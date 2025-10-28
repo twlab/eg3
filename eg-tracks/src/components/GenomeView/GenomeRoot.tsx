@@ -5,7 +5,7 @@ import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import { addTabSetToLayout, initialLayout } from "../../models/layoutUtils";
 import "./AppLayout.css";
-import { arraysHaveSameTrackModels } from "../../util";
+import { arraysHaveSameTrackModels, generateUUID } from "../../util";
 
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";
@@ -18,11 +18,15 @@ const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
+// @ts-ignore
+import FetchDataWorker from "../../getRemoteData/fetchDataWorker.ts?worker&inline";
+// @ts-ignore
+import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
 
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
-const packageVersion = true;
+const packageVersion = false;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -43,6 +47,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   setScreenshotData,
   isScreenShotOpen,
   selectedRegionSet,
+  darkTheme,
 }) {
   const [resizeRef, size] = useResizeObserver();
 
@@ -53,9 +58,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     packageVersion
       ? null
       : {
-        instance: [],
-        worker: [],
-      }
+          instance: [],
+          worker: [],
+        }
   );
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
@@ -96,13 +101,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       for (let i = 0; i < normalCount; i++) {
         if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
           infiniteScrollWorkers.current!.worker.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
+            fetchWorker: new FetchDataWorker(),
             hasOnMessage: false,
           });
         }
@@ -111,13 +110,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       for (let i = 0; i < instanceFetchTracksCount; i++) {
         if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
           infiniteScrollWorkers.current!.instance.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
+            fetchWorker: new FetchDataWorker(),
             hasOnMessage: false,
           });
         }
@@ -128,13 +121,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         !fetchGenomeAlignWorker.current
       ) {
         fetchGenomeAlignWorker.current = {
-          fetchWorker: new Worker(
-            new URL(
-              "../../getRemoteData/fetchGenomeAlignWorker.ts",
-              import.meta.url
-            ),
-            { type: "module" }
-          ),
+          fetchWorker: new FetchGenomeAlignWorker(),
           hasOnMessage: false,
         };
       }
@@ -197,8 +184,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               (!size.width || size.width - legendWidth <= 0
                 ? window.innerWidth
                 : size.width) -
-              legendWidth
-              -
+              legendWidth -
               40
             }
             userViewRegion={userViewRegion}
@@ -221,6 +207,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             infiniteScrollWorkers={infiniteScrollWorkers}
             fetchGenomeAlignWorker={fetchGenomeAlignWorker}
             currentState={currentState}
+            darkTheme={darkTheme}
           />
         );
       } else {
@@ -347,8 +334,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             (!size.width || size.width - legendWidth <= 0
               ? window.innerWidth
               : size.width) -
-            legendWidth -
-            40
+              legendWidth -
+              40
           )}
           userViewRegion={userViewRegion}
           highlights={highlights}
@@ -370,6 +357,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           infiniteScrollWorkers={infiniteScrollWorkers}
           fetchGenomeAlignWorker={fetchGenomeAlignWorker}
           currentState={currentState}
+          darkTheme={darkTheme}
         />
       ) : (
         <div style={{ width: size.width, height: 900 }}>

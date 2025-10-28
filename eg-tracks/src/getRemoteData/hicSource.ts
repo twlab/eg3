@@ -155,7 +155,7 @@ export class HicSource {
       );
     } catch (error) {
       console.error("Failed to fetch contact records:", error);
-      return []; // Return an empty array or handle the error as needed
+      return { error: "Failed to fetch hic data. " }; // Return an empty array or handle the error as needed
     }
 
     const interactions: Array<any> = [];

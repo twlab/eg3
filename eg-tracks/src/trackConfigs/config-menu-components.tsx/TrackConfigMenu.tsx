@@ -9,10 +9,11 @@ import {
 } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 import OutsideClickDetector from "../../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
+import ReactDOM from "react-dom";
 
 function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
-
+  const darkTheme = props.darkTheme;
   // Use mouse coordinates for positioning
   const left = menuData.pageX || 0;
   const top = menuData.pageY || 0;
@@ -41,22 +42,24 @@ function ConfigMenuComponent(props: any) {
   );
   // left: menuData.pageX - leftMargin,
   // top: menuData.pageY - blockPosData.height,
-  return (
+  return ReactDOM.createPortal(
     <Manager>
       <Reference>
         {({ ref }) => (
           <div
             ref={ref}
             style={{
-              position: "fixed", // Use fixed so it's relative to the viewport
-              left,
-              top,
-              backgroundColor: "var(--bg-container-color)",
-              color: "var(--font-color)",
+              position: "absolute",
+              left: Math.abs(left),
+              top: top,
+              color: darkTheme ? "white" : "black",
               zIndex: 1000,
             }}
           >
-            <Popper placement="right-end">
+            <Popper
+              placement="auto"
+              modifiers={[{ name: "flip", enabled: false }]}
+            >
               {({ ref, style }) => (
                 <div
                   ref={ref}
@@ -71,7 +74,7 @@ function ConfigMenuComponent(props: any) {
                   >
                     <div
                       className="TrackContextMenu-body"
-                      style={{ backgroundColor: "var(--bg-container-color)" }}
+                      style={{ backgroundColor: darkTheme ? "black" : "white" }}
                     >
                       <MenuTitle
                         title={
@@ -114,7 +117,8 @@ function ConfigMenuComponent(props: any) {
           </div>
         )}
       </Reference>
-    </Manager>
+    </Manager>,
+    document.body
   );
 }
 

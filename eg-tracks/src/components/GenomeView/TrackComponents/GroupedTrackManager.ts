@@ -84,13 +84,9 @@ export class GroupedTrackManager {
     dataIdx: number,
     trackFetchedDataCache: any
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
-    // console.log(tracks);
     if (trackData) {
-      const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
+      const grouping = {};
       for (let i = 0; i < tracks.length; i++) {
-        // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
-        // console.log(tracks[i]);
-
         if (tracks[i].options.group && tracks[i].type in numericalTracksGroup) {
           const g = tracks[i].options.group;
           const tid = tracks[i].id;

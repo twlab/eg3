@@ -49,17 +49,16 @@ const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 
 const defaultTracks = [
-  new TrackModel({
-    type: "ruler",
-    name: "Ruler",
-  }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
   // new TrackModel({
   //   type: "hi",
   //   url: "",
   //   name: "NOTSUPPORTEDTRACEXAMPLE",
   // }),
-
+  new TrackModel({
+    type: "ruler",
+    name: "Ruler",
+  }),
   new TrackModel({
     type: "geneAnnotation",
     name: "refGene",
@@ -69,6 +68,18 @@ const defaultTracks = [
     type: "geneAnnotation",
     name: "gencodeV47",
     genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "MANE_select_1.4",
+    label: "MANE selection v1.4",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "repeatmasker",
+    name: "rmsk_all",
+    options: { label: "RepeatMasker" },
+    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
   }),
   // new TrackModel({
   //   type: "bigwig",
@@ -163,18 +174,7 @@ const defaultTracks = [
   //   name: "snp",
   //   genome: "hg38",
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "MANE_select_1.4",
-    label: "MANE selection v1.4",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "repeatmasker",
-    name: "rmsk_all",
-    options: { label: "RepeatMasker" },
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  }),
+
   // new TrackModel({
   //   type: "bigwig",
   //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",

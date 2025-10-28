@@ -27,6 +27,7 @@ export interface ITrackContainerState {
   setScreenshotData: any;
   isScreenShotOpen: boolean;
   currentState: any;
+  darkTheme: boolean;
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -56,6 +57,7 @@ export interface ITrackContainerRepresentableProps {
   isScreenShotOpen: boolean;
   overrideViewRegion: GenomeCoordinate | null;
   currentState: any;
+  darkTheme: boolean;
 }
 
 // MARK: Track Model

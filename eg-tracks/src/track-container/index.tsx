@@ -40,6 +40,7 @@ export function TrackContainerRepresentable({
   isScreenShotOpen,
   overrideViewRegion,
   currentState,
+  darkTheme,
 }: ITrackContainerRepresentableProps) {
   // const [forceViewRegionUpdate, setForceViewRegionUpdate] = useState(0);
 
@@ -305,6 +306,7 @@ export function TrackContainerRepresentable({
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
+        darkTheme={darkTheme}
       />
     </div>
   );

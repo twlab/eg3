@@ -66,6 +66,7 @@ export const getHoverTooltip = {
       typeof value2 === "number" && !Number.isNaN(value2)
         ? value2.toFixed(2)
         : "(no data)";
+
     return {
       toolTip: (
         <div>
@@ -720,50 +721,51 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     beams: <></>,
   });
   const handleMouseEnter = (e) => {
-    if (
-      isArrayNotEmpty(data) ||
-      (isObjectNotEmpty(data) && isDataValid(data)) ||
-      trackType === "ruler"
-    ) {
-      const rect = targetRef.current!.getBoundingClientRect();
+    const rect = targetRef.current!.getBoundingClientRect();
 
-      let dataIdxX = Math.round(e.pageX - rect.left);
-      let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
-      // windowwidth going over by 1 pixel because each region pixel array starts at 0
+    let dataIdxX = Math.round(e.pageX - rect.left);
+    let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
+    // windowwidth going over by 1 pixel because each region pixel array starts at 0
 
-      let trackHoverTooltip = getHoverTooltip[trackType]({
-        data,
-        trackModel,
-        data2,
-        viewRegion,
-        width: windowWidth,
-        unit,
-        relativeX: dataIdxX,
-        relativeY: dataIdxY,
-        hasReverse,
-        options,
-        viewWindow,
-        legendWidth,
-        targetRef,
-        scale,
-        xAlias,
+    let trackHoverTooltip = getHoverTooltip[trackType]({
+      data:
+        isArrayNotEmpty(data) || (isObjectNotEmpty(data) && isDataValid(data))
+          ? data
+          : [],
+      trackModel,
+      data2:
+        isArrayNotEmpty(data2) ||
+        (isObjectNotEmpty(data2) && isDataValid(data2))
+          ? data2
+          : [],
+      viewRegion,
+      width: windowWidth,
+      unit,
+      relativeX: dataIdxX,
+      relativeY: dataIdxY,
+      hasReverse,
+      options,
+      viewWindow,
+      legendWidth,
+      targetRef,
+      scale,
+      xAlias,
+    });
+
+    if (trackHoverTooltip) {
+      setPosition({
+        ...rectPosition,
+        top: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        dataIdxX: dataIdxX,
+        dataIdxY: dataIdxY,
+        toolTip: trackHoverTooltip.toolTip,
+        beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
       });
-
-      if (trackHoverTooltip) {
-        setPosition({
-          ...rectPosition,
-          top: rect.bottom,
-          left: rect.left,
-          right: rect.right,
-          dataIdxX: dataIdxX,
-          dataIdxY: dataIdxY,
-          toolTip: trackHoverTooltip.toolTip,
-          beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
-        });
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
     }
   };
   // when creating mouse behavior and events for separate component you have to create handler function outside the useeffect or else state is based

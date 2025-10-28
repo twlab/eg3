@@ -48,37 +48,41 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <FeatureDetail
-                  feature={feature}
-                  category={undefined}
-                  queryEndpoint={undefined}
-                />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <FeatureDetail
+                        feature={feature}
+                        category={undefined}
+                        queryEndpoint={undefined}
+                      />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -130,51 +134,55 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <GeneDetail
-                  gene={gene}
-                  collectionName={name}
-                  queryEndpoint={{}}
-                />
-                {isThereG3dTrack ? (
-                  <div>
-                    <button
-                      className="btn btn-sm btn-primary"
-                      onClick={() =>
-                        setShow3dGene ? setShow3dGene(gene) : () => {}
-                      }
-                    >
-                      Show in 3D
-                    </button>
-                  </div>
-                ) : (
-                  ""
-                )}
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <GeneDetail
+                        gene={gene}
+                        collectionName={name}
+                        queryEndpoint={{}}
+                      />
+                      {isThereG3dTrack ? (
+                        <div>
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() =>
+                              setShow3dGene ? setShow3dGene(gene) : () => {}
+                            }
+                          >
+                            Show in 3D
+                          </button>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -227,55 +235,59 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <GeneDetail
-                  gene={gene}
-                  collectionName={name}
-                  queryEndpoint={{}}
-                />
-                {isThereG3dTrack ? (
-                  <div>
-                    <button
-                      className="btn btn-sm btn-primary"
-                      onClick={() =>
-                        setShow3dGene ? setShow3dGene(gene) : () => {}
-                      }
-                    >
-                      Show in 3D
-                    </button>
-                    {/* {" "}
+            <div>
+              {ReactDOM.createPortal(
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <GeneDetail
+                        gene={gene}
+                        collectionName={name}
+                        queryEndpoint={{}}
+                      />
+                      {isThereG3dTrack ? (
+                        <div>
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() =>
+                              setShow3dGene ? setShow3dGene(gene) : () => {}
+                            }
+                          >
+                            Show in 3D
+                          </button>
+                          {/* {" "}
                     <button className="btn btn-sm btn-secondary" onClick={this.clearGene3d}>
                         Clear in 3D
                     </button> */}
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                    </OutsideClickDetector>
                   </div>
-                ) : (
-                  ""
-                )}
-              </OutsideClickDetector>
-              {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -323,37 +335,41 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <FeatureDetail
-                  feature={feature}
-                  category={undefined}
-                  queryEndpoint={undefined}
-                />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <FeatureDetail
+                        feature={feature}
+                        category={undefined}
+                        queryEndpoint={undefined}
+                      />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -401,37 +417,41 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <FeatureDetail
-                  feature={feature}
-                  category={undefined}
-                  queryEndpoint={undefined}
-                />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <FeatureDetail
+                        feature={feature}
+                        category={undefined}
+                        queryEndpoint={undefined}
+                      />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -481,56 +501,60 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <div>
-                  <div>
-                    <span
-                      className="Tooltip-major-text"
-                      style={{ marginRight: 5 }}
-                    >
-                      {feature.getName()}
-                    </span>
-                    <span className="Tooltip-minor-text">
-                      {feature.getClassDetails()}
-                    </span>
-                  </div>
-                  <div>
-                    {feature.getLocus().toString()} (
-                    {feature.getLocus().getLength()}bp)
-                  </div>
-                  <div>
-                    (1 - divergence%) = {feature.repeatValue.toFixed(2)}
-                  </div>
-                  <div>strand: {feature.strand}</div>
-                  <div className="Tooltip-minor-text">
-                    {trackModel.getDisplayLabel()}
-                  </div>
-                </div>
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <div>
+                        <div>
+                          <span
+                            className="Tooltip-major-text"
+                            style={{ marginRight: 5 }}
+                          >
+                            {feature.getName()}
+                          </span>
+                          <span className="Tooltip-minor-text">
+                            {feature.getClassDetails()}
+                          </span>
+                        </div>
+                        <div>
+                          {feature.getLocus().toString()} (
+                          {feature.getLocus().getLength()}bp)
+                        </div>
+                        <div>
+                          (1 - divergence%) = {feature.repeatValue.toFixed(2)}
+                        </div>
+                        <div>strand: {feature.strand}</div>
+                        <div className="Tooltip-minor-text">
+                          {trackModel.getDisplayLabel()}
+                        </div>
+                      </div>
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -576,33 +600,37 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <SnpDetail snp={snp} />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <SnpDetail snp={snp} />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -650,42 +678,48 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <FeatureDetail
-                  feature={feature}
-                  category={undefined}
-                  queryEndpoint={undefined}
-                />
-                <div style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
-                  <div>Ref {alignment.reference}</div>
-                  <div> {alignment.lines}</div>
-                  <div>Read {alignment.read}</div>
-                </div>
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <FeatureDetail
+                        feature={feature}
+                        category={undefined}
+                        queryEndpoint={undefined}
+                      />
+                      <div
+                        style={{ fontFamily: "monospace", whiteSpace: "pre" }}
+                      >
+                        <div>Ref {alignment.reference}</div>
+                        <div> {alignment.lines}</div>
+                        <div>Read {alignment.read}</div>
+                      </div>
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -733,33 +767,37 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <SnpDetail snp={snp} />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <SnpDetail snp={snp} />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -809,37 +847,41 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <FeatureDetail
-                  feature={feature}
-                  category={configOptions.category}
-                  queryEndpoint={undefined}
-                />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <FeatureDetail
+                        feature={feature}
+                        category={configOptions.category}
+                        queryEndpoint={undefined}
+                      />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -882,33 +924,36 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <VcfDetail vcf={vcf as Vcf} />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <VcfDetail vcf={vcf as Vcf} />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>
@@ -956,33 +1001,37 @@ export const geneClickToolTipMap: { [key: string]: any } = {
           modifiers={[{ name: "flip", enabled: false }]}
         >
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <JasparDetail feature={feature} />
-              </OutsideClickDetector>
+            <div>
               {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <JasparDetail feature={feature} />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />
+                </>,
                 document.body
               )}
             </div>

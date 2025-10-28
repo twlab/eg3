@@ -55,7 +55,7 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
 /**
  * Track specialized in showing numerical data.
  *
- * @author Silas Hsu
+ * @author Silas Hsu, Chanrung Seng
  */
 const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const {
@@ -104,11 +104,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           props.viewWindow.start,
           props.viewWindow.end
         );
-        // TO- DO implement when dragX changes then the legend also changings with viewWindow values
-        // const visibleValues = xToValue.slice(
-        //   props.viewWindow.start + props.width / 3,
-        //   props.viewWindow.end - props.width / 3
-        // );
 
         max = _.max(visibleValues) || 1;
         xValues2 = xToValue2.filter((x) => x);
@@ -132,10 +127,17 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       }
 
       const zeroLine =
-        min < 0
+        min < 0 && xToValue && xToValue.length > 0
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : height;
-
+          : xToValue && xToValue.length > 0
+          ? height
+          : 0;
+      if (
+        (!xToValue || xToValue.length === 0) &&
+        (!xToValue2 || xToValue2.length === 0)
+      ) {
+        max = 0;
+      }
       if (
         xValues2.length &&
         (yScale === ScaleChoices.AUTO ||
@@ -169,7 +171,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       } else {
         return {
           axisScale: scaleLinear()
-            .domain([max, min])
+            .domain([0, min])
             .range([TOP_PADDING, height])
             .clamp(true),
           valueToY: scaleLinear()
@@ -274,18 +276,24 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         <div
           style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
         >
-          <ValuePlot
-            xToValue={xToValue}
-            scales={scales}
-            height={scales.zeroLine}
-            color={color}
-            colorOut={colorAboveMax}
-            isDrawingBars={isDrawingBars}
-            forceSvg={forceSvg}
-            width={width}
-            viewWindow={props.viewWindow}
-          />
-          <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+          {xToValue && xToValue.length > 0 ? (
+            <>
+              <ValuePlot
+                xToValue={xToValue}
+                scales={scales}
+                height={scales.zeroLine}
+                color={color}
+                colorOut={colorAboveMax}
+                isDrawingBars={isDrawingBars}
+                forceSvg={forceSvg}
+                width={width}
+                viewWindow={props.viewWindow}
+              />
+              <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+            </>
+          ) : (
+            ""
+          )}
 
           <ValuePlot
             xToValue={xToValue2}

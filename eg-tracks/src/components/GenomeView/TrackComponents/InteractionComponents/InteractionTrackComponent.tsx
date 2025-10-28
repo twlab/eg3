@@ -200,6 +200,7 @@ class InteractionTrackComponent extends React.PureComponent<
     const filteredData = this.filterData(data);
 
     this.scales = this.computeScale();
+
     let interactionData = this.featurePlacer.placeInteractions(
       filteredData,
       visRegion,

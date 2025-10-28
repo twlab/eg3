@@ -105,6 +105,7 @@ const componentMap: { [key: string]: any } = {
   longrange: "",
   biginteract: "",
   repeatmasker: "",
+  rmskv2: "",
   bigbed: "",
   refbed: "",
   matplot: "",
@@ -714,7 +715,6 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
 
   return {
     fetchResults,
-
     navData: {
       ...data,
       genomicFetchCoord,
