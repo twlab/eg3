@@ -44,17 +44,17 @@ export default function PublicDataHubs() {
   }
 
   const selectedGenomeConfig = useMemo(() => {
-    if (selectedGenomeName && selectedGenomeName !== selectedGenomeName) {
-      return secondaryGenomes.find(
-        (g) => g.genome.getName() === selectedGenomeName
-      );
-    }
+    // if (selectedGenomeName && selectedGenomeName !== selectedGenomeName) {
+    //   return secondaryGenomes.find(
+    //     (g) => g.genome.getName() === selectedGenomeName
+    //   );
+    // }
 
     return genomeConfig;
   }, [secondaryGenomes, selectedGenomeName, genomeConfig]);
 
   const groupedHubs = useMemo(() => {
-    const hubs = selectedGenomeConfig ? selectedGenomeConfig.publicHubList : [];
+    const hubs = selectedGenomeConfig && selectedGenomeConfig.publicHubList ? selectedGenomeConfig.publicHubList : [];
 
     const filteredHubs = hubs.filter((hub: any) =>
       Object.values(hub).some((value: any) =>
@@ -121,11 +121,10 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${
-                isLoaded
-                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-              }`}
+              className={`size-6 rounded-md flex items-center justify-center ${isLoaded
+                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+                }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -203,7 +202,7 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>

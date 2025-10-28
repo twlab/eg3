@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import _ from "lodash";
+import _, { create } from "lodash";
 
 import { ClipLoader } from "react-spinners";
 import {
@@ -391,6 +391,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
         const newTrackState = { ...createSVGData.trackState };
         newTrackState["viewWindow"] = viewWindow;
+
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
@@ -405,7 +406,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           groupScale: newTrackState.groupScale,
           xvaluesData: createSVGData.xvaluesData
             ? createSVGData.xvaluesData
-            : null
+            : null,
+          isError: createSVGData.isError
         });
 
         return (

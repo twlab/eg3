@@ -3,12 +3,12 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import {
+  selectDarkTheme,
   selectIsNavigatorVisible,
   selectIsToolBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
 import {
-  resetState,
   selectScreenShotOpen,
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
@@ -18,11 +18,9 @@ import {
   ITrackModel,
   RegionSet,
 } from "wuepgg3-track";
-import "wuepgg3-track/style.css"
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 
-import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { selectCurrentState } from "../../lib/redux/selectors";
@@ -39,21 +37,12 @@ export default function GenomeView() {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const isToolBarVisible = useAppSelector(selectIsToolBarVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
-  const showToolbar = useAppSelector(selectIsToolBarVisible);
+  const darkTheme = useAppSelector(selectDarkTheme);
+  const bundleId =
+    currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
-  const lastSessionId = useRef<null | string>(null);
-  const bundleId = currentSession ? currentSession.bundleId : null;
-
-  const sessionId = currentSession ? currentSession.id : null;
-
-  if (lastSessionId.current !== sessionId && sessionId !== null) {
-    if (lastSessionId.current !== null) {
-      dispatch(resetState());
-    }
-    lastSessionId.current = sessionId;
-    if (bundleId) {
-      dispatch(fetchBundle(bundleId));
-    }
+  if (bundleId) {
+    dispatch(fetchBundle(bundleId));
   }
 
   // const bundleId = currentSession.bundleId;
@@ -120,15 +109,13 @@ export default function GenomeView() {
       viewRegion={currentSession?.viewRegion}
       userViewRegion={currentSession.userViewRegion}
       tool={tool}
-      Toolbar={{
-        toolbar: showToolbar === false ? "" : Toolbar,
-        skeleton: TrackPlaceHolder,
-      }}
+      Toolbar={{ toolbar: Toolbar, skeleton: TrackPlaceHolder }}
       selectedRegionSet={currentSession?.selectedRegionSet}
       setScreenshotData={setScreenshotData}
       isScreenShotOpen={isScreenShotOpen}
       overrideViewRegion={currentSession?.overrideViewRegion}
       currentState={currentState}
+      darkTheme={darkTheme}
     />
   ) : null;
 }

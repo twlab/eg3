@@ -148,7 +148,7 @@ export const addSessionsFromBundleId = createAsyncThunk(
     const response = await fetch(
       `https://eg-session.firebaseio.com/sessions/${sessionId}.json`
     ).then((r) => r.json() as Promise<Isession>);
-    console.log(response)
+
     let sessionInView: any = null
     if (response && response.currentId) {
       sessionInView = response.sessionsInBundle[response.currentId].state

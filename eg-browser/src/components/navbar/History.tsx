@@ -2,11 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { ClockIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-
-  OutsideClickDetector,
-
-} from "wuepgg3-track";
+import { OutsideClickDetector } from "wuepgg3-track";
 /**
  * A component to show users' history of operations
  * @param props The component props
@@ -19,9 +15,15 @@ type Props = {
     future: any[];
   };
   jumpToPast: (index: number) => void;
+  clearHistory: () => void;
   jumpToFuture: (index: number) => void;
 };
-const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
+const History: React.FC<Props> = ({
+  state,
+  jumpToPast,
+  jumpToFuture,
+  clearHistory,
+}) => {
   const [showModal, setShowModal] = useState(false);
   const [checkStateEmpty, setCheckStateEmpty] = useState(false);
   const handleOpenModal = () => {
@@ -43,6 +45,7 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
   function handleClear() {
     setCheckStateEmpty(true);
     renderHistory();
+    clearHistory();
   }
   const renderHistory = () => {
     const { past, future } = state;

@@ -1,4 +1,8 @@
-import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useUndoRedo,
+} from "../../lib/redux/hooks";
 import {
   selectNavigationTab,
   setNavigationTab,
@@ -19,7 +23,6 @@ import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
   createSession,
-  selectCurrentSession,
   selectCurrentSessionId,
   setCurrentSession,
   updateCurrentSession,
@@ -32,35 +35,25 @@ import MouseFollowingTooltip from "../ui/tooltip/MouseFollowingTooltip";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
 import {
-  resetSettings,
   selectDarkTheme,
-  selectCookieConsentStatus,
   setNavBarVisibility,
   setNavigatorVisibility,
   setToolBarVisibility,
-  selectIsNavigatorVisible,
   selectIsNavBarVisible,
-  selectIsToolBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
 import { useEffect } from "react";
 
 import {
   GenomeSerializer,
   getGenomeConfig,
-  IGenome,
   ITrackModel,
-  generateUUID,
-  Genome,
   GenomeCoordinate,
+  GenomeConfig,
 } from "wuepgg3-track";
-import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 
-// const firebaseConfig = {
-//   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
-//   authDomain: "chadeg3-83548.firebaseapp.com",
-//   databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
-//   storageBucket: "chadeg3-83548.firebasestorage.app",
-// };
+import { resetState } from "@/lib/redux/slices/hubSlice";
+import { TracksProps } from "wuepgg3-track";
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
@@ -70,14 +63,6 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-export interface TracksProps {
-  url?: string;
-  name?: string;
-  options?: { [key: string]: any };
-  type: string;
-  showOnHubLoad?: boolean;
-  metadata?: { [key: string]: any };
-}
 export interface RootLayoutProps {
   viewRegion?: string | null | undefined;
   genomeName?: string;
@@ -87,15 +72,6 @@ export interface RootLayoutProps {
   showGenomeNavigator?: boolean;
   // showNavBar?: boolean;
   // showToolBar?: boolean;
-}
-
-export interface TracksProps {
-  url?: string;
-  name?: string;
-  options?: { [key: string]: any };
-  type: string;
-  showOnHubLoad?: boolean;
-  metadata?: { [key: string]: any };
 }
 
 export interface GenomeHubProps {
@@ -123,22 +99,28 @@ export default function RootLayout(props: GenomeHubProps) {
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
 
+  const { clearHistory } = useUndoRedo();
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
     props.showGenomeNavigator !== undefined ||
     props.showNavBar !== undefined ||
     props.showToolBar !== undefined;
 
+  const handleGoHome = () => {
+    dispatch(setCurrentSession(null));
+  };
+
+  // Reset state when session is cleared
+  useEffect(() => {
+    dispatch(resetState());
+    clearHistory();
+  }, [sessionId]);
+
   // For package mode: use Redux state (controlled by props)
   // For web mode: default to true (ignore persisted state)
   const showNavBar = isPackageMode
     ? useAppSelector(selectIsNavBarVisible)
     : true;
-
-  const handleGoHome = () => {
-    dispatch(setCurrentSession(null));
-  };
-
   function getConfig() {
     if (props.customGenome) {
       try {
@@ -152,6 +134,7 @@ export default function RootLayout(props: GenomeHubProps) {
     }
     return null;
   }
+
   useEffect(() => {
     // Only apply visibility props in package mode
 
@@ -187,7 +170,6 @@ export default function RootLayout(props: GenomeHubProps) {
       const genomeConfig: GenomeConfig | null = getConfig();
       if (genomeConfig) {
         if (!sessionId) {
-          console.log("HUH")
           if (genomeConfig?.genome) {
             const genome = GenomeSerializer.serialize(genomeConfig);
 
@@ -206,7 +188,6 @@ export default function RootLayout(props: GenomeHubProps) {
             );
           }
         } else {
-                console.log("HUH22")
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],

@@ -164,8 +164,6 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
-
-    dispatch(resetState());
     dispatch(updateCurrentSession(session));
   }
 
@@ -195,6 +193,7 @@ const Session: React.FC = () => {
   return (
     <SessionUI
       onRestoreSession={onRestoreSession}
+
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
       bundleId={bundle.bundleId ? bundle.bundleId : ""}
