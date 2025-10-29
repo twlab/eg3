@@ -1554,112 +1554,111 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any }
   ) => {
-    console.log(event.data);
-    // await Promise.all(
-    //   event.data.map(async (dataItem: any) => {
-    //     const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
-    //       ? dataItem.trackToDrawId
-    //       : {};
-    //     const regionDrawIdx = dataItem.trackDataIdx;
+    await Promise.all(
+      event.data.map(async (dataItem: any) => {
+        const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
+          ? dataItem.trackToDrawId
+          : {};
+        const regionDrawIdx = dataItem.trackDataIdx;
 
-    //     const curTrackState = {
-    //       ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
-    //       primaryGenName: genomeConfig.genome.getName(),
-    //     };
+        const curTrackState = {
+          ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
+          primaryGenName: genomeConfig.genome.getName(),
+        };
 
-    //     // Process each fetch result with promises
-    //     await Promise.all(
-    //       dataItem.fetchResults.map(
-    //         async (item: {
-    //           id: any;
-    //           name: string;
-    //           result: any;
-    //           metadata: any;
-    //           trackModel: any;
-    //           curFetchNav: any;
-    //         }) => {
-    //           trackToDrawId[`${item.id}`] = "";
-    //           await createCache({
-    //             trackState: curTrackState,
-    //             result: item.result,
-    //             id: item.id,
-    //             trackType: item.trackModel.type
-    //               ? item.trackModel.type
-    //               : item.name
-    //                 ? item.name
-    //                 : "",
-    //             metadata: item.metadata,
-    //             trackModel: item.trackModel,
-    //             curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-    //             missingIdx: dataItem.missingIdx,
-    //           });
-    //         }
-    //       )
-    //     );
+        // Process each fetch result with promises
+        await Promise.all(
+          dataItem.fetchResults.map(
+            async (item: {
+              id: any;
+              name: string;
+              result: any;
+              metadata: any;
+              trackModel: any;
+              curFetchNav: any;
+            }) => {
+              trackToDrawId[`${item.id}`] = "";
+              await createCache({
+                trackState: curTrackState,
+                result: item.result,
+                id: item.id,
+                trackType: item.trackModel.type
+                  ? item.trackModel.type
+                  : item.name
+                  ? item.name
+                  : "",
+                metadata: item.metadata,
+                trackModel: item.trackModel,
+                curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+                missingIdx: dataItem.missingIdx,
+              });
+            }
+          )
+        );
 
-    //     const drawData = {
-    //       trackDataIdx: dataItem.trackDataIdx,
-    //       initial: dataItem.initial,
-    //       trackToDrawId: trackToDrawId,
-    //       missingIdx: dataItem.missingIdx,
-    //     };
-    //     let curDrawData;
-    //     let combineTrackToDrawId = {};
+        const drawData = {
+          trackDataIdx: dataItem.trackDataIdx,
+          initial: dataItem.initial,
+          trackToDrawId: trackToDrawId,
+          missingIdx: dataItem.missingIdx,
+        };
+        let curDrawData;
+        let combineTrackToDrawId = {};
 
-    //     curDrawData = drawData;
-    //     combineTrackToDrawId = {
-    //       ...combineTrackToDrawId,
-    //       ...drawData.trackToDrawId,
-    //     };
+        curDrawData = drawData;
+        combineTrackToDrawId = {
+          ...combineTrackToDrawId,
+          ...drawData.trackToDrawId,
+        };
 
-    //     if (curDrawData) {
-    //       const idxArr = [
-    //         dataIdx.current - 1,
-    //         dataIdx.current,
-    //         dataIdx.current + 1,
-    //       ];
-    //       const cacheKeysWithData = {};
-    //       for (let trackToDrawKey in combineTrackToDrawId) {
-    //         const cache = trackFetchedDataCache.current[trackToDrawKey];
+        if (curDrawData) {
+          const idxArr = [
+            dataIdx.current - 1,
+            dataIdx.current,
+            dataIdx.current + 1,
+          ];
+          const cacheKeysWithData = {};
+          for (let trackToDrawKey in combineTrackToDrawId) {
+            const cache = trackFetchedDataCache.current[trackToDrawKey];
 
-    //         if (cache) {
-    //           if (useFineModeNav.current || cache.useExpandedLoci) {
-    //             if (cache[dataIdx.current]) {
-    //               cacheKeysWithData[trackToDrawKey] = "";
-    //             }
-    //           } else {
-    //             let hasAllRegionData = true;
-    //             for (let idx of idxArr) {
-    //               if (!cache[idx] || cache[idx].dataCache === null) {
-    //                 hasAllRegionData = false;
-    //                 break;
-    //               }
-    //             }
-    //             if (hasAllRegionData) {
-    //               cacheKeysWithData[trackToDrawKey] = "";
-    //             }
-    //           }
-    //         }
-    //       }
-    //       for (let id in cacheKeysWithData) {
-    //         cacheKeysWithData[`${id}`] = false;
-    //       }
-    //       if (completedFetchedRegion.current.key !== dataIdx.current) {
-    //         completedFetchedRegion.current.key = dataIdx.current;
-    //         completedFetchedRegion.current.done = {};
-    //       }
+            if (cache) {
+              if (useFineModeNav.current || cache.useExpandedLoci) {
+                if (cache[dataIdx.current]) {
+                  cacheKeysWithData[trackToDrawKey] = "";
+                }
+              } else {
+                let hasAllRegionData = true;
+                for (let idx of idxArr) {
+                  if (!cache[idx] || cache[idx].dataCache === null) {
+                    hasAllRegionData = false;
+                    break;
+                  }
+                }
+                if (hasAllRegionData) {
+                  cacheKeysWithData[trackToDrawKey] = "";
+                }
+              }
+            }
+          }
+          for (let id in cacheKeysWithData) {
+            cacheKeysWithData[`${id}`] = false;
+          }
+          if (completedFetchedRegion.current.key !== dataIdx.current) {
+            completedFetchedRegion.current.key = dataIdx.current;
+            completedFetchedRegion.current.done = {};
+          }
 
-    //       curDrawData["trackToDrawId"] = { ...cacheKeysWithData };
-    //       curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
-    //       if (
-    //         curDrawData["trackToDrawId"] &&
-    //         Object.keys(curDrawData["trackToDrawId"]).length > 0
-    //       ) {
-    //         checkDrawData(curDrawData);
-    //       }
-    //     }
-    //   })
-    // );
+          curDrawData["trackToDrawId"] = { ...cacheKeysWithData };
+          curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
+          if (
+            curDrawData["trackToDrawId"] &&
+            Object.keys(curDrawData["trackToDrawId"]).length > 0
+          ) {
+            checkDrawData(curDrawData);
+          }
+        }
+      })
+    );
   };
 
   //MARK: onmessGenAl;

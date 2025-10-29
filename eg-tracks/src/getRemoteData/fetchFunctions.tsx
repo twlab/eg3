@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { SequenceSegment } from "../models/AlignmentStringUtils";
 import AlignmentRecord from "../models/AlignmentRecord";
 import OpenInterval from "../models/OpenInterval";
@@ -13,8 +12,6 @@ import {
 
 import { AlignmentSegment } from "../models/AlignmentSegment";
 import { NavContextBuilder } from "../models/NavContextBuilder";
-
-import JSON5 from "json5";
 
 import ChromosomeInterval from "../models/ChromosomeInterval";
 
@@ -157,6 +154,56 @@ export interface Alignment {
 
 export interface MultiAlignment {
   [genome: string]: Alignment;
+}
+
+// Custom parser for genome align data format
+function parseCustomFormat(str: string): any {
+  // Remove outer braces
+  str = str.slice(1, -1);
+
+  const result: any = {};
+
+  // Split by top-level commas (not inside nested objects)
+  const parts = str.split(/,(?![^{]*})/);
+
+  parts.forEach((part) => {
+    const colonIndex = part.indexOf(":");
+    const key = part.substring(0, colonIndex).trim();
+    let value = part.substring(colonIndex + 1).trim();
+
+    if (value.startsWith("{")) {
+      // Parse nested object
+      result[key] = parseNestedObject(value);
+    } else {
+      // Parse primitive value
+      result[key] = isNaN(Number(value)) ? value : Number(value);
+    }
+  });
+
+  return result;
+}
+
+function parseNestedObject(str: string): any {
+  str = str.slice(1, -1); // Remove braces
+  const obj: any = {};
+
+  const regex = /(\w+):(".*?"|[\w+-]+)/g;
+  let match;
+
+  while ((match = regex.exec(str)) !== null) {
+    const key = match[1];
+    let value: any = match[2];
+
+    if (value.startsWith('"') && value.endsWith('"')) {
+      value = value.slice(1, -1); // Remove quotes
+    } else if (!isNaN(Number(value))) {
+      value = Number(value);
+    }
+
+    obj[key] = value;
+  }
+
+  return obj;
 }
 
 // Main processing function that can be used both as worker and regular function
@@ -392,7 +439,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                 }),
               ]);
             }
-            responses.push(_.flatten(curRespond));
+            responses.push(curRespond.flat());
           } catch (error) {
             console.error(
               `Error fetching data for track model type ${trackModel.type}:`,
@@ -534,7 +581,8 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
               let records: AlignmentRecord[] = [];
 
               for (const record of responds) {
-                let data = JSON5.parse("{" + record[3] + "}");
+                let data = parseCustomFormat("{" + record[3] + "}");
+
                 record[3] = data;
                 records.push(new AlignmentRecord(record));
               }
@@ -715,6 +763,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
 
   return {
     fetchResults,
+
     navData: {
       ...data,
       genomicFetchCoord,
