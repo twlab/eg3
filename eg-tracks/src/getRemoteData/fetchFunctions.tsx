@@ -14,8 +14,6 @@ import {
 import { AlignmentSegment } from "../models/AlignmentSegment";
 import { NavContextBuilder } from "../models/NavContextBuilder";
 
-import JSON5 from "json5";
-
 import ChromosomeInterval from "../models/ChromosomeInterval";
 
 import NavigationContext from "../models/NavigationContext";
@@ -124,7 +122,6 @@ const componentMap: { [key: string]: any } = {
   bam: "",
   omeroidr: "",
   error: "",
-
 };
 export interface PlacedMergedAlignment extends QueryGenomePiece {
   segments: PlacedAlignment[];
@@ -158,6 +155,56 @@ export interface Alignment {
 
 export interface MultiAlignment {
   [genome: string]: Alignment;
+}
+
+// Custom parser for genome align data format
+function parseCustomFormat(str: string): any {
+  // Remove outer braces
+  str = str.slice(1, -1);
+
+  const result: any = {};
+
+  // Split by top-level commas (not inside nested objects)
+  const parts = str.split(/,(?![^{]*})/);
+
+  parts.forEach((part) => {
+    const colonIndex = part.indexOf(":");
+    const key = part.substring(0, colonIndex).trim();
+    let value = part.substring(colonIndex + 1).trim();
+
+    if (value.startsWith("{")) {
+      // Parse nested object
+      result[key] = parseNestedObject(value);
+    } else {
+      // Parse primitive value
+      result[key] = isNaN(Number(value)) ? value : Number(value);
+    }
+  });
+
+  return result;
+}
+
+function parseNestedObject(str: string): any {
+  str = str.slice(1, -1); // Remove braces
+  const obj: any = {};
+
+  const regex = /(\w+):(".*?"|[\w+-]+)/g;
+  let match;
+
+  while ((match = regex.exec(str)) !== null) {
+    const key = match[1];
+    let value: any = match[2];
+
+    if (value.startsWith('"') && value.endsWith('"')) {
+      value = value.slice(1, -1); // Remove quotes
+    } else if (!isNaN(Number(value))) {
+      value = Number(value);
+    }
+
+    obj[key] = value;
+  }
+
+  return obj;
 }
 
 // Main processing function that can be used both as worker and regular function
@@ -209,7 +256,6 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             !(item.metadata.genome in genomicFetchCoord)) ||
           !(item.type in componentMap)
         ) {
-
           foundInvalidTrack = true;
         }
         if (foundInvalidTrack) {
@@ -339,15 +385,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            });
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              });
 
           if (
             curRespond &&
@@ -373,8 +419,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
                         : trackModel.genome
-                          ? trackModel.genome
-                          : primaryGenName,
+                        ? trackModel.genome
+                        : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,
@@ -536,7 +582,8 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
               let records: AlignmentRecord[] = [];
 
               for (const record of responds) {
-                let data = JSON5.parse("{" + record[3] + "}");
+                let data = parseCustomFormat("{" + record[3] + "}");
+
                 record[3] = data;
                 records.push(new AlignmentRecord(record));
               }
@@ -724,7 +771,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       trackToDrawId,
       regionSetStartBp:
         data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-          data.bpRegionSize
+        data.bpRegionSize
           ? 0
           : null,
     },
