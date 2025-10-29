@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { SequenceSegment } from "../models/AlignmentStringUtils";
 import AlignmentRecord from "../models/AlignmentRecord";
 import OpenInterval from "../models/OpenInterval";
@@ -440,7 +439,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                 }),
               ]);
             }
-            responses.push(_.flatten(curRespond));
+            responses.push(curRespond.flat());
           } catch (error) {
             console.error(
               `Error fetching data for track model type ${trackModel.type}:`,
