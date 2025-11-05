@@ -75,12 +75,12 @@ const defaultTracks = [
     label: "MANE selection v1.4",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "repeatmasker",
-    name: "rmsk_all",
-    options: { label: "RepeatMasker" },
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  }),
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "rmsk_all",
+  //   options: { label: "RepeatMasker" },
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  // }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig nochr",
@@ -112,11 +112,16 @@ const defaultTracks = [
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-  // new TrackModel({
-  //   type: "bigbed",
-  //   name: "test bigbed",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  // }),
+  new TrackModel({
+    type: "bigbed",
+    name: "test bigbed",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  }),
+  new TrackModel({
+    type: "bigbed",
+    name: "band2",
+    url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
+  }),
   // new TrackModel({
   //   type: "refbed",
   //   name: "mm10 gencode basic",

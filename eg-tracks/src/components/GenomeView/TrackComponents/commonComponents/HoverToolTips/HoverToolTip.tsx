@@ -66,7 +66,7 @@ export const getHoverTooltip = {
       typeof value2 === "number" && !Number.isNaN(value2)
         ? value2.toFixed(2)
         : "(no data)";
-    console.log(stringValue2, stringValue);
+
     return {
       toolTip: (
         <div>

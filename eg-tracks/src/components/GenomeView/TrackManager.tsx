@@ -1294,7 +1294,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return !id.includes(String(item.id));
       }
     );
-    console.log(trackManagerState.current.tracks);
+
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
 
     if (id.length > 0) {

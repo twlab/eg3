@@ -14,7 +14,7 @@ class JasparSource {
     if (basesPerPixel > this.maxBasesPerPixel) {
       return Promise.resolve([]);
     } else {
-      return this.workerSource.getData(region, options);
+      return this.workerSource.getData(region, basesPerPixel, options);
     }
   }
 }
