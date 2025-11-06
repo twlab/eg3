@@ -177,13 +177,18 @@ function getRemoteData(regionData: any, trackType: string) {
   if (fetchInstance) {
     if (
       (trackType in { repeat: "", rmskv2: "" } &&
-        regionData.basesByPixel > 1000) ||
-      (trackType === "jaspar" && regionData.basesByPixel > 2) ||
+        regionData.basesPerPixel <= 1000) ||
+      (trackType === "jaspar" && regionData.basesPerPixel <= 2) ||
       trackType === "bigbed"
     ) {
       return fetchInstance.getData(
         regionData.nav,
         regionData.basesPerPixel,
+        regionData.trackModel.options
+      );
+    } else {
+      return fetchInstance.getData(
+        regionData.nav,
         regionData.trackModel.options
       );
     }

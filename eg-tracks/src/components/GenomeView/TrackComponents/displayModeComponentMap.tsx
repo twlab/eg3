@@ -1856,6 +1856,7 @@ function formatSnpData(genesArr: any[]) {
   return genesArr.map((record) => new Snp(record));
 }
 function formatCategoricalData(genesArr: any[]) {
+  console.log(genesArr);
   const formattedData = genesArr.map(
     (record) =>
       new Feature(
