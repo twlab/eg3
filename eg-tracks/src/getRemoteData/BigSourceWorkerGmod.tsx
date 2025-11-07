@@ -8,28 +8,6 @@ import fetch from "isomorphic-fetch";
  * @author Daofeng Li Chanrung Seng
  */
 
-// Custom fetch function that prevents caching
-const fetchWithNoCaching = (input: RequestInfo, opts: any = {}) => {
-  // Add timestamp to URL to bust cache
-  let url = typeof input === "string" ? input : input.url;
-
-  // Only add cache buster for range requests (the actual data chunks)
-  // Skip it for the initial header request to avoid issues
-  const isRangeRequest = opts?.headers?.Range || opts?.headers?.range;
-
-  if (isRangeRequest) {
-    const separator = url.includes("?") ? "&" : "?";
-    url = `${url}${separator}_=${Date.now()}`;
-  }
-
-  const noCacheOpts = {
-    ...opts,
-    cache: "no-store" as RequestCache,
-  };
-
-  return fetch(url, noCacheOpts);
-};
-
 const ensembl: Array<string> = [
   "1",
   "2",
@@ -79,7 +57,7 @@ class BigSourceWorkerGmod {
    */
   private createBigWig() {
     return new BigWig({
-      filehandle: new RemoteFile(this.url, { fetch: fetchWithNoCaching }),
+      filehandle: new RemoteFile(this.url, { fetch }),
     });
   }
 
@@ -87,8 +65,11 @@ class BigSourceWorkerGmod {
    * Detects if the BigWig file uses Ensembl chromosome naming convention
    * @return {Promise<boolean>} True if Ensembl naming (1, 2, 3...), false if UCSC naming (chr1, chr2, chr3...)
    */
-  async detectChromosomeNaming(header: any) {
+  async detectChromosomeNaming() {
     try {
+      const bw = this.createBigWig();
+      const header = await bw.getHeader();
+
       // Get just the first chromosome name directly
       const firstChrom = Object.keys(header.refsByName || {})[0];
 
@@ -115,16 +96,9 @@ class BigSourceWorkerGmod {
   async getData(loci, basesPerPixel, options) {
     // Create a fresh instance for each request (avoids cache)
     const bw = this.createBigWig();
-    const header = await bw.getHeader();
-    const useEnsemblStyle = await this.detectChromosomeNaming(header);
+    const useEnsemblStyle = await this.detectChromosomeNaming();
 
-    const MAX_FEATURES_PER_CHUNK = 10000; // Adjust based on memory constraints
-    const MAX_TOTAL_FEATURES = 1000000; // Safety limit to prevent browser crash
-    const combinedData: any[] = [];
-    let totalFeaturesProcessed = 0;
-
-    // Process loci sequentially to avoid memory spikes
-    for (const locus of loci) {
+    const promises = loci.map((locus) => {
       let chrom = useEnsemblStyle ? locus.chr.replace("chr", "") : locus.chr;
 
       // Handle mitochondrial chromosome naming variations
@@ -133,77 +107,17 @@ class BigSourceWorkerGmod {
         chrom = useEnsemblStyle ? "M" : "chrM";
       }
 
-      try {
-        // Check if we've exceeded the safety limit
-        if (totalFeaturesProcessed >= MAX_TOTAL_FEATURES) {
-          console.warn(
-            `Data fetch stopped: exceeded maximum limit of ${MAX_TOTAL_FEATURES} features to prevent browser crash`
-          );
-          break;
-        }
+      return bw.getFeatures(chrom, locus.start, locus.end, {
+        basesPerSpan: basesPerPixel,
+      });
+    });
 
-        // Fetch features for this locus
-        const features = await bw.getFeatures(chrom, locus.start, locus.end, {
-          basesPerSpan: basesPerPixel,
-        });
+    const dataForEachLocus = await Promise.all(promises);
+    loci.forEach((locus, index) => {
+      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+    });
+    const combinedData = dataForEachLocus.flat();
 
-        // Process features in chunks to avoid memory issues
-        const numFeatures = features.length;
-
-        if (numFeatures > MAX_FEATURES_PER_CHUNK) {
-          // Process in chunks if dataset is large
-          for (let i = 0; i < numFeatures; i += MAX_FEATURES_PER_CHUNK) {
-            // Check limit before processing each chunk
-            if (totalFeaturesProcessed >= MAX_TOTAL_FEATURES) {
-              console.warn(
-                `Data fetch stopped: exceeded maximum limit during chunk processing`
-              );
-              features.length = 0;
-              break;
-            }
-
-            const chunk = features.slice(i, i + MAX_FEATURES_PER_CHUNK);
-
-            // Format chunk
-            chunk.forEach((f: any) => {
-              f.chr = locus.chr;
-              combinedData.push(f);
-              totalFeaturesProcessed++;
-            });
-
-            // Clear the chunk reference to help GC
-            chunk.length = 0;
-          }
-
-          // Clear the original features array to free memory
-          features.length = 0;
-        } else {
-          // For smaller datasets, process normally
-          features.forEach((f: any) => {
-            if (totalFeaturesProcessed < MAX_TOTAL_FEATURES) {
-              f.chr = locus.chr;
-              combinedData.push(f);
-              totalFeaturesProcessed++;
-            }
-          });
-
-          // Clear features array
-          features.length = 0;
-        }
-      } catch (error) {
-        console.error(
-          `Error fetching data for ${locus.chr}:${locus.start}-${locus.end}:`,
-          error
-        );
-        // Continue with next locus instead of failing completely
-      }
-
-      // Suggest garbage collection after each locus (if available)
-      if (global.gc) {
-        global.gc();
-      }
-    }
-    console.log(combinedData);
     return combinedData;
   }
 }

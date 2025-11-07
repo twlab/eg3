@@ -171,7 +171,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       } else {
         return {
           axisScale: scaleLinear()
-            .domain([0, min])
+            .domain([max, min])
             .range([TOP_PADDING, height])
             .clamp(true),
           valueToY: scaleLinear()
@@ -220,7 +220,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     <TrackLegend
       trackModel={trackModel}
       height={height}
-      axisScale={isDrawingBars ? scales.axisScale : undefined}
+      axisScale={scales.axisScale}
       axisLegend={unit}
       label={options.label}
       forceSvg={forceSvg}

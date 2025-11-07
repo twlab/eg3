@@ -22,7 +22,7 @@ import TrackModel from "../../models/TrackModel";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
-const packageVersion = true;
+const packageVersion = false;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,

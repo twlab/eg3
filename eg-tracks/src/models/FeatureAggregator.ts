@@ -132,21 +132,54 @@ export class FeatureAggregator {
     }
 
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures(
+    // Pass xToFeatures array to placeFeatures so it builds the map while placing
+    placer.placeFeatures(features, viewRegion, width, useCenter, xToFeatures);
+
+    return xToFeatures;
+  }
+
+  /**
+   * Combines feature placement and aggregation in a single loop for better performance.
+   * Aggregates values as features are placed, eliminating the need for a separate map operation.
+   *
+   * @param {Feature[]} features - features to aggregate
+   * @param {DisplayedRegionModel} viewRegion - used to compute drawing coordinates
+   * @param {number} width - width of the visualization
+   * @param {Function} aggregateFunc - aggregation function to apply to features at each x position
+   * @param {boolean} useCenter - whether to use center positioning
+   * @return {any[]} aggregated values for each x position
+   */
+  makeXMapWithAggregation(
+    features: Feature[],
+    viewRegion: DisplayedRegionModel,
+    width: number,
+    aggregateFunc: (features: Feature[]) => any,
+    useCenter: boolean = false
+  ): any[] {
+    width = Math.round(width);
+
+    // Initialize arrays to collect features at each x position
+    const xToFeatures = Array(width).fill(null);
+    const xToAggregated = Array(width).fill(null);
+    
+    for (let x = 0; x < width; x++) {
+      xToFeatures[x] = [];
+      xToAggregated[x] = null; // Will be populated during placement
+    }
+
+    const placer = new FeaturePlacer();
+    // Place features AND aggregate in one pass
+    placer.placeFeatures(
       features,
       viewRegion,
       width,
-      useCenter
+      useCenter,
+      xToFeatures,
+      aggregateFunc,
+      xToAggregated
     );
 
-    for (const placedFeature of placement) {
-      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        xToFeatures[x].push(placedFeature.feature);
-      }
-    }
-    return xToFeatures;
+    return xToAggregated;
   }
 
   makeXWindowMap(
@@ -159,10 +192,7 @@ export class FeatureAggregator {
     const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
     for (let x = 0; x < width; x += windowSize) {
-      // Fill the array with empty arrays
-      // if (x < width) {
       map[x] = [];
-      // }
     }
     const placer = new FeaturePlacer();
     const placement = placer.placeFeatures(
@@ -171,6 +201,7 @@ export class FeatureAggregator {
       width,
       useCenter
     );
+
     for (const placedFeature of placement) {
       const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
       const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));

@@ -19,15 +19,22 @@ export class NumericalAggregator {
 
   aggregateFeatures(data, viewRegion, width, aggregatorId) {
     const aggregator = new FeatureAggregator();
-    const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
     let newAggregatorId = aggregatorId;
     if (aggregatorId === "IMAGECOUNT" || !aggregatorId) {
       newAggregatorId = "MEAN";
     } else {
-      newAggregatorId = aggregatorId
+      newAggregatorId = aggregatorId;
     }
 
-    return xToFeatures.map(DefaultAggregators.fromId(newAggregatorId));
+    const aggregateFunc = DefaultAggregators.fromId(newAggregatorId);
+    
+    // Use optimized method that combines placement and aggregation in one pass
+    return aggregator.makeXMapWithAggregation(
+      data,
+      viewRegion,
+      width,
+      aggregateFunc
+    );
   }
 
   xToValueMaker(data, viewRegion, width, options) {

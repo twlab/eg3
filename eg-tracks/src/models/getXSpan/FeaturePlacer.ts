@@ -81,19 +81,30 @@ export class FeaturePlacer {
    * @param {Feature[]} features - features for which to compute draw locations
    * @param {DisplayedRegionModel} viewRegion - region in which to draw
    * @param {number} width - width of visualization
+   * @param {boolean} useCenter - whether to use center positioning
+   * @param {Feature[][] | null} xToFeatures - optional pre-initialized array to build x-to-features map
+   * @param {Function | null} aggregateFunc - optional aggregation function to apply during placement
+   * @param {any[] | null} xToAggregated - optional pre-initialized array to store aggregated values
    * @return {PlacedFeature[]} draw info for the features
    */
   placeFeatures(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
     width: number,
-    useCenter: boolean = false
+    useCenter: boolean = false,
+    xToFeatures: Feature[][] | null = null,
+    aggregateFunc: ((features: Feature[]) => any) | null = null,
+    xToAggregated: any[] | null = null
   ): PlacedFeature[] {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const viewRegionBounds = viewRegion.getContextCoordinates();
     const navContext = viewRegion.getNavigationContext();
 
     const placements: Array<any> = [];
+    
+    // Track which x positions have been updated for aggregation
+    const updatedX = aggregateFunc && xToAggregated ? new Set<number>() : null;
+    
     for (const feature of features) {
       for (let contextLocation of feature.computeNavContextCoordinates(
         navContext
@@ -116,7 +127,28 @@ export class FeaturePlacer {
             xSpan,
             isReverse,
           });
+
+          // If xToFeatures array provided, build the map directly while placing
+          if (xToFeatures) {
+            const startX = Math.max(0, Math.floor(xSpan.start));
+            const endX = Math.min(width - 1, Math.ceil(xSpan.end));
+            for (let x = startX; x <= endX; x++) {
+              xToFeatures[x].push(feature);
+              
+              // Mark this x position as updated for aggregation
+              if (updatedX) {
+                updatedX.add(x);
+              }
+            }
+          }
         }
+      }
+    }
+
+    // After all features are placed, aggregate only the updated positions
+    if (aggregateFunc && xToAggregated && xToFeatures && updatedX) {
+      for (const x of updatedX) {
+        xToAggregated[x] = aggregateFunc(xToFeatures[x]);
       }
     }
 

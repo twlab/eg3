@@ -348,25 +348,25 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           );
         }
 
-        let currIdx2 = dataIdx + 1;
-        for (let i = 0; i < 3; i++) {
-          if (
-            !cacheTrackData[currIdx2] ||
-            !cacheTrackData[currIdx2].dataCache
-          ) {
-            noData = true;
-            continue;
-          }
+        // let currIdx2 = dataIdx + 1;
+        // for (let i = 0; i < 3; i++) {
+        //   if (
+        //     !cacheTrackData[currIdx2] ||
+        //     !cacheTrackData[currIdx2].dataCache
+        //   ) {
+        //     noData = true;
+        //     continue;
+        //   }
 
-          delete cacheTrackData[currIdx2].dataCache;
+        //   delete cacheTrackData[currIdx2].dataCache;
 
-          currIdx2--;
-        }
+        //   currIdx2--;
+        // }
 
-        // console.log(
-        //   trackFetchedDataCache.current,
-        //   "after drawing and deleting"
-        // );
+        console.log(
+          trackFetchedDataCache.current,
+          "after drawing and deleting"
+        );
       } else {
         const combinedData = cacheTrackData[dataIdx]
           ? cacheTrackData[dataIdx].dataCache

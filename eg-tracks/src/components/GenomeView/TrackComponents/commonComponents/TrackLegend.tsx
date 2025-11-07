@@ -53,6 +53,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
   }
 
   componentDidMount() {
+    console.log(this.props);
     this.drawAxis();
   }
 
@@ -79,6 +80,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       const axis = axisLeft(this.props.axisScale);
       // axis.ticks(NUM_TICKS_SUGGESTION);
       const axisDomain = this.props.axisScale.domain();
+      console.log(axis, axisDomain);
       if (!axisDomain.includes(NaN)) {
         if (axisDomain[0] > 1000) {
           axis.tickValues(axisDomain).tickFormat(format(".3s"));
@@ -199,7 +201,9 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
     };
 
     let axis;
+
     if (axisScale) {
+      console.log(this.props);
       axis = (
         <svg
           width={AXIS_WIDTH}
