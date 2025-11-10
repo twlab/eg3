@@ -77,7 +77,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   let xvalues = xvaluesData
     ? xvaluesData
-    : aggregator.xToValueMaker(data, viewRegion, width, options);
+    : aggregator.xToValueMaker(data, viewRegion, width, options, viewWindow);
 
   let [xToValue, xToValue2, hasReverse] = xvalues;
   const computeScales = useMemo(() => {

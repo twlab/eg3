@@ -22,6 +22,7 @@ import TrackLegend from "../commonComponents/TrackLegend";
 import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 import Chromosomes from "../../genomeNavigator/Chromosomes";
 import React from "react";
+import { NumericalAggregator } from "../commonComponents/numerical/NumericalAggregator";
 
 const CHROMOSOMES_Y = 60;
 const TOP_PADDING = 2;
@@ -67,18 +68,6 @@ interface DynseqTrackProps {
 }
 
 class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
-  static propTypes = {
-    data: PropTypes.array.isRequired,
-    unit: PropTypes.string,
-    options: PropTypes.shape({
-      aggregateMethod: PropTypes.oneOf(Object.values(DefaultAggregators.types)),
-      height: PropTypes.number.isRequired,
-      color: PropTypes.string,
-    }).isRequired,
-    isLoading: PropTypes.bool,
-    error: PropTypes.any,
-  };
-
   xToValue: Array<any> | null = null;
   xToValue2: Array<any> | null = null;
   allValues: Array<any> = [];
@@ -88,20 +77,9 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
 
   constructor(props: DynseqTrackProps) {
     super(props);
-    this.aggregateFeatures = memoizeOne(this.aggregateFeatures);
+
     this.computeScales = memoizeOne(this.computeScales);
   }
-
-  aggregateFeatures = (
-    data: any[],
-    viewRegion: any,
-    width: number,
-    aggregatorId: string
-  ) => {
-    const aggregator = new FeatureAggregator();
-    const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
-    return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
-  };
 
   computeScales = (xToValue: number[], xToValue2: number[], height: number) => {
     const { yScale, yMin, yMax } = this.props.options;
@@ -200,35 +178,14 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       basesByPixel,
       xvaluesData,
       forceSvg,
+      viewWindow,
     } = this.props;
-    const { height, aggregateMethod } = options;
+    const { height } = options;
     if (!xvaluesData) {
-      const dataForward = data.filter(
-        (feature) => feature.value === undefined || feature.value >= 0
-      );
-      const dataReverse = data.filter((feature) => feature.value < 0);
+      const aggregator = new NumericalAggregator();
 
-      if (dataReverse.length > 0) {
-        this.hasReverse = true;
-        this.xToValue2! = this.aggregateFeatures(
-          dataReverse,
-          viewRegion,
-          width,
-          aggregateMethod
-        );
-      } else {
-        this.xToValue2 = [];
-      }
-
-      this.xToValue! =
-        dataForward.length > 0
-          ? this.aggregateFeatures(
-              dataForward,
-              viewRegion,
-              width,
-              aggregateMethod
-            )
-          : [];
+      [this.xToValue, this.xToValue2, this.hasReverse] =
+        aggregator.xToValueMaker(data, viewRegion, width, options, viewWindow);
     } else {
       this.xToValue = xvaluesData[0];
       this.xToValue2 = xvaluesData[1];

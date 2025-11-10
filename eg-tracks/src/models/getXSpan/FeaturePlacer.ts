@@ -72,83 +72,233 @@ export class PlacedInteraction {
   }
 }
 
+export interface PlaceFeaturesOptions {
+  features: Feature[] | any[];
+  viewRegion: DisplayedRegionModel;
+  width: number;
+  useCenter?: boolean;
+  skipPlacements?: boolean;
+  viewWindow?: { start: number; end: number };
+  // For aggregation mode (skipPlacements = true)
+  xToFeaturesForward?: Feature[][];
+  xToFeaturesReverse?: Feature[][];
+  aggregateFunc?: (features: Feature[]) => any;
+  xToAggregatedForward?: any[];
+  xToAggregatedReverse?: any[];
+}
+
 export class FeaturePlacer {
   /**
-   * Computes context and draw locations for a list of features.  There may be a different number of placed features
-   * than input features, as a feature might map to several different nav context coordinates, or a feature might
-   * not map at all.
+   * Computes context and draw locations for a list of features.
+   * Accepts nested arrays (e.g., from combinedData with dataCache) and processes them without flattening.
    *
-   * @param {Feature[]} features - features for which to compute draw locations
-   * @param {DisplayedRegionModel} viewRegion - region in which to draw
-   * @param {number} width - width of visualization
-   * @param {boolean} useCenter - whether to use center positioning
-   * @param {Feature[][] | null} xToFeatures - optional pre-initialized array to build x-to-features map
-   * @param {Function | null} aggregateFunc - optional aggregation function to apply during placement
-   * @param {any[] | null} xToAggregated - optional pre-initialized array to store aggregated values
-   * @return {PlacedFeature[]} draw info for the features
+   * Two modes:
+   * 1. Placement mode (skipPlacements = false): Returns PlacedFeature[] for rendering
+   * 2. Aggregation mode (skipPlacements = true): Builds aggregation arrays, returns empty array
+   *
+   * @param {PlaceFeaturesOptions} options - configuration object
+   * @return {PlacedFeature[]} draw info for the features (empty if skipPlacements=true)
    */
-  placeFeatures(
-    features: Feature[],
-    viewRegion: DisplayedRegionModel,
-    width: number,
-    useCenter: boolean = false,
-    xToFeatures: Feature[][] | null = null,
-    aggregateFunc: ((features: Feature[]) => any) | null = null,
-    xToAggregated: any[] | null = null
-  ): PlacedFeature[] {
+  placeFeatures(options: PlaceFeaturesOptions): PlacedFeature[] {
+    const {
+      features,
+      viewRegion,
+      width,
+      useCenter = false,
+      skipPlacements = false,
+      viewWindow,
+      xToFeaturesForward,
+      xToFeaturesReverse,
+      aggregateFunc,
+      xToAggregatedForward,
+      xToAggregatedReverse,
+    } = options;
+
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const viewRegionBounds = viewRegion.getContextCoordinates();
     const navContext = viewRegion.getNavigationContext();
 
     const placements: Array<any> = [];
-    
-    // Track which x positions have been updated for aggregation
-    const updatedX = aggregateFunc && xToAggregated ? new Set<number>() : null;
-    
-    for (const feature of features) {
-      for (let contextLocation of feature.computeNavContextCoordinates(
-        navContext
-      )) {
-        contextLocation = contextLocation.getOverlap(viewRegionBounds)!; // Clamp the location to view region
-        if (contextLocation) {
-          const xSpan = useCenter
-            ? drawModel.baseSpanToXCenter(contextLocation)
-            : drawModel.baseSpanToXSpan(contextLocation);
-          const { visiblePart, isReverse } = this._locatePlacement(
-            feature,
-            navContext,
-            contextLocation
-          );
 
-          placements.push({
-            feature,
-            visiblePart,
-            contextLocation,
-            xSpan,
-            isReverse,
-          });
+    // Only use Set when we're in regions where duplicates are possible
+    const seenLoci = new Set<string>();
 
-          // If xToFeatures array provided, build the map directly while placing
-          if (xToFeatures) {
+    // Track ranges for forward and reverse separately (only needed for aggregation mode)
+    let prevEndXForward = -1;
+    let groupStartXForward = Infinity;
+    let prevEndXReverse = -1;
+    let groupStartXReverse = Infinity;
+
+    // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
+    for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
+      const item = features[regionIndex];
+
+      // Check if item has dataCache property (nested structure)
+      const featureArray = item && item.dataCache ? item.dataCache : [item];
+
+      // Loop through features in the dataCache (or single feature)
+      for (const feature of featureArray) {
+        // Skip if no feature or item was invalid
+        if (!feature) continue;
+
+        // Determine if forward or reverse based on value (only for aggregation mode)
+        const isForward =
+          skipPlacements && (feature.value === undefined || feature.value >= 0);
+        const xToFeatures = skipPlacements
+          ? isForward
+            ? xToFeaturesForward
+            : xToFeaturesReverse
+          : undefined;
+        const xToAggregated = skipPlacements
+          ? isForward
+            ? xToAggregatedForward
+            : xToAggregatedReverse
+          : undefined;
+
+        // Use the appropriate tracking variables
+        let prevEndX = skipPlacements
+          ? isForward
+            ? prevEndXForward
+            : prevEndXReverse
+          : -1;
+        let groupStartX = skipPlacements
+          ? isForward
+            ? groupStartXForward
+            : groupStartXReverse
+          : Infinity;
+
+        for (let contextLocation of feature.computeNavContextCoordinates(
+          navContext
+        )) {
+          contextLocation = contextLocation.getOverlap(viewRegionBounds)!;
+          if (contextLocation) {
+            const xSpan = useCenter
+              ? drawModel.baseSpanToXCenter(contextLocation)
+              : drawModel.baseSpanToXSpan(contextLocation);
+
             const startX = Math.max(0, Math.floor(xSpan.start));
             const endX = Math.min(width - 1, Math.ceil(xSpan.end));
-            for (let x = startX; x <= endX; x++) {
-              xToFeatures[x].push(feature);
-              
-              // Mark this x position as updated for aggregation
-              if (updatedX) {
-                updatedX.add(x);
+
+            // Determine if we need deduplication based on actual coordinates
+            let useDeduplication = false;
+            if (viewWindow) {
+              // Region 1: if endX extends into region 2, enable dedup for next regions
+              if (regionIndex === 0 && endX > viewWindow.start) {
+                useDeduplication = true;
+              }
+              // Region 2: if endX extends into region 3, enable dedup for region 3
+              else if (regionIndex === 1 && endX > viewWindow.end) {
+                useDeduplication = true;
+              }
+              // Region 2 or 3: always use dedup (could have overlaps from previous regions)
+              else if (regionIndex > 0 && regionIndex !== features.length - 1) {
+                useDeduplication = true;
               }
             }
+
+            // Deduplicate when in overlap regions
+            if (useDeduplication) {
+              const locusId = `${feature.locus.start}-${feature.locus.end}`;
+              if (seenLoci.has(locusId)) {
+                continue; // Skip duplicate
+              }
+              seenLoci.add(locusId);
+            }
+
+            // Only compute placement details if needed
+            if (!skipPlacements) {
+              const { visiblePart, isReverse } = this._locatePlacement(
+                feature,
+                navContext,
+                contextLocation
+              );
+
+              placements.push({
+                feature,
+                visiblePart,
+                contextLocation,
+                xSpan,
+                isReverse,
+              });
+            }
+
+            // Aggregation mode: detect gap and aggregate previous group
+            if (
+              skipPlacements &&
+              xToFeatures &&
+              xToAggregated &&
+              aggregateFunc
+            ) {
+              if (prevEndX >= 0 && startX > prevEndX) {
+                for (let x = groupStartX; x <= prevEndX; x++) {
+                  // if (xToFeatures[x] && xToFeatures[x].length > 0) {
+
+                  xToAggregated[x] = aggregateFunc(xToFeatures[x]);
+                  // }
+                }
+                groupStartX = startX;
+              }
+
+              // Add feature to x positions
+              for (let x = startX; x <= endX; x++) {
+                xToFeatures[x].push(feature);
+              }
+
+              // Update tracking
+              groupStartX = Math.min(groupStartX, startX);
+              prevEndX = endX;
+            }
+          }
+        }
+
+        // Save updated tracking variables back (aggregation mode only)
+        if (skipPlacements) {
+          if (isForward) {
+            prevEndXForward = prevEndX;
+            groupStartXForward = groupStartX;
+          } else {
+            prevEndXReverse = prevEndX;
+            groupStartXReverse = groupStartX;
           }
         }
       }
     }
 
-    // After all features are placed, aggregate only the updated positions
-    if (aggregateFunc && xToAggregated && xToFeatures && updatedX) {
-      for (const x of updatedX) {
-        xToAggregated[x] = aggregateFunc(xToFeatures[x]);
+    // Aggregate remaining positions for forward (aggregation mode only)
+    if (
+      skipPlacements &&
+      groupStartXForward !== Infinity &&
+      xToFeaturesForward &&
+      xToAggregatedForward &&
+      aggregateFunc
+    ) {
+      for (let x = groupStartXForward; x <= prevEndXForward; x++) {
+        // if (
+        //   xToFeaturesForward[x] &&
+        //   xToFeaturesForward[x].length > 0 &&
+        //   xToAggregatedForward[x] === null
+        // ) {
+        xToAggregatedForward[x] = aggregateFunc(xToFeaturesForward[x]);
+        // }
+      }
+    }
+
+    // Aggregate remaining positions for reverse (aggregation mode only)
+    if (
+      skipPlacements &&
+      groupStartXReverse !== Infinity &&
+      xToFeaturesReverse &&
+      xToAggregatedReverse &&
+      aggregateFunc
+    ) {
+      for (let x = groupStartXReverse; x <= prevEndXReverse; x++) {
+        // if (
+        //   xToFeaturesReverse[x] &&
+        //   xToFeaturesReverse[x].length > 0 &&
+        //   xToAggregatedReverse[x] === null
+        // ) {
+        xToAggregatedReverse[x] = aggregateFunc(xToFeaturesReverse[x]);
+        // }
       }
     }
 

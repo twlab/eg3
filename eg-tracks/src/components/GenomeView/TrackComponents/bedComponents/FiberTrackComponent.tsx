@@ -4,7 +4,6 @@ import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
 
-
 import { Fiber } from "../../../../models/Feature";
 import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
 import OpenInterval from "../../../../models/OpenInterval";
@@ -126,7 +125,12 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
       xToFibers[x] = { on: 0, off: 0, count: 0 };
     }
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures(data, viewRegion, width);
+    const placement = placer.placeFeatures({
+      features: data,
+      viewRegion,
+      width,
+      skipPlacements: false,
+    });
     for (const placedFeature of placement) {
       const { feature, xSpan, visiblePart } = placedFeature;
       const { relativeStart, relativeEnd } = visiblePart;

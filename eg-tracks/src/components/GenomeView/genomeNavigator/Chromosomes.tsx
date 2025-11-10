@@ -254,7 +254,8 @@ class Chromosomes extends React.PureComponent<
    * @return {JSX.Element[]} cytoband elements
    */
   renderCytobandsInLocus(locus, drawModel) {
-    const cytobandsForChr = this.props.genomeConfig.cytobands?.[locus.chr] || [];
+    const cytobandsForChr =
+      this.props.genomeConfig.cytobands?.[locus.chr] || [];
     let children: Array<any> = [];
     for (let cytoband of cytobandsForChr) {
       const cytobandLocus = new ChromosomeInterval(
@@ -294,11 +295,12 @@ class Chromosomes extends React.PureComponent<
       hideCytoband,
       minXwidthPerBase,
     } = this.props;
-    const placedSequences = this.featurePlacer.placeFeatures(
-      this.state.sequenceData,
+    const placedSequences = this.featurePlacer.placeFeatures({
+      features: this.state.sequenceData,
       viewRegion,
-      width
-    );
+      width,
+      skipPlacements: false,
+    });
     return placedSequences.map((placement, i) => {
       const { feature, visiblePart, xSpan, isReverse } = placement;
       const { relativeStart, relativeEnd } = visiblePart;

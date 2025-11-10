@@ -1166,7 +1166,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-
+    console.log(formattedData);
     let canvasElements = (
       <MethylCTrackComputation
         data={formattedData}

@@ -630,19 +630,20 @@ export class MultiAlignmentViewCalculator {
   ): PlacedAlignment[] {
     const { visRegion, visWidth } = visData;
 
-    return FEATURE_PLACER.placeFeatures(records, visRegion, visWidth).map(
-      (placement) => {
-        return {
-          record: placement.feature as AlignmentRecord,
-          visiblePart: AlignmentSegment.fromFeatureSegment(
-            placement.visiblePart
-          ),
-          contextSpan: placement.contextLocation,
-          targetXSpan: placement.xSpan,
-          queryXSpan: null,
-        };
-      }
-    );
+    return FEATURE_PLACER.placeFeatures({
+      features: records,
+      viewRegion: visRegion,
+      width: visWidth,
+      skipPlacements: false,
+    }).map((placement) => {
+      return {
+        record: placement.feature as AlignmentRecord,
+        visiblePart: AlignmentSegment.fromFeatureSegment(placement.visiblePart),
+        contextSpan: placement.contextLocation,
+        targetXSpan: placement.xSpan,
+        queryXSpan: null,
+      };
+    });
   }
 
   /**

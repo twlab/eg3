@@ -3162,15 +3162,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 combinedData = groupTracksArrMatPlot(combinedData);
               }
             } else {
-              combinedData = combinedData
-                .map((item) => {
-                  if (item && item["dataCache"]) {
-                    return item.dataCache;
-                  } else {
-                    noData = true;
-                  }
-                })
-                .flat(1);
+              // combinedData = combinedData
+              //   .map((item) => {
+              //     if (item && item["dataCache"]) {
+              //       return item.dataCache;
+              //     } else {
+              //       noData = true;
+              //     }
+              //   })
+              //   .flat(1);
             }
           }
         }

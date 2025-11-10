@@ -128,41 +128,44 @@ export class FeatureArranger {
     hiddenPixels: number = 0.5,
     sortItems: SortItemsOptions = SortItemsOptions.NONE
   ): FeatureArrangementResult {
-
     const drawModel = new LinearDrawingModel(viewRegion, width);
-    const visibleFeatures = features.filter(
-      (feature) => drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
-    );
+    // const visibleFeatures = features.filter(
+    //   (feature) => drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
+    // );
 
     const results: PlacedFeatureGroup[] = [];
     const featureTracker = {};
 
+    // for (const feature of visibleFeatures) {
+    //   // Generate the ID to use for uniqueness check
+    //   let featureId = feature.id;
+    //   if (featureId === undefined || featureId === null) {
+    //     featureId = `${feature.locus.start}-${feature.locus.end}`;
+    //   }
 
-    for (const feature of visibleFeatures) {
-      // Generate the ID to use for uniqueness check
-      let featureId = feature.id;
-      if (featureId === undefined || featureId === null) {
-        featureId = `${feature.locus.start}-${feature.locus.end}`;
-      }
+    //   // Skip this feature if the ID already exists
+    //   if (featureTracker[featureId]) {
+    //     continue;
+    //   }
 
-      // Skip this feature if the ID already exists
-      if (featureTracker[featureId]) {
-        continue;
-      }
+    //   // Mark this ID as seen
+    //   featureTracker[featureId] = true;
 
-      // Mark this ID as seen
-      featureTracker[featureId] = true;
-
-      // Place features and process results
-      const placements = FEATURE_PLACER.placeFeatures([feature], viewRegion, width);
-      results.push(...this._combineAdjacent(placements));
-    }
+    // Place features and process results
+    const placements = FEATURE_PLACER.placeFeatures({
+      features,
+      viewRegion,
+      width,
+      skipPlacements: false,
+    });
+    results.push(...this._combineAdjacent(placements));
+    // }
     const numRowsAssigned = this._assignRows(results, padding, sortItems);
 
     return {
       placements: results,
       numRowsAssigned,
-      numHidden: features.length - visibleFeatures.length,
+      numHidden: features.length - features.length,
     };
   }
 }

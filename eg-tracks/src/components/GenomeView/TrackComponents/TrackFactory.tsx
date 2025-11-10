@@ -307,25 +307,26 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             } else {
               combinedData = groupTracksArrMatPlot(combinedData);
             }
-          } else {
-            if (
-              (cacheTrackData[`${dataIdx}`] &&
-                cacheTrackData[`${dataIdx}`]["xvalues"]) ||
-              !combinedData
-            ) {
-              combinedData = [];
-            } else {
-              combinedData = combinedData
-                .map((item) => {
-                  if (item && "dataCache" in item && item.dataCache) {
-                    return item.dataCache;
-                  } else {
-                    noData = true;
-                  }
-                })
-                .flat(1);
-            }
           }
+          //  else {
+          //   if (
+          //     (cacheTrackData[`${dataIdx}`] &&
+          //       cacheTrackData[`${dataIdx}`]["xvalues"]) ||
+          //     !combinedData
+          //   ) {
+
+          //   } else {
+          //     // combinedData = combinedData
+          //     //   .map((item) => {
+          //     //     if (item && "dataCache" in item && item.dataCache) {
+          //     //       return item.dataCache;
+          //     //     } else {
+          //     //       noData = true;
+          //     //     }
+          //     //   })
+          //     //   .flat(1);
+          //   }
+          // }
         }
 
         if (!noData) {
@@ -336,7 +337,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             globalTrackState.current.trackStates[dataIdx].trackState[
               "groupScale"
             ];
-
+          console.log(combinedData);
           createSVGOrCanvas(
             trackState,
             combinedData,
@@ -362,11 +363,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         //   currIdx2--;
         // }
-
-        console.log(
-          trackFetchedDataCache.current,
-          "after drawing and deleting"
-        );
       } else {
         const combinedData = cacheTrackData[dataIdx]
           ? cacheTrackData[dataIdx].dataCache

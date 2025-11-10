@@ -82,6 +82,7 @@ class MethylCRecord extends Feature {
       records,
       (record) => record.getIsForwardStrand()
     );
+
     return {
       combined: MethylCRecord.aggregateRecords(records)!,
       forward: MethylCRecord.aggregateRecords(forwardStrandRecords)!,
