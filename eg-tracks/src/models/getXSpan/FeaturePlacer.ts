@@ -164,7 +164,7 @@ export class FeaturePlacer {
     let groupStartXForward = Infinity;
     let prevEndXReverse = -1;
     let groupStartXReverse = Infinity;
-
+    console.log(features);
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
@@ -203,6 +203,25 @@ export class FeaturePlacer {
             : groupStartXReverse
           : Infinity;
 
+        // Determine if we need deduplication based on region index
+        let useDeduplication = false;
+        if (viewWindow && regionIndex > 0) {
+          // Region 2 or 3: always use dedup (could have overlaps from previous regions)
+          useDeduplication = true;
+        }
+
+        // Deduplicate when in overlap regions (outside contextLocation loop)
+        if (useDeduplication) {
+          const locusId = feature.id
+            ? feature.id
+            : `${feature.locus.start}-${feature.locus.end}`;
+
+          if (seenLoci.has(locusId)) {
+            continue; // Skip duplicate feature entirely
+          }
+          seenLoci.add(locusId);
+        }
+
         for (let contextLocation of feature.computeNavContextCoordinates(
           navContext
         )) {
@@ -214,33 +233,6 @@ export class FeaturePlacer {
 
             const startX = Math.max(0, Math.floor(xSpan.start));
             const endX = Math.min(width - 1, Math.ceil(xSpan.end));
-
-            // Determine if we need deduplication based on actual coordinates
-            let useDeduplication = false;
-            if (viewWindow) {
-              // Region 1: if endX extends into region 2, enable dedup for next regions
-              if (regionIndex === 0 && endX > viewWindow.start) {
-                useDeduplication = true;
-              }
-              // Region 2: if endX extends into region 3, enable dedup for region 3
-              else if (regionIndex === 1 && endX > viewWindow.end) {
-                useDeduplication = true;
-              }
-              // Region 2 or 3: always use dedup (could have overlaps from previous regions)
-              else if (regionIndex > 0) {
-                useDeduplication = true;
-              }
-            }
-
-            // Deduplicate when in overlap regions
-            if (useDeduplication) {
-              const locusId = `${feature.locus.start}-${feature.locus.end}`;
-
-              if (seenLoci.has(locusId)) {
-                continue; // Skip duplicate
-              }
-              seenLoci.add(locusId);
-            }
 
             // Check if feature is too small to display (ANNOTATION mode only)
             if (isAnnotation) {

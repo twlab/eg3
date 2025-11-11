@@ -379,25 +379,25 @@ const defaultTracks = [
   //   },
   // }),
 
-  // new TrackModel({
-  //   name: "vertebratephastCons46way",
-  //   label: "Vertebrate PhastCons 46-way",
-  //   filetype: "bedgraph",
-  //   url: "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
-  //   height: 50,
-  //   options: { color: "#006385" },
-  // }),
-  // new TrackModel({
-  //   type: "boxplot",
-  //   name: "example boxplot",
-  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  // }),
+  new TrackModel({
+    name: "vertebratephastCons46way",
+    label: "Vertebrate PhastCons 46-way",
+    filetype: "bedgraph",
+    url: "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
+    height: 50,
+    options: { color: "#006385" },
+  }),
+  new TrackModel({
+    type: "boxplot",
+    name: "example boxplot",
+    url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  }),
 
-  // new TrackModel({
-  //   type: "biginteract",
-  //   name: "test bigInteract",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
-  // }),
+  new TrackModel({
+    type: "biginteract",
+    name: "test bigInteract",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
+  }),
   // new TrackModel({
   //   name: "dynamic hic",
   //   type: "dynamichic",
