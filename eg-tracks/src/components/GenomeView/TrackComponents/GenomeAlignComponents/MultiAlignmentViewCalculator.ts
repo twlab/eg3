@@ -22,9 +22,14 @@ import LinearDrawingModel from "../../../../models/LinearDrawingModel";
 import Feature from "../../../../models/Feature";
 
 import { ViewExpansion } from "../../../../models/RegionExpander";
-import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
+import {
+  FeaturePlacer,
+  PlacedFeature,
+  PlacementMode,
+} from "../../../../models/getXSpan/FeaturePlacer";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 import { niceBpCount } from "../../../../models/util";
+import { FeaturePlacementResult } from "../../../../models/FeatureArranger";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -630,12 +635,14 @@ export class MultiAlignmentViewCalculator {
   ): PlacedAlignment[] {
     const { visRegion, visWidth } = visData;
 
-    return FEATURE_PLACER.placeFeatures({
+    const result: FeaturePlacementResult = FEATURE_PLACER.placeFeatures({
       features: records,
       viewRegion: visRegion,
       width: visWidth,
-      skipPlacements: false,
-    }).map((placement) => {
+      mode: PlacementMode.PLACEMENT,
+    }) as FeaturePlacementResult;
+
+    return result.placements.map((placement: any) => {
       return {
         record: placement.feature as AlignmentRecord,
         visiblePart: AlignmentSegment.fromFeatureSegment(placement.visiblePart),

@@ -3105,7 +3105,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (!trackOptionMap[`${cacheTrackData.trackType}`]) {
           continue;
         }
-        if (cacheTrackData.trackType in { hic: "", longrange: "" }) {
+        if (
+          cacheTrackData.trackType in
+          { hic: "", longrange: "", biginteraction: "" }
+        ) {
           trackToDrawId[key] = "";
           continue;
         }

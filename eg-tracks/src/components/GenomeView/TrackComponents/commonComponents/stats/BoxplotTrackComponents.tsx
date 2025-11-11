@@ -4,7 +4,6 @@ import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import * as d3 from "d3";
 import memoizeOne from "memoize-one";
-import Track from "../Track";
 import TrackLegend from "../TrackLegend";
 import GenomicCoordinates from "../HoverToolTips/GenomicCoordinates";
 
@@ -40,25 +39,6 @@ interface BoxplotTrackProps {
   getNumLegend: any;
 }
 class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
-  /**
-   */
-  static propTypes = Object.assign(
-    {},
-    {
-      /**
-       * NumericalFeatureProcessor provides these.  Parents should provide an array of NumericalFeature.
-       */
-      data: PropTypes.array.isRequired, // PropTypes.arrayOf(Feature)
-      unit: PropTypes.string, // Unit to display after the number in tooltips
-      options: PropTypes.shape({
-        height: PropTypes.number.isRequired, // Height of the track
-        color: PropTypes.string, // Color to draw bars, if using the default getBarElement
-        windowSize: PropTypes.number,
-      }).isRequired,
-      isLoading: PropTypes.bool, // If true, applies loading styling
-      error: PropTypes.any, // If present, applies error styling
-    }
-  );
   xMap: {};
   xAlias: {};
   scales;
@@ -226,8 +206,6 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
         axisLegend={unit}
       />
     );
-
-
 
     if (this.props.getNumLegend) {
       this.props.getNumLegend(legend);

@@ -1,7 +1,8 @@
 import _ from "lodash";
 import { Feature } from "./Feature";
 import DisplayedRegionModel from "./DisplayedRegionModel";
-import { FeaturePlacer } from "./getXSpan/FeaturePlacer";
+import { FeaturePlacer, PlacementMode } from "./getXSpan/FeaturePlacer";
+import { FeaturePlacementResult } from "./FeatureArranger";
 
 const VALUE_PROP_NAME = "value";
 
@@ -162,7 +163,7 @@ export class FeatureAggregator {
       viewRegion,
       width,
       useCenter,
-      skipPlacements: true,
+      mode: PlacementMode.NUMERICAL,
       viewWindow,
       xToFeaturesForward,
       xToFeaturesReverse,
@@ -186,23 +187,16 @@ export class FeatureAggregator {
       map[x] = [];
     }
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures({
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
-      useCenter,
-      skipPlacements: false,
+      useCenter: true, // BOXPLOT always uses center
+      mode: PlacementMode.BOXPLOT,
+      windowSize,
+      xToWindowMap: map,
     });
 
-    for (const placedFeature of placement) {
-      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        if (map.hasOwnProperty(x)) {
-          map[x].push(placedFeature.feature);
-        }
-      }
-    }
     return map;
   }
 }

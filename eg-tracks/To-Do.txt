@@ -179,3 +179,9 @@ to do: 10/21/2025
 - remove indicator when going to genomepicker
 
 
+
+11/10/2025
+- dupe refgenes for new recode 
+- check all track if working with new recode 
+- parsing interval
+- option to increase hic range 

@@ -337,7 +337,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             globalTrackState.current.trackStates[dataIdx].trackState[
               "groupScale"
             ];
-          console.log(combinedData);
+
           createSVGOrCanvas(
             trackState,
             combinedData,

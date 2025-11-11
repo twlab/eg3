@@ -721,7 +721,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackState.visWidth,
       getGenePadding,
       configOptions.hiddenPixels,
-      sortType
+      sortType,
+      trackState.viewWindow
     );
 
     // if (configOptions.forceSvg) {
@@ -741,7 +742,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     height =
       trackModel.type === "repeatmasker" || trackModel.type === "rmskv2"
         ? configOptions.height
-        : getHeight(placeFeatureData.numRowsAssigned);
+        : placeFeatureData.numRowsAssigned
+        ? getHeight(placeFeatureData.numRowsAssigned)
+        : 40;
 
     const legend = (
       <TrackLegend
