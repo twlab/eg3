@@ -1062,23 +1062,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
       if (trackModel) {
         trackModel.options =
-          (globalTrackConfig.current[`${config}`] &&
-            globalTrackConfig.current[`${config}`].configOptions) ??
-          _.cloneDeep(globalTrackConfig.current[`${config}`].configOptions);
-        if (!trackModel.options) {
-          trackModel.options = {};
-        }
+          globalTrackConfig.current[`${config}`] !== undefined &&
+          globalTrackConfig.current[`${config}`].configOptions !== undefined
+            ? _.cloneDeep(globalTrackConfig.current[`${config}`].configOptions)
+            : {};
+
         if (value && key === "displayMode") {
-          trackModel.options.displayMode = value;
+          trackModel.options!.displayMode = value;
         }
         if (value && key === "scoreScale") {
-          trackModel.options.scoreScale = value;
+          trackModel.options!.scoreScale = value;
         }
         if (trackModel.type === "hic") {
           fileInfos[`${trackModel.id}`] =
             fetchInstances.current[`${trackModel.id}`].getFileInfo();
         }
-        trackModel.options["trackId"] = config;
+        trackModel.options!["trackId"] = config;
         const trackConfig = getTrackConfig(trackModel);
         const menuItems = trackConfig.getMenuComponents();
 
@@ -1289,12 +1288,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleDelete(id: Array<any>) {
+    console.log(id);
     trackManagerState.current.tracks = trackManagerState.current.tracks.filter(
       (item, _index) => {
         return !id.includes(String(item.id));
       }
     );
-    console.log(trackManagerState.current.tracks);
+
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
 
     if (id.length > 0) {
@@ -2574,8 +2574,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }
             }
           }
-
-          initialLoad.current = false;
         }
       }
     }
@@ -3509,6 +3507,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       });
     }
+    initialLoad.current = false;
   }, [tracks]);
   // MARK: width, regions
   useEffect(() => {
