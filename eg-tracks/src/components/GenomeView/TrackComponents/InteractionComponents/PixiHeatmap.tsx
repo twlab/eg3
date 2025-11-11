@@ -84,7 +84,7 @@ export class PixiHeatmap extends PureComponent<
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
 
-    const bgColor = colorString2number("var(--bg-color)",);
+    const bgColor = colorString2number("var(--bg-color)");
     this.app = new PIXI.Application();
     await this.app.init({
       width,
@@ -109,9 +109,11 @@ export class PixiHeatmap extends PureComponent<
   }
 
   componentWillUnmount() {
-    this.app!.ticker.remove(this.tick);
-    window.removeEventListener("resize", this.onWindowResize);
-    this.app!.stage.off("pointerdown", this.onPointerDown);
+    if (this.app) {
+      this.app.ticker?.remove(this.tick);
+      this.app.stage?.off("pointerdown", this.onPointerDown);
+      window.removeEventListener("resize", this.onWindowResize);
+    }
   }
 
   componentDidUpdate(prevProps: PixiHeatmapProps, prevState: PixiHeatmapState) {
@@ -346,34 +348,30 @@ export class PixiHeatmap extends PureComponent<
    * @return {JSX.Element} tooltip to render
    */
 
-
-
-
   render() {
     const { height, width } = this.props;
     const style = { width: `${width}px`, height: `${height}px` };
 
-    return <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-
-        <HoverToolTip
-          data={this.hmData}
-          windowWidth={width}
-          viewWindow={this.props.viewWindow}
-          trackType={"dynamichic"}
-          height={height}
-
-        />
-
-      </div>
-      <div ref={this.myRef}></div>;
-    </React.Fragment>
+    return (
+      <React.Fragment>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+          }}
+        >
+          <HoverToolTip
+            data={this.hmData}
+            windowWidth={width}
+            viewWindow={this.props.viewWindow}
+            trackType={"dynamichic"}
+            height={height}
+          />
+        </div>
+        <div ref={this.myRef}></div>;
+      </React.Fragment>
+    );
   }
 }
