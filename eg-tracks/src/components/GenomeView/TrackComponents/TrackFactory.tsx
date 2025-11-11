@@ -308,6 +308,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               combinedData = groupTracksArrMatPlot(combinedData);
             }
           }
+
           //  else {
           //   if (
           //     (cacheTrackData[`${dataIdx}`] &&

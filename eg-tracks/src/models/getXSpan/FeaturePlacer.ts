@@ -164,13 +164,17 @@ export class FeaturePlacer {
     let groupStartXForward = Infinity;
     let prevEndXReverse = -1;
     let groupStartXReverse = Infinity;
-    console.log(features);
+
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
 
-      // Check if item has dataCache property (nested structure)
-      const featureArray = item && item.dataCache ? item.dataCache : [item];
+      // Check if item is an array, has dataCache property, or is a single feature
+      const featureArray = Array.isArray(item)
+        ? item
+        : item && item.dataCache
+        ? item.dataCache
+        : [item];
 
       // Loop through features in the dataCache (or single feature)
       for (const feature of featureArray) {

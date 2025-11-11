@@ -21,6 +21,7 @@ interface CubicCurveDisplayProps {
   forceSvg?: boolean;
   bothAnchorsInView?: boolean;
   options?: any;
+  legend?: any;
 }
 
 export class CubicCurveDisplay extends React.PureComponent<

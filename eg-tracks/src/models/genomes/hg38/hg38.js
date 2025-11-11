@@ -398,71 +398,71 @@ const defaultTracks = [
     name: "test bigInteract",
     url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   }),
-  // new TrackModel({
-  //   name: "dynamic hic",
-  //   type: "dynamichic",
-  //   options: {
-  //     dynamicColors: ["red", "blue"],
-  //     useDynamicColors: true,
-  //   },
-  //   tracks: [
-  //     {
-  //       type: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //     },
-  //     {
-  //       name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
-  //       type: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //     },
-  //   ],
-  //   showOnHubLoad: true,
-  // }),
+  new TrackModel({
+    name: "dynamic hic",
+    type: "dynamichic",
+    options: {
+      dynamicColors: ["red", "blue"],
+      useDynamicColors: true,
+    },
+    tracks: [
+      {
+        type: "hic",
+        url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+      },
+      {
+        name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+        type: "hic",
+        url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+      },
+    ],
+    showOnHubLoad: true,
+  }),
 
-  // new TrackModel({
-  //   type: "dynamicbed",
-  //   name: "dynamic bed",
-  //   showOnHubLoad: true,
-  //   tracks: [
-  //     {
-  //       type: "bed",
-  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-  //       name: "peak1",
-  //     },
-  //     {
-  //       type: "bed",
-  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
-  //       name: "peak2",
-  //     },
-  //   ],
-  // }),
-  // new TrackModel({
-  //   type: "dynamic",
-  //   name: "dynamic plot example",
-  //   showOnHubLoad: true,
-  //   tracks: [
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
-  //       name: "CH12 H3K4me1",
-  //     },
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
-  //       name: "CH12 H3K27ac",
-  //     },
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
-  //       name: "CH12 H3K4me3",
-  //     },
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
-  //       name: "CH12 H3K36me3",
-  //     },
-  //   ],
-  // }),
+  new TrackModel({
+    type: "dynamicbed",
+    name: "dynamic bed",
+    showOnHubLoad: true,
+    tracks: [
+      {
+        type: "bed",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+        name: "peak1",
+      },
+      {
+        type: "bed",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
+        name: "peak2",
+      },
+    ],
+  }),
+  new TrackModel({
+    type: "dynamic",
+    name: "dynamic plot example",
+    showOnHubLoad: true,
+    tracks: [
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
+        name: "CH12 H3K4me1",
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
+        name: "CH12 H3K27ac",
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
+        name: "CH12 H3K4me3",
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
+        name: "CH12 H3K36me3",
+      },
+    ],
+  }),
 
   // new TrackModel({
   //   type: "hic",

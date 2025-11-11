@@ -292,7 +292,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     this.aggregatedRecords = xvaluesData
       ? xvaluesData
       : this.aggregateRecords(data, viewRegion, width);
-    console.log(data);
+
     this.scales = this.computeScales(
       this.aggregatedRecords,
       options.height,
