@@ -184,8 +184,16 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
   }
 
   render() {
-    const { data, viewRegion, width, trackModel, unit, options, forceSvg } =
-      this.props;
+    const {
+      data,
+      viewRegion,
+      width,
+      trackModel,
+      unit,
+      options,
+      forceSvg,
+      viewWindow,
+    } = this.props;
     const { height, boxColor, lineColor } = options;
     this.xAlias = this.makeXalias(width, options.windowSize);
     this.xMap = this.aggregateFeatures(
@@ -204,13 +212,28 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
         height={height}
         axisScale={this.scales.valueToY}
         axisLegend={unit}
+        label={options.label}
+        forceSvg={forceSvg}
       />
     );
 
     if (this.props.getNumLegend) {
       this.props.getNumLegend(legend);
     }
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
     const visualizer = (
       //   <HoverTooltipContext
       //     tooltipRelativeY={height}
@@ -244,17 +267,25 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
               ""
             )}
           </div>
-          {forceSvg ? legend : ""}
-          <Boxplot
-            xMap={this.xMap}
-            scales={this.scales}
-            height={height}
-            width={width}
-            windowSize={options.windowSize}
-            boxColor={boxColor}
-            lineColor={lineColor}
-            forceSvg={forceSvg}
-          />
+          <div style={{ display: "flex", ...curParentStyle }}>
+            {forceSvg || options.packageVersion ? legend : ""}{" "}
+            <div
+              style={{
+                ...curEleStyle,
+              }}
+            >
+              <Boxplot
+                xMap={this.xMap}
+                scales={this.scales}
+                height={height}
+                width={width}
+                windowSize={options.windowSize}
+                boxColor={boxColor}
+                lineColor={lineColor}
+                forceSvg={forceSvg}
+              />
+            </div>
+          </div>{" "}
         </div>
       </React.Fragment>
     );

@@ -207,14 +207,49 @@ export class FeaturePlacer {
             : groupStartXReverse
           : Infinity;
 
-        // Determine if we need deduplication based on region index
-        let useDeduplication = false;
-        if (viewWindow && regionIndex > 0) {
-          // Region 2 or 3: always use dedup (could have overlaps from previous regions)
-          useDeduplication = true;
+        // Collect all context locations for this feature
+        const contextLocations: OpenInterval[] = [];
+        for (let contextLocation of feature.computeNavContextCoordinates(
+          navContext
+        )) {
+          const overlappedLocation =
+            contextLocation.getOverlap(viewRegionBounds);
+          if (overlappedLocation) {
+            contextLocations.push(overlappedLocation);
+          }
         }
 
-        // Deduplicate when in overlap regions (outside contextLocation loop)
+        // Skip if no valid context locations
+        if (contextLocations.length === 0) {
+          continue;
+        }
+
+        // Use first context location to check for duplicates based on pixel coordinates
+        const firstContextLocation = contextLocations[0];
+        const firstXSpan = useCenter
+          ? drawModel.baseSpanToXCenter(firstContextLocation)
+          : drawModel.baseSpanToXSpan(firstContextLocation);
+        const firstStartX = Math.max(0, Math.floor(firstXSpan.start));
+        const firstEndX = Math.min(width - 1, Math.ceil(firstXSpan.end));
+
+        // Determine if we need deduplication based on actual coordinates
+        let useDeduplication = false;
+        if (viewWindow) {
+          // Region 1: if endX extends into region 2, enable dedup for next regions
+          if (regionIndex === 0 && firstEndX > viewWindow.start) {
+            useDeduplication = true;
+          }
+          // Region 2: if endX extends into region 3, enable dedup for region 3
+          else if (regionIndex === 1 && firstEndX > viewWindow.end) {
+            useDeduplication = true;
+          }
+          // Region 2 or 3: always use dedup (could have overlaps from previous regions)
+          else if (regionIndex > 0) {
+            useDeduplication = true;
+          }
+        }
+
+        // Deduplicate when in overlap regions
         if (useDeduplication) {
           const locusId = feature.id
             ? feature.id
@@ -226,99 +261,95 @@ export class FeaturePlacer {
           seenLoci.add(locusId);
         }
 
-        for (let contextLocation of feature.computeNavContextCoordinates(
-          navContext
-        )) {
-          contextLocation = contextLocation.getOverlap(viewRegionBounds)!;
-          if (contextLocation) {
-            const xSpan = useCenter
-              ? drawModel.baseSpanToXCenter(contextLocation)
-              : drawModel.baseSpanToXSpan(contextLocation);
+        // Process all context locations for this feature
+        for (const contextLocation of contextLocations) {
+          const xSpan = useCenter
+            ? drawModel.baseSpanToXCenter(contextLocation)
+            : drawModel.baseSpanToXSpan(contextLocation);
 
-            const startX = Math.max(0, Math.floor(xSpan.start));
-            const endX = Math.min(width - 1, Math.ceil(xSpan.end));
+          const startX = Math.max(0, Math.floor(xSpan.start));
+          const endX = Math.min(width - 1, Math.ceil(xSpan.end));
 
-            // Check if feature is too small to display (ANNOTATION mode only)
+          // Check if feature is too small to display (ANNOTATION mode only)
+          if (isAnnotation) {
+            const featureWidth = drawModel.basesToXWidth(feature.getLength());
+            if (featureWidth < hiddenPixels) {
+              numHidden++;
+              continue; // Skip this feature
+            }
+          }
+
+          // Only compute placement details if not in numerical mode
+          if (!isNumerical && !isBoxplot) {
+            const { visiblePart, isReverse } = this._locatePlacement(
+              feature,
+              navContext,
+              contextLocation
+            );
+
+            const placement: PlacedFeature = {
+              feature,
+              visiblePart,
+              contextLocation,
+              xSpan,
+              isReverse,
+            };
+
             if (isAnnotation) {
-              const featureWidth = drawModel.basesToXWidth(feature.getLength());
-              if (featureWidth < hiddenPixels) {
-                numHidden++;
-                continue; // Skip this feature
-              }
-            }
-
-            // Only compute placement details if not in numerical mode
-            if (!isNumerical && !isBoxplot) {
-              const { visiblePart, isReverse } = this._locatePlacement(
-                feature,
-                navContext,
-                contextLocation
-              );
-
-              const placement: PlacedFeature = {
-                feature,
-                visiblePart,
-                contextLocation,
-                xSpan,
-                isReverse,
-              };
-
-              if (isAnnotation) {
-                // ANNOTATION mode: Check if this placement is adjacent to the last one
-                if (
-                  lastPlacement &&
-                  this._lociAreAdjacent(lastPlacement, placement)
-                ) {
-                  currentGroup.push(placement);
-                } else {
-                  // Start a new group - finalize previous and assign row
-                  if (currentGroup.length > 0) {
-                    this._finalizeGroupWithRow(
-                      currentGroup,
-                      groups,
-                      padding,
-                      maxXsForRows
-                    );
-                  }
-                  currentGroup = [placement];
-                }
-                lastPlacement = placement;
+              // ANNOTATION mode: Check if this placement is adjacent to the last one
+              if (
+                lastPlacement &&
+                this._lociAreAdjacent(lastPlacement, placement)
+              ) {
+                currentGroup.push(placement);
               } else {
-                // PLACEMENT mode: Just add to placements
-                placements.push(placement);
-              }
-            }
-
-            // BOXPLOT mode: bin features by window
-            if (isBoxplot && xToWindowMap && windowSize) {
-              for (let x = startX; x <= endX; x++) {
-                if (xToWindowMap.hasOwnProperty(x)) {
-                  xToWindowMap[x].push(feature);
+                // Start a new group - finalize previous and assign row
+                if (currentGroup.length > 0) {
+                  this._finalizeGroupWithRow(
+                    currentGroup,
+                    groups,
+                    padding,
+                    maxXsForRows
+                  );
                 }
+                currentGroup = [placement];
+              }
+              lastPlacement = placement;
+            } else {
+              // PLACEMENT mode: Just add to placements
+              placements.push(placement);
+            }
+          }
+
+          // BOXPLOT mode: bin features by window
+          if (isBoxplot && xToWindowMap && windowSize) {
+            for (let x = startX; x <= endX; x++) {
+              if (xToWindowMap.hasOwnProperty(x)) {
+                xToWindowMap[x].push(feature);
               }
             }
+          }
 
-            // Numerical mode: detect gap and aggregate previous group
-            if (isNumerical && xToFeatures && xToAggregated && aggregateFunc) {
-              if (prevEndX >= 0 && startX > prevEndX) {
-                for (let x = groupStartX; x <= prevEndX; x++) {
-                  // if (xToFeatures[x] && xToFeatures[x].length > 0) {
+          // Numerical mode: detect gap and aggregate previous group
+          if (isNumerical && xToFeatures && xToAggregated && aggregateFunc) {
+            if (prevEndX >= 0 && startX > prevEndX) {
+              for (let x = groupStartX; x <= prevEndX; x++) {
+                // if (xToFeatures[x] && xToFeatures[x].length > 0) {
 
-                  xToAggregated[x] = aggregateFunc(xToFeatures[x]);
-                  // }
-                }
-                groupStartX = startX;
+                xToAggregated[x] = aggregateFunc(xToFeatures[x]);
+                // }
               }
-
-              // Add feature to x positions
-              for (let x = startX; x <= endX; x++) {
-                xToFeatures[x].push(feature);
-              }
-
-              // Update tracking
-              groupStartX = Math.min(groupStartX, startX);
-              prevEndX = endX;
+              groupStartX = startX;
             }
+
+            // Add feature to x positions
+            for (let x = startX; x <= endX; x++) {
+              xToFeatures[x].push(feature);
+            }
+
+            // Update tracking
+            groupStartX = Math.min(groupStartX, startX);
+            prevEndX = endX;
           }
         }
 

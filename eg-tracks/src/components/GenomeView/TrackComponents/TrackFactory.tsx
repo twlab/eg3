@@ -552,34 +552,34 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
 
           if (!hasError) {
-            if (dynamicMatplotTracks.has(trackModel.type)) {
-              if (
-                cacheTrackData[`${dataIdx}`] &&
-                cacheTrackData[`${dataIdx}`]["xvalues"]
-              ) {
-                combinedData = [];
-              } else {
-                combinedData = groupTracksArrMatPlot(combinedData);
-              }
-            } else {
-              if (
-                (cacheTrackData[`${dataIdx}`] &&
-                  cacheTrackData[`${dataIdx}`]["xvalues"]) ||
-                !combinedData
-              ) {
-                combinedData = [];
-              } else {
-                combinedData = combinedData
-                  .map((item) => {
-                    if (item && "dataCache" in item && item.dataCache) {
-                      return item.dataCache;
-                    } else {
-                      noData = true;
-                    }
-                  })
-                  .flat(1);
-              }
-            }
+            // if (dynamicMatplotTracks.has(trackModel.type)) {
+            //   if (
+            //     cacheTrackData[`${dataIdx}`] &&
+            //     cacheTrackData[`${dataIdx}`]["xvalues"]
+            //   ) {
+            //     combinedData = [];
+            //   } else {
+            //     combinedData = groupTracksArrMatPlot(combinedData);
+            //   }
+            // } else {
+            //   if (
+            //     (cacheTrackData[`${dataIdx}`] &&
+            //       cacheTrackData[`${dataIdx}`]["xvalues"]) ||
+            //     !combinedData
+            //   ) {
+            //     combinedData = [];
+            //   } else {
+            //     combinedData = combinedData
+            //       .map((item) => {
+            //         if (item && "dataCache" in item && item.dataCache) {
+            //           return item.dataCache;
+            //         } else {
+            //           noData = true;
+            //         }
+            //       })
+            //       .flat(1);
+            //   }
+            // }
           }
 
           if (!noData) {

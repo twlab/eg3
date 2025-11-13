@@ -95,7 +95,6 @@ enum BedColumnIndex {
 }
 const TOP_PADDING = 2;
 export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
-
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
     formattedData,

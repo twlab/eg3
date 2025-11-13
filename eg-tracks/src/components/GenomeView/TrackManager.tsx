@@ -74,6 +74,7 @@ export const convertTrackModelToITrackModel = (
   querygenome: track.querygenome,
   id: track.id,
   isSelected: track.isSelected,
+  tracks: track.tracks,
 });
 
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
@@ -2587,10 +2588,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const curTracks = trackManagerState.current.tracks.filter(
         (trackModel) => trackModel.type !== "g3d"
       );
-
-      const convertedITrackModel = curTracks.map((item) =>
-        convertTrackModelToITrackModel(item)
-      );
+      console.log(curTracks);
+      const convertedITrackModel = curTracks
+        .filter(
+          (item) =>
+            item.type !== "dynamicbed" &&
+            item.type !== "dynamic" &&
+            item.type !== "dynamichic"
+        )
+        .map((item) => convertTrackModelToITrackModel(item));
 
       const curStartBp = bpX.current;
       const curEndBp = bpX.current + bpRegionSize.current;
@@ -2736,11 +2742,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (genomeConfig) {
       prevWindowWidth.current = windowWidth;
 
-      genomeConfig.defaultRegion = new OpenInterval(
-        userViewRegion._startBase!,
-        userViewRegion._endBase!
-      );
-      genomeConfig.navContext = userViewRegion._navContext;
+      Object.assign(genomeConfig, {
+        defaultRegion: new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
+        ),
+        navContext: userViewRegion._navContext,
+      });
       trackManagerState.current.tracks.map(
         (items: { type: string }, _index: any) => {
           if (items.type === "genomealign") {
@@ -3484,7 +3492,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           trackManagerState.current.tracks = filteredTracks;
           setTrackComponents(newTrackComponents);
         }
-        console.log(tracks, filteredTracks, trackComponents);
+
         if (filteredTracks.length === 0) {
           setTrackComponents([]);
           trackManagerState.current.tracks = [];
@@ -3513,11 +3521,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (userViewRegion && !initialLoad.current) {
       if (trackComponents) {
-        genomeConfig.defaultRegion = new OpenInterval(
+        const updatedGenomeConfig = _.cloneDeep(genomeConfig);
+        updatedGenomeConfig.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
-        genomeConfig.navContext = userViewRegion._navContext;
+        updatedGenomeConfig.navContext = userViewRegion._navContext;
+        genomeConfig = updatedGenomeConfig;
         trackSizeChange();
       }
     }
@@ -3525,19 +3535,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!initialLoad.current) {
+      const updatedGenomeConfig = _.cloneDeep(genomeConfig);
       if (userViewRegion) {
-        genomeConfig.defaultRegion = new OpenInterval(
+        updatedGenomeConfig.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
-        genomeConfig.navContext = userViewRegion._navContext;
+        updatedGenomeConfig.navContext = userViewRegion._navContext;
       } else {
-        genomeConfig.defaultRegion = new OpenInterval(
+        updatedGenomeConfig.defaultRegion = new OpenInterval(
           viewRegion._startBase,
           viewRegion._endBase
         );
-        genomeConfig.navContext = viewRegion._navContext;
+        updatedGenomeConfig.navContext = viewRegion._navContext;
       }
+      Object.assign(genomeConfig, updatedGenomeConfig);
       preload.current = true;
       refreshState();
       initializeTracks();
@@ -3554,11 +3566,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       // this check current index of the state, should only change when its different from the prev index
       if (currentState.index !== stateIdx.current) {
-        genomeConfig.defaultRegion = new OpenInterval(
+        const updatedGenomeConfig = _.cloneDeep(genomeConfig);
+        updatedGenomeConfig.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
-        genomeConfig.navContext = userViewRegion._navContext;
+        updatedGenomeConfig.navContext = userViewRegion._navContext;
+        Object.assign(genomeConfig, updatedGenomeConfig);
         preload.current = true;
         refreshState();
         initializeTracks();

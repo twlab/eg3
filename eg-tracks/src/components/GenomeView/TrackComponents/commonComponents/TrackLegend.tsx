@@ -235,12 +235,15 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       }
     }
     let labelList;
-    if (trackModel.type === "matplot") {
-      const labels = trackModel.tracks!.map((track, i) => {
-        const color = track.options.color || "blue";
+    if (trackModel.type === "matplot" && trackModel.tracks) {
+      const labels = trackModel.tracks.map((track, i) => {
+        const color =
+          track && track.options && track.options.color
+            ? track.options.color
+            : "blue";
         return (
           <div key={i} style={{ color }}>
-            {track.label}
+            {track && track.label ? track.label : ""}
           </div>
         );
       });
@@ -259,12 +262,15 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
     }
     return (
       <div style={divStyle}>
-        <div className="TrackLegend-wrap" title={trackModel.options.label}>
+        <div
+          className="TrackLegend-wrap"
+          title={trackModel.options ? trackModel.options.label : ""}
+        >
           <p
             className="TrackLegend-label"
             style={{ ...pStyle, wordWrap: "break-word", whiteSpace: "normal" }}
           >
-            {label ? label : trackModel.options.label}
+            {label ? label : trackModel.options ? trackModel.options.label : ""}
           </p>
           <div
             style={{ display: "flex", alignItems: "center", fontSize: "12px" }}
