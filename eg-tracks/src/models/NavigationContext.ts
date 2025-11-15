@@ -284,8 +284,10 @@ class NavigationContext {
 
       const [startChr, startPosStr] = startChromosomePart.split(":");
       const [endChr, endPosStr] = endChromosomePart.split(":");
-      const startPos = Math.round(parseFloat(startPosStr));
-      const endPos = Math.round(parseFloat(endPosStr));
+      const startPos = Math.round(
+        parseFloat(startPosStr.replace(/[^0-9.]/g, ""))
+      );
+      const endPos = Math.round(parseFloat(endPosStr.replace(/[^0-9.]/g, "")));
 
       const startFeature = this._featuresForChr[startChr]?.[0];
       const endFeature = this._featuresForChr[endChr]?.[0];
@@ -371,8 +373,8 @@ class NavigationContext {
     if (str.includes(":") && str.includes("-")) {
       const [chrPart, rangePart] = str.split(":");
       const [startStr, endStr] = rangePart.split("-");
-      const startPos = Math.round(parseFloat(startStr));
-      const endPos = Math.round(parseFloat(endStr));
+      const startPos = Math.round(parseFloat(startStr.replace(/[^0-9.]/g, "")));
+      const endPos = Math.round(parseFloat(endStr.replace(/[^0-9.]/g, "")));
       const cleanedStr = `${chrPart}:${startPos}-${endPos}`;
 
       const locus = ChromosomeInterval.parse(cleanedStr);
@@ -384,13 +386,18 @@ class NavigationContext {
       }
     }
 
-    const locus = ChromosomeInterval.parse(str);
+    try {
+      const cleanedStr = str.replace(/[^0-9:-]/g, "");
+      const locus = ChromosomeInterval.parse(cleanedStr);
 
-    const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
-    if (!contextCoords) {
-      throw new RangeError("Location unavailable in this context");
-    } else {
-      return contextCoords;
+      const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
+      if (!contextCoords) {
+        throw new RangeError("Location unavailable in this context");
+      } else {
+        return contextCoords;
+      }
+    } catch (error) {
+      throw new RangeError(`Could not parse location "${str}"`);
     }
   }
   // below is the version from Vincent

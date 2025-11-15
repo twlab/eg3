@@ -50,15 +50,15 @@ function ConfigMenuComponent(props: any) {
             ref={ref}
             style={{
               position: "absolute",
-              left: Math.abs(left) + 5, // slight offset to avoid default right click menu
-              top: top,
+              left: Math.abs(left), // slight offset to avoid default right click menu
+              top: top + 2,
               color: darkTheme ? "white" : "black",
               zIndex: 1000,
             }}
           >
             <Popper
-              placement="auto"
-              modifiers={[{ name: "flip", enabled: false }]}
+            // placement="top-start"
+            // modifiers={[{ name: "flip", enabled: false }]}
             >
               {({ ref, style }) => (
                 <div

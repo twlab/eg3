@@ -18,7 +18,9 @@ const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
-
+import FetchDataWorker from "../../getRemoteData/fetchDataWorker.ts?worker&inline";
+// @ts-ignore
+import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
@@ -97,13 +99,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       for (let i = 0; i < normalCount; i++) {
         if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
           infiniteScrollWorkers.current!.worker.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
+            fetchWorker: new FetchDataWorker(),
             hasOnMessage: false,
           });
         }
@@ -112,13 +108,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       for (let i = 0; i < instanceFetchTracksCount; i++) {
         if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
           infiniteScrollWorkers.current!.instance.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
+            fetchWorker: new FetchDataWorker(),
             hasOnMessage: false,
           });
         }
@@ -129,13 +119,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         !fetchGenomeAlignWorker.current
       ) {
         fetchGenomeAlignWorker.current = {
-          fetchWorker: new Worker(
-            new URL(
-              "../../getRemoteData/fetchGenomeAlignWorker.ts",
-              import.meta.url
-            ),
-            { type: "module" }
-          ),
+          fetchWorker: new FetchGenomeAlignWorker(),
           hasOnMessage: false,
         };
       }
