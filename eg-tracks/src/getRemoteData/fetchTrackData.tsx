@@ -98,7 +98,7 @@ export const trackFetchFunction: { [key: string]: any } = {
   ...createStandardFetchFunctions(),
 };
 
-function getRemoteData(regionData: any, trackType: string) {
+async function getRemoteData(regionData: any, trackType: string) {
   const indexUrl = regionData.trackModel.indexUrl || null;
   let fetchInstance: any = null;
 
@@ -127,13 +127,23 @@ function getRemoteData(regionData: any, trackType: string) {
   const isBigbed = trackType === "bigbed";
 
   if (needsBasesPerPixel || isJaspar || isBigbed) {
-    return fetchInstance.getData(
-      regionData.nav,
-      regionData.basesPerPixel,
-      regionData.trackModel.options
-    );
+    return fetchInstance
+      .getData(
+        regionData.nav,
+        regionData.basesPerPixel,
+        regionData.trackModel.options
+      )
+      .then((data: any) => {
+        fetchInstance = null;
+        return data;
+      });
   } else {
-    return fetchInstance.getData(regionData.nav, regionData.trackModel.options);
+    return fetchInstance
+      .getData(regionData.nav, regionData.trackModel.options)
+      .then((data: any) => {
+        fetchInstance = null;
+        return data;
+      });
   }
 }
 

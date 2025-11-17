@@ -81,32 +81,32 @@ const defaultTracks = [
   //   options: { label: "RepeatMasker" },
   //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
   // }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "bigwig nochr",
-  //   genome: "hg38",
-  //   url: "https://wangftp.wustl.edu/~dli/test/TW549_2-5-bonemarrow_MRE.CpG.nochr.bigwig",
-  // }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "bigwig yeschr",
-  //   genome: "hg38",
-  //   url: "https://wangftp.wustl.edu/~dli/test/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-  // }),
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  // }),
-  // new TrackModel({
-  //   type: "vcf",
-  //   name: "testVcf",
-  //   genome: "hg38",
-  //   url: "https://wangftp.wustl.edu/~jmacias/SMaHT_HapMap_Truth_Set/SMaHT_MCGB_Graph_VCFs/9188e8.vcf.gz",
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "bigwig nochr",
+    genome: "hg38",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  }),
+  new TrackModel({
+    type: "bigwig",
+    name: "bigwig yeschr",
+    genome: "hg38",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
+  }),
+  new TrackModel({
+    name: "hg38tomm10",
+    label: "Query mouse mm10 to hg38 blastz",
+    type: "genomealign",
+    querygenome: "mm10",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  }),
+  new TrackModel({
+    type: "vcf",
+    name: "testVcf",
+    genome: "hg38",
+    url: "https://wangftp.wustl.edu/~jmacias/SMaHT_HapMap_Truth_Set/SMaHT_MCGB_Graph_VCFs/9188e8.vcf.gz",
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "gencodeV39",
@@ -122,20 +122,20 @@ const defaultTracks = [
     name: "band2",
     url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
   }),
-  // new TrackModel({
-  //   type: "refbed",
-  //   name: "mm10 gencode basic",
-  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-  //   options: {
-  //     categoryColors: {
-  //       coding: "rgb(101,1,168)",
-  //       nonCoding: "rgb(1,193,75)",
-  //       pseudo: "rgb(230,0,172)",
-  //       problem: "rgb(224,2,2)",
-  //       other: "rgb(128,128,128)",
-  //     },
-  //   },
-  // }),
+  new TrackModel({
+    type: "refbed",
+    name: "mm10 gencode basic",
+    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+    options: {
+      categoryColors: {
+        coding: "rgb(101,1,168)",
+        nonCoding: "rgb(1,193,75)",
+        pseudo: "rgb(230,0,172)",
+        problem: "rgb(224,2,2)",
+        other: "rgb(128,128,128)",
+      },
+    },
+  }),
   // new TrackModel({
   //   type: "g3d",
   //   url: "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
@@ -464,15 +464,15 @@ const defaultTracks = [
     ],
   }),
 
-  // new TrackModel({
-  //   type: "hic",
-  //   name: "test hic",
-  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
-  //   // "options": {
-  //   //     "displayMode": "arc"
-  //   // }
-  //   // metadata: { genome: "mm10" },
-  // }),
+  new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+    // metadata: { genome: "mm10" },
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",

@@ -712,11 +712,8 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [rectPosition, setPosition] = useState({
-    top: 0,
-    left: 0,
-    right: 0,
-    dataIdxX: 0,
-    dataIdxY: 0,
+    mouseYPos: 0,
+    mouseXPos: 0,
     toolTip: <></>,
     beams: <></>,
   });
@@ -755,11 +752,8 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     if (trackHoverTooltip) {
       setPosition({
         ...rectPosition,
-        top: rect.bottom,
-        left: rect.left,
-        right: rect.right,
-        dataIdxX: dataIdxX,
-        dataIdxY: dataIdxY,
+        mouseYPos: e.pageY + 10,
+        mouseXPos: e.pageX + 10,
         toolTip: trackHoverTooltip.toolTip,
         beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
       });
@@ -812,8 +806,8 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
             <div
               style={{
                 position: "absolute",
-                top: rectPosition.top + window.scrollY,
-                left: rectPosition.left + rectPosition.dataIdxX,
+                top: rectPosition.mouseYPos,
+                left: rectPosition.mouseXPos,
                 backgroundColor: "lightBlue",
                 borderRadius: 4,
 

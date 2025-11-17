@@ -163,6 +163,7 @@ export default function RootLayout(props: GenomeHubProps) {
   ]);
 
   useEffect(() => {
+
     if (
       (props.genomeName && props.tracks && props.viewRegion) ||
       props.customGenome

@@ -2007,20 +2007,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         .sort((a, b) => a - b);
       let minIdx, maxIdx;
       if (curTrack.trackType in trackUsingExpandedLoci) {
-        minIdx = dataIdx.current - 3;
-        maxIdx = dataIdx.current + 3;
+        minIdx = dataIdx.current;
+        maxIdx = dataIdx.current;
       } else {
-        minIdx = dataIdx.current - 2;
-        maxIdx = dataIdx.current + 2;
+        minIdx = dataIdx.current - 1;
+        maxIdx = dataIdx.current + 1;
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
-          if ("records" in trackFetchedDataCache.current[key][cacheDataIdx]) {
-            delete trackFetchedDataCache.current[key][cacheDataIdx].records;
-          }
-          if ("xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]) {
-            delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
-          }
+          trackFetchedDataCache.current[key][cacheDataIdx] = {};
         }
       }
     }

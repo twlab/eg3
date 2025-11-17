@@ -1168,7 +1168,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-    console.log(formattedData);
+
     let canvasElements = (
       <MethylCTrackComputation
         data={formattedData}
@@ -1858,7 +1858,6 @@ function formatSnpData(genesArr: any[]) {
   return genesArr.map((record) => new Snp(record));
 }
 function formatCategoricalData(genesArr: any[]) {
-  console.log(genesArr);
   const formattedData = genesArr.map(
     (record) =>
       new Feature(
