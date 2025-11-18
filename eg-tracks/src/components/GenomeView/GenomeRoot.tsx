@@ -49,10 +49,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 }) {
   const [resizeRef, size] = useResizeObserver();
 
-  // Track if component is mounted to prevent worker termination during quick remounts (tab switches)
-  const isMountedRef = useRef(true);
-  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   const infiniteScrollWorkers = useRef<{
     instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
@@ -71,34 +67,50 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
+  const [tracksToDraw, setTracksToDraw] = useState<Array<TrackModel> | null>(
+    null
+  );
+
   const [show3dGene, setShow3dGene] = useState();
   //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
   const g3dTracks = useRef<Array<any>>([]);
-
   const has3dTracks = useMemo(
     () => tracks.some((track) => track.type === "g3d"),
     [tracks]
   );
 
-  const nonG3dTracks = useMemo(
-    () => tracks.filter((trackModel) => trackModel.type !== "g3d"),
-    [tracks]
-  );
-
-  // Memoized track counts to avoid unnecessary worker scaling
-  const trackCounts = useMemo(() => {
-    const normalCount = tracks.filter(
-      (t) => !(t.type in INSTANCE_FETCH_TYPES)
-    ).length;
-    const instanceCount = tracks.filter(
-      (t) => t.type in INSTANCE_FETCH_TYPES
-    ).length;
-    const hasGenomeAlign = tracks.some((t) => t.type === "genomealign");
-    return { normalCount, instanceCount, hasGenomeAlign };
-  }, [tracks.length, JSON.stringify(tracks.map((t) => t.type))]);
-
-  // Initialize/scale workers based on tracks, but never terminate existing workers
+  // Initialize workers based on tracks when they change
   useEffect(() => {
+    if (tracks.length > 0 && has3dTracks) {
+      const curG3dTracks = findAllG3dTabs(layout.current);
+      const newG3dTracks: Array<any> = tracks.filter(
+        (track) => track.type === "g3d"
+      );
+
+      if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
+        layout.current = _.cloneDeep(initialLayout);
+        g3dTracks.current = newG3dTracks;
+        for (let track of newG3dTracks) {
+          const newLayout = {
+            type: "tabset",
+            children: [
+              {
+                type: "tab",
+                name: track.getDisplayLabel(),
+                component: "g3d",
+
+                config: { trackModel: track, trackId: track.id },
+                enableClose: true,
+              },
+            ],
+          };
+          layout.current = addTabSetToLayout(newLayout, layout.current);
+        }
+
+        setModel(FlexLayout.Model.fromJson(layout.current));
+      }
+    }
+
     if (!packageVersion && infiniteScrollWorkers.current) {
       const normalTracks = tracks.filter(
         (t) => !(t.type in INSTANCE_FETCH_TYPES)
@@ -106,36 +118,32 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       const instanceFetchTracks = tracks.filter(
         (t) => t.type in INSTANCE_FETCH_TYPES
       );
-      // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
+
+      // Calculate how many workers we need
       const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
       const instanceFetchTracksCount = Math.min(
         instanceFetchTracks.length,
         MAX_WORKERS
       );
 
-      // Only create NEW workers if needed - never terminate existing ones
-      // Create workers for normal tracks
-      const existingNormalWorkers =
-        infiniteScrollWorkers.current!.worker.length;
+      // Only create NEW workers if we need more than we have
+      const existingNormalWorkers = infiniteScrollWorkers.current.worker.length;
       for (let i = existingNormalWorkers; i < normalCount; i++) {
-        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.worker.push({
-            fetchWorker: new FetchDataWorker(),
-            hasOnMessage: false,
-          });
-        }
+        infiniteScrollWorkers.current.worker.push({
+          fetchWorker: new FetchDataWorker(),
+          hasOnMessage: false,
+        });
       }
-      // Create workers for instance fetch tracks
+
       const existingInstanceWorkers =
-        infiniteScrollWorkers.current!.instance.length;
+        infiniteScrollWorkers.current.instance.length;
       for (let i = existingInstanceWorkers; i < instanceFetchTracksCount; i++) {
-        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.instance.push({
-            fetchWorker: new FetchDataWorker(),
-            hasOnMessage: false,
-          });
-        }
+        infiniteScrollWorkers.current.instance.push({
+          fetchWorker: new FetchDataWorker(),
+          hasOnMessage: false,
+        });
       }
+
       // Create genome align worker if needed (only once)
       if (
         tracks.some((t) => t.type === "genomealign") &&
@@ -147,11 +155,12 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         };
       }
     }
-  }, [
-    trackCounts.normalCount,
-    trackCounts.instanceCount,
-    trackCounts.hasGenomeAlign,
-  ]); // Only re-run if track counts change or genomealign is added
+    const nonG3dTracks = tracks.filter(
+      (trackModel) => trackModel.type !== "g3d"
+    );
+    genomeConfig.defaultTracks = tracks;
+    setTracksToDraw(nonG3dTracks);
+  }, [tracks]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
@@ -201,9 +210,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       const component = node.getComponent();
 
       if (component === "Browser") {
-        return (
+        return tracksToDraw ? (
           <TrackManager
-            tracks={nonG3dTracks}
+            tracks={tracksToDraw}
             legendWidth={legendWidth}
             windowWidth={
               (!size.width || size.width - legendWidth <= 0
@@ -234,13 +243,15 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             currentState={currentState}
             darkTheme={darkTheme}
           />
+        ) : (
+          ""
         );
       } else {
         return renderG3dTrackComponents(node);
       }
     },
     [
-      nonG3dTracks,
+      tracksToDraw,
       size.width,
       legendWidth,
       userViewRegion,
@@ -280,95 +291,46 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }
 
   useEffect(() => {
-    isMountedRef.current = true;
-
-    // Clear any pending cleanup from previous unmount
-    if (cleanupTimeoutRef.current) {
-      clearTimeout(cleanupTimeoutRef.current);
-      cleanupTimeoutRef.current = null;
-    }
-
-    // Cleanup function - only runs when component is truly unmounting
     return () => {
-      isMountedRef.current = false;
+      // Terminate all infinite scroll workers
 
-      // Add a delay to prevent premature termination during tab switches
-      // If component remounts quickly (tab switch), this won't execute
-      cleanupTimeoutRef.current = setTimeout(() => {
-        // Only proceed if still unmounted after delay
-        if (!isMountedRef.current) {
-          // Terminate all infinite scroll workers
-          if (infiniteScrollWorkers.current) {
-            infiniteScrollWorkers.current.worker.forEach((workerObj) => {
-              workerObj.fetchWorker.terminate();
-            });
-            infiniteScrollWorkers.current.instance.forEach((workerObj) => {
-              workerObj.fetchWorker.terminate();
-            });
+      if (infiniteScrollWorkers.current) {
+        infiniteScrollWorkers.current.worker.forEach((workerObj) => {
+          workerObj.fetchWorker.terminate();
+        });
+        infiniteScrollWorkers.current.instance.forEach((workerObj) => {
+          workerObj.fetchWorker.terminate();
+        });
 
-            // Clear the arrays and references
-            infiniteScrollWorkers.current.worker = [];
-            infiniteScrollWorkers.current.instance = [];
-            infiniteScrollWorkers.current = null;
-          }
+        // Clear the arrays and references
+        infiniteScrollWorkers.current.worker = [];
+        infiniteScrollWorkers.current.instance = [];
+        infiniteScrollWorkers.current = null;
+      }
 
-          // Terminate genome align worker
-          if (fetchGenomeAlignWorker.current) {
-            fetchGenomeAlignWorker.current.fetchWorker.terminate();
-          }
-          fetchGenomeAlignWorker.current = null;
+      // Terminate genome align worker
+      if (fetchGenomeAlignWorker.current) {
+        fetchGenomeAlignWorker.current.fetchWorker.terminate();
+      }
+      fetchGenomeAlignWorker.current = null;
 
-          // Clear all other refs
-          layout.current = _.cloneDeep(initialLayout);
-          g3dTracks.current = [];
+      // Clear all other refs
 
-          // Reset state to initial values
-          setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
-          setShow3dGene(undefined);
-        }
-      }, 100); // 100ms delay to allow for quick remounts
+      layout.current = _.cloneDeep(initialLayout);
+      g3dTracks.current = [];
+
+      // Reset state to initial values
+
+      setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
+      setShow3dGene(undefined);
     };
   }, []);
 
-  // check what types of tracks are being added, and determine the number of workers needed for
-  // TrackManager
-  useEffect(() => {
-    if (tracks.length > 0 && has3dTracks) {
-      const curG3dTracks = findAllG3dTabs(layout.current);
-      const newG3dTracks: Array<any> = tracks.filter(
-        (track) => track.type === "g3d"
-      );
-
-      if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
-        layout.current = _.cloneDeep(initialLayout);
-        g3dTracks.current = newG3dTracks;
-        for (let track of newG3dTracks) {
-          const newLayout = {
-            type: "tabset",
-            children: [
-              {
-                type: "tab",
-                name: track.getDisplayLabel(),
-                component: "g3d",
-
-                config: { trackModel: track, trackId: track.id },
-                enableClose: true,
-              },
-            ],
-          };
-          layout.current = addTabSetToLayout(newLayout, layout.current);
-        }
-
-        setModel(FlexLayout.Model.fromJson(layout.current));
-      }
-    }
-  }, [tracks]);
-
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks ? (
+      {!has3dTracks && tracksToDraw && genomeConfig ? (
         <TrackManager
-          tracks={nonG3dTracks}
+          tracks={tracksToDraw}
           legendWidth={legendWidth}
           windowWidth={Math.round(
             (!size.width || size.width - legendWidth <= 0
