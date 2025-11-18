@@ -2755,26 +2755,48 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // we create a way to recieve the return data as message from the workers here
       if (infiniteScrollWorkers.current) {
         infiniteScrollWorkers.current.worker?.forEach((w) => {
-          if (!w.hasOnMessage) {
-            w.fetchWorker.onmessage = createInfiniteOnMessage;
-            w.hasOnMessage = true;
+          if (!w.hasOnMessage && w.fetchWorker) {
+            try {
+              w.fetchWorker.onmessage = createInfiniteOnMessage;
+              w.hasOnMessage = true;
+            } catch (error) {
+              console.warn(
+                "Failed to set worker onmessage handler on mount:",
+                error
+              );
+            }
           }
         });
         infiniteScrollWorkers.current.instance?.forEach((w) => {
-          if (!w.hasOnMessage) {
-            w.fetchWorker.onmessage = createInfiniteOnMessage;
-            w.hasOnMessage = true;
+          if (!w.hasOnMessage && w.fetchWorker) {
+            try {
+              w.fetchWorker.onmessage = createInfiniteOnMessage;
+              w.hasOnMessage = true;
+            } catch (error) {
+              console.warn(
+                "Failed to set worker onmessage handler on mount:",
+                error
+              );
+            }
           }
         });
       }
       if (
         hasGenomeAlign.current &&
         fetchGenomeAlignWorker.current &&
+        fetchGenomeAlignWorker.current.fetchWorker &&
         !fetchGenomeAlignWorker.current.hasOnMessage
       ) {
-        fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-          createGenomeAlignOnMessage;
-        fetchGenomeAlignWorker.current.hasOnMessage = true;
+        try {
+          fetchGenomeAlignWorker.current.fetchWorker.onmessage =
+            createGenomeAlignOnMessage;
+          fetchGenomeAlignWorker.current.hasOnMessage = true;
+        } catch (error) {
+          console.warn(
+            "Failed to set genome align worker onmessage handler:",
+            error
+          );
+        }
       }
       initializeTracks();
       preload.current = true;
@@ -3498,15 +3520,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     if (infiniteScrollWorkers.current) {
       infiniteScrollWorkers.current.worker?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
+        if (!w.hasOnMessage && w.fetchWorker) {
+          try {
+            w.fetchWorker.onmessage = createInfiniteOnMessage;
+            w.hasOnMessage = true;
+          } catch (error) {
+            console.warn("Failed to set worker onmessage handler:", error);
+          }
         }
       });
       infiniteScrollWorkers.current.instance?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
+        if (!w.hasOnMessage && w.fetchWorker) {
+          try {
+            w.fetchWorker.onmessage = createInfiniteOnMessage;
+            w.hasOnMessage = true;
+          } catch (error) {
+            console.warn("Failed to set worker onmessage handler:", error);
+          }
         }
       });
     }
