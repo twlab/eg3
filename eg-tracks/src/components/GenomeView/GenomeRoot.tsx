@@ -67,13 +67,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
-  const [isWorkerReady, setIsWorkerReady] = useState(false);
+  const [tracksToDraw, setTracksToDraw] = useState<Array<TrackModel> | null>(
+    null
+  );
+
   const [show3dGene, setShow3dGene] = useState();
   //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
   const g3dTracks = useRef<Array<any>>([]);
-  const nonG3dTracks = useRef<Array<any>>(
-    tracks.filter((trackModel) => trackModel.type !== "g3d")
-  );
   const has3dTracks = useMemo(
     () => tracks.some((track) => track.type === "g3d"),
     [tracks]
@@ -81,7 +81,36 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   // Initialize workers based on tracks when they change
   useEffect(() => {
-    setIsWorkerReady(false);
+    if (tracks.length > 0 && has3dTracks) {
+      const curG3dTracks = findAllG3dTabs(layout.current);
+      const newG3dTracks: Array<any> = tracks.filter(
+        (track) => track.type === "g3d"
+      );
+
+      if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
+        layout.current = _.cloneDeep(initialLayout);
+        g3dTracks.current = newG3dTracks;
+        for (let track of newG3dTracks) {
+          const newLayout = {
+            type: "tabset",
+            children: [
+              {
+                type: "tab",
+                name: track.getDisplayLabel(),
+                component: "g3d",
+
+                config: { trackModel: track, trackId: track.id },
+                enableClose: true,
+              },
+            ],
+          };
+          layout.current = addTabSetToLayout(newLayout, layout.current);
+        }
+
+        setModel(FlexLayout.Model.fromJson(layout.current));
+      }
+    }
+
     if (!packageVersion && infiniteScrollWorkers.current) {
       const normalTracks = tracks.filter(
         (t) => !(t.type in INSTANCE_FETCH_TYPES)
@@ -126,15 +155,12 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         };
       }
     }
+    const nonG3dTracks = tracks.filter(
+      (trackModel) => trackModel.type !== "g3d"
+    );
+    genomeConfig.defaultTracks = tracks;
+    setTracksToDraw(nonG3dTracks);
   }, [tracks]);
-
-  useEffect(() => {
-    if (isWorkerReady) {
-      nonG3dTracks.current = tracks.filter(
-        (trackModel) => trackModel.type !== "g3d"
-      );
-    }
-  }, [isWorkerReady]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
@@ -184,9 +210,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       const component = node.getComponent();
 
       if (component === "Browser") {
-        return (
+        return tracksToDraw ? (
           <TrackManager
-            tracks={nonG3dTracks.current}
+            tracks={tracksToDraw}
             legendWidth={legendWidth}
             windowWidth={
               (!size.width || size.width - legendWidth <= 0
@@ -217,13 +243,15 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             currentState={currentState}
             darkTheme={darkTheme}
           />
+        ) : (
+          ""
         );
       } else {
         return renderG3dTrackComponents(node);
       }
     },
     [
-      nonG3dTracks,
+      tracksToDraw,
       size.width,
       legendWidth,
       userViewRegion,
@@ -298,45 +326,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     };
   }, []);
 
-  // check what types of tracks are being added, and determine the number of workers needed for
-  // TrackManager
-  useEffect(() => {
-    if (tracks.length > 0 && has3dTracks) {
-      const curG3dTracks = findAllG3dTabs(layout.current);
-      const newG3dTracks: Array<any> = tracks.filter(
-        (track) => track.type === "g3d"
-      );
-
-      if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
-        layout.current = _.cloneDeep(initialLayout);
-        g3dTracks.current = newG3dTracks;
-        for (let track of newG3dTracks) {
-          const newLayout = {
-            type: "tabset",
-            children: [
-              {
-                type: "tab",
-                name: track.getDisplayLabel(),
-                component: "g3d",
-
-                config: { trackModel: track, trackId: track.id },
-                enableClose: true,
-              },
-            ],
-          };
-          layout.current = addTabSetToLayout(newLayout, layout.current);
-        }
-
-        setModel(FlexLayout.Model.fromJson(layout.current));
-      }
-    }
-  }, [tracks]);
-
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks ? (
+      {!has3dTracks && tracksToDraw && genomeConfig ? (
         <TrackManager
-          tracks={isWorkerReady ? tracks : nonG3dTracks.current}
+          tracks={tracksToDraw}
           legendWidth={legendWidth}
           windowWidth={Math.round(
             (!size.width || size.width - legendWidth <= 0

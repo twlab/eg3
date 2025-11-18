@@ -101,12 +101,12 @@ const defaultTracks = [
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   }),
-  new TrackModel({
-    type: "vcf",
-    name: "testVcf",
-    genome: "hg38",
-    url: "https://wangftp.wustl.edu/~jmacias/SMaHT_HapMap_Truth_Set/SMaHT_MCGB_Graph_VCFs/9188e8.vcf.gz",
-  }),
+  // new TrackModel({
+  //   type: "vcf",
+  //   name: "testVcf",
+  //   genome: "hg38",
+  //   url: "https://wangftp.wustl.edu/~jmacias/SMaHT_HapMap_Truth_Set/SMaHT_MCGB_Graph_VCFs/9188e8.vcf.gz",
+  // }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "gencodeV39",
