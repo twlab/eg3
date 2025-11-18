@@ -1,7 +1,7 @@
 {
   "name": "wuepgg",
   "private": false,
-  "version": "57.0.5",
+  "version": "57.0.7",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -35,7 +35,6 @@
     "@reduxjs/toolkit": "^2.3.0",
     "@rollup/plugin-url": "^8.0.2",
     "@types/uuid": "^10.0.0",
-    "react-autosuggest": "^10.1.0",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "classnames": "^2.5.1",
@@ -49,6 +48,7 @@
     "plotly.js": "^3.0.3",
     "postcss": "^8.4.49",
     "qrcode.react": "^4.2.0",
+    "react-autosuggest": "^10.1.0",
     "react-modal": "^3.16.1",
     "react-plotly.js": "^2.6.0",
     "react-redux": "^9.1.2",
@@ -57,7 +57,8 @@
     "redux-persist": "^6.0.0",
     "redux-undo": "^1.1.0",
     "tailwind-merge": "^3.3.1",
-    "vite-plugin-dts": "^2.1.0"
+    "vite-plugin-dts": "^2.1.0",
+    "wuepgg3-track": "^3.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
