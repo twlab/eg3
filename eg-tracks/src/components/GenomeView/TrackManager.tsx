@@ -162,11 +162,11 @@ interface TrackManagerProps {
   infiniteScrollWorkers: React.MutableRefObject<{
     instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
-  } | null>;
+  }>;
   fetchGenomeAlignWorker: React.MutableRefObject<{
     fetchWorker: Worker;
     hasOnMessage: boolean;
-  } | null>;
+  }>;
   isThereG3dTrack: boolean;
   currentState?: any;
   darkTheme: boolean;
@@ -498,6 +498,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           }
           if (messagesForWorker.length > 0) {
+            if (
+              infiniteScrollWorkers.current.instance[i].hasOnMessage === false
+            ) {
+              infiniteScrollWorkers.current.instance[i].fetchWorker.onmessage =
+                createInfiniteOnMessage;
+              infiniteScrollWorkers.current.instance[i].hasOnMessage = true;
+            }
             infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
               messagesForWorker
             );
@@ -511,6 +518,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         infiniteScrollWorkers.current.worker.length > 0
       ) {
         const numWorkers = infiniteScrollWorkers.current.worker.length;
+        console.log(infiniteScrollWorkers.current, numWorkers, tracks);
         for (let i = 0; i < numWorkers; i++) {
           const messagesForWorker: Array<any> = [];
           for (const msgObj of normalMessages) {
@@ -524,6 +532,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
 
           if (messagesForWorker.length > 0) {
+            if (
+              infiniteScrollWorkers.current.worker[i].hasOnMessage === false
+            ) {
+              infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
+                createInfiniteOnMessage;
+              infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
+            }
             infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
               messagesForWorker
             );
@@ -2753,29 +2768,53 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
       // created the workers needed already in GenomeRoot, now
       // we create a way to recieve the return data as message from the workers here
-      if (infiniteScrollWorkers.current) {
-        infiniteScrollWorkers.current.worker?.forEach((w) => {
-          if (!w.hasOnMessage) {
-            w.fetchWorker.onmessage = createInfiniteOnMessage;
-            w.hasOnMessage = true;
-          }
-        });
-        infiniteScrollWorkers.current.instance?.forEach((w) => {
-          if (!w.hasOnMessage) {
-            w.fetchWorker.onmessage = createInfiniteOnMessage;
-            w.hasOnMessage = true;
-          }
-        });
-      }
-      if (
-        hasGenomeAlign.current &&
-        fetchGenomeAlignWorker.current &&
-        !fetchGenomeAlignWorker.current.hasOnMessage
-      ) {
-        fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-          createGenomeAlignOnMessage;
-        fetchGenomeAlignWorker.current.hasOnMessage = true;
-      }
+
+      // if (infiniteScrollWorkers.current) {
+      //   infiniteScrollWorkers.current.worker?.forEach((w) => {
+      //     if (!w.hasOnMessage) {
+      //       try {
+      //         w.fetchWorker.onmessage = createInfiniteOnMessage;
+
+      //         w.hasOnMessage = true;
+      //       } catch (error) {
+      //         console.warn(
+      //           "Failed to set worker onmessage handler on mount:",
+      //           error
+      //         );
+      //       }
+      //     }
+      //   });
+      //   infiniteScrollWorkers.current.instance?.forEach((w) => {
+      //     if (!w.hasOnMessage) {
+      //       try {
+      //         w.fetchWorker.onmessage = createInfiniteOnMessage;
+      //         w.hasOnMessage = true;
+      //       } catch (error) {
+      //         console.warn(
+      //           "Failed to set worker onmessage handler on mount:",
+      //           error
+      //         );
+      //       }
+      //     }
+      //   });
+      // }
+      // if (
+      //   hasGenomeAlign.current &&
+      //   fetchGenomeAlignWorker.current &&
+      //   fetchGenomeAlignWorker.current.fetchWorker &&
+      //   !fetchGenomeAlignWorker.current.hasOnMessage
+      // ) {
+      //   try {
+      //     fetchGenomeAlignWorker.current.fetchWorker.onmessage =
+      //       createGenomeAlignOnMessage;
+      //     fetchGenomeAlignWorker.current.hasOnMessage = true;
+      //   } catch (error) {
+      //     console.warn(
+      //       "Failed to set genome align worker onmessage handler:",
+      //       error
+      //     );
+      //   }
+      // }
       initializeTracks();
       preload.current = true;
     }
@@ -3264,6 +3303,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return str !== null && !isNaN(num) && Number.isInteger(num);
   }
 
+  // useEffect(() => {
+  //   if (infiniteScrollWorkers.current) {
+  //     infiniteScrollWorkers.current.worker?.forEach((w) => {
+  //       if (w.hasOnMessage === false) {
+  //         console.log("Setting worker onmessage handler in tracks useeffect");
+  //         try {
+  //           w.fetchWorker.onmessage = createInfiniteOnMessage;
+  //           w.hasOnMessage = true;
+  //         } catch (error) {
+  //           console.warn("Failed to set worker onmessage handler:", error);
+  //         }
+  //       }
+  //     });
+  //     infiniteScrollWorkers.current.instance?.forEach((w) => {
+  //       if (!w.hasOnMessage) {
+  //         try {
+  //           w.fetchWorker.onmessage = createInfiniteOnMessage;
+  //           w.hasOnMessage = true;
+  //         } catch (error) {
+  //           console.warn("Failed to set worker onmessage handler:", error);
+  //         }
+  //       }
+  //     });
+  //   }
+  // }, [
+  //   infiniteScrollWorkers.current.worker.length,
+  //   infiniteScrollWorkers.current.instance.length,
+  // ]);
   useEffect(() => {
     if (!initialLoad.current && tracks && tracks.length === 0) {
       setTrackComponents([]);
@@ -3372,15 +3439,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 useFineModeNav.current = true;
               }
               hasGenomeAlign.current = true;
-              if (
-                hasGenomeAlign.current &&
-                fetchGenomeAlignWorker.current &&
-                !fetchGenomeAlignWorker.current.hasOnMessage
-              ) {
-                fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-                  createGenomeAlignOnMessage;
-                fetchGenomeAlignWorker.current.hasOnMessage = true;
-              }
             }
             // for tracks like hic and bam where we create an  instance obj
             // that we reuse to fetch data
@@ -3496,20 +3554,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(filteredTracks);
     }
-    if (infiniteScrollWorkers.current) {
-      infiniteScrollWorkers.current.worker?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
-        }
-      });
-      infiniteScrollWorkers.current.instance?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
-        }
-      });
-    }
+
     initialLoad.current = false;
   }, [tracks]);
   // MARK: width, regions

@@ -67,53 +67,55 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
+  const [isWorkerReady, setIsWorkerReady] = useState(false);
   const [show3dGene, setShow3dGene] = useState();
   //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
   const g3dTracks = useRef<Array<any>>([]);
-
+  const nonG3dTracks = useRef<Array<any>>(
+    tracks.filter((trackModel) => trackModel.type !== "g3d")
+  );
   const has3dTracks = useMemo(
     () => tracks.some((track) => track.type === "g3d"),
     [tracks]
   );
 
-  const nonG3dTracks = useMemo(
-    () => tracks.filter((trackModel) => trackModel.type !== "g3d"),
-    [tracks]
-  );
-
-  useMemo(() => {
-    if (!packageVersion) {
+  // Initialize workers based on tracks when they change
+  useEffect(() => {
+    setIsWorkerReady(false);
+    if (!packageVersion && infiniteScrollWorkers.current) {
       const normalTracks = tracks.filter(
         (t) => !(t.type in INSTANCE_FETCH_TYPES)
       );
       const instanceFetchTracks = tracks.filter(
         (t) => t.type in INSTANCE_FETCH_TYPES
       );
-      // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
+
+      // Calculate how many workers we need
       const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
       const instanceFetchTracksCount = Math.min(
         instanceFetchTracks.length,
         MAX_WORKERS
       );
-      // Create workers for normal tracks
-      for (let i = 0; i < normalCount; i++) {
-        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.worker.push({
-            fetchWorker: new FetchDataWorker(),
-            hasOnMessage: false,
-          });
-        }
+
+      // Only create NEW workers if we need more than we have
+      const existingNormalWorkers = infiniteScrollWorkers.current.worker.length;
+      for (let i = existingNormalWorkers; i < normalCount; i++) {
+        infiniteScrollWorkers.current.worker.push({
+          fetchWorker: new FetchDataWorker(),
+          hasOnMessage: false,
+        });
       }
-      // Create workers for instance fetch tracks
-      for (let i = 0; i < instanceFetchTracksCount; i++) {
-        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.instance.push({
-            fetchWorker: new FetchDataWorker(),
-            hasOnMessage: false,
-          });
-        }
+
+      const existingInstanceWorkers =
+        infiniteScrollWorkers.current.instance.length;
+      for (let i = existingInstanceWorkers; i < instanceFetchTracksCount; i++) {
+        infiniteScrollWorkers.current.instance.push({
+          fetchWorker: new FetchDataWorker(),
+          hasOnMessage: false,
+        });
       }
-      // Create genome align worker if needed
+
+      // Create genome align worker if needed (only once)
       if (
         tracks.some((t) => t.type === "genomealign") &&
         !fetchGenomeAlignWorker.current
@@ -125,6 +127,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     }
   }, [tracks]);
+
+  useEffect(() => {
+    if (isWorkerReady) {
+      nonG3dTracks.current = tracks.filter(
+        (trackModel) => trackModel.type !== "g3d"
+      );
+    }
+  }, [isWorkerReady]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
@@ -176,7 +186,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       if (component === "Browser") {
         return (
           <TrackManager
-            tracks={nonG3dTracks}
+            tracks={nonG3dTracks.current}
             legendWidth={legendWidth}
             windowWidth={
               (!size.width || size.width - legendWidth <= 0
@@ -326,7 +336,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {!has3dTracks ? (
         <TrackManager
-          tracks={nonG3dTracks}
+          tracks={isWorkerReady ? tracks : nonG3dTracks.current}
           legendWidth={legendWidth}
           windowWidth={Math.round(
             (!size.width || size.width - legendWidth <= 0
