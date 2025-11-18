@@ -74,7 +74,12 @@ import Bedcolor from "./bedComponents/Bedcolor";
 
 import { generateUUID } from "../../../util";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
-export const bigWithNavTracks = new Set(["repeat", "jaspar", "bigbed", "rmskv2"]);
+export const bigWithNavTracks = new Set([
+  "repeat",
+  "jaspar",
+  "bigbed",
+  "rmskv2",
+]);
 export const instanceFetchTracks = new Set(["hic", "dynamichic", "bam"]);
 export const dynamicMatplotTracks = new Set([
   "matplot",
@@ -90,7 +95,6 @@ enum BedColumnIndex {
 }
 const TOP_PADDING = 2;
 export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
-
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
     formattedData,
@@ -134,17 +138,17 @@ export const displayModeComponentMap: { [key: string]: any } = {
       if (configOptions.forceSvg || configOptions.packageVersion) {
         let curParentStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
+              position: "relative",
 
-            overflow: "hidden",
-            width: width / 3,
-          }
+              overflow: "hidden",
+              width: width / 3,
+            }
           : {};
         let curEleStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
-            transform: `translateX(${-trackState.viewWindow.start}px)`,
-          }
+              position: "relative",
+              transform: `translateX(${-trackState.viewWindow.start}px)`,
+            }
           : {};
 
         return (
@@ -214,7 +218,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -239,7 +243,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -312,7 +316,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -337,7 +341,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => { }}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onClose}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -555,7 +559,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => { }}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -581,7 +585,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -600,7 +604,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -620,8 +624,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-          imgCount -
-          THUMBNAIL_PADDING,
+            imgCount -
+            THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -645,8 +649,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
               configOptions.label
                 ? configOptions.label
                 : trackModel.options.label
-                  ? trackModel.options.label
-                  : ""
+                ? trackModel.options.label
+                : ""
             }
           />
         );
@@ -665,7 +669,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => { }}
+          onSetImageInfo={() => {}}
           heightObj={heightObj}
         />
       );
@@ -716,7 +720,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackState.visWidth,
       getGenePadding,
       configOptions.hiddenPixels,
-      sortType
+      sortType,
+      trackState.viewWindow
     );
 
     // if (configOptions.forceSvg) {
@@ -736,7 +741,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     height =
       trackModel.type === "repeatmasker" || trackModel.type === "rmskv2"
         ? configOptions.height
-        : getHeight(placeFeatureData.numRowsAssigned);
+        : placeFeatureData.numRowsAssigned
+        ? getHeight(placeFeatureData.numRowsAssigned)
+        : 40;
 
     const legend = (
       <TrackLegend
@@ -746,8 +753,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.label
             ? configOptions.label
             : trackModel.options.label
-              ? trackModel.options.label
-              : ""
+            ? trackModel.options.label
+            : ""
         }
         forceSvg={configOptions.forceSvg}
       />
@@ -1244,9 +1251,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         selectedRegion={
           trackState.genomicFetchCoord
             ? objToInstanceAlign(
-              trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
-                .viewWindowRegion
-            )
+                trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+                  .viewWindowRegion
+              )
             : trackState.visRegion
         }
         viewWindow={
@@ -1278,8 +1285,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
           drawData.configOptions.label
             ? drawData.configOptions.label
             : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
+            ? drawData.trackModel.options.label
+            : ""
         }
         forceSvg={drawData.configOptions.forceSvg}
       />
@@ -1406,25 +1413,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
       if (drawData.configOptions.forceSvg) {
         let curParentStyle: any = drawData.configOptions.forceSvg
           ? {
-            position: "relative",
+              position: "relative",
 
-            overflow: "hidden",
-            width: drawData.trackState.visWidth / 3,
-          }
+              overflow: "hidden",
+              width: drawData.trackState.visWidth / 3,
+            }
           : {};
         let curEleStyle: any = drawData.configOptions.forceSvg
           ? {
-            position: "relative",
-            transform: `translateX(${-drawData.trackState.viewWindow
-              .start}px)`,
-          }
+              position: "relative",
+              transform: `translateX(${-drawData.trackState.viewWindow
+                .start}px)`,
+            }
           : {};
 
         element = (
           <React.Fragment>
             <div style={{ display: "flex", ...curParentStyle }}>
               {drawData.configOptions.forceSvg ||
-                drawData.configOptions.packageVersion
+              drawData.configOptions.packageVersion
                 ? legend
                 : ""}
               <div
@@ -1504,8 +1511,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.label
             ? configOptions.label
             : trackModel.options.label
-              ? trackModel.options.label
-              : ""
+            ? trackModel.options.label
+            : ""
         }
       />
     );
@@ -1549,10 +1556,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
           <span>
             {Array.isArray(genesArr)
               ? genesArr.filter((gene) => typeof gene === "string")[0] ||
-              "Something went wrong"
+                "Something went wrong"
               : typeof genesArr === "object" && genesArr["error"]
-                ? genesArr["error"]
-                : "Something went wrong"}{" "}
+              ? genesArr["error"]
+              : "Something went wrong"}{" "}
           </span>
           <span>Refresh page or click track to try again.</span>
           <span
@@ -1721,12 +1728,46 @@ function formatGeneAnnotationData(genesArr: any[]) {
   return genesArr.map((record) => new Gene(record));
 }
 function formatRepeatMasker(genesArr: any[]) {
-  const filteredArray: Array<any> = [];
-  for (const record of genesArr) {
-    const output: RepeatDASFeature = record as RepeatDASFeature;
-    filteredArray.push(new RepeatMaskerFeature(output));
-  }
-  return filteredArray;
+  return genesArr.map((record) => {
+    const [
+      label,
+      scoreStr,
+      orientation,
+      swScore,
+      milliDiv,
+      milliDel,
+      milliIns,
+      genoLeft,
+      repClass,
+      repFamily,
+      repStart,
+      repEnd,
+      repLeft,
+    ] = record.rest.split("\t");
+
+    const output: RepeatDASFeature = {
+      genoLeft,
+      label,
+      max: record.end,
+      milliDel,
+      milliDiv,
+      milliIns,
+      min: record.start,
+      orientation,
+      repClass,
+      repEnd,
+      repFamily,
+      repLeft,
+      repStart,
+      score: Number(scoreStr),
+      segment: record.chr,
+      swScore,
+      type: "bigbed",
+      _chromId: record.chromId,
+    };
+
+    return new RepeatMaskerFeature(output);
+  });
 }
 function formatRmskv2Masker(genesArr: any[]) {
   const filteredArray: Array<any> = [];
@@ -1785,17 +1826,32 @@ function formatOmeroidrData(genesArr: any[]) {
 }
 
 function formatBigBedData(genesArr: any[]) {
-  const formattedData = genesArr.map((record) => {
-    const feature = new Feature(
-      record.name ? record.name : record.label ? record.label : "",
-      new ChromosomeInterval(record.segment, record.min, record.max),
-      record.orientation,
-      record.score
-    );
+  return genesArr.map((record) => {
+    // Handle both old format (segment/min/max) and new format (chr/start/end)
+    const chr = record.segment || record.chr;
+    const start = record.min ?? record.start;
+    const end = record.max ?? record.end;
 
-    return feature;
+    // Parse rest field if present (format: "name\tscore\torientation")
+    let name = record.name || record.label || "";
+    let score = record.score;
+    let orientation = record.orientation;
+
+    if (record.rest) {
+      const [parsedName, parsedScore, parsedOrientation] =
+        record.rest.split("\t");
+      name = parsedName || name;
+      score = parsedScore ? Number(parsedScore) : score;
+      orientation = parsedOrientation || orientation;
+    }
+
+    return new Feature(
+      name,
+      new ChromosomeInterval(chr, start, end),
+      orientation,
+      score
+    );
   });
-  return formattedData;
 }
 
 function formatSnpData(genesArr: any[]) {

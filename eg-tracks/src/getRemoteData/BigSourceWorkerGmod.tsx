@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
 import { RemoteFile } from "generic-filehandle2";
 import fetch from "isomorphic-fetch";
@@ -44,7 +43,7 @@ export function resolveUriLocation(location) {
 }
 class BigSourceWorkerGmod {
   url: any;
-  bw: BigWig;
+  bw: any;
   /**
    *
    * @param {string} url - the URL from which to fetch data
@@ -54,7 +53,12 @@ class BigSourceWorkerGmod {
     this.bw = new BigWig({
       filehandle: new RemoteFile(url, { fetch }),
     });
+    // Don't store the instance - create fresh ones in getData to avoid cache
   }
+
+  /**
+   * Creates a new BigWig instance (no caching between requests)
+   */
 
   /**
    * Detects if the BigWig file uses Ensembl chromosome naming convention
@@ -87,7 +91,9 @@ class BigSourceWorkerGmod {
    * @return {Promise<DASFeature[]>} a Promise for the data
    * @override
    */
-  async getData(loci, options) {
+  async getData(loci, basesPerPixel, options) {
+    // Create a fresh instance for each request (avoids cache)
+
     const useEnsemblStyle = await this.detectChromosomeNaming();
 
     const promises = loci.map((locus) => {
@@ -99,14 +105,17 @@ class BigSourceWorkerGmod {
         chrom = useEnsemblStyle ? "M" : "chrM";
       }
 
-      return this.bw.getFeatures(chrom, locus.start, locus.end);
+      return this.bw.getFeatures(chrom, locus.start, locus.end, {
+        basesPerSpan: basesPerPixel,
+      });
     });
 
     const dataForEachLocus = await Promise.all(promises);
     loci.forEach((locus, index) => {
       dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
     });
-    const combinedData = _.flatten(dataForEachLocus);
+    const combinedData = dataForEachLocus.flat();
+
     return combinedData;
   }
 }

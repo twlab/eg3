@@ -1,7 +1,8 @@
 import _ from "lodash";
 import { Feature } from "./Feature";
 import DisplayedRegionModel from "./DisplayedRegionModel";
-import { FeaturePlacer } from "./getXSpan/FeaturePlacer";
+import { FeaturePlacer, PlacementMode } from "./getXSpan/FeaturePlacer";
+import { FeaturePlacementResult } from "./FeatureArranger";
 
 const VALUE_PROP_NAME = "value";
 
@@ -117,38 +118,62 @@ export class FeatureAggregator {
    * @param {number} width - width of the visualization
    * @return {Feature[][]} mapping from x coordinate to all Features overlapping that location
    */
+
+  /**
+   * Aggregates features in a single pass, separating forward and reverse values based on feature.value.
+   * Also handles deduplication based on locus coordinates in one loop.
+   *
+   * @param {Feature[]} features - features to aggregate (may contain duplicates)
+   * @param {DisplayedRegionModel} viewRegion - used to compute drawing coordinates
+   * @param {number} width - width of the visualization
+   * @param {Function} aggregateFunc - aggregation function to apply to features at each x position
+   * @param {boolean} useCenter - whether to use center positioning
+   * @param {object} viewWindow - optional window defining center region {start, end} for deduplication
+   * @return {[any[], any[]]} tuple of [forwardAggregated, reverseAggregated]
+   */
   makeXMap(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
     width: number,
-    useCenter: boolean = false
-  ): any {
-    width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
+    aggregateFunc: (features: Array<any>) => any,
+    useCenter: boolean = false,
+    viewWindow?: { start: number; end: number }
+  ): [any[], any[]] {
+    width = Math.round(width);
 
-    const xToFeatures = Array(width).fill(null);
+    // Initialize arrays for both forward and reverse
+    const xToFeaturesForward = Array(width).fill(null);
+    const xToAggregatedForward = Array(width).fill(null);
+    const xToFeaturesReverse = Array(width).fill(null);
+    const xToAggregatedReverse = Array(width).fill(null);
+
     for (let x = 0; x < width; x++) {
-      // Fill the array with empty arrays
-      xToFeatures[x] = [];
+      xToFeaturesForward[x] = [];
+      xToAggregatedForward[x] = null;
+      xToFeaturesReverse[x] = [];
+      xToAggregatedReverse[x] = null;
     }
 
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures(
+
+    // Single pass: deduplicate, separate, place, and aggregate
+    // Skip placements array for performance since we don't use it
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
-      useCenter
-    );
+      useCenter,
+      mode: PlacementMode.NUMERICAL,
+      viewWindow,
+      xToFeaturesForward,
+      xToFeaturesReverse,
+      aggregateFunc,
+      xToAggregatedForward,
+      xToAggregatedReverse,
+    });
 
-    for (const placedFeature of placement) {
-      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        xToFeatures[x].push(placedFeature.feature);
-      }
-    }
-    return xToFeatures;
+    return [xToAggregatedForward, xToAggregatedReverse];
   }
-
   makeXWindowMap(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
@@ -159,27 +184,19 @@ export class FeatureAggregator {
     const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
     for (let x = 0; x < width; x += windowSize) {
-      // Fill the array with empty arrays
-      // if (x < width) {
       map[x] = [];
-      // }
     }
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures(
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
-      useCenter
-    );
-    for (const placedFeature of placement) {
-      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        if (map.hasOwnProperty(x)) {
-          map[x].push(placedFeature.feature);
-        }
-      }
-    }
+      useCenter: true, // BOXPLOT always uses center
+      mode: PlacementMode.BOXPLOT,
+      windowSize,
+      xToWindowMap: map,
+    });
+
     return map;
   }
 }

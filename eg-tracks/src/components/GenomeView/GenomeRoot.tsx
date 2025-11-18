@@ -18,11 +18,9 @@ const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
-// @ts-ignore
 import FetchDataWorker from "../../getRemoteData/fetchDataWorker.ts?worker&inline";
 // @ts-ignore
 import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
-
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 

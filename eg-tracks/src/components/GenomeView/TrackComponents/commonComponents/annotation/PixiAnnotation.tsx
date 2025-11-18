@@ -58,7 +58,7 @@ export class PixiAnnotation extends React.PureComponent<
     useDynamicColors: false,
   };
 
-  private myRef: React.RefObject<HTMLDivElement>;
+  private myRef: React.RefObject<HTMLDivElement | null>;
   private container: HTMLDivElement | null = null;
   private subcontainer: PIXI.Container | null = null;
   private app: PIXI.Application | null = null;
@@ -106,15 +106,22 @@ export class PixiAnnotation extends React.PureComponent<
   }
 
   componentWillUnmount() {
-    this.app?.ticker.remove(this.tick);
+    if (this.app) {
+      this.app.ticker?.remove(this.tick);
+      this.app.stage?.off("pointerdown", this.onPointerDown);
+    }
     window.removeEventListener("resize", this.onWindowResize);
-    this.app?.stage.off("pointerdown", this.onPointerDown);
   }
 
   componentDidUpdate(
     prevProps: PixiAnnotationProps,
     prevState: PixiAnnotationState
   ) {
+    // Guard clause: don't process updates if app isn't initialized
+    if (!this.app) {
+      return;
+    }
+
     const { currentStep } = this.state;
 
     if (prevProps.arrangeResults !== this.props.arrangeResults) {
@@ -140,23 +147,29 @@ export class PixiAnnotation extends React.PureComponent<
     }
 
     if (prevProps.backgroundColor !== this.props.backgroundColor) {
-      this.app!.renderer.background.color = colorString2number(
-        this.props.backgroundColor || "0x000000"
-      );
+      if (this.app.renderer) {
+        this.app.renderer.background.color = colorString2number(
+          this.props.backgroundColor || "0x000000"
+        );
+      }
     }
 
     if (
       prevProps.height !== this.props.height ||
       prevProps.width !== this.props.width
     ) {
-      this.app!.renderer.resize(this.props.width, this.props.height);
+      if (this.app.renderer) {
+        this.app.renderer.resize(this.props.width, this.props.height);
+      }
     }
 
     if (prevProps.playing !== this.props.playing) {
-      if (this.props.playing) {
-        this.app!.ticker.start();
-      } else {
-        this.app!.ticker.stop();
+      if (this.app.ticker) {
+        if (this.props.playing) {
+          this.app.ticker.start();
+        } else {
+          this.app.ticker.stop();
+        }
       }
     }
 
@@ -168,14 +181,16 @@ export class PixiAnnotation extends React.PureComponent<
   }
 
   onPointerDown = (event: PIXI.FederatedPointerEvent) => {
-    if (event.button === 1) {
+    if (event.button === 1 && this.app?.ticker) {
       this.setState(
         (prevState) => ({ isPlaying: !prevState.isPlaying }),
         () => {
-          if (this.state.isPlaying) {
-            this.app!.ticker.start();
-          } else {
-            this.app!.ticker.stop();
+          if (this.app?.ticker) {
+            if (this.state.isPlaying) {
+              this.app.ticker.start();
+            } else {
+              this.app.ticker.stop();
+            }
           }
         }
       );
@@ -183,6 +198,10 @@ export class PixiAnnotation extends React.PureComponent<
   };
 
   initializeSubs = () => {
+    if (!this.subcontainer) {
+      return; // Subcontainer not initialized yet
+    }
+
     this.subs = [];
     this.steps = this.getMaxSteps();
     for (let i = 0; i < this.steps; i++) {
@@ -214,6 +233,10 @@ export class PixiAnnotation extends React.PureComponent<
   };
 
   drawAnnotations = () => {
+    if (!this.app || !this.subcontainer) {
+      return; // App not initialized yet
+    }
+
     const {
       color,
       color2,
@@ -230,6 +253,10 @@ export class PixiAnnotation extends React.PureComponent<
       this.resetSubs();
     } else {
       this.initializeSubs();
+      // Check again after initialization
+      if (!this.subs.length) {
+        return; // Failed to initialize subs
+      }
     }
 
     const style = {
@@ -249,7 +276,7 @@ export class PixiAnnotation extends React.PureComponent<
     g.endFill();
 
     let colorEach;
-    const t = this.app!.renderer.generateTexture(g);
+    const t = this.app.renderer.generateTexture(g);
 
     arrangeResults.forEach((placementGroup, index) => {
       if (useDynamicColors && dynamicColors?.length) {

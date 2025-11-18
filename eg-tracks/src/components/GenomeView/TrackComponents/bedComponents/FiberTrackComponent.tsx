@@ -4,12 +4,18 @@ import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
 
-
 import { Fiber } from "../../../../models/Feature";
-import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
+import {
+  FeaturePlacementResult,
+  PlacedFeatureGroup,
+} from "../../../../models/FeatureArranger";
 import OpenInterval from "../../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
+import {
+  FeaturePlacer,
+  PlacementMode,
+  PlacedFeature,
+} from "../../../../models/getXSpan/FeaturePlacer";
 import TrackLegend from "../commonComponents/TrackLegend";
 import DesignRenderer, {
   RenderTypes,
@@ -126,9 +132,14 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
       xToFibers[x] = { on: 0, off: 0, count: 0 };
     }
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures(data, viewRegion, width);
-    for (const placedFeature of placement) {
-      const { feature, xSpan, visiblePart } = placedFeature;
+    const result: FeaturePlacementResult = placer.placeFeatures({
+      features: data,
+      viewRegion,
+      width,
+      mode: PlacementMode.PLACEMENT,
+    }) as FeaturePlacementResult;
+    for (const placedFeature of result.placements) {
+      const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
       const { relativeStart, relativeEnd } = visiblePart;
       const segmentWidth = relativeEnd - relativeStart;
       const startX = Math.max(0, Math.floor(xSpan.start));
