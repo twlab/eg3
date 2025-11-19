@@ -75,32 +75,32 @@ const defaultTracks = [
     label: "MANE selection v1.4",
     genome: "hg38",
   }),
+  new TrackModel({
+    type: "repeatmasker",
+    name: "rmsk_all",
+    options: { label: "RepeatMasker" },
+    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  }),
   // new TrackModel({
-  //   type: "repeatmasker",
-  //   name: "rmsk_all",
-  //   options: { label: "RepeatMasker" },
-  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  //   type: "bigwig",
+  //   name: "bigwig nochr",
+  //   genome: "hg38",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
   // }),
-  new TrackModel({
-    type: "bigwig",
-    name: "bigwig nochr",
-    genome: "hg38",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-  }),
-  new TrackModel({
-    type: "bigwig",
-    name: "bigwig yeschr",
-    genome: "hg38",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
-  }),
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig yeschr",
+  //   genome: "hg38",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
+  // }),
+  // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  // }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -340,15 +340,15 @@ const defaultTracks = [
   //     },
   //   ],
   // }),
-  new TrackModel({
-    type: "dynseq",
-    name: "example dynseq",
-    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-    options: {
-      color: "blue",
-      height: 100,
-    },
-  }),
+  // new TrackModel({
+  //   type: "dynseq",
+  //   name: "example dynseq",
+  //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+  //   options: {
+  //     color: "blue",
+  //     height: 100,
+  //   },
+  // }),
 
   // new TrackModel({
   //   type: "methylc",
@@ -464,15 +464,15 @@ const defaultTracks = [
   //   ],
   // }),
 
-  new TrackModel({
-    type: "hic",
-    name: "test hic",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-    // metadata: { genome: "mm10" },
-  }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",

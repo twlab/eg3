@@ -1985,40 +1985,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: checkDrawData
   function checkDrawData(newDrawData) {
-    const browserMemorySize: { [key: string]: any } = window.performance;
+    // const browserMemorySize: { [key: string]: any } = window.performance;
 
-    // Check memory usage and free up if necessary
-    if (
-      browserMemorySize["memory"] &&
-      browserMemorySize["memory"].usedJSHeapSize >
-        browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-    ) {
-      // Old cache deletion loop (round-robin style)
+    // // Check memory usage and free up if necessary
+    // if (
+    //   browserMemorySize["memory"] &&
+    //   browserMemorySize["memory"].usedJSHeapSize >
+    //     browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+    // ) {
+    //   // Old cache deletion loop (round-robin style)
 
-      for (const key in trackFetchedDataCache.current) {
-        const curTrack = trackFetchedDataCache.current[key];
-        for (const cacheDataIdx in curTrack) {
-          if (
-            curTrack.trackType in trackUsingExpandedLoci &&
-            isInteger(cacheDataIdx)
-          ) {
-            if (Number(cacheDataIdx) !== dataIdx.current) {
-              delete trackFetchedDataCache.current[key][cacheDataIdx].dataCache;
-              if (
-                "records" in trackFetchedDataCache.current[key][cacheDataIdx]
-              ) {
-                delete trackFetchedDataCache.current[key][cacheDataIdx].records;
-              }
-              if (
-                "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
-              ) {
-                delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
-              }
-            }
-          }
-        }
-      }
-    }
+    //   for (const key in trackFetchedDataCache.current) {
+    //     const curTrack = trackFetchedDataCache.current[key];
+    //     for (const cacheDataIdx in curTrack) {
+    //       if (
+    //         curTrack.trackType in trackUsingExpandedLoci &&
+    //         isInteger(cacheDataIdx)
+    //       ) {
+    //         if (Number(cacheDataIdx) !== dataIdx.current) {
+    //           delete trackFetchedDataCache.current[key][cacheDataIdx].dataCache;
+    //           if (
+    //             "records" in trackFetchedDataCache.current[key][cacheDataIdx]
+    //           ) {
+    //             delete trackFetchedDataCache.current[key][cacheDataIdx].records;
+    //           }
+    //           if (
+    //             "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
+    //           ) {
+    //             delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
     for (const key in trackFetchedDataCache.current) {
       const curTrack = trackFetchedDataCache.current[key];
       const cacheKeys = Object.keys(curTrack)
