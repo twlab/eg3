@@ -2771,53 +2771,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
       );
-
-      // if (infiniteScrollWorkers.current) {
-      //   infiniteScrollWorkers.current.worker?.forEach((w) => {
-      //     if (!w.hasOnMessage) {
-      //       try {
-      //         w.fetchWorker.onmessage = createInfiniteOnMessage;
-
-      //         w.hasOnMessage = true;
-      //       } catch (error) {
-      //         console.warn(
-      //           "Failed to set worker onmessage handler on mount:",
-      //           error
-      //         );
-      //       }
-      //     }
-      //   });
-      //   infiniteScrollWorkers.current.instance?.forEach((w) => {
-      //     if (!w.hasOnMessage) {
-      //       try {
-      //         w.fetchWorker.onmessage = createInfiniteOnMessage;
-      //         w.hasOnMessage = true;
-      //       } catch (error) {
-      //         console.warn(
-      //           "Failed to set worker onmessage handler on mount:",
-      //           error
-      //         );
-      //       }
-      //     }
-      //   });
-      // }
-      // if (
-      //   hasGenomeAlign.current &&
-      //   fetchGenomeAlignWorker.current &&
-      //   fetchGenomeAlignWorker.current.fetchWorker &&
-      //   !fetchGenomeAlignWorker.current.hasOnMessage
-      // ) {
-      //   try {
-      //     fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-      //       createGenomeAlignOnMessage;
-      //     fetchGenomeAlignWorker.current.hasOnMessage = true;
-      //   } catch (error) {
-      //     console.warn(
-      //       "Failed to set genome align worker onmessage handler:",
-      //       error
-      //     );
-      //   }
-      // }
       initializeTracks();
       preload.current = true;
     }
@@ -2833,27 +2786,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mouseup", handleMouseUp);
 
       console.log("trackmanager terminate");
-
-      // Reset hasOnMessage flags when workers terminate
-      if (infiniteScrollWorkers.current) {
-        infiniteScrollWorkers.current.worker?.forEach((w) => {
-          if (w.hasOnMessage) {
-            w.hasOnMessage = false;
-          }
-        });
-        infiniteScrollWorkers.current.instance?.forEach((w) => {
-          if (w.hasOnMessage) {
-            w.hasOnMessage = false;
-          }
-        });
-      }
-      if (
-        hasGenomeAlign.current &&
-        fetchGenomeAlignWorker.current &&
-        fetchGenomeAlignWorker.current.hasOnMessage
-      ) {
-        fetchGenomeAlignWorker.current.hasOnMessage = false;
-      }
     };
   }, []);
 
@@ -3414,15 +3346,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 useFineModeNav.current = true;
               }
               hasGenomeAlign.current = true;
-              if (
-                hasGenomeAlign.current &&
-                fetchGenomeAlignWorker.current &&
-                !fetchGenomeAlignWorker.current.hasOnMessage
-              ) {
-                fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-                  createGenomeAlignOnMessage;
-                fetchGenomeAlignWorker.current.hasOnMessage = true;
-              }
             }
             // for tracks like hic and bam where we create an  instance obj
             // that we reuse to fetch data
