@@ -400,7 +400,7 @@ export const getHoverTooltip = {
         const rightBeamPos = right - dataObj.viewWindow.start + 120 + "px";
         const leftWidth = Math.max(xSpan1.getLength(), 1);
         const rightWidth = Math.max(xSpan2.getLength(), 1);
-        console.log(leftBeamPos, rightBeamPos);
+
         return (
           <>
             <div

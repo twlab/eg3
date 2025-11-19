@@ -18,6 +18,7 @@ import {
   ITrackModel,
   RegionSet,
 } from "wuepgg3-track";
+// import "wuepgg3-track/style.css";
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 

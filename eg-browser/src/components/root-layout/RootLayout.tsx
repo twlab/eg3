@@ -23,6 +23,7 @@ import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
   createSession,
+  selectCurrentSession,
   selectCurrentSessionId,
   setCurrentSession,
   updateCurrentSession,
@@ -92,6 +93,7 @@ export default function RootLayout(props: GenomeHubProps) {
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
   const navigationTab = useAppSelector(selectNavigationTab);
+  const currentSession = useAppSelector(selectCurrentSession);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
@@ -165,6 +167,7 @@ export default function RootLayout(props: GenomeHubProps) {
 
   useEffect(() => {
     let usePrevSession = false;
+    console.log(sessionId, initialState.current, "SESSION ID", currentSession);
     if (initialState.current && sessionId) {
       usePrevSession = true;
       initialState.current = false;
