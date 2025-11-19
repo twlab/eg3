@@ -1985,40 +1985,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: checkDrawData
   function checkDrawData(newDrawData) {
-    const browserMemorySize: { [key: string]: any } = window.performance;
+    // const browserMemorySize: { [key: string]: any } = window.performance;
 
-    // Check memory usage and free up if necessary
-    if (
-      browserMemorySize["memory"] &&
-      browserMemorySize["memory"].usedJSHeapSize >
-        browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-    ) {
-      // Old cache deletion loop (round-robin style)
+    // // Check memory usage and free up if necessary
+    // if (
+    //   browserMemorySize["memory"] &&
+    //   browserMemorySize["memory"].usedJSHeapSize >
+    //     browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+    // ) {
+    //   // Old cache deletion loop (round-robin style)
 
-      for (const key in trackFetchedDataCache.current) {
-        const curTrack = trackFetchedDataCache.current[key];
-        for (const cacheDataIdx in curTrack) {
-          if (
-            curTrack.trackType in trackUsingExpandedLoci &&
-            isInteger(cacheDataIdx)
-          ) {
-            if (Number(cacheDataIdx) !== dataIdx.current) {
-              delete trackFetchedDataCache.current[key][cacheDataIdx].dataCache;
-              if (
-                "records" in trackFetchedDataCache.current[key][cacheDataIdx]
-              ) {
-                delete trackFetchedDataCache.current[key][cacheDataIdx].records;
-              }
-              if (
-                "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
-              ) {
-                delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
-              }
-            }
-          }
-        }
-      }
-    }
+    //   for (const key in trackFetchedDataCache.current) {
+    //     const curTrack = trackFetchedDataCache.current[key];
+    //     for (const cacheDataIdx in curTrack) {
+    //       if (
+    //         curTrack.trackType in trackUsingExpandedLoci &&
+    //         isInteger(cacheDataIdx)
+    //       ) {
+    //         if (Number(cacheDataIdx) !== dataIdx.current) {
+    //           delete trackFetchedDataCache.current[key][cacheDataIdx].dataCache;
+    //           if (
+    //             "records" in trackFetchedDataCache.current[key][cacheDataIdx]
+    //           ) {
+    //             delete trackFetchedDataCache.current[key][cacheDataIdx].records;
+    //           }
+    //           if (
+    //             "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
+    //           ) {
+    //             delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
     for (const key in trackFetchedDataCache.current) {
       const curTrack = trackFetchedDataCache.current[key];
       const cacheKeys = Object.keys(curTrack)
@@ -2771,53 +2771,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
       );
-
-      // if (infiniteScrollWorkers.current) {
-      //   infiniteScrollWorkers.current.worker?.forEach((w) => {
-      //     if (!w.hasOnMessage) {
-      //       try {
-      //         w.fetchWorker.onmessage = createInfiniteOnMessage;
-
-      //         w.hasOnMessage = true;
-      //       } catch (error) {
-      //         console.warn(
-      //           "Failed to set worker onmessage handler on mount:",
-      //           error
-      //         );
-      //       }
-      //     }
-      //   });
-      //   infiniteScrollWorkers.current.instance?.forEach((w) => {
-      //     if (!w.hasOnMessage) {
-      //       try {
-      //         w.fetchWorker.onmessage = createInfiniteOnMessage;
-      //         w.hasOnMessage = true;
-      //       } catch (error) {
-      //         console.warn(
-      //           "Failed to set worker onmessage handler on mount:",
-      //           error
-      //         );
-      //       }
-      //     }
-      //   });
-      // }
-      // if (
-      //   hasGenomeAlign.current &&
-      //   fetchGenomeAlignWorker.current &&
-      //   fetchGenomeAlignWorker.current.fetchWorker &&
-      //   !fetchGenomeAlignWorker.current.hasOnMessage
-      // ) {
-      //   try {
-      //     fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-      //       createGenomeAlignOnMessage;
-      //     fetchGenomeAlignWorker.current.hasOnMessage = true;
-      //   } catch (error) {
-      //     console.warn(
-      //       "Failed to set genome align worker onmessage handler:",
-      //       error
-      //     );
-      //   }
-      // }
       initializeTracks();
       preload.current = true;
     }
@@ -2833,27 +2786,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mouseup", handleMouseUp);
 
       console.log("trackmanager terminate");
-
-      // Reset hasOnMessage flags when workers terminate
-      if (infiniteScrollWorkers.current) {
-        infiniteScrollWorkers.current.worker?.forEach((w) => {
-          if (w.hasOnMessage) {
-            w.hasOnMessage = false;
-          }
-        });
-        infiniteScrollWorkers.current.instance?.forEach((w) => {
-          if (w.hasOnMessage) {
-            w.hasOnMessage = false;
-          }
-        });
-      }
-      if (
-        hasGenomeAlign.current &&
-        fetchGenomeAlignWorker.current &&
-        fetchGenomeAlignWorker.current.hasOnMessage
-      ) {
-        fetchGenomeAlignWorker.current.hasOnMessage = false;
-      }
     };
   }, []);
 
@@ -3414,15 +3346,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 useFineModeNav.current = true;
               }
               hasGenomeAlign.current = true;
-              if (
-                hasGenomeAlign.current &&
-                fetchGenomeAlignWorker.current &&
-                !fetchGenomeAlignWorker.current.hasOnMessage
-              ) {
-                fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-                  createGenomeAlignOnMessage;
-                fetchGenomeAlignWorker.current.hasOnMessage = true;
-              }
             }
             // for tracks like hic and bam where we create an  instance obj
             // that we reuse to fetch data

@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels, generateUUID } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 10;
+const MAX_WORKERS = 20;
 const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
@@ -52,14 +52,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const infiniteScrollWorkers = useRef<{
     instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
-  } | null>(
-    packageVersion
-      ? null
-      : {
-          instance: [],
-          worker: [],
-        }
-  );
+  }>({
+    instance: [],
+    worker: [],
+  });
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
     hasOnMessage: boolean;
@@ -111,50 +107,49 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     }
 
-    if (!packageVersion && infiniteScrollWorkers.current) {
-      const normalTracks = tracks.filter(
-        (t) => !(t.type in INSTANCE_FETCH_TYPES)
-      );
-      const instanceFetchTracks = tracks.filter(
-        (t) => t.type in INSTANCE_FETCH_TYPES
-      );
+    const normalTracks = tracks.filter(
+      (t) => !(t.type in INSTANCE_FETCH_TYPES)
+    );
+    const instanceFetchTracks = tracks.filter(
+      (t) => t.type in INSTANCE_FETCH_TYPES
+    );
 
-      // Calculate how many workers we need
-      const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-      const instanceFetchTracksCount = Math.min(
-        instanceFetchTracks.length,
-        MAX_WORKERS
-      );
+    // Calculate how many workers we need
+    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    const instanceFetchTracksCount = Math.min(
+      instanceFetchTracks.length,
+      MAX_WORKERS
+    );
 
-      // Only create NEW workers if we need more than we have
-      const existingNormalWorkers = infiniteScrollWorkers.current.worker.length;
-      for (let i = existingNormalWorkers; i < normalCount; i++) {
-        infiniteScrollWorkers.current.worker.push({
-          fetchWorker: new FetchDataWorker(),
-          hasOnMessage: false,
-        });
-      }
-
-      const existingInstanceWorkers =
-        infiniteScrollWorkers.current.instance.length;
-      for (let i = existingInstanceWorkers; i < instanceFetchTracksCount; i++) {
-        infiniteScrollWorkers.current.instance.push({
-          fetchWorker: new FetchDataWorker(),
-          hasOnMessage: false,
-        });
-      }
-
-      // Create genome align worker if needed (only once)
-      if (
-        tracks.some((t) => t.type === "genomealign") &&
-        !fetchGenomeAlignWorker.current
-      ) {
-        fetchGenomeAlignWorker.current = {
-          fetchWorker: new FetchGenomeAlignWorker(),
-          hasOnMessage: false,
-        };
-      }
+    // Only create NEW workers if we need more than we have
+    const existingNormalWorkers = infiniteScrollWorkers.current.worker.length;
+    for (let i = existingNormalWorkers; i < normalCount; i++) {
+      infiniteScrollWorkers.current.worker.push({
+        fetchWorker: new FetchDataWorker(),
+        hasOnMessage: false,
+      });
     }
+
+    const existingInstanceWorkers =
+      infiniteScrollWorkers.current.instance.length;
+    for (let i = existingInstanceWorkers; i < instanceFetchTracksCount; i++) {
+      infiniteScrollWorkers.current.instance.push({
+        fetchWorker: new FetchDataWorker(),
+        hasOnMessage: false,
+      });
+    }
+
+    // Create genome align worker if needed (only once)
+    if (
+      tracks.some((t) => t.type === "genomealign") &&
+      !fetchGenomeAlignWorker.current
+    ) {
+      fetchGenomeAlignWorker.current = {
+        fetchWorker: new FetchGenomeAlignWorker(),
+        hasOnMessage: false,
+      };
+    }
+
     const nonG3dTracks = tracks.filter(
       (trackModel) => trackModel.type !== "g3d"
     );
@@ -303,9 +298,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         });
 
         // Clear the arrays and references
-        infiniteScrollWorkers.current.worker = [];
-        infiniteScrollWorkers.current.instance = [];
-        infiniteScrollWorkers.current = null;
+
+        infiniteScrollWorkers.current = {
+          instance: [],
+          worker: [],
+        };
       }
 
       // Terminate genome align worker
