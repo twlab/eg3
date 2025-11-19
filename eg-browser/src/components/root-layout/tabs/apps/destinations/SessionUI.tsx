@@ -195,6 +195,76 @@ const SessionUI: React.FC<SessionUIProps> = ({
     updateBundle(newBundle);
     const db = getDatabase();
     try {
+      // Get all existing sessions before setting the new one
+      // for checking most recent session update for those
+      // that didn't save their id
+
+      // const dbRef = ref(db, `sessions/`);
+      // const snapshot = await get(dbRef);
+
+      // let existingSessions = null;
+      // if (snapshot.exists()) {
+      //   existingSessions = snapshot.val();
+
+      //   // Convert to array for sorting
+      //   const sessionsArray = Object.entries(existingSessions).map(
+      //     ([bundleId, bundleData]: [string, any]) => {
+      //       let mostRecentDate = 0;
+
+      //       // Find the most recent date in this bundle's sessionsInBundle
+      //       if (
+      //         bundleData.sessionsInBundle &&
+      //         typeof bundleData.sessionsInBundle === "object"
+      //       ) {
+      //         mostRecentDate = Math.max(
+      //           ...Object.values(bundleData.sessionsInBundle).map(
+      //             (session: any) => session.date || 0
+      //           )
+      //         );
+      //       }
+
+      //       return {
+      //         bundleId,
+      //         bundleData,
+      //         mostRecentDate,
+      //       };
+      //     }
+      //   );
+
+      //   // Sort by most recent date (newest first)
+      //   sessionsArray.sort((a, b) => b.mostRecentDate - a.mostRecentDate);
+
+      //   console.log(
+      //     "Existing sessions sorted bsy most recent date:",
+      //     sessionsArray.map((s) => ({
+      //       bundleId: s.bundleId,
+      //       mostRecentDate: new Date(s.mostRecentDate).toLocaleString("en-US", {
+      //         month: "long",
+      //         day: "numeric",
+      //         hour: "numeric",
+      //         minute: "2-digit",
+      //         year: "numeric",
+      //       }),
+      //       sessions: Object.entries(s.bundleData.sessionsInBundle || {}).map(
+      //         ([sessionId, session]: [string, any]) => ({
+      //           sessionId,
+      //           label: session.label,
+      //           trackCount: session.state?.tracks?.length || 0,
+      //         })
+      //       ),
+      //       data: s,
+      //     }))
+      //   );
+
+      //   console.log(
+      //     "Bundle IDs in sorted order:",
+      //     sessionsArray.map((s) => s.bundleId)
+      //   );
+      // } else {
+      //   console.log("No existing sessions found");
+      // }
+
+      // Now set the new bundle
       await set(
         ref(db, `sessions/${curBundleId}`),
         JSON.parse(JSON.stringify(newBundle))
@@ -615,7 +685,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       onRetrieveBundle(bundleRes);
     }
   };
-  const styles = {
+  const styles: any = {
     container: {
       width: "100%",
       maxWidth: "800px",

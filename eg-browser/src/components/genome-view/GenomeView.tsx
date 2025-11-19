@@ -18,8 +18,8 @@ import {
   ITrackModel,
   RegionSet,
 } from "wuepgg3-track";
-import { TrackContainerRepresentable } from "wuepgg3-track";
 import "wuepgg3-track/style.css";
+import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 
 import { fetchBundle } from "../../lib/redux/thunk/session";
@@ -89,13 +89,7 @@ export default function GenomeView() {
       );
     }
   }
-  console.log(
-    currentSession &&
-      genomeConfig &&
-      currentSession.genomeId === genomeConfig.name,
-    currentSession,
-    genomeConfig
-  );
+
   return currentSession &&
     genomeConfig &&
     currentSession.genomeId === genomeConfig.name ? (

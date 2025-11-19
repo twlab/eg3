@@ -2,7 +2,6 @@ import {
   createSession,
   upsertSession,
   setCurrentSession,
-
 } from "../redux/slices/browserSlice";
 import { useAppDispatch } from "../redux/hooks";
 import { useEffect } from "react";
@@ -123,10 +122,7 @@ export default function useBrowserInitialization() {
             try {
               const hubData = await fetch(hub)
                 .then((r) => r.json())
-                .then((tracks) => tracks
-                );
-
-
+                .then((tracks) => tracks);
 
               additionalTracks = hubData.map((t: any) => ({
                 ...t,
@@ -134,10 +130,11 @@ export default function useBrowserInitialization() {
 
                 isSelected: false,
               }));
-
             } catch (error) {
               console.error("Failed to load hub data:", error);
-              alert("Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead.");
+              alert(
+                "Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead."
+              );
             }
           }
 
@@ -189,7 +186,11 @@ function generateAndSetIdempotencyToken() {
   }
 
   // Build URL string manually to preserve original parameter formatting
-  const paramString = params.toString().replace(/https%3A%2F%2F/g, 'https://').replace(/%2F/g, '/').replace(/%3A/g, ':');
+  const paramString = params
+    .toString()
+    .replace(/https%3A%2F%2F/g, "https://")
+    .replace(/%2F/g, "/")
+    .replace(/%3A/g, ":");
 
   const newUrl = paramString
     ? `${window.location.pathname}?${paramString}`

@@ -23,6 +23,7 @@ import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
   createSession,
+  selectCurrentSession,
   selectCurrentSessionId,
   setCurrentSession,
   updateCurrentSession,
@@ -41,7 +42,7 @@ import {
   setToolBarVisibility,
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   GenomeSerializer,
@@ -53,6 +54,7 @@ import {
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
 import { TracksProps } from "wuepgg3-track";
+import { initial } from "lodash";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -91,6 +93,7 @@ export default function RootLayout(props: GenomeHubProps) {
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
   const navigationTab = useAppSelector(selectNavigationTab);
+  const currentSession = useAppSelector(selectCurrentSession);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
@@ -98,7 +101,7 @@ export default function RootLayout(props: GenomeHubProps) {
   const isSmallScreen = useSmallScreen();
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
-
+  const initialState = useRef(true);
   const { clearHistory } = useUndoRedo();
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
@@ -163,9 +166,18 @@ export default function RootLayout(props: GenomeHubProps) {
   ]);
 
   useEffect(() => {
+    let usePrevSession = false;
+    console.log(sessionId, initialState.current, "SESSION ID", currentSession);
+    if (initialState.current && sessionId) {
+      usePrevSession = true;
+      initialState.current = false;
+    } else if (!initialState.current) {
+      usePrevSession = false;
+    }
     if (
-      (props.genomeName && props.tracks && props.viewRegion) ||
-      props.customGenome
+      !usePrevSession &&
+      ((props.genomeName && props.tracks && props.viewRegion) ||
+        props.customGenome)
     ) {
       const genomeConfig: GenomeConfig | null = getConfig();
       if (genomeConfig) {

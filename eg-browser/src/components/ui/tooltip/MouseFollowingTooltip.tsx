@@ -140,7 +140,7 @@ const MouseFollowingTooltip: React.FC = () => {
       {/* Indicator for selected tracks */}
       {hasSelectedTracks && sessionId && (
         <motion.div
-          className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[999] pointer-events-auto select-none cursor-pointer"
+          className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[9999] pointer-events-auto select-none cursor-pointer"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 0.9, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
