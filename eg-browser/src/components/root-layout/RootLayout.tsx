@@ -167,7 +167,7 @@ export default function RootLayout(props: GenomeHubProps) {
 
   useEffect(() => {
     let usePrevSession = false;
-    console.log(sessionId, initialState.current, "SESSION ID", currentSession);
+
     if (initialState.current && sessionId) {
       usePrevSession = true;
       initialState.current = false;
