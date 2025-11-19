@@ -1,25 +1,31 @@
 # Version history
 
+## 58.0.0
+
+-
+
 ## 57.0.1
-- added more error checking for saving sessions 
-- removed unused session tab 
+
+- added more error checking for saving sessions
+- removed unused session tab
 - small changes to session picker css, clearer import and move icon to top
 
 ## 57.0.0
-- Implemented a way for users to retry fetching a track if there is an error 
+
+- Implemented a way for users to retry fetching a track if there is an error
 - Implemented History menu, allow user to change to past or future states
 - Implemented URL param for datahub
 - Implemented shortcut keys for tools
 - implemented auto detect if file is ensembl and displays them
-- Allow users to import session in Genome picker menu 
+- Allow users to import session in Genome picker menu
 - Pressing Escape now allow users to exit out of sub menus
 - Redesign Sessions, history, toolbar and genome picker
 - refactor gene search
 - Reworked toolbar to fit screen when user zoom in and out
-- fixed memory deleting memory caching 
+- fixed memory deleting memory caching
 - fixed issues between sessions
 - fixed issues with custom genome saving them in session
-- increase overall stability and increase error checks 
+- increase overall stability and increase error checks
 
 ## 56.0.8
 
@@ -27,7 +33,7 @@
 
 ## 56.0.7
 
-- fixed search bar css 
+- fixed search bar css
 - fixed screenshot bug where track crashes
 - fixed bug when tabs open changing state cause crash
 - fixed bug when changing state to the latest do not update tracks
