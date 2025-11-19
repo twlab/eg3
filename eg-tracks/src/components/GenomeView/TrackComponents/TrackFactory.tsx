@@ -229,7 +229,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
       if (
         !trackFetchedDataCache.current[`${id}`] ||
-        !globalTrackState.current.trackStates[dataIdx]
+        !globalTrackState.current.trackStates[dataIdx] ||
+        !globalTrackState.current.trackStates[dataIdx].trackState
+          .genomicFetchCoord
       ) {
         return;
       }

@@ -28,14 +28,7 @@ interface HoverToolTipProps {
 }
 import { sameLoci } from "../../../../../models/util";
 import ReactDOM from "react-dom";
-function getAbsolutePosition(element) {
-  const rect = element.getBoundingClientRect();
-  return {
-    top: rect.top + window.pageYOffset,
-    left: rect.left + window.pageXOffset,
-    height: rect.height,
-  };
-}
+
 export const getHoverTooltip = {
   ruler: function getTooltip(dataObj: { [key: string]: any }) {
     return {
@@ -399,20 +392,15 @@ export const getHoverTooltip = {
     function renderTooltip() {
       if (polygon) {
         let { xSpan1, xSpan2 } = polygon;
-        const parentPos = getAbsolutePosition(dataObj.targetRef.current);
 
         const left = xSpan1.start;
         const right = xSpan2.start;
-        //  when theres padding or component moves
-        const fullSiteLeft = parentPos.left + left - 20 + "px";
-        const fullSiteRight = parentPos.left + right - 20 + "px";
-        // const fullSiteLeft = left - dataObj.viewWindow.start + 120 + "px";
-        // const fullSiteRight = right - dataObj.viewWindow.start + 120 + "px";
-        const packageLeft = left + 120 + "px";
-        const packageRight = right + 120 + "px";
+
+        const leftBeamPos = left - dataObj.viewWindow.start + 120 + "px";
+        const rightBeamPos = right - dataObj.viewWindow.start + 120 + "px";
         const leftWidth = Math.max(xSpan1.getLength(), 1);
         const rightWidth = Math.max(xSpan2.getLength(), 1);
-
+        console.log(leftBeamPos, rightBeamPos);
         return (
           <>
             <div
@@ -422,9 +410,7 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: dataObj.options.packageVersion
-                  ? packageLeft
-                  : fullSiteLeft,
+                left: leftBeamPos,
                 width: leftWidth + "px",
                 height: "100%",
 
@@ -440,9 +426,7 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: dataObj.options.packageVersion
-                  ? packageRight
-                  : fullSiteRight,
+                left: rightBeamPos,
                 width: rightWidth + "px",
                 height: "1000",
                 zIndex: 1000,
