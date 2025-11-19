@@ -28,12 +28,34 @@ interface HoverToolTipProps {
 }
 import { sameLoci } from "../../../../../models/util";
 import ReactDOM from "react-dom";
-function getAbsolutePosition(element) {
+function getAbsolutePosition(element, portalContainer = null) {
   const rect = element.getBoundingClientRect();
+
+  // Sum up all padding from element up to the portal container (or body)
+  let totalPaddingLeft = 0;
+  let totalBorderLeft = 0;
+  let currentElement = element;
+
+  // Walk up the tree until we hit the portal container, body, or max depth
+  while (currentElement && currentElement !== document.body) {
+    const style = window.getComputedStyle(currentElement);
+    totalPaddingLeft += parseFloat(style.paddingLeft) || 0;
+    totalBorderLeft += parseFloat(style.borderLeftWidth) || 0;
+
+    // Stop if we've reached the portal container
+    if (portalContainer && currentElement === portalContainer) {
+      break;
+    }
+
+    currentElement = currentElement.parentElement;
+  }
+
   return {
     top: rect.top + window.pageYOffset,
     left: rect.left + window.pageXOffset,
     height: rect.height,
+    paddingLeft: totalPaddingLeft,
+    borderLeft: totalBorderLeft,
   };
 }
 export const getHoverTooltip = {
@@ -399,17 +421,26 @@ export const getHoverTooltip = {
     function renderTooltip() {
       if (polygon) {
         let { xSpan1, xSpan2 } = polygon;
-        const parentPos = getAbsolutePosition(dataObj.targetRef.current);
+        const portalTarget = dataObj.options?.trackManagerRef?.current;
+        const parentPos = getAbsolutePosition(
+          dataObj.targetRef.current,
+          portalTarget
+        );
 
         const left = xSpan1.start;
         const right = xSpan2.start;
-        //  when theres padding or component moves
-        const fullSiteLeft = parentPos.left + left - 20 + "px";
-        const fullSiteRight = parentPos.left + right - 20 + "px";
+        //  Dynamically account for all padding and borders in hierarchy
+        const paddingOffset = parentPos.paddingLeft;
+        const borderOffset = parentPos.borderLeft;
+
+        const fullSiteLeft =
+          parentPos.left + left - paddingOffset - borderOffset + "px";
+        const fullSiteRight =
+          parentPos.left + right - paddingOffset - borderOffset + "px";
         // const fullSiteLeft = left - dataObj.viewWindow.start + 120 + "px";
         // const fullSiteRight = right - dataObj.viewWindow.start + 120 + "px";
-        const packageLeft = left + 120 + "px";
-        const packageRight = right + 120 + "px";
+        // const packageLeft = left + 120 + "px";
+        // const packageRight = right + 120 + "px";
         const leftWidth = Math.max(xSpan1.getLength(), 1);
         const rightWidth = Math.max(xSpan2.getLength(), 1);
 
@@ -422,9 +453,7 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: dataObj.options.packageVersion
-                  ? packageLeft
-                  : fullSiteLeft,
+                left: fullSiteLeft,
                 width: leftWidth + "px",
                 height: "100%",
 
@@ -440,9 +469,7 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: dataObj.options.packageVersion
-                  ? packageRight
-                  : fullSiteRight,
+                left: fullSiteRight,
                 width: rightWidth + "px",
                 height: "1000",
                 zIndex: 1000,
