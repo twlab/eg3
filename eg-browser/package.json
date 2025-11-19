@@ -1,7 +1,7 @@
 {
   "name": "wuepgg",
   "private": false,
-  "version": "57.0.7",
+  "version": "58.0.0",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",

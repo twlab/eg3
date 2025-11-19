@@ -23,7 +23,6 @@ import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
   createSession,
-  selectCurrentSession,
   selectCurrentSessionId,
   setCurrentSession,
   updateCurrentSession,
@@ -53,8 +52,6 @@ import {
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
-import { TracksProps } from "wuepgg3-track";
-import { initial } from "lodash";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -68,7 +65,7 @@ firebase.initializeApp(firebaseConfig);
 export interface RootLayoutProps {
   viewRegion?: string | null | undefined;
   genomeName?: string;
-  tracks?: TracksProps[] | ITrackModel[];
+  tracks?: Array<any> | ITrackModel[];
   windowWidth?: number;
   customGenome?: any;
   showGenomeNavigator?: boolean;
@@ -79,7 +76,7 @@ export interface RootLayoutProps {
 export interface GenomeHubProps {
   viewRegion?: string | null | undefined;
   genomeName?: string;
-  tracks?: TracksProps[] | ITrackModel[];
+  tracks?: Array<any> | ITrackModel[];
   windowWidth?: number;
   customGenome?: any;
   showGenomeNavigator?: boolean;
@@ -93,7 +90,6 @@ export default function RootLayout(props: GenomeHubProps) {
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
   const navigationTab = useAppSelector(selectNavigationTab);
-  const currentSession = useAppSelector(selectCurrentSession);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
