@@ -2,7 +2,17 @@
 
 ## 58.0.0
 
--
+- reduced memory usage by combining loops and removing repeating creation of array elements
+- implement workers into package version and refactor worker creation
+- fixed configmenu css positioning
+- fixed heatmap beam position
+- fixed url link bug when you can't make a url after clicking url link
+- implement full url for users that can't use tinyurl
+- fixed genome align for package
+- fixed clear all history bug and refactor history state
+- clear static numerical fetch instance raw data after fetch, reducing memory usage
+- implement persist state for package version, each new component keeps their previous state and load it on refresh
+- changed how numerical track are displayed when there are only negative or positive
 
 ## 57.0.1
 
