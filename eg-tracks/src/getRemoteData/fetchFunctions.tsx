@@ -91,7 +91,7 @@ interface QueryGenomePiece {
 const componentMap: { [key: string]: any } = {
   geneannotation: "",
   bed: "",
-  bedcolor: "",
+  // bedcolor: "",
   bigwig: "",
   dynseq: "",
   methylc: "",

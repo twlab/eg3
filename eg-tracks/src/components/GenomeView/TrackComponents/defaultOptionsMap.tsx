@@ -15,7 +15,7 @@ import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultVcfTrack } from "./VcfComponents/VcfTrack";
 import { DEFAULT_OPTIONS as defaultDynamicInteraction } from "./InteractionComponents/DynamicInteractionTrackComponents";
-import { DEFAULT_OPTIONS as defaultBedcolorTrack } from "./bedComponents/BedcolorTrack";
+// import { DEFAULT_OPTIONS as defaultBedcolorTrack } from "./bedComponents/BedcolorTrack";
 
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
@@ -110,16 +110,16 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
-  bedcolor: {
-    defaultOptions: {
-      ...defaultBedTrack,
-      ...defaultNumericalTrack,
-      ...defaultAnnotationTrack,
-      ...defaultBedcolorTrack,
-    },
-    getGenePadding: 0,
-    ROW_HEIGHT: 40 + 2,
-  },
+  // bedcolor: {
+  //   defaultOptions: {
+  //     ...defaultBedTrack,
+  //     ...defaultNumericalTrack,
+  //     ...defaultAnnotationTrack,
+  //     ...defaultBedcolorTrack,
+  //   },
+  //   getGenePadding: 0,
+  //   ROW_HEIGHT: 40 + 2,
+  // },
   repeatmasker: {
     defaultOptions: {
       ...defaultAnnotationTrack,
