@@ -137,7 +137,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         max = 0;
       }
 
-      console.log(xToValue, xToValue2, xvalues);
       if (
         xValues2.length &&
         (yScale === ScaleChoices.AUTO ||

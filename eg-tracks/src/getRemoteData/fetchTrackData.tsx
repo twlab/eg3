@@ -183,6 +183,8 @@ async function getRemoteData(regionData: any, trackType: string) {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
+    } else {
+      throw new Error(`Unsupported track type: ${trackType}`);
     }
   }
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
@@ -208,6 +210,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         regionData.trackModel.options
       )
       .then((data: any) => {
+        cachedFetchInstance[regionData.trackModel.url] = null;
         fetchInstance = null;
         return data;
       });
@@ -215,6 +218,7 @@ async function getRemoteData(regionData: any, trackType: string) {
     return fetchInstance
       .getData(regionData.nav, regionData.trackModel.options)
       .then((data: any) => {
+        cachedFetchInstance[regionData.trackModel.url] = null;
         fetchInstance = null;
         return data;
       });

@@ -518,7 +518,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         infiniteScrollWorkers.current.worker.length > 0
       ) {
         const numWorkers = infiniteScrollWorkers.current.worker.length;
-        console.log(infiniteScrollWorkers.current, numWorkers, tracks);
+
         for (let i = 0; i < numWorkers; i++) {
           const messagesForWorker: Array<any> = [];
           for (const msgObj of normalMessages) {
@@ -1309,7 +1309,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleDelete(id: Array<any>) {
-    console.log(id);
     trackManagerState.current.tracks = trackManagerState.current.tracks.filter(
       (item, _index) => {
         return !id.includes(String(item.id));
@@ -2027,15 +2026,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         .sort((a, b) => a - b);
       let minIdx, maxIdx;
       if (curTrack.trackType in trackUsingExpandedLoci) {
-        minIdx = dataIdx.current;
-        maxIdx = dataIdx.current;
-      } else {
         minIdx = dataIdx.current - 1;
         maxIdx = dataIdx.current + 1;
+      } else {
+        minIdx = dataIdx.current - 2;
+        maxIdx = dataIdx.current + 2;
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
-          trackFetchedDataCache.current[key][cacheDataIdx] = {};
+          if (trackFetchedDataCache.current[key][cacheDataIdx]) {
+            trackFetchedDataCache.current[key][cacheDataIdx] = {};
+          }
         }
       }
     }
@@ -2542,6 +2543,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         preloadedTracks.current = {};
         preload.current = false;
         if (initialLoad.current) {
+          initialLoad.current = false;
           setSelectedTool((prevState) => {
             if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
               const newSelectedTool = toolSelect(tool);
@@ -2603,7 +2605,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const curTracks = trackManagerState.current.tracks.filter(
         (trackModel) => trackModel.type !== "g3d"
       );
-      console.log(curTracks);
+
       const convertedITrackModel = curTracks
         .filter(
           (item) =>
@@ -3461,8 +3463,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(filteredTracks);
     }
-
-    initialLoad.current = false;
   }, [tracks]);
   // MARK: width, regions
   useEffect(() => {
