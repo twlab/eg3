@@ -2542,53 +2542,51 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       ) {
         preloadedTracks.current = {};
         preload.current = false;
-        if (initialLoad.current) {
-          initialLoad.current = false;
-          setSelectedTool((prevState) => {
-            if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
-              const newSelectedTool = toolSelect(tool);
-              return newSelectedTool;
-            } else {
-              return {
-                isSelected: false,
-                title: 0,
-              };
-            }
-          });
-          // When a track refreshes or a new genome is initialize, we
-          // select the region that was selected before the refresh after the track is
-          // created
-          const isSelected: Array<any> = [];
-          tracks.map((item) => {
-            if (item.isSelected) {
-              isSelected.push(item.id);
-            }
-          });
 
-          for (const key in selectedTracks.current) {
-            if (!(key in isSelected)) {
+        setSelectedTool((prevState) => {
+          if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
+            const newSelectedTool = toolSelect(tool);
+            return newSelectedTool;
+          } else {
+            return {
+              isSelected: false,
+              title: 0,
+            };
+          }
+        });
+        // When a track refreshes or a new genome is initialize, we
+        // select the region that was selected before the refresh after the track is
+        // created
+        const isSelected: Array<any> = [];
+        tracks.map((item) => {
+          if (item.isSelected) {
+            isSelected.push(item.id);
+          }
+        });
+
+        for (const key in selectedTracks.current) {
+          if (!(key in isSelected)) {
+            if (trackComponents) {
               if (trackComponents) {
-                if (trackComponents) {
-                  for (const component of trackComponents) {
-                    if (component.id === key) {
-                      // component.legendRef.current.style.backgroundColor = "white";
-                      delete selectedTracks.current[key];
-                    }
+                for (const component of trackComponents) {
+                  if (component.id === key) {
+                    // component.legendRef.current.style.backgroundColor = "white";
+                    delete selectedTracks.current[key];
                   }
                 }
               }
             }
           }
-          for (const key of isSelected) {
-            if (key! in selectedTracks.current) {
-              continue;
-            } else {
-              for (const component of trackComponents) {
-                if (component.id === key) {
-                  // component.legendRef.current.style.backgroundColor =
-                  //   "lightblue";
-                  selectedTracks.current[key!] = "";
-                }
+        }
+        for (const key of isSelected) {
+          if (key! in selectedTracks.current) {
+            continue;
+          } else {
+            for (const component of trackComponents) {
+              if (component.id === key) {
+                // component.legendRef.current.style.backgroundColor =
+                //   "lightblue";
+                selectedTracks.current[key!] = "";
               }
             }
           }
@@ -3463,6 +3461,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(filteredTracks);
     }
+    initialLoad.current = false;
   }, [tracks]);
   // MARK: width, regions
   useEffect(() => {
@@ -3665,7 +3664,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 >
                   <p
                     style={{
-                      backgroundColor: "var(--bg-color)",
+                      backgroundColor: "var(cd --bg-color)",
                       color: "var(--font-color)",
                       fontSize: `${Math.max(16, getFontSize())}px`,
                       margin: 0,

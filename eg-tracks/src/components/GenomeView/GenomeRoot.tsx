@@ -63,9 +63,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
-  const [tracksToDraw, setTracksToDraw] = useState<Array<TrackModel> | null>(
-    null
-  );
 
   const [show3dGene, setShow3dGene] = useState();
   //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
@@ -149,12 +146,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         hasOnMessage: false,
       };
     }
-
-    const nonG3dTracks = tracks.filter(
-      (trackModel) => trackModel.type !== "g3d"
-    );
     genomeConfig.defaultTracks = tracks;
-    setTracksToDraw(nonG3dTracks);
   }, [tracks]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
@@ -205,9 +197,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       const component = node.getComponent();
 
       if (component === "Browser") {
-        return tracksToDraw ? (
+        return tracks ? (
           <TrackManager
-            tracks={tracksToDraw}
+            tracks={tracks}
             legendWidth={legendWidth}
             windowWidth={
               (!size.width || size.width - legendWidth <= 0
@@ -246,7 +238,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     },
     [
-      tracksToDraw,
+      tracks,
       size.width,
       legendWidth,
       userViewRegion,
@@ -286,6 +278,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }
 
   useEffect(() => {
+    genomeConfig.defaultTracks = tracks;
     return () => {
       // Terminate all infinite scroll workers
 
@@ -325,9 +318,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks && tracksToDraw && genomeConfig ? (
+      {!has3dTracks ? (
         <TrackManager
-          tracks={tracksToDraw}
+          tracks={tracks}
           legendWidth={legendWidth}
           windowWidth={Math.round(
             (!size.width || size.width - legendWidth <= 0
