@@ -1,60 +1,37 @@
 import TabixSource from "./tabixSource";
 import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
-import JasparSource from "./JasparSource";
 import VcfSource from "./VcfSource";
 
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
 // Map track types to their data source types
-const TRACK_TYPE_MAP: { [key: string]: string } = {
-  bed: "bedOrTabix",
-  bedcolor: "bedOrTabix",
-  omeroidr: "bedOrTabix",
-  bedgraph: "bedOrTabix",
-  qbed: "bedOrTabix",
-  dbedgraph: "bedOrTabix",
-  modbed: "bedOrTabix",
-  refbed: "bedOrTabix",
-  matplot: "bedOrTabix",
-  categorical: "bedOrTabix",
-  longrange: "bedOrTabix",
-  methylc: "bedOrTabix",
-  genomealign: "bedOrTabix",
-  boxplot: "big",
-  bigwig: "big",
-  dynseq: "big",
-  biginteract: "big",
-  repeatmasker: "repeat",
-  rmskv2: "rmskv2",
-  jaspar: "jaspar",
-  bigbed: "bigbed",
-  vcf: "vcf",
-};
 
-// Create fetch functions dynamically for standard track types
-const createStandardFetchFunctions = () => {
-  const functions: { [key: string]: any } = {};
-
-  for (const [trackType, sourceType] of Object.entries(TRACK_TYPE_MAP)) {
-    functions[trackType] = async function (regionData: any) {
-      return getRemoteData(regionData, sourceType);
-    };
-  }
-
-  return functions;
-};
-
+let cachedFetchInstance: { [key: string]: any } = {};
 export const trackFetchFunction: { [key: string]: any } = {
-  // Custom implementations
   geneannotation: async function refGeneFetch(regionData: any) {
+    let genomeName;
+    let apiConfigPrefix;
     const trackModel = regionData.trackModel;
-    const genomeName = trackModel.apiConfig?.genome || regionData.genomeName;
-    const apiConfigPrefix =
-      trackModel.apiConfig?.format && apiConfigMap[trackModel.apiConfig.format]
-        ? apiConfigMap[trackModel.apiConfig.format]
-        : apiConfigMap.WashU;
+    if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
+      genomeName = trackModel["apiConfig"]["genome"];
+    } else {
+      genomeName = regionData.genomeName;
+    }
 
-    const url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    if (
+      trackModel["apiConfig"] &&
+      trackModel["apiConfig"]["format"] in apiConfigMap
+    ) {
+      apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`];
+    } else {
+      apiConfigPrefix = apiConfigMap.WashU;
+    }
+
+    let url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+
+    // if (regionData.genomeName === "canFam6") {
+    //   url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    // }
 
     const genRefResponse = await fetch(url, {
       method: "GET",
@@ -63,70 +40,158 @@ export const trackFetchFunction: { [key: string]: any } = {
     return genRefResponse.json();
   },
   snp: async function snpFetch(regionData: any) {
-    const SNP_REGION_API: { [key: string]: string } = {
+    const SNP_REGION_API: { [key: string]: any } = {
       hg19: "https://grch37.rest.ensembl.org/overlap/region/human",
       hg38: "https://rest.ensembl.org/overlap/region/human",
     };
 
-    const api = SNP_REGION_API[regionData.genomeName];
+    const api =
+      regionData.genomeName in SNP_REGION_API
+        ? SNP_REGION_API[`${regionData.genomeName}`]
+        : null;
 
-    if (!api || regionData.end - regionData.start > 30000) {
+    if (!api) {
       return [];
     }
 
-    const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
-      regionData.end
-    }?content-type=application%2Fjson&feature=variation`;
+    const headers = {
+      "Content-Type": "application/json",
+    };
 
-    try {
-      const response = await fetch(url, {
-        headers: { "Content-Type": "application/json" },
-      });
+    if (regionData.end - regionData.start <= 30000) {
+      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
+        regionData.end + "?content-type=application%2Fjson&feature=variation"
+      }`;
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
-      return { data: [] };
+      return fetch(url, { headers })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error);
+          return { data: [] };
+        });
+    } else {
+      return [];
     }
   },
+  bed: async function bedFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  bedcolor: async function bedFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  omeroidr: async function bedFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  bedgraph: async function bedgraphFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
 
-  // Spread all standard track type functions
-  ...createStandardFetchFunctions(),
+  qbed: async function qbedFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  dbedgraph: async function dbedgraphFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+
+  boxplot: async function boxplotFetch(regionData: any) {
+    return getRemoteData(regionData, "big");
+  },
+  modbed: async function bedFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+
+  jaspar: async function jasparFetch(regionData: any) {
+    return getRemoteData(regionData, "jaspar");
+  },
+  bigbed: async function bigbedFetch(regionData: any) {
+    return getRemoteData(regionData, "bigbed");
+  },
+  refbed: async function refbedFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  matplot: async function matplotFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  bigwig: async function bigwigFetch(regionData: any) {
+    return getRemoteData(regionData, "big");
+  },
+
+  categorical: async function coolFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  longrange: async function coolFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  dynseq: async function dynseqFetch(regionData: any) {
+    return getRemoteData(regionData, "big");
+  },
+
+  repeatmasker: async function repeatmaskerFetch(regionData: any) {
+    return getRemoteData(regionData, "repeat");
+  },
+
+  rmskv2: async function rmskv2Fetch(regionData: any) {
+    return getRemoteData(regionData, "repeat");
+  },
+  biginteract: async function biginteractFetch(regionData: any) {
+    return getRemoteData(regionData, "big");
+  },
+  methylc: async function methylcFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+
+  genomealign: function genomeAlignFetch(regionData: any) {
+    return getRemoteData(regionData, "bedOrTabix");
+  },
+  vcf: function vcfFetch(regionData: any) {
+    return getRemoteData(regionData, "vcf");
+  },
 };
 
 async function getRemoteData(regionData: any, trackType: string) {
   const indexUrl = regionData.trackModel.indexUrl || null;
   let fetchInstance: any = null;
-
-  const trackTypeMap: { [key: string]: any } = {
-    bedOrTabix: () => new TabixSource(regionData.trackModel.url, indexUrl),
-    vcf: () => new VcfSource(regionData.trackModel.url, indexUrl),
-    bigbed: () => new BigSourceWorkerGmod(regionData.trackModel.url),
-    big: () => new BigSourceWorkerGmod(regionData.trackModel.url),
-    repeat: () => new BigSourceWorkerGmod(regionData.trackModel.url),
-    rmskv2: () => new BigSourceWorkerGmod(regionData.trackModel.url),
-    jaspar: () => new BigSourceWorkerGmod(regionData.trackModel.url),
-  };
-
-  if (trackTypeMap[trackType]) {
-    fetchInstance = trackTypeMap[trackType]();
+  if (!cachedFetchInstance[regionData.trackModel.url]) {
+    if (trackType === "bedOrTabix") {
+      fetchInstance = new TabixSource(regionData.trackModel.url, indexUrl);
+    } else if (trackType === "vcf") {
+      fetchInstance = new VcfSource(regionData.trackModel.url, indexUrl);
+    } else if (trackType === "bigbed") {
+      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+    } else if (trackType === "big") {
+      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+    } else if (trackType === "repeat") {
+      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+    } else if (trackType === "jaspar") {
+      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+    }
+  } else {
+    fetchInstance = cachedFetchInstance[regionData.trackModel.url];
   }
-
   if (!fetchInstance) {
     return null;
   }
 
   const needsBasesPerPixel =
-    (trackType === "repeat" || trackType === "rmskv2") &&
-    regionData.basesPerPixel <= 1000;
-  const isJaspar = trackType === "jaspar" && regionData.basesPerPixel <= 2;
-  const isBigbed = trackType === "bigbed";
+    ((trackType === "repeat" || trackType === "rmskv2") &&
+      regionData.basesPerPixel <= 1000) ||
+    (trackType === "jaspar" && regionData.basesPerPixel <= 2);
 
-  if (needsBasesPerPixel || isJaspar || isBigbed) {
+  if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
+    return [];
+  }
+  if (
+    (trackType === "repeat" || trackType === "rmskv2") &&
+    regionData.basesPerPixel > 1000
+  ) {
+    return [];
+  }
+  if (needsBasesPerPixel || trackType === "bigbed") {
     return fetchInstance
       .getData(
         regionData.nav,

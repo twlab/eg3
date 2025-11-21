@@ -13,7 +13,12 @@ export class BigwigSource {
   constructor(url) {
     this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(url, { fetch }),
+      filehandle: new RemoteFile(url, {
+        fetch,
+        overrides: {
+          cache: "no-store",
+        },
+      }),
     });
   }
 

@@ -1,6 +1,5 @@
 import { BigWig } from "@gmod/bbi";
 import { RemoteFile } from "generic-filehandle2";
-import fetch from "isomorphic-fetch";
 
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
@@ -36,11 +35,6 @@ const ensembl: Array<string> = [
   "M",
 ];
 
-export function resolveUriLocation(location) {
-  return location.baseUri
-    ? { ...location, uri: new URL(location.uri, location.baseUri).href }
-    : location;
-}
 class BigSourceWorkerGmod {
   url: any;
   bw: any;
@@ -51,9 +45,8 @@ class BigSourceWorkerGmod {
   constructor(url) {
     this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(url, { fetch }),
+      filehandle: new RemoteFile(url),
     });
-    // Don't store the instance - create fresh ones in getData to avoid cache
   }
 
   /**
@@ -105,9 +98,7 @@ class BigSourceWorkerGmod {
         chrom = useEnsemblStyle ? "M" : "chrM";
       }
 
-      return this.bw.getFeatures(chrom, locus.start, locus.end, {
-        basesPerSpan: basesPerPixel,
-      });
+      return this.bw.getFeatures(chrom, locus.start, locus.end);
     });
 
     const dataForEachLocus = await Promise.all(promises);
@@ -115,7 +106,7 @@ class BigSourceWorkerGmod {
       dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
     });
     const combinedData = dataForEachLocus.flat();
-
+    console.log(combinedData);
     return combinedData;
   }
 }

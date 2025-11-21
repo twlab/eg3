@@ -2027,11 +2027,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         .sort((a, b) => a - b);
       let minIdx, maxIdx;
       if (curTrack.trackType in trackUsingExpandedLoci) {
-        minIdx = dataIdx.current;
-        maxIdx = dataIdx.current;
+        minIdx = dataIdx.current - 2;
+        maxIdx = dataIdx.current + 2;
       } else {
-        minIdx = dataIdx.current - 1;
-        maxIdx = dataIdx.current + 1;
+        minIdx = dataIdx.current - 4;
+        maxIdx = dataIdx.current + 4;
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
@@ -2590,6 +2590,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }
             }
           }
+          initialLoad.current = false;
         }
       }
     }
@@ -3239,6 +3240,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
+    console.log(initialLoad.current);
     if (!initialLoad.current && tracks && tracks.length === 0) {
       setTrackComponents([]);
     } else if (
@@ -3461,8 +3463,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(filteredTracks);
     }
-
-    initialLoad.current = false;
   }, [tracks]);
   // MARK: width, regions
   useEffect(() => {

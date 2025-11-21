@@ -178,7 +178,14 @@ export class FeaturePlacer {
 
       for (const feature of featureArray) {
         if (!feature) continue;
-
+        // Check if feature is too small to display (ANNOTATION mode only)
+        if (isAnnotation) {
+          const featureWidth = drawModel.basesToXWidth(feature.getLength());
+          if (featureWidth <= hiddenPixels) {
+            numHidden++;
+            continue; // Skip this feature
+          }
+        }
         // Determine if forward or reverse based on value (only for numerical mode)
         const isForward =
           isNumerical && (feature.value === undefined || feature.value >= 0);
@@ -265,15 +272,6 @@ export class FeaturePlacer {
 
           const startX = Math.max(0, Math.floor(xSpan.start));
           const endX = Math.min(width - 1, Math.ceil(xSpan.end));
-
-          // Check if feature is too small to display (ANNOTATION mode only)
-          if (isAnnotation) {
-            const featureWidth = drawModel.basesToXWidth(feature.getLength());
-            if (featureWidth < hiddenPixels) {
-              numHidden++;
-              continue; // Skip this feature
-            }
-          }
 
           // Only compute placement details if not in numerical mode
           if (!isNumerical && !isBoxplot) {

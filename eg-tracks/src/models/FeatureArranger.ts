@@ -10,6 +10,7 @@ import {
 } from "./getXSpan/FeaturePlacer";
 import OpenInterval from "./OpenInterval";
 import { SortItemsOptions } from "./SortItemsOptions";
+import LinearDrawingModel from "./LinearDrawingModel";
 
 export interface PlacedFeatureGroup {
   feature: Feature;
@@ -55,8 +56,31 @@ export class FeatureArranger {
     viewWindow
   ): FeaturePlacementResult {
     // Place features in ANNOTATION mode - combines adjacent features and assigns rows in one pass
+    const drawModel = new LinearDrawingModel(viewRegion, width);
+    console.log(viewRegion, width);
+    const visibleFeatures = features.map((item: any) => {
+      // Handle array, object with dataCache, or single feature
+      const featureArray = Array.isArray(item)
+        ? item
+        : item && item.dataCache
+        ? item.dataCache
+        : [item];
+
+      // Filter out features too small to display
+      const filtered = featureArray.filter(
+        (feature) =>
+          feature &&
+          drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
+      );
+
+      // Return the same structure (preserve dataCache if it exists)
+      return item && item.dataCache
+        ? { ...item, dataCache: filtered }
+        : filtered;
+    });
+    console.log(visibleFeatures);
     return FEATURE_PLACER.placeFeatures({
-      features,
+      features: visibleFeatures,
       viewRegion,
       width,
       mode: PlacementMode.ANNOTATION,
