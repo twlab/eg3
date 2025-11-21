@@ -1,6 +1,5 @@
 import { BigWig } from "@gmod/bbi";
 import { RemoteFile } from "generic-filehandle2";
-import fetch from "isomorphic-fetch";
 
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
@@ -46,15 +45,11 @@ const ensembl: Array<string> = [
   "M",
 ];
 
-export function resolveUriLocation(location) {
-  return location.baseUri
-    ? { ...location, uri: new URL(location.uri, location.baseUri).href }
-    : location;
-}
 class BigSourceWorkerGmod {
   url: any;
   private chromNamingCache: boolean | null = null;
-  private instanceId: string;
+  bw: BigWig;
+  useEnsemblStyle: null | boolean;
 
   /**
    *
@@ -62,42 +57,20 @@ class BigSourceWorkerGmod {
    */
   constructor(url) {
     this.url = url;
-    // Create a unique instance ID to prevent cache conflicts between multiple App instances
-    this.instanceId = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-  }
-
-  /**
-   * Creates a new BigWig instance for each request
-   * This prevents cache conflicts when multiple App instances access the same URL
-   */
-  private createBigWigInstance() {
-    // Create a fresh RemoteFile instance with no-cache fetch
-    // This prevents ERR_CACHE_O errors when multiple App instances access the same URL
-    const customFetch = createFetchWithNoCache();
-
-    return new BigWig({
-      filehandle: new RemoteFile(this.url, { fetch: customFetch }),
+    this.bw = new BigWig({
+      filehandle: new RemoteFile(this.url),
     });
+    this.useEnsemblStyle = null;
   }
 
   /**
-   * Detects if the BigWig file uses Ensembl chromosome naming convention
-   * Caches the result to avoid repeated header reads
+   * Detects if the BigWig file uses Ensembl
    * @return {Promise<boolean>} True if Ensembl naming (1, 2, 3...), false if UCSC naming (chr1, chr2, chr3...)
    */
   async detectChromosomeNaming() {
-    // Return cached result if available
-    if (this.chromNamingCache !== null) {
-      return this.chromNamingCache;
-    }
-
     try {
-      const bw = this.createBigWigInstance();
-      const header = await bw.getHeader();
+      const header = await this.bw.getHeader();
 
-      // Get just the first chromosome name directly
       const firstChrom = Object.keys(header.refsByName || {})[0];
 
       if (!firstChrom) {
@@ -126,9 +99,10 @@ class BigSourceWorkerGmod {
   getData = async (loci, basesPerPixel, options) => {
     // Create a fresh BigWig instance for each getData call
     // This prevents cache conflicts when multiple App instances exist
-    const bw = this.createBigWigInstance();
-
-    const useEnsemblStyle = await this.detectChromosomeNaming();
+    if (this.useEnsemblStyle === null) {
+      this.useEnsemblStyle = await this.detectChromosomeNaming();
+    }
+    const useEnsemblStyle = this.useEnsemblStyle;
 
     const promises = loci.map((locus) => {
       let chrom = useEnsemblStyle ? locus.chr.replace("chr", "") : locus.chr;
@@ -139,7 +113,7 @@ class BigSourceWorkerGmod {
         chrom = useEnsemblStyle ? "M" : "chrM";
       }
 
-      return bw.getFeatures(chrom, locus.start, locus.end, {
+      return this.bw.getFeatures(chrom, locus.start, locus.end, {
         basesPerSpan: basesPerPixel,
       });
     });

@@ -1,7 +1,6 @@
 import _ from "lodash";
 import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
-import fetch from "isomorphic-fetch";
 
 import { ensureMaxListLength } from "../models/util";
 // import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
@@ -28,8 +27,8 @@ class TabixSource {
     this.indexUrl = indexUrl ? indexUrl : url + ".tbi";
     this.dataLimit = dataLimit;
     this.tabix = new TabixIndexedFile({
-      filehandle: new RemoteFile(url, { fetch }),
-      tbiFilehandle: new RemoteFile(this.indexUrl, { fetch }),
+      filehandle: new RemoteFile(url),
+      tbiFilehandle: new RemoteFile(this.indexUrl),
     });
   }
 

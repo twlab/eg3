@@ -4,20 +4,8 @@ import AppProvider, { AppProviderProps } from "./lib/redux/AppProvider";
 import "./index.css";
 
 export interface AppProps extends Omit<AppProviderProps, "children"> {
-  /**
-   * Unique identifier for this App instance.
-   * Required when using multiple App instances to ensure isolated state.
-   * Each instance should have a unique storeId.
-   *
-   * @example
-   * <App storeConfig={{ storeId: 'genome-hub-1' }} />
-   * <App storeConfig={{ storeId: 'genome-hub-2' }} />
-   */
   storeConfig?: AppProviderProps["storeConfig"];
 
-  /**
-   * Any additional props to pass to RootLayout
-   */
   [key: string]: any;
 }
 
