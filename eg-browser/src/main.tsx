@@ -2,9 +2,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 
-createRoot(document.getElementById("root")!).render(
-  <App storeConfig={{ storeId: "main" }} />
-);
+createRoot(document.getElementById("root")!).render(<App />);
 
 // const testProps = {
 //   viewRegion: "chr7:27181545-27245617",
