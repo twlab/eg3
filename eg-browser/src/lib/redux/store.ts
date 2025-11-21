@@ -24,14 +24,6 @@ import searchReducer from "./slices/searchSlice";
 import undoRedoReducer from "./slices/undoRedoSlice";
 import { setCurrentSession } from "./slices/browserSlice";
 
-/**
- * @deprecated This default store is maintained for backward compatibility.
- * For new code or when using App as a package, use createAppStore() from './createStore' instead.
- *
- * When using multiple App instances, each should have its own store created via createAppStore()
- * with a unique storeId to ensure proper state isolation.
- */
-
 // Transform to reduce the size of persisted browser state
 const browserTransform = createTransform(
   // transform state on its way to being serialized and persisted

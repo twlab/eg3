@@ -158,25 +158,34 @@ async function getRemoteData(regionData: any, trackType: string) {
   let fetchInstance: any = null;
   if (!cachedFetchInstance[regionData.trackModel.url]) {
     if (trackType === "bedOrTabix") {
-      fetchInstance = new TabixSource(regionData.trackModel.url, indexUrl);
+      cachedFetchInstance[regionData.trackModel.url] = new TabixSource(
+        regionData.trackModel.url,
+        indexUrl
+      );
     } else if (trackType === "vcf") {
-      fetchInstance = new VcfSource(regionData.trackModel.url, indexUrl);
+      cachedFetchInstance[regionData.trackModel.url] = new VcfSource(
+        regionData.trackModel.url,
+        indexUrl
+      );
     } else if (trackType === "bigbed") {
-      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+        regionData.trackModel.url
+      );
     } else if (trackType === "big") {
-      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+        regionData.trackModel.url
+      );
     } else if (trackType === "repeat") {
-      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+        regionData.trackModel.url
+      );
     } else if (trackType === "jaspar") {
-      fetchInstance = new BigSourceWorkerGmod(regionData.trackModel.url);
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+        regionData.trackModel.url
+      );
     }
-  } else {
-    fetchInstance = cachedFetchInstance[regionData.trackModel.url];
   }
-  if (!fetchInstance) {
-    return null;
-  }
-
+  fetchInstance = cachedFetchInstance[regionData.trackModel.url];
   const needsBasesPerPixel =
     ((trackType === "repeat" || trackType === "rmskv2") &&
       regionData.basesPerPixel <= 1000) ||
