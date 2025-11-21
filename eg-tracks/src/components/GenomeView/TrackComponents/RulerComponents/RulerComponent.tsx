@@ -21,7 +21,7 @@ const HEIGHT = 40;
 /**
  * A ruler display.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 
 interface RulerVisualizerProps {

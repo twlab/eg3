@@ -54,7 +54,7 @@ interface ITrackModel {
  * An object storing track metadata and state.
  *
  * @implements {Serializable}
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class TrackModel {
   /**

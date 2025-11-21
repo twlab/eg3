@@ -14,7 +14,7 @@ const GAP_CHR = ""; // The special chromosome that gaps lie in.
  * have non-empty, unique names.  In addition to this implicit coordinate system, NavContext methods also support
  * feature coordinates, which are a feature and base number relative to the start of the feature.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 class NavigationContext {
   public _name: string;

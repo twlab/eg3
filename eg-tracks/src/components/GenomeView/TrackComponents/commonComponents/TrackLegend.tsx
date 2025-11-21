@@ -35,7 +35,7 @@ const AXIS_WIDTH = 32;
 /**
  * A box displaying labels, axes, and other important track info.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 class TrackLegend extends React.PureComponent<TrackLegendProps> {
   static defaultProps = {

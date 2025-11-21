@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
  * rather than measuring the text's bounding box.  It is reasonably good at this estimation; nonetheless, we are dealing
  * with a guess, so the background box may not be completely accurate.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 interface BackgroundedTextProps {
   // Props that are associated with <text>

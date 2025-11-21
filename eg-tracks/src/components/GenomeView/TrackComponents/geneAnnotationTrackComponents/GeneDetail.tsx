@@ -14,7 +14,7 @@ import "./Tooltip.css";
 /**
  * Box that contains gene details when a gene annotation is clicked.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 interface GeneDetailProps {
   gene: Gene; // Assuming Gene is a class or interface defined elsewhere
@@ -24,7 +24,7 @@ interface GeneDetailProps {
 /**
  * Box that contains gene details when a gene annotation is clicked.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 
 const GeneDetail: React.FC<GeneDetailProps> = ({ gene, queryEndpoint }) => {

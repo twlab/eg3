@@ -24,7 +24,7 @@ export const DEFAULT_OPTIONS = {
 /**
  * Track component for BED annotations.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 class BedcolorTrackNoTooltip extends React.Component<BedcolorTrackProps> {
   static displayName = "BedcolorTrack";

@@ -47,7 +47,7 @@ interface SelectableAreaState {
 /**
  * Creates and manages the boxes that the user can drag across the screen to select a new region.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class SelectableArea extends React.PureComponent<
   SelectableAreaProps,

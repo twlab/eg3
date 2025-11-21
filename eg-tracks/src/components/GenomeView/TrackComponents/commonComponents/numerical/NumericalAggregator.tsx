@@ -6,15 +6,9 @@ import {
 } from "../../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import { DEFAULT_OPTIONS } from "./NumericalTrack";
-import MethylCRecord from "../../../../../models/MethylCRecord";
-
-/*
-separate aggregate function out
-*/
 
 export class NumericalAggregator {
   constructor() {
-    // this.aggregateFeatures = memoizeOne(this.aggregateFeatures);
     this.xToValueMaker = memoizeOne(this.xToValueMaker);
   }
 
@@ -44,9 +38,9 @@ export class NumericalAggregator {
 
     let xToValue,
       xToValue2,
-      hasReverse = false;
+      hasReverse = false,
+      hasForward = false;
     if (data) {
-      // Aggregate forward and reverse values in a single pass through the data
       const aggregator = new FeatureAggregator();
       let newAggregatorId = aggregateMethod;
       if (aggregateMethod === "IMAGECOUNT" || !aggregateMethod) {
@@ -54,7 +48,6 @@ export class NumericalAggregator {
       }
       const aggregateFunc = DefaultAggregators.fromId(newAggregatorId);
 
-      // Single-pass aggregation that handles forward/reverse and deduplication
       const [xToValueBeforeSmooth, xToValue2BeforeSmooth] = aggregator.makeXMap(
         data,
         viewRegion,
@@ -64,7 +57,6 @@ export class NumericalAggregator {
         viewWindow
       );
 
-      // Apply smoothing
       const smoothNumber = Number.parseInt(smooth) || 0;
       xToValue =
         smoothNumber === 0
@@ -75,16 +67,24 @@ export class NumericalAggregator {
           ? xToValue2BeforeSmooth
           : Smooth(xToValue2BeforeSmooth, smoothNumber);
 
-      // Check if reverse data exists
-      if (
-        xToValue2.some((x) => x) &&
-        (yScale === ScaleChoices.AUTO ||
-          (yScale === ScaleChoices.FIXED && yMin < 0))
-      ) {
-        hasReverse = true;
+      for (let i = 0; i < xToValue.length; i++) {
+        if (!hasForward && xToValue[i]) {
+          hasForward = true;
+        }
+        if (
+          !hasReverse &&
+          xToValue2[i] &&
+          (yScale === ScaleChoices.AUTO ||
+            (yScale === ScaleChoices.FIXED && yMin < 0))
+        ) {
+          hasReverse = true;
+        }
+
+        if (hasForward && hasReverse) {
+          break;
+        }
       }
     }
-
-    return [xToValue, xToValue2, hasReverse];
+    return [xToValue, xToValue2, hasReverse, hasForward];
   }
 }

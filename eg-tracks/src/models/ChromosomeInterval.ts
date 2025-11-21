@@ -24,7 +24,7 @@ interface MergedLocus<T> {
  * Basically an OpenInterval with a chromosome's name.  Expresses genomic coordinates.
  *
  * @implements {Serializable}
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 class ChromosomeInterval extends OpenInterval implements IChromosomeInterval {
   /**

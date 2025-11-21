@@ -146,20 +146,20 @@ export class FeaturePlacer {
 
     const placements: Array<any> = [];
 
-    // For ANNOTATION mode: combine adjacent features and assign rows
+    // for Annotation, combine adjacent features and assign rows
     const groups: PlacedFeatureGroup[] = [];
     let currentGroup: PlacedFeature[] = [];
     let lastPlacement: PlacedFeature | null = null;
     const maxXsForRows: number[] = []; // Track row assignments
     const isConstPadding = typeof padding === "number";
 
-    // Track hidden features for ANNOTATION mode
+    // for Annotation, gene can be too small so we dont draw and increment numHidden
     let numHidden = 0;
 
-    // Only use Set when we're in regions where duplicates are possible
+    // used to store genome that we have already seen
     const seenLoci = new Set<string>();
 
-    // Track ranges for forward and reverse separately (only needed for numerical mode)
+    // track ranges for forward and reverse separately (only needed for numerical mode)
     let prevEndXForward = -1;
     let groupStartXForward = Infinity;
     let prevEndXReverse = -1;
@@ -169,16 +169,14 @@ export class FeaturePlacer {
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
 
-      // Check if item is an array, has dataCache property, or is a single feature
+      // check:  array, has dataCache property, or is a single feature
       const featureArray = Array.isArray(item)
         ? item
         : item && item.dataCache
         ? item.dataCache
         : [item];
 
-      // Loop through features in the dataCache (or single feature)
       for (const feature of featureArray) {
-        // Skip if no feature or item was invalid
         if (!feature) continue;
 
         // Determine if forward or reverse based on value (only for numerical mode)
@@ -195,7 +193,6 @@ export class FeaturePlacer {
             : xToAggregatedReverse
           : undefined;
 
-        // Use the appropriate tracking variables
         let prevEndX = isNumerical
           ? isForward
             ? prevEndXForward
@@ -219,12 +216,11 @@ export class FeaturePlacer {
           }
         }
 
-        // Skip if no valid context locations
         if (contextLocations.length === 0) {
           continue;
         }
 
-        // Use first context location to check for duplicates based on pixel coordinates
+        // use first location to check for duplicates based on pixel coordinates
         const firstContextLocation = contextLocations[0];
         const firstXSpan = useCenter
           ? drawModel.baseSpanToXCenter(firstContextLocation)
@@ -334,10 +330,7 @@ export class FeaturePlacer {
           if (isNumerical && xToFeatures && xToAggregated && aggregateFunc) {
             if (prevEndX >= 0 && startX > prevEndX) {
               for (let x = groupStartX; x <= prevEndX; x++) {
-                // if (xToFeatures[x] && xToFeatures[x].length > 0) {
-
                 xToAggregated[x] = aggregateFunc(xToFeatures[x]);
-                // }
               }
               groupStartX = startX;
             }
@@ -366,7 +359,7 @@ export class FeaturePlacer {
       }
     }
 
-    // Aggregate remaining positions for forward (numerical mode only)
+    // aggregate remaining positions for forward (numerical mode only)
     if (
       isNumerical &&
       groupStartXForward !== Infinity &&
@@ -375,17 +368,11 @@ export class FeaturePlacer {
       aggregateFunc
     ) {
       for (let x = groupStartXForward; x <= prevEndXForward; x++) {
-        // if (
-        //   xToFeaturesForward[x] &&
-        //   xToFeaturesForward[x].length > 0 &&
-        //   xToAggregatedForward[x] === null
-        // ) {
         xToAggregatedForward[x] = aggregateFunc(xToFeaturesForward[x]);
-        // }
       }
     }
 
-    // Aggregate remaining positions for reverse (numerical mode only)
+    // aggregate remaining positions for reverse (numerical mode only)
     if (
       isNumerical &&
       groupStartXReverse !== Infinity &&
@@ -394,17 +381,11 @@ export class FeaturePlacer {
       aggregateFunc
     ) {
       for (let x = groupStartXReverse; x <= prevEndXReverse; x++) {
-        // if (
-        //   xToFeaturesReverse[x] &&
-        //   xToFeaturesReverse[x].length > 0 &&
-        //   xToAggregatedReverse[x] === null
-        // ) {
         xToAggregatedReverse[x] = aggregateFunc(xToFeaturesReverse[x]);
-        // }
       }
     }
 
-    // Finalize last group if in ANNOTATION mode
+    // finalize last group if in ANNOTATION mode
     if (isAnnotation) {
       if (currentGroup.length > 0) {
         this._finalizeGroupWithRow(currentGroup, groups, padding, maxXsForRows);

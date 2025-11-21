@@ -21,7 +21,7 @@ export const REVERSE_STRAND_CHAR = "-";
  * A feature, or annotation, in the genome.
  *
  * @implements {Serializable}
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class Feature {
   name: string; // - name of the feature
@@ -130,7 +130,7 @@ export class Feature {
 /**
  * Everything a Feature is, plus a `value` prop.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class NumericalFeature extends Feature {
   declare value: number | undefined;

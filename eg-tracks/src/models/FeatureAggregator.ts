@@ -106,7 +106,7 @@ export const DefaultArrayAggregators = {
 /**
  * Aggregator of features.  Includes methods to construct x-to-data maps.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu, Chanrung(Chad) Seng
  */
 export class FeatureAggregator {
   /**
@@ -142,6 +142,8 @@ export class FeatureAggregator {
     width = Math.round(width);
 
     // Initialize arrays for both forward and reverse
+    // xToFeature holds genome element that sits at the same x position, we put them in an array to aggregate
+    // xToAggregated is the aggregated value at the x position from xToFeature, each element from xToFeature is an array of features
     const xToFeaturesForward = Array(width).fill(null);
     const xToAggregatedForward = Array(width).fill(null);
     const xToFeaturesReverse = Array(width).fill(null);
@@ -156,8 +158,7 @@ export class FeatureAggregator {
 
     const placer = new FeaturePlacer();
 
-    // Single pass: deduplicate, separate, place, and aggregate
-    // Skip placements array for performance since we don't use it
+    // Combined all functionality into one loop doing only a single pass: deduplicate, separate, place, and aggregate
     placer.placeFeatures({
       features,
       viewRegion,
