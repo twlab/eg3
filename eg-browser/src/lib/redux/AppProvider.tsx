@@ -12,11 +12,9 @@ export default function AppProvider({
   children,
   storeConfig,
 }: AppProviderProps) {
-  // Extract primitive values for stable dependencies
   const storeId = storeConfig?.storeId;
   const enablePersistence = storeConfig?.enablePersistence;
 
-  // Get or create a cached store instance to ensure persistence works across remounts
   const { store, persistor } = useMemo(
     () => getOrCreateStore({ storeId, enablePersistence }),
     [storeId, enablePersistence]

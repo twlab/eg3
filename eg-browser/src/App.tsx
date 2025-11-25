@@ -10,10 +10,10 @@ export interface AppProps extends Omit<AppProviderProps, "children"> {
 }
 
 /**
- * Main App component that can be exported and used as a package.
- * Supports multiple isolated instances through the storeConfig prop.
+ * app component can be exported and used as a package.
+ * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
  *
- * @param props Configuration and layout props
+ * @param props configuration and layout props
  */
 export default function App({ storeConfig, ...rootLayoutProps }: AppProps) {
   return (
