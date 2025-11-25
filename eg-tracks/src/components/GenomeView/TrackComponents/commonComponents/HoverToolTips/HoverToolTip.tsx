@@ -303,8 +303,13 @@ export const getHoverTooltip = {
   },
   methyc: function getTooltip(dataObj: { [key: string]: any }) {
     const { trackModel, viewRegion, width, options } = dataObj;
-    const strandsAtPixel = dataObj.data[Math.round(dataObj.relativeX)];
-
+    let strandsAtPixel = dataObj.data[Math.round(dataObj.relativeX)];
+    if (!strandsAtPixel) {
+      strandsAtPixel =
+        typeof strandsAtPixel === "number" && !Number.isNaN(strandsAtPixel)
+          ? strandsAtPixel.toFixed(2)
+          : "(no data)";
+    }
     return {
       toolTip: (
         <div>

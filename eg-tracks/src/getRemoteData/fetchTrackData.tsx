@@ -188,40 +188,47 @@ async function getRemoteData(regionData: any, trackType: string) {
     }
   }
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
-  const needsBasesPerPixel =
-    ((trackType === "repeat" || trackType === "rmskv2") &&
-      regionData.basesPerPixel <= 1000) ||
-    (trackType === "jaspar" && regionData.basesPerPixel <= 2);
+  if (fetchInstance) {
+    try {
+      const needsBasesPerPixel =
+        ((trackType === "repeat" || trackType === "rmskv2") &&
+          regionData.basesPerPixel <= 1000) ||
+        (trackType === "jaspar" && regionData.basesPerPixel <= 2);
 
-  if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
-    return [];
-  }
-  if (
-    (trackType === "repeat" || trackType === "rmskv2") &&
-    regionData.basesPerPixel > 1000
-  ) {
-    return [];
-  }
-  if (needsBasesPerPixel || trackType === "bigbed") {
-    return fetchInstance
-      .getData(
-        regionData.nav,
-        regionData.basesPerPixel,
-        regionData.trackModel.options
-      )
-      .then((data: any) => {
-        cachedFetchInstance[regionData.trackModel.url] = null;
-        fetchInstance = null;
-        return data;
-      });
+      if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
+        return [];
+      }
+      if (
+        (trackType === "repeat" || trackType === "rmskv2") &&
+        regionData.basesPerPixel > 1000
+      ) {
+        return [];
+      }
+      if (needsBasesPerPixel || trackType === "bigbed") {
+        return fetchInstance
+          .getData(
+            regionData.nav,
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
+          .then((data: any) => {
+            cachedFetchInstance[regionData.trackModel.url] = null;
+            fetchInstance = null;
+            return data;
+          })
+          .catch((error: any) => {});
+      } else {
+        return fetchInstance
+          .getData(regionData.nav, regionData.trackModel.options)
+          .then((data: any) => {
+            cachedFetchInstance[regionData.trackModel.url] = null;
+            fetchInstance = null;
+            return data;
+          })
+          .catch((error: any) => {});
+      }
+    } catch (error: any) {}
   } else {
-    return fetchInstance
-      .getData(regionData.nav, regionData.trackModel.options)
-      .then((data: any) => {
-        cachedFetchInstance[regionData.trackModel.url] = null;
-        fetchInstance = null;
-        return data;
-      });
   }
 }
 
