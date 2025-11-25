@@ -579,7 +579,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
               });
 
               let records: AlignmentRecord[] = [];
-
+              console.log(responds);
               for (const record of responds) {
                 let data = parseCustomFormat("{" + record[3] + "}");
 
@@ -609,7 +609,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
         };
       })
     );
-
+    console.log(fetchResults);
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
     let successFetch: Array<any> = [];

@@ -113,15 +113,14 @@ class BigSourceWorkerGmod {
         chrom = useEnsemblStyle ? "M" : "chrM";
       }
 
-      return this.bw.getFeatures(chrom, locus.start, locus.end, {
-        basesPerSpan: basesPerPixel,
-      });
+      return this.bw.getFeatures(chrom, locus.start, locus.end);
     });
 
     const dataForEachLocus = await Promise.all(promises);
     loci.forEach((locus, index) => {
       dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
     });
+    console.log(dataForEachLocus);
     const combinedData = dataForEachLocus.flat();
 
     return combinedData;

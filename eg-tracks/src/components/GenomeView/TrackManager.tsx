@@ -1704,7 +1704,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     event: MessageEvent | { [key: string]: any }
   ) => {
     const regionDrawIdx = event.data.navData.trackDataIdx;
-
+    console.log(event.data);
     const curTrackState = {
       ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
       primaryGenName: genomeConfig.genome.getName(),
