@@ -120,7 +120,7 @@ class BigSourceWorkerGmod {
     loci.forEach((locus, index) => {
       dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
     });
-    console.log(dataForEachLocus);
+
     const combinedData = dataForEachLocus.flat();
 
     return combinedData;

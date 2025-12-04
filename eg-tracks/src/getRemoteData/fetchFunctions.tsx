@@ -579,7 +579,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
               });
 
               let records: AlignmentRecord[] = [];
-              console.log(responds);
+
               for (const record of responds) {
                 let data = parseCustomFormat("{" + record[3] + "}");
 
