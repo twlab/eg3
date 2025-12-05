@@ -263,7 +263,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             id: id,
             metadata: item.metadata,
             trackModel: item,
-            result: { error: "This track type is currently not supported" },
+            result: { error: "This track type is currently not supported. " },
           });
         } else if (trackType in { hic: "", dynamichic: "" }) {
           fetchResults.push({
