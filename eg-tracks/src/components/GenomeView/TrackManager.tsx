@@ -1,4 +1,11 @@
-import { createRef, memo, useEffect, useRef, useState } from "react";
+import {
+  createRef,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
@@ -632,7 +639,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
 
   // MARK: mouseAction
-  const handleKeyDown = (event: { key: string }) => {
+  const handleKeyDown = useCallback((event: { key: string }) => {
     if (event.key === "Escape") {
       // let newSelectedTool: { [key: string]: any } = {};
       // newSelectedTool["tool"] = "none";
@@ -641,20 +648,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onTrackUnSelect();
       onConfigMenuClose();
     }
-  };
+  }, []); // onTrackUnSelect and onConfigMenuClose defined below with useCallback
 
-  function handleMouseEnter() {
+  const handleMouseEnter = useCallback(() => {
     isMouseInsideRef.current = true;
-  }
+  }, []);
 
-  function handleMouseLeave() {
+  const handleMouseLeave = useCallback(() => {
     isMouseInsideRef.current = false;
     // Hide crosshair lines when mouse leaves
     if (horizontalLineRef.current && verticalLineRef.current) {
       horizontalLineRef.current.style.display = "none";
       verticalLineRef.current.style.display = "none";
     }
-  }
+  }, []);
 
   function calculateGenomicPosition(x: number) {
     // Calculate the genomic position based on mouse x coordinate
@@ -1050,18 +1057,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     delete completedFetchedRegion.current.done[id];
     queueRegionToFetch(dataIdx.current);
   }
-  function handleReorder(order: Array<any>) {
-    const newOrder: Array<any> = [];
-    for (const item of order) {
-      newOrder.push(_.cloneDeep(item.trackModel));
-    }
+  const handleReorder = useCallback(
+    (order: Array<any>) => {
+      const newOrder: Array<any> = [];
+      for (const item of order) {
+        newOrder.push(_.cloneDeep(item.trackModel));
+      }
 
-    trackManagerState.current.tracks = _.cloneDeep(newOrder);
+      trackManagerState.current.tracks = _.cloneDeep(newOrder);
 
-    // console.log(trackManagerState.current.tracks, newOrder, "order")
+      // console.log(trackManagerState.current.tracks, newOrder, "order")
 
-    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
-  }
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+    },
+    [onTracksChange]
+  );
   function updateGlobalTrackConfig(config: any) {
     globalTrackConfig.current[`${config.trackModel.id}`] = _.cloneDeep(config);
   }
@@ -1293,11 +1303,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
 
-  function onConfigMenuClose() {
+  const onConfigMenuClose = useCallback(() => {
     setConfigMenu(null);
-  }
+  }, []);
 
-  function onTrackUnSelect() {
+  const onTrackUnSelect = useCallback(() => {
     if (Object.keys(selectedTracks.current).length !== 0) {
       trackManagerState.current.tracks.map((trackModel) => {
         trackModel.isSelected = false;
@@ -1306,21 +1316,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       selectedTracks.current = {};
       onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
     }
-  }
+  }, [onTracksChange]);
 
-  function handleDelete(id: Array<any>) {
-    trackManagerState.current.tracks = trackManagerState.current.tracks.filter(
-      (item, _index) => {
-        return !id.includes(String(item.id));
+  const handleDelete = useCallback(
+    (id: Array<any>) => {
+      trackManagerState.current.tracks =
+        trackManagerState.current.tracks.filter((item, _index) => {
+          return !id.includes(String(item.id));
+        });
+
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+
+      if (id.length > 0) {
+        onConfigMenuClose();
       }
-    );
-
-    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
-
-    if (id.length > 0) {
-      onConfigMenuClose();
-    }
-  }
+    },
+    [onTracksChange, onConfigMenuClose]
+  );
   function handleAdd(tracks: Array<any>, trackType) {
     let newTrack: TrackModel | null = null;
     if (trackType === "matplot") {
@@ -1704,7 +1716,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     event: MessageEvent | { [key: string]: any }
   ) => {
     const regionDrawIdx = event.data.navData.trackDataIdx;
-    console.log(event.data);
+
     const curTrackState = {
       ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
       primaryGenName: genomeConfig.genome.getName(),

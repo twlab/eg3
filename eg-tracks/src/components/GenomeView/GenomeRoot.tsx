@@ -5,7 +5,7 @@ import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import { addTabSetToLayout, initialLayout } from "../../models/layoutUtils";
 import "./AppLayout.css";
-import { arraysHaveSameTrackModels, generateUUID } from "../../util";
+import { arraysHaveSameTrackModels } from "../../util";
 
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";

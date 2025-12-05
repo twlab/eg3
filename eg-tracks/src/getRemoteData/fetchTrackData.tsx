@@ -216,7 +216,9 @@ async function getRemoteData(regionData: any, trackType: string) {
             fetchInstance = null;
             return data;
           })
-          .catch((error: any) => {});
+          .catch(() => {
+            return { error: "Failed to fetch data. " };
+          });
       } else {
         return fetchInstance
           .getData(regionData.nav, regionData.trackModel.options)
@@ -225,11 +227,15 @@ async function getRemoteData(regionData: any, trackType: string) {
             fetchInstance = null;
             return data;
           })
-          .catch((error: any) => {});
+          .catch(() => {
+            return { error: "Failed to fetch data. " };
+          });
       }
-    } catch (error: any) {}
-  } else {
+    } catch (error: any) {
+      return { error: "Failed to fetch data. " };
+    }
   }
+  return { error: "Failed to fetch data. " };
 }
 
 export default trackFetchFunction;

@@ -1,5 +1,9 @@
 # Version history
 
+## 58.0.1
+
+- fixed small issue with custom genome not properly displaying when given id and name property
+
 ## 58.0.0
 
 - reduced memory usage by combining loops and removing repeating creation of array elements

@@ -1977,6 +1977,7 @@ function formatDynamic(genesArr: any[]) {
 
 function formatBedgraph(genesArr: any[]) {
   const VALUE_COLUMN_INDEX = 3;
+
   return genesArr.map((record) => {
     const newChrInt = new ChromosomeInterval(
       record.chr,

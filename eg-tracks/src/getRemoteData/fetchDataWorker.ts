@@ -16,7 +16,6 @@ if (
         postMessage(results);
       }
       results = null;
-      ("");
     } catch (error) {
       postMessage({
         error: error instanceof Error ? error.message : "Unknown error",

@@ -439,6 +439,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                 }),
               ]);
             }
+
             responses.push(curRespond.flat());
           } catch (error) {
             console.error(
@@ -609,7 +610,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
         };
       })
     );
-    console.log(fetchResults);
+
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
     let successFetch: Array<any> = [];
