@@ -1,5 +1,9 @@
 # Version history
 
+## 58.0.2
+
+- fixed groupscale not displaying because of new code rework
+
 ## 58.0.1
 
 - fixed small issue with custom genome not properly displaying when given id and name property
