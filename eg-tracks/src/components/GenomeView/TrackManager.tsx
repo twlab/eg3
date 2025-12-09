@@ -40,6 +40,7 @@ import { ITrackModel, Tool } from "../../types";
 import {
   GroupedTrackManager,
   numericalTracks,
+  numericalTracksGroup,
 } from "./TrackComponents/GroupedTrackManager";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
@@ -225,6 +226,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
     key: -0,
     done: {},
+    groups: {},
   });
   const initialLoad = useRef(true);
   const useFineModeNav = useRef(false);
@@ -1695,6 +1697,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (completedFetchedRegion.current.key !== dataIdx.current) {
             completedFetchedRegion.current.key = dataIdx.current;
             completedFetchedRegion.current.done = {};
+            completedFetchedRegion.current.groups = {};
           }
 
           curDrawData["trackToDrawId"] = { ...cacheKeysWithData };
@@ -1977,8 +1980,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       !initialLoad.current
     ) {
       if (dataIdx.current !== completedFetchedRegion.current.key) {
-        completedFetchedRegion.current.done = {};
         completedFetchedRegion.current.key = dataIdx.current;
+        completedFetchedRegion.current.done = {};
+        completedFetchedRegion.current.groups = {};
+
         checkDrawData({
           curDataIdx: dataIdx.current,
           isInitial: 0,
@@ -2093,12 +2098,71 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
+      const nonGroupScaleTracks: { [key: string]: any } = {};
+      for (const trackId in newDrawData.trackToDrawId) {
+        let configOptions;
+        let curTrackModel;
+        if (trackId in globalTrackConfig.current) {
+          configOptions = globalTrackConfig.current[trackId].configOptions;
+        } else {
+          curTrackModel = tracks.find(
+            (trackModel: any) => trackModel.id === trackId
+          );
+
+          if (curTrackModel) {
+            configOptions = {
+              ...trackOptionMap[
+                `${trackFetchedDataCache.current[trackId].trackType}`
+              ].defaultOptions,
+              ...curTrackModel.options,
+            };
+          }
+        }
+
+        if (
+          configOptions &&
+          configOptions.group &&
+          trackFetchedDataCache.current[trackId].trackType in
+            numericalTracksGroup
+        ) {
+          const groupId = configOptions.group;
+          if (!completedFetchedRegion.current.groups[`${groupId}`]) {
+            completedFetchedRegion.current.groups[`${groupId}`] = {};
+          }
+          completedFetchedRegion.current.groups[`${groupId}`][`${trackId}`] =
+            newDrawData.trackToDrawId[`${trackId}`];
+        } else {
+          nonGroupScaleTracks[`${trackId}`] =
+            newDrawData.trackToDrawId[`${trackId}`];
+        }
+      }
 
       completedFetchedRegion.current.done = {
         ...completedFetchedRegion.current.done,
-        ...newDrawData.trackToDrawId,
+        ...nonGroupScaleTracks,
       };
+      for (const groupId in completedFetchedRegion.current.groups) {
+        const currGroupKeys = Object.keys(
+          completedFetchedRegion.current.groups[`${groupId}`]
+        );
+        const checkGroupsKeys: Array<any> = [];
+        for (const track of trackManagerState.current.tracks) {
+          if (track.options && String(track.options.group) === groupId) {
+            checkGroupsKeys.push(track.id);
+          }
+        }
 
+        const haveSameElements =
+          currGroupKeys.length === checkGroupsKeys.length &&
+          currGroupKeys.every((key) => checkGroupsKeys.includes(key));
+        // console.log(haveSameElements, currGroupKeys, checkGroupsKeys);
+        if (haveSameElements) {
+          completedFetchedRegion.current.done = {
+            ...completedFetchedRegion.current.done,
+            ...completedFetchedRegion.current.groups[`${groupId}`],
+          };
+        }
+      }
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
@@ -2388,6 +2452,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     completedFetchedRegion.current = {
       key: -0,
       done: {},
+      groups: {},
     };
     useFineModeNav.current = false;
     trackManagerId.current = "";
@@ -3262,6 +3327,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         (trackModel) => trackModel.type !== "g3d"
       );
       const tracksInView = [...trackComponents.map((item) => item.trackModel)];
+      // const tracksRemoved = tracksInView.filter(
+      //   (trackInView) =>
+      //     !filteredTracks.some((track) => track.id === trackInView.id)
+      // );
+
       if (!arraysHaveSameTrackModels(filteredTracks, tracksInView)) {
         const newGenomealignTracks = filteredTracks.filter(
           (item) => item.type === "genomealign"
@@ -3429,9 +3499,62 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         trackManagerState.current.tracks = filteredTracks;
+
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
+        // if (tracksRemoved.length > 0) {
+        //   const trackToDrawId: { [key: string]: any } = {};
+
+        //   for (const track of tracksRemoved) {
+        //     if (track.options && track.options.group) {
+        //       for (const newTrack of tracks) {
+        //         if (newTrack.options && newTrack.options.group) {
+        //           if (track.options.group === newTrack.options.group) {
+        //             const curTrack = trackFetchedDataCache.current[newTrack.id];
+
+        //             for (const cacheDataIdx in curTrack) {
+        //               if (isInteger(cacheDataIdx)) {
+        //                 if (
+        //                   "xvalues" in
+        //                   trackFetchedDataCache.current[newTrack.id][
+        //                     cacheDataIdx
+        //                   ]
+        //                 ) {
+        //                   delete trackFetchedDataCache.current[newTrack.id][
+        //                     cacheDataIdx
+        //                   ].xvalues;
+        //                 }
+        //               }
+        //             }
+        //             trackToDrawId[newTrack.id] = false;
+        //             completedFetchedRegion.current.done[newTrack.id] = false;
+        //             if (
+        //               !completedFetchedRegion.current.groups[
+        //                 newTrack.options.group
+        //               ]
+        //             ) {
+        //               completedFetchedRegion.current.groups[
+        //                 newTrack.options.group
+        //               ] = {};
+        //             } else {
+        //               completedFetchedRegion.current.groups[
+        //                 newTrack.options.group
+        //               ][newTrack.id] = false;
+        //             }
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        //   completedFetchedRegion.current.key = dataIdx.current;
+
+        //   checkDrawData({
+        //     curDataIdx: dataIdx.current,
+        //     isInitial: 0,
+        //     trackToDrawId,
+        //   });
+        // }
       } else {
         const newTrackComponents: Array<any> = [];
 
