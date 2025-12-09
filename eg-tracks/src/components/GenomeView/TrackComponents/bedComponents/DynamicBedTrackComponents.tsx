@@ -51,7 +51,7 @@ const DynamicBedTrackComponents: React.FC<DynamicBedTrackProps> = ({
   options,
   trackModel,
   svgHeight,
-  updatedLegend
+  updatedLegend,
 }) => {
   const featureArranger = useMemo(() => new FeatureArranger(), []);
   featureArranger.arrange = memoizeOne(featureArranger.arrange);
@@ -64,7 +64,9 @@ const DynamicBedTrackComponents: React.FC<DynamicBedTrackProps> = ({
           visRegion,
           width,
           (bed: any) => getBedPadding(bed, options.rowHeight),
-          options.hiddenPixels
+          options.hiddenPixels,
+          undefined,
+          viewWindow
         )
       ),
     [data, visRegion, width, options]
@@ -72,10 +74,12 @@ const DynamicBedTrackComponents: React.FC<DynamicBedTrackProps> = ({
 
   const height = getHeight(arrangeResults, options.rowHeight, options.maxRows);
   if (svgHeight) {
-    svgHeight.current = height
+    svgHeight.current = height;
   }
   if (updatedLegend) {
-    updatedLegend.current = <TrackLegend height={height} trackModel={trackModel} />;
+    updatedLegend.current = (
+      <TrackLegend height={height} trackModel={trackModel} />
+    );
   }
 
   return (

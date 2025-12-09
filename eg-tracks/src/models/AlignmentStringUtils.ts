@@ -1,7 +1,7 @@
 /**
  * Utilities that deal with processing of alignment strings
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 import _ from "lodash";
 
@@ -103,7 +103,7 @@ export function makeBaseNumberLookup(
 /**
  * An iterator that steps along a string, skipping '-' characters.  Instances start at index -1.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class AlignmentIterator {
   public sequence: string;

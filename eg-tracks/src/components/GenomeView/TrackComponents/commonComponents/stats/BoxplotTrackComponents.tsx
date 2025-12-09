@@ -4,7 +4,6 @@ import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import * as d3 from "d3";
 import memoizeOne from "memoize-one";
-import Track from "../Track";
 import TrackLegend from "../TrackLegend";
 import GenomicCoordinates from "../HoverToolTips/GenomicCoordinates";
 
@@ -40,25 +39,6 @@ interface BoxplotTrackProps {
   getNumLegend: any;
 }
 class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
-  /**
-   */
-  static propTypes = Object.assign(
-    {},
-    {
-      /**
-       * NumericalFeatureProcessor provides these.  Parents should provide an array of NumericalFeature.
-       */
-      data: PropTypes.array.isRequired, // PropTypes.arrayOf(Feature)
-      unit: PropTypes.string, // Unit to display after the number in tooltips
-      options: PropTypes.shape({
-        height: PropTypes.number.isRequired, // Height of the track
-        color: PropTypes.string, // Color to draw bars, if using the default getBarElement
-        windowSize: PropTypes.number,
-      }).isRequired,
-      isLoading: PropTypes.bool, // If true, applies loading styling
-      error: PropTypes.any, // If present, applies error styling
-    }
-  );
   xMap: {};
   xAlias: {};
   scales;
@@ -204,8 +184,16 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
   }
 
   render() {
-    const { data, viewRegion, width, trackModel, unit, options, forceSvg } =
-      this.props;
+    const {
+      data,
+      viewRegion,
+      width,
+      trackModel,
+      unit,
+      options,
+      forceSvg,
+      viewWindow,
+    } = this.props;
     const { height, boxColor, lineColor } = options;
     this.xAlias = this.makeXalias(width, options.windowSize);
     this.xMap = this.aggregateFeatures(
@@ -224,15 +212,28 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
         height={height}
         axisScale={this.scales.valueToY}
         axisLegend={unit}
+        label={options.label}
+        forceSvg={forceSvg}
       />
     );
-
-
 
     if (this.props.getNumLegend) {
       this.props.getNumLegend(legend);
     }
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
     const visualizer = (
       //   <HoverTooltipContext
       //     tooltipRelativeY={height}
@@ -266,17 +267,25 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
               ""
             )}
           </div>
-          {forceSvg ? legend : ""}
-          <Boxplot
-            xMap={this.xMap}
-            scales={this.scales}
-            height={height}
-            width={width}
-            windowSize={options.windowSize}
-            boxColor={boxColor}
-            lineColor={lineColor}
-            forceSvg={forceSvg}
-          />
+          <div style={{ display: "flex", ...curParentStyle }}>
+            {forceSvg || options.packageVersion ? legend : ""}{" "}
+            <div
+              style={{
+                ...curEleStyle,
+              }}
+            >
+              <Boxplot
+                xMap={this.xMap}
+                scales={this.scales}
+                height={height}
+                width={width}
+                windowSize={options.windowSize}
+                boxColor={boxColor}
+                lineColor={lineColor}
+                forceSvg={forceSvg}
+              />
+            </div>
+          </div>{" "}
         </div>
       </React.Fragment>
     );

@@ -10,7 +10,6 @@ import _ from "lodash";
 // import * as THREE from "three";
 import rgba from "color-rgba";
 import ChromosomeInterval from "./ChromosomeInterval";
-import fetch from "isomorphic-fetch";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 interface Coordinate {
   x: number;
@@ -198,8 +197,7 @@ export const HELP_LINKS = {
   trackOptions:
     "https://eg.readthedocs.io/en/latest/datahub.html#track-properties",
   textTrack: "https://eg.readthedocs.io/en/latest/text.html",
-  publish:
-    "https://epgg.github.io/contact#publish-with-the-browser",
+  publish: "https://epgg.github.io/contact#publish-with-the-browser",
   threed:
     "https://eg.readthedocs.io/en/latest/3d.html#supported-file-formats-for-3d-annotation-painting",
 };

@@ -30,7 +30,7 @@ interface BamAnnotationProps {
 /**
  * Draws a single BAM annotation.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class BamAnnotation extends React.Component<BamAnnotationProps, {}> {
   static HEIGHT = HEIGHT;

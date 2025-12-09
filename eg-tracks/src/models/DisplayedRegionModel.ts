@@ -13,7 +13,7 @@ const MIN_BASE = 0;
  * Model that stores the view window/region in a larger navigation context (e.g. a genome).  Internally stores the
  * region as an open interval of nav context coordinates (@see {@link NavigationContext}).
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 class DisplayedRegionModel {
   public _navContext: NavigationContext;

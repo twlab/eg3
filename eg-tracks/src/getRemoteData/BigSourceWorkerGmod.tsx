@@ -1,13 +1,21 @@
-import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
 import { RemoteFile } from "generic-filehandle2";
-import fetch from "isomorphic-fetch";
 
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
  *
  * @author Daofeng Li Chanrung Seng
  */
+
+// Create a custom fetch wrapper that prevents cache conflicts
+const createFetchWithNoCache = () => {
+  return (input: RequestInfo | URL, options: any = {}) => {
+    return fetch(input, {
+      ...options,
+      cache: "no-store", // Prevent cache conflicts between multiple App instances
+    });
+  };
+};
 
 const ensembl: Array<string> = [
   "1",
@@ -37,14 +45,12 @@ const ensembl: Array<string> = [
   "M",
 ];
 
-export function resolveUriLocation(location) {
-  return location.baseUri
-    ? { ...location, uri: new URL(location.uri, location.baseUri).href }
-    : location;
-}
 class BigSourceWorkerGmod {
   url: any;
+  private chromNamingCache: boolean | null = null;
   bw: BigWig;
+  useEnsemblStyle: null | boolean;
+
   /**
    *
    * @param {string} url - the URL from which to fetch data
@@ -52,30 +58,33 @@ class BigSourceWorkerGmod {
   constructor(url) {
     this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(url, { fetch }),
+      filehandle: new RemoteFile(this.url),
     });
+    this.useEnsemblStyle = null;
   }
 
   /**
-   * Detects if the BigWig file uses Ensembl chromosome naming convention
+   * Detects if the BigWig file uses Ensembl
    * @return {Promise<boolean>} True if Ensembl naming (1, 2, 3...), false if UCSC naming (chr1, chr2, chr3...)
    */
   async detectChromosomeNaming() {
     try {
       const header = await this.bw.getHeader();
 
-      // Get just the first chromosome name directly
       const firstChrom = Object.keys(header.refsByName || {})[0];
 
       if (!firstChrom) {
-        return false; // Default to UCSC naming if no chromosomes found
+        this.chromNamingCache = false; // Default to UCSC naming if no chromosomes found
+        return false;
       }
 
       // Check if the first chromosome name is in the Ensembl array
-      return ensembl.includes(firstChrom);
+      this.chromNamingCache = ensembl.includes(firstChrom);
+      return this.chromNamingCache;
     } catch (error) {
       console.error("Error detecting chromosome naming:", error);
-      return false; // Default to UCSC naming
+      this.chromNamingCache = false; // Default to UCSC naming
+      return false;
     }
   }
 
@@ -87,8 +96,13 @@ class BigSourceWorkerGmod {
    * @return {Promise<DASFeature[]>} a Promise for the data
    * @override
    */
-  async getData(loci, options) {
-    const useEnsemblStyle = await this.detectChromosomeNaming();
+  getData = async (loci, basesPerPixel, options) => {
+    // Create a fresh BigWig instance for each getData call
+    // This prevents cache conflicts when multiple App instances exist
+    if (this.useEnsemblStyle === null) {
+      this.useEnsemblStyle = await this.detectChromosomeNaming();
+    }
+    const useEnsemblStyle = this.useEnsemblStyle;
 
     const promises = loci.map((locus) => {
       let chrom = useEnsemblStyle ? locus.chr.replace("chr", "") : locus.chr;
@@ -106,9 +120,11 @@ class BigSourceWorkerGmod {
     loci.forEach((locus, index) => {
       dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
     });
-    const combinedData = _.flatten(dataForEachLocus);
+
+    const combinedData = dataForEachLocus.flat();
+
     return combinedData;
-  }
+  };
 }
 
 export default BigSourceWorkerGmod;

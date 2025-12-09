@@ -1,12 +1,11 @@
 .TrackContextMenu-body {
   z-index: 1;
-  min-width: 200px;
+  min-width: 250px;
   max-width: 400px;
   background-color: var(--bg-color);
-  border: 2px solid #B7B1F2;
+  border: 1px solid #b7b1f2;
   border-radius: 0.25rem;
   font-size: small;
-
 }
 
 .TrackContextMenu-item {

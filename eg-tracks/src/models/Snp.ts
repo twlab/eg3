@@ -4,7 +4,7 @@ import ChromosomeInterval from "./ChromosomeInterval";
 /**
  * A data container for snp.
  *
- * @author Daofeng Li and Silas Hsu
+ * @author Daofeng Li and Chanrung(Chad) Seng, Silas Hsu
  */
 class Snp extends Feature {
   public id: string;

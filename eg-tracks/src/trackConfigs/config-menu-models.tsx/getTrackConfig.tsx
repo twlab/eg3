@@ -16,6 +16,7 @@ import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
 import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
 import { MethylCTrackConfig } from "./MethylCTrackConfig";
 import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
+import { Rmskv2TrackConfig } from "./Rmskv2TrackConfig";
 import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 import { RulerTrackConfig } from "./RulerTrackConfig";
 import { RefBedTrackConfig } from "./RefBedTrackConfig";
@@ -65,6 +66,7 @@ export const TYPE_NAME_TO_CONFIG = {
   refbed: RefBedTrackConfig,
   methylc: MethylCTrackConfig,
   repeatmasker: RepeatMaskerTrackConfig,
+  rmskv2: Rmskv2TrackConfig,
   genomealign: GenomeAlignTrackConfig,
 
   ruler: RulerTrackConfig,

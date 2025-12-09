@@ -41,6 +41,7 @@ interface ViewWindow {
 
 import TrackModel from "../../../../../models/TrackModel";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
+import { NumericalAggregator } from "./NumericalAggregator";
 
 interface Options {
   aggregateMethod: string;
@@ -111,7 +112,6 @@ class DynamicplotTrackComponent extends React.PureComponent<
 
     this.aggregateFeatures = memoizeOne(this.aggregateFeatures);
     this.computeScales = memoizeOne(this.computeScales);
-
   }
 
   aggregateFeatures(
@@ -120,9 +120,15 @@ class DynamicplotTrackComponent extends React.PureComponent<
     width: number,
     aggregatorId: string
   ) {
-    const aggregator = new FeatureAggregator();
-    const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
-    return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
+    const aggregator = new NumericalAggregator();
+
+    return aggregator.xToValueMaker(
+      data,
+      viewRegion,
+      width,
+      this.props.options,
+      this.props.viewWindow
+    )[0];
   }
 
   computeScales(xToValue: number[][], height: number) {
@@ -201,8 +207,16 @@ class DynamicplotTrackComponent extends React.PureComponent<
   // }
 
   render() {
-    const { data, viewRegion, width, trackModel, unit, options, viewWindow, updatedLegend } =
-      this.props;
+    const {
+      data,
+      viewRegion,
+      width,
+      trackModel,
+      unit,
+      options,
+      viewWindow,
+      updatedLegend,
+    } = this.props;
 
     const {
       height,
@@ -216,7 +230,6 @@ class DynamicplotTrackComponent extends React.PureComponent<
       dynamicLabels,
       dynamicColors,
       useDynamicColors,
-
     } = options;
     const aggregatedData = data.map((d) =>
       this.aggregateFeatures(d, viewRegion, width, aggregateMethod)
@@ -228,11 +241,17 @@ class DynamicplotTrackComponent extends React.PureComponent<
     this.scales = this.computeScales(this.xToValue, height);
     const xToValueZipped = _.zip(...this.xToValue);
     if (updatedLegend) {
-      updatedLegend.current = <TrackLegend trackModel={trackModel} height={height} axisScale={this.scales.valueToY as any} axisLegend={unit} />
+      updatedLegend.current = (
+        <TrackLegend
+          trackModel={trackModel}
+          height={height}
+          axisScale={this.scales.valueToY as any}
+          axisLegend={unit}
+        />
+      );
     }
 
     const visualizer = (
-
       <React.Fragment>
         <div
           style={{
@@ -242,7 +261,6 @@ class DynamicplotTrackComponent extends React.PureComponent<
             zIndex: 3,
           }}
         >
-
           <HoverToolTip
             data={this.xToValue}
             windowWidth={width}
@@ -254,7 +272,6 @@ class DynamicplotTrackComponent extends React.PureComponent<
             hasReverse={true}
             options={options}
           />
-
         </div>
         <PixiScene
           xToValue={xToValueZipped}

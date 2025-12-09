@@ -1,10 +1,9 @@
 import TabixSource from "./tabixSource";
 import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
+import JasparSource from "./JasparSource";
 import VcfSource from "./VcfSource";
 
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
-
-// Map track types to their data source types
 
 let cachedFetchInstance: { [key: string]: any } = {};
 export const trackFetchFunction: { [key: string]: any } = {
@@ -136,7 +135,7 @@ export const trackFetchFunction: { [key: string]: any } = {
   },
 
   rmskv2: async function rmskv2Fetch(regionData: any) {
-    return getRemoteData(regionData, "repeat");
+    return getRemoteData(regionData, "rmskv2");
   },
   biginteract: async function biginteractFetch(regionData: any) {
     return getRemoteData(regionData, "big");
@@ -153,89 +152,61 @@ export const trackFetchFunction: { [key: string]: any } = {
   },
 };
 
-async function getRemoteData(regionData: any, trackType: string) {
-  const indexUrl = regionData.trackModel.indexUrl || null;
-  let fetchInstance: any = null;
-  if (!cachedFetchInstance[regionData.trackModel.url]) {
+function getRemoteData(regionData: any, trackType: string) {
+  let indexUrl = null;
+
+  if (regionData.trackModel.indexUrl) {
+    indexUrl = regionData.trackModel.indexUrl;
+  }
+  if (regionData.trackModel.id in cachedFetchInstance) {
+  } else {
     if (trackType === "bedOrTabix") {
-      cachedFetchInstance[regionData.trackModel.url] = new TabixSource(
+      cachedFetchInstance[`${regionData.trackModel.id}`] = new TabixSource(
         regionData.trackModel.url,
         indexUrl
       );
     } else if (trackType === "vcf") {
-      cachedFetchInstance[regionData.trackModel.url] = new VcfSource(
+      cachedFetchInstance[`${regionData.trackModel.id}`] = new VcfSource(
         regionData.trackModel.url,
         indexUrl
       );
     } else if (trackType === "bigbed") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url
-      );
+      cachedFetchInstance[`${regionData.trackModel.id}`] =
+        new BigSourceWorkerGmod(regionData.trackModel.url);
     } else if (trackType === "big") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url
-      );
+      cachedFetchInstance[`${regionData.trackModel.id}`] =
+        new BigSourceWorkerGmod(regionData.trackModel.url);
     } else if (trackType === "repeat") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url
-      );
+      cachedFetchInstance[`${regionData.trackModel.id}`] =
+        new BigSourceWorkerGmod(regionData.trackModel.url);
+    } else if (trackType === "rmskv2") {
+      cachedFetchInstance[`${regionData.trackModel.id}`] =
+        new BigSourceWorkerGmod(regionData.trackModel.url);
     } else if (trackType === "jaspar") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url
+      cachedFetchInstance[`${regionData.trackModel.id}`] =
+        new BigSourceWorkerGmod(regionData.trackModel.url);
+    }
+  }
+
+  if (cachedFetchInstance[`${regionData.trackModel.id}`]) {
+    if (
+      (trackType in { repeat: "", rmskv2: "" } &&
+        regionData.basesPerPixel <= 1000) ||
+      (trackType === "jaspar" && regionData.basesPerPixel <= 2) ||
+      trackType === "bigbed"
+    ) {
+      return cachedFetchInstance[`${regionData.trackModel.id}`].getData(
+        regionData.nav,
+        regionData.basesPerPixel,
+        regionData.trackModel.options
       );
     } else {
-      throw new Error(`Unsupported track type: ${trackType}`);
+      return cachedFetchInstance[`${regionData.trackModel.id}`].getData(
+        regionData.nav,
+        regionData.trackModel.options
+      );
     }
   }
-  fetchInstance = cachedFetchInstance[regionData.trackModel.url];
-  if (fetchInstance) {
-    try {
-      const needsBasesPerPixel =
-        ((trackType === "repeat" || trackType === "rmskv2") &&
-          regionData.basesPerPixel <= 1000) ||
-        (trackType === "jaspar" && regionData.basesPerPixel <= 2);
-
-      if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
-        return [];
-      }
-      if (
-        (trackType === "repeat" || trackType === "rmskv2") &&
-        regionData.basesPerPixel > 1000
-      ) {
-        return [];
-      }
-      if (needsBasesPerPixel || trackType === "bigbed") {
-        return fetchInstance
-          .getData(
-            regionData.nav,
-            regionData.basesPerPixel,
-            regionData.trackModel.options
-          )
-          .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
-            fetchInstance = null;
-            return data;
-          })
-          .catch(() => {
-            return { error: "Failed to fetch data. " };
-          });
-      } else {
-        return fetchInstance
-          .getData(regionData.nav, regionData.trackModel.options)
-          .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
-            fetchInstance = null;
-            return data;
-          })
-          .catch(() => {
-            return { error: "Failed to fetch data. " };
-          });
-      }
-    } catch (error: any) {
-      return { error: "Failed to fetch data. " };
-    }
-  }
-  return { error: "Failed to fetch data. " };
 }
 
 export default trackFetchFunction;

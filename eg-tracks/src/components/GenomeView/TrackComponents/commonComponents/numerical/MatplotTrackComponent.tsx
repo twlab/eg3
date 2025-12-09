@@ -19,6 +19,7 @@ import Feature from "../../../../../models/Feature";
 import TrackModel from "../../../../../models/TrackModel";
 import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
+import { NumericalAggregator } from "./NumericalAggregator";
 
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -76,21 +77,16 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
   );
   xToValue: any;
   scales: any;
+  aggregator: NumericalAggregator;
 
   constructor(props) {
     super(props);
     this.xToValue = null;
     this.scales = null;
 
-    this.aggregateFeatures = memoizeOne(this.aggregateFeatures);
+    this.aggregator = new NumericalAggregator();
     this.computeScales = memoizeOne(this.computeScales);
     // this.renderTooltip = this.renderTooltip.bind(this);
-  }
-
-  aggregateFeatures(data, viewRegion, width, aggregatorId) {
-    const aggregator = new FeatureAggregator();
-    const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
-    return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
   }
 
   computeScales(xToValue, height) {
@@ -182,20 +178,37 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       forceSvg,
       getNumLegend,
       viewWindow,
-      xvaluesData
+      xvaluesData,
     } = this.props;
 
-    const { height, aggregateMethod, smooth, lineWidth } = options;
-    const aggreagatedData = data.map((d) =>
-      this.aggregateFeatures(d, viewRegion, width, aggregateMethod)
-    );
+    const { height, smooth, lineWidth } = options;
 
-    this.xToValue = this.props.xvaluesData
-      ? this.props.xvaluesData
-      :
-      smooth === 0
-        ? aggreagatedData
-        : aggreagatedData.map((d) => Smooth(d, smooth));
+    this.xToValue = xvaluesData
+      ? xvaluesData
+      : smooth === 0
+      ? data.map(
+          (d) =>
+            this.aggregator.xToValueMaker(
+              d,
+              viewRegion,
+              width,
+              options,
+              viewWindow
+            )[0]
+        )
+      : Smooth(
+          data.map(
+            (d) =>
+              this.aggregator.xToValueMaker(
+                d,
+                viewRegion,
+                width,
+                options,
+                viewWindow
+              )[0]
+          ),
+          smooth
+        );
     this.scales = this.computeScales(this.xToValue, height);
     const legend = (
       <TrackLegend
@@ -208,7 +221,20 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
     if (getNumLegend) {
       getNumLegend(legend);
     }
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
     const visualizer = (
       // <HoverTooltipContext tooltipRelativeY={height} getTooltipContents={this.renderTooltip} >
       <React.Fragment>
@@ -238,17 +264,25 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
               ""
             )}
           </div>
-          {forceSvg ? legend : ""}
-          <LinePlot
-            trackModel={trackModel}
-            xToValue={this.xToValue}
-            scales={this.scales}
-            height={height}
-            forceSvg={forceSvg}
-            lineWidth={lineWidth}
-            width={width}
-            viewWindow={viewWindow}
-          />
+          <div style={{ display: "flex", ...curParentStyle }}>
+            {forceSvg || options.packageVersion ? legend : ""}
+            <div
+              style={{
+                ...curEleStyle,
+              }}
+            >
+              <LinePlot
+                trackModel={trackModel}
+                xToValue={this.xToValue}
+                scales={this.scales}
+                height={height}
+                forceSvg={forceSvg}
+                lineWidth={lineWidth}
+                width={width}
+                viewWindow={viewWindow}
+              />{" "}
+            </div>{" "}
+          </div>
         </div>
       </React.Fragment>
     );
@@ -300,8 +334,13 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
         }
       })
       .filter((value) => value); // removes null from original
-    console.log(trackModel.tracks, trackIndex)
-    const color = trackModel.tracks![trackIndex].options.color || "blue";
+    console.log(trackModel);
+    const color =
+      trackModel.tracks &&
+      trackModel.tracks[trackIndex] &&
+      trackModel.tracks[trackIndex].options
+        ? trackModel.tracks[trackIndex].options.color || "blue"
+        : "blue";
     return (
       <polyline
         key={trackIndex}

@@ -55,7 +55,7 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
 /**
  * Track specialized in showing numerical data.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const {
@@ -77,9 +77,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   let xvalues = xvaluesData
     ? xvaluesData
-    : aggregator.xToValueMaker(data, viewRegion, width, options);
+    : aggregator.xToValueMaker(data, viewRegion, width, options, viewWindow);
 
-  let [xToValue, xToValue2, hasReverse] = xvalues;
+  let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
+
   const computeScales = useMemo(() => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
       const { yScale, yMin, yMax } = options;
@@ -104,11 +105,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           props.viewWindow.start,
           props.viewWindow.end
         );
-        // TO- DO implement when dragX changes then the legend also changings with viewWindow values
-        // const visibleValues = xToValue.slice(
-        //   props.viewWindow.start + props.width / 3,
-        //   props.viewWindow.end - props.width / 3
-        // );
 
         max = _.max(visibleValues) || 1;
         xValues2 = xToValue2.filter((x) => x);
@@ -132,9 +128,14 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       }
 
       const zeroLine =
-        min < 0
+        min < 0 && hasForward
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : height;
+          : hasForward
+          ? height
+          : 0;
+      if (!hasForward && hasReverse) {
+        max = 0;
+      }
 
       if (
         xValues2.length &&
@@ -218,7 +219,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     <TrackLegend
       trackModel={trackModel}
       height={height}
-      axisScale={isDrawingBars ? scales.axisScale : undefined}
+      axisScale={scales.axisScale}
       axisLegend={unit}
       label={options.label}
       forceSvg={forceSvg}
@@ -274,18 +275,24 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         <div
           style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
         >
-          <ValuePlot
-            xToValue={xToValue}
-            scales={scales}
-            height={scales.zeroLine}
-            color={color}
-            colorOut={colorAboveMax}
-            isDrawingBars={isDrawingBars}
-            forceSvg={forceSvg}
-            width={width}
-            viewWindow={props.viewWindow}
-          />
-          <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+          {xToValue && xToValue.length > 0 ? (
+            <>
+              <ValuePlot
+                xToValue={xToValue}
+                scales={scales}
+                height={scales.zeroLine}
+                color={color}
+                colorOut={colorAboveMax}
+                isDrawingBars={isDrawingBars}
+                forceSvg={forceSvg}
+                width={width}
+                viewWindow={props.viewWindow}
+              />
+              <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+            </>
+          ) : (
+            ""
+          )}
 
           <ValuePlot
             xToValue={xToValue2}

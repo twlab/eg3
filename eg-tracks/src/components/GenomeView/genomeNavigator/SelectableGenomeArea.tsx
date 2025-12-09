@@ -31,7 +31,7 @@ interface SelectableGenomeAreaProps {
 /**
  * A SelectableArea, but also displays the selected length in base pairs, and puts a limit on the selected size.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAreaProps> {
   constructor(props: SelectableGenomeAreaProps) {

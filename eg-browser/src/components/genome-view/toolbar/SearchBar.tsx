@@ -459,11 +459,18 @@ export default function SearchBar({
       return;
     }
 
-    if (REGION_REGEX.test(query)) {
-      setIsRegion(true);
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
+    try {
+      const navContext = genomeConfig?.navContext;
+      let parsedRegion;
+      parsedRegion = navContext!.parse(query || "");
+      if (parsedRegion) {
+        setIsRegion(true);
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+    } catch (error) {
+      // Parsing failed, continue to gene/snp search
     }
     setIsRegion(false);
     setIsSearching(true);

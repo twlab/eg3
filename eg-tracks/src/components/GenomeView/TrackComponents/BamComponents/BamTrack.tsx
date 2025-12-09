@@ -16,7 +16,7 @@
 // /**
 //  * Bam visualizer specification.
 //  *
-//  * @author Silas Hsu
+//  * @author Chanrung(Chad) Seng, Silas Hsu
 //  */
 // class BamTrack extends React.Component<BamTrackProps> {
 //     constructor(props: BamTrackProps) {

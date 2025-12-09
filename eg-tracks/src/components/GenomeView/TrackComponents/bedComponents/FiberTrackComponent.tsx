@@ -3,13 +3,19 @@ import memoizeOne from "memoize-one";
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
-import Track, { PropsFromTrackContainer } from "../commonComponents/Track";
 
 import { Fiber } from "../../../../models/Feature";
-import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
+import {
+  FeaturePlacementResult,
+  PlacedFeatureGroup,
+} from "../../../../models/FeatureArranger";
 import OpenInterval from "../../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
+import {
+  FeaturePlacer,
+  PlacementMode,
+  PlacedFeature,
+} from "../../../../models/getXSpan/FeaturePlacer";
 import TrackLegend from "../commonComponents/TrackLegend";
 import DesignRenderer, {
   RenderTypes,
@@ -19,7 +25,7 @@ import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 const ROW_VERTICAL_PADDING = 2;
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 
-interface FiberTrackProps extends PropsFromTrackContainer {
+interface FiberTrackProps {
   data: Fiber[];
   options: {
     color?: string; // methylated color
@@ -38,8 +44,11 @@ interface FiberTrackProps extends PropsFromTrackContainer {
   getAnnotationTrack: any;
   trackState: any;
   renderTooltip: any;
-
+  width: number;
+  trackModel: any;
+  viewWindow: OpenInterval;
   svgHeight: any;
+  isLoading: boolean;
   updatedLegend: any;
   getGenePadding: any;
   getHeight: any;
@@ -123,9 +132,14 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
       xToFibers[x] = { on: 0, off: 0, count: 0 };
     }
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures(data, viewRegion, width);
-    for (const placedFeature of placement) {
-      const { feature, xSpan, visiblePart } = placedFeature;
+    const result: FeaturePlacementResult = placer.placeFeatures({
+      features: data,
+      viewRegion,
+      width,
+      mode: PlacementMode.PLACEMENT,
+    }) as FeaturePlacementResult;
+    for (const placedFeature of result.placements) {
+      const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
       const { relativeStart, relativeEnd } = visiblePart;
       const segmentWidth = relativeEnd - relativeStart;
       const startX = Math.max(0, Math.floor(xSpan.start));

@@ -65,7 +65,7 @@ export const browserSlice = createSlice({
 
       const { defaultRegion, defaultTracks: tracks = [] } = genome;
 
-      let allTracks = [...tracks, ...additionalTracks];
+      let allTracks = additionalTracks.length > 0 ? additionalTracks : tracks;
 
       const initializedTracks =
         allTracks?.map((track) => ({
@@ -217,9 +217,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-      state,
-      state.browser.present.currentSession
-    )
+        state,
+        state.browser.present.currentSession
+      )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

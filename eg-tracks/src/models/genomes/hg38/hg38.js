@@ -49,17 +49,16 @@ const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 
 const defaultTracks = [
-  new TrackModel({
-    type: "ruler",
-    name: "Ruler",
-  }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
   // new TrackModel({
   //   type: "hi",
   //   url: "",
   //   name: "NOTSUPPORTEDTRACEXAMPLE",
   // }),
-
+  new TrackModel({
+    type: "ruler",
+    name: "Ruler",
+  }),
   new TrackModel({
     type: "geneAnnotation",
     name: "refGene",
@@ -70,17 +69,29 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "MANE_select_1.4",
+    label: "MANE selection v1.4",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "repeatmasker",
+    name: "rmsk_all",
+    options: { label: "RepeatMasker" },
+    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig nochr",
   //   genome: "hg38",
-  //   url: "https://wangftp.wustl.edu/~dli/test/TW549_2-5-bonemarrow_MRE.CpG.nochr.bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
   // }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig yeschr",
   //   genome: "hg38",
-  //   url: "https://wangftp.wustl.edu/~dli/test/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
   // }),
   // new TrackModel({
   //   name: "hg38tomm10",
@@ -105,6 +116,11 @@ const defaultTracks = [
   //   type: "bigbed",
   //   name: "test bigbed",
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "band2",
+  //   url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
   // }),
   // new TrackModel({
   //   type: "refbed",
@@ -163,18 +179,7 @@ const defaultTracks = [
   //   name: "snp",
   //   genome: "hg38",
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "MANE_select_1.4",
-    label: "MANE selection v1.4",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "repeatmasker",
-    name: "rmsk_all",
-    options: { label: "RepeatMasker" },
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  }),
+
   // new TrackModel({
   //   type: "bigwig",
   //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
@@ -462,7 +467,7 @@ const defaultTracks = [
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",
-  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
   //   // "options": {
   //   //     "displayMode": "arc"
   //   // }

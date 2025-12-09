@@ -38,7 +38,7 @@ const MIN_BINS_PER_REGION = 50;
 /**
  * Data source that fetches data from .hic files.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class HicSource {
   currentBinSize: number;

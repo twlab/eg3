@@ -1,12 +1,11 @@
+const MAX_BASES_PER_PIXEL = 1000; // Example value, replace with actual import if needed
 import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
-const MAX_BASES_PER_PIXEL = 2; // The higher this number, the more zooming out we support
 
-class JasparSource {
-  maxBasesPerPixel: number;
+class Rmskv2Source {
+  maxBasesPerPixel: any;
   workerSource: BigSourceWorkerGmod;
   constructor(url) {
     this.maxBasesPerPixel = MAX_BASES_PER_PIXEL;
-
     this.workerSource = new BigSourceWorkerGmod(url);
   }
 
@@ -19,4 +18,4 @@ class JasparSource {
   }
 }
 
-export default JasparSource;
+export default Rmskv2Source;

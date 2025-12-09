@@ -28,14 +28,7 @@ interface HoverToolTipProps {
 }
 import { sameLoci } from "../../../../../models/util";
 import ReactDOM from "react-dom";
-function getAbsolutePosition(element) {
-  const rect = element.getBoundingClientRect();
-  return {
-    top: rect.top + window.pageYOffset,
-    left: rect.left + window.pageXOffset,
-    height: rect.height,
-  };
-}
+
 export const getHoverTooltip = {
   ruler: function getTooltip(dataObj: { [key: string]: any }) {
     return {
@@ -66,6 +59,7 @@ export const getHoverTooltip = {
       typeof value2 === "number" && !Number.isNaN(value2)
         ? value2.toFixed(2)
         : "(no data)";
+
     return {
       toolTip: (
         <div>
@@ -309,8 +303,13 @@ export const getHoverTooltip = {
   },
   methyc: function getTooltip(dataObj: { [key: string]: any }) {
     const { trackModel, viewRegion, width, options } = dataObj;
-    const strandsAtPixel = dataObj.data[Math.round(dataObj.relativeX)];
-
+    let strandsAtPixel = dataObj.data[Math.round(dataObj.relativeX)];
+    if (!strandsAtPixel) {
+      strandsAtPixel =
+        typeof strandsAtPixel === "number" && !Number.isNaN(strandsAtPixel)
+          ? strandsAtPixel.toFixed(2)
+          : "(no data)";
+    }
     return {
       toolTip: (
         <div>
@@ -398,17 +397,12 @@ export const getHoverTooltip = {
     function renderTooltip() {
       if (polygon) {
         let { xSpan1, xSpan2 } = polygon;
-        const parentPos = getAbsolutePosition(dataObj.targetRef.current);
 
         const left = xSpan1.start;
         const right = xSpan2.start;
-        //  when theres padding or component moves
-        const fullSiteLeft = parentPos.left + left - 20 + "px";
-        const fullSiteRight = parentPos.left + right - 20 + "px";
-        // const fullSiteLeft = left - dataObj.viewWindow.start + 120 + "px";
-        // const fullSiteRight = right - dataObj.viewWindow.start + 120 + "px";
-        const packageLeft = left + 120 + "px";
-        const packageRight = right + 120 + "px";
+
+        const leftBeamPos = left - dataObj.viewWindow.start + 120 + "px";
+        const rightBeamPos = right - dataObj.viewWindow.start + 120 + "px";
         const leftWidth = Math.max(xSpan1.getLength(), 1);
         const rightWidth = Math.max(xSpan2.getLength(), 1);
 
@@ -421,9 +415,7 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: dataObj.options.packageVersion
-                  ? packageLeft
-                  : fullSiteLeft,
+                left: leftBeamPos,
                 width: leftWidth + "px",
                 height: "100%",
 
@@ -439,9 +431,7 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: dataObj.options.packageVersion
-                  ? packageRight
-                  : fullSiteRight,
+                left: rightBeamPos,
                 width: rightWidth + "px",
                 height: "1000",
                 zIndex: 1000,
@@ -711,59 +701,54 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [rectPosition, setPosition] = useState({
-    top: 0,
-    left: 0,
-    right: 0,
-    dataIdxX: 0,
-    dataIdxY: 0,
+    mouseYPos: 0,
+    mouseXPos: 0,
     toolTip: <></>,
     beams: <></>,
   });
   const handleMouseEnter = (e) => {
-    if (
-      isArrayNotEmpty(data) ||
-      (isObjectNotEmpty(data) && isDataValid(data)) ||
-      trackType === "ruler"
-    ) {
-      const rect = targetRef.current!.getBoundingClientRect();
+    const rect = targetRef.current!.getBoundingClientRect();
 
-      let dataIdxX = Math.round(e.pageX - rect.left);
-      let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
-      // windowwidth going over by 1 pixel because each region pixel array starts at 0
+    let dataIdxX = Math.round(e.pageX - rect.left);
+    let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
+    // windowwidth going over by 1 pixel because each region pixel array starts at 0
 
-      let trackHoverTooltip = getHoverTooltip[trackType]({
-        data,
-        trackModel,
-        data2,
-        viewRegion,
-        width: windowWidth,
-        unit,
-        relativeX: dataIdxX,
-        relativeY: dataIdxY,
-        hasReverse,
-        options,
-        viewWindow,
-        legendWidth,
-        targetRef,
-        scale,
-        xAlias,
+    let trackHoverTooltip = getHoverTooltip[trackType]({
+      data:
+        isArrayNotEmpty(data) || (isObjectNotEmpty(data) && isDataValid(data))
+          ? data
+          : [],
+      trackModel,
+      data2:
+        isArrayNotEmpty(data2) ||
+        (isObjectNotEmpty(data2) && isDataValid(data2))
+          ? data2
+          : [],
+      viewRegion,
+      width: windowWidth,
+      unit,
+      relativeX: dataIdxX,
+      relativeY: dataIdxY,
+      hasReverse,
+      options,
+      viewWindow,
+      legendWidth,
+      targetRef,
+      scale,
+      xAlias,
+    });
+
+    if (trackHoverTooltip) {
+      setPosition({
+        ...rectPosition,
+        mouseYPos: e.pageY + 10,
+        mouseXPos: e.pageX + 10,
+        toolTip: trackHoverTooltip.toolTip,
+        beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
       });
-
-      if (trackHoverTooltip) {
-        setPosition({
-          ...rectPosition,
-          top: rect.bottom,
-          left: rect.left,
-          right: rect.right,
-          dataIdxX: dataIdxX,
-          dataIdxY: dataIdxY,
-          toolTip: trackHoverTooltip.toolTip,
-          beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
-        });
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
     }
   };
   // when creating mouse behavior and events for separate component you have to create handler function outside the useeffect or else state is based
@@ -810,8 +795,8 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
             <div
               style={{
                 position: "absolute",
-                top: rectPosition.top + window.scrollY,
-                left: rectPosition.left + rectPosition.dataIdxX,
+                top: rectPosition.mouseYPos,
+                left: rectPosition.mouseXPos,
                 backgroundColor: "lightBlue",
                 borderRadius: 4,
 

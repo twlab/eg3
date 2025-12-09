@@ -44,7 +44,7 @@ interface AlignmentResult {
 /**
  * A BAM record.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  * @author David Ayeke
  * @author Daofeng Li
  */
@@ -85,8 +85,7 @@ export class BamAlignment extends Feature {
         : FORWARD_STRAND_CHAR;
     super(rawObject.get("name"), locus, strand);
 
-
-    this.id = rawObject["_id"]
+    this.id = rawObject["_id"];
     this.MD = rawObject.get("md");
     this.cigar = parsedCigar;
     this.seq = rawObject.getReadBases();
@@ -157,7 +156,7 @@ export class BamAlignment extends Feature {
         matches followed by a 2bp deletion from the reference; the deleted sequence is AC; the last 6 bases are
         matches. The MD field ought to match the CIGAR string.
         
-        From Silas Hsu:
+        From Chanrung(Chad) Seng, Silas Hsu:
         The MD string contains no information about insertions in the read.  An example: if cigar="5M1I5M" (5 match,
         1 insertion, 5 match), then a valid MD string is MD="10".  10 bases align to the reference, and the MD
         string does not mention the insertion at all.

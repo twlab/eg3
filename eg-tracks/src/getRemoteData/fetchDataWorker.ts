@@ -11,8 +11,11 @@ if (
 ) {
   self.onmessage = async (event: MessageEvent) => {
     try {
-      const results = await fetchGenomicData(event.data);
-      postMessage(results);
+      let results = await fetchGenomicData(event.data);
+      if (results) {
+        postMessage(results);
+      }
+      results = null;
     } catch (error) {
       postMessage({
         error: error instanceof Error ? error.message : "Unknown error",

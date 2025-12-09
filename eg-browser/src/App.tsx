@@ -1,15 +1,26 @@
 import { MotionConfig } from "framer-motion";
-import RootLayout, {
-  RootLayoutProps,
-} from "./components/root-layout/RootLayout";
-import ReduxProvider from "./lib/redux/provider";
+import RootLayout from "./components/root-layout/RootLayout";
+import AppProvider, { AppProviderProps } from "./lib/redux/AppProvider";
+import "./index.css";
 
-export default function App(props: RootLayoutProps = {}) {
+export interface AppProps extends Omit<AppProviderProps, "children"> {
+  storeConfig?: AppProviderProps["storeConfig"];
+
+  [key: string]: any;
+}
+
+/**
+ * app component can be exported and used as a package.
+ * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
+ *
+ * @param props configuration and layout props
+ */
+export default function App({ storeConfig, ...rootLayoutProps }: AppProps) {
   return (
     <MotionConfig transition={snappyTransition}>
-      <ReduxProvider>
-        <RootLayout {...props} />
-      </ReduxProvider>
+      <AppProvider storeConfig={storeConfig}>
+        <RootLayout {...rootLayoutProps} />
+      </AppProvider>
     </MotionConfig>
   );
 }

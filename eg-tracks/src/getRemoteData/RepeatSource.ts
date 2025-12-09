@@ -1,19 +1,19 @@
-const MAX_BASES_PER_PIXEL = 1000;
-import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
+const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
+import BigSourceWorker from "./BigSourceWorker";
 
 class RepeatSource {
   maxBasesPerPixel: any;
-  workerSource: BigSourceWorkerGmod;
+  workerSource: BigSourceWorker;
   constructor(url) {
     this.maxBasesPerPixel = MAX_BASES_PER_PIXEL;
-    this.workerSource = new BigSourceWorkerGmod(url);
+    this.workerSource = new BigSourceWorker(url);
   }
 
   getData(region, basesPerPixel, options) {
     if (basesPerPixel > this.maxBasesPerPixel) {
       return Promise.resolve([]);
     } else {
-      return this.workerSource.getData(region, options);
+      return this.workerSource.getData(region, basesPerPixel, options);
     }
   }
 }

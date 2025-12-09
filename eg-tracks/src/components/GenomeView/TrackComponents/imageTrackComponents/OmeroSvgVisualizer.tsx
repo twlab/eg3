@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import fetch from "isomorphic-fetch";
 import _ from "lodash";
 import OpenInterval from "../../../../models/OpenInterval";
 

@@ -1,7 +1,6 @@
 import { BigWig } from "@gmod/bbi";
 
 import { RemoteFile } from "generic-filehandle2";
-import fetch from "isomorphic-fetch";
 
 export class BigwigSource {
   url: any;
@@ -13,7 +12,7 @@ export class BigwigSource {
   constructor(url) {
     this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(url, { fetch }),
+      filehandle: new RemoteFile(this.url),
     });
   }
 

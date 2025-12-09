@@ -10,7 +10,7 @@ const DEFAULT_COLOR = "#FFFFFF"; // White
 /**
  * A context menu item that configures tracks' colors in general.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 
 interface ColorConfigProps {

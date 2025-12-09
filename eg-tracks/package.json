@@ -53,7 +53,6 @@
     "react-autosuggest": "^10.1.0",
     "react-color": "^2.19.3",
     "react-compound-slider": "^3.4.0",
-    "react-copy-to-clipboard": "^5.1.0",
     "react-modal": "^3.16.1",
     "react-popper": "^2.3.0",
     "vite-plugin-node-polyfills": "^0.24.0"

@@ -3,12 +3,12 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import {
+  selectDarkTheme,
   selectIsNavigatorVisible,
   selectIsToolBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
 import {
-  resetState,
   selectScreenShotOpen,
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
@@ -18,6 +18,7 @@ import {
   ITrackModel,
   RegionSet,
 } from "wuepgg3-track";
+// import "wuepgg3-track/style.css";
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 
@@ -37,20 +38,9 @@ export default function GenomeView() {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const isToolBarVisible = useAppSelector(selectIsToolBarVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
-
-  const bundleId = currentSession && currentSession.bundleId ? currentSession.bundleId : null;
-
-
-
-  // if (lastSessionId.current !== sessionId && sessionId !== null) {
-  //   if (lastSessionId.current !== null) {
-  //     dispatch(resetSt ate());
-  //   }
-  //   lastSessionId.current = sessionId;
-  //   if (bundleId) {
-  //     dispatch(fetchBundle(bundleId));
-  //   }
-  // }
+  const darkTheme = useAppSelector(selectDarkTheme);
+  const bundleId =
+    currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
   if (bundleId) {
     dispatch(fetchBundle(bundleId));
@@ -102,7 +92,8 @@ export default function GenomeView() {
 
   return currentSession &&
     genomeConfig &&
-    currentSession.genomeId === genomeConfig.name ? (
+    (currentSession.genomeId === genomeConfig.name ||
+      currentSession.genomeId === genomeConfig.id) ? (
     <TrackContainerRepresentable
       key={currentSession.id}
       genomeName={currentSession?.genomeId ? currentSession?.genomeId : "hg38"}
@@ -126,6 +117,7 @@ export default function GenomeView() {
       isScreenShotOpen={isScreenShotOpen}
       overrideViewRegion={currentSession?.overrideViewRegion}
       currentState={currentState}
+      darkTheme={darkTheme}
     />
   ) : null;
 }

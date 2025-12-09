@@ -6,11 +6,10 @@ export function isGenomeCoordinate(str: string) {
   return singleRegionPattern.test(str) || multiRegionPattern.test(str);
 }
 
-
 /**
  * A 0-indexed open interval within a Feature.  Or, put another way, attaches an interval to a Feature.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  * @see Feature
  */
 
@@ -19,7 +18,9 @@ function parseChromosomeName(regionString: string): string {
   const match = regionString.match(singleRegionPattern);
 
   if (!match) {
-    throw new Error(`Invalid region format: ${regionString}. Expected format: chr7:27053397-27373765`);
+    throw new Error(
+      `Invalid region format: ${regionString}. Expected format: chr7:27053397-27373765`
+    );
   }
 
   return match[1]; // Returns the chromosome name (e.g., "chr7")
@@ -160,7 +161,6 @@ export class FeatureSegment {
     return `${name}:${this.relativeStart}-${this.relativeEnd}`;
   }
 
-
   // /**
   //  * Interprets this and another interval as a multi-feature interval, with this being the start and the other being
   //  * the end.  Returns a human-readable representation of that interpretation.
@@ -173,8 +173,7 @@ export class FeatureSegment {
     let name2;
     if (isGenomeCoordinate(this.getName())) {
       name1 = parseChromosomeName(this.getName());
-    }
-    else {
+    } else {
       name1 = this.getName();
     }
     if (isGenomeCoordinate(other.getName())) {
@@ -184,5 +183,4 @@ export class FeatureSegment {
     }
     return `${name1}:${this.relativeStart + 1}-${name2}:${other.relativeEnd}`;
   }
-
 }

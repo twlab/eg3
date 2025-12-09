@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { ClockIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
-import OutsideClickDetector from "wuepgg3-track/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
+import { OutsideClickDetector } from "wuepgg3-track";
 /**
  * A component to show users' history of operations
  * @param props The component props
@@ -18,7 +18,12 @@ type Props = {
   clearHistory: () => void;
   jumpToFuture: (index: number) => void;
 };
-const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture, clearHistory }) => {
+const History: React.FC<Props> = ({
+  state,
+  jumpToPast,
+  jumpToFuture,
+  clearHistory,
+}) => {
   const [showModal, setShowModal] = useState(false);
   const [checkStateEmpty, setCheckStateEmpty] = useState(false);
   const handleOpenModal = () => {
@@ -40,7 +45,7 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture, clearHistor
   function handleClear() {
     setCheckStateEmpty(true);
     renderHistory();
-    clearHistory()
+    clearHistory();
   }
   const renderHistory = () => {
     const { past, future } = state;
@@ -103,8 +108,8 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture, clearHistor
             {stateData && stateData.userViewRegion
               ? stateData.userViewRegion
               : stateData && stateData.viewRegion
-                ? stateData.viewRegion
-                : "(None)"}
+              ? stateData.viewRegion
+              : "(None)"}
             , # of tracks:{" "}
             {stateData && stateData.tracks ? stateData.tracks.length : 0}
           </span>
