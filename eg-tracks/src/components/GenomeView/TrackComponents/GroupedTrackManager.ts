@@ -62,6 +62,7 @@ export class GroupedTrackManager {
         if (tracks[i].options.group && tracks[i].type in numericalTracksGroup) {
           const g = tracks[i].options.group;
           const tid = tracks[i].id;
+
           if (tracks[i].options.yScale === ScaleChoices.FIXED) {
             grouping[g] = {
               scale: ScaleChoices.FIXED,
@@ -86,14 +87,14 @@ export class GroupedTrackManager {
               );
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
             }
-
+            let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
             const max =
-              xvalues[0] && xvalues[0].length
-                ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
+              hasForward && xToValue && xToValue
+                ? _.max(xToValue.slice(viewWindow.start, viewWindow.end))
                 : 1;
             const min =
-              xvalues[1] && xvalues[1].length
-                ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
+              hasReverse && xToValue2 && xToValue2.length
+                ? _.min(xToValue2.slice(viewWindow.start, viewWindow.end))
                 : 0;
 
             if (!grouping.hasOwnProperty(g)) {
