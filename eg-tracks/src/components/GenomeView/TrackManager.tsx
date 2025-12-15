@@ -2619,7 +2619,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       ) {
         preloadedTracks.current = {};
         preload.current = false;
-
+        initialLoad.current = false;
         setSelectedTool((prevState) => {
           if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
             const newSelectedTool = toolSelect(tool);
@@ -3596,7 +3596,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(filteredTracks);
     }
-    initialLoad.current = false;
   }, [tracks]);
   // MARK: width, regions
   useEffect(() => {
