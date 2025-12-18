@@ -619,7 +619,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     isfetchGenomeAlignWorkerBusy.current = true;
     const message = genomeAlignMessageQueue.current.pop();
-    if (fetchGenomeAlignWorker.current) {
+    if (
+      fetchGenomeAlignWorker.current &&
+      !isfetchGenomeAlignWorkerBusy.current
+    ) {
+      isfetchGenomeAlignWorkerBusy.current = true;
       if (fetchGenomeAlignWorker.current.hasOnMessage === false) {
         fetchGenomeAlignWorker.current.fetchWorker.onmessage =
           createGenomeAlignOnMessage;
@@ -1684,8 +1688,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             completedFetchedRegion.current.done = {};
             completedFetchedRegion.current.groups = {};
           }
-          processGenomeAlignQueue();
-          processQueue();
+
           checkDrawData({
             trackDataIdx: dataItem.trackDataIdx,
             initial: dataItem.initial,
@@ -1693,6 +1696,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             missingIdx: dataItem.missingIdx,
             curDataIdx: dataItem.trackDataIdx,
           });
+          isWorkerBusy.current = false;
+
+          processQueue();
         }
       })
     );
@@ -1782,6 +1788,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
       }
+      isfetchGenomeAlignWorkerBusy.current = false;
+      processGenomeAlignQueue();
     } catch (error) {
       console.error(
         "An error occurred when trying to fetch genomealign track:",
@@ -2011,28 +2019,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //     }
     //   }
     // }
-    for (const key in trackFetchedDataCache.current) {
-      const curTrack = trackFetchedDataCache.current[key];
-      const cacheKeys = Object.keys(curTrack)
-        .filter((k) => isInteger(k))
-        .map(Number)
-        .sort((a, b) => a - b);
-      let minIdx, maxIdx;
-      if (curTrack.trackType in trackUsingExpandedLoci) {
-        minIdx = dataIdx.current - 3;
-        maxIdx = dataIdx.current + 3;
-      } else {
-        minIdx = dataIdx.current - 6;
-        maxIdx = dataIdx.current + 6;
-      }
-      for (const cacheDataIdx of cacheKeys) {
-        if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
-          if (trackFetchedDataCache.current[key][cacheDataIdx]) {
-            trackFetchedDataCache.current[key][cacheDataIdx] = {};
-          }
-        }
-      }
-    }
+    // for (const key in trackFetchedDataCache.current) {
+    //   const curTrack = trackFetchedDataCache.current[key];
+    //   const cacheKeys = Object.keys(curTrack)
+    //     .filter((k) => isInteger(k))
+    //     .map(Number)
+    //     .sort((a, b) => a - b);
+    //   let minIdx, maxIdx;
+    //   if (curTrack.trackType in trackUsingExpandedLoci) {
+    //     minIdx = dataIdx.current - 3;
+    //     maxIdx = dataIdx.current + 3;
+    //   } else {
+    //     minIdx = dataIdx.current - 6;
+    //     maxIdx = dataIdx.current + 6;
+    //   }
+    //   for (const cacheDataIdx of cacheKeys) {
+    //     if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
+    //       if (trackFetchedDataCache.current[key][cacheDataIdx]) {
+    //         trackFetchedDataCache.current[key][cacheDataIdx] = {};
+    //       }
+    //     }
+    //   }
+    // }
     if (newDrawData && Object.keys(newDrawData.trackToDrawId).length > 0) {
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
@@ -2140,25 +2148,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      // Check if all tracks are present in completedFetchedRegion.current.done
-      let hasAllRegionData = true;
-      for (const track of trackManagerState.current.tracks) {
-        if (!(track.id in completedFetchedRegion.current.done)) {
-          hasAllRegionData = false;
-          break;
-        }
-      }
-      if (hasAllRegionData) {
-      }
-      processQueue();
-      isWorkerBusy.current = false;
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
         completedFetchedRegion,
       });
-      processGenomeAlignQueue();
-      processQueue();
     }
   }
 

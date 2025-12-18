@@ -260,6 +260,7 @@ class NavigationContext {
   /**
    * Parses a location in this navigation context. Should be formatted like "$chrName:$startBase-$endBase" OR
    * "$featureName". Supports multi-chromosome intervals like "chr7:154900269-chr8:1379003".
+   * Also supports whitespace-separated formats like "chr7 154900269 chr8 1379003".
    *
    * Returns an open interval of context coordinates. Throws RangeError on parse failure.
    *
@@ -268,11 +269,35 @@ class NavigationContext {
    * @throws {RangeError} when parsing an interval outside of the context or something otherwise nonsensical
    */
   parse(str: string): OpenInterval {
+    // Normalize whitespace-separated format to colon-dash format
+    // Pattern: "chr7   154900269 chr8    1379003" -> "chr7:154900269-chr8:1379003"
+    // Pattern: "chr7 27103672 27424040" -> "chr7:27103672-27424040"
+    let normalizedStr = str.trim();
+
+    // Detect whitespace-separated multi-chromosome format: "chr7 154900269 chr8 1379003"
+    // or gene format: "CYP4A22 1 CYP1A2 7763"
+    const multiChrWhitespacePattern =
+      /^(\S+)\s+(\d+\.?\d*)\s+(\S+)\s+(\d+\.?\d*)$/;
+    const multiChrMatch = normalizedStr.match(multiChrWhitespacePattern);
+
+    if (multiChrMatch) {
+      // Convert "chr7 154900269 chr8 1379003" to "chr7:154900269-chr8:1379003"
+      normalizedStr = `${multiChrMatch[1]}:${multiChrMatch[2]}-${multiChrMatch[3]}:${multiChrMatch[4]}`;
+    } else {
+      // Detect single chromosome whitespace format: "chr7 27103672 27424040"
+      const singleChrWhitespacePattern = /^(\S+)\s+(\d+\.?\d*)\s+(\d+\.?\d*)$/;
+      const singleChrMatch = normalizedStr.match(singleChrWhitespacePattern);
+
+      if (singleChrMatch) {
+        // Convert "chr7 27103672 27424040" to "chr7:27103672-27424040"
+        normalizedStr = `${singleChrMatch[1]}:${singleChrMatch[2]}-${singleChrMatch[3]}`;
+      }
+    }
+
     // Check if the input contains multiple chromosome intervals
     // Multi-chromosome format: "chr7:154900269-chr8:1379003" or "CYP4A22:1-CYP1A2:7763"
     // Single chromosome format: "chr7:27103672.064926386-27424040.064926386"
-
-    const segments = str.split("-");
+    const segments = normalizedStr.split("-");
     const isMultiChromosome =
       segments.length === 2 &&
       segments[0].includes(":") &&
@@ -289,11 +314,11 @@ class NavigationContext {
       );
       const endPos = Math.round(parseFloat(endPosStr.replace(/[^0-9.]/g, "")));
 
-      // Try to find features by chromosome name first, then by feature name
+      // find features by chromosome name first, then by feature name
       let startFeature = this._featuresForChr[startChr]?.[0];
       let endFeature = this._featuresForChr[endChr]?.[0];
 
-      // If not found by chromosome, try finding by feature name
+      //  try finding by feature name
       if (!startFeature) {
         startFeature = this._features.find((f) => f.getName() === startChr);
       }
@@ -308,11 +333,10 @@ class NavigationContext {
         );
       }
 
-      // Check if we're dealing with standard chromosomes (chr1, chr2, etc.) or gene names
+      // get chromosome or gene names eg, chr1, CYP1A2
       const isStandardChromosome =
         startChr.startsWith("chr") && endChr.startsWith("chr");
 
-      // Collect all intervals spanning from start chromosome to end chromosome
       const intervals: OpenInterval[] = [];
 
       // For gene names, we need to convert to actual chromosome coordinates
@@ -336,9 +360,7 @@ class NavigationContext {
         intervals.push(startContextCoords);
       }
 
-      // Only iterate through intermediate chromosomes if we're dealing with standard chromosome names
       if (isStandardChromosome) {
-        // Extract chromosome numbers for range calculation
         const startChrNum = parseInt(startChr.replace("chr", ""));
         const endChrNum = parseInt(endChr.replace("chr", ""));
 
@@ -391,7 +413,6 @@ class NavigationContext {
         throw new RangeError("No valid intervals found in this context");
       }
 
-      // Return an interval spanning from the start of the first interval to the end of the last
       const overallStart = Math.min(
         ...intervals.map((interval) => interval.start)
       );
@@ -400,8 +421,9 @@ class NavigationContext {
       return new OpenInterval(overallStart, overallEnd);
     }
 
-    // Handle single chromosome interval or feature name
-    const feature = this._features.find((feature) => feature.getName() === str);
+    const feature = this._features.find(
+      (feature) => feature.getName() === normalizedStr
+    );
     if (feature) {
       const contextCoords = this.convertFeatureSegmentToContextCoordinates(
         new FeatureSegment(feature)
@@ -410,9 +432,9 @@ class NavigationContext {
       return new OpenInterval(center - 3, center + 3);
     }
 
-    // Handle single chromosome interval with potential decimal coordinates
-    if (str.includes(":") && str.includes("-")) {
-      const [chrPart, rangePart] = str.split(":");
+    // coord within a single chromosome ------------------
+    if (normalizedStr.includes(":") && normalizedStr.includes("-")) {
+      const [chrPart, rangePart] = normalizedStr.split(":");
       const [startStr, endStr] = rangePart.split("-");
       const startPos = Math.round(parseFloat(startStr.replace(/[^0-9.]/g, "")));
       const endPos = Math.round(parseFloat(endStr.replace(/[^0-9.]/g, "")));
@@ -428,7 +450,7 @@ class NavigationContext {
     }
 
     try {
-      const cleanedStr = str.replace(/[^0-9:-]/g, "");
+      const cleanedStr = normalizedStr.replace(/[^0-9:-]/g, "");
       const locus = ChromosomeInterval.parse(cleanedStr);
 
       const contextCoords = this.convertGenomeIntervalToBases(locus)[0];

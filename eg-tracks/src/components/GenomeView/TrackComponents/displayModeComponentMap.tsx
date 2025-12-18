@@ -1390,7 +1390,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
           strand === "-",
           80,
           targetGenome,
-          queryGenome
+          queryGenome,
+          drawData.configOptions
         )
       );
       const arrows = renderRoughStrand(
