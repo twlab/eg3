@@ -29,26 +29,45 @@ export const trackFetchFunction: { [key: string]: any } = {
 
     let url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
 
-    // if (regionData.genomeName === "canFam6") {
-    //   url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
-    // }
+    // Retry logic for intermittent CORS errors
+    const maxRetries = 2;
+    const retryDelay = 500; // ms
 
-    try {
-      const genRefResponse = await fetch(url, {
-        method: "GET",
-        mode: "cors",
-        cache: "default",
-      });
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const genRefResponse = await fetch(url, {
+          method: "GET",
+          mode: "cors",
+          cache: "default",
+          credentials: "omit", // Don't send credentials which can cause CORS issues
+        });
 
-      if (!genRefResponse.ok) {
-        throw new Error(`HTTP error! status: ${genRefResponse.status}`);
+        if (!genRefResponse.ok) {
+          throw new Error(`HTTP error! status: ${genRefResponse.status}`);
+        }
+
+        return genRefResponse.json();
+      } catch (error) {
+        const isCorsError =
+          error instanceof TypeError && error.message.includes("fetch");
+        const isLastAttempt = attempt === maxRetries;
+
+        if (isCorsError && !isLastAttempt) {
+          console.warn(`CORS error on attempt ${attempt + 1}, retrying...`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          continue;
+        }
+
+        if (isLastAttempt) {
+          console.error(
+            "Failed to fetch gene annotation data after retries:",
+            error
+          );
+        }
+        return [];
       }
-
-      return genRefResponse.json();
-    } catch (error) {
-      console.error("Failed to fetch gene annotation data:", error);
-      return [];
     }
+    return [];
   },
   snp: async function snpFetch(regionData: any) {
     const SNP_REGION_API: { [key: string]: any } = {

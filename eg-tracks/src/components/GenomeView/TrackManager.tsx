@@ -25,7 +25,6 @@ import TrackFactory from "./TrackComponents/TrackFactory";
 import BamSource from "../../getRemoteData/BamSource";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
-import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import { TrackState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import TrackRegionController from "./genomeNavigator/TrackRegionController";
@@ -49,10 +48,7 @@ import { formatDataByType } from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
 // import { fetchGenomicData } from "../../getRemoteData/fetchData";
 // import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
-import {
-  arraysHaveSameTrackModels,
-  getGenomeAlignTracksNotInSecondArray,
-} from "../../util";
+import { arraysHaveSameTrackModels } from "../../util";
 import { generateUUID } from "../../util";
 import {
   fetchGenomeAlignData,
@@ -433,181 +429,184 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     setMessageData(getMessageData());
-    const message = messageQueue.current.pop();
+    if (!isWorkerBusy.current) {
+      const message = messageQueue.current.pop();
+      isWorkerBusy.current = true;
+      // Split message by trackModelArr type
+      const hicTypes = { hic: "", dynamichic: "", bam: "" };
 
-    // Split message by trackModelArr type
-    const hicTypes = { hic: "", dynamichic: "", bam: "" };
+      // message is an array of objects
+      const intMessages: Array<any> = [];
+      const normalMessages: Array<any> = [];
 
-    // message is an array of objects
-    const intMessages: Array<any> = [];
-    const normalMessages: Array<any> = [];
+      for (const msgObj of message) {
+        if (
+          Array.isArray(msgObj.trackModelArr) &&
+          msgObj.trackModelArr.length > 0
+        ) {
+          const intTrackModels: any[] = [];
+          const normalTrackModels: any[] = [];
+          for (const track of msgObj.trackModelArr) {
+            if (track.type in hicTypes) {
+              intTrackModels.push(track);
+            } else {
+              normalTrackModels.push(track);
+            }
+          }
+          if (intTrackModels.length > 0) {
+            intMessages.push({
+              ...msgObj,
+              trackModelArr: intTrackModels,
+            });
+          }
+          if (normalTrackModels.length > 0) {
+            normalMessages.push({
+              ...msgObj,
+              trackModelArr: normalTrackModels,
+            });
+          }
+        }
+      }
 
-    for (const msgObj of message) {
+      // split an array into N chunks
+      // split an array into N contiguous chunks
+      function splitArrayIntoChunks(arr, numChunks) {
+        const chunkSize = Math.ceil(arr.length / numChunks);
+        const chunks: Array<any> = [];
+        for (let i = 0; i < numChunks; i++) {
+          const start = i * chunkSize;
+          const end = start + chunkSize;
+          chunks.push(arr.slice(start, end));
+        }
+        return chunks;
+      }
+
+      // Send intMessages to instance workers
       if (
-        Array.isArray(msgObj.trackModelArr) &&
-        msgObj.trackModelArr.length > 0
+        infiniteScrollWorkers.current &&
+        (infiniteScrollWorkers.current.instance.length > 0 ||
+          infiniteScrollWorkers.current.worker.length > 0)
       ) {
-        const intTrackModels: any[] = [];
-        const normalTrackModels: any[] = [];
-        for (const track of msgObj.trackModelArr) {
-          if (track.type in hicTypes) {
-            intTrackModels.push(track);
-          } else {
-            normalTrackModels.push(track);
-          }
-        }
-        if (intTrackModels.length > 0) {
-          intMessages.push({
-            ...msgObj,
-            trackModelArr: intTrackModels,
-          });
-        }
-        if (normalTrackModels.length > 0) {
-          normalMessages.push({
-            ...msgObj,
-            trackModelArr: normalTrackModels,
-          });
-        }
-      }
-    }
-
-    // split an array into N chunks
-    // split an array into N contiguous chunks
-    function splitArrayIntoChunks(arr, numChunks) {
-      const chunkSize = Math.ceil(arr.length / numChunks);
-      const chunks: Array<any> = [];
-      for (let i = 0; i < numChunks; i++) {
-        const start = i * chunkSize;
-        const end = start + chunkSize;
-        chunks.push(arr.slice(start, end));
-      }
-      return chunks;
-    }
-
-    // Send intMessages to instance workers
-    if (
-      infiniteScrollWorkers.current &&
-      (infiniteScrollWorkers.current.instance.length > 0 ||
-        infiniteScrollWorkers.current.worker.length > 0)
-    ) {
-      if (
-        intMessages.length > 0 &&
-        infiniteScrollWorkers.current.instance.length > 0
-      ) {
-        const numWorkers = infiniteScrollWorkers.current.instance.length;
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of intMessages) {
-            const chunks = splitArrayIntoChunks(
-              msgObj.trackModelArr,
-              numWorkers
-            );
-            if (chunks[i].length > 0) {
-              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+        if (
+          intMessages.length > 0 &&
+          infiniteScrollWorkers.current.instance.length > 0
+        ) {
+          const numWorkers = infiniteScrollWorkers.current.instance.length;
+          for (let i = 0; i < numWorkers; i++) {
+            const messagesForWorker: Array<any> = [];
+            for (const msgObj of intMessages) {
+              const chunks = splitArrayIntoChunks(
+                msgObj.trackModelArr,
+                numWorkers
+              );
+              if (chunks[i].length > 0) {
+                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+              }
+            }
+            if (messagesForWorker.length > 0) {
+              if (
+                infiniteScrollWorkers.current.instance[i].hasOnMessage === false
+              ) {
+                infiniteScrollWorkers.current.instance[
+                  i
+                ].fetchWorker.onmessage = createInfiniteOnMessage;
+                infiniteScrollWorkers.current.instance[i].hasOnMessage = true;
+              }
+              infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
+                messagesForWorker
+              );
             }
           }
-          if (messagesForWorker.length > 0) {
-            if (
-              infiniteScrollWorkers.current.instance[i].hasOnMessage === false
-            ) {
-              infiniteScrollWorkers.current.instance[i].fetchWorker.onmessage =
-                createInfiniteOnMessage;
-              infiniteScrollWorkers.current.instance[i].hasOnMessage = true;
+        }
+
+        // Send normalMessages to worker workers
+        if (
+          normalMessages.length > 0 &&
+          infiniteScrollWorkers.current.worker.length > 0
+        ) {
+          const numWorkers = infiniteScrollWorkers.current.worker.length;
+
+          for (let i = 0; i < numWorkers; i++) {
+            const messagesForWorker: Array<any> = [];
+            for (const msgObj of normalMessages) {
+              const chunks = splitArrayIntoChunks(
+                msgObj.trackModelArr,
+                numWorkers
+              );
+              if (chunks[i].length > 0) {
+                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+              }
             }
-            infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
-              messagesForWorker
-            );
+
+            if (messagesForWorker.length > 0) {
+              if (
+                infiniteScrollWorkers.current.worker[i].hasOnMessage === false
+              ) {
+                infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
+                  createInfiniteOnMessage;
+                infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
+              }
+              infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+                messagesForWorker
+              );
+            }
           }
         }
-      }
+      } else {
+        // Send normalMessages to fetch functions (non-worker version)
+        if (normalMessages.length > 0) {
+          const numWorkers = tracks.length;
 
-      // Send normalMessages to worker workers
-      if (
-        normalMessages.length > 0 &&
-        infiniteScrollWorkers.current.worker.length > 0
-      ) {
-        const numWorkers = infiniteScrollWorkers.current.worker.length;
-
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of normalMessages) {
-            const chunks = splitArrayIntoChunks(
-              msgObj.trackModelArr,
-              numWorkers
-            );
-            if (chunks[i].length > 0) {
-              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+          for (let i = 0; i < numWorkers; i++) {
+            const messagesForWorker: Array<any> = [];
+            for (const msgObj of normalMessages) {
+              const chunks = splitArrayIntoChunks(
+                msgObj.trackModelArr,
+                numWorkers
+              );
+              if (chunks[i].length > 0) {
+                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+              }
             }
-          }
 
-          if (messagesForWorker.length > 0) {
-            if (
-              infiniteScrollWorkers.current.worker[i].hasOnMessage === false
-            ) {
-              infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-                createInfiniteOnMessage;
-              infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
+            if (messagesForWorker.length > 0) {
+              // Launch async operation without awaiting - process results independently
+              fetchGenomicData(messagesForWorker)
+                .then((results) => {
+                  // Call createInfiniteOnMessage once with the entire results array
+                  createInfiniteOnMessage({ data: results });
+                })
+                .catch((error) => {
+                  console.error("Error fetching genomic data:", error);
+                });
             }
-            infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-              messagesForWorker
-            );
           }
         }
-      }
-    } else {
-      // Send normalMessages to fetch functions (non-worker version)
-      if (normalMessages.length > 0) {
-        const numWorkers = tracks.length;
-
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of normalMessages) {
-            const chunks = splitArrayIntoChunks(
-              msgObj.trackModelArr,
-              numWorkers
-            );
-            if (chunks[i].length > 0) {
-              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+        if (intMessages.length > 0) {
+          const numWorkers = tracks.length;
+          for (let i = 0; i < numWorkers; i++) {
+            const messagesForWorker: Array<any> = [];
+            for (const msgObj of intMessages) {
+              const chunks = splitArrayIntoChunks(
+                msgObj.trackModelArr,
+                numWorkers
+              );
+              if (chunks[i].length > 0) {
+                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+              }
             }
-          }
 
-          if (messagesForWorker.length > 0) {
-            // Launch async operation without awaiting - process results independently
-            fetchGenomicData(messagesForWorker)
-              .then((results) => {
-                // Call createInfiniteOnMessage once with the entire results array
-                createInfiniteOnMessage({ data: results });
-              })
-              .catch((error) => {
-                console.error("Error fetching genomic data:", error);
-              });
-          }
-        }
-      }
-      if (intMessages.length > 0) {
-        const numWorkers = tracks.length;
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of intMessages) {
-            const chunks = splitArrayIntoChunks(
-              msgObj.trackModelArr,
-              numWorkers
-            );
-            if (chunks[i].length > 0) {
-              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            if (messagesForWorker.length > 0) {
+              // Launch async operation without awaiting - process results independently
+              fetchGenomicData(messagesForWorker)
+                .then((results) => {
+                  // Call createInfiniteOnMessage once with the entire results array
+                  createInfiniteOnMessage({ data: results });
+                })
+                .catch((error) => {
+                  console.error("Error fetching genomic data:", error);
+                });
             }
-          }
-
-          if (messagesForWorker.length > 0) {
-            // Launch async operation without awaiting - process results independently
-            fetchGenomicData(messagesForWorker)
-              .then((results) => {
-                // Call createInfiniteOnMessage once with the entire results array
-                createInfiniteOnMessage({ data: results });
-              })
-              .catch((error) => {
-                console.error("Error fetching genomic data:", error);
-              });
           }
         }
       }
@@ -2144,11 +2143,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
         }
       }
+
+      // Check if all tracks are present in completedFetchedRegion.current.done
+      let hasAllRegionData = true;
+      for (const track of trackManagerState.current.tracks) {
+        if (!(track.id in completedFetchedRegion.current.done)) {
+          hasAllRegionData = false;
+          break;
+        }
+      }
+      if (hasAllRegionData) {
+      }
+      processQueue();
+      isWorkerBusy.current = false;
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
         completedFetchedRegion,
       });
+      processGenomeAlignQueue();
+      processQueue();
     }
   }
 

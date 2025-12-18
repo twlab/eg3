@@ -269,18 +269,18 @@ class NavigationContext {
    */
   parse(str: string): OpenInterval {
     // Check if the input contains multiple chromosome intervals
-    // Multi-chromosome format: "chr7:154900269-chr8:1379003"
+    // Multi-chromosome format: "chr7:154900269-chr8:1379003" or "CYP4A22:1-CYP1A2:7763"
     // Single chromosome format: "chr7:27103672.064926386-27424040.064926386"
+
     const segments = str.split("-");
     const isMultiChromosome =
       segments.length === 2 &&
       segments[0].includes(":") &&
-      segments[1].includes(":") &&
-      segments[1].startsWith("chr");
+      segments[1].includes(":");
 
     if (isMultiChromosome) {
-      const startChromosomePart = segments[0]; // e.g., "chr7:154900269"
-      const endChromosomePart = segments[1]; // e.g., "chr10:1379003"
+      const startChromosomePart = segments[0]; // e.g., "chr7:154900269" or "CYP4A22:1"
+      const endChromosomePart = segments[1]; // e.g., "chr10:1379003" or "CYP1A2:7763"
 
       const [startChr, startPosStr] = startChromosomePart.split(":");
       const [endChr, endPosStr] = endChromosomePart.split(":");
@@ -289,26 +289,46 @@ class NavigationContext {
       );
       const endPos = Math.round(parseFloat(endPosStr.replace(/[^0-9.]/g, "")));
 
-      const startFeature = this._featuresForChr[startChr]?.[0];
-      const endFeature = this._featuresForChr[endChr]?.[0];
+      // Try to find features by chromosome name first, then by feature name
+      let startFeature = this._featuresForChr[startChr]?.[0];
+      let endFeature = this._featuresForChr[endChr]?.[0];
 
+      // If not found by chromosome, try finding by feature name
+      if (!startFeature) {
+        startFeature = this._features.find((f) => f.getName() === startChr);
+      }
+      if (!endFeature) {
+        endFeature = this._features.find((f) => f.getName() === endChr);
+      }
+
+      console.log(startFeature, endFeature);
       if (!startFeature || !endFeature) {
         throw new RangeError(
-          "One or more chromosomes unavailable in this context"
+          "One or more features unavailable in this context"
         );
       }
 
-      // Extract chromosome numbers for range calculation
-      const startChrNum = parseInt(startChr.replace("chr", ""));
-      const endChrNum = parseInt(endChr.replace("chr", ""));
+      // Check if we're dealing with standard chromosomes (chr1, chr2, etc.) or gene names
+      const isStandardChromosome =
+        startChr.startsWith("chr") && endChr.startsWith("chr");
 
       // Collect all intervals spanning from start chromosome to end chromosome
       const intervals: OpenInterval[] = [];
 
-      // Add the starting chromosome interval (from startPos to end of chromosome)
-      const startInterval = `${startChr}:${startPos}-${
-        startFeature.getLocus().end
-      }`;
+      // For gene names, we need to convert to actual chromosome coordinates
+      // For chromosomes, we can use them directly
+      let startInterval: string;
+      if (isStandardChromosome) {
+        startInterval = `${startChr}:${startPos}-${
+          startFeature.getLocus().end
+        }`;
+      } else {
+        // For gene features, use the actual chromosome from the locus
+        const startLocus = startFeature.getLocus();
+        const actualStartPos = startLocus.start + startPos;
+        startInterval = `${startLocus.chr}:${actualStartPos}-${startLocus.end}`;
+      }
+
       const startContextCoords = this.convertGenomeIntervalToBases(
         ChromosomeInterval.parse(startInterval)
       )[0];
@@ -316,33 +336,54 @@ class NavigationContext {
         intervals.push(startContextCoords);
       }
 
-      // Add all complete chromosomes in between
-      for (let chrNum = startChrNum + 1; chrNum < endChrNum; chrNum++) {
-        const chrName = `chr${chrNum}`;
-        const chrFeature = this._featuresForChr[chrName]?.[0];
-        if (chrFeature) {
-          const chrInterval = `${chrName}:${chrFeature.getLocus().start}-${
-            chrFeature.getLocus().end
-          }`;
-          const chrContextCoords = this.convertGenomeIntervalToBases(
-            ChromosomeInterval.parse(chrInterval)
-          )[0];
-          if (chrContextCoords) {
-            intervals.push(chrContextCoords);
+      // Only iterate through intermediate chromosomes if we're dealing with standard chromosome names
+      if (isStandardChromosome) {
+        // Extract chromosome numbers for range calculation
+        const startChrNum = parseInt(startChr.replace("chr", ""));
+        const endChrNum = parseInt(endChr.replace("chr", ""));
+
+        // Add all complete chromosomes in between
+        for (let chrNum = startChrNum + 1; chrNum < endChrNum; chrNum++) {
+          const chrName = `chr${chrNum}`;
+          const chrFeature = this._featuresForChr[chrName]?.[0];
+          if (chrFeature) {
+            const chrInterval = `${chrName}:${chrFeature.getLocus().start}-${
+              chrFeature.getLocus().end
+            }`;
+            const chrContextCoords = this.convertGenomeIntervalToBases(
+              ChromosomeInterval.parse(chrInterval)
+            )[0];
+            if (chrContextCoords) {
+              intervals.push(chrContextCoords);
+            }
           }
         }
-      }
 
-      // Add the ending chromosome interval (from start of chromosome to endPos)
-      if (startChrNum !== endChrNum) {
-        const endInterval = `${endChr}:${
-          endFeature.getLocus().start
-        }-${endPos}`;
-        const endContextCoords = this.convertGenomeIntervalToBases(
-          ChromosomeInterval.parse(endInterval)
-        )[0];
-        if (endContextCoords) {
-          intervals.push(endContextCoords);
+        // Add the ending chromosome interval (from start of chromosome to endPos)
+        if (startChrNum !== endChrNum) {
+          const endInterval = `${endChr}:${
+            endFeature.getLocus().start
+          }-${endPos}`;
+          const endContextCoords = this.convertGenomeIntervalToBases(
+            ChromosomeInterval.parse(endInterval)
+          )[0];
+          if (endContextCoords) {
+            intervals.push(endContextCoords);
+          }
+        }
+      } else {
+        // For gene names or non-standard features, just handle start and end
+        if (startChr !== endChr) {
+          // For gene features, use actual chromosome coordinates
+          const endLocus = endFeature.getLocus();
+          const actualEndPos = endLocus.start + endPos;
+          const endInterval = `${endLocus.chr}:${endLocus.start}-${actualEndPos}`;
+          const endContextCoords = this.convertGenomeIntervalToBases(
+            ChromosomeInterval.parse(endInterval)
+          )[0];
+          if (endContextCoords) {
+            intervals.push(endContextCoords);
+          }
         }
       }
 
