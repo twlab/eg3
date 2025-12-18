@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import { Manager, Reference, Popper } from "react-popper";
 import TrackModel from "../../../../models/TrackModel";
 
-import "./hoverToolTips/Tooltip.css";
+import "./HoverToolTips/Tooltip.css";
 
 import { variableIsObject } from "../../../../models/util";
 
