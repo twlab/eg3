@@ -7,16 +7,6 @@ import { RemoteFile } from "generic-filehandle2";
  * @author Daofeng Li Chanrung Seng
  */
 
-// Create a custom fetch wrapper that prevents cache conflicts
-const createFetchWithNoCache = () => {
-  return (input: RequestInfo | URL, options: any = {}) => {
-    return fetch(input, {
-      ...options,
-      cache: "no-store", // Prevent cache conflicts between multiple App instances
-    });
-  };
-};
-
 const ensembl: Array<string> = [
   "1",
   "2",
@@ -67,26 +57,6 @@ class BigSourceWorkerGmod {
    * Detects if the BigWig file uses Ensembl
    * @return {Promise<boolean>} True if Ensembl naming (1, 2, 3...), false if UCSC naming (chr1, chr2, chr3...)
    */
-  async detectChromosomeNaming() {
-    try {
-      const header = await this.bw.getHeader();
-
-      const firstChrom = Object.keys(header.refsByName || {})[0];
-
-      if (!firstChrom) {
-        this.chromNamingCache = false; // Default to UCSC naming if no chromosomes found
-        return false;
-      }
-
-      // Check if the first chromosome name is in the Ensembl array
-      this.chromNamingCache = ensembl.includes(firstChrom);
-      return this.chromNamingCache;
-    } catch (error) {
-      console.error("Error detecting chromosome naming:", error);
-      this.chromNamingCache = false; // Default to UCSC naming
-      return false;
-    }
-  }
 
   /**
    * Gets BigWig or BigBed features inside the requested locations.
@@ -100,7 +70,7 @@ class BigSourceWorkerGmod {
     // Create a fresh BigWig instance for each getData call
     // This prevents cache conflicts when multiple App instances exist
     if (this.useEnsemblStyle === null) {
-      this.useEnsemblStyle = await this.detectChromosomeNaming();
+      this.useEnsemblStyle = false;
     }
     const useEnsemblStyle = this.useEnsemblStyle;
 

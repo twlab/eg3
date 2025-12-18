@@ -155,37 +155,28 @@ export function TrackContainerRepresentable({
   }, [viewRegion, genomeConfig, selectedRegionSet]);
 
   const convertedUserViewRegion = useMemo(() => {
-    try {
-      let newViewRegion;
-      if (userViewRegion) {
-        newViewRegion = genomeConfig.navContext.parse(
-          userViewRegion as GenomeCoordinate
-        );
-      } else if (overrideViewRegion) {
-        newViewRegion = genomeConfig.navContext.parse(
-          overrideViewRegion as GenomeCoordinate
-        );
-      }
+    let newViewRegion;
+    if (overrideViewRegion) {
+      newViewRegion = genomeConfig.navContext.parse(
+        overrideViewRegion as GenomeCoordinate
+      );
+    } else if (selectedRegionSet) {
+      let setNavContext;
+      if (typeof selectedRegionSet === "object") {
+        const newRegionSet = RegionSet.deserialize(selectedRegionSet);
 
-      if (selectedRegionSet) {
-        let setNavContext;
-        if (typeof selectedRegionSet === "object") {
-          const newRegionSet = RegionSet.deserialize(selectedRegionSet);
-          setNavContext = newRegionSet.makeNavContext();
-        } else {
-          setNavContext = selectedRegionSet.makeNavContext();
-        }
-
-        return new DisplayedRegionModel(setNavContext, ...newViewRegion);
+        setNavContext = newRegionSet.makeNavContext();
       } else {
-        if (newViewRegion) {
-          return new DisplayedRegionModel(
-            genomeConfig.navContext,
-            ...newViewRegion
-          );
-        }
+        setNavContext = selectedRegionSet.makeNavContext();
       }
-    } catch (e) {
+      const newNav = new DisplayedRegionModel(setNavContext);
+
+      return newNav;
+    } else if (userViewRegion) {
+      newViewRegion = genomeConfig.navContext.parse(
+        userViewRegion as GenomeCoordinate
+      );
+    } else {
       return new DisplayedRegionModel(
         genomeConfig.navContext,
         ...genomeConfig.defaultRegion

@@ -33,11 +33,22 @@ export const trackFetchFunction: { [key: string]: any } = {
     //   url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
     // }
 
-    const genRefResponse = await fetch(url, {
-      method: "GET",
-    });
+    try {
+      const genRefResponse = await fetch(url, {
+        method: "GET",
+        mode: "cors",
+        cache: "default",
+      });
 
-    return genRefResponse.json();
+      if (!genRefResponse.ok) {
+        throw new Error(`HTTP error! status: ${genRefResponse.status}`);
+      }
+
+      return genRefResponse.json();
+    } catch (error) {
+      console.error("Failed to fetch gene annotation data:", error);
+      return [];
+    }
   },
   snp: async function snpFetch(regionData: any) {
     const SNP_REGION_API: { [key: string]: any } = {
@@ -60,19 +71,23 @@ export const trackFetchFunction: { [key: string]: any } = {
 
     if (regionData.end - regionData.start <= 30000) {
       const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
-        regionData.end + "?content-type=application%2Fjson&feature=variation"
-      }`;
+        regionData.end
+      }?content-type=application%2Fjson&feature=variation`;
 
-      return fetch(url, { headers })
+      return fetch(url, {
+        headers,
+        mode: "cors",
+        cache: "default",
+      })
         .then((response) => {
           if (!response.ok) {
-            throw new Error("Network response was not ok");
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
         })
         .catch((error) => {
           console.error("There was a problem with the fetch operation:", error);
-          return { data: [] };
+          return [];
         });
     } else {
       return [];

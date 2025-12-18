@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 16;
+const MAX_WORKERS = 6;
 const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
@@ -63,7 +63,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
-
+  const [workerReady, setWorkerReady] = useState(false);
   const [show3dGene, setShow3dGene] = useState();
   //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
   const g3dTracks = useRef<Array<any>>([]);
@@ -147,6 +147,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       };
     }
     genomeConfig.defaultTracks = tracks;
+    setWorkerReady(true);
   }, [tracks]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
@@ -318,7 +319,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks ? (
+      {!has3dTracks && workerReady ? (
         <TrackManager
           tracks={tracks}
           legendWidth={legendWidth}

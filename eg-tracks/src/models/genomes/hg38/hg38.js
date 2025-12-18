@@ -36,6 +36,8 @@ const genome = new Genome("hg38", [
 //   //testing finemode  27213325-27213837, 27195171-27202238, chr7:27166871-27181006
 //   //chr7:157159564-158159564
 
+// chr7:24333029-24373096 TESTING GENOMEALIGN ROUGH with query WENJIN FILE https://wangcluster.wustl.edu/~wzhang/projects/MSN_epigenome/datahub.json
+
 //chr7:26805572-26825594
 // biginteract chr3:63836292-64336395
 // https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d
