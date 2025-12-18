@@ -447,14 +447,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       (trackModel.type in numericalTracks ||
         configOptions.current.displayMode === "density")
     ) {
-      if (anchorTracks.has(trackModel.type)) {
-        // if (
-        //   !configOptions.current.fetchViewWindowOnly &&
-        //   !configOptions.current.bothAnchorsInView
-        // ) {
-        //   return;
-        // }
-      }
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );

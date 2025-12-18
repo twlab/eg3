@@ -1616,37 +1616,33 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           primaryGenName: genomeConfig.genome.getName(),
         };
 
-        // Process each fetch result with promises
-        await Promise.all(
-          dataItem.fetchResults.map(
-            async (item: {
-              id: any;
-              name: string;
-              result: any;
-              metadata: any;
-              trackModel: any;
-              curFetchNav: any;
-            }) => {
-              trackToDrawId[`${item.id}`] = "";
-              await createCache({
-                trackState: curTrackState,
-                result: item.result,
-                id: item.id,
-                trackType: item.trackModel.type
-                  ? item.trackModel.type
-                  : item.name
-                  ? item.name
-                  : "",
-                metadata: item.metadata,
-                trackModel: item.trackModel,
-                curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-                missingIdx: dataItem.missingIdx,
-              });
-            }
-          )
+        dataItem.fetchResults.map(
+          async (item: {
+            id: any;
+            name: string;
+            result: any;
+            metadata: any;
+            trackModel: any;
+            curFetchNav: any;
+          }) => {
+            trackToDrawId[`${item.id}`] = "";
+            createCache({
+              trackState: curTrackState,
+              result: item.result,
+              id: item.id,
+              trackType: item.trackModel.type
+                ? item.trackModel.type
+                : item.name
+                ? item.name
+                : "",
+              metadata: item.metadata,
+              trackModel: item.trackModel,
+              curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+              missingIdx: dataItem.missingIdx,
+            });
+          }
         );
 
-        // Capture current dataIdx to avoid race conditions
         const currentDataIdx = dataIdx.current;
         const idxArr = [currentDataIdx - 1, currentDataIdx, currentDataIdx + 1];
 
@@ -1666,7 +1662,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 cacheKeysWithData[trackToDrawKey] = false;
               }
             } else {
-              // For normal mode, check all three indices
+              //  normal mode check all three indices
               let hasAllRegionData = true;
               for (let idx of idxArr) {
                 if (!cache[idx] || !cache[idx].dataCache) {
@@ -1681,7 +1677,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
 
-        // Only proceed if we have valid cached data
+        // if we have valid cached data
         if (Object.keys(cacheKeysWithData).length > 0) {
           if (completedFetchedRegion.current.key !== currentDataIdx) {
             completedFetchedRegion.current.key = currentDataIdx;
@@ -2023,11 +2019,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         .sort((a, b) => a - b);
       let minIdx, maxIdx;
       if (curTrack.trackType in trackUsingExpandedLoci) {
-        minIdx = dataIdx.current - 1;
-        maxIdx = dataIdx.current + 1;
+        minIdx = dataIdx.current - 3;
+        maxIdx = dataIdx.current + 3;
       } else {
-        minIdx = dataIdx.current - 2;
-        maxIdx = dataIdx.current + 2;
+        minIdx = dataIdx.current - 6;
+        maxIdx = dataIdx.current + 6;
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
@@ -3273,7 +3269,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         if (!noData) {
-          trackToDrawId[key] = "";
+          if (cacheTrackData.usePrimaryNav) {
+            trackToDrawId[key] = "";
+          }
         }
       }
 

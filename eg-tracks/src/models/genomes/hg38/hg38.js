@@ -33,7 +33,7 @@ const genome = new Genome("hg38", [
 ]);
 //   //chr7:27053397-27373765
 //   // chr7:10000-20000
-//   //testinhttps://wangcluster.wustl.edu/~wzhang/projects/MSN_epigenome/datahub.jsong finemode  27213325-27213837, 27195171-27202238, chr7:27166871-27181006
+//   //testin https://wangcluster.wustl.edu/~wzhang/projects/MSN_epigenome/datahub.json  finemode  27213325-27213837, 27195171-27202238, chr7:27166871-27181006
 //   //chr7:157159564-158159564
 
 // chr7:24333029-24373096 TESTING GENOMEALIGN ROUGH with query WENJIN FILE
