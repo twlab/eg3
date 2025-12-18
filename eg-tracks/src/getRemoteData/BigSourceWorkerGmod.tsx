@@ -7,6 +7,16 @@ import { RemoteFile } from "generic-filehandle2";
  * @author Daofeng Li Chanrung Seng
  */
 
+// Create a custom fetch wrapper that prevents cache conflicts
+const createFetchWithNoCache = () => {
+  return (input: RequestInfo | URL, options: any = {}) => {
+    return fetch(input, {
+      ...options,
+      cache: "no-store", // Prevent cache conflicts between multiple App instances
+    });
+  };
+};
+
 const ensembl: Array<string> = [
   "1",
   "2",
@@ -48,8 +58,19 @@ class BigSourceWorkerGmod {
   constructor(url) {
     this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(this.url),
+      filehandle: new RemoteFile(this.url, { fetch: createFetchWithNoCache() }),
     });
+    this.useEnsemblStyle = null;
+  }
+
+  /**
+   * Recreates the BigWig instance to clear any cached data
+   */
+  private recreateBigWigInstance() {
+    this.bw = new BigWig({
+      filehandle: new RemoteFile(this.url, { fetch: createFetchWithNoCache() }),
+    });
+    this.chromNamingCache = null;
     this.useEnsemblStyle = null;
   }
 
@@ -57,6 +78,26 @@ class BigSourceWorkerGmod {
    * Detects if the BigWig file uses Ensembl
    * @return {Promise<boolean>} True if Ensembl naming (1, 2, 3...), false if UCSC naming (chr1, chr2, chr3...)
    */
+  async detectChromosomeNaming() {
+    try {
+      const header = await this.bw.getHeader();
+
+      const firstChrom = Object.keys(header.refsByName || {})[0];
+
+      if (!firstChrom) {
+        this.chromNamingCache = false; // Default to UCSC naming if no chromosomes found
+        return false;
+      }
+
+      // Check if the first chromosome name is in the Ensembl array
+      this.chromNamingCache = ensembl.includes(firstChrom);
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error("Error detecting chromosome naming:", error);
+      this.chromNamingCache = false; // Default to UCSC naming
+      return false;
+    }
+  }
 
   /**
    * Gets BigWig or BigBed features inside the requested locations.
@@ -70,30 +111,76 @@ class BigSourceWorkerGmod {
     // Create a fresh BigWig instance for each getData call
     // This prevents cache conflicts when multiple App instances exist
     if (this.useEnsemblStyle === null) {
-      this.useEnsemblStyle = false;
+      this.useEnsemblStyle = await this.detectChromosomeNaming();
     }
     const useEnsemblStyle = this.useEnsemblStyle;
 
-    const promises = loci.map((locus) => {
-      let chrom = useEnsemblStyle ? locus.chr.replace("chr", "") : locus.chr;
+    try {
+      const promises = loci.map(async (locus) => {
+        let chrom = useEnsemblStyle ? locus.chr.replace("chr", "") : locus.chr;
 
-      // Handle mitochondrial chromosome naming variations
-      if (chrom === "M" || chrom === "chrM") {
-        // Try both M and MT depending on the file's naming convention
-        chrom = useEnsemblStyle ? "M" : "chrM";
+        // Handle mitochondrial chromosome naming variations
+        if (chrom === "M" || chrom === "chrM") {
+          // Try both M and MT depending on the file's naming convention
+          chrom = useEnsemblStyle ? "M" : "chrM";
+        }
+
+        return this.bw.getFeatures(chrom, locus.start, locus.end);
+      });
+
+      const dataForEachLocus = await Promise.all(promises);
+      loci.forEach((locus, index) => {
+        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+      });
+
+      const combinedData = dataForEachLocus.flat();
+
+      return combinedData;
+    } catch (error) {
+      console.error("Error fetching BigWig data, recreating instance:", error);
+
+      // Clear browser cache for this URL
+      if ("caches" in window) {
+        try {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames.map((cacheName) => caches.delete(cacheName))
+          );
+          console.log("Browser cache cleared");
+        } catch (cacheError) {
+          console.warn("Could not clear browser cache:", cacheError);
+        }
       }
 
-      return this.bw.getFeatures(chrom, locus.start, locus.end);
-    });
+      // Recreate the BigWig instance
+      this.recreateBigWigInstance();
 
-    const dataForEachLocus = await Promise.all(promises);
-    loci.forEach((locus, index) => {
-      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-    });
+      // Retry once with new instance
+      if (this.useEnsemblStyle === null) {
+        this.useEnsemblStyle = await this.detectChromosomeNaming();
+      }
 
-    const combinedData = dataForEachLocus.flat();
+      const promises = loci.map(async (locus) => {
+        let chrom = this.useEnsemblStyle
+          ? locus.chr.replace("chr", "")
+          : locus.chr;
 
-    return combinedData;
+        if (chrom === "M" || chrom === "chrM") {
+          chrom = this.useEnsemblStyle ? "M" : "chrM";
+        }
+
+        return this.bw.getFeatures(chrom, locus.start, locus.end);
+      });
+
+      const dataForEachLocus = await Promise.all(promises);
+      loci.forEach((locus, index) => {
+        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+      });
+
+      const combinedData = dataForEachLocus.flat();
+
+      return combinedData;
+    }
   };
 }
 

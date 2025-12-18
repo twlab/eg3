@@ -266,6 +266,7 @@ async function getRemoteData(regionData: any, trackType: string) {
           });
       }
     } catch (error: any) {
+      fetchInstance = null;
       return { error: "Failed to fetch data. " };
     }
   }

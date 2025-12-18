@@ -1616,7 +1616,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           primaryGenName: genomeConfig.genome.getName(),
         };
 
-        dataItem.fetchResults.map(
+        await dataItem.fetchResults.map(
           async (item: {
             id: any;
             name: string;
@@ -1626,7 +1626,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             curFetchNav: any;
           }) => {
             trackToDrawId[`${item.id}`] = "";
-            createCache({
+            await createCache({
               trackState: curTrackState,
               result: item.result,
               id: item.id,
