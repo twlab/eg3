@@ -1,5 +1,12 @@
 # Version history
 
+## 58.0.5
+
+- fixed critical bug where genome that querys with genomealign fetches too much data, increasing performance
+- implemented white space checking for searching genome coordinates
+- fixed long range text track not parsing file correctly
+- fixed genome align rough mode color config
+
 ## 58.0.2
 
 - fixed groupscale not displaying because of new code rework

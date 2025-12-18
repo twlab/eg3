@@ -214,7 +214,25 @@ class NavigationContext {
   convertGenomeIntervalToBases(
     chrInterval: ChromosomeInterval
   ): OpenInterval[] {
-    const potentialOverlaps = this._featuresForChr[chrInterval.chr] || [];
+    let potentialOverlaps = this._featuresForChr[chrInterval.chr] || [];
+
+    // If no features found, try alternative chromosome naming (chr1 vs 1)
+    if (potentialOverlaps.length === 0) {
+      const altChr = chrInterval.chr.startsWith("chr")
+        ? chrInterval.chr.replace("chr", "")
+        : `chr${chrInterval.chr}`;
+      potentialOverlaps = this._featuresForChr[altChr] || [];
+
+      if (potentialOverlaps.length > 0) {
+        // Update chrInterval to use the correct chromosome name
+        chrInterval = new ChromosomeInterval(
+          altChr,
+          chrInterval.start,
+          chrInterval.end
+        );
+      }
+    }
+
     const contextIntervals: Array<any> = [];
     for (const feature of potentialOverlaps) {
       const overlap = new FeatureSegment(feature).getGenomeOverlap(chrInterval);
@@ -224,6 +242,21 @@ class NavigationContext {
         );
       }
     }
+
+    // If no overlap found but chromosome exists, return the feature's full range as fallback
+    if (contextIntervals.length === 0 && potentialOverlaps.length > 0) {
+      const feature = potentialOverlaps[0];
+      const featureLocus = feature.getLocus();
+      console.warn(
+        `Requested ${chrInterval.chr}:${chrInterval.start}-${chrInterval.end} but feature only covers ${featureLocus.start}-${featureLocus.end}. Using full feature range.`
+      );
+      // Return the entire feature as fallback
+      const fullFeatureSegment = new FeatureSegment(feature);
+      contextIntervals.push(
+        this.convertFeatureSegmentToContextCoordinates(fullFeatureSegment)
+      );
+    }
+
     return contextIntervals;
   }
 
@@ -269,32 +302,32 @@ class NavigationContext {
    * @throws {RangeError} when parsing an interval outside of the context or something otherwise nonsensical
    */
   parse(str: string): OpenInterval {
-    // Normalize whitespace-separated format to colon-dash format
+    // convert string into standard format
     // Pattern: "chr7   154900269 chr8    1379003" -> "chr7:154900269-chr8:1379003"
     // Pattern: "chr7 27103672 27424040" -> "chr7:27103672-27424040"
     let normalizedStr = str.trim();
 
-    // Detect whitespace-separated multi-chromosome format: "chr7 154900269 chr8 1379003"
+    // check for whitespace multi-chromosome format: "chr7 154900269 chr8 1379003"
     // or gene format: "CYP4A22 1 CYP1A2 7763"
     const multiChrWhitespacePattern =
       /^(\S+)\s+(\d+\.?\d*)\s+(\S+)\s+(\d+\.?\d*)$/;
     const multiChrMatch = normalizedStr.match(multiChrWhitespacePattern);
 
     if (multiChrMatch) {
-      // Convert "chr7 154900269 chr8 1379003" to "chr7:154900269-chr8:1379003"
+      // convert "chr7 154900269 chr8 1379003" to "chr7:154900269-chr8:1379003"
       normalizedStr = `${multiChrMatch[1]}:${multiChrMatch[2]}-${multiChrMatch[3]}:${multiChrMatch[4]}`;
     } else {
-      // Detect single chromosome whitespace format: "chr7 27103672 27424040"
+      // single chromosome whitespace format: "chr7 27103672 27424040"
       const singleChrWhitespacePattern = /^(\S+)\s+(\d+\.?\d*)\s+(\d+\.?\d*)$/;
       const singleChrMatch = normalizedStr.match(singleChrWhitespacePattern);
 
       if (singleChrMatch) {
-        // Convert "chr7 27103672 27424040" to "chr7:27103672-27424040"
+        // convert "chr7 27103672 27424040" to "chr7:27103672-27424040"
         normalizedStr = `${singleChrMatch[1]}:${singleChrMatch[2]}-${singleChrMatch[3]}`;
       }
     }
 
-    // Check if the input contains multiple chromosome intervals
+    // check if the input contains multiple chromosome intervals
     // Multi-chromosome format: "chr7:154900269-chr8:1379003" or "CYP4A22:1-CYP1A2:7763"
     // Single chromosome format: "chr7:27103672.064926386-27424040.064926386"
     const segments = normalizedStr.split("-");
@@ -304,8 +337,8 @@ class NavigationContext {
       segments[1].includes(":");
 
     if (isMultiChromosome) {
-      const startChromosomePart = segments[0]; // e.g., "chr7:154900269" or "CYP4A22:1"
-      const endChromosomePart = segments[1]; // e.g., "chr10:1379003" or "CYP1A2:7763"
+      const startChromosomePart = segments[0]; // eg, "chr7:154900269" or "CYP4A22:1"
+      const endChromosomePart = segments[1]; // eg, "chr10:1379003" or "CYP1A2:7763"
 
       const [startChr, startPosStr] = startChromosomePart.split(":");
       const [endChr, endPosStr] = endChromosomePart.split(":");
@@ -315,8 +348,8 @@ class NavigationContext {
       const endPos = Math.round(parseFloat(endPosStr.replace(/[^0-9.]/g, "")));
 
       // find features by chromosome name first, then by feature name
-      let startFeature = this._featuresForChr[startChr]?.[0];
-      let endFeature = this._featuresForChr[endChr]?.[0];
+      let startFeature: any = this._featuresForChr[startChr]?.[0];
+      let endFeature: any = this._featuresForChr[endChr]?.[0];
 
       //  try finding by feature name
       if (!startFeature) {
@@ -326,7 +359,6 @@ class NavigationContext {
         endFeature = this._features.find((f) => f.getName() === endChr);
       }
 
-      console.log(startFeature, endFeature);
       if (!startFeature || !endFeature) {
         throw new RangeError(
           "One or more features unavailable in this context"
@@ -339,15 +371,15 @@ class NavigationContext {
 
       const intervals: OpenInterval[] = [];
 
-      // For gene names, we need to convert to actual chromosome coordinates
-      // For chromosomes, we can use them directly
+      // for gene names, we need to convert to actual chromosome coordinates
+      // for chromosomes, we can use them directly
       let startInterval: string;
       if (isStandardChromosome) {
         startInterval = `${startChr}:${startPos}-${
           startFeature.getLocus().end
         }`;
       } else {
-        // For gene features, use the actual chromosome from the locus
+        // for gene features, use the actual chromosome from the locus
         const startLocus = startFeature.getLocus();
         const actualStartPos = startLocus.start + startPos;
         startInterval = `${startLocus.chr}:${actualStartPos}-${startLocus.end}`;
@@ -364,7 +396,7 @@ class NavigationContext {
         const startChrNum = parseInt(startChr.replace("chr", ""));
         const endChrNum = parseInt(endChr.replace("chr", ""));
 
-        // Add all complete chromosomes in between
+        // add all complete chromosomes in between
         for (let chrNum = startChrNum + 1; chrNum < endChrNum; chrNum++) {
           const chrName = `chr${chrNum}`;
           const chrFeature = this._featuresForChr[chrName]?.[0];
@@ -381,7 +413,7 @@ class NavigationContext {
           }
         }
 
-        // Add the ending chromosome interval (from start of chromosome to endPos)
+        // add the ending chromosome interval (from start of chromosome to endPos)
         if (startChrNum !== endChrNum) {
           const endInterval = `${endChr}:${
             endFeature.getLocus().start
@@ -394,9 +426,9 @@ class NavigationContext {
           }
         }
       } else {
-        // For gene names or non-standard features, just handle start and end
+        // for gene names or non-standard features, just handle start and end
         if (startChr !== endChr) {
-          // For gene features, use actual chromosome coordinates
+          // for gene features, use actual chromosome coordinates
           const endLocus = endFeature.getLocus();
           const actualEndPos = endLocus.start + endPos;
           const endInterval = `${endLocus.chr}:${endLocus.start}-${actualEndPos}`;
@@ -438,14 +470,24 @@ class NavigationContext {
       const [startStr, endStr] = rangePart.split("-");
       const startPos = Math.round(parseFloat(startStr.replace(/[^0-9.]/g, "")));
       const endPos = Math.round(parseFloat(endStr.replace(/[^0-9.]/g, "")));
-      const cleanedStr = `${chrPart}:${startPos}-${endPos}`;
+
+      // Format with space for ChromosomeInterval.parse compatibility
+      const cleanedStr = `${chrPart} ${startPos} ${endPos}`;
 
       const locus = ChromosomeInterval.parse(cleanedStr);
-      const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
-      if (!contextCoords) {
-        throw new RangeError("Location unavailable in this context");
+      const contextCoordsArray = this.convertGenomeIntervalToBases(locus);
+
+      if (contextCoordsArray.length === 0) {
+        const availableChrs = Object.keys(this._featuresForChr)
+          .slice(0, 10)
+          .join(", ");
+        console.warn(
+          `Chromosome "${chrPart}" not found. Available: ${availableChrs}${
+            Object.keys(this._featuresForChr).length > 10 ? "..." : ""
+          }`
+        );
       } else {
-        return contextCoords;
+        return contextCoordsArray[0];
       }
     }
 
@@ -453,14 +495,24 @@ class NavigationContext {
       const cleanedStr = normalizedStr.replace(/[^0-9:-]/g, "");
       const locus = ChromosomeInterval.parse(cleanedStr);
 
-      const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
-      if (!contextCoords) {
-        throw new RangeError("Location unavailable in this context");
-      } else {
-        return contextCoords;
+      const contextCoordsArray = this.convertGenomeIntervalToBases(locus);
+      if (contextCoordsArray.length === 0) {
+        const availableChrs = Object.keys(this._featuresForChr)
+          .slice(0, 20)
+          .join(", ");
+        throw new RangeError(
+          `Location unavailable. Available chromosomes: ${availableChrs}${
+            Object.keys(this._featuresForChr).length > 20 ? "..." : ""
+          }`
+        );
       }
+      return contextCoordsArray[0];
     } catch (error) {
-      throw new RangeError(`Could not parse location "${str}"`);
+      throw new RangeError(
+        `Could not parse location "${str}". ${
+          error instanceof Error ? error.message : ""
+        }`
+      );
     }
   }
   // below is the version from Vincent
@@ -526,6 +578,7 @@ class NavigationContext {
   ): FeatureSegment[] {
     const queryInterval = new OpenInterval(queryStart, queryEnd);
     const results: Array<any> = [];
+
     for (const feature of this._features) {
       // Check each feature for overlap with the query interval
       if (!includeGaps && NavigationContext.isGapFeature(feature)) {
@@ -533,6 +586,7 @@ class NavigationContext {
       }
       const start = this.getFeatureStart(feature);
       const end = start + feature.getLength(); // Noninclusive
+
       const overlap = new OpenInterval(start, end).getOverlap(queryInterval);
 
       if (overlap) {
