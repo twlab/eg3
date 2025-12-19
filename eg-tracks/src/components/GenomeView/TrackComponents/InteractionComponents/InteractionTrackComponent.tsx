@@ -102,10 +102,8 @@ class InteractionTrackComponent extends React.PureComponent<
     const { data } = this.props;
     const { scoreScale, scoreMin, scoreMax, height, scalePercentile } =
       this.props.options;
-    
     // Safety check: handle null, undefined, or empty data
     const safeData = data || [];
-    
     if (scoreScale === ScaleChoices.AUTO) {
       // const maxScore = this.props.data.length > 0 ? _.maxBy(this.props.data, "score").score : 10;
       const item = percentile(scalePercentile!, safeData, (item) => item.score);
@@ -177,7 +175,6 @@ class InteractionTrackComponent extends React.PureComponent<
     if (!data) {
       return [];
     }
-    
     const { minValueFilter, maxValueFilter } = this.props.options;
     let filteredData: GenomeInteraction[] = [];
     if (maxValueFilter && !isNaN(maxValueFilter)) {
