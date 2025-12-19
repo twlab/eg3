@@ -317,10 +317,10 @@ export function renderRoughAlignment(
       width={targetXSpan.end - targetXSpan.start}
       height={RECT_HEIGHT}
       fill={options.primaryColor}
-      // tslint:disable-next-line:jsx-no-lambda
-      // onClick={() =>
-      //   console.log("You clicked on " + queryFeature.getLocus().toString())
-      // }
+    // tslint:disable-next-line:jsx-no-lambda
+    // onClick={() =>
+    //   console.log("You clicked on " + queryFeature.getLocus().toString())
+    // }
     />
   );
   const queryGenomeRect = (
@@ -330,8 +330,8 @@ export function renderRoughAlignment(
       width={queryXSpan.end - queryXSpan.start}
       height={RECT_HEIGHT}
       fill={options.queryColor}
-      // tslint:disable-next-line:jsx-no-lambda
-      // onClick={() => console.log("You clicked on " + queryFeature.getLocus().toString())}
+    // tslint:disable-next-line:jsx-no-lambda
+    // onClick={() => console.log("You clicked on " + queryFeature.getLocus().toString())}
     />
   );
 
@@ -357,13 +357,13 @@ export function renderRoughAlignment(
     const y0 = RECT_HEIGHT;
     const x1 =
       (!plotReverse && segment.record.queryStrand === "-") ||
-      (plotReverse && segment.record.queryStrand === "+")
+        (plotReverse && segment.record.queryStrand === "+")
         ? Math.ceil(segment.queryXSpan!.end)
         : Math.floor(segment.queryXSpan!.start);
     const y1 = queryRectTopY;
     const x2 =
       (!plotReverse && segment.record.queryStrand === "-") ||
-      (plotReverse && segment.record.queryStrand === "+")
+        (plotReverse && segment.record.queryStrand === "+")
         ? Math.floor(segment.queryXSpan!.start)
         : Math.ceil(segment.queryXSpan!.end);
     // const y2 = queryRectTopY;
@@ -383,18 +383,18 @@ export function renderRoughAlignment(
       <path
         key={uniqueKey + i}
         d={d_string}
-        fill={DEFAULT_OPTIONS.queryColor}
+        fill={options.queryColor}
         fillOpacity={0.5}
         // tslint:disable-next-line:jsx-no-lambda
         onClick={() =>
           console.log(
             targetGenome +
-              ":" +
-              `${segment.record.locus.chr}:${segment.record.locus.start}-${segment.record.locus.end}` +
-              " --- " +
-              queryGenome +
-              ":" +
-              `${segment.record.queryLocus.chr}:${segment.record.queryLocus.start}-${segment.record.queryLocus.end}`
+            ":" +
+            `${segment.record.locus.chr}:${segment.record.locus.start}-${segment.record.locus.end}` +
+            " --- " +
+            queryGenome +
+            ":" +
+            `${segment.record.queryLocus.chr}:${segment.record.queryLocus.start}-${segment.record.queryLocus.end}`
           )
         }
       />

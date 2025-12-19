@@ -102,11 +102,15 @@ class InteractionTrackComponent extends React.PureComponent<
     const { data } = this.props;
     const { scoreScale, scoreMin, scoreMax, height, scalePercentile } =
       this.props.options;
+    
+    // Safety check: handle null, undefined, or empty data
+    const safeData = data || [];
+    
     if (scoreScale === ScaleChoices.AUTO) {
       // const maxScore = this.props.data.length > 0 ? _.maxBy(this.props.data, "score").score : 10;
-      const item = percentile(scalePercentile!, data, (item) => item.score);
+      const item = percentile(scalePercentile!, safeData, (item) => item.score);
       // console.log(item)
-      const maxScore = data.length > 0 ? (item as GenomeInteraction).score : 10;
+      const maxScore = safeData.length > 0 ? (item as GenomeInteraction).score : 10;
       // console.log(maxScore)
       return {
         opacityScale: scaleLinear()
@@ -169,6 +173,11 @@ class InteractionTrackComponent extends React.PureComponent<
   //   }
 
   filterData = (data: GenomeInteraction[]): GenomeInteraction[] => {
+    // Safety check: handle null or undefined data
+    if (!data) {
+      return [];
+    }
+    
     const { minValueFilter, maxValueFilter } = this.props.options;
     let filteredData: GenomeInteraction[] = [];
     if (maxValueFilter && !isNaN(maxValueFilter)) {
@@ -197,7 +206,9 @@ class InteractionTrackComponent extends React.PureComponent<
       getNumLegend,
     } = this.props;
 
-    const filteredData = this.filterData(data);
+    // Safety check: ensure data is always an array
+    const safeData = data || [];
+    const filteredData = this.filterData(safeData);
 
     this.scales = this.computeScale();
 

@@ -37,7 +37,7 @@ class BedTextSource {
       }
       return record;
     } else {
-      console.log(item);
+      // console.log(item);
       // Split the first element by tabs/spaces to get the main fields
       const mainFields = item.length === 1 ? item[0].split(/\s+/) : item; // ['chr1', '713605', '715737', 'chr1:720589-722848']
 

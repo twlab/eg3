@@ -246,10 +246,10 @@ class NavigationContext {
     // If no overlap found but chromosome exists, return the feature's full range as fallback
     if (contextIntervals.length === 0 && potentialOverlaps.length > 0) {
       const feature = potentialOverlaps[0];
-      const featureLocus = feature.getLocus();
-      console.warn(
-        `Requested ${chrInterval.chr}:${chrInterval.start}-${chrInterval.end} but feature only covers ${featureLocus.start}-${featureLocus.end}. Using full feature range.`
-      );
+      // const featureLocus = feature.getLocus();
+      // console.warn(
+      //   `Requested ${chrInterval.chr}:${chrInterval.start}-${chrInterval.end} but feature only covers ${featureLocus.start}-${featureLocus.end}. Using full feature range.`
+      // );
       // Return the entire feature as fallback
       const fullFeatureSegment = new FeatureSegment(feature);
       contextIntervals.push(
