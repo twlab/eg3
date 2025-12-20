@@ -320,7 +320,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     viewWindow: OpenInterval;
     groupScale: any;
     dataIdx: number;
-    navContextCoord: { start: number; end: number };
   } | null>(null);
 
   // These states are used to update the tracks with new fetch(data);
@@ -358,9 +357,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: FetchQueue
   //popqueue when fetching data. Lifo
   const messageQueue = useRef<any>([]);
-  const isWorkerBusy = useRef(false);
+
   const genomeAlignMessageQueue = useRef<any>([]);
-  const isfetchGenomeAlignWorkerBusy = useRef(false);
 
   const throttleViewRegion = (callback, limit) => {
     let timeoutId: any = null;
@@ -430,184 +428,182 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     setMessageData(getMessageData());
-    if (!isWorkerBusy.current) {
-      const message = messageQueue.current.pop();
-      isWorkerBusy.current = true;
-      // Split message by trackModelArr type
-      const hicTypes = { hic: "", dynamichic: "", bam: "" };
 
-      // message is an array of objects
-      const intMessages: Array<any> = [];
-      const normalMessages: Array<any> = [];
+    const message = messageQueue.current.pop();
 
-      for (const msgObj of message) {
-        if (
-          Array.isArray(msgObj.trackModelArr) &&
-          msgObj.trackModelArr.length > 0
-        ) {
-          const intTrackModels: any[] = [];
-          const normalTrackModels: any[] = [];
-          for (const track of msgObj.trackModelArr) {
-            if (track.type in hicTypes) {
-              intTrackModels.push(track);
-            } else {
-              normalTrackModels.push(track);
-            }
-          }
-          if (intTrackModels.length > 0) {
-            intMessages.push({
-              ...msgObj,
-              trackModelArr: intTrackModels,
-            });
-          }
-          if (normalTrackModels.length > 0) {
-            normalMessages.push({
-              ...msgObj,
-              trackModelArr: normalTrackModels,
-            });
-          }
-        }
-      }
+    // Split message by trackModelArr type
+    const hicTypes = { hic: "", dynamichic: "", bam: "" };
 
-      // split an array into N chunks
-      // split an array into N contiguous chunks
-      function splitArrayIntoChunks(arr, numChunks) {
-        const chunkSize = Math.ceil(arr.length / numChunks);
-        const chunks: Array<any> = [];
-        for (let i = 0; i < numChunks; i++) {
-          const start = i * chunkSize;
-          const end = start + chunkSize;
-          chunks.push(arr.slice(start, end));
-        }
-        return chunks;
-      }
+    // message is an array of objects
+    const intMessages: Array<any> = [];
+    const normalMessages: Array<any> = [];
 
-      // Send intMessages to instance workers
+    for (const msgObj of message) {
       if (
-        infiniteScrollWorkers.current &&
-        (infiniteScrollWorkers.current.instance.length > 0 ||
-          infiniteScrollWorkers.current.worker.length > 0)
+        Array.isArray(msgObj.trackModelArr) &&
+        msgObj.trackModelArr.length > 0
       ) {
-        if (
-          intMessages.length > 0 &&
-          infiniteScrollWorkers.current.instance.length > 0
-        ) {
-          const numWorkers = infiniteScrollWorkers.current.instance.length;
-          for (let i = 0; i < numWorkers; i++) {
-            const messagesForWorker: Array<any> = [];
-            for (const msgObj of intMessages) {
-              const chunks = splitArrayIntoChunks(
-                msgObj.trackModelArr,
-                numWorkers
-              );
-              if (chunks[i].length > 0) {
-                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-              }
-            }
-            if (messagesForWorker.length > 0) {
-              if (
-                infiniteScrollWorkers.current.instance[i].hasOnMessage === false
-              ) {
-                infiniteScrollWorkers.current.instance[
-                  i
-                ].fetchWorker.onmessage = createInfiniteOnMessage;
-                infiniteScrollWorkers.current.instance[i].hasOnMessage = true;
-              }
-              infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
-                messagesForWorker
-              );
-            }
+        const intTrackModels: any[] = [];
+        const normalTrackModels: any[] = [];
+        for (const track of msgObj.trackModelArr) {
+          if (track.type in hicTypes) {
+            intTrackModels.push(track);
+          } else {
+            normalTrackModels.push(track);
           }
         }
+        if (intTrackModels.length > 0) {
+          intMessages.push({
+            ...msgObj,
+            trackModelArr: intTrackModels,
+          });
+        }
+        if (normalTrackModels.length > 0) {
+          normalMessages.push({
+            ...msgObj,
+            trackModelArr: normalTrackModels,
+          });
+        }
+      }
+    }
 
-        // Send normalMessages to worker workers
-        if (
-          normalMessages.length > 0 &&
-          infiniteScrollWorkers.current.worker.length > 0
-        ) {
-          const numWorkers = infiniteScrollWorkers.current.worker.length;
+    // split an array into N chunks
+    // split an array into N contiguous chunks
+    function splitArrayIntoChunks(arr, numChunks) {
+      const chunkSize = Math.ceil(arr.length / numChunks);
+      const chunks: Array<any> = [];
+      for (let i = 0; i < numChunks; i++) {
+        const start = i * chunkSize;
+        const end = start + chunkSize;
+        chunks.push(arr.slice(start, end));
+      }
+      return chunks;
+    }
 
-          for (let i = 0; i < numWorkers; i++) {
-            const messagesForWorker: Array<any> = [];
-            for (const msgObj of normalMessages) {
-              const chunks = splitArrayIntoChunks(
-                msgObj.trackModelArr,
-                numWorkers
-              );
-              if (chunks[i].length > 0) {
-                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-              }
-            }
-
-            if (messagesForWorker.length > 0) {
-              if (
-                infiniteScrollWorkers.current.worker[i].hasOnMessage === false
-              ) {
-                infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-                  createInfiniteOnMessage;
-                infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
-              }
-              infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-                messagesForWorker
-              );
+    // Send intMessages to instance workers
+    if (
+      infiniteScrollWorkers.current &&
+      (infiniteScrollWorkers.current.instance.length > 0 ||
+        infiniteScrollWorkers.current.worker.length > 0)
+    ) {
+      if (
+        intMessages.length > 0 &&
+        infiniteScrollWorkers.current.instance.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.instance.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of intMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
             }
           }
-        }
-      } else {
-        // Send normalMessages to fetch functions (non-worker version)
-        if (normalMessages.length > 0) {
-          const numWorkers = tracks.length;
-
-          for (let i = 0; i < numWorkers; i++) {
-            const messagesForWorker: Array<any> = [];
-            for (const msgObj of normalMessages) {
-              const chunks = splitArrayIntoChunks(
-                msgObj.trackModelArr,
-                numWorkers
-              );
-              if (chunks[i].length > 0) {
-                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-              }
+          if (messagesForWorker.length > 0) {
+            if (
+              infiniteScrollWorkers.current.instance[i].hasOnMessage === false
+            ) {
+              infiniteScrollWorkers.current.instance[i].fetchWorker.onmessage =
+                createInfiniteOnMessage;
+              infiniteScrollWorkers.current.instance[i].hasOnMessage = true;
             }
-
-            if (messagesForWorker.length > 0) {
-              // Launch async operation without awaiting - process results independently
-              fetchGenomicData(messagesForWorker)
-                .then((results) => {
-                  // Call createInfiniteOnMessage once with the entire results array
-                  createInfiniteOnMessage({ data: results });
-                })
-                .catch((error) => {
-                  console.error("Error fetching genomic data:", error);
-                });
-            }
+            infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
           }
         }
-        if (intMessages.length > 0) {
-          const numWorkers = tracks.length;
-          for (let i = 0; i < numWorkers; i++) {
-            const messagesForWorker: Array<any> = [];
-            for (const msgObj of intMessages) {
-              const chunks = splitArrayIntoChunks(
-                msgObj.trackModelArr,
-                numWorkers
-              );
-              if (chunks[i].length > 0) {
-                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-              }
-            }
+      }
 
-            if (messagesForWorker.length > 0) {
-              // Launch async operation without awaiting - process results independently
-              fetchGenomicData(messagesForWorker)
-                .then((results) => {
-                  // Call createInfiniteOnMessage once with the entire results array
-                  createInfiniteOnMessage({ data: results });
-                })
-                .catch((error) => {
-                  console.error("Error fetching genomic data:", error);
-                });
+      // Send normalMessages to worker workers
+      if (
+        normalMessages.length > 0 &&
+        infiniteScrollWorkers.current.worker.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.worker.length;
+
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of normalMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
             }
+          }
+
+          if (messagesForWorker.length > 0) {
+            if (
+              infiniteScrollWorkers.current.worker[i].hasOnMessage === false
+            ) {
+              infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
+                createInfiniteOnMessage;
+              infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
+            }
+            infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
+          }
+        }
+      }
+    } else {
+      // Send normalMessages to fetch functions (non-worker version)
+      if (normalMessages.length > 0) {
+        const numWorkers = tracks.length;
+
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of normalMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
+
+          if (messagesForWorker.length > 0) {
+            // Launch async operation without awaiting - process results independently
+            fetchGenomicData(messagesForWorker)
+              .then((results) => {
+                // Call createInfiniteOnMessage once with the entire results array
+                createInfiniteOnMessage({ data: results });
+              })
+              .catch((error) => {
+                console.error("Error fetching genomic data:", error);
+              });
+          }
+        }
+      }
+      if (intMessages.length > 0) {
+        const numWorkers = tracks.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of intMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
+
+          if (messagesForWorker.length > 0) {
+            // Launch async operation without awaiting - process results independently
+            fetchGenomicData(messagesForWorker)
+              .then((results) => {
+                // Call createInfiniteOnMessage once with the entire results array
+                createInfiniteOnMessage({ data: results });
+              })
+              .catch((error) => {
+                console.error("Error fetching genomic data:", error);
+              });
           }
         }
       }
@@ -618,13 +614,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (genomeAlignMessageQueue.current.length === 0) {
       return;
     }
-    isfetchGenomeAlignWorkerBusy.current = true;
+
     const message = genomeAlignMessageQueue.current.pop();
-    if (
-      fetchGenomeAlignWorker.current &&
-      !isfetchGenomeAlignWorkerBusy.current
-    ) {
-      isfetchGenomeAlignWorkerBusy.current = true;
+    if (fetchGenomeAlignWorker.current) {
       if (fetchGenomeAlignWorker.current.hasOnMessage === false) {
         fetchGenomeAlignWorker.current.fetchWorker.onmessage =
           createGenomeAlignOnMessage;
@@ -967,16 +959,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         viewWindow: curViewWindow,
         groupScale: null,
         dataIdx: curDataIdx,
-        navContextCoord: { start: curBp, end: curBp + bpRegionSize.current },
       };
     } else {
       dataIdx.current = curDataIdx;
-      queueRegionToFetch(
-        curDataIdx,
-        curDataIdx in globalTrackState.current.trackStates
-          ? globalTrackState.current.trackStates[curDataIdx].trackState
-          : ""
-      );
+      queueRegionToFetch(curDataIdx);
     }
   }
 
@@ -1067,14 +1053,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     delete completedFetchedRegion.current.done[id];
-    const curDataIdx = dataIdx.current;
-
-    queueRegionToFetch(
-      curDataIdx,
-      curDataIdx in globalTrackState.current.trackStates
-        ? globalTrackState.current.trackStates[curDataIdx].trackState
-        : ""
-    );
+    queueRegionToFetch(dataIdx.current);
   }
   const handleReorder = useCallback(
     (order: Array<any>) => {
@@ -1240,15 +1219,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       });
     }
-
     if (key === "normalization" || key === "binSize") {
-      const curDataIdx = dataIdx.current;
-      queueRegionToFetch(
-        curDataIdx,
-        curDataIdx in globalTrackState.current.trackStates
-          ? globalTrackState.current.trackStates[curDataIdx].trackState
-          : ""
-      );
+      queueRegionToFetch(dataIdx.current);
     } else {
       setApplyTrackConfigChange(newSelected);
     }
@@ -1717,7 +1689,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             missingIdx: dataItem.missingIdx,
             curDataIdx: dataItem.trackDataIdx,
           });
-          isWorkerBusy.current = false;
 
           processQueue();
         }
@@ -1756,7 +1727,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     );
 
     try {
-      isfetchGenomeAlignWorkerBusy.current = false;
       // once we finish with a fetch we need to check if there are any more
       // request in the queue, user might scroll fast and have multipe region data to fetch
 
@@ -1809,7 +1779,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
       }
-      isfetchGenomeAlignWorkerBusy.current = false;
+
       processGenomeAlignQueue();
     } catch (error) {
       console.error(
@@ -1844,7 +1814,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
   // MARK: queueRegion
 
-  function queueRegionToFetch(regionIdx: number, trackState) {
+  function queueRegionToFetch(regionIdx: number) {
     const trackToDrawId: { [key: string]: any } = {};
 
     let needToFetch = false;
@@ -1893,7 +1863,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const dataToFetchArr: Array<any> = [];
       for (const curDataIdx of idxArr) {
         let trackToFetch: Array<TrackModel> = [];
-
+        let trackState;
         for (const key in trackFetchedDataCache.current) {
           const curTrackCache = trackFetchedDataCache.current[key];
 
@@ -1909,6 +1879,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 trackModel.id === Number(key) || trackModel.id === key
             );
 
+            trackState =
+              curDataIdx in globalTrackState.current.trackStates
+                ? globalTrackState.current.trackStates[curDataIdx].trackState
+                : "";
             if (curTrackModel) {
               trackFetchedDataCache.current[key][curDataIdx]["dataCache"] =
                 null;
@@ -2036,28 +2010,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //     }
     //   }
     // }
-    // for (const key in trackFetchedDataCache.current) {
-    //   const curTrack = trackFetchedDataCache.current[key];
-    //   const cacheKeys = Object.keys(curTrack)
-    //     .filter((k) => isInteger(k))
-    //     .map(Number)
-    //     .sort((a, b) => a - b);
-    //   let minIdx, maxIdx;
-    //   if (curTrack.trackType in trackUsingExpandedLoci) {
-    //     minIdx = dataIdx.current - 3;
-    //     maxIdx = dataIdx.current + 3;
-    //   } else {
-    //     minIdx = dataIdx.current - 6;
-    //     maxIdx = dataIdx.current + 6;
-    //   }
-    //   for (const cacheDataIdx of cacheKeys) {
-    //     if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
-    //       if (trackFetchedDataCache.current[key][cacheDataIdx]) {
-    //         trackFetchedDataCache.current[key][cacheDataIdx] = {};
-    //       }
-    //     }
-    //   }
-    // }
+    for (const key in trackFetchedDataCache.current) {
+      const curTrack = trackFetchedDataCache.current[key];
+      const cacheKeys = Object.keys(curTrack)
+        .filter((k) => isInteger(k))
+        .map(Number)
+        .sort((a, b) => a - b);
+      let minIdx, maxIdx;
+      if (curTrack.trackType in trackUsingExpandedLoci) {
+        minIdx = dataIdx.current - 1;
+        maxIdx = dataIdx.current + 1;
+      } else {
+        minIdx = dataIdx.current - 2;
+        maxIdx = dataIdx.current + 2;
+      }
+      for (const cacheDataIdx of cacheKeys) {
+        if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
+          if (trackFetchedDataCache.current[key][cacheDataIdx]) {
+            trackFetchedDataCache.current[key][cacheDataIdx] = {};
+          }
+        }
+      }
+    }
     if (newDrawData && Object.keys(newDrawData.trackToDrawId).length > 0) {
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
@@ -2448,7 +2422,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initTrackModel;
     trackFetchedDataCache.current[`${initTrackModel.id}`]["error"] = false;
   }
-
   const refreshState = () => {
     // Reset useRef letiables
     completedFetchedRegion.current = {
@@ -2608,13 +2581,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     addTermToMetaSets(trackManagerState.current.tracks);
 
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
-    const curDataIdx = dataIdx.current;
-    queueRegionToFetch(
-      curDataIdx,
-      curDataIdx in globalTrackState.current.trackStates
-        ? globalTrackState.current.trackStates[curDataIdx].trackState
-        : ""
-    );
+
+    queueRegionToFetch(0);
 
     setTrackComponents(newTrackComponents);
   }
@@ -3113,13 +3081,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // setTrackComponents(tmpArr);
 
-      const curDataIdx = dataIdx.current;
-      queueRegionToFetch(
-        curDataIdx,
-        curDataIdx in globalTrackState.current.trackStates
-          ? globalTrackState.current.trackStates[curDataIdx].trackState
-          : ""
-      );
+      queueRegionToFetch(dataIdx.current);
     } else {
       for (const key in trackFetchedDataCache.current) {
         const curTrack = trackFetchedDataCache.current[key];
@@ -3519,13 +3481,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
-        const curDataIdx = dataIdx.current;
-        queueRegionToFetch(
-          curDataIdx,
-          curDataIdx in globalTrackState.current.trackStates
-            ? globalTrackState.current.trackStates[curDataIdx].trackState
-            : ""
-        );
+        queueRegionToFetch(dataIdx.current);
         // if (tracksRemoved.length > 0) {
         //   const trackToDrawId: { [key: string]: any } = {};
 
@@ -3696,8 +3652,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (viewWindowConfigData.current) {
       if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
-        if (hasGenomeAlign.current && !useFineModeNav.current) {
-        }
         const curTrackToDrawId = getWindowViewConfig(
           viewWindowConfigData.current.viewWindow,
           viewWindowConfigData.current.dataIdx
