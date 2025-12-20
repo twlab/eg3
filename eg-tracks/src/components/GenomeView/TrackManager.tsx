@@ -1601,43 +1601,43 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   ) => {
     await Promise.all(
       event.data.map(async (dataItem: any) => {
-        const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
-          ? dataItem.trackToDrawId
-          : {};
+        const trackToDrawId: { [key: string]: any } =
+          dataItem.trackToDrawId ?? {};
         const regionDrawIdx = dataItem.trackDataIdx;
+
         if (globalTrackState.current.trackStates[regionDrawIdx] === undefined) {
           return;
         }
+
         const curTrackState = {
           ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
           primaryGenName: genomeConfig.genome.getName(),
         };
 
-        await dataItem.fetchResults.map(
-          async (item: {
-            id: any;
-            name: string;
-            result: any;
-            metadata: any;
-            trackModel: any;
-            curFetchNav: any;
-          }) => {
-            trackToDrawId[`${item.id}`] = "";
-            await createCache({
-              trackState: curTrackState,
-              result: item.result,
-              id: item.id,
-              trackType: item.trackModel.type
-                ? item.trackModel.type
-                : item.name
-                ? item.name
-                : "",
-              metadata: item.metadata,
-              trackModel: item.trackModel,
-              curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-              missingIdx: dataItem.missingIdx,
-            });
-          }
+        // Fix: Properly await all fetch result promises
+        await Promise.all(
+          dataItem.fetchResults.map(
+            async (item: {
+              id: any;
+              name: string;
+              result: any;
+              metadata: any;
+              trackModel: any;
+              curFetchNav: any;
+            }) => {
+              trackToDrawId[`${item.id}`] = "";
+              await createCache({
+                trackState: curTrackState,
+                result: item.result,
+                id: item.id,
+                trackType: item.trackModel.type || item.name || "",
+                metadata: item.metadata,
+                trackModel: item.trackModel,
+                curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+                missingIdx: dataItem.missingIdx,
+              });
+            }
+          )
         );
 
         const currentDataIdx = dataIdx.current;
@@ -1652,17 +1652,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (useFineModeNav.current || cache.useExpandedLoci) {
               // For fine mode or expanded loci, only check current index
               if (
-                cache[currentDataIdx] &&
-                cache[currentDataIdx].dataCache !== undefined &&
-                cache[currentDataIdx].dataCache !== null
+                cache[currentDataIdx]?.dataCache !== undefined &&
+                cache[currentDataIdx]?.dataCache !== null
               ) {
                 cacheKeysWithData[trackToDrawKey] = false;
               }
             } else {
-              //  normal mode check all three indices
+              // Normal mode: check all three indices
               let hasAllRegionData = true;
               for (let idx of idxArr) {
-                if (!cache[idx] || !cache[idx].dataCache) {
+                if (!cache[idx]?.dataCache) {
                   hasAllRegionData = false;
                   break;
                 }
@@ -1674,7 +1673,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
 
-        // if we have valid cached data
+        // If we have valid cached data
         if (Object.keys(cacheKeysWithData).length > 0) {
           if (completedFetchedRegion.current.key !== currentDataIdx) {
             completedFetchedRegion.current.key = currentDataIdx;

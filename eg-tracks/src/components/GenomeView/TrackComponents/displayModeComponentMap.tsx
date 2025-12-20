@@ -1092,21 +1092,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-    console.log(
-      formattedData,
-      trackState,
-      windowWidth,
-      configOptions,
-      updatedLegend,
-      trackModel,
-      renderTooltip,
-      svgHeight,
-      getGenePadding,
-      getHeight,
-      ROW_HEIGHT,
-      onClose,
-      xvaluesData
-    );
+
     let canvasElements = (
       <FiberTrackComponent
         data={formattedData}
