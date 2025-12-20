@@ -320,6 +320,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     viewWindow: OpenInterval;
     groupScale: any;
     dataIdx: number;
+    contextNavCoord: { [key: string]: any };
   } | null>(null);
 
   // These states are used to update the tracks with new fetch(data);
@@ -959,6 +960,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         viewWindow: curViewWindow,
         groupScale: null,
         dataIdx: curDataIdx,
+        contextNavCoord: { start: curBp, end: curBp + bpRegionSize.current },
       };
     } else {
       dataIdx.current = curDataIdx;
