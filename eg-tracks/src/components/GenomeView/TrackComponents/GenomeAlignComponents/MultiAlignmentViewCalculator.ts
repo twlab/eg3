@@ -641,7 +641,9 @@ export class MultiAlignmentViewCalculator {
       width: visWidth,
       mode: PlacementMode.PLACEMENT,
     }) as FeaturePlacementResult;
-
+    if (!result.placements) {
+      return [];
+    }
     return result.placements.map((placement: any) => {
       return {
         record: placement.feature as AlignmentRecord,

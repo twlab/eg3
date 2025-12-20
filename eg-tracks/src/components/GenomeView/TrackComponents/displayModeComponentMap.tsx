@@ -1092,12 +1092,30 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-
+    console.log(
+      formattedData,
+      trackState,
+      windowWidth,
+      configOptions,
+      updatedLegend,
+      trackModel,
+      renderTooltip,
+      svgHeight,
+      getGenePadding,
+      getHeight,
+      ROW_HEIGHT,
+      onClose,
+      xvaluesData
+    );
     let canvasElements = (
       <FiberTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         visRegion={objToInstanceAlign(trackState.visRegion)}

@@ -208,14 +208,16 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
   const legend = (
-    <TrackLegend
-      trackModel={trackModel}
-      height={height}
-      axisScale={scales.axisScale}
-      axisLegend={unit}
-      label={options.label}
-      forceSvg={forceSvg}
-    />
+    <div>
+      <TrackLegend
+        trackModel={trackModel}
+        height={height}
+        axisScale={scales.axisScale}
+        axisLegend={unit}
+        label={options.label}
+        forceSvg={forceSvg}
+      />
+    </div>
   );
 
   if (getNumLegend) {
