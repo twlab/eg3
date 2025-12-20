@@ -83,12 +83,12 @@ const defaultTracks = [
     options: { label: "RepeatMasker" },
     url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
   }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "bigwig nochr",
-  //   genome: "hg38",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "bigwig nochr",
+    genome: "hg38",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig yeschr",

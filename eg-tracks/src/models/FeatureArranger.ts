@@ -22,7 +22,9 @@ export interface PlacedFeatureGroup {
  * Return value from FeatureArranger::arrange()
  */
 export interface FeaturePlacementResult {
-  placements: PlacedFeatureGroup[] | PlacedFeature[]; // The draw locations of features that are visible
+  placements?: PlacedFeatureGroup[] | PlacedFeature[];
+  placementsForward?: PlacedFeatureGroup[] | PlacedFeature[]; // The draw locations of features that are visible
+  placementsReverse?: PlacedFeatureGroup[] | PlacedFeature[]; // The draw locations of features that are visible
   numRowsAssigned?: number; // Number of rows required to view all features
   numHidden?: number; // Number of features omitted from featureArrangement
 }
@@ -45,6 +47,46 @@ export class FeatureArranger {
    * @param {number} [hiddenPixels] - hide an item when its length less than this value.  Default 0.5
    * @return {FeaturePlacementResult} suggested draw location info
    */
+
+  /**
+   * Check if two placements have adjacent loci
+   */
+
+  _assignRows(
+    groups: PlacedFeatureGroup[],
+    padding: number | PaddingFunc,
+    sortItems: SortItemsOptions
+  ): number {
+    if (sortItems === SortItemsOptions.NONE) {
+      groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    } else if (sortItems === SortItemsOptions.ASC) {
+      groups.sort((a, b) => a.feature.score - b.feature.score);
+    } else if (sortItems === SortItemsOptions.DESC) {
+      groups.sort((a, b) => b.feature.score - a.feature.score);
+    }
+    const maxXsForRows: number[] = [];
+    const isConstPadding = typeof padding === "number";
+    for (const group of groups) {
+      const horizontalPadding = isConstPadding
+        ? (padding as number)
+        : (padding as PaddingFunc)(group.feature, group.xSpan);
+      const startX = group.xSpan.start - horizontalPadding;
+      const endX = group.xSpan.end + horizontalPadding;
+      // Find the first row where the interval won't overlap with others in the row
+      let row = maxXsForRows.findIndex((maxX) => maxX < startX);
+      if (row === -1) {
+        // Couldn't find a row -- make a new one
+        maxXsForRows.push(endX);
+        row = maxXsForRows.length - 1;
+      } else {
+        maxXsForRows[row] = endX;
+      }
+      group.row = row;
+    }
+
+    return maxXsForRows.length;
+  }
+
   arrange(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
@@ -54,16 +96,28 @@ export class FeatureArranger {
     sortItems: SortItemsOptions = SortItemsOptions.NONE,
     viewWindow
   ): FeaturePlacementResult {
-    // Place features in ANNOTATION mode - combines adjacent features and assigns rows in one pass
-    return FEATURE_PLACER.placeFeatures({
+    const results: any = FEATURE_PLACER.placeFeatures({
       features,
       viewRegion,
       width,
       mode: PlacementMode.ANNOTATION,
       viewWindow,
       padding,
+
       hiddenPixels,
     }) as FeaturePlacementResult;
+
+    const numRowsAssigned = this._assignRows(
+      results.placementsForward,
+      padding,
+      sortItems
+    );
+
+    return {
+      placements: results.placementsForward,
+      numRowsAssigned,
+      numHidden: results.numHidden,
+    };
   }
 }
 
