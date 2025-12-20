@@ -484,7 +484,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
   };
   const genomeAlignTracks = trackToFetch;
 
-  const fetchArrNav = [regionExpandLoci];
+  const fetchArrNav = [genomicLoci];
 
   if (genomeAlignTracks.length > 0) {
     await getGenomeAlignment(data.visData.visRegion, genomeAlignTracks);
