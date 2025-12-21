@@ -1925,12 +1925,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // MARK: addGenAlign
         const curTrackState =
           globalTrackState.current.trackStates[curIdx].trackState;
+        console.log(bpX.current, bpX.current + bpRegionSize.current);
+        let genomeFeatureSegment: Array<FeatureSegment> =
+          genomeConfig.navContext.getFeaturesInInterval(
+            bpX.current,
+            bpX.current + bpRegionSize.current
+          );
+
+        const regionLoci = genomeFeatureSegment.map((item, _index) =>
+          item.getLocus()
+        );
 
         enqueueGenomeAlignMessage({
           trackToFetch: genomeAlignTracks,
           visData:
             globalTrackState.current.trackStates[curIdx].trackState.visData,
-          genomicLoci: curTrackState.regionLoci,
+          genomicLoci: regionLoci,
           primaryGenName: genomeConfig.genome.getName(),
           trackModelArr: genomeAlignTracks,
           regionExpandLoci: curTrackState.regionExpandLoci,
