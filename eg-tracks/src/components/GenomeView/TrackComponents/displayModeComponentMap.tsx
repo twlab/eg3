@@ -1273,6 +1273,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     return canvasElements;
   },
   genomealign: function getGenomeAlign(drawData) {
+    console.log(drawData);
     let result = drawData.genesArr;
     if (!result) {
       return null;

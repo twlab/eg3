@@ -247,10 +247,11 @@ async function getRemoteData(regionData: any, trackType: string) {
           )
           .then((data: any) => {
             cachedFetchInstance[regionData.trackModel.url] = null;
-            fetchInstance = null;
+
             return data;
           })
           .catch(() => {
+            fetchInstance = null;
             return { error: "Failed to fetch data. " };
           });
       } else {
@@ -258,10 +259,11 @@ async function getRemoteData(regionData: any, trackType: string) {
           .getData(regionData.nav, regionData.trackModel.options)
           .then((data: any) => {
             cachedFetchInstance[regionData.trackModel.url] = null;
-            fetchInstance = null;
+
             return data;
           })
           .catch(() => {
+            fetchInstance = null;
             return { error: "Failed to fetch data. " };
           });
       }
