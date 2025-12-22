@@ -456,6 +456,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
 }
 
 export async function fetchGenomeAlignData(data: any): Promise<any> {
+  console.log(data);
   const regionExpandLoci = data.regionExpandLoci;
   const trackToFetch = data.trackToFetch;
   const genomicLoci = data.genomicLoci;
@@ -477,7 +478,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
   const fetchArrNav = useFineModeNav
     ? regionExpandLoci
     : data.viewWindowGenomicLoci;
-  console.log(fetchArrNav);
+
   if (genomeAlignTracks.length > 0) {
     await getGenomeAlignment(data.visData.visRegion, genomeAlignTracks);
   }
@@ -661,6 +662,15 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
 
         alignment[`${query}`] = { ...alignment[`${query}`], ...tempObj };
       }
+
+      genomicFetchCoord[`${query}`] = {
+        queryGenomicCoord: alignment[`${query}`].queryRegion
+          .getGenomeIntervals()
+          .map((locus) => locus.serialize()),
+        id: alignment[`${query}`].id,
+        queryRegion: alignment[`${query}`].queryRegion,
+      };
+
       for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
         let placement = alignment[`${query}`].drawData[i];
         let tempObj = {};
@@ -704,47 +714,15 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
 
       // step 4 create obj that holds primary and query genome genomic coordinate because some other tracks might
       // align to the query coord
-      let queryGenomicCoords: Array<any> = [];
-
-      let featuresForChr =
-        alignment[`${query}`].queryRegion._navContext._featuresForChr;
-
-      for (let chr in featuresForChr) {
-        if (chr !== "") {
-          for (let genomicNav of featuresForChr[`${chr}`]) {
-            queryGenomicCoords.push(genomicNav.locus);
-          }
-        }
-      }
 
       genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
         alignment[`${query}`].primaryVisData;
 
       //save the genomic location so that track that has query as parent can use that data to get data\
 
-      genomicFetchCoord[`${query}`] = {
-        queryGenomicCoord: queryGenomicCoords,
-        id: alignment[`${query}`].id,
-        queryRegion: alignment[`${query}`].queryRegion,
-      };
       fetchResults[`${alignment[`${query}`].id}`]["records"] =
         alignment[`${query}`];
     }
-  }
-
-  function parseGenomicCoordinates(input: string): {
-    chr: string;
-    start: number;
-    end: number;
-  } {
-    const [chrPart, positionPart] = input.split(":");
-    const [startStr, endStr] = positionPart.split("-");
-
-    const chr = chrPart.slice(3); // Remove the 'chr' prefix
-    const start = parseInt(startStr, 10);
-    const end = parseInt(endStr, 10);
-
-    return { chr, start, end };
   }
 
   return {
@@ -760,5 +738,6 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
           ? 0
           : null,
     },
+    dragX: data.dragX,
   };
 }
