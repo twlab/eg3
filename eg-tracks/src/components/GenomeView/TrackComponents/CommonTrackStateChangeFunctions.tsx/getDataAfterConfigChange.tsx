@@ -1,5 +1,7 @@
-
-import { groupTracksArrMatPlot, trackUsingExpandedLoci } from "./cacheFetchedData";
+import {
+  groupTracksArrMatPlot,
+  trackUsingExpandedLoci,
+} from "./cacheFetchedData";
 
 interface GetConfigChangeDataParams {
   fetchedDataCache: any;
@@ -48,7 +50,7 @@ export function getConfigChangeData({
       viewData = viewData.map((item) => item.dataCache).flat(1);
     }
   }
-
+  console.log(viewData);
   newIntanceTrackState["recreate"] = true;
 
   createSVGOrCanvas(

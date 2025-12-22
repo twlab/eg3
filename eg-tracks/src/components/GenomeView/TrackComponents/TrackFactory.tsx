@@ -227,6 +227,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       } else {
         return;
       }
+
       if (
         !trackFetchedDataCache.current[`${id}`] ||
         !globalTrackState.current.trackStates[dataIdx] ||
@@ -235,6 +236,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) {
         return;
       }
+
       const cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
@@ -276,7 +278,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         initTrackStart.current = false;
       }
 
-      if (!cacheTrackData.useExpandedLoci) {
+      if (!cacheTrackData.useExpandedLoci || cacheTrackData.usePrimaryNav) {
         let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
@@ -310,32 +312,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               combinedData = groupTracksArrMatPlot(combinedData);
             }
           }
-
-          //  else {
-          //   if (
-          //     (cacheTrackData[`${dataIdx}`] &&
-          //       cacheTrackData[`${dataIdx}`]["xvalues"]) ||
-          //     !combinedData
-          //   ) {
-
-          //   } else {
-          //     // combinedData = combinedData
-          //     //   .map((item) => {
-          //     //     if (item && "dataCache" in item && item.dataCache) {
-          //     //       return item.dataCache;
-          //     //     } else {
-          //     //       noData = true;
-          //     //     }
-          //     //   })
-          //     //   .flat(1);
-          //   }
-          // }
         }
 
         if (!noData) {
           if (newDrawData.viewWindow) {
             trackState["viewWindow"] = newDrawData.viewWindow;
           }
+
           trackState["groupScale"] =
             globalTrackState.current.trackStates[dataIdx].trackState[
               "groupScale"
@@ -351,31 +334,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : null
           );
         }
-
-        // let currIdx2 = dataIdx + 1;
-        // for (let i = 0; i < 3; i++) {
-        //   if (
-        //     !cacheTrackData[currIdx2] ||
-        //     !cacheTrackData[currIdx2].dataCache
-        //   ) {
-        //     noData = true;
-        //     continue;
-        //   }
-
-        //   delete cacheTrackData[currIdx2].dataCache;
-
-        //   currIdx2--;
-        // }
       } else {
         const combinedData = cacheTrackData[dataIdx]
           ? cacheTrackData[dataIdx].dataCache
           : null;
+        if (newDrawData.viewWindow) {
+          trackState["viewWindow"] = newDrawData.viewWindow;
+        }
 
         if (combinedData) {
-          if (newDrawData.viewWindow) {
-            trackState["viewWindow"] = newDrawData.viewWindow;
-          }
-
           createSVGOrCanvas(
             trackState,
             combinedData,
@@ -387,6 +354,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           );
         }
       }
+    } else {
+      return;
     }
   }, [newDrawData]);
 
@@ -451,6 +420,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         globalTrackState.current.trackStates[dataIdx].trackState
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+      if (!cacheTrackData.usePrimaryNav) {
+        return;
+      }
+
       let noData = false;
       if (!cacheTrackData.useExpandedLoci) {
         let curIdx = dataIdx + 1;

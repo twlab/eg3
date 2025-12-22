@@ -27,47 +27,38 @@ export const trackFetchFunction: { [key: string]: any } = {
       apiConfigPrefix = apiConfigMap.WashU;
     }
 
-    let url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    try {
+      const fetchPromises = regionData.nav.map(async (region: any) => {
+        const url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${region.chr}&start=${region.start}&end=${region.end}`;
 
-    // Retry logic for intermittent CORS errors
-    const maxRetries = 2;
-    const retryDelay = 500; // ms
+        try {
+          const genRefResponse = await fetch(url, {
+            method: "GET",
+            mode: "cors",
+            cache: "default",
+            credentials: "omit",
+          });
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const genRefResponse = await fetch(url, {
-          method: "GET",
-          mode: "cors",
-          cache: "default",
-          credentials: "omit", // Don't send credentials which can cause CORS issues
-        });
+          if (!genRefResponse.ok) {
+            throw new Error(`HTTP error! status: ${genRefResponse.status}`);
+          }
 
-        if (!genRefResponse.ok) {
-          throw new Error(`HTTP error! status: ${genRefResponse.status}`);
-        }
-
-        return genRefResponse.json();
-      } catch (error) {
-        const isCorsError =
-          error instanceof TypeError && error.message.includes("fetch");
-        const isLastAttempt = attempt === maxRetries;
-
-        if (isCorsError && !isLastAttempt) {
-          console.warn(`CORS error on attempt ${attempt + 1}, retrying...`);
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          continue;
-        }
-
-        if (isLastAttempt) {
+          return genRefResponse.json();
+        } catch (error) {
           console.error(
-            "Failed to fetch gene annotation data after retries:",
+            `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
             error
           );
+          return [];
         }
-        return [];
-      }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      return results.flat();
+    } catch (error) {
+      console.error("Error in refGeneFetch:", error);
+      return [];
     }
-    return [];
   },
   snp: async function snpFetch(regionData: any) {
     const SNP_REGION_API: { [key: string]: any } = {
@@ -88,27 +79,41 @@ export const trackFetchFunction: { [key: string]: any } = {
       "Content-Type": "application/json",
     };
 
-    if (regionData.end - regionData.start <= 30000) {
-      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
-        regionData.end
-      }?content-type=application%2Fjson&feature=variation`;
+    try {
+      const fetchPromises = regionData.nav.map(async (region: any) => {
+        if (region.end - region.start > 30000) {
+          return [];
+        }
 
-      return fetch(url, {
-        headers,
-        mode: "cors",
-        cache: "default",
-      })
-        .then((response) => {
+        const url = `${api}/${region.chr.substr(3)}:${region.start}-${
+          region.end
+        }?content-type=application%2Fjson&feature=variation`;
+
+        try {
+          const response = await fetch(url, {
+            headers,
+            mode: "cors",
+            cache: "default",
+          });
+
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
+
           return response.json();
-        })
-        .catch((error) => {
-          console.error("There was a problem with the fetch operation:", error);
+        } catch (error) {
+          console.error(
+            `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
+            error
+          );
           return [];
-        });
-    } else {
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      return results.flat();
+    } catch (error) {
+      console.error("Error in snpFetch:", error);
       return [];
     }
   },

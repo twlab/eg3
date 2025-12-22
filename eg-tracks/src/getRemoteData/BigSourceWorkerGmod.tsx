@@ -179,7 +179,7 @@ class BigSourceWorkerGmod {
 
       const combinedData = dataForEachLocus.flat();
 
-      return combinedData;
+      return [];
     }
   };
 }

@@ -797,7 +797,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
         }
       }
     }
-
+    console.log(
+      trackState.viewWindow,
+      trackState,
+      windowWidth,
+      configOptions,
+      updatedLegend,
+      trackModel,
+      groupScale,
+      xvaluesData
+    );
     let canvasElements = (
       <NumericalTrack
         data={formattedData}
@@ -1273,7 +1282,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     return canvasElements;
   },
   genomealign: function getGenomeAlign(drawData) {
-    console.log(drawData);
     let result = drawData.genesArr;
     if (!result) {
       return null;

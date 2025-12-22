@@ -75,9 +75,13 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  let xvalues = xvaluesData
-    ? xvaluesData
-    : aggregator.xToValueMaker(data, viewRegion, width, options, viewWindow);
+  let xvalues = aggregator.xToValueMaker(
+    data,
+    viewRegion,
+    width,
+    options,
+    viewWindow
+  );
 
   let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
 
@@ -101,11 +105,19 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         max = _.max(Object.values(gscale.max));
         min = _.min(Object.values(gscale.min));
       } else {
-        const visibleValues = xToValue;
+        const visibleValues = xToValue.slice(
+          props.viewWindow.start,
+          props.viewWindow.end
+        );
 
         max = _.max(visibleValues) || 1;
-
-        min = (xValues2.length ? _.min(xToValue2) : 0) || 0;
+        xValues2 = xToValue2.filter((x) => x);
+        min =
+          (xValues2.length
+            ? _.min(
+                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+              )
+            : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
         min = xValues2.length ? -maxBoth : 0;

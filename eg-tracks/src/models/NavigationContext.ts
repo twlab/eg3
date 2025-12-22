@@ -481,11 +481,6 @@ class NavigationContext {
         const availableChrs = Object.keys(this._featuresForChr)
           .slice(0, 10)
           .join(", ");
-        console.warn(
-          `Chromosome "${chrPart}" not found. Available: ${availableChrs}${
-            Object.keys(this._featuresForChr).length > 10 ? "..." : ""
-          }`
-        );
       } else {
         return contextCoordsArray[0];
       }
@@ -577,8 +572,7 @@ class NavigationContext {
     includeGaps = true
   ): FeatureSegment[] {
     const queryInterval = new OpenInterval(queryStart, queryEnd);
-    const results: Array<any> = [];
-
+    const results = [];
     for (const feature of this._features) {
       // Check each feature for overlap with the query interval
       if (!includeGaps && NavigationContext.isGapFeature(feature)) {
@@ -586,7 +580,6 @@ class NavigationContext {
       }
       const start = this.getFeatureStart(feature);
       const end = start + feature.getLength(); // Noninclusive
-
       const overlap = new OpenInterval(start, end).getOverlap(queryInterval);
 
       if (overlap) {
@@ -601,7 +594,6 @@ class NavigationContext {
         break;
       }
     }
-
     return results;
   }
 
