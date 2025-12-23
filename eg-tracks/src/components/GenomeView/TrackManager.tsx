@@ -413,7 +413,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   const enqueueMessage = (message: Array<any>) => {
-    messageQueue.current = [message];
+    messageQueue.current.push(message);
 
     processQueue();
   };
@@ -1717,7 +1717,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       primaryGenName: genomeConfig.genome.getName(),
       ...event.data.navData,
     };
-
+    const fetchNewRegion = event.data.navData.fetchNewRegion;
+    const fetchedDragX = event.data.navData.dragX;
     // Process all fetch results with promises
     await Promise.all(
       Object.values(event.data.fetchResults).map((item: any) =>
@@ -1779,15 +1780,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             completedFetchedRegion.current.done = {};
             completedFetchedRegion.current.groups = {};
           }
-
-          checkDrawData({
-            curDataIdx: curTrackState.trackDataIdx,
-            isInitial: undefined,
-            trackToDrawId,
-            missingIdx: curTrackState.missingIdx,
-            trackDataIdx: curTrackState.trackDataIdx,
-          });
-          enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+          if (fetchNewRegion || fetchedDragX === dragX.current) {
+            checkDrawData({
+              curDataIdx: curTrackState.trackDataIdx,
+              isInitial: undefined,
+              trackToDrawId,
+              missingIdx: curTrackState.missingIdx,
+              trackDataIdx: curTrackState.trackDataIdx,
+            });
+            enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+          }
         } else {
           checkDrawData({
             curDataIdx: curTrackState.trackDataIdx,
@@ -1977,6 +1979,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           fetchAfterGenAlignTracks: dataToFetchArr,
           trackDataIdx: curIdx,
           missingIdx: curIdx,
+          fetchNewRegion: true,
         });
       } else {
         enqueueMessage(dataToFetchArr);
@@ -3749,10 +3752,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             trackDataIdx: viewWindowConfigData.current.dataIdx,
             missingIdx: viewWindowConfigData.current.dataIdx,
           });
-          console.log(
-            userViewRegion._startBase,
-            viewWindowConfigData.current.contextNavCoord
-          );
+
           enqueueGenomeAlignMessage({
             trackToFetch: genomeAlignTracks,
             visData: trackState.visData
@@ -3771,6 +3771,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             fetchAfterGenAlignTracks: dataToFetchArr,
             trackDataIdx: viewWindowConfigData.current.dataIdx,
             missingIdx: viewWindowConfigData.current.dataIdx,
+            dragX: dragX.current,
+            fetchNewRegion: false,
           });
           console.log(
             "_______________________________________________________________________________________________________________________________"

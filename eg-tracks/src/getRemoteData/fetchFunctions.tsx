@@ -456,7 +456,6 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
 }
 
 export async function fetchGenomeAlignData(data: any): Promise<any> {
-  console.log(data);
   const regionExpandLoci = data.regionExpandLoci;
   const trackToFetch = data.trackToFetch;
   const genomicLoci = data.genomicLoci;
@@ -737,6 +736,8 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
         data.bpRegionSize
           ? 0
           : null,
+      fetchNewRegion: data.fetchNewRegion,
+      dragX: data.dragX,
     },
     dragX: data.dragX,
   };
