@@ -155,7 +155,6 @@ class NavigationContext {
    */
   getFeatureStart(feature: Feature): number {
     const coordinate = this._minCoordinateForFeature.get(feature);
-
     if (coordinate === undefined) {
       throw new RangeError(
         `Feature "${feature.getName()}" not in this navigation context`
@@ -214,26 +213,8 @@ class NavigationContext {
   convertGenomeIntervalToBases(
     chrInterval: ChromosomeInterval
   ): OpenInterval[] {
-    let potentialOverlaps = this._featuresForChr[chrInterval.chr] || [];
-
-    // If no features found, try alternative chromosome naming (chr1 vs 1)
-    if (potentialOverlaps.length === 0) {
-      const altChr = chrInterval.chr.startsWith("chr")
-        ? chrInterval.chr.replace("chr", "")
-        : `chr${chrInterval.chr}`;
-      potentialOverlaps = this._featuresForChr[altChr] || [];
-
-      if (potentialOverlaps.length > 0) {
-        // Update chrInterval to use the correct chromosome name
-        chrInterval = new ChromosomeInterval(
-          altChr,
-          chrInterval.start,
-          chrInterval.end
-        );
-      }
-    }
-
-    const contextIntervals: Array<any> = [];
+    const potentialOverlaps = this._featuresForChr[chrInterval.chr] || [];
+    const contextIntervals = [];
     for (const feature of potentialOverlaps) {
       const overlap = new FeatureSegment(feature).getGenomeOverlap(chrInterval);
       if (overlap) {
@@ -242,21 +223,6 @@ class NavigationContext {
         );
       }
     }
-
-    // If no overlap found but chromosome exists, return the feature's full range as fallback
-    if (contextIntervals.length === 0 && potentialOverlaps.length > 0) {
-      const feature = potentialOverlaps[0];
-      // const featureLocus = feature.getLocus();
-      // console.warn(
-      //   `Requested ${chrInterval.chr}:${chrInterval.start}-${chrInterval.end} but feature only covers ${featureLocus.start}-${featureLocus.end}. Using full feature range.`
-      // );
-      // Return the entire feature as fallback
-      const fullFeatureSegment = new FeatureSegment(feature);
-      contextIntervals.push(
-        this.convertFeatureSegmentToContextCoordinates(fullFeatureSegment)
-      );
-    }
-
     return contextIntervals;
   }
 

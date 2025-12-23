@@ -25,7 +25,7 @@ export class NumericalAggregator {
       viewRegion,
       width
     );
-
+    console.log(xToFeaturesForward);
     return [
       xToFeaturesForward.map(DefaultAggregators.fromId(newAggregatorId)),
       xToFeaturesReverse.map(DefaultAggregators.fromId(newAggregatorId)),

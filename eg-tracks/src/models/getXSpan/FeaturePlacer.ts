@@ -301,11 +301,19 @@ export class FeaturePlacer {
     // Now, we can compare the context location locus to the feature's locus.
     const distFromFeatureLocus = contextLocusStart - feature.getLocus().start;
     const relativeStart = Math.max(0, distFromFeatureLocus);
+
+    // Calculate the genomic length (in bases) that the context location represents
+    const contextFeatureCoordEnd = navContext.convertBaseToFeatureCoordinate(
+      contextLocation.end
+    );
+    const placedBaseEnd = contextFeatureCoordEnd.getLocus().start;
+    const genomicLength = Math.abs(placedBaseEnd - placedBase);
+
     return {
       visiblePart: new FeatureSegment(
         feature,
         relativeStart,
-        relativeStart + contextLocation.getLength()
+        relativeStart + genomicLength
       ),
       isReverse,
     };
