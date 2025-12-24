@@ -579,9 +579,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 // Call createInfiniteOnMessage once with the entire results array
                 createInfiniteOnMessage({ data: results });
               })
-              .catch((error) => {
-                console.error("Error fetching genomic data:", error);
-              });
+              .catch(() => {});
           }
         }
       }
@@ -606,9 +604,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 // Call createInfiniteOnMessage once with the entire results array
                 createInfiniteOnMessage({ data: results });
               })
-              .catch((error) => {
-                console.error("Error fetching genomic data:", error);
-              });
+              .catch(() => {});
           }
         }
       }
@@ -635,9 +631,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           // Call createInfiniteOnMessage once with the entire results array
           createGenomeAlignOnMessage({ data: results });
         })
-        .catch((error) => {
-          console.error("Error fetching genomic data:", error);
-        });
+        .catch(() => {});
     }
   };
 
@@ -1604,6 +1598,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any }
   ) => {
+    console.log(event.data);
     await Promise.all(
       event.data.map(async (dataItem: any) => {
         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
@@ -1804,10 +1799,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       processGenomeAlignQueue();
     } catch (error) {
-      console.error(
-        "An error occurred when trying to fetch genomealign track:",
-        error
-      );
       const trackToDrawId: { [key: string]: any } = {};
       for (const key in trackManagerState.current.tracks) {
         if (trackManagerState.current.tracks[key].type === "genomealign") {
@@ -1911,7 +1902,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (curTrackModel) {
               trackFetchedDataCache.current[key][curDataIdx]["dataCache"] =
                 null;
-              trackToFetch.push(curTrackModel);
+              const tempTrackModel = _.cloneDeep(curTrackModel);
+              tempTrackModel["Error"] = curTrackCache.Error;
+              trackToFetch.push(_.cloneDeep(tempTrackModel));
             }
           }
         }
@@ -2126,7 +2119,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             (trackModel: any) => trackModel.id === trackId
           );
 
-          if (curTrackModel) {
+          if (
+            curTrackModel &&
+            trackOptionMap[
+              `${trackFetchedDataCache.current[trackId].trackType}`
+            ]
+          ) {
             configOptions = {
               ...trackOptionMap[
                 `${trackFetchedDataCache.current[trackId].trackType}`
@@ -2276,11 +2274,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           // }
         }
       } catch (error) {
-        console.error(
-          `Error fetching data for ${fetchRes.trackType} track:`,
-          error
-        );
-        result = { error: "Failed to fetch track data" };
+        result = { error: "Failed to fetch track data", Error: error };
       }
     } else {
       result = fetchRes.result;
@@ -2295,8 +2289,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         //   ? result
         //   :
         formatDataByType(result, fetchRes.trackType);
-      if ("error" in formattedData) {
-        trackFetchedDataCache.current[`${fetchRes.id}`].error = true;
+      if ("Error" in formattedData) {
+        trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
+          formattedData;
       }
       trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
         "dataCache"
@@ -2462,7 +2457,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initTrackModel.type;
     trackFetchedDataCache.current[`${initTrackModel.id}`]["trackModel"] =
       initTrackModel;
-    trackFetchedDataCache.current[`${initTrackModel.id}`]["error"] = false;
+    trackFetchedDataCache.current[`${initTrackModel.id}`]["Error"] = null;
   }
   const refreshState = () => {
     // Reset useRef letiables
@@ -3215,7 +3210,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (
               !cacheTrackData[currIdx] ||
               !cacheTrackData[currIdx].dataCache ||
-              "error" in cacheTrackData[currIdx].dataCache
+              "Error" in cacheTrackData[currIdx].dataCache
             ) {
               noData = true;
               break;
@@ -3774,9 +3769,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             dragX: dragX.current,
             fetchNewRegion: false,
           });
-          console.log(
-            "_______________________________________________________________________________________________________________________________"
-          );
         }
         //__________________________________________________________
         const curTrackToDrawId = getWindowViewConfig(
@@ -4017,7 +4009,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       }}
                     >
                       {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
-                  track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing error.
+                  track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing err.
                    */}
                       {item.trackModel.isSelected ? (
                         <div className="Track-border-container Track-selected-border"></div>

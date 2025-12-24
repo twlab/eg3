@@ -1,5 +1,3 @@
-import TrackModel from "../../../../models/TrackModel";
-import { GenomeConfig } from "../../../../models/genomes/GenomeConfig";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
 // import { GuaranteeMap } from '../../model/GuaranteeMap';
@@ -24,7 +22,6 @@ import Feature from "../../../../models/Feature";
 import { ViewExpansion } from "../../../../models/RegionExpander";
 import {
   FeaturePlacer,
-  PlacedFeature,
   PlacementMode,
 } from "../../../../models/getXSpan/FeaturePlacer";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";

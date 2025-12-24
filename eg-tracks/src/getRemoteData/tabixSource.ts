@@ -33,13 +33,22 @@ class TabixSource {
   }
 
   /**
-   * Gets data for a list of chromosome intervals.
-   *
-   * @param {ChromosomeInterval[]} loci - locations for which to fetch data
-   * @return {Promise<BedRecord[]>} Promise for the data
+   * Recreates the Tabix instance to clear any cached data
    */
-  getData = async (loci, basesPerPixel, options) => {
-    // let promises = loci.map(this.getDataForLocus);
+  private recreateTabixInstance() {
+    this.tabix = new TabixIndexedFile({
+      filehandle: new RemoteFile(this.url),
+      tbiFilehandle: new RemoteFile(this.indexUrl),
+    });
+  }
+
+  /**
+   * Fetches data from Tabix file for the given loci
+   * @param {ChromosomeInterval[]} loci - locations for which to fetch data
+   * @param {any} options - fetch options including ensemblStyle
+   * @return {Promise<BedRecord[]>} a Promise for the data
+   */
+  private async fetchSource(loci, options) {
     const promises = loci.map((locus) => {
       // graph container uses this source directly w/o initial track, so options is null
       let chrom =
@@ -59,6 +68,36 @@ class TabixSource {
       });
     }
     return _.flatten(dataForEachLocus);
+  }
+
+  /**
+   * Gets data for a list of chromosome intervals.
+   *
+   * @param {ChromosomeInterval[]} loci - locations for which to fetch data
+   * @return {Promise<BedRecord[]>} Promise for the data
+   */
+  getData = async (loci, basesPerPixel, options) => {
+    try {
+      return await this.fetchSource(loci, options);
+    } catch (error) {
+      console.error("Error fetching Tabix data, recreating instance:", error);
+
+      try {
+        if ("caches" in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames.map((cacheName) => caches.delete(cacheName))
+          );
+        }
+
+        // recreate the fetch instance and retry once, because it might be a disk cache issue
+        this.recreateTabixInstance();
+
+        return await this.fetchSource(loci, options);
+      } catch (error) {
+        throw error;
+      }
+    }
   };
 
   /**

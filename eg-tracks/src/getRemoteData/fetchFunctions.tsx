@@ -249,43 +249,33 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       leftOverTrackModels.map(async (item) => {
         const trackType = item?.type || item?.metadata["Track type"];
         const id = item.id;
-        let foundInvalidTrack = false;
+
         if (
           (item.metadata.genome &&
             !(item.metadata.genome in genomicFetchCoord)) ||
           !(item.type in componentMap)
         ) {
-          foundInvalidTrack = true;
-        }
-        if (foundInvalidTrack) {
           fetchResults.push({
             name: trackType,
             id: id,
             metadata: item.metadata,
             trackModel: item,
-            result: { error: "This track type is currently not supported. " },
+            result: {
+              error: "This track type is currently not supported. ",
+              Error: "UnsupportedTrack",
+            },
+          });
+        } else if (item.Error) {
+          fetchResults.push({
+            name: trackType,
+            id: id,
+            metadata: item.metadata,
+            trackModel: item,
+            result: item.Error,
           });
         } else if (trackType in { hic: "", dynamichic: "" }) {
           fetchResults.push({
             name: trackType,
-            id: id,
-            metadata: item.metadata,
-            trackModel: item,
-          });
-        } else if (trackType === "ruler") {
-          fetchResults.push({
-            name: trackType,
-            id: id,
-            metadata: item.metadata,
-            trackModel: item,
-            result: [],
-          });
-        } else if (trackType === "geneannotation") {
-          // Only await here, not in the map above
-          const genRefResponses = await fetchData(item);
-          fetchResults.push({
-            name: trackType,
-            result: genRefResponses[0],
             id: id,
             metadata: item.metadata,
             trackModel: item,
@@ -315,6 +305,25 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             trackModel: item,
             curFetchNav,
           });
+        } else if (trackType === "ruler") {
+          fetchResults.push({
+            name: trackType,
+            id: id,
+            metadata: item.metadata,
+            trackModel: item,
+            result: [],
+          });
+        } else if (trackType === "geneannotation") {
+          // Only await here, not in the map above
+          const genRefResponses = await fetchData(item);
+
+          fetchResults.push({
+            name: trackType,
+            result: genRefResponses,
+            id: id,
+            metadata: item.metadata,
+            trackModel: item,
+          });
         } else if (
           trackType in
           {
@@ -325,21 +334,20 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           }
         ) {
           let hasError = false;
-          // Use Promise.all for all tracks, no await inside map
-          const tmpResults = await Promise.all(
-            item.tracks.map(async (trackItem) => {
-              const result = (await fetchData(trackItem)).flat(1);
-              if (typeof result[0] === "object" && "error" in result[0]) {
-                hasError = true;
-              }
-              return result;
-            })
-          );
+          let responses: Array<any> | { [key: string]: any } = [];
+          for (const trackItem of item.tracks) {
+            const response: any = await fetchData(trackItem);
+            if (typeof response === "object" && "Error" in response) {
+              hasError = true;
+              responses = response;
+              break; // Stop processing remaining tracks
+            }
+            responses.push(response);
+          }
+
           fetchResults.push({
             name: trackType,
-            result: hasError
-              ? { error: "Fetch failed: data source is not valid" }
-              : tmpResults,
+            result: responses,
             id: id,
             metadata: item.metadata,
             trackModel: item,
@@ -348,7 +356,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           const responses = await fetchData(item);
           fetchResults.push({
             name: trackType,
-            result: responses[0],
+            result: responses,
             id: id,
             metadata: item.metadata,
             trackModel: item,
@@ -364,7 +372,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
     }));
 
     async function fetchData(trackModel): Promise<Array<any>> {
-      let responses: Array<any> = [];
+      let responses: any = null;
       let curFetchNav;
       const { genome } = trackModel.metadata;
 
@@ -380,35 +388,22 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       }
 
       const isLocalFetch = trackModel.fileObj instanceof File;
-      if (isLocalFetch && trackModel.url === "") {
-        const curRespond = trackModel.isText
-          ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav,
-              trackModel,
-            })
-          : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav,
-              trackModel,
-            });
-
-        if (
-          curRespond &&
-          typeof curRespond === "object" &&
-          curRespond.hasOwnProperty("error")
-        ) {
-          responses.push({
-            error: curRespond.message,
-          });
-        } else {
-          responses.push(curRespond);
-        }
-      } else if (!isLocalFetch) {
-        let curRespond;
-        try {
+      try {
+        if (isLocalFetch && trackModel.url === "") {
+          responses = trackModel.isText
+            ? await textFetchFunction[trackModel.type]({
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav,
+                trackModel,
+              })
+            : await localTrackFetchFunction[trackModel.type]({
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav,
+                trackModel,
+              });
+        } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
-            curRespond = await trackFetchFunction[trackModel.type]({
+            responses = await trackFetchFunction[trackModel.type]({
               genomeName:
                 "genome" in trackModel.metadata
                   ? trackModel.metadata.genome
@@ -422,29 +417,20 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               trackType: trackModel.type,
             });
           } else {
-            curRespond = await Promise.all([
-              trackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              }),
-            ]);
+            responses = await trackFetchFunction[trackModel.type]({
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            });
           }
-
-          responses.push(curRespond.flat());
-        } catch (error) {
-          console.error(
-            `Error fetching data for track model type ${trackModel.type}:`,
-            error
-          );
-          responses.push({
-            error: "Data fetch failed.",
-          });
         }
-      } else {
-        responses.push({
-          error: "Fetch failed: data source is not valid",
-        });
+      } catch (error) {
+        console.log(error);
+        responses = {
+          error: `Error fetching data for track ${trackModel.name}`,
+          Error: error,
+          trackModel: trackModel,
+        };
       }
       return responses;
     }

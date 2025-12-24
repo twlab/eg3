@@ -57,7 +57,7 @@ export const trackFetchFunction: { [key: string]: any } = {
       return results.flat();
     } catch (error) {
       console.error("Error in refGeneFetch:", error);
-      return [];
+      throw error;
     }
   },
   snp: async function snpFetch(regionData: any) {
@@ -111,10 +111,10 @@ export const trackFetchFunction: { [key: string]: any } = {
       });
 
       const results = await Promise.all(fetchPromises);
-      return results.flat();
+      return results;
     } catch (error) {
       console.error("Error in snpFetch:", error);
-      return [];
+      throw error;
     }
   },
   bed: async function bedFetch(regionData: any) {
@@ -227,8 +227,8 @@ async function getRemoteData(regionData: any, trackType: string) {
     }
   }
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
-  if (fetchInstance) {
-    try {
+  try {
+    if (fetchInstance) {
       const needsBasesPerPixel =
         ((trackType === "repeat" || trackType === "rmskv2") &&
           regionData.basesPerPixel <= 1000) ||
@@ -255,9 +255,9 @@ async function getRemoteData(regionData: any, trackType: string) {
 
             return data;
           })
-          .catch(() => {
+          .catch((error) => {
             fetchInstance = null;
-            return { error: "Failed to fetch data. " };
+            throw error;
           });
       } else {
         return fetchInstance
@@ -267,17 +267,16 @@ async function getRemoteData(regionData: any, trackType: string) {
 
             return data;
           })
-          .catch(() => {
+          .catch((error) => {
             fetchInstance = null;
-            return { error: "Failed to fetch data. " };
+            throw error;
           });
       }
-    } catch (error: any) {
-      fetchInstance = null;
-      return { error: "Failed to fetch data. " };
     }
+  } catch (error) {
+    fetchInstance = null;
+    throw error;
   }
-  return { error: "Failed to fetch data. " };
 }
 
 export default trackFetchFunction;

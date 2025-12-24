@@ -93,10 +93,40 @@ class BigSourceWorkerGmod {
       this.chromNamingCache = ensembl.includes(firstChrom);
       return this.chromNamingCache;
     } catch (error) {
-      console.error("Error detecting chromosome naming:", error);
-      this.chromNamingCache = false; // Default to UCSC naming
-      return false;
+      console.error(
+        "Error detecting chromosome naming. Check URL and file format.",
+        error
+      );
+      throw error;
     }
+  }
+
+  /**
+   * Fetches features from BigWig/BigBed file for the given loci
+   * @param {ChromosomeInterval[]} loci - locations for which to fetch data
+   * @return {Promise<DASFeature[]>} a Promise for the data
+   */
+  private async fetchSource(loci) {
+    const promises = loci.map(async (locus) => {
+      let chrom = this.useEnsemblStyle
+        ? locus.chr.replace("chr", "")
+        : locus.chr;
+
+      if (chrom === "M" || chrom === "chrM") {
+        chrom = this.useEnsemblStyle ? "M" : "chrM";
+      }
+
+      return this.bw.getFeatures(chrom, locus.start, locus.end);
+    });
+
+    const dataForEachLocus = await Promise.all(promises);
+    loci.forEach((locus, index) => {
+      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+    });
+
+    const combinedData = dataForEachLocus.flat();
+
+    return combinedData;
   }
 
   /**
@@ -108,78 +138,34 @@ class BigSourceWorkerGmod {
    * @override
    */
   getData = async (loci, basesPerPixel, options) => {
-    // Create a fresh BigWig instance for each getData call
-    // This prevents cache conflicts when multiple App instances exist
     if (this.useEnsemblStyle === null) {
       this.useEnsemblStyle = await this.detectChromosomeNaming();
     }
-    const useEnsemblStyle = this.useEnsemblStyle;
 
     try {
-      const promises = loci.map(async (locus) => {
-        let chrom = useEnsemblStyle ? locus.chr.replace("chr", "") : locus.chr;
-
-        // Handle mitochondrial chromosome naming variations
-        if (chrom === "M" || chrom === "chrM") {
-          // Try both M and MT depending on the file's naming convention
-          chrom = useEnsemblStyle ? "M" : "chrM";
-        }
-
-        return this.bw.getFeatures(chrom, locus.start, locus.end);
-      });
-
-      const dataForEachLocus = await Promise.all(promises);
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-
-      const combinedData = dataForEachLocus.flat();
-
-      return combinedData;
+      return await this.fetchSource(loci);
     } catch (error) {
       console.error("Error fetching BigWig data, recreating instance:", error);
 
-      // Clear browser cache for this URL
-      if ("caches" in window) {
-        try {
+      try {
+        if ("caches" in window) {
           const cacheNames = await caches.keys();
           await Promise.all(
             cacheNames.map((cacheName) => caches.delete(cacheName))
           );
-          console.log("Browser cache cleared");
-        } catch (cacheError) {
-          console.warn("Could not clear browser cache:", cacheError);
-        }
-      }
-
-      // Recreate the BigWig instance
-      this.recreateBigWigInstance();
-
-      // Retry once with new instance
-      if (this.useEnsemblStyle === null) {
-        this.useEnsemblStyle = await this.detectChromosomeNaming();
-      }
-
-      const promises = loci.map(async (locus) => {
-        let chrom = this.useEnsemblStyle
-          ? locus.chr.replace("chr", "")
-          : locus.chr;
-
-        if (chrom === "M" || chrom === "chrM") {
-          chrom = this.useEnsemblStyle ? "M" : "chrM";
         }
 
-        return this.bw.getFeatures(chrom, locus.start, locus.end);
-      });
+        // recreate the fetch instance and retry once, because it might a disk cache issue
+        this.recreateBigWigInstance();
 
-      const dataForEachLocus = await Promise.all(promises);
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
+        if (this.useEnsemblStyle === null) {
+          this.useEnsemblStyle = await this.detectChromosomeNaming();
+        }
 
-      const combinedData = dataForEachLocus.flat();
-
-      return [];
+        return await this.fetchSource(loci);
+      } catch (error) {
+        throw error;
+      }
     }
   };
 }
