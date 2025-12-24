@@ -1,7 +1,36 @@
 import TabixSource from "./tabixSource";
 import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
 import VcfSource from "./VcfSource";
+import { HicSource } from "./hicSource";
+import BamSource from "./BamSource";
+import Feature from "../models/Feature";
+import ChromosomeInterval from "../models/ChromosomeInterval";
+import NavigationContext from "../models/NavigationContext";
+import DisplayedRegionModel from "../models/DisplayedRegionModel";
+function objToInstanceAlign(alignment: { [key: string]: any }) {
+  let visRegionFeatures: Feature[] = [];
 
+  for (let feature of alignment._navContext._features) {
+    let newChr = new ChromosomeInterval(
+      feature.locus.chr,
+      feature.locus.start,
+      feature.locus.end
+    );
+    visRegionFeatures.push(new Feature(feature.name, newChr));
+  }
+
+  let visRegionNavContext = new NavigationContext(
+    alignment._navContext._name,
+    visRegionFeatures
+  );
+
+  let visRegion = new DisplayedRegionModel(
+    visRegionNavContext,
+    alignment._startBase,
+    alignment._endBase
+  );
+  return visRegion;
+}
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
 // Map track types to their data source types
@@ -190,6 +219,14 @@ export const trackFetchFunction: { [key: string]: any } = {
   vcf: function vcfFetch(regionData: any) {
     return getRemoteData(regionData, "vcf");
   },
+
+  hic: function hicFetch(regionData: any) {
+    return getRemoteData(regionData, "hic");
+  },
+
+  bam: function bamFetch(regionData: any) {
+    return getRemoteData(regionData, "bam");
+  },
 };
 
 async function getRemoteData(regionData: any, trackType: string) {
@@ -220,6 +257,14 @@ async function getRemoteData(regionData: any, trackType: string) {
       );
     } else if (trackType === "jaspar") {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+        regionData.trackModel.url
+      );
+    } else if (trackType === "hic") {
+      cachedFetchInstance[regionData.trackModel.url] = new HicSource(
+        regionData.trackModel.url
+      );
+    } else if (trackType === "bam") {
+      cachedFetchInstance[regionData.trackModel.url] = new BamSource(
         regionData.trackModel.url
       );
     } else {
@@ -253,6 +298,21 @@ async function getRemoteData(regionData: any, trackType: string) {
           .then((data: any) => {
             cachedFetchInstance[regionData.trackModel.url] = null;
 
+            return data;
+          })
+          .catch((error) => {
+            fetchInstance = null;
+            throw error;
+          });
+      } else if (trackType === "hic") {
+        return fetchInstance
+          .getData(
+            objToInstanceAlign(regionData.visRegion),
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
+          .then((data: any) => {
+            cachedFetchInstance[regionData.trackModel.url] = null;
             return data;
           })
           .catch((error) => {

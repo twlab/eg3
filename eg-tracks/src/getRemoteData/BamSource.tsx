@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 import { BamFile } from "@gmod/bam";
 import { BlobFile } from "generic-filehandle";
 
@@ -55,7 +53,7 @@ class BamSource {
 
     const dataForEachSegment = await Promise.all(promises);
 
-    const flattened = _.flatten(dataForEachSegment);
+    const flattened = dataForEachSegment.flat(1);
     const alignments = flattened.map((r) =>
       Object.assign(r, { ref: this.bam.indexToChr[r.get("seq_id")].refName })
     );

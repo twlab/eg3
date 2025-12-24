@@ -83,7 +83,7 @@ class TabixSource {
       console.error("Error fetching Tabix data, recreating instance:", error);
 
       try {
-        if ("caches" in window) {
+        if (typeof window !== "undefined" && "caches" in window) {
           const cacheNames = await caches.keys();
           await Promise.all(
             cacheNames.map((cacheName) => caches.delete(cacheName))

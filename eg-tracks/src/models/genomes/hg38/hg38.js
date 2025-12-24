@@ -52,55 +52,55 @@ const defaultRegion = navContext.parse("chr7:27053397-27373765");
 
 const defaultTracks = [
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
-  new TrackModel({
-    type: "hi",
-    url: "",
-    name: "NOTSUPPORTEDTRACEXAMPLE",
-  }),
-  new TrackModel({
-    type: "ruler",
-    name: "Ruler",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV47",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "MANE_select_1.4",
-    label: "MANE selection v1.4",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "repeatmasker",
-    name: "rmsk_all",
-    options: { label: "RepeatMasker" },
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  }),
-  new TrackModel({
-    type: "bigwig",
-    name: "bigwig nochr",
-    genome: "hg38",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-  }),
-  new TrackModel({
-    type: "bigwig",
-    name: "bigwig yeschr",
-    genome: "hg38",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
-  }),
-  new TrackModel({
-    type: "bigwig",
-    name: "bigwig yeschr",
-    genome: "hg38",
-    url: "https://vizhub",
-  }),
+  // new TrackModel({
+  //   type: "hi",
+  //   url: "",
+  //   name: "NOTSUPPORTEDTRACEXAMPLE",
+  // }),
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV47",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "MANE_select_1.4",
+  //   label: "MANE selection v1.4",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "rmsk_all",
+  //   options: { label: "RepeatMasker" },
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig nochr",
+  //   genome: "hg38",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig yeschr",
+  //   genome: "hg38",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig yeschr",
+  //   genome: "hg38",
+  //   url: "https://vizhub",
+  // }),
   // new TrackModel({
   //   name: "hg38tomm10",
   //   label: "Query mouse mm10 to hg38 blastz",
@@ -214,38 +214,38 @@ const defaultTracks = [
   //     assay: "MRE",
   //   },
   // }),
-  new TrackModel({
-    type: "matplot",
-    name: "matplot wrap",
-    tracks: [
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-        name: "MeDIP",
-        options: {
-          color: "red",
-          backgroundColor: "#FFE7AB",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MeDIP",
-        },
-      },
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-        name: "MRE",
-        options: {
-          color: "blue",
-          backgroundColor: "#C0E3CC",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MRE",
-        },
-      },
-    ],
-  }),
+  // new TrackModel({
+  //   type: "matplot",
+  //   name: "matplot wrap",
+  //   tracks: [
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //       name: "MeDIP",
+  //       options: {
+  //         color: "red",
+  //         backgroundColor: "#FFE7AB",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MeDIP",
+  //       },
+  //     },
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //       name: "MRE",
+  //       options: {
+  //         color: "blue",
+  //         backgroundColor: "#C0E3CC",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MRE",
+  //       },
+  //     },
+  //   ],
+  // }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "example bigwig",
@@ -472,15 +472,15 @@ const defaultTracks = [
   //   ],
   // }),
 
-  // new TrackModel({
-  //   type: "hic",
-  //   name: "test hic",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //   // "options": {
-  //   //     "displayMode": "arc"
-  //   // }
-  //   // metadata: { genome: "mm10" },
-  // }),
+  new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/cool/HIC002.hic",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+    // metadata: { genome: "mm10" },
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",

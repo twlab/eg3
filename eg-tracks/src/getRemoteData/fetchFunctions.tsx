@@ -273,38 +273,6 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             trackModel: item,
             result: item.Error,
           });
-        } else if (trackType in { hic: "", dynamichic: "" }) {
-          fetchResults.push({
-            name: trackType,
-            id: id,
-            metadata: item.metadata,
-            trackModel: item,
-          });
-        } else if (trackType === "bam") {
-          let curFetchNav;
-          if (
-            "genome" in item.metadata &&
-            item.metadata.genome !== undefined &&
-            item.metadata.genome !== primaryGenName
-          ) {
-            curFetchNav =
-              genomicFetchCoord[
-                item.metadata.genome === ""
-                  ? primaryGenName
-                  : item.metadata.genome
-              ].queryGenomicCoord;
-          } else if (initial === 1) {
-            curFetchNav = initGenomicLoci;
-          } else {
-            curFetchNav = Array(genomicLoci);
-          }
-          fetchResults.push({
-            name: trackType,
-            id: id,
-            metadata: item.metadata,
-            trackModel: item,
-            curFetchNav,
-          });
         } else if (trackType === "ruler") {
           fetchResults.push({
             name: trackType,
@@ -331,6 +299,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             dynamic: "",
             dynamicbed: "",
             dynamiclongrange: "",
+            dynamichic: "",
           }
         ) {
           let hasError = false;
@@ -374,10 +343,13 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
     async function fetchData(trackModel): Promise<Array<any>> {
       let responses: any = null;
       let curFetchNav;
+      let visRegion =
+        genomicFetchCoord[primaryGenName].primaryVisData.visRegion;
       const { genome } = trackModel.metadata;
 
       if (genome && genome !== "" && genome !== primaryGenName) {
         curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
+        visRegion = genomicFetchCoord[genome].queryRegion;
       } else if (
         trackModel.type === "longrange" ||
         trackModel.type === "biginteract"
@@ -421,7 +393,11 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               basesPerPixel: bpRegionSize / windowWidth,
               nav: curFetchNav,
               trackModel,
+              visRegion: visRegion,
             });
+            if (trackModel.type === "hic") {
+              console.log(responses);
+            }
           }
         }
       } catch (error) {

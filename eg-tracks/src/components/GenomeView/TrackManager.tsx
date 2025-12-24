@@ -1102,10 +1102,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (value && key === "scoreScale") {
           trackModel.options!.scoreScale = value;
         }
-        if (trackModel.type === "hic") {
-          fileInfos[`${trackModel.id}`] =
-            fetchInstances.current[`${trackModel.id}`].getFileInfo();
-        }
+        // if (trackModel.type === "hic") {
+        //   fileInfos[`${trackModel.id}`] =
+        //     fetchInstances.current[`${trackModel.id}`].getFileInfo();
+        // }
         trackModel.options!["trackId"] = config;
         const trackConfig = getTrackConfig(trackModel);
         const menuItems = trackConfig.getMenuComponents();
@@ -1660,6 +1660,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 cache[currentDataIdx].dataCache !== undefined &&
                 cache[currentDataIdx].dataCache !== null
               ) {
+                console.log("yeet");
                 cacheKeysWithData[trackToDrawKey] = false;
               }
             } else {
@@ -2178,7 +2179,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
         }
       }
-
+      console.log(completedFetchedRegion.current.done);
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
@@ -2191,7 +2192,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   async function createCache(fetchRes: { [key: string]: any }) {
     const tmpTrackState = { ...fetchRes.trackState };
     let result;
-    if (fetchRes.trackType in { hic: "", dynamichic: "", bam: "" }) {
+    if (fetchRes.trackType in { dynamichic: "" }) {
       try {
         let configOptions;
         if (globalTrackConfig.current[`${fetchRes.id}`]) {
@@ -2223,15 +2224,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
 
-        if (fetchRes.trackType === "hic") {
-          result = await fetchInstances.current[
-            `${fetchRes.trackModel.id}`
-          ].getData(
-            objToInstanceAlign(visRegion),
-            basePerPixel.current,
-            configOptions
-          );
-        } else if (fetchRes.trackType === "dynamichic") {
+        // if (fetchRes.trackType === "hic") {
+        //   result = await fetchInstances.current[
+        //     `${fetchRes.trackModel.id}`
+        //   ].getData(
+        //     objToInstanceAlign(visRegion),
+        //     basePerPixel.current,
+        //     configOptions
+        //   );
+        // }
+
+        if (fetchRes.trackType === "dynamichic") {
           const curStraw = fetchRes.trackModel.tracks.map(
             (_hicTrack: any, index: any) => {
               return fetchInstances.current[
@@ -2554,28 +2557,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           useFineModeNav.current = true;
         }
       }
-      if (trackManagerState.current.tracks[i].type === "hic") {
-        if (
-          !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
-        ) {
-          fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
-            new HicSource(trackManagerState.current.tracks[i].url);
-        }
-      } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
-        trackManagerState.current.tracks[i].tracks?.map(
-          (_item: any, index: string | number) => {
-            fetchInstances.current[
-              `${trackManagerState.current.tracks[i].id}` +
-                "subtrack" +
-                `${index}`
-            ] = new HicSource(
-              trackManagerState.current.tracks[i].tracks![index].url
-            );
-          }
-        );
-      } else if (
+      // if (trackManagerState.current.tracks[i].type === "hic") {
+      //   if (
+      //     !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
+      //   ) {
+      //     fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
+      //       new HicSource(trackManagerState.current.tracks[i].url);
+      //   }
+      // } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
+      //   trackManagerState.current.tracks[i].tracks?.map(
+      //     (_item: any, index: string | number) => {
+      //       fetchInstances.current[
+      //         `${trackManagerState.current.tracks[i].id}` +
+      //           "subtrack" +
+      //           `${index}`
+      //       ] = new HicSource(
+      //         trackManagerState.current.tracks[i].tracks![index].url
+      //       );
+      //     }
+      //   );
+      // } else
+
+      if (
         trackManagerState.current.tracks[i].type in
-        { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+        {
+          matplot: "",
+          dynamic: "",
+          dynamicbed: "",
+          dynamiclongrange: "",
+          dynamichic: "",
+        }
       ) {
         trackManagerState.current.tracks[i].tracks?.map(
           (trackModel: TrackModel, index: any) => {
@@ -2585,10 +2596,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               `${index}`;
           }
         );
-      } else if (trackManagerState.current.tracks[i].type === "bam") {
-        fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
-          new BamSource(trackManagerState.current.tracks[i].url);
       }
+
+      // else if (trackManagerState.current.tracks[i].type === "bam") {
+      //   fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
+      //     new BamSource(trackManagerState.current.tracks[i].url);
+      // }
 
       const newPosRef = createRef();
       const newLegendRef = createRef();

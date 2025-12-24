@@ -278,7 +278,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         initTrackStart.current = false;
       }
 
-      if (!cacheTrackData.useExpandedLoci || cacheTrackData.usePrimaryNav) {
+      if (!cacheTrackData.useExpandedLoci && cacheTrackData.usePrimaryNav) {
         let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
@@ -341,7 +341,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         if (newDrawData.viewWindow) {
           trackState["viewWindow"] = newDrawData.viewWindow;
         }
-
+        console.log(combinedData);
         if (combinedData) {
           createSVGOrCanvas(
             trackState,

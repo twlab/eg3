@@ -108,7 +108,8 @@ class InteractionTrackComponent extends React.PureComponent<
       // const maxScore = this.props.data.length > 0 ? _.maxBy(this.props.data, "score").score : 10;
       const item = percentile(scalePercentile!, safeData, (item) => item.score);
       // console.log(item)
-      const maxScore = safeData.length > 0 ? (item as GenomeInteraction).score : 10;
+      const maxScore =
+        safeData.length > 0 ? (item as GenomeInteraction).score : 10;
       // console.log(maxScore)
       return {
         opacityScale: scaleLinear()
@@ -202,7 +203,7 @@ class InteractionTrackComponent extends React.PureComponent<
       isThereG3dTrack,
       getNumLegend,
     } = this.props;
-
+    console.log(data);
     // Safety check: ensure data is always an array
     const safeData = data || [];
     const filteredData = this.filterData(safeData);
