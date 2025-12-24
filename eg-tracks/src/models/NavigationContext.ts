@@ -312,6 +312,10 @@ class NavigationContext {
         parseFloat(startPosStr.replace(/[^0-9.]/g, ""))
       );
       const endPos = Math.round(parseFloat(endPosStr.replace(/[^0-9.]/g, "")));
+      const startPos = Math.round(
+        parseFloat(startPosStr.replace(/[^0-9.]/g, ""))
+      );
+      const endPos = Math.round(parseFloat(endPosStr.replace(/[^0-9.]/g, "")));
 
       // find features by chromosome name first, then by feature name
       let startFeature: any = this._featuresForChr[startChr]?.[0];

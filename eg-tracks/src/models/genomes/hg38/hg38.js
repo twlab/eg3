@@ -88,6 +88,7 @@ const defaultTracks = [
   //   name: "bigwig nochr",
   //   genome: "hg38",
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
   // }),
   // new TrackModel({
   //   type: "bigwig",
@@ -124,6 +125,11 @@ const defaultTracks = [
   //   type: "bigbed",
   //   name: "test bigbed",
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "band2",
+  //   url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
   // }),
   // new TrackModel({
   //   type: "bigbed",

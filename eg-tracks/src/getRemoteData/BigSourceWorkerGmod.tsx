@@ -116,7 +116,9 @@ class BigSourceWorkerGmod {
         chrom = this.useEnsemblStyle ? "M" : "chrM";
       }
 
-      return this.bw.getFeatures(chrom, locus.start, locus.end);
+      return this.bw.getFeatures(chrom, locus.start, locus.end, {
+        basesPerSpan: basesPerPixel,
+      });
     });
 
     const dataForEachLocus = await Promise.all(promises);

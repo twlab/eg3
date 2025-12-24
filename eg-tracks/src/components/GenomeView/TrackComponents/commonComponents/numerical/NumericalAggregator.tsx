@@ -33,9 +33,11 @@ export class NumericalAggregator {
   }
 
   xToValueMaker(data, viewRegion, width, options, viewWindow) {
+  xToValueMaker(data, viewRegion, width, options, viewWindow) {
     const withDefaultOptions = Object.assign({}, DEFAULT_OPTIONS, options);
     const { aggregateMethod, smooth, yScale, yMin } = withDefaultOptions;
 
+    let xToValue,
     let xToValue,
       xToValue2,
       hasReverse = false,
@@ -47,6 +49,10 @@ export class NumericalAggregator {
         this.aggregateFeatures(data, viewRegion, width, aggregateMethod);
 
       const smoothNumber = Number.parseInt(smooth) || 0;
+      xToValue =
+        smoothNumber === 0
+          ? xToValueBeforeSmooth
+          : Smooth(xToValueBeforeSmooth, smoothNumber);
       xToValue =
         smoothNumber === 0
           ? xToValueBeforeSmooth

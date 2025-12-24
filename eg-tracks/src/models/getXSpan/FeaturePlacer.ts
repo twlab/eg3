@@ -105,8 +105,48 @@ export interface PlaceFeaturesOptions {
   xToWindowMap?: { [x: number]: Feature[] }; // Output map for boxplot
 }
 
+export type PaddingFunc = (feature: Feature, xSpan: OpenInterval) => number;
+
+export enum PlacementMode {
+  NUMERICAL = "numerical", // Build aggregation arrays for numerical tracks
+  PLACEMENT = "placement", // Return PlacedFeature[]
+  ANNOTATION = "annotation", // Return PlacedFeatureGroup[] with adjacent features grouped and rows assigned
+  BOXPLOT = "boxplot", // Build windowed map for boxplot visualization
+}
+
+export interface PlaceFeaturesOptions {
+  features: Feature[] | any[];
+  viewRegion: DisplayedRegionModel;
+  width: number;
+  useCenter?: boolean;
+  mode?: PlacementMode; // Defaults to PLACEMENT
+  viewWindow?: { start: number; end: number };
+  // For ANNOTATION mode (combines adjacent + assigns rows)
+  padding?: number | PaddingFunc;
+  hiddenPixels?: number; // Minimum pixel width to display a feature
+  // For NUMERICAL mode
+  xToFeaturesForward?: Feature[][];
+  xToFeaturesReverse?: Feature[][];
+  aggregateFunc?: (features: Feature[]) => any;
+  xToAggregatedForward?: any[];
+  xToAggregatedReverse?: any[];
+  // For BOXPLOT mode
+  windowSize?: number; // Window size for binning features
+  xToWindowMap?: { [x: number]: Feature[] }; // Output map for boxplot
+}
+
 export class FeaturePlacer {
   /**
+   * Computes context and draw locations for a list of features.
+   * Accepts nested arrays (e.g., from combinedData with dataCache) and processes them without flattening.
+   *
+   * Three modes:
+   * 1. NUMERICAL: Builds aggregation arrays, returns empty array
+   * 2. PLACEMENT: Returns PlacedFeature[] for rendering
+   * 3. ANNOTATION: Returns PlacedFeatureGroup[] with adjacent features grouped and rows assigned
+   *
+   * @param {PlaceFeaturesOptions} options - configuration object
+   * @return {FeaturePlacementResult} draw info with placements and metadata
    * Computes context and draw locations for a list of features.
    * Accepts nested arrays (e.g., from combinedData with dataCache) and processes them without flattening.
    *

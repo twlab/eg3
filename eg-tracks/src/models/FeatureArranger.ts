@@ -8,6 +8,13 @@ import {
   PaddingFunc,
   PlaceFeaturesOptions,
 } from "./getXSpan/FeaturePlacer";
+import {
+  FeaturePlacer,
+  PlacedFeature,
+  PlacementMode,
+  PaddingFunc,
+  PlaceFeaturesOptions,
+} from "./getXSpan/FeaturePlacer";
 import OpenInterval from "./OpenInterval";
 import { SortItemsOptions } from "./SortItemsOptions";
 
@@ -15,6 +22,7 @@ export interface PlacedFeatureGroup {
   feature: Feature;
   xSpan: OpenInterval;
   placedFeatures: PlacedFeature[];
+  row: number;
   row: number;
 }
 

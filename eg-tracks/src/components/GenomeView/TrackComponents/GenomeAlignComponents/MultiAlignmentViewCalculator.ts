@@ -27,6 +27,7 @@ import {
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 import { niceBpCount } from "../../../../models/util";
 import { FeaturePlacementResult } from "../../../../models/FeatureArranger";
+import { FeaturePlacementResult } from "../../../../models/FeatureArranger";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;

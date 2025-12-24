@@ -175,6 +175,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         return {
           axisScale: scaleLinear()
             .domain([max, min])
+            .domain([max, min])
             .range([TOP_PADDING, height])
             .clamp(true),
           valueToY: scaleLinear()

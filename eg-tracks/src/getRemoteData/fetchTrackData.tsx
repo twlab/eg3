@@ -37,24 +37,14 @@ const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
 let cachedFetchInstance: { [key: string]: any } = {};
 export const trackFetchFunction: { [key: string]: any } = {
+  // Custom implementations
   geneannotation: async function refGeneFetch(regionData: any) {
-    let genomeName;
-    let apiConfigPrefix;
     const trackModel = regionData.trackModel;
-    if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
-      genomeName = trackModel["apiConfig"]["genome"];
-    } else {
-      genomeName = regionData.genomeName;
-    }
-
-    if (
-      trackModel["apiConfig"] &&
-      trackModel["apiConfig"]["format"] in apiConfigMap
-    ) {
-      apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`];
-    } else {
-      apiConfigPrefix = apiConfigMap.WashU;
-    }
+    const genomeName = trackModel.apiConfig?.genome || regionData.genomeName;
+    const apiConfigPrefix =
+      trackModel.apiConfig?.format && apiConfigMap[trackModel.apiConfig.format]
+        ? apiConfigMap[trackModel.apiConfig.format]
+        : apiConfigMap.WashU;
 
     try {
       const fetchPromises = regionData.nav.map(async (region: any) => {
@@ -90,17 +80,14 @@ export const trackFetchFunction: { [key: string]: any } = {
     }
   },
   snp: async function snpFetch(regionData: any) {
-    const SNP_REGION_API: { [key: string]: any } = {
+    const SNP_REGION_API: { [key: string]: string } = {
       hg19: "https://grch37.rest.ensembl.org/overlap/region/human",
       hg38: "https://rest.ensembl.org/overlap/region/human",
     };
 
-    const api =
-      regionData.genomeName in SNP_REGION_API
-        ? SNP_REGION_API[`${regionData.genomeName}`]
-        : null;
+    const api = SNP_REGION_API[regionData.genomeName];
 
-    if (!api) {
+    if (!api || regionData.end - regionData.start > 30000) {
       return [];
     }
 

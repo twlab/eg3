@@ -132,6 +132,19 @@ export class FeatureAggregator {
    * @param {object} viewWindow - optional window defining center region {start, end} for deduplication
    * @return {[any[], any[]]} tuple of [forwardAggregated, reverseAggregated]
    */
+
+  /**
+   * Aggregates features in a single pass, separating forward and reverse values based on feature.value.
+   * Also handles deduplication based on locus coordinates in one loop.
+   *
+   * @param {Feature[]} features - features to aggregate (may contain duplicates)
+   * @param {DisplayedRegionModel} viewRegion - used to compute drawing coordinates
+   * @param {number} width - width of the visualization
+   * @param {Function} aggregateFunc - aggregation function to apply to features at each x position
+   * @param {boolean} useCenter - whether to use center positioning
+   * @param {object} viewWindow - optional window defining center region {start, end} for deduplication
+   * @return {[any[], any[]]} tuple of [forwardAggregated, reverseAggregated]
+   */
   makeXMap(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
@@ -174,7 +187,6 @@ export class FeatureAggregator {
 
     return { xToFeaturesForward, xToFeaturesReverse };
   }
-
   makeXWindowMap(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
@@ -189,9 +201,16 @@ export class FeatureAggregator {
     }
     const placer = new FeaturePlacer();
     placer.placeFeatures({
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
+      useCenter: true, // BOXPLOT always uses center
+      mode: PlacementMode.BOXPLOT,
+      windowSize,
+      xToWindowMap: map,
+    });
+
       useCenter: true, // BOXPLOT always uses center
       mode: PlacementMode.BOXPLOT,
       windowSize,

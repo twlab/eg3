@@ -56,6 +56,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     instance: [],
     worker: [],
   });
+  }>({
+    instance: [],
+    worker: [],
+  });
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
     hasOnMessage: boolean;
@@ -233,6 +237,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           />
         ) : (
           ""
+        ) : (
+          ""
         );
       } else {
         return renderG3dTrackComponents(node);
@@ -292,6 +298,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         });
 
         // Clear the arrays and references
+
+        infiniteScrollWorkers.current = {
+          instance: [],
+          worker: [],
+        };
 
         infiniteScrollWorkers.current = {
           instance: [],
