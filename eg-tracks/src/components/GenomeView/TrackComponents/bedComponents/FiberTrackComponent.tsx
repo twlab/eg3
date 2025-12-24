@@ -4,12 +4,18 @@ import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
 
-
 import { Fiber } from "../../../../models/Feature";
-import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
+import {
+  FeaturePlacementResult,
+  PlacedFeatureGroup,
+} from "../../../../models/FeatureArranger";
 import OpenInterval from "../../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
+import {
+  FeaturePlacer,
+  PlacementMode,
+  PlacedFeature,
+} from "../../../../models/getXSpan/FeaturePlacer";
 import TrackLegend from "../commonComponents/TrackLegend";
 import DesignRenderer, {
   RenderTypes,
@@ -31,6 +37,7 @@ interface FiberTrackProps {
     displayMode: FiberDisplayModes;
     hideMinimalItems: boolean;
     pixelsPadding?: number;
+    packageVersion?: boolean;
   };
   forceSvg?: boolean;
   visRegion: DisplayedRegionModel;
@@ -126,9 +133,14 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
       xToFibers[x] = { on: 0, off: 0, count: 0 };
     }
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures(data, viewRegion, width);
-    for (const placedFeature of placement) {
-      const { feature, xSpan, visiblePart } = placedFeature;
+    const result: FeaturePlacementResult = placer.placeFeatures({
+      features: data,
+      viewRegion,
+      width,
+      mode: PlacementMode.PLACEMENT,
+    }) as FeaturePlacementResult;
+    for (const placedFeature of result.placements) {
+      const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
       const { relativeStart, relativeEnd } = visiblePart;
       const segmentWidth = relativeEnd - relativeStart;
       const startX = Math.max(0, Math.floor(xSpan.start));
@@ -199,9 +211,17 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
 
   visualizer = () => {
     const { pctToY, countToY, pcts, counts } = this.scales;
-    const { height, color, color2, displayMode } = this.props.options;
-    const { width, trackModel, forceSvg, getNumLegend, options, visRegion } =
-      this.props;
+    const { height, color, color2, displayMode, packageVersion } =
+      this.props.options;
+    const {
+      width,
+      trackModel,
+      forceSvg,
+      getNumLegend,
+      options,
+      visRegion,
+      viewWindow,
+    } = this.props;
     const colorScale = scaleLinear()
       .domain([0, 1])
       .range([color2 as any, color as any])
@@ -253,60 +273,88 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
     }
 
     const legend = (
-      <div>
+      <div
+        style={{
+          display: "flex",
+        }}
+      >
         <TrackLegend
           trackModel={trackModel}
-          height={options.height}
-          axisScale={
-            options.displayMode === FiberDisplayModes.AUTO
-              ? this.scales.pctToY
-              : this.scales.countToY
-          }
+          height={height}
+          forceSvg={forceSvg}
         />
       </div>
     );
     if (getNumLegend) {
       getNumLegend(legend);
     }
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
+    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
     return (
       <React.Fragment>
-        <div style={{ display: "flex" }}>
+        {!forceSvg ? (
           <div
             style={{
               display: "flex",
               flexDirection: "row",
               position: "absolute",
               zIndex: 3,
+              ...hoverStyle,
             }}
           >
-            {!forceSvg ? (
-              <HoverToolTip
-                data={this.xMap}
-                scale={this.scales}
-                windowWidth={width}
-                trackType={"modbed"}
-                trackModel={trackModel}
-                height={height}
-                viewRegion={visRegion}
-                unit={""}
-                hasReverse={true}
-                options={options}
-              />
-            ) : (
-              ""
-            )}
+            <HoverToolTip
+              data={this.xMap}
+              scale={this.scales}
+              windowWidth={width}
+              trackType={"modbed"}
+              trackModel={trackModel}
+              height={height}
+              viewRegion={visRegion}
+              unit={""}
+              hasReverse={true}
+              options={options}
+            />
           </div>
-          {forceSvg ? legend : ""}
-
-          <DesignRenderer
-            type={this.props.forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-            width={this.props.width}
-            height={height}
+        ) : (
+          ""
+        )}
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {forceSvg || options.packageVersion ? legend : ""}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              ...curEleStyle,
+            }}
           >
-            {bars}
-            {lines}
-          </DesignRenderer>
+            <>
+              <DesignRenderer
+                type={
+                  this.props.forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS
+                }
+                width={this.props.width}
+                height={height}
+                forceSvg={forceSvg}
+                viewWindow={viewWindow}
+              >
+                {bars}
+                {lines}
+              </DesignRenderer>
+            </>
+          </div>
         </div>
       </React.Fragment>
     );

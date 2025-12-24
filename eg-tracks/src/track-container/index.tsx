@@ -155,18 +155,8 @@ export function TrackContainerRepresentable({
   }, [viewRegion, genomeConfig, selectedRegionSet]);
 
   const convertedUserViewRegion = useMemo(() => {
-    try {
-      let newViewRegion;
-      if (userViewRegion) {
-        newViewRegion = genomeConfig.navContext.parse(
-          userViewRegion as GenomeCoordinate
-        );
-      } else if (overrideViewRegion) {
-        newViewRegion = genomeConfig.navContext.parse(
-          overrideViewRegion as GenomeCoordinate
-        );
-      }
-
+    let newViewRegion;
+    if (userViewRegion) {
       if (selectedRegionSet) {
         let setNavContext;
         if (typeof selectedRegionSet === "object") {
@@ -176,19 +166,25 @@ export function TrackContainerRepresentable({
           setNavContext = selectedRegionSet.makeNavContext();
         }
 
-        return new DisplayedRegionModel(setNavContext, ...newViewRegion);
+        setNavContext.parse(userViewRegion as GenomeCoordinate);
+        return new DisplayedRegionModel(setNavContext);
       } else {
-        if (newViewRegion) {
-          return new DisplayedRegionModel(
-            genomeConfig.navContext,
-            ...newViewRegion
-          );
-        }
+        newViewRegion = genomeConfig.navContext.parse(
+          userViewRegion as GenomeCoordinate
+        );
       }
-    } catch (e) {
+    } else if (overrideViewRegion) {
+      newViewRegion = genomeConfig.navContext.parse(
+        overrideViewRegion as GenomeCoordinate
+      );
+    } else {
+      newViewRegion = genomeConfig.defaultRegion;
+    }
+
+    if (newViewRegion) {
       return new DisplayedRegionModel(
         genomeConfig.navContext,
-        ...genomeConfig.defaultRegion
+        ...newViewRegion
       );
     }
   }, [userViewRegion, genomeConfig, overrideViewRegion, selectedRegionSet]);

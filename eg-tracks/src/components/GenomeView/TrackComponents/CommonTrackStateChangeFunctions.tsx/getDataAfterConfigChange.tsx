@@ -1,5 +1,7 @@
-
-import { groupTracksArrMatPlot, trackUsingExpandedLoci } from "./cacheFetchedData";
+import {
+  groupTracksArrMatPlot,
+  trackUsingExpandedLoci,
+} from "./cacheFetchedData";
 
 interface GetConfigChangeDataParams {
   fetchedDataCache: any;

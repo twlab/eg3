@@ -60,7 +60,7 @@ export class PixiHeatmap extends PureComponent<
     useDynamicColors: false,
   };
 
-  private myRef: React.RefObject<HTMLDivElement>;
+  private myRef: React.RefObject<HTMLDivElement | null>;
   private container: HTMLDivElement | null = null;
   private app: PIXI.Application | undefined;
   private subcontainer: PIXI.Container;
@@ -84,7 +84,7 @@ export class PixiHeatmap extends PureComponent<
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
 
-    const bgColor = colorString2number("var(--bg-color)",);
+    const bgColor = colorString2number("var(--bg-color)");
     this.app = new PIXI.Application();
     await this.app.init({
       width,
@@ -109,12 +109,19 @@ export class PixiHeatmap extends PureComponent<
   }
 
   componentWillUnmount() {
-    this.app!.ticker.remove(this.tick);
-    window.removeEventListener("resize", this.onWindowResize);
-    this.app!.stage.off("pointerdown", this.onPointerDown);
+    if (this.app) {
+      this.app.ticker?.remove(this.tick);
+      this.app.stage?.off("pointerdown", this.onPointerDown);
+      window.removeEventListener("resize", this.onWindowResize);
+    }
   }
 
   componentDidUpdate(prevProps: PixiHeatmapProps, prevState: PixiHeatmapState) {
+    // Guard clause: don't process updates if app isn't initialized
+    if (!this.app) {
+      return;
+    }
+
     if (
       prevProps.placedInteractionsArray !== this.props.placedInteractionsArray
     ) {
@@ -140,25 +147,31 @@ export class PixiHeatmap extends PureComponent<
     }
 
     if (prevProps.backgroundColor !== this.props.backgroundColor) {
-      this.app!.renderer.background = colorString2number(
-        this.props.backgroundColor || "0x000000"
-      );
+      if (this.app.renderer) {
+        this.app.renderer.background = colorString2number(
+          this.props.backgroundColor || "0x000000"
+        );
+      }
     }
 
     if (
       prevProps.height !== this.props.height ||
       prevProps.width !== this.props.width
     ) {
-      this.app!.renderer.resize(this.props.width, this.props.height);
+      if (this.app.renderer) {
+        this.app.renderer.resize(this.props.width, this.props.height);
+      }
     }
 
     if (prevProps.playing !== this.props.playing) {
-      if (this.props.playing) {
-        this.setState({ isPlaying: true });
-        this.app!.ticker.start();
-      } else {
-        this.setState({ isPlaying: false });
-        this.app!.ticker.stop();
+      if (this.app.ticker) {
+        if (this.props.playing) {
+          this.setState({ isPlaying: true });
+          this.app.ticker.start();
+        } else {
+          this.setState({ isPlaying: false });
+          this.app.ticker.stop();
+        }
       }
     }
 
@@ -188,14 +201,16 @@ export class PixiHeatmap extends PureComponent<
   };
 
   onPointerDown = async (event: PIXI.FederatedPointerEvent) => {
-    if (event.button === 1) {
+    if (event.button === 1 && this.app?.ticker) {
       this.setState(
         (prevState) => ({ isPlaying: !prevState.isPlaying }),
         () => {
-          if (this.state.isPlaying) {
-            this.app!.ticker.start();
-          } else {
-            this.app!.ticker.stop();
+          if (this.app?.ticker) {
+            if (this.state.isPlaying) {
+              this.app.ticker.start();
+            } else {
+              this.app.ticker.stop();
+            }
           }
         }
       );
@@ -204,7 +219,7 @@ export class PixiHeatmap extends PureComponent<
 
   onWindowResize = () => {
     const { height, width } = this.props;
-    this.app!.renderer.resize(width, height);
+    this.app?.renderer?.resize(width, height);
   };
 
   tick = () => {
@@ -216,6 +231,10 @@ export class PixiHeatmap extends PureComponent<
   };
 
   initializeSubs = () => {
+    if (!this.subcontainer) {
+      return; // Subcontainer not initialized yet
+    }
+
     this.subs = [];
     this.steps = this.getMaxSteps();
     for (let i = 0; i < this.steps; i++) {
@@ -231,6 +250,10 @@ export class PixiHeatmap extends PureComponent<
   };
 
   drawHeatmap = () => {
+    if (!this.app || !this.app.renderer || !this.subcontainer) {
+      return; // App not initialized yet
+    }
+
     const {
       opacityScale,
       color,
@@ -247,6 +270,10 @@ export class PixiHeatmap extends PureComponent<
       this.resetSubs();
     } else {
       this.initializeSubs();
+      // Check again after initialization
+      if (!this.subs.length) {
+        return; // Failed to initialize subs
+      }
     }
 
     const style = new PIXI.TextStyle({
@@ -260,7 +287,7 @@ export class PixiHeatmap extends PureComponent<
     g.drawRect(0, 0, 1, 1);
     g.endFill();
 
-    const t = this.app!.renderer.generateTexture(g);
+    const t = this.app.renderer.generateTexture(g);
     let colorEach;
 
     placedInteractionsArray.forEach((placedInteractions: any, index) => {
@@ -346,34 +373,30 @@ export class PixiHeatmap extends PureComponent<
    * @return {JSX.Element} tooltip to render
    */
 
-
-
-
   render() {
     const { height, width } = this.props;
     const style = { width: `${width}px`, height: `${height}px` };
 
-    return <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-
-        <HoverToolTip
-          data={this.hmData}
-          windowWidth={width}
-          viewWindow={this.props.viewWindow}
-          trackType={"dynamichic"}
-          height={height}
-
-        />
-
-      </div>
-      <div ref={this.myRef}></div>;
-    </React.Fragment>
+    return (
+      <React.Fragment>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+          }}
+        >
+          <HoverToolTip
+            data={this.hmData}
+            windowWidth={width}
+            viewWindow={this.props.viewWindow}
+            trackType={"dynamichic"}
+            height={height}
+          />
+        </div>
+        <div ref={this.myRef}></div>;
+      </React.Fragment>
+    );
   }
 }

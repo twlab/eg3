@@ -84,11 +84,11 @@ const defaultTracks = [
   //   name: "example github g3d",
   //   showOnHubLoad: true,
   // }),
-  // new TrackModel({
-  //   type: "bam",
-  //   name: "Test bam",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
-  // }),
+  new TrackModel({
+    type: "bam",
+    name: "Test bam",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+  }),
   // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",

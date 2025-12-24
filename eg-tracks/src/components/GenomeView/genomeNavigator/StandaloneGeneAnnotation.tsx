@@ -14,7 +14,7 @@ const HEIGHT = 9;
 /**
  * A SVG containing a happy solo GeneAnnotation.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export function StandaloneGeneAnnotation(
   props: StandaloneGeneAnnotationProps

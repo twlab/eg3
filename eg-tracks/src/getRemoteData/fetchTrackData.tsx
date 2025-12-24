@@ -1,16 +1,41 @@
-import _ from "lodash";
 import TabixSource from "./tabixSource";
 import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
-import RepeatSource from "./RepeatSource";
-
-import JasparSource from "./JasparSource";
 import VcfSource from "./VcfSource";
-import BigSourceWorker from "./BigSourceWorker";
-import Rmskv2Source from "./Rmskv2Source";
+import { HicSource } from "./hicSource";
+import BamSource from "./BamSource";
+import Feature from "../models/Feature";
+import ChromosomeInterval from "../models/ChromosomeInterval";
+import NavigationContext from "../models/NavigationContext";
+import DisplayedRegionModel from "../models/DisplayedRegionModel";
+function objToInstanceAlign(alignment: { [key: string]: any }) {
+  let visRegionFeatures: Feature[] = [];
 
-let cachedFetchInstance: { [key: string]: any } = {};
+  for (let feature of alignment._navContext._features) {
+    let newChr = new ChromosomeInterval(
+      feature.locus.chr,
+      feature.locus.start,
+      feature.locus.end
+    );
+    visRegionFeatures.push(new Feature(feature.name, newChr));
+  }
+
+  let visRegionNavContext = new NavigationContext(
+    alignment._navContext._name,
+    visRegionFeatures
+  );
+
+  let visRegion = new DisplayedRegionModel(
+    visRegionNavContext,
+    alignment._startBase,
+    alignment._endBase
+  );
+  return visRegion;
+}
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
+// Map track types to their data source types
+
+let cachedFetchInstance: { [key: string]: any } = {};
 export const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
     let genomeName;
@@ -31,17 +56,38 @@ export const trackFetchFunction: { [key: string]: any } = {
       apiConfigPrefix = apiConfigMap.WashU;
     }
 
-    let url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    try {
+      const fetchPromises = regionData.nav.map(async (region: any) => {
+        const url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${region.chr}&start=${region.start}&end=${region.end}`;
 
-    // if (regionData.genomeName === "canFam6") {
-    //   url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
-    // }
+        try {
+          const genRefResponse = await fetch(url, {
+            method: "GET",
+            mode: "cors",
+            cache: "default",
+            credentials: "omit",
+          });
 
-    const genRefResponse = await fetch(url, {
-      method: "GET",
-    });
+          if (!genRefResponse.ok) {
+            throw new Error(`HTTP error! status: ${genRefResponse.status}`);
+          }
 
-    return genRefResponse.json();
+          return genRefResponse.json();
+        } catch (error) {
+          console.error(
+            `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
+            error
+          );
+          return [];
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      return results.flat();
+    } catch (error) {
+      console.error("Error in refGeneFetch:", error);
+      throw error;
+    }
   },
   snp: async function snpFetch(regionData: any) {
     const SNP_REGION_API: { [key: string]: any } = {
@@ -62,23 +108,42 @@ export const trackFetchFunction: { [key: string]: any } = {
       "Content-Type": "application/json",
     };
 
-    if (regionData.end - regionData.start <= 30000) {
-      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${regionData.end + "?content-type=application%2Fjson&feature=variation"
-        }`;
+    try {
+      const fetchPromises = regionData.nav.map(async (region: any) => {
+        if (region.end - region.start > 30000) {
+          return [];
+        }
 
-      return fetch(url, { headers })
-        .then((response) => {
+        const url = `${api}/${region.chr.substr(3)}:${region.start}-${
+          region.end
+        }?content-type=application%2Fjson&feature=variation`;
+
+        try {
+          const response = await fetch(url, {
+            headers,
+            mode: "cors",
+            cache: "default",
+          });
+
           if (!response.ok) {
-            throw new Error("Network response was not ok");
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
+
           return response.json();
-        })
-        .catch((error) => {
-          console.error("There was a problem with the fetch operation:", error);
-          return { data: [] };
-        });
-    } else {
-      return [];
+        } catch (error) {
+          console.error(
+            `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
+            error
+          );
+          return [];
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      return results;
+    } catch (error) {
+      console.error("Error in snpFetch:", error);
+      throw error;
     }
   },
   bed: async function bedFetch(regionData: any) {
@@ -139,7 +204,7 @@ export const trackFetchFunction: { [key: string]: any } = {
   },
 
   rmskv2: async function rmskv2Fetch(regionData: any) {
-    return getRemoteData(regionData, "rmskv2");
+    return getRemoteData(regionData, "repeat");
   },
   biginteract: async function biginteractFetch(regionData: any) {
     return getRemoteData(regionData, "big");
@@ -154,59 +219,124 @@ export const trackFetchFunction: { [key: string]: any } = {
   vcf: function vcfFetch(regionData: any) {
     return getRemoteData(regionData, "vcf");
   },
+
+  hic: function hicFetch(regionData: any) {
+    return getRemoteData(regionData, "hic");
+  },
+
+  bam: function bamFetch(regionData: any) {
+    return getRemoteData(regionData, "bam");
+  },
 };
 
-function getRemoteData(regionData: any, trackType: string) {
-  let indexUrl = null;
-  if (regionData.trackModel.indexUrl) {
-    indexUrl = regionData.trackModel.indexUrl;
-  }
-  if (regionData.trackModel.id in cachedFetchInstance) {
-  } else {
+async function getRemoteData(regionData: any, trackType: string) {
+  const indexUrl = regionData.trackModel.indexUrl || null;
+  let fetchInstance: any = null;
+  if (!cachedFetchInstance[regionData.trackModel.url]) {
     if (trackType === "bedOrTabix") {
-      cachedFetchInstance[`${regionData.trackModel.id}`] = new TabixSource(
+      cachedFetchInstance[regionData.trackModel.url] = new TabixSource(
         regionData.trackModel.url,
         indexUrl
       );
     } else if (trackType === "vcf") {
-      cachedFetchInstance[`${regionData.trackModel.id}`] = new VcfSource(
+      cachedFetchInstance[regionData.trackModel.url] = new VcfSource(
         regionData.trackModel.url,
         indexUrl
       );
     } else if (trackType === "bigbed") {
-      cachedFetchInstance[`${regionData.trackModel.id}`] = new BigSourceWorker(
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
     } else if (trackType === "big") {
-      cachedFetchInstance[`${regionData.trackModel.id}`] =
-        new BigSourceWorkerGmod(regionData.trackModel.url);
-    } else if (trackType === "repeat") {
-      cachedFetchInstance[`${regionData.trackModel.id}`] = new RepeatSource(
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
-    }
-    else if (trackType === "rmskv2") {
-      cachedFetchInstance[`${regionData.trackModel.id}`] = new Rmskv2Source(
+    } else if (trackType === "repeat") {
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
     } else if (trackType === "jaspar") {
-      cachedFetchInstance[`${regionData.trackModel.id}`] = new JasparSource(
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
+    } else if (trackType === "hic") {
+      cachedFetchInstance[regionData.trackModel.url] = new HicSource(
+        regionData.trackModel.url
+      );
+    } else if (trackType === "bam") {
+      cachedFetchInstance[regionData.trackModel.url] = new BamSource(
+        regionData.trackModel.url
+      );
+    } else {
+      throw new Error(`Unsupported track type: ${trackType}`);
     }
   }
-  let fetchInstance = cachedFetchInstance[`${regionData.trackModel.id}`];
+  fetchInstance = cachedFetchInstance[regionData.trackModel.url];
+  try {
+    if (fetchInstance) {
+      const needsBasesPerPixel =
+        ((trackType === "repeat" || trackType === "rmskv2") &&
+          regionData.basesPerPixel <= 1000) ||
+        (trackType === "jaspar" && regionData.basesPerPixel <= 2);
 
-  if (trackType in { repeat: "", jaspar: "", bigbed: "", rmskv2: "" }) {
+      if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
+        return [];
+      }
+      if (
+        (trackType === "repeat" || trackType === "rmskv2") &&
+        regionData.basesPerPixel > 1000
+      ) {
+        return [];
+      }
+      if (needsBasesPerPixel || trackType === "bigbed") {
+        return fetchInstance
+          .getData(
+            regionData.nav,
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
+          .then((data: any) => {
+            cachedFetchInstance[regionData.trackModel.url] = null;
 
-    return fetchInstance.getData(
-      regionData.nav,
-      regionData.basesPerPixel,
-      regionData.trackModel.options
-    );
+            return data;
+          })
+          .catch((error) => {
+            fetchInstance = null;
+            throw error;
+          });
+      } else if (trackType === "hic") {
+        return fetchInstance
+          .getData(
+            objToInstanceAlign(regionData.visRegion),
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
+          .then((data: any) => {
+            cachedFetchInstance[regionData.trackModel.url] = null;
+            return data;
+          })
+          .catch((error) => {
+            fetchInstance = null;
+            throw error;
+          });
+      } else {
+        return fetchInstance
+          .getData(regionData.nav, regionData.trackModel.options)
+          .then((data: any) => {
+            cachedFetchInstance[regionData.trackModel.url] = null;
+
+            return data;
+          })
+          .catch((error) => {
+            fetchInstance = null;
+            throw error;
+          });
+      }
+    }
+  } catch (error) {
+    fetchInstance = null;
+    throw error;
   }
-
-  return fetchInstance.getData(regionData.nav, regionData.trackModel.options);
 }
 
 export default trackFetchFunction;

@@ -7,7 +7,7 @@ import "./TrackContextMenu.css";
 /**
  * A menu option that configures some integer-based property.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 interface NumberConfigProps {
   optionsObjects: any;

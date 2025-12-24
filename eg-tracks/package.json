@@ -47,13 +47,11 @@
     "@types/lodash": "^4.17.6",
     "@types/pako": "^2.0.3",
     "3dmol": "^2.4.0",
-    "and": "^0.0.3",
     "array-smooth": "^1.0.0",
     "axios": "^1.10.0",
     "color-rgba": "^3.0.0",
     "d3": "^7.9.0",
     "flexlayout-react": "^0.3.11",
-    "framer-motion": "^12.23.24",
     "generic-filehandle": "^3.1.2",
     "generic-filehandle2": "^2.0.14",
     "grommet": "^2.37.0",
@@ -75,8 +73,8 @@
     "react-compound-slider": "^3.4.0",
     "react-modal": "^3.16.1",
     "react-popper": "^2.3.0",
-    "react-table": "^7.8.0",
     "vite-plugin-dts": "^2.1.0",
+    "framer-motion": "^12.12.1",
     "vite-plugin-node-polyfills": "^0.24.0"
   },
   "devDependencies": {

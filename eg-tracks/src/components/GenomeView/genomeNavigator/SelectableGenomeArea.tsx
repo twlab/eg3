@@ -31,7 +31,7 @@ interface SelectableGenomeAreaProps {
 /**
  * A SelectableArea, but also displays the selected length in base pairs, and puts a limit on the selected size.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAreaProps> {
   constructor(props: SelectableGenomeAreaProps) {
@@ -49,6 +49,7 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
       selectableRegion,
       dragLimits.getLength()
     );
+
     return new OpenInterval(xToBase(xSpan.start), xToBase(xSpan.end));
 
     function xToBase(x: number) {
@@ -80,6 +81,7 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
 
   handleAreaSelect(xSpan: OpenInterval) {
     const baseSpan = this.getSelectedBases(xSpan);
+
     if (this.getIsBaseSpanValid(baseSpan)) {
       this.props.onRegionSelected!(
         baseSpan.start,

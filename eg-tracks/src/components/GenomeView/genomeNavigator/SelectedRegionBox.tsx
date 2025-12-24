@@ -28,7 +28,7 @@ const TEXT_STYLE = {
 /**
  * A box that shows the currently selected region, or a GOTO button if the currently selected region is out of view.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 
 interface SelectedRegionBoxProps {

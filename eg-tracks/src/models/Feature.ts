@@ -21,7 +21,7 @@ export const REVERSE_STRAND_CHAR = "-";
  * A feature, or annotation, in the genome.
  *
  * @implements {Serializable}
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class Feature {
   name: string; // - name of the feature
@@ -42,7 +42,7 @@ export class Feature {
     name: string | undefined,
     public locus: ChromosomeInterval,
     public strand: Strand = "",
-    value?: any = null
+    value: any = null
   ) {
     this.name = name === undefined ? locus.toString() : name; // eslint-disable-line eqeqeq
     this.locus = locus;
@@ -130,10 +130,10 @@ export class Feature {
 /**
  * Everything a Feature is, plus a `value` prop.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class NumericalFeature extends Feature {
-  value: number | undefined;
+  declare value: number | undefined;
 
   /**
    * Sets value and returns this.

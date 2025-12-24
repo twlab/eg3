@@ -96,6 +96,7 @@ export interface ITrackModel {
   querygenome?: string;
   id: number | string;
   isSelected: boolean;
+  tracks?: ITrackModel[];
 }
 
 export interface IHighlightInterval {

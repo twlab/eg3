@@ -55,7 +55,7 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
 /**
  * Track specialized in showing numerical data.
  *
- * @author Silas Hsu, Chanrung Seng
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const {
@@ -75,11 +75,16 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  let xvalues = xvaluesData
-    ? xvaluesData
-    : aggregator.xToValueMaker(data, viewRegion, width, options);
+  let xvalues = aggregator.xToValueMaker(
+    data,
+    viewRegion,
+    width,
+    options,
+    viewWindow
+  );
 
-  let [xToValue, xToValue2, hasReverse] = xvalues;
+  let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
+
   const computeScales = useMemo(() => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
       const { yScale, yMin, yMax } = options;
@@ -127,17 +132,15 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       }
 
       const zeroLine =
-        min < 0 && xToValue && xToValue.length > 0
+        min < 0 && hasForward
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : xToValue && xToValue.length > 0
+          : hasForward
           ? height
           : 0;
-      if (
-        (!xToValue || xToValue.length === 0) &&
-        (!xToValue2 || xToValue2.length === 0)
-      ) {
+      if (!hasForward && hasReverse) {
         max = 0;
       }
+
       if (
         xValues2.length &&
         (yScale === ScaleChoices.AUTO ||
@@ -171,7 +174,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       } else {
         return {
           axisScale: scaleLinear()
-            .domain([0, min])
+            .domain([max, min])
             .range([TOP_PADDING, height])
             .clamp(true),
           valueToY: scaleLinear()
@@ -217,14 +220,16 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
   const legend = (
-    <TrackLegend
-      trackModel={trackModel}
-      height={height}
-      axisScale={isDrawingBars ? scales.axisScale : undefined}
-      axisLegend={unit}
-      label={options.label}
-      forceSvg={forceSvg}
-    />
+    <div>
+      <TrackLegend
+        trackModel={trackModel}
+        height={height}
+        axisScale={scales.axisScale}
+        axisLegend={unit}
+        label={options.label}
+        forceSvg={forceSvg}
+      />
+    </div>
   );
 
   if (getNumLegend) {

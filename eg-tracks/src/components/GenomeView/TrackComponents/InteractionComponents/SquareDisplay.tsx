@@ -19,7 +19,7 @@ interface SquareDisplayProps {
   color2?: string;
   forceSvg?: boolean;
   bothAnchorsInView?: boolean;
-
+  legend?: any;
   options: any;
 }
 

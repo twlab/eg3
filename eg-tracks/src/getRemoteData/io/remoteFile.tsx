@@ -1,5 +1,3 @@
-import fetch from "isomorphic-fetch";
-
 class RemoteFile {
   config: any;
   url: any;
@@ -44,8 +42,8 @@ class RemoteFile {
     const status = response.status;
 
     if (status >= 400) {
-      let err = Error(response.statusText);
-      err = status;
+      const err: any = Error(response.statusText);
+      err.status = status;
       throw err;
     } else {
       return response.arrayBuffer();

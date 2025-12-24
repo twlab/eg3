@@ -32,7 +32,7 @@ interface CategoricalAnnotationProps {
 /**
  * Visualizer for Feature objects.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 class CategoricalAnnotation extends React.Component<CategoricalAnnotationProps> {
   static TEXT_HEIGHT = TEXT_HEIGHT;

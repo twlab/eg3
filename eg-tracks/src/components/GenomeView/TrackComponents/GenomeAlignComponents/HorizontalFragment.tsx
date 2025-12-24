@@ -59,7 +59,21 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
 
     let lines;
     if (isNaN(xSpanIndex)) {
-      lines = <React.Fragment>{null}</React.Fragment>;
+      lines = (
+        <div
+          style={{
+            padding: "8px 12px",
+            fontSize: "16",
+            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100%",
+          }}
+        >
+          No data
+        </div>
+      );
     } else {
       const targetXSpan = targetXSpanList[xSpanIndex];
       const queryXSpan = queryXSpanList[xSpanIndex];
@@ -113,7 +127,15 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
     }
 
     return (
-      <div style={style} {...otherProps}>
+      <div
+        style={{
+          position: "relative",
+          width: 225,
+          height,
+          overflow: "visible",
+        }}
+        {...otherProps}
+      >
         {children}
         {lines}
       </div>

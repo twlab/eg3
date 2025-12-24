@@ -7,6 +7,9 @@ import NavigationContext from "../NavigationContext";
 import { FeatureSegment } from "../FeatureSegment";
 import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
 import ChromosomeInterval from "../ChromosomeInterval";
+import { FeaturePlacementResult, PlacedFeatureGroup } from "../FeatureArranger";
+import _ from "lodash";
+import { off } from "process";
 
 /**
  * Draw information for a Feature
@@ -72,57 +75,199 @@ export class PlacedInteraction {
   }
 }
 
+export type PaddingFunc = (feature: Feature, xSpan: OpenInterval) => number;
+
+export enum PlacementMode {
+  NUMERICAL = "numerical", // Build aggregation arrays for numerical tracks
+  PLACEMENT = "placement", // Return PlacedFeature[]
+  ANNOTATION = "annotation", // Return PlacedFeatureGroup[] with adjacent features grouped and rows assigned
+  BOXPLOT = "boxplot", // Build windowed map for boxplot visualization
+}
+
+export interface PlaceFeaturesOptions {
+  features: Feature[] | any[];
+  viewRegion: DisplayedRegionModel;
+  width: number;
+  useCenter?: boolean;
+  mode?: PlacementMode; // Defaults to PLACEMENT
+  viewWindow?: { start: number; end: number };
+  // For ANNOTATION mode (combines adjacent + assigns rows)
+  padding?: number | PaddingFunc;
+  hiddenPixels?: number; // Minimum pixel width to display a feature
+  // For NUMERICAL mode
+  xToFeaturesForward?: Feature[][];
+  xToFeaturesReverse?: Feature[][];
+  aggregateFunc?: (features: Feature[]) => any;
+  xToAggregatedForward?: any[];
+  xToAggregatedReverse?: any[];
+  // For BOXPLOT mode
+  windowSize?: number; // Window size for binning features
+  xToWindowMap?: { [x: number]: Feature[] }; // Output map for boxplot
+}
+
 export class FeaturePlacer {
   /**
-   * Computes context and draw locations for a list of features.  There may be a different number of placed features
-   * than input features, as a feature might map to several different nav context coordinates, or a feature might
-   * not map at all.
+   * Computes context and draw locations for a list of features.
+   * Accepts nested arrays (e.g., from combinedData with dataCache) and processes them without flattening.
    *
-   * @param {Feature[]} features - features for which to compute draw locations
-   * @param {DisplayedRegionModel} viewRegion - region in which to draw
-   * @param {number} width - width of visualization
-   * @return {PlacedFeature[]} draw info for the features
+   * Three modes:
+   * 1. NUMERICAL: Builds aggregation arrays, returns empty array
+   * 2. PLACEMENT: Returns PlacedFeature[] for rendering
+   * 3. ANNOTATION: Returns PlacedFeatureGroup[] with adjacent features grouped and rows assigned
+   *
+   * @param {PlaceFeaturesOptions} options - configuration object
+   * @return {FeaturePlacementResult} draw info with placements and metadata
    */
   placeFeatures(
-    features: Feature[],
-    viewRegion: DisplayedRegionModel,
-    width: number,
-    useCenter: boolean = false
-  ): PlacedFeature[] {
+    options: PlaceFeaturesOptions
+  ): FeaturePlacementResult | PlacedFeature {
+    const {
+      features,
+      viewRegion,
+      width,
+      useCenter = false,
+      mode = PlacementMode.PLACEMENT,
+
+      hiddenPixels = 0.5,
+    } = options;
+
+    const isNumerical = mode === PlacementMode.NUMERICAL;
+    const isAnnotation = mode === PlacementMode.ANNOTATION;
+    const isBoxplot = mode === PlacementMode.BOXPLOT;
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const viewRegionBounds = viewRegion.getContextCoordinates();
     const navContext = viewRegion.getNavigationContext();
 
     const placements: Array<any> = [];
-    for (const feature of features) {
-      for (let contextLocation of feature.computeNavContextCoordinates(
-        navContext
-      )) {
-        contextLocation = contextLocation.getOverlap(viewRegionBounds)!; // Clamp the location to view region
-        if (contextLocation) {
-          const xSpan = useCenter
-            ? drawModel.baseSpanToXCenter(contextLocation)
-            : drawModel.baseSpanToXSpan(contextLocation);
-          const { visiblePart, isReverse } = this._locatePlacement(
-            feature,
-            navContext,
-            contextLocation
-          );
+    const placementsForward: Array<any> = [];
+    const placementsReverse: Array<any> = [];
+    // for Annotation, gene can be too small so we dont draw and increment numHidden
+    let numHidden = 0;
 
-          placements.push({
-            feature,
-            visiblePart,
-            contextLocation,
-            xSpan,
-            isReverse,
-          });
+    // used to store genome that we have already seen
+    const seenLoci = new Set<string>();
+
+    // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
+    for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
+      const item = features[regionIndex];
+
+      // check:  array, has dataCache property, or is a single feature
+      const featureArray = Array.isArray(item)
+        ? item
+        : item && item.dataCache
+        ? item.dataCache
+        : [item];
+
+      for (const feature of featureArray) {
+        if (!feature) {
+          continue;
+        }
+        if (
+          mode === PlacementMode.ANNOTATION &&
+          drawModel.basesToXWidth(feature.getLength()) < hiddenPixels
+        ) {
+          numHidden++;
+          continue;
+        }
+
+        const locusId = feature.id
+          ? feature.id
+          : `${feature.locus.start}-${feature.locus.end}`;
+
+        if (seenLoci.has(locusId)) {
+          continue; // Skip duplicate feature entirely
+        }
+        seenLoci.add(locusId);
+
+        for (let contextLocation of feature.computeNavContextCoordinates(
+          navContext
+        )) {
+          if (contextLocation) {
+            feature;
+            const xSpan = useCenter
+              ? drawModel.baseSpanToXCenter(contextLocation)
+              : drawModel.baseSpanToXSpan(contextLocation);
+            const { visiblePart, isReverse } = this._locatePlacement(
+              feature,
+              navContext,
+              contextLocation
+            );
+            let tempPlacementParam;
+            if (mode === PlacementMode.ANNOTATION) {
+              tempPlacementParam = this._combineAdjacent([
+                {
+                  feature,
+                  visiblePart,
+                  contextLocation,
+                  xSpan,
+                  isReverse,
+                },
+              ]);
+            } else {
+              tempPlacementParam = {
+                feature,
+                visiblePart,
+                contextLocation,
+                xSpan,
+                isReverse,
+              };
+            }
+
+            if (feature.value === undefined || feature.value >= 0) {
+              if (Array.isArray(tempPlacementParam)) {
+                placementsForward.push(...tempPlacementParam);
+              } else {
+                placementsForward.push(tempPlacementParam);
+              }
+            } else if (feature.value < 0) {
+              placementsReverse.push(tempPlacementParam);
+            }
+          }
         }
       }
     }
-
-    return placements;
+    return {
+      placements: placementsForward,
+      placementsForward,
+      placementsReverse,
+      numHidden: numHidden,
+    };
   }
 
+  _combineAdjacent(placements: PlacedFeature[]): PlacedFeatureGroup[] {
+    placements.sort((a, b) => a.xSpan.start - b.xSpan.start);
+
+    const groups: PlacedFeatureGroup[] = [];
+    let i = 0;
+    while (i < placements.length) {
+      let j = i + 1;
+      while (j < placements.length && lociAreAdjacent(j - 1, j)) {
+        j++;
+      }
+
+      const placementsInGroup = placements.slice(i, j);
+      const firstPlacement = _.first(placementsInGroup);
+      const lastPlacement = _.last(placementsInGroup);
+      groups.push({
+        feature: firstPlacement.feature,
+        row: -1,
+        xSpan: new OpenInterval(
+          firstPlacement.xSpan.start,
+          lastPlacement.xSpan.end
+        ),
+        placedFeatures: placementsInGroup,
+      });
+      i = j;
+    }
+
+    return groups;
+
+    function lociAreAdjacent(a: number, b: number) {
+      const locusA = placements[a].visiblePart.getLocus();
+      const locusB = placements[b].visiblePart.getLocus();
+      return locusA.end === locusB.start || locusA.start === locusB.end;
+    }
+  }
   /**
    * Gets the visible part of a feature after it has been placed in a navigation context, as well as if was placed
    * into a reversed part of the nav context.
@@ -156,11 +301,19 @@ export class FeaturePlacer {
     // Now, we can compare the context location locus to the feature's locus.
     const distFromFeatureLocus = contextLocusStart - feature.getLocus().start;
     const relativeStart = Math.max(0, distFromFeatureLocus);
+
+    // Calculate the genomic length (in bases) that the context location represents
+    const contextFeatureCoordEnd = navContext.convertBaseToFeatureCoordinate(
+      contextLocation.end
+    );
+    const placedBaseEnd = contextFeatureCoordEnd.getLocus().start;
+    const genomicLength = Math.abs(placedBaseEnd - placedBase);
+
     return {
       visiblePart: new FeatureSegment(
         feature,
         relativeStart,
-        relativeStart + contextLocation.getLength()
+        relativeStart + genomicLength
       ),
       isReverse,
     };

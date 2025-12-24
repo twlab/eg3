@@ -1,5 +1,3 @@
-import TrackModel from "../../../../models/TrackModel";
-import { GenomeConfig } from "../../../../models/genomes/GenomeConfig";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
 // import { GuaranteeMap } from '../../model/GuaranteeMap';
@@ -22,9 +20,13 @@ import LinearDrawingModel from "../../../../models/LinearDrawingModel";
 import Feature from "../../../../models/Feature";
 
 import { ViewExpansion } from "../../../../models/RegionExpander";
-import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
+import {
+  FeaturePlacer,
+  PlacementMode,
+} from "../../../../models/getXSpan/FeaturePlacer";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 import { niceBpCount } from "../../../../models/util";
+import { FeaturePlacementResult } from "../../../../models/FeatureArranger";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -630,19 +632,24 @@ export class MultiAlignmentViewCalculator {
   ): PlacedAlignment[] {
     const { visRegion, visWidth } = visData;
 
-    return FEATURE_PLACER.placeFeatures(records, visRegion, visWidth).map(
-      (placement) => {
-        return {
-          record: placement.feature as AlignmentRecord,
-          visiblePart: AlignmentSegment.fromFeatureSegment(
-            placement.visiblePart
-          ),
-          contextSpan: placement.contextLocation,
-          targetXSpan: placement.xSpan,
-          queryXSpan: null,
-        };
-      }
-    );
+    const result: FeaturePlacementResult = FEATURE_PLACER.placeFeatures({
+      features: records,
+      viewRegion: visRegion,
+      width: visWidth,
+      mode: PlacementMode.PLACEMENT,
+    }) as FeaturePlacementResult;
+    if (!result.placements) {
+      return [];
+    }
+    return result.placements.map((placement: any) => {
+      return {
+        record: placement.feature as AlignmentRecord,
+        visiblePart: AlignmentSegment.fromFeatureSegment(placement.visiblePart),
+        contextSpan: placement.contextLocation,
+        targetXSpan: placement.xSpan,
+        queryXSpan: null,
+      };
+    });
   }
 
   /**

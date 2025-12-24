@@ -6,7 +6,7 @@ const ARROW_SEPARATION = 16;
 /**
  * A series of evenly-spaced arrows on a horizontal axis.  Renders SVG elements.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 interface ArrowProps {
   startX: number; // X location to start drawing arrows

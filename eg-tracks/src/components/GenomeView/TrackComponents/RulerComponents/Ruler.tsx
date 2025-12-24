@@ -9,7 +9,7 @@ const RULER_DESIGNER = new RulerDesigner();
 /**
  * Draws a ruler that displays feature coordinates.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 
 interface RulerProps {

@@ -9,11 +9,15 @@ import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import LinearDrawingModel from "../../../models/LinearDrawingModel";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import NavigationContext from "../../../models/NavigationContext";
-import { FeaturePlacer } from "../../../models/getXSpan/FeaturePlacer";
+import {
+  FeaturePlacer,
+  PlacementMode,
+} from "../../../models/getXSpan/FeaturePlacer";
 import TwoBitSource from "../../../getRemoteData/TwoBitSource";
 import { TranslatableG } from "../TrackComponents/geneAnnotationTrackComponents/TranslatableG";
 import { SequenceData } from "../../../models/SequenceData";
-import { GenomeConfig } from "../../../models/genomes/GenomeConfig";
+
+import { FeaturePlacementResult } from "../../../models/FeatureArranger";
 
 const HEIGHT = 15;
 const TOP_PADDING = 5;
@@ -254,7 +258,8 @@ class Chromosomes extends React.PureComponent<
    * @return {JSX.Element[]} cytoband elements
    */
   renderCytobandsInLocus(locus, drawModel) {
-    const cytobandsForChr = this.props.genomeConfig.cytobands?.[locus.chr] || [];
+    const cytobandsForChr =
+      this.props.genomeConfig.cytobands?.[locus.chr] || [];
     let children: Array<any> = [];
     for (let cytoband of cytobandsForChr) {
       const cytobandLocus = new ChromosomeInterval(
@@ -294,13 +299,14 @@ class Chromosomes extends React.PureComponent<
       hideCytoband,
       minXwidthPerBase,
     } = this.props;
-    const placedSequences = this.featurePlacer.placeFeatures(
-      this.state.sequenceData,
+    const result: FeaturePlacementResult = this.featurePlacer.placeFeatures({
+      features: this.state.sequenceData,
       viewRegion,
-      width
-    );
-    return placedSequences.map((placement, i) => {
-      const { feature, visiblePart, xSpan, isReverse } = placement;
+      width,
+      mode: PlacementMode.PLACEMENT,
+    }) as FeaturePlacementResult;
+    return result.placements.map((placement, i) => {
+      const { feature, visiblePart, xSpan, isReverse } = placement as any;
       const { relativeStart, relativeEnd } = visiblePart;
       if (hideCytoband) {
         return (

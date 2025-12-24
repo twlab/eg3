@@ -11,7 +11,7 @@ export interface IOpenInterval {
  *     `myFunction(...interval)` is equivalent to `myFunction(interval.start, interval.end)`
  *
  * @implements {Serializable}
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export default class OpenInterval implements IOpenInterval {
   /**

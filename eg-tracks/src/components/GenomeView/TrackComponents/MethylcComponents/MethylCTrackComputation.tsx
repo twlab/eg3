@@ -81,18 +81,6 @@ interface MethylCTrackProps {
 }
 
 class MethylCTrack extends PureComponent<MethylCTrackProps> {
-  static propTypes = {
-    data: PropTypes.array.isRequired,
-    options: PropTypes.shape({
-      aggregateMethod: PropTypes.string,
-      height: PropTypes.number.isRequired,
-      color: PropTypes.string,
-      isCombineStrands: PropTypes.bool,
-    }).isRequired,
-    isLoading: PropTypes.bool,
-    error: PropTypes.any,
-  };
-
   aggregatedRecords: any[] = [];
   scales: any = null;
 
@@ -104,13 +92,30 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
 
   aggregateRecords = (data: any[], viewRegion: any, width: number) => {
     const aggregator = new FeatureAggregator();
-    const xToRecords = aggregator.makeXMap(data, viewRegion, width);
-    return xToRecords.map(MethylCRecord.aggregateByStrand);
+    return aggregator.makeXMap(
+      data,
+      viewRegion,
+      width,
+      MethylCRecord.aggregateByStrand,
+      false,
+      this.props.viewWindow
+    )[0];
   };
 
   computeScales = (xMap: any[], height: number, maxMethyl: number) => {
-    const forwardRecords = xMap.map((record) => record.forward);
-    const reverseRecords = xMap.map((record) => record.reverse);
+    const forwardRecords: any[] = [];
+    const reverseRecords: any[] = [];
+
+    for (const record of xMap) {
+      if (record) {
+        forwardRecords.push(record.forward);
+        reverseRecords.push(record.reverse);
+      } else {
+        forwardRecords.push(null);
+        reverseRecords.push(null);
+      }
+    }
+
     const maxDepthForward = _.maxBy(forwardRecords, "depth") || { depth: 0 };
     const maxDepthReverse = _.maxBy(reverseRecords, "depth") || { depth: 0 };
     const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
@@ -287,6 +292,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     this.aggregatedRecords = xvaluesData
       ? xvaluesData
       : this.aggregateRecords(data, viewRegion, width);
+
     this.scales = this.computeScales(
       this.aggregatedRecords,
       options.height,
@@ -332,8 +338,8 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
 
   renderBarElement(x: number) {
     const { data, scales, strand, height, depthFilter } = this.props;
-    const pixelData = data[x][strand];
 
+    const pixelData = data[x]?.[strand];
     if (!pixelData) {
       return null;
     }
@@ -387,8 +393,8 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
 
     let elements: Array<any> = [];
     for (let x = 0; x < data.length - 1; x++) {
-      const currentRecord = data[x][strand];
-      const nextRecord = data[x + 1][strand];
+      const currentRecord = data[x]?.[strand];
+      const nextRecord = data[x + 1]?.[strand];
       if (currentRecord && nextRecord) {
         if (currentRecord.depth < depthFilter) {
           continue;

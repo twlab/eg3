@@ -38,7 +38,7 @@ const MIN_BINS_PER_REGION = 50;
 /**
  * Data source that fetches data from .hic files.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class HicSource {
   currentBinSize: number;
@@ -196,6 +196,7 @@ export class HicSource {
    * @return {Promise<GenomeInteraction[]>} a Promise for the data
    */
   async getData(region, basesPerPixel, options) {
+    console.log(region, options);
     this.metadata = await this.straw.getMetaData();
     this.normOptions = await this.straw.getNormalizationOptions();
     // console.log(this.metadata, this.normOptions);

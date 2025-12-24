@@ -7,10 +7,11 @@ import {
 import { dynamicMatplotTracks } from "../displayModeComponentMap";
 
 export function groupTracksArrMatPlot(data: Array<any>) {
-
-
   // Pre-determine the size to avoid dynamic resizing
-  const maxIndex = data.length > 0 ? Math.max(...data.map(d => d.dataCache?.length || 0)) : 0;
+  const maxIndex =
+    data.length > 0
+      ? Math.max(...data.map((d) => d.dataCache?.length || 0))
+      : 0;
   const groupedArrays: any[][] = new Array(maxIndex);
 
   // Initialize arrays once
@@ -25,12 +26,8 @@ export function groupTracksArrMatPlot(data: Array<any>) {
 
     for (let j = 0; j < dataCache.length; j++) {
       const featArr = dataCache[j];
-      // Flatten immediately instead of using flat(1) later
-      if (Array.isArray(featArr)) {
-        groupedArrays[j].push(...featArr);
-      } else {
-        groupedArrays[j].push(featArr);
-      }
+
+      groupedArrays[j].push(featArr);
     }
   }
 
@@ -112,8 +109,8 @@ export function cacheFetchedData({
           }
             ? trackData
             : trackType === "genomealign"
-              ? trackData
-              : trackData.flat(1),
+            ? trackData
+            : trackData.flat(1),
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
     }
@@ -125,8 +122,8 @@ export function cacheFetchedData({
       ] = {
         dataCache: dynamicMatplotTracks.has(trackType)
           ? trackData.map((item: any, index: number) => {
-            return item[0];
-          })
+              return item[0];
+            })
           : trackData[0],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]++;
@@ -136,8 +133,8 @@ export function cacheFetchedData({
       ] = {
         dataCache: dynamicMatplotTracks.has(trackType)
           ? trackData.map((item: any, index: number) => {
-            return item[1];
-          })
+              return item[1];
+            })
           : trackData[1],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
@@ -146,8 +143,8 @@ export function cacheFetchedData({
       ] = {
         dataCache: dynamicMatplotTracks.has(trackType)
           ? trackData.map((item: any, index: number) => {
-            return item[2];
-          })
+              return item[2];
+            })
           : trackData[2],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;

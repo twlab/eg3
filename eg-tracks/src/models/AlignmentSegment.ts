@@ -7,7 +7,7 @@ import { countBases, AlignmentIterator } from "./AlignmentStringUtils";
 /**
  * A segment of an alignment record.  Has methods that get parts of the attached record's sequences and loci.
  *
- * @author Silas Hsu
+ * @author Chanrung(Chad) Seng, Silas Hsu
  */
 export class AlignmentSegment extends FeatureSegment {
   public readonly feature: AlignmentRecord;

@@ -34,6 +34,7 @@ interface ArcDisplayProps {
   isThereG3dTrack?: boolean;
   clampHeight?: boolean;
   options?: any;
+  legend?: any;
 }
 
 // const ITEM_LIMIT = 1000;
