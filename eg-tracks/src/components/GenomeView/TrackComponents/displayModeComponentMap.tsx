@@ -1499,7 +1499,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
-    genesArr,
+    errorInfo,
     handleRetryFetchTrack,
   }) {
     function getErrorLegend(legend: ReactNode) {
@@ -1559,11 +1559,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
           }}
         >
           <span>
-            {Array.isArray(genesArr)
-              ? genesArr.filter((gene) => typeof gene === "string")[0] ||
+            {Array.isArray(errorInfo)
+              ? errorInfo.filter((gene) => typeof gene === "string")[0] ||
                 "Something went wrong"
-              : typeof genesArr === "object" && genesArr["error"]
-              ? genesArr["error"]
+              : typeof errorInfo === "object" && errorInfo["error"]
+              ? errorInfo["error"]
               : "Something went wrong"}{" "}
           </span>
           <span>Refresh page or click track to try again.</span>
@@ -1608,10 +1608,10 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   });
 
   // Error handling
-  if (drawData.isError) {
+  if (drawData.errorInfo) {
     return displayModeComponentMap.error(
       createCommonParams({
-        genesArr,
+        errorInfo: drawData.errorInfo,
         handleRetryFetchTrack: drawData.handleRetryFetchTrack,
       })
     );

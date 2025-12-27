@@ -1660,7 +1660,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 cache[currentDataIdx].dataCache !== undefined &&
                 cache[currentDataIdx].dataCache !== null
               ) {
-                console.log("yeet");
                 cacheKeysWithData[trackToDrawKey] = false;
               }
             } else {
@@ -1833,6 +1832,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     for (const [key, curTrackCache] of Object.entries(
       trackFetchedDataCache.current
     )) {
+      if (curTrackCache["Error"]) {
+        continue;
+      }
       let hasAllRegionData = true;
 
       for (const idx of idxArr) {
@@ -2008,40 +2010,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: checkDrawData
   function checkDrawData(newDrawData) {
-    // const browserMemorySize: { [key: string]: any } = window.performance;
-
-    // // Check memory usage and free up if necessary
-    // if (
-    //   browserMemorySize["memory"] &&
-    //   browserMemorySize["memory"].usedJSHeapSize >
-    //     browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-    // ) {
-    //   // Old cache deletion loop (round-robin style)
-
-    //   for (const key in trackFetchedDataCache.current) {
-    //     const curTrack = trackFetchedDataCache.current[key];
-    //     for (const cacheDataIdx in curTrack) {
-    //       if (
-    //         curTrack.trackType in trackUsingExpandedLoci &&
-    //         isInteger(cacheDataIdx)
-    //       ) {
-    //         if (Number(cacheDataIdx) !== dataIdx.current) {
-    //           delete trackFetchedDataCache.current[key][cacheDataIdx].dataCache;
-    //           if (
-    //             "records" in trackFetchedDataCache.current[key][cacheDataIdx]
-    //           ) {
-    //             delete trackFetchedDataCache.current[key][cacheDataIdx].records;
-    //           }
-    //           if (
-    //             "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
-    //           ) {
-    //             delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
     for (const key in trackFetchedDataCache.current) {
       const curTrack = trackFetchedDataCache.current[key];
       const cacheKeys = Object.keys(curTrack)
@@ -2179,7 +2147,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
         }
       }
-      console.log(completedFetchedRegion.current.done);
+
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
@@ -2192,7 +2160,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   async function createCache(fetchRes: { [key: string]: any }) {
     const tmpTrackState = { ...fetchRes.trackState };
     let result;
-    if (fetchRes.trackType in { dynamichic: "" }) {
+    if (fetchRes.trackType in { dyna: "" }) {
       try {
         let configOptions;
         if (globalTrackConfig.current[`${fetchRes.id}`]) {
@@ -2295,10 +2263,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if ("Error" in formattedData) {
         trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
           formattedData;
+      } else {
+        trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
+          "dataCache"
+        ] = formattedData;
       }
-      trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
-        "dataCache"
-      ] = formattedData;
     }
   }
 
@@ -3181,7 +3150,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const cacheTrackData = trackFetchedDataCache.current[key];
         let curTrackModel;
         let configOptions;
-        if (!trackOptionMap[`${cacheTrackData.trackType}`]) {
+        if (
+          cacheTrackData["Error"] ||
+          !trackOptionMap[`${cacheTrackData.trackType}`]
+        ) {
           continue;
         }
         if (
@@ -3222,8 +3194,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           for (let i = 0; i < 3; i++) {
             if (
               !cacheTrackData[currIdx] ||
-              !cacheTrackData[currIdx].dataCache ||
-              "Error" in cacheTrackData[currIdx].dataCache
+              !cacheTrackData[currIdx].dataCache
             ) {
               noData = true;
               break;

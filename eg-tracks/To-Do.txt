@@ -185,3 +185,13 @@ to do: 10/21/2025
 - check all track if working with new recode 
 - parsing interval
 - option to increase hic range 
+
+
+
+12/24/2025
+
+finished hic and bam working, and error for normal tracks 
+
+1. need to check if hic and bam is working with package (ITS WORKIGN)
+2. error for hic and bam, genomealign
+3. check boxplot, bigbed
