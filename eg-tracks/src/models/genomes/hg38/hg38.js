@@ -475,7 +475,7 @@ const defaultTracks = [
   new TrackModel({
     type: "hic",
     name: "test hic",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/cool/HIC002.hic",
+    url: "https://epgg-test.wustl.e",
     // "options": {
     //     "displayMode": "arc"
     // }

@@ -1598,7 +1598,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any }
   ) => {
-    console.log(event.data);
     await Promise.all(
       event.data.map(async (dataItem: any) => {
         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
@@ -1655,11 +1654,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               !cache.usePrimaryNav
             ) {
               // For fine mode or expanded loci, only check current index
-              if (
-                cache[currentDataIdx] &&
-                cache[currentDataIdx].dataCache !== undefined &&
-                cache[currentDataIdx].dataCache !== null
-              ) {
+              if (cache[currentDataIdx] && cache[currentDataIdx]["dataCache"]) {
                 cacheKeysWithData[trackToDrawKey] = false;
               }
             } else {
@@ -2263,11 +2258,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if ("Error" in formattedData) {
         trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
           formattedData;
-      } else {
-        trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
-          "dataCache"
-        ] = formattedData;
       }
+      trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
+        "dataCache"
+      ] = formattedData;
     }
   }
 

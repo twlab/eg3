@@ -279,6 +279,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           : null;
         initTrackStart.current = false;
       }
+
       if (fetchError.current) {
         createSVGOrCanvas(trackState, [], dataIdx, null);
       } else if (
