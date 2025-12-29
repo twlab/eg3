@@ -14,7 +14,7 @@ import {
 } from "./displayModeComponentMap";
 const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
-import _, { create } from "lodash";
+import _ from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
 import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
@@ -426,10 +426,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
 
           if (!noData) {
-            if (newDrawData.viewWindow) {
-              trackState["viewWindow"] = newDrawData.viewWindow;
+            if (viewWindowConfigChange.viewWindow) {
+              trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
             }
-
             trackState["groupScale"] =
               globalTrackState.current.trackStates[dataIdx].trackState[
                 "groupScale"
@@ -448,8 +447,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           const combinedData = cacheTrackData[dataIdx]
             ? cacheTrackData[dataIdx].dataCache
             : null;
-          if (newDrawData.viewWindow) {
-            trackState["viewWindow"] = newDrawData.viewWindow;
+          if (viewWindowConfigChange.viewWindow) {
+            trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
           }
 
           if (combinedData) {
@@ -481,6 +480,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
       trackState["recreate"] = true;
+      const primaryVisData =
+        trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
+      if (cacheTrackData.trackType !== "genomealign") {
+        let visRegion = !cacheTrackData.usePrimaryNav
+          ? trackState.genomicFetchCoord[
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
+          : primaryVisData.visRegion;
+        trackState["visRegion"] = visRegion;
+      }
+      trackState["visWidth"] = primaryVisData.visWidth
+        ? primaryVisData.visWidth
+        : windowWidth * 3;
       if (fetchError.current) {
         trackState["recreate"] = false;
         createSVGOrCanvas(trackState, [], dataIdx, null);
@@ -515,8 +527,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
-          if (newDrawData.viewWindow) {
-            trackState["viewWindow"] = newDrawData.viewWindow;
+          if (viewWindowConfigChange.viewWindow) {
+            trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
           }
 
           trackState["groupScale"] =
@@ -537,10 +549,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         const combinedData = cacheTrackData[dataIdx]
           ? cacheTrackData[dataIdx].dataCache
           : null;
-        if (newDrawData.viewWindow) {
-          trackState["viewWindow"] = newDrawData.viewWindow;
+        if (viewWindowConfigChange.viewWindow) {
+          trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
         }
-
         if (combinedData) {
           createSVGOrCanvas(
             trackState,

@@ -92,14 +92,11 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
 
   aggregateRecords = (data: any[], viewRegion: any, width: number) => {
     const aggregator = new FeatureAggregator();
-    return aggregator.makeXMap(
-      data,
-      viewRegion,
-      width,
-      MethylCRecord.aggregateByStrand,
-      false,
-      this.props.viewWindow
-    )[0];
+    const result = aggregator.makeXMap(data, viewRegion, width);
+    const xToRecords: Array<any> = result["xToFeaturesForward"]
+      ? result["xToFeaturesForward"]
+      : [];
+    return xToRecords.map(MethylCRecord.aggregateByStrand);
   };
 
   computeScales = (xMap: any[], height: number, maxMethyl: number) => {

@@ -1822,7 +1822,7 @@ function formatBedData(genesArr: any[]) {
 }
 function formatBamData(genesArr: any[]) {
   // const filteredArray = removeDuplicates(genesArr, "_id");
-  console.log([...genesArr]);
+
   return BamAlignment.makeBamAlignments(genesArr);
 }
 

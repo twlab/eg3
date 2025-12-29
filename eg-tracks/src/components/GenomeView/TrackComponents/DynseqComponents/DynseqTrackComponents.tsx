@@ -183,15 +183,13 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
     const { height } = options;
     if (!xvaluesData) {
       const aggregator = new NumericalAggregator();
-
       [this.xToValue, this.xToValue2, this.hasReverse] =
-        aggregator.xToValueMaker(data, viewRegion, width, options, viewWindow);
+        aggregator.xToValueMaker(data, viewRegion, width, options);
     } else {
-      this.xToValue = xvaluesData[0];
-      this.xToValue2 = xvaluesData[1];
-      this.hasReverse = xvaluesData[2];
+      [this.xToValue, this.xToValue2, this.hasReverse] = xvaluesData;
     }
     this.scales = this.computeScales(this.xToValue!, this.xToValue2!, height);
+
     this.drawHeights = this.xToValue!.map(
       (x) => this.scales.valueToHeight(x) || 0
     );

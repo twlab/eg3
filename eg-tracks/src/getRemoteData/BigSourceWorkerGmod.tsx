@@ -58,7 +58,7 @@ class BigSourceWorkerGmod {
   constructor(url) {
     this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(this.url, { fetch: createFetchWithNoCache() }),
+      filehandle: new RemoteFile(this.url),
     });
     this.useEnsemblStyle = null;
   }
@@ -138,6 +138,7 @@ class BigSourceWorkerGmod {
    * @override
    */
   getData = async (loci, basesPerPixel, options) => {
+    console.log(loci);
     if (this.useEnsemblStyle === null) {
       this.useEnsemblStyle = await this.detectChromosomeNaming();
     }

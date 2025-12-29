@@ -56,7 +56,6 @@ interface VcfTrackProps {
   getHeight: any;
   xvaluesData?: any;
   getNumLegend: any;
-
 }
 
 /**
@@ -81,11 +80,13 @@ class VcfTrack extends React.Component<VcfTrackProps> {
     highValueColor: any
   ) => {
     let values: any[];
+    // Flatten all dataCache arrays from each data object
+    const allVariants = data.flatMap((d) => d.dataCache || []);
     if (colorKey === VcfColorScaleKeys.QUAL) {
-      values = data.map((v) => v.variant.QUAL);
+      values = allVariants.map((v) => v.variant.QUAL);
     } else if (colorKey === VcfColorScaleKeys.AF) {
-      values = data.map((v) => {
-        if (v.variant.INFO.hasOwnProperty("AF")) {
+      values = allVariants.map((v) => {
+        if (v.variant.INFO && v.variant.INFO.hasOwnProperty("AF")) {
           return v.variant.INFO.AF[0];
         }
         return 0;
@@ -122,7 +123,6 @@ class VcfTrack extends React.Component<VcfTrackProps> {
     isLastRow: boolean,
     index: number
   ) {
-
     return placedGroup.placedFeatures.map((placement, i) => (
       <VcfAnnotation
         key={i}
@@ -152,7 +152,7 @@ class VcfTrack extends React.Component<VcfTrackProps> {
       updatedLegend,
       getGenePadding,
       getHeight,
-      xvaluesData
+      xvaluesData,
     } = this.props;
 
     const currentViewLength =
@@ -164,7 +164,6 @@ class VcfTrack extends React.Component<VcfTrackProps> {
     };
     if (options.displayMode === VcfDisplayModes.AUTO) {
       if (currentViewLength > 100000) {
-
         return (
           <NumericalTrack
             {...this.props}
@@ -173,8 +172,7 @@ class VcfTrack extends React.Component<VcfTrackProps> {
             xvaluesData={xvaluesData}
           />
         );
-      }
-      else {
+      } else {
         this.scales = this.computeColorScales(
           data,
           options.colorScaleKey,
@@ -195,11 +193,9 @@ class VcfTrack extends React.Component<VcfTrackProps> {
           getHeight: getHeight,
           ROW_HEIGHT: options.rowHeight + ROW_VERTICAL_PADDING,
           scales: this.scales,
-        });
+        }).component;
       }
-    }
-
-    else {
+    } else {
       if (options.displayMode === VcfDisplayModes.DENSITY) {
         return (
           <NumericalTrack
@@ -209,16 +205,13 @@ class VcfTrack extends React.Component<VcfTrackProps> {
             xvaluesData={xvaluesData}
           />
         );
-      }
-
-      else {
+      } else {
         this.scales = this.computeColorScales(
           data,
           options.colorScaleKey,
           options.lowValueColor,
           options.highValueColor
         );
-
 
         return displayModeComponentMap["full"]({
           formattedData: data,
@@ -233,7 +226,7 @@ class VcfTrack extends React.Component<VcfTrackProps> {
           getHeight: getHeight,
           ROW_HEIGHT: options.rowHeight + ROW_VERTICAL_PADDING,
           scales: this.scales,
-        });
+        }).component;
       }
     }
   }

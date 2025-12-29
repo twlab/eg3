@@ -39,9 +39,36 @@ export class GroupedTrackManager {
    * @returns list of groups found in the track list, their data, and their original indicies
    */
   public aggregator: NumericalAggregator;
+  dynseqAggregator: (
+    data: any[],
+    viewRegion: any,
+    width: number,
+    aggregatorId: string
+  ) => any;
+  aggregateRecords: (data: any[], viewRegion: any, width: number) => any;
+  aggregateFeaturesMatplot: (
+    data: any,
+    viewRegion: any,
+    width: any,
+    aggregatorId: any
+  ) => any;
 
   constructor() {
     this.aggregator = new NumericalAggregator();
+
+    this.aggregateRecords = (data: any[], viewRegion: any, width: number) => {
+      const aggregator = new FeatureAggregator();
+      const result = aggregator.makeXMap(data, viewRegion, width);
+      const xToRecords: Array<any> = result["xToFeaturesForward"]
+        ? result["xToFeaturesForward"]
+        : [];
+      return xToRecords.map(MethylCRecord.aggregateByStrand);
+    };
+    this.aggregateFeaturesMatplot = (data, viewRegion, width, aggregatorId) => {
+      const aggregator = new FeatureAggregator();
+      const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
+      return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
+    };
   }
 
   getGroupScale(
@@ -81,8 +108,7 @@ export class GroupedTrackManager {
                 data,
                 trackData[tid].visRegion,
                 width,
-                trackData[tid].configOptions,
-                viewWindow
+                trackData[tid].configOptions
               );
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
             }
@@ -116,34 +142,34 @@ export class GroupedTrackManager {
             if (trackFetchedDataCache.current[tid][dataIdx]["xvalues"]) {
               continue;
             } else {
-              if (tracks[i].type === "methylc") {
-                const aggregator = new FeatureAggregator();
-                xvalues = aggregator.makeXMap(
+              if (tracks[i].type === "dynseq") {
+                xvalues = this.aggregator.xToValueMaker(
                   data,
                   trackData[tid].visRegion,
                   width,
-                  MethylCRecord.aggregateByStrand,
-                  true,
-                  viewWindow
-                )[0];
+                  trackData[tid].configOptions
+                );
+              } else if (tracks[i].type === "methylc") {
+                xvalues = this.aggregateRecords(
+                  data,
+                  trackData[tid].visRegion,
+                  width
+                );
               } else if (tracks[i].type === "matplot") {
-                xvalues = data.map(
-                  (d) =>
-                    this.aggregator.xToValueMaker(
-                      d,
-                      trackData[tid].visRegion,
-                      width,
-                      trackData[tid].configOptions,
-                      viewWindow
-                    )[0]
+                xvalues = data.map((d) =>
+                  this.aggregateFeaturesMatplot(
+                    d,
+                    trackData[tid].visRegion,
+                    width,
+                    trackData[tid].configOptions.aggregateMethod
+                  )
                 );
               } else {
                 xvalues = this.aggregator.xToValueMaker(
                   data,
                   trackData[tid].visRegion,
                   width,
-                  trackData[tid].configOptions,
-                  viewWindow
+                  trackData[tid].configOptions
                 );
               }
 

@@ -1827,9 +1827,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     for (const [key, curTrackCache] of Object.entries(
       trackFetchedDataCache.current
     )) {
-      if (curTrackCache["Error"]) {
-        continue;
-      }
       let hasAllRegionData = true;
 
       for (const idx of idxArr) {
@@ -1853,7 +1850,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const isGenomeAlignTrack = curTrackCache.trackType === "genomealign";
 
           const dataCacheKeyMissing =
-            !("dataCache" in curTrackCache[idx]) || isGenomeAlignTrack;
+            !("dataCache" in curTrackCache[idx]) ||
+            isGenomeAlignTrack ||
+            !curTrackCache[idx]["dataCache"] === null;
 
           if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
             needToFetchGenAlign = true;
@@ -1987,7 +1986,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         completedFetchedRegion.current.key = dataIdx.current;
         completedFetchedRegion.current.done = {};
         completedFetchedRegion.current.groups = {};
-
+        console.log(trackToDrawId);
         checkDrawData({
           curDataIdx: dataIdx.current,
           isInitial: 0,
@@ -2016,8 +2015,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curTrack.trackType in trackUsingExpandedLoci ||
         !curTrack.usePrimaryNav
       ) {
-        minIdx = dataIdx.current;
-        maxIdx = dataIdx.current;
+        minIdx = dataIdx.current - 3;
+        maxIdx = dataIdx.current + 3;
       } else {
         minIdx = dataIdx.current - 4;
         maxIdx = dataIdx.current + 4;
