@@ -631,13 +631,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
       />
 
-      {Toolbar.skeleton && !viewComponent ? (
-        <div style={{}}>
-          <Toolbar.skeleton width={windowWidth} height={40} />
-        </div>
-      ) : (
-        ""
-      )}
+      <Toolbar.skeleton width={windowWidth} height={40} />
+
       <div
         ref={posRef}
         style={{
