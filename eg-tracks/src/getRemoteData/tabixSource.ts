@@ -80,8 +80,6 @@ class TabixSource {
     try {
       return await this.fetchSource(loci, options);
     } catch (error) {
-      console.error("Error fetching Tabix data, recreating instance:", error);
-
       try {
         if (typeof window !== "undefined" && "caches" in window) {
           const cacheNames = await caches.keys();

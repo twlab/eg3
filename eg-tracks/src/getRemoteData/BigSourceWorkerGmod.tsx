@@ -94,8 +94,7 @@ class BigSourceWorkerGmod {
       return this.chromNamingCache;
     } catch (error) {
       console.error(
-        "Error detecting chromosome naming. Check URL and file format.",
-        error
+        "Error detecting chromosome naming. Check URL and file format."
       );
       throw error;
     }
@@ -138,7 +137,6 @@ class BigSourceWorkerGmod {
    * @override
    */
   getData = async (loci, basesPerPixel, options) => {
-    console.log(loci);
     if (this.useEnsemblStyle === null) {
       this.useEnsemblStyle = await this.detectChromosomeNaming();
     }
@@ -146,8 +144,6 @@ class BigSourceWorkerGmod {
     try {
       return await this.fetchSource(loci);
     } catch (error) {
-      console.error("Error fetching BigWig data, recreating instance:", error);
-
       try {
         if (typeof window !== "undefined" && "caches" in window) {
           const cacheNames = await caches.keys();

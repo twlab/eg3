@@ -395,13 +395,9 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               trackModel,
               visRegion: visRegion,
             });
-            if (trackModel.type === "hic") {
-              console.log(responses);
-            }
           }
         }
       } catch (error) {
-        console.log(error);
         responses = {
           error: `Error fetching data for track ${trackModel.name}`,
           Error: error,

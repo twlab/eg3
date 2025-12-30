@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
@@ -71,17 +71,16 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     xvaluesData,
     viewWindow,
   } = props;
+  const currentViewDataIdx = useRef(0);
+  const currentViewWindow = useRef({ start: 0, end: 1 });
+  const [currentDrawData, setCurrentDrawData] = useState<{
+    [key: string]: any;
+  } | null>(null);
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  let xvalues = aggregator.xToValueMaker(
-    data,
-    viewRegion,
-    width,
-    options,
-    viewWindow
-  );
+  let xvalues = aggregator.xToValueMaker(data, viewRegion, width, options);
 
   let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
 

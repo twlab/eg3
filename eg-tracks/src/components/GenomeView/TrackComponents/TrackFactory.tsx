@@ -216,6 +216,110 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }, [viewComponent]);
 
   // MARK:[newDrawDat
+  // Helper function to handle track drawing logic for newDrawData, viewWindowConfigChange, and configChange
+  function handleTrackDraw({
+    cacheTrackData,
+    trackState,
+    viewWindow,
+    groupScale,
+    xvalues,
+    isInit,
+    matplotCheck,
+    skipNoData,
+  }) {
+    const primaryVisData =
+      trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
+    if (cacheTrackData.trackType !== "genomealign") {
+      let visRegion = !cacheTrackData.usePrimaryNav
+        ? trackState.genomicFetchCoord[cacheTrackData.queryGenome].queryRegion
+        : primaryVisData.visRegion;
+      trackState["visRegion"] = visRegion;
+    }
+    trackState["visWidth"] = primaryVisData.visWidth
+      ? primaryVisData.visWidth
+      : windowWidth * 3;
+
+    if (isInit && initTrackStart.current) {
+      if (interactionTracks.has(trackModel.type)) {
+        configOptions.current["trackManagerRef"] = trackManagerRef;
+      }
+      configOptions.current = {
+        ...configOptions.current,
+        ...trackModel.options,
+      };
+      updateGlobalTrackConfig({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        usePrimaryNav: cacheTrackData.usePrimaryNav,
+      });
+      fetchError.current = cacheTrackData["Error"]
+        ? cacheTrackData["Error"]
+        : null;
+      initTrackStart.current = false;
+    }
+
+    if (fetchError.current) {
+      trackState["recreate"] = false;
+      createSVGOrCanvas(trackState, [], dataIdx, null);
+      return;
+    }
+
+    if (!cacheTrackData.useExpandedLoci && cacheTrackData.usePrimaryNav) {
+      let combinedData: Array<any> = [];
+      let currIdx = dataIdx + 1;
+      let noData = false;
+      for (let i = 0; i < 3; i++) {
+        if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
+          noData = true;
+          continue;
+        }
+        combinedData.push(cacheTrackData[currIdx]);
+        currIdx--;
+      }
+      if (matplotCheck && dynamicMatplotTracks.has(trackModel.type)) {
+        if (
+          cacheTrackData[`${dataIdx}`] &&
+          cacheTrackData[`${dataIdx}`]["xvalues"]
+        ) {
+          combinedData = [];
+        } else {
+          combinedData = groupTracksArrMatPlot(combinedData);
+        }
+      }
+      if (!noData || skipNoData) {
+        if (viewWindow) {
+          trackState["viewWindow"] = viewWindow;
+        }
+        if (groupScale !== undefined) {
+          trackState["groupScale"] = groupScale;
+        }
+        createSVGOrCanvas(
+          trackState,
+          combinedData,
+          dataIdx,
+          xvalues ? xvalues : null
+        );
+      }
+    } else {
+      const combinedData = cacheTrackData[dataIdx]
+        ? cacheTrackData[dataIdx].dataCache
+        : null;
+      if (viewWindow) {
+        trackState["viewWindow"] = viewWindow;
+      }
+      if (combinedData) {
+        createSVGOrCanvas(
+          trackState,
+          combinedData,
+          dataIdx,
+          xvalues ? xvalues : null
+        );
+      }
+    }
+  }
+
   useEffect(() => {
     if (
       newDrawData.completedFetchedRegion &&
@@ -226,7 +330,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       } else {
         return;
       }
-
       if (
         !trackFetchedDataCache.current[`${id}`] ||
         !globalTrackState.current.trackStates[dataIdx] ||
@@ -235,121 +338,23 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) {
         return;
       }
-
       const cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
-      const primaryVisData =
-        trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
-      if (cacheTrackData.trackType !== "genomealign") {
-        let visRegion = !cacheTrackData.usePrimaryNav
-          ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
-          : primaryVisData.visRegion;
-        trackState["visRegion"] = visRegion;
-      }
-      trackState["visWidth"] = primaryVisData.visWidth
-        ? primaryVisData.visWidth
-        : windowWidth * 3;
-
-      if (initTrackStart.current) {
-        // use previous data before resetState
-
-        if (interactionTracks.has(trackModel.type)) {
-          configOptions.current["trackManagerRef"] = trackManagerRef;
-        }
-
-        configOptions.current = {
-          ...configOptions.current,
-          ...trackModel.options,
-        };
-        updateGlobalTrackConfig({
-          configOptions: configOptions.current,
-          trackModel: trackModel,
-          id: id,
-          trackIdx: trackIdx,
-
-          usePrimaryNav: cacheTrackData.usePrimaryNav,
-        });
-        fetchError.current = cacheTrackData["Error"]
-          ? cacheTrackData["Error"]
-          : null;
-        initTrackStart.current = false;
-      }
-
-      if (fetchError.current) {
-        createSVGOrCanvas(trackState, [], dataIdx, null);
-      } else if (
-        !cacheTrackData.useExpandedLoci &&
-        cacheTrackData.usePrimaryNav
-      ) {
-        let combinedData: any = [];
-
-        let currIdx = dataIdx + 1;
-        var noData = false;
-        for (let i = 0; i < 3; i++) {
-          if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
-            noData = true;
-            continue;
-          }
-
-          combinedData.push(cacheTrackData[currIdx]);
-
-          currIdx--;
-        }
-
-        if (dynamicMatplotTracks.has(trackModel.type)) {
-          if (
-            cacheTrackData[`${dataIdx}`] &&
-            cacheTrackData[`${dataIdx}`]["xvalues"]
-          ) {
-            combinedData = [];
-          } else {
-            combinedData = groupTracksArrMatPlot(combinedData);
-          }
-        }
-
-        if (!noData) {
-          if (newDrawData.viewWindow) {
-            trackState["viewWindow"] = newDrawData.viewWindow;
-          }
-
-          trackState["groupScale"] =
-            globalTrackState.current.trackStates[dataIdx].trackState[
-              "groupScale"
-            ];
-
-          createSVGOrCanvas(
-            trackState,
-            combinedData,
-            dataIdx,
-            cacheTrackData[dataIdx].xvalues
-              ? cacheTrackData[dataIdx].xvalues
-              : null
-          );
-        }
-      } else {
-        const combinedData = cacheTrackData[dataIdx]
-          ? cacheTrackData[dataIdx].dataCache
-          : null;
-        if (newDrawData.viewWindow) {
-          trackState["viewWindow"] = newDrawData.viewWindow;
-        }
-
-        if (combinedData) {
-          createSVGOrCanvas(
-            trackState,
-            combinedData,
-            dataIdx,
-            cacheTrackData[dataIdx].xvalues
-              ? cacheTrackData[dataIdx].xvalues
-              : null
-          );
-        }
-      }
+      handleTrackDraw({
+        cacheTrackData,
+        trackState,
+        viewWindow: newDrawData.viewWindow,
+        groupScale:
+          globalTrackState.current.trackStates[dataIdx].trackState[
+            "groupScale"
+          ],
+        xvalues: cacheTrackData[dataIdx]?.xvalues,
+        isInit: true,
+        matplotCheck: true,
+        skipNoData: false,
+      });
     }
   }, [newDrawData]);
 
@@ -361,7 +366,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ...configOptions.current,
           ...applyTrackConfigChange[`${id}`],
         };
-
         updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
@@ -373,95 +377,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let trackState = _.cloneDeep(
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
-
-        if (cacheTrackData.trackType !== "genomealign") {
-          const primaryVisData =
-            trackState.genomicFetchCoord[trackState.primaryGenName]
-              .primaryVisData;
-          let visRegion = !cacheTrackData.usePrimaryNav
-            ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
-            : primaryVisData.visRegion;
-          trackState["visRegion"] = visRegion;
-        }
-        if (viewWindowConfigData.current) {
-          trackState.viewWindow = viewWindowConfigData.current.viewWindow;
-        }
-        trackState["recreate"] = true;
-        if (fetchError.current) {
-          trackState["recreate"] = false;
-          createSVGOrCanvas(trackState, [], dataIdx, null);
-        } else if (
-          !cacheTrackData.useExpandedLoci &&
-          cacheTrackData.usePrimaryNav
-        ) {
-          let combinedData: any = [];
-
-          let currIdx = dataIdx + 1;
-          var noData = false;
-          for (let i = 0; i < 3; i++) {
-            if (
-              !cacheTrackData[currIdx] ||
-              !cacheTrackData[currIdx].dataCache
-            ) {
-              noData = true;
-              continue;
-            }
-
-            combinedData.push(cacheTrackData[currIdx]);
-
-            currIdx--;
-          }
-
-          if (dynamicMatplotTracks.has(trackModel.type)) {
-            if (
-              cacheTrackData[`${dataIdx}`] &&
-              cacheTrackData[`${dataIdx}`]["xvalues"]
-            ) {
-              combinedData = [];
-            } else {
-              combinedData = groupTracksArrMatPlot(combinedData);
-            }
-          }
-
-          if (!noData) {
-            if (viewWindowConfigChange.viewWindow) {
-              trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
-            }
-            trackState["groupScale"] =
-              globalTrackState.current.trackStates[dataIdx].trackState[
-                "groupScale"
-              ];
-
-            createSVGOrCanvas(
-              trackState,
-              combinedData,
-              dataIdx,
-              cacheTrackData[dataIdx].xvalues
-                ? cacheTrackData[dataIdx].xvalues
-                : null
-            );
-          }
-        } else {
-          const combinedData = cacheTrackData[dataIdx]
-            ? cacheTrackData[dataIdx].dataCache
-            : null;
-          if (viewWindowConfigChange.viewWindow) {
-            trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
-          }
-
-          if (combinedData) {
-            createSVGOrCanvas(
-              trackState,
-              combinedData,
-              dataIdx,
-              cacheTrackData[dataIdx].xvalues
-                ? cacheTrackData[dataIdx].xvalues
-                : null
-            );
-          }
-        }
+        handleTrackDraw({
+          cacheTrackData,
+          trackState,
+          viewWindow: viewWindowConfigData.current?.viewWindow,
+          groupScale:
+            globalTrackState.current.trackStates[dataIdx].trackState[
+              "groupScale"
+            ],
+          xvalues: cacheTrackData[dataIdx]?.xvalues,
+          isInit: false,
+          matplotCheck: true,
+          skipNoData: false,
+        });
       }
     }
   }, [applyTrackConfigChange]);
@@ -480,89 +408,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
       trackState["recreate"] = true;
-      const primaryVisData =
-        trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
-      if (cacheTrackData.trackType !== "genomealign") {
-        let visRegion = !cacheTrackData.usePrimaryNav
-          ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
-          : primaryVisData.visRegion;
-        trackState["visRegion"] = visRegion;
-      }
-      trackState["visWidth"] = primaryVisData.visWidth
-        ? primaryVisData.visWidth
-        : windowWidth * 3;
-      if (fetchError.current) {
-        trackState["recreate"] = false;
-        createSVGOrCanvas(trackState, [], dataIdx, null);
-      } else if (
-        !cacheTrackData.useExpandedLoci &&
-        cacheTrackData.usePrimaryNav
-      ) {
-        let combinedData: any = [];
-
-        let currIdx = dataIdx + 1;
-        var noData = false;
-        for (let i = 0; i < 3; i++) {
-          if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
-            noData = true;
-            continue;
-          }
-
-          combinedData.push(cacheTrackData[currIdx]);
-
-          currIdx--;
-        }
-
-        if (dynamicMatplotTracks.has(trackModel.type)) {
-          if (
-            cacheTrackData[`${dataIdx}`] &&
-            cacheTrackData[`${dataIdx}`]["xvalues"]
-          ) {
-            combinedData = [];
-          } else {
-            combinedData = groupTracksArrMatPlot(combinedData);
-          }
-        }
-
-        if (!noData) {
-          if (viewWindowConfigChange.viewWindow) {
-            trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
-          }
-
-          trackState["groupScale"] =
-            globalTrackState.current.trackStates[dataIdx].trackState[
-              "groupScale"
-            ];
-
-          createSVGOrCanvas(
-            trackState,
-            combinedData,
-            dataIdx,
-            cacheTrackData[dataIdx].xvalues
-              ? cacheTrackData[dataIdx].xvalues
-              : null
-          );
-        }
-      } else {
-        const combinedData = cacheTrackData[dataIdx]
-          ? cacheTrackData[dataIdx].dataCache
-          : null;
-        if (viewWindowConfigChange.viewWindow) {
-          trackState["viewWindow"] = viewWindowConfigChange.viewWindow;
-        }
-        if (combinedData) {
-          createSVGOrCanvas(
-            trackState,
-            combinedData,
-            dataIdx,
-            cacheTrackData[dataIdx].xvalues
-              ? cacheTrackData[dataIdx].xvalues
-              : null
-          );
-        }
-      }
+      handleTrackDraw({
+        cacheTrackData,
+        trackState,
+        viewWindow: viewWindowConfigChange.viewWindow,
+        groupScale:
+          globalTrackState.current.trackStates[dataIdx].trackState[
+            "groupScale"
+          ],
+        xvalues: cacheTrackData[dataIdx]?.xvalues,
+        isInit: false,
+        matplotCheck: true,
+        skipNoData: false,
+      });
     }
   }, [viewWindowConfigChange]);
 
