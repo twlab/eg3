@@ -144,25 +144,22 @@ class BigSourceWorkerGmod {
     try {
       return await this.fetchSource(loci);
     } catch (error) {
-      try {
-        if (typeof window !== "undefined" && "caches" in window) {
-          const cacheNames = await caches.keys();
-          await Promise.all(
-            cacheNames.map((cacheName) => caches.delete(cacheName))
-          );
-        }
-
-        // recreate the fetch instance and retry once, because it might a disk cache issue
-        this.recreateBigWigInstance();
-
-        if (this.useEnsemblStyle === null) {
-          this.useEnsemblStyle = await this.detectChromosomeNaming();
-        }
-
-        return await this.fetchSource(loci);
-      } catch (error) {
-        throw error;
-      }
+      // try {
+      //   if (typeof window !== "undefined" && "caches" in window) {
+      //     const cacheNames = await caches.keys();
+      //     await Promise.all(
+      //       cacheNames.map((cacheName) => caches.delete(cacheName))
+      //     );
+      //   }
+      //   // recreate the fetch instance and retry once, because it might a disk cache issue
+      //   this.recreateBigWigInstance();
+      //   if (this.useEnsemblStyle === null) {
+      //     this.useEnsemblStyle = await this.detectChromosomeNaming();
+      //   }
+      //   return await this.fetchSource(loci);
+      // } catch (error) {
+      //   throw error;
+      // }
     }
   };
 }

@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
@@ -16,6 +22,7 @@ import { NumericalAggregator } from "./NumericalAggregator";
 
 import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
+import { current } from "@reduxjs/toolkit";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data?: Array<any>;
@@ -31,6 +38,7 @@ interface NumericalTrackProps {
   forceSvg?: any;
   getNumLegend?: any;
   xvaluesData?: Array<any>;
+  dataIdx: number;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -70,137 +78,135 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     groupScale,
     xvaluesData,
     viewWindow,
+    dataIdx,
   } = props;
   const currentViewDataIdx = useRef(0);
+  const initialRender = useRef(true);
+  const currentScale = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const [currentDrawData, setCurrentDrawData] = useState<{
     [key: string]: any;
   } | null>(null);
-  const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  let xvalues = aggregator.xToValueMaker(data, viewRegion, width, options);
+  function computeScales(
+    xToValue,
+    xToValue2,
+    hasReverse,
+    hasForward,
+    height: number
+  ) {
+    const { yScale, yMin, yMax } = options;
+    if (yMin >= yMax) {
+      console.log("Y-axis min must less than max", "error", 2000);
+    }
 
-  let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
-
-  const computeScales = useMemo(() => {
-    return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
-      const { yScale, yMin, yMax } = options;
-      if (yMin >= yMax) {
-        console.log("Y-axis min must less than max", "error", 2000);
+    let gscale: any = {},
+      min,
+      max,
+      xValues2: Array<any> = [];
+    if (groupScale) {
+      if (trackModel.options.hasOwnProperty("group")) {
+        gscale = groupScale[trackModel.options.group];
       }
+    }
+    if (!_.isEmpty(gscale)) {
+      max = _.max(Object.values(gscale.max));
+      min = _.min(Object.values(gscale.min));
+    } else {
+      const visibleValues = xToValue.slice(
+        props.viewWindow.start,
+        props.viewWindow.end
+      );
 
-      let gscale: any = {},
+      max = _.max(visibleValues) || 1;
+      xValues2 = xToValue2.filter((x) => x);
+      min =
+        (xValues2.length
+          ? _.min(xToValue2.slice(props.viewWindow.start, props.viewWindow.end))
+          : 0) || 0;
+      const maxBoth = Math.max(Math.abs(max), Math.abs(min));
+      max = maxBoth;
+      min = xValues2.length ? -maxBoth : 0;
+      if (yScale === ScaleChoices.FIXED) {
+        max = yMax ? yMax : max;
+        min = yMin !== undefined ? yMin : min;
+      }
+    }
+    if (min > max) {
+      console.log("Y-axis min should less than Y-axis max", "warning", 5000);
+      min = 0;
+    }
+
+    const zeroLine =
+      min < 0 && hasForward
+        ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
+        : hasForward
+        ? height
+        : 0;
+    if (!hasForward && hasReverse) {
+      max = 0;
+    }
+
+    if (
+      xValues2.length &&
+      (yScale === ScaleChoices.AUTO ||
+        (yScale === ScaleChoices.FIXED && yMin < 0))
+    ) {
+      return {
+        axisScale: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height - TOP_PADDING])
+          .clamp(true),
+        valueToY: scaleLinear()
+          .domain([max, 0])
+          .range([TOP_PADDING, zeroLine])
+          .clamp(true),
+        valueToYReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, height - zeroLine - TOP_PADDING])
+          .clamp(true),
+        valueToOpacity: scaleLinear()
+          .domain([0, max])
+          .range([0, 1])
+          .clamp(true),
+        valueToOpacityReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, 1])
+          .clamp(true),
         min,
         max,
-        xValues2: Array<any> = [];
-      if (groupScale) {
-        if (trackModel.options.hasOwnProperty("group")) {
-          gscale = groupScale[trackModel.options.group];
-        }
-      }
-      if (!_.isEmpty(gscale)) {
-        max = _.max(Object.values(gscale.max));
-        min = _.min(Object.values(gscale.min));
-      } else {
-        const visibleValues = xToValue.slice(
-          props.viewWindow.start,
-          props.viewWindow.end
-        );
-
-        max = _.max(visibleValues) || 1;
-        xValues2 = xToValue2.filter((x) => x);
-        min =
-          (xValues2.length
-            ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-              )
-            : 0) || 0;
-        const maxBoth = Math.max(Math.abs(max), Math.abs(min));
-        max = maxBoth;
-        min = xValues2.length ? -maxBoth : 0;
-        if (yScale === ScaleChoices.FIXED) {
-          max = yMax ? yMax : max;
-          min = yMin !== undefined ? yMin : min;
-        }
-      }
-      if (min > max) {
-        console.log("Y-axis min should less than Y-axis max", "warning", 5000);
-        min = 0;
-      }
-
-      const zeroLine =
-        min < 0 && hasForward
-          ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : hasForward
-          ? height
-          : 0;
-      if (!hasForward && hasReverse) {
-        max = 0;
-      }
-
-      if (
-        xValues2.length &&
-        (yScale === ScaleChoices.AUTO ||
-          (yScale === ScaleChoices.FIXED && yMin < 0))
-      ) {
-        return {
-          axisScale: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height - TOP_PADDING])
-            .clamp(true),
-          valueToY: scaleLinear()
-            .domain([max, 0])
-            .range([TOP_PADDING, zeroLine])
-            .clamp(true),
-          valueToYReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, height - zeroLine - TOP_PADDING])
-            .clamp(true),
-          valueToOpacity: scaleLinear()
-            .domain([0, max])
-            .range([0, 1])
-            .clamp(true),
-          valueToOpacityReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, 1])
-            .clamp(true),
-          min,
-          max,
-          zeroLine,
-        };
-      } else {
-        return {
-          axisScale: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height])
-            .clamp(true),
-          valueToY: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height])
-            .clamp(true),
-          valueToOpacity: scaleLinear()
-            .domain([min, max])
-            .range([0, 1])
-            .clamp(true),
-          valueToYReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, height - zeroLine - TOP_PADDING])
-            .clamp(true),
-          valueToOpacityReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, 1])
-            .clamp(true),
-          min,
-          max,
-          zeroLine,
-        };
-      }
-    });
-  }, [options, props]);
-
-  const scales = computeScales(xToValue, xToValue2, height);
+        zeroLine,
+      };
+    } else {
+      return {
+        axisScale: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height])
+          .clamp(true),
+        valueToY: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height])
+          .clamp(true),
+        valueToOpacity: scaleLinear()
+          .domain([min, max])
+          .range([0, 1])
+          .clamp(true),
+        valueToYReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, height - zeroLine - TOP_PADDING])
+          .clamp(true),
+        valueToOpacityReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, 1])
+          .clamp(true),
+        min,
+        max,
+        zeroLine,
+      };
+    }
+  }
 
   const getEffectiveDisplayMode = () => {
     const { displayMode, height } = options;
@@ -215,157 +221,217 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       return displayMode;
     }
   };
+  const xvalues = xvaluesData
+    ? xvaluesData
+    : aggregator.xToValueMaker(data, viewRegion, width, options);
 
-  let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
+  const [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
 
-  const legend = (
-    <div>
-      <TrackLegend
-        trackModel={trackModel}
-        height={height}
-        axisScale={scales.axisScale}
-        axisLegend={unit}
-        label={options.label}
-        forceSvg={forceSvg}
-      />
-    </div>
+  const scales = computeScales(
+    xToValue,
+    xToValue2,
+    hasReverse,
+    hasForward,
+    options.height
   );
 
-  if (getNumLegend) {
-    getNumLegend(legend);
-  }
-  let curParentStyle: any = forceSvg
-    ? {
-        position: "relative",
+  useEffect(() => {
+    if (
+      initialRender.current ||
+      options.forceSvg ||
+      (dataIdx === currentViewDataIdx.current &&
+        !_.isEqual(viewWindow, currentViewWindow.current) &&
+        (!(scales.max === currentScale.current?.max) ||
+          !(scales.min === currentScale.current?.min))) ||
+      dataIdx !== currentViewDataIdx.current
+    ) {
+      const legend = (
+        <div>
+          <TrackLegend
+            trackModel={trackModel}
+            height={options.height}
+            axisScale={scales.axisScale}
+            axisLegend={unit}
+            label={options.label}
+            forceSvg={forceSvg}
+          />
+        </div>
+      );
 
-        overflow: "hidden",
-        width: width / 3,
+      if (getNumLegend) {
+        getNumLegend(legend);
       }
-    : {};
-  let curEleStyle: any = forceSvg
-    ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
-    : {};
-  let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
-  const visualizer = hasReverse ? (
-    <React.Fragment>
-      {!forceSvg ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
-            zIndex: 3,
-            ...hoverStyle,
-          }}
-        >
-          <HoverToolTip
-            data={xToValue}
-            data2={xToValue2}
-            windowWidth={width}
-            trackType={"numerical"}
-            trackModel={trackModel}
-            height={height}
-            viewRegion={viewRegion}
-            unit={unit}
-            hasReverse={true}
-            options={options}
-          />
-        </div>
-      ) : (
-        ""
-      )}
 
-      <div style={{ display: "flex", ...curParentStyle }}>
-        {forceSvg || options.packageVersion ? legend : ""}
-        <div
-          style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
-        >
-          {xToValue && xToValue.length > 0 ? (
-            <>
-              <ValuePlot
-                xToValue={xToValue}
-                scales={scales}
-                height={scales.zeroLine}
-                color={color}
-                colorOut={colorAboveMax}
-                isDrawingBars={isDrawingBars}
-                forceSvg={forceSvg}
-                width={width}
-                viewWindow={props.viewWindow}
-              />
-              <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
-            </>
-          ) : (
-            ""
-          )}
+      let isDrawingBars =
+        getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
-          <ValuePlot
-            xToValue={xToValue2}
-            scales={scales}
-            height={height - scales.zeroLine}
-            color={color2}
-            colorOut={color2BelowMin}
-            isDrawingBars={isDrawingBars}
-            forceSvg={forceSvg}
-            width={width}
-            viewWindow={props.viewWindow}
-          />
-        </div>
-      </div>
-    </React.Fragment>
-  ) : (
-    <React.Fragment>
-      {!forceSvg ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
-            zIndex: 3,
-            ...hoverStyle,
-          }}
-        >
-          <HoverToolTip
-            data={xToValue}
-            data2={xToValue2}
-            windowWidth={width}
-            trackType={"numerical"}
-            trackModel={trackModel}
-            height={height}
-            viewRegion={viewRegion}
-            unit={unit}
-            hasReverse={true}
-            options={options}
-          />
-        </div>
-      ) : (
-        ""
-      )}
-      <div style={{ display: "flex", ...curParentStyle }}>
-        {forceSvg || options.packageVersion ? legend : ""}
-        <div
-          style={{
-            ...curEleStyle,
-          }}
-        >
-          <ValuePlot
-            xToValue={xToValue}
-            scales={scales}
-            height={scales.zeroLine}
-            color={color}
-            colorOut={colorAboveMax}
-            isDrawingBars={isDrawingBars}
-            forceSvg={forceSvg}
-            width={width}
-            viewWindow={props.viewWindow}
-          />
-        </div>
-      </div>
-    </React.Fragment>
-  );
+      setCurrentDrawData({
+        xToValue,
+        xToValue2,
+        hasReverse,
+        hasForward,
+        isDrawingBars,
+        curParentStyle: forceSvg
+          ? {
+              position: "relative",
 
-  xvalues = [];
-  return visualizer;
+              overflow: "hidden",
+              width: width / 3,
+            }
+          : {},
+        curEleStyle: forceSvg
+          ? {
+              position: "relative",
+              transform: `translateX(${-viewWindow.start}px)`,
+            }
+          : {},
+        hoverStyle: options.packageVersion ? { marginLeft: 120 } : {},
+        legend,
+        options,
+        scales,
+        viewWindow,
+        width,
+        trackModel,
+        viewRegion,
+        unit,
+        forceSvg,
+      });
+    }
+    currentViewDataIdx.current = dataIdx;
+    currentViewWindow.current = viewWindow;
+    initialRender.current = false;
+    currentScale.current = scales;
+  }, [props]);
+
+  return currentDrawData ? (
+    currentDrawData.hasReverse ? (
+      <React.Fragment>
+        {!currentDrawData.forceSvg ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+              ...currentDrawData.hoverStyle,
+            }}
+          >
+            <HoverToolTip
+              data={currentDrawData.xToValue}
+              data2={currentDrawData.xToValue2}
+              windowWidth={currentDrawData.width}
+              trackType={"numerical"}
+              trackModel={currentDrawData.trackModel}
+              height={currentDrawData.options.height}
+              viewRegion={currentDrawData.viewRegion}
+              unit={currentDrawData.unit}
+              hasReverse={currentDrawData.hasReverse}
+              options={currentDrawData.options}
+            />
+          </div>
+        ) : (
+          ""
+        )}
+
+        <div style={{ display: "flex", ...currentDrawData.curParentStyle }}>
+          {currentDrawData.forceSvg || currentDrawData.options.packageVersion
+            ? currentDrawData.legend
+            : ""}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              ...currentDrawData.curEleStyle,
+            }}
+          >
+            {currentDrawData.xToValue && currentDrawData.xToValue.length > 0 ? (
+              <>
+                <ValuePlot
+                  xToValue={currentDrawData.xToValue}
+                  scales={currentDrawData.scales}
+                  height={currentDrawData.scales.zeroLine}
+                  color={currentDrawData.options.color}
+                  colorOut={currentDrawData.options.colorAboveMax}
+                  isDrawingBars={currentDrawData.isDrawingBars}
+                  forceSvg={currentDrawData.forceSvg}
+                  width={currentDrawData.width}
+                  viewWindow={currentDrawData.viewWindow}
+                />
+                <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+              </>
+            ) : (
+              ""
+            )}
+
+            <ValuePlot
+              xToValue={currentDrawData.xToValue2}
+              scales={currentDrawData.scales}
+              height={
+                currentDrawData.options.height - currentDrawData.scales.zeroLine
+              }
+              color={currentDrawData.options.color2}
+              colorOut={currentDrawData.options.color2BelowMin}
+              isDrawingBars={currentDrawData.isDrawingBars}
+              forceSvg={currentDrawData.forceSvg}
+              width={currentDrawData.width}
+              viewWindow={currentDrawData.viewWindow}
+            />
+          </div>
+        </div>
+      </React.Fragment>
+    ) : (
+      <React.Fragment>
+        {!currentDrawData.forceSvg ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+              ...currentDrawData.hoverStyle,
+            }}
+          >
+            <HoverToolTip
+              data={currentDrawData.xToValue}
+              data2={currentDrawData.xToValue2}
+              windowWidth={currentDrawData.width}
+              trackType={"numerical"}
+              trackModel={currentDrawData.trackModel}
+              height={currentDrawData.options.height}
+              viewRegion={currentDrawData.viewRegion}
+              unit={currentDrawData.unit}
+              hasReverse={currentDrawData.hasReverse}
+              options={currentDrawData.options}
+            />
+          </div>
+        ) : (
+          ""
+        )}
+        <div style={{ display: "flex", ...currentDrawData.curParentStyle }}>
+          {currentDrawData.forceSvg || currentDrawData.options.packageVersion
+            ? currentDrawData.legend
+            : ""}
+          <div
+            style={{
+              ...currentDrawData.curEleStyle,
+            }}
+          >
+            <ValuePlot
+              xToValue={currentDrawData.xToValue}
+              scales={currentDrawData.scales}
+              height={currentDrawData.scales.zeroLine}
+              color={currentDrawData.options.color}
+              colorOut={currentDrawData.options.colorAboveMax}
+              isDrawingBars={currentDrawData.isDrawingBars}
+              forceSvg={currentDrawData.forceSvg}
+              width={currentDrawData.width}
+              viewWindow={currentDrawData.viewWindow}
+            />
+          </div>
+        </div>
+      </React.Fragment>
+    )
+  ) : null;
 };
 
 const ValuePlot = (props) => {
@@ -463,7 +529,6 @@ const ValuePlot = (props) => {
       width={xToValue.length}
       height={height}
       forceSvg={forceSvg}
-      viewWindow={viewWindow}
     >
       {xToValue.map(renderPixel)}
     </DesignRenderer>

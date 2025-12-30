@@ -814,6 +814,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getNumLegend={getNumLegend}
         groupScale={groupScale}
         xvaluesData={xvaluesData}
+        dataIdx={trackState.dataIdx}
       />
     );
     return canvasElements;

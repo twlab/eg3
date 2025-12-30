@@ -99,8 +99,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   ) {
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
-    trackState["viewWindow"] = trackState.viewWindow;
-
     const res = getDisplayModeFunction({
       basesByPixel: basePerPixel,
       genesArr,
@@ -238,7 +236,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     trackState["visWidth"] = primaryVisData.visWidth
       ? primaryVisData.visWidth
       : windowWidth * 3;
-
+    trackState["dataIdx"] = dataIdx;
     if (isInit && initTrackStart.current) {
       if (interactionTracks.has(trackModel.type)) {
         configOptions.current["trackManagerRef"] = trackManagerRef;

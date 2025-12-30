@@ -195,3 +195,5 @@ finished hic and bam working, and error for normal tracks
 1. need to check if hic and bam is working with package (ITS WORKIGN)
 2. error for hic and bam, genomealign
 3. check boxplot, bigbed
+
+4. fix when queryGenome but no genomealign track with query
