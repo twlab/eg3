@@ -144,6 +144,7 @@ class BigSourceWorkerGmod {
     try {
       return await this.fetchSource(loci);
     } catch (error) {
+      throw error;
       // try {
       //   if (typeof window !== "undefined" && "caches" in window) {
       //     const cacheNames = await caches.keys();

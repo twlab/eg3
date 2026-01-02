@@ -12,6 +12,7 @@ import OutsideClickDetector from "../../components/GenomeView/TrackComponents/co
 import ReactDOM from "react-dom";
 
 function ConfigMenuComponent(props: any) {
+  console.log(props);
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
   // Use mouse coordinates for positioning
@@ -50,7 +51,7 @@ function ConfigMenuComponent(props: any) {
             ref={ref}
             style={{
               position: "absolute",
-              left: Math.abs(left), // slight offset to avoid default right click menu
+              left: Math.abs(left) + 2, // slight offset to avoid default right click menu
               top: top + 2,
               color: darkTheme ? "white" : "black",
               zIndex: 1000,

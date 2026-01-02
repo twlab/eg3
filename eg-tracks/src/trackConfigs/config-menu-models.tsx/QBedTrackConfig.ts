@@ -1,4 +1,4 @@
-import { DownsamplingChoices } from "../../models/DownsamplingChoices";
+import DownsamplingConfig from "../config-menu-components.tsx/DownsamplingConfig";
 import {
   PrimaryColorConfig,
   SecondaryColorConfig,
@@ -21,7 +21,7 @@ export class QBedTrackConfig extends TrackConfig {
       HeightConfig,
       YscaleConfig,
       LogScaleConfig,
-      DownsamplingChoices,
+      DownsamplingConfig,
       OpacitySliderConfig,
       MarkerSizeConfig,
       PrimaryColorConfig,

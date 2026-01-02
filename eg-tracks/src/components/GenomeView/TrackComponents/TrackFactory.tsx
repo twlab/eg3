@@ -52,6 +52,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   messageData,
   Toolbar,
   handleRetryFetchTrack,
+  initialLoad,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -124,6 +125,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       onClose,
       errorInfo: fetchError.current,
       handleRetryFetchTrack: handleRetryFetchTrack,
+      initialLoad: initialLoad.current,
     });
 
     if (cacheDataIdx === dataIdx) {
@@ -630,8 +632,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           )
         }
       />
-
-      <Toolbar.skeleton width={windowWidth} height={40} />
+      {Toolbar.skeleton && !viewComponent ? (
+        <div style={{}}>
+          <Toolbar.skeleton width={windowWidth} height={40} />
+        </div>
+      ) : (
+        ""
+      )}
 
       <div
         ref={posRef}

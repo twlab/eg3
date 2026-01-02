@@ -32,6 +32,7 @@ interface NumericalTrackProps {
   getNumLegend?: any;
   xvaluesData?: Array<any>;
   dataIdx: number;
+  initialLoad;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -61,7 +62,7 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
 const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const currentViewDataIdx = useRef(0);
   const initialRender = useRef(true);
-  const currentScale = useRef(null);
+  const currentScale: any = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
   const {
@@ -77,8 +78,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     xvaluesData,
     viewWindow,
     dataIdx,
+    initialLoad,
   } = props;
-
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
@@ -224,7 +225,11 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
   const legend = (
-    <div>
+    <div
+      style={{
+        display: "flex",
+      }}
+    >
       <TrackLegend
         trackModel={trackModel}
         height={height}
@@ -253,15 +258,18 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
 
   let visualizer;
+
   if (
-    initialRender.current ||
+    initialLoad ||
     options.forceSvg ||
     (dataIdx === currentViewDataIdx.current &&
       !_.isEqual(viewWindow, currentViewWindow.current) &&
       (!(scales.max === currentScale.current?.max) ||
         !(scales.min === currentScale.current?.min))) ||
+    scales.zeroLine !== currentScale.current?.zeroLine ||
     dataIdx !== currentViewDataIdx.current
   ) {
+    console.log("RENDERING NUMERICAL");
     visualizer = hasReverse ? (
       <React.Fragment>
         {!forceSvg ? (
@@ -294,7 +302,11 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         <div style={{ display: "flex", ...curParentStyle }}>
           {forceSvg || options.packageVersion ? legend : ""}
           <div
-            style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              ...curEleStyle,
+            }}
           >
             {xToValue && xToValue.length > 0 ? (
               <>
@@ -379,16 +391,14 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         </div>
       </React.Fragment>
     );
-
-    currentVisualizer.current = visualizer;
-    currentViewDataIdx.current = dataIdx;
-    currentViewWindow.current = viewWindow;
-    initialRender.current = false;
-    currentScale.current = scales;
   } else {
     visualizer = currentVisualizer.current;
   }
-
+  currentVisualizer.current = visualizer;
+  currentViewDataIdx.current = dataIdx;
+  currentViewWindow.current = viewWindow;
+  initialRender.current = false;
+  currentScale.current = scales;
   xvalues = [];
   return visualizer;
 };

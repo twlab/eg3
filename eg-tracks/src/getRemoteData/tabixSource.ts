@@ -67,6 +67,7 @@ class TabixSource {
         dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
       });
     }
+
     return _.flatten(dataForEachLocus);
   }
 
@@ -80,21 +81,20 @@ class TabixSource {
     try {
       return await this.fetchSource(loci, options);
     } catch (error) {
-      try {
-        if (typeof window !== "undefined" && "caches" in window) {
-          const cacheNames = await caches.keys();
-          await Promise.all(
-            cacheNames.map((cacheName) => caches.delete(cacheName))
-          );
-        }
-
-        // recreate the fetch instance and retry once, because it might be a disk cache issue
-        this.recreateTabixInstance();
-
-        return await this.fetchSource(loci, options);
-      } catch (error) {
-        throw error;
-      }
+      throw error;
+      // try {
+      //   if (typeof window !== "undefined" && "caches" in window) {
+      //     const cacheNames = await caches.keys();
+      //     await Promise.all(
+      //       cacheNames.map((cacheName) => caches.delete(cacheName))
+      //     );
+      //   }
+      //   // recreate the fetch instance and retry once, because it might be a disk cache issue
+      //   this.recreateTabixInstance();
+      //   return await this.fetchSource(loci, options);
+      // } catch (error) {
+      //   throw error;
+      // }
     }
   };
 

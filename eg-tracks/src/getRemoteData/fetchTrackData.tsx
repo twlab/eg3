@@ -238,6 +238,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         regionData.trackModel.url,
         indexUrl
       );
+      console.log("YEE");
     } else if (trackType === "vcf") {
       cachedFetchInstance[regionData.trackModel.url] = new VcfSource(
         regionData.trackModel.url,
@@ -328,12 +329,14 @@ async function getRemoteData(regionData: any, trackType: string) {
             return data;
           })
           .catch((error) => {
+            console.log("YEE");
             fetchInstance = null;
             throw error;
           });
       }
     }
   } catch (error) {
+    console.log("YEE");
     fetchInstance = null;
     throw error;
   }

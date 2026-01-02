@@ -18,7 +18,7 @@ import { HicSource } from "../../getRemoteData/hicSource";
 import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
-import _, { set, throttle } from "lodash";
+import _, { initial, set, throttle } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 // import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
@@ -1986,7 +1986,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         completedFetchedRegion.current.key = dataIdx.current;
         completedFetchedRegion.current.done = {};
         completedFetchedRegion.current.groups = {};
-        console.log(trackToDrawId);
+
         checkDrawData({
           curDataIdx: dataIdx.current,
           isInitial: 0,
@@ -2426,6 +2426,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   const refreshState = () => {
     // Reset useRef letiables
+    initialLoad.current = true;
     completedFetchedRegion.current = {
       key: -0,
       done: {},
@@ -4025,6 +4026,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         messageData={messageData}
                         Toolbar={Toolbar}
                         handleRetryFetchTrack={handleRetryFetchTrack}
+                        initialLoad={initialLoad}
                       />
                     </div>
                   </SortableList.Item>

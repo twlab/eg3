@@ -43,4 +43,5 @@ export interface TrackProps {
   messageData: any;
   Toolbar: { [key: string]: any };
   handleRetryFetchTrack: (trackIdx: number) => void;
+  initialLoad: any;
 }

@@ -789,6 +789,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     groupScale,
     xvaluesData,
+    initialLoad,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -815,6 +816,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         groupScale={groupScale}
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
       />
     );
     return canvasElements;
@@ -831,6 +833,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     getGenePadding,
     xvaluesData,
+    initialLoad,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -860,6 +863,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getHeight={getHeight}
         xvaluesData={xvaluesData}
         getNumLegend={getNumLegend}
+        dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
       />
     );
   },
@@ -870,6 +875,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    initialLoad,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -894,6 +900,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         error={undefined}
         forceSvg={configOptions.forceSvg}
         getNumLegend={getNumLegend}
+        dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
       />
     );
     return canvasElements;
@@ -930,6 +938,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         // isLoading={false}
         // error={undefined}
         getNumLegend={getNumLegend}
+        dataIdx={trackState.dataIdx}
         unit={""}
       />
     );
@@ -990,6 +999,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
+        dataIdx={trackState.dataIdx}
       />
     );
     return canvasElements;
@@ -1024,6 +1034,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         svgHeight={svgHeight}
         updatedLegend={updatedLegend}
+        dataIdx={trackState.dataIdx}
       />
     );
     return canvasElements;
@@ -1046,6 +1057,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
+        dataIdx={trackState.dataIdx}
       />
     );
     return canvasElements;
@@ -1068,6 +1080,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
+        dataIdx={trackState.dataIdx}
       />
     );
     return canvasElements;
@@ -1119,6 +1132,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         ROW_HEIGHT={ROW_HEIGHT}
         onClose={onClose}
         xvaluesData={xvaluesData}
+        dataIdx={trackState.dataIdx}
       />
     );
 
@@ -1153,6 +1167,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
+        dataIdx={trackState.dataIdx}
       />
     );
 
@@ -1229,6 +1244,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         basesByPixel={basesByPixel}
         genomeConfig={genomeConfig}
         xvaluesData={xvaluesData}
+        dataIdx={trackState.dataIdx}
       />
     );
 
@@ -1594,6 +1610,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     configOptions: drawData.configOptions,
     updatedLegend: drawData.updatedLegend,
     trackModel: drawData.trackModel,
+    initialLoad: drawData.initialLoad,
     ...extraParams,
   });
 

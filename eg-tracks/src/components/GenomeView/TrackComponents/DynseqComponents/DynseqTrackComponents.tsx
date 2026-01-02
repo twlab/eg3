@@ -65,6 +65,7 @@ interface DynseqTrackProps {
   basesByPixel: number;
   genomeConfig: any;
   xvaluesData: any;
+  dataIdx: number;
 }
 
 class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {

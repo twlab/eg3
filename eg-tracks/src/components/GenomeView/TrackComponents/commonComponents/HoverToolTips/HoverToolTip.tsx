@@ -95,7 +95,96 @@ export const getHoverTooltip = {
       ),
     };
   },
+  qbed: function getTooltip(dataObj: { [key: string]: any }) {
+    function formatCards(quanta: any[]) {
+      const head = (
+        <thead>
+          <tr>
+            <th scope="col">Value</th>
+            <th scope="col">Strand</th>
+            <th scope="col">Annotation</th>
+          </tr>
+        </thead>
+      );
+      const rows = quanta.slice(0, 10).map((quantum, i) => (
+        <tr key={i}>
+          <td>{quantum.value}</td>
+          <td>{quantum.strand}</td>
+          <td>
+            {_.truncate(quantum.annotation, {
+              length: 75,
+              separator: /[,; ]/,
+            })}
+          </td>
+        </tr>
+      ));
+      return (
+        <table className="table table-striped table-sm">
+          {head}
+          <tbody>{rows}</tbody>
+        </table>
+      );
+    }
 
+    function nearestCards(
+      quanta: any[],
+      relativeX: number,
+      relativeY: number,
+      radius: number
+    ) {
+      const distances = quanta.map(
+        (quantum) =>
+          Math.pow(relativeX - (quantum.relativeX || 0), 2) +
+          Math.pow(relativeY - (quantum.relativeY || 0), 2)
+      );
+
+      const mindist = Math.min(...distances);
+      if (mindist < radius * radius) {
+        return quanta.filter((_, i) => distances[i] === mindist);
+      } else {
+        return [];
+      }
+    }
+    const {
+      trackModel,
+      viewRegion,
+      width,
+
+      data,
+      relativeY,
+      relativeX,
+    } = dataObj;
+    const { markerSize } = dataObj.options;
+
+    let quanta: any[] = [];
+
+    for (let i = relativeX - markerSize; i <= relativeX + markerSize; i++) {
+      quanta = quanta.concat(data[i]);
+    }
+
+    if (quanta !== undefined && quanta.length > 0) {
+      const nearest = nearestCards(quanta, relativeX, relativeY, markerSize);
+      if (nearest.length > 0) {
+        return {
+          toolTip: (
+            <div>
+              <div className="Tooltip-minor-text">
+                <GenomicCoordinates
+                  viewRegion={viewRegion}
+                  width={width}
+                  x={relativeX}
+                />
+              </div>
+              <div className="Tooltip-minor-text">
+                {trackModel.getDisplayLabel()}
+              </div>
+              <div className="Tooltip-minor-text">{formatCards(nearest)}</div>
+            </div>
+          ),
+        };
+      }
+    }
+  },
   dbedgraph: function getTooltip(dataObj: { [key: string]: any }) {
     const { trackModel, viewRegion, width, relativeX, data } = dataObj;
     if (!data) {

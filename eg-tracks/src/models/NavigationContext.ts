@@ -140,7 +140,7 @@ class NavigationContext {
    * @return {boolean} whether the base is navigable
    */
   getIsValidBase(base: number): boolean {
-    return 0 <= base && base < this._totalBases;
+    return 0 <= base && base < this._totalBases + 1;
   }
 
   /**
