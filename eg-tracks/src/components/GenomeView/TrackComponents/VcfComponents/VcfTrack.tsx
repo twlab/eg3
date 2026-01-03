@@ -57,6 +57,7 @@ interface VcfTrackProps {
   xvaluesData?: any;
   getNumLegend: any;
   dataIdx: number;
+  initialLoad?: boolean;
 }
 
 /**
@@ -155,6 +156,7 @@ class VcfTrack extends React.Component<VcfTrackProps> {
       getHeight,
       xvaluesData,
       dataIdx,
+      initialLoad,
     } = this.props;
 
     const currentViewLength =
@@ -205,6 +207,8 @@ class VcfTrack extends React.Component<VcfTrackProps> {
             unit="feature density"
             options={numericalOptions}
             xvaluesData={xvaluesData}
+            dataIdx={dataIdx}
+            initialLoad={initialLoad}
           />
         );
       } else {

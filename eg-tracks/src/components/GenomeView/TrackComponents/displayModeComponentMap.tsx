@@ -922,6 +922,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         }
       }
     }
+
     let canvasElements = (
       <BoxplotTrackComponents
         data={formattedData}
@@ -1182,6 +1183,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     xvaluesData,
+    initialLoad,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -1204,6 +1206,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         getNumLegend={getNumLegend}
         xvaluesData={xvaluesData}
+        dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
       />
     );
 
@@ -1220,6 +1224,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     genomeConfig,
     basesByPixel,
     xvaluesData,
+    initialLoad,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -1245,6 +1250,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         genomeConfig={genomeConfig}
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
       />
     );
 

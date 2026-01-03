@@ -164,7 +164,6 @@ interface TrackManagerProps {
   selectedRegionSet: any;
   setShow3dGene: any;
   infiniteScrollWorkers: React.MutableRefObject<{
-    instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
   } | null>;
   fetchGenomeAlignWorker: React.MutableRefObject<{
@@ -436,43 +435,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const message = messageQueue.current.pop();
 
-    // Split message by trackModelArr type
-    const hicTypes = { hic: "", dynamichic: "", bam: "" };
-
-    // message is an array of objects
-    const intMessages: Array<any> = [];
-    const normalMessages: Array<any> = [];
-
-    for (const msgObj of message) {
-      if (
-        Array.isArray(msgObj.trackModelArr) &&
-        msgObj.trackModelArr.length > 0
-      ) {
-        const intTrackModels: any[] = [];
-        const normalTrackModels: any[] = [];
-        for (const track of msgObj.trackModelArr) {
-          if (track.type in hicTypes) {
-            intTrackModels.push(track);
-          } else {
-            normalTrackModels.push(track);
-          }
-        }
-        if (intTrackModels.length > 0) {
-          intMessages.push({
-            ...msgObj,
-            trackModelArr: intTrackModels,
-          });
-        }
-        if (normalTrackModels.length > 0) {
-          normalMessages.push({
-            ...msgObj,
-            trackModelArr: normalTrackModels,
-          });
-        }
-      }
-    }
-
-    // split an array into N chunks
     // split an array into N contiguous chunks
     function splitArrayIntoChunks(arr, numChunks) {
       const chunkSize = Math.ceil(arr.length / numChunks);
@@ -485,20 +447,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return chunks;
     }
 
-    // Send intMessages to instance workers
+    // Send messages to worker workers
     if (
       infiniteScrollWorkers.current &&
-      (infiniteScrollWorkers.current.instance.length > 0 ||
-        infiniteScrollWorkers.current.worker.length > 0)
+      infiniteScrollWorkers.current.worker.length > 0
     ) {
-      if (
-        intMessages.length > 0 &&
-        infiniteScrollWorkers.current.instance.length > 0
-      ) {
-        const numWorkers = infiniteScrollWorkers.current.instance.length;
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of intMessages) {
+      const numWorkers = infiniteScrollWorkers.current.worker.length;
+
+      for (let i = 0; i < numWorkers; i++) {
+        const messagesForWorker: Array<any> = [];
+        for (const msgObj of message) {
+          if (
+            Array.isArray(msgObj.trackModelArr) &&
+            msgObj.trackModelArr.length > 0
+          ) {
             const chunks = splitArrayIntoChunks(
               msgObj.trackModelArr,
               numWorkers
@@ -506,63 +468,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (chunks[i].length > 0) {
               messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
             }
-          }
-          if (messagesForWorker.length > 0) {
-            if (
-              infiniteScrollWorkers.current.instance[i].hasOnMessage === false
-            ) {
-              infiniteScrollWorkers.current.instance[i].fetchWorker.onmessage =
-                createInfiniteOnMessage;
-              infiniteScrollWorkers.current.instance[i].hasOnMessage = true;
-            }
-            infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
-              messagesForWorker
-            );
           }
         }
-      }
 
-      // Send normalMessages to worker workers
-      if (
-        normalMessages.length > 0 &&
-        infiniteScrollWorkers.current.worker.length > 0
-      ) {
-        const numWorkers = infiniteScrollWorkers.current.worker.length;
-
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of normalMessages) {
-            const chunks = splitArrayIntoChunks(
-              msgObj.trackModelArr,
-              numWorkers
-            );
-            if (chunks[i].length > 0) {
-              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-            }
+        if (messagesForWorker.length > 0) {
+          if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
+            infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
+              createInfiniteOnMessage;
+            infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
           }
-
-          if (messagesForWorker.length > 0) {
-            if (
-              infiniteScrollWorkers.current.worker[i].hasOnMessage === false
-            ) {
-              infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-                createInfiniteOnMessage;
-              infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
-            }
-            infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-              messagesForWorker
-            );
-          }
+          infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+            messagesForWorker
+          );
         }
       }
     } else {
-      // Send normalMessages to fetch functions (non-worker version)
-      if (normalMessages.length > 0) {
-        const numWorkers = tracks.length;
+      // Send messages to fetch functions (non-worker version)
+      const numWorkers = tracks.length;
 
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of normalMessages) {
+      for (let i = 0; i < numWorkers; i++) {
+        const messagesForWorker: Array<any> = [];
+        for (const msgObj of message) {
+          if (
+            Array.isArray(msgObj.trackModelArr) &&
+            msgObj.trackModelArr.length > 0
+          ) {
             const chunks = splitArrayIntoChunks(
               msgObj.trackModelArr,
               numWorkers
@@ -570,42 +500,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (chunks[i].length > 0) {
               messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
             }
-          }
-
-          if (messagesForWorker.length > 0) {
-            // Launch async operation without awaiting - process results independently
-            fetchGenomicData(messagesForWorker)
-              .then((results) => {
-                // Call createInfiniteOnMessage once with the entire results array
-                createInfiniteOnMessage({ data: results });
-              })
-              .catch(() => {});
           }
         }
-      }
-      if (intMessages.length > 0) {
-        const numWorkers = tracks.length;
-        for (let i = 0; i < numWorkers; i++) {
-          const messagesForWorker: Array<any> = [];
-          for (const msgObj of intMessages) {
-            const chunks = splitArrayIntoChunks(
-              msgObj.trackModelArr,
-              numWorkers
-            );
-            if (chunks[i].length > 0) {
-              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-            }
-          }
 
-          if (messagesForWorker.length > 0) {
-            // Launch async operation without awaiting - process results independently
-            fetchGenomicData(messagesForWorker)
-              .then((results) => {
-                // Call createInfiniteOnMessage once with the entire results array
-                createInfiniteOnMessage({ data: results });
-              })
-              .catch(() => {});
-          }
+        if (messagesForWorker.length > 0) {
+          // Launch async operation without awaiting - process results independently
+          fetchGenomicData(messagesForWorker)
+            .then((results) => {
+              // Call createInfiniteOnMessage once with the entire results array
+              createInfiniteOnMessage({ data: results });
+            })
+            .catch(() => {});
         }
       }
     }

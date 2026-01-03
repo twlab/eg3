@@ -169,7 +169,7 @@ export class GroupedTrackManager {
                   data,
                   trackData[tid].visRegion,
                   width,
-                  tracks[i].type === "qbed" ? true : false
+                  trackData[tid].configOptions
                 );
               }
 

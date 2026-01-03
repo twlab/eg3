@@ -131,14 +131,10 @@ export class FeaturePlacer {
       hiddenPixels = 0.5,
     } = options;
 
-    const isNumerical = mode === PlacementMode.NUMERICAL;
-    const isAnnotation = mode === PlacementMode.ANNOTATION;
-    const isBoxplot = mode === PlacementMode.BOXPLOT;
     const drawModel = new LinearDrawingModel(viewRegion, width);
-    const viewRegionBounds = viewRegion.getContextCoordinates();
+
     const navContext = viewRegion.getNavigationContext();
 
-    const placements: Array<any> = [];
     const placementsForward: Array<any> = [];
     const placementsReverse: Array<any> = [];
     // for Annotation, gene can be too small so we dont draw and increment numHidden
@@ -146,7 +142,7 @@ export class FeaturePlacer {
 
     // used to store genome that we have already seen
     const seenLoci = new Set<string>();
-
+    console.log(drawModel);
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
@@ -166,6 +162,7 @@ export class FeaturePlacer {
           mode === PlacementMode.ANNOTATION &&
           drawModel.basesToXWidth(feature.getLength()) < hiddenPixels
         ) {
+          console.log(drawModel.basesToXWidth(feature.getLength()));
           numHidden++;
           continue;
         }
@@ -226,6 +223,7 @@ export class FeaturePlacer {
         }
       }
     }
+
     return {
       placements: placementsForward,
       placementsForward,

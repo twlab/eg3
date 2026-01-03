@@ -1,7 +1,6 @@
-import React, { PureComponent } from "react";
+import React, { PureComponent, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
-import memoizeOne from "memoize-one";
 import { scaleLinear } from "d3-scale";
 
 // import Track from './commonComponents/Track';
@@ -78,133 +77,156 @@ interface MethylCTrackProps {
   forceSvg: boolean;
   getNumLegend: any;
   xvaluesData?: any;
+  initialLoad: boolean;
+  dataIdx: number;
 }
 
-class MethylCTrack extends PureComponent<MethylCTrackProps> {
-  aggregatedRecords: any[] = [];
-  scales: any = null;
+const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
+  const currentViewDataIdx = useRef(0);
+  const initialRender = useRef(true);
+  const currentScale: any = useRef(null);
+  const currentViewWindow = useRef({ start: 0, end: 1 });
+  const currentVisualizer = useRef(null);
+  const currentViewOptions = useRef({});
+  const {
+    data,
+    trackModel,
+    viewRegion,
+    width,
+    options,
+    getNumLegend,
+    xvaluesData,
+    forceSvg,
+    viewWindow,
+    dataIdx,
+    initialLoad,
+  } = props;
 
-  constructor(props: MethylCTrackProps) {
-    super(props);
-    this.aggregateRecords = memoizeOne(this.aggregateRecords);
-    this.computeScales = memoizeOne(this.computeScales);
-  }
+  const aggregateRecords = useMemo(() => {
+    return (data: any[], viewRegion: any, width: number) => {
+      const aggregator = new FeatureAggregator();
+      const result = aggregator.makeXMap(data, viewRegion, width);
+      const xToRecords: Array<any> = result["xToFeaturesForward"]
+        ? result["xToFeaturesForward"]
+        : [];
+      return xToRecords.map(MethylCRecord.aggregateByStrand);
+    };
+  }, []);
 
-  aggregateRecords = (data: any[], viewRegion: any, width: number) => {
-    const aggregator = new FeatureAggregator();
-    const result = aggregator.makeXMap(data, viewRegion, width);
-    const xToRecords: Array<any> = result["xToFeaturesForward"]
-      ? result["xToFeaturesForward"]
-      : [];
-    return xToRecords.map(MethylCRecord.aggregateByStrand);
-  };
+  const computeScales = useMemo(() => {
+    return (xMap: any[], height: number, maxMethyl: number) => {
+      const forwardRecords: any[] = [];
+      const reverseRecords: any[] = [];
 
-  computeScales = (xMap: any[], height: number, maxMethyl: number) => {
-    const forwardRecords: any[] = [];
-    const reverseRecords: any[] = [];
-
-    for (const record of xMap) {
-      if (record) {
-        forwardRecords.push(record.forward);
-        reverseRecords.push(record.reverse);
-      } else {
-        forwardRecords.push(null);
-        reverseRecords.push(null);
+      for (const record of xMap) {
+        if (record) {
+          forwardRecords.push(record.forward);
+          reverseRecords.push(record.reverse);
+        } else {
+          forwardRecords.push(null);
+          reverseRecords.push(null);
+        }
       }
-    }
 
-    const maxDepthForward = _.maxBy(forwardRecords, "depth") || { depth: 0 };
-    const maxDepthReverse = _.maxBy(reverseRecords, "depth") || { depth: 0 };
-    const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
-    return {
-      methylToY: scaleLinear()
-        .domain([maxMethyl, 0])
-        .range([VERTICAL_PADDING, height])
-        .clamp(true),
-      depthToY: scaleLinear()
-        .domain([maxDepth, 0])
-        .range([VERTICAL_PADDING, height])
-        .clamp(true),
+      const maxDepthForward = _.maxBy(forwardRecords, "depth") || { depth: 0 };
+      const maxDepthReverse = _.maxBy(reverseRecords, "depth") || { depth: 0 };
+      const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
+      return {
+        methylToY: scaleLinear()
+          .domain([maxMethyl, 0])
+          .range([VERTICAL_PADDING, height])
+          .clamp(true),
+        depthToY: scaleLinear()
+          .domain([maxDepth, 0])
+          .range([VERTICAL_PADDING, height])
+          .clamp(true),
+      };
     };
+  }, []);
+
+  const aggregatedRecords = xvaluesData
+    ? xvaluesData
+    : aggregateRecords(data, viewRegion, width);
+
+  const scales = computeScales(
+    aggregatedRecords,
+    options.height,
+    options.maxMethyl
+  );
+
+  let { height, colorsForContext, depthColor, isCombineStrands, depthFilter } =
+    options;
+
+  const childProps = {
+    data: aggregatedRecords,
+    scales: scales,
+    htmlType: forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS,
+    width,
+    height,
+    colorsForContext,
+    depthColor,
+    depthFilter,
+    forceSvg: options.forceSvg,
+    viewWindow: viewWindow,
   };
 
-  renderVisualizer() {
-    let {
-      width,
-      options,
-      forceSvg,
-      viewRegion,
-      trackModel,
-      getNumLegend,
-      viewWindow,
-    } = this.props;
-    let {
-      height,
-      colorsForContext,
-      depthColor,
-      isCombineStrands,
-      depthFilter,
-    } = options;
-    // we only want a section of viewWindow if we take a screenshot
+  let legend = (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <TrackLegend
+        trackModel={trackModel}
+        height={options.height}
+        axisScale={scales.methylToY}
+        noShiftFirstAxisLabel={!options.isCombineStrands}
+        forceSvg={forceSvg}
+      />
 
-    const childProps = {
-      data: this.aggregatedRecords,
-      scales: this.scales,
-      htmlType: forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS,
-      width,
-      height,
-      colorsForContext,
-      depthColor,
-      depthFilter,
-      forceSvg: options.forceSvg,
-      viewWindow: this.props.viewWindow,
-    };
-
-    let legend = (
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <TrackLegend
+      {!options.isCombineStrands && (
+        <ReverseStrandLegend
           trackModel={trackModel}
           height={options.height}
-          axisScale={this.scales.methylToY}
-          noShiftFirstAxisLabel={!options.isCombineStrands}
+          maxMethyl={options.maxMethyl}
           forceSvg={forceSvg}
         />
+      )}
+    </div>
+  );
 
-        {!options.isCombineStrands && (
-          <ReverseStrandLegend
-            trackModel={trackModel}
-            height={options.height}
-            maxMethyl={options.maxMethyl}
-            forceSvg={forceSvg}
-          />
-        )}
-      </div>
-    );
-    if (getNumLegend) {
-      getNumLegend(legend);
-    }
-    let strandRenderers, tooltipY;
+  if (getNumLegend) {
+    getNumLegend(legend);
+  }
 
-    let curParentStyle: any = forceSvg
-      ? {
-          position: "relative",
+  let strandRenderers, tooltipY;
 
-          overflow: "hidden",
-          width: width / 3,
-        }
-      : {};
-    let curEleStyle: any = forceSvg
-      ? {
-          position: "relative",
-          transform: `translateX(${-viewWindow.start}px)`,
-        }
-      : {};
+  let curParentStyle: any = forceSvg
+    ? {
+        position: "relative",
+        overflow: "hidden",
+        width: width / 3,
+      }
+    : {};
+  let curEleStyle: any = forceSvg
+    ? {
+        position: "relative",
+        transform: `translateX(${-viewWindow.start}px)`,
+      }
+    : {};
+
+  let visualizer;
+
+  if (
+    initialLoad ||
+    options.forceSvg ||
+    (dataIdx === currentViewDataIdx.current &&
+      !_.isEqual(viewWindow, currentViewWindow.current)) ||
+    dataIdx !== currentViewDataIdx.current ||
+    !_.isEqual(options, currentViewOptions.current)
+  ) {
     if (isCombineStrands) {
       strandRenderers = (
         <React.Fragment>
@@ -245,7 +267,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       tooltipY = height * 2;
     }
 
-    return (
+    visualizer = (
       <>
         {!forceSvg ? (
           <div
@@ -253,12 +275,11 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
               display: "flex",
               flexDirection: "row",
               position: "absolute",
-
               zIndex: 3,
             }}
           >
             <HoverToolTip
-              data={this.aggregatedRecords}
+              data={aggregatedRecords}
               windowWidth={width}
               trackModel={trackModel}
               trackType={"methyc"}
@@ -274,31 +295,18 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
         {strandRenderers}
       </>
     );
+  } else {
+    visualizer = currentVisualizer.current;
   }
 
-  render() {
-    const {
-      data,
-      trackModel,
-      viewRegion,
-      width,
-      options,
-      getNumLegend,
-      xvaluesData,
-    } = this.props;
-    this.aggregatedRecords = xvaluesData
-      ? xvaluesData
-      : this.aggregateRecords(data, viewRegion, width);
+  currentVisualizer.current = visualizer;
+  currentViewDataIdx.current = dataIdx;
+  currentViewWindow.current = viewWindow;
+  initialRender.current = false;
+  currentScale.current = scales;
 
-    this.scales = this.computeScales(
-      this.aggregatedRecords,
-      options.height,
-      options.maxMethyl
-    );
-
-    return this.renderVisualizer();
-  }
-}
+  return visualizer;
+};
 
 export default MethylCTrack;
 
@@ -315,7 +323,6 @@ interface StrandVisualizerProps {
   forceSvg: boolean;
   viewWindow: any;
 }
-
 class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
   static propTypes = {
     data: PropTypes.array.isRequired,
@@ -335,8 +342,8 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
 
   renderBarElement(x: number) {
     const { data, scales, strand, height, depthFilter } = this.props;
+    const pixelData = data[x][strand];
 
-    const pixelData = data[x]?.[strand];
     if (!pixelData) {
       return null;
     }
@@ -390,8 +397,8 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
 
     let elements: Array<any> = [];
     for (let x = 0; x < data.length - 1; x++) {
-      const currentRecord = data[x]?.[strand];
-      const nextRecord = data[x + 1]?.[strand];
+      const currentRecord = data[x][strand];
+      const nextRecord = data[x + 1][strand];
       if (currentRecord && nextRecord) {
         if (currentRecord.depth < depthFilter) {
           continue;

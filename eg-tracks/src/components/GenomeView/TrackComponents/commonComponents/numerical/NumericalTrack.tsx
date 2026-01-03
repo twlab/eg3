@@ -16,6 +16,7 @@ import { NumericalAggregator } from "./NumericalAggregator";
 
 import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
+import { current } from "@reduxjs/toolkit";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data?: Array<any>;
@@ -65,6 +66,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const currentScale: any = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
+  const currentViewOptions = useRef({});
   const {
     data,
     viewRegion,
@@ -267,9 +269,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       (!(scales.max === currentScale.current?.max) ||
         !(scales.min === currentScale.current?.min))) ||
     scales.zeroLine !== currentScale.current?.zeroLine ||
-    dataIdx !== currentViewDataIdx.current
+    dataIdx !== currentViewDataIdx.current ||
+    !_.isEqual(options, currentViewOptions.current)
   ) {
-    console.log("RENDERING NUMERICAL");
     visualizer = hasReverse ? (
       <React.Fragment>
         {!forceSvg ? (
@@ -399,6 +401,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   currentViewWindow.current = viewWindow;
   initialRender.current = false;
   currentScale.current = scales;
+  currentViewOptions.current = options;
   xvalues = [];
   return visualizer;
 };

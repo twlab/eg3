@@ -7,6 +7,7 @@ import Feature from "../models/Feature";
 import ChromosomeInterval from "../models/ChromosomeInterval";
 import NavigationContext from "../models/NavigationContext";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
+import BigSourceWorker from "./BigSourceWorker";
 function objToInstanceAlign(alignment: { [key: string]: any }) {
   let visRegionFeatures: Feature[] = [];
 
@@ -238,14 +239,13 @@ async function getRemoteData(regionData: any, trackType: string) {
         regionData.trackModel.url,
         indexUrl
       );
-      console.log("YEE");
     } else if (trackType === "vcf") {
       cachedFetchInstance[regionData.trackModel.url] = new VcfSource(
         regionData.trackModel.url,
         indexUrl
       );
     } else if (trackType === "bigbed") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
         regionData.trackModel.url
       );
     } else if (trackType === "big") {
@@ -289,7 +289,7 @@ async function getRemoteData(regionData: any, trackType: string) {
       ) {
         return [];
       }
-      if (needsBasesPerPixel || trackType === "bigbed") {
+      if (trackType === "bigbed") {
         return fetchInstance
           .getData(
             regionData.nav,
@@ -329,14 +329,12 @@ async function getRemoteData(regionData: any, trackType: string) {
             return data;
           })
           .catch((error) => {
-            console.log("YEE");
             fetchInstance = null;
             throw error;
           });
       }
     }
   } catch (error) {
-    console.log("YEE");
     fetchInstance = null;
     throw error;
   }

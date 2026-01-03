@@ -66,15 +66,13 @@ interface DynseqTrackProps {
   genomeConfig: any;
   xvaluesData: any;
   dataIdx: number;
+  initialLoad: boolean;
 }
 
 class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
-  xToValue: Array<any> | null = null;
-  xToValue2: Array<any> | null = null;
   allValues: Array<any> = [];
   drawHeights: Array<any> = [];
   scales: any = null;
-  hasReverse: boolean = false;
 
   constructor(props: DynseqTrackProps) {
     super(props);
@@ -182,29 +180,35 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       viewWindow,
     } = this.props;
     const { height } = options;
+    let xToValue: Array<any>;
+    let xToValue2: Array<any>;
+    let hasReverse: boolean;
+    let hasForward: boolean;
     if (!xvaluesData) {
       const aggregator = new NumericalAggregator();
-      [this.xToValue, this.xToValue2, this.hasReverse] =
-        aggregator.xToValueMaker(data, viewRegion, width, options);
+      [xToValue, xToValue2, hasReverse, hasForward] = aggregator.xToValueMaker(
+        data,
+        viewRegion,
+        width,
+        options
+      );
     } else {
-      [this.xToValue, this.xToValue2, this.hasReverse] = xvaluesData;
+      [xToValue, xToValue2, hasReverse, hasForward] = xvaluesData;
     }
-    this.scales = this.computeScales(this.xToValue!, this.xToValue2!, height);
+    this.scales = this.computeScales(xToValue, xToValue2, height);
 
-    this.drawHeights = this.xToValue!.map(
-      (x) => this.scales.valueToHeight(x) || 0
-    );
-    this.allValues = this.xToValue!.map((x) => x || 0);
+    this.drawHeights = xToValue.map((x) => this.scales.valueToHeight(x) || 0);
+    this.allValues = xToValue.map((x) => x || 0);
 
-    if (this.xToValue2!.length > 0) {
-      const negHeights = this.xToValue2!.map(
+    if (xToValue2.length > 0) {
+      const negHeights = xToValue2.map(
         (x) => this.scales.valueToHeight(x) || 0
       );
       this.drawHeights = this.drawHeights.map(
         (num, idx) => num + negHeights[idx]
       );
       this.allValues = this.allValues.map(
-        (num, idx) => num + (this.xToValue2![idx] || 0)
+        (num, idx) => num + (xToValue2[idx] || 0)
       );
     }
 
@@ -235,8 +239,8 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
               }}
             >
               <HoverToolTip
-                data={this.xToValue}
-                data2={this.xToValue2}
+                data={xToValue}
+                data2={xToValue2}
                 windowWidth={width}
                 trackType={"numerical"}
                 trackModel={trackModel}
@@ -275,7 +279,7 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       return (
         <NumericalTrack
           {...this.props}
-          xvaluesData={[this.xToValue, this.xToValue2, this.hasReverse]}
+          xvaluesData={[xToValue, xToValue2, hasReverse, hasForward]}
         />
       );
     }

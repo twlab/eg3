@@ -185,19 +185,29 @@ export class FeatureAggregator {
     const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
     for (let x = 0; x < width; x += windowSize) {
+      // Fill the array with empty arrays
+      // if (x < width) {
       map[x] = [];
+      // }
     }
     const placer = new FeaturePlacer();
-    placer.placeFeatures({
+    const placement = placer.placeFeatures({
       features,
       viewRegion,
       width,
-      useCenter: true, // BOXPLOT always uses center
-      mode: PlacementMode.BOXPLOT,
-      windowSize,
-      xToWindowMap: map,
+      useCenter: true,
+      mode: PlacementMode.NUMERICAL,
     });
 
+    for (const placedFeature of placement.placementsForward) {
+      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
+      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+      for (let x = startX; x <= endX; x++) {
+        if (map.hasOwnProperty(x)) {
+          map[x].push(placedFeature.feature);
+        }
+      }
+    }
     return map;
   }
 }
