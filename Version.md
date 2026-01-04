@@ -1,5 +1,15 @@
 # Version history
 
+## 59.0.0
+
+- fixed rough mode genome alignment
+- fixed sparse numerical display, now showing full view
+- fixed feature placer, now correctly converting from genomic loci to xspan
+- added better error checking for fetch
+- rechecked all tracks for bugs with changes to feature placer
+- readjusted color config for genomealign rough mode
+- optimized and refactor trackmanager
+
 ## 58.0.5
 
 - fixed critical bug where genome that querys with genomealign fetches too much data, increasing performance

@@ -815,6 +815,7 @@ export class MultiAlignmentViewCalculator {
     drawModel: LinearDrawingModel
   ) {
     const xSpans: Array<any> = [];
+
     if (drawReverse) {
       // place segments from right to left if drawReverse
       for (const locus of internalLoci) {

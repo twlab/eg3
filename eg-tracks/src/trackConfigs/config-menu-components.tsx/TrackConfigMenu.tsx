@@ -12,7 +12,6 @@ import OutsideClickDetector from "../../components/GenomeView/TrackComponents/co
 import ReactDOM from "react-dom";
 
 function ConfigMenuComponent(props: any) {
-  console.log(props);
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
   // Use mouse coordinates for positioning

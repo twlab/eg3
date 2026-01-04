@@ -154,7 +154,6 @@ export class FeaturePlacer {
         ? item.dataCache
         : [item];
       if (!Array.isArray(featureArray)) {
-        console.log("featureArray is not array:", featureArray);
         continue;
       }
       for (const feature of featureArray) {
@@ -291,6 +290,7 @@ export class FeaturePlacer {
 
     // We have a base number, but it could be the end or the beginning of the context locus.
     let contextLocusStart;
+
     if (isReverse) {
       // placedBase is the end base number of the context locus.  Convert to the start.
       contextLocusStart = placedBase - contextLocation.getLength() + 1;

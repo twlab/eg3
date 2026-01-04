@@ -1,6 +1,7 @@
 import {
   createRef,
   memo,
+  use,
   useCallback,
   useEffect,
   useRef,
@@ -107,7 +108,9 @@ export function objToInstanceAlign(alignment: { [key: string]: any }) {
       feature.locus.start,
       feature.locus.end
     );
-    visRegionFeatures.push(new Feature(feature.name, newChr));
+    visRegionFeatures.push(
+      new Feature(feature.name, newChr, feature.strand, feature.value)
+    );
   }
 
   let visRegionNavContext = new NavigationContext(
@@ -2166,7 +2169,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // fetchRes.trackType in twoDataTypeTracks
         //   ? result
         //   :
-        formatDataByType(result, fetchRes.trackType);
+        formatDataByType(
+          result,
+          fetchRes.trackType,
+          !trackFetchedDataCache.current[`${fetchRes.id}`].usePrimaryNav &&
+            !useFineModeNav.current
+        );
       if ("Error" in formattedData) {
         trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
           formattedData;

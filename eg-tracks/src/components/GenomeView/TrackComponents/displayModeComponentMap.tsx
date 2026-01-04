@@ -723,9 +723,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType,
       trackState.viewWindow
     );
-    if (trackModel.type === "snp") {
-      console.log(placeFeatureData, trackState, getGenePadding, formattedData);
-    }
+
     // if (configOptions.forceSvg) {
     //   placeFeatureData.placements = placeFeatureData.placements.filter(
     //     (feature) => {
@@ -1887,7 +1885,6 @@ function formatBigBedData(genesArr: any[]) {
 
 function formatSnpData(genesArr: any[]) {
   const formattedData = genesArr.map((record) => new Snp(record));
-  console.log(formattedData);
   return formattedData;
 }
 function formatCategoricalData(genesArr: any[]) {
@@ -2144,7 +2141,7 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   longrange: formatLongRange,
   // Add additional type-function mappings here
 };
-export function formatDataByType(genesArr: any[], type: string) {
+export function formatDataByType(genesArr: any[], type: string, reverse) {
   // Check if genesArr is falsy
   if (!genesArr) {
     return { error: "No data available" };
@@ -2162,6 +2159,7 @@ export function formatDataByType(genesArr: any[], type: string) {
     }
   }
   const formatter = formatFunctions[type];
+
   if (formatter) {
     return formatter(genesArr);
   } else {

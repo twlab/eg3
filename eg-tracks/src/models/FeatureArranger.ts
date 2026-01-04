@@ -64,6 +64,9 @@ export class FeatureArranger {
     // } else if (sortItems === SortItemsOptions.DESC) {
     //   groups.sort((a, b) => b.feature.score - a.feature.score);
     // }
+
+    groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
+
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
     for (const group of groups) {

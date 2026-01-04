@@ -160,7 +160,6 @@ export class GroupedTrackManager {
                       trackData[tid].configOptions
                     )[0]
                 );
-                console.log(xvalues);
               } else {
                 xvalues = this.aggregator.xToValueMaker(
                   data,

@@ -51,7 +51,7 @@ class LocalBigSource {
   async getData(loci, basesPerPixel) {
     const bigWigObj = await this.bigWigPromise;
     const zoomLevel = this._getMatchingZoomLevel(bigWigObj, basesPerPixel);
-    console.log(zoomLevel, basesPerPixel);
+
     let promises = loci.map((locus) =>
       this._getDataForChromosome(locus, bigWigObj, zoomLevel)
     );

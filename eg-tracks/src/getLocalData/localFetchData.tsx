@@ -110,13 +110,6 @@ async function getLocalData(regionData: any, trackType: string) {
   let fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
 
   if (trackType in { bigbed: "" }) {
-    console.log(
-      fetchInstance.getData(
-        regionData.nav,
-        regionData.basesPerPixel,
-        regionData.trackModel.options
-      )
-    );
     return await fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,

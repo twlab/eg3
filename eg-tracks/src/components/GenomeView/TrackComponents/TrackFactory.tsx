@@ -98,9 +98,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     cacheDataIdx,
     xvalues = null
   ) {
-    if (trackModel.type === "snp") {
-      console.log(genesArr);
-    }
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
     const res = getDisplayModeFunction({
