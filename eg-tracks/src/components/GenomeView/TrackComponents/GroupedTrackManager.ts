@@ -64,11 +64,6 @@ export class GroupedTrackManager {
         : [];
       return xToRecords.map(MethylCRecord.aggregateByStrand);
     };
-    this.aggregateFeaturesMatplot = (data, viewRegion, width, aggregatorId) => {
-      const aggregator = new FeatureAggregator();
-      const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
-      return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
-    };
   }
 
   getGroupScale(
@@ -156,14 +151,16 @@ export class GroupedTrackManager {
                   width
                 );
               } else if (tracks[i].type === "matplot") {
-                xvalues = data.map((d) =>
-                  this.aggregateFeaturesMatplot(
-                    d,
-                    trackData[tid].visRegion,
-                    width,
-                    trackData[tid].configOptions.aggregateMethod
-                  )
+                xvalues = data.map(
+                  (d) =>
+                    this.aggregator.xToValueMaker(
+                      d,
+                      trackData[tid].visRegion,
+                      width,
+                      trackData[tid].configOptions
+                    )[0]
                 );
+                console.log(xvalues);
               } else {
                 xvalues = this.aggregator.xToValueMaker(
                   data,

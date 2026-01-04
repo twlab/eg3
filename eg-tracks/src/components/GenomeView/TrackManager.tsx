@@ -26,7 +26,6 @@ import BamSource from "../../getRemoteData/BamSource";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
-import { TrackState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import TrackRegionController from "./genomeNavigator/TrackRegionController";
 import {
   groupTracksArrMatPlot,
@@ -251,7 +250,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const globalTrackConfig = useRef<{ [key: string]: any }>({
     viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
   });
-  const trackManagerState = useRef<TrackState>({
+  const trackManagerState = useRef<any>({
     bundleId: "",
     customTracksPool: [],
     darkTheme: false,
@@ -867,7 +866,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     } else {
       dataIdx.current = curDataIdx;
-      queueRegionToFetch(curDataIdx);
+      if (
+        globalTrackState.current.trackStates[curDataIdx]?.trackState?.visData
+      ) {
+        queueRegionToFetch(curDataIdx);
+      }
     }
   }
 
@@ -1605,6 +1608,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createGenomeAlignOnMessage = async (
     event: MessageEvent | { [key: string]: any }
   ) => {
+    if (!event.data.navData) {
+      console.log("EEY");
+    }
+    console.log(event.data);
     const regionDrawIdx = event.data.navData.trackDataIdx;
 
     const curTrackState = {
@@ -1755,9 +1762,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const isGenomeAlignTrack = curTrackCache.trackType === "genomealign";
 
           const dataCacheKeyMissing =
-            !("dataCache" in curTrackCache[idx]) ||
-            isGenomeAlignTrack ||
-            !curTrackCache[idx]["dataCache"] === null;
+            !("dataCache" in curTrackCache[idx]) || isGenomeAlignTrack;
 
           if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
             needToFetchGenAlign = true;
@@ -1858,11 +1863,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const regionLoci = genomeFeatureSegment.map((item, _index) =>
           item.getLocus()
         );
-
+        if (!curTrackState.visData) {
+          console.log(viewWindowConfigChange?.current, curTrackState, {
+            ...globalTrackState.current.trackStates,
+          });
+        }
         enqueueGenomeAlignMessage({
           trackToFetch: genomeAlignTracks,
-          visData:
-            globalTrackState.current.trackStates[curIdx].trackState.visData,
+          visData: curTrackState.visData,
           genomicLoci: curTrackState.regionLoci,
           viewWindowGenomicLoci: regionLoci,
           primaryGenName: genomeConfig.genome.getName(),
@@ -2271,6 +2279,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         toolTitle
       );
     } else if (String(toolTitle) in zoomFactors) {
+      console.log("ZOOM FACTOR TOOL");
       let useDisplayFunction = new DisplayedRegionModel(
         genomeConfig.navContext,
         bpX.current,
@@ -3087,7 +3096,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         let combinedData: any = [];
         let noData = false;
-        if (!("xvalues" in cacheTrackData[dataIdx])) {
+        if (!cacheTrackData?.[dataIdx]?.["xvalues"]) {
           let currIdx = dataIdx + 1;
 
           for (let i = 0; i < 3; i++) {
@@ -3585,6 +3594,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   viewWindowConfigData.current.dataIdx
                 ].trackState
               : "";
+          if (!trackState) {
+            console.log(viewWindowConfigChange?.current);
+          }
           for (const key in trackFetchedDataCache.current) {
             const trackCache = trackFetchedDataCache.current[key];
             if (trackCache.trackType === "genomealign") {
@@ -3630,7 +3642,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             trackDataIdx: viewWindowConfigData.current.dataIdx,
             missingIdx: viewWindowConfigData.current.dataIdx,
           });
-
+          if (!trackState.visData) {
+            console.log(viewWindowConfigChange?.current, trackState.visData);
+          }
           enqueueGenomeAlignMessage({
             trackToFetch: genomeAlignTracks,
             visData: trackState.visData

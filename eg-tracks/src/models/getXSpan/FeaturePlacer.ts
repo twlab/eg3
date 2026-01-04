@@ -142,7 +142,7 @@ export class FeaturePlacer {
 
     // used to store genome that we have already seen
     const seenLoci = new Set<string>();
-    console.log(drawModel);
+
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
@@ -153,7 +153,10 @@ export class FeaturePlacer {
         : item && item.dataCache
         ? item.dataCache
         : [item];
-
+      if (!Array.isArray(featureArray)) {
+        console.log("featureArray is not array:", featureArray);
+        continue;
+      }
       for (const feature of featureArray) {
         if (!feature) {
           continue;
@@ -162,7 +165,6 @@ export class FeaturePlacer {
           mode === PlacementMode.ANNOTATION &&
           drawModel.basesToXWidth(feature.getLength()) < hiddenPixels
         ) {
-          console.log(drawModel.basesToXWidth(feature.getLength()));
           numHidden++;
           continue;
         }

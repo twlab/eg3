@@ -79,7 +79,7 @@ export const trackFetchFunction: { [key: string]: any } = {
             `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
             error
           );
-          return [];
+          throw error;
         }
       });
 
@@ -112,7 +112,7 @@ export const trackFetchFunction: { [key: string]: any } = {
     try {
       const fetchPromises = regionData.nav.map(async (region: any) => {
         if (region.end - region.start > 30000) {
-          return [];
+          throw new Error("Region is higher then 30000");
         }
 
         const url = `${api}/${region.chr.substr(3)}:${region.start}-${
@@ -136,12 +136,12 @@ export const trackFetchFunction: { [key: string]: any } = {
             `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
             error
           );
-          return [];
+          throw error;
         }
       });
 
       const results = await Promise.all(fetchPromises);
-      return results;
+      return results.flat();
     } catch (error) {
       console.error("Error in snpFetch:", error);
       throw error;
@@ -297,7 +297,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })
@@ -313,7 +313,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
             return data;
           })
           .catch((error) => {
@@ -324,7 +324,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         return fetchInstance
           .getData(regionData.nav, regionData.trackModel.options)
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })

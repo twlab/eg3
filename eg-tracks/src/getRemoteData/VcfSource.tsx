@@ -78,21 +78,22 @@ class VcfSource {
     } catch (error) {
       console.error("Error fetching VCF data, recreating instance:", error);
 
-      try {
-        if (typeof window !== "undefined" && "caches" in window) {
-          const cacheNames = await caches.keys();
-          await Promise.all(
-            cacheNames.map((cacheName) => caches.delete(cacheName))
-          );
-        }
+      // try {
+      //   if (typeof window !== "undefined" && "caches" in window) {
+      //     const cacheNames = await caches.keys();
+      //     await Promise.all(
+      //       cacheNames.map((cacheName) => caches.delete(cacheName))
+      //     );
+      //   }
 
-        // recreate the fetch instance and retry once, because it might be a disk cache issue
-        this.recreateVcfInstance();
+      //   // recreate the fetch instance and retry once, because it might be a disk cache issue
+      //   this.recreateVcfInstance();
 
-        return await this.fetchSource(region, options);
-      } catch (error) {
-        throw error;
-      }
+      //   return await this.fetchSource(region, options);
+      // } catch (error) {
+      //   throw error;
+      // }
+      throw error;
     }
   }
 

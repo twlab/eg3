@@ -723,7 +723,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType,
       trackState.viewWindow
     );
-
+    if (trackModel.type === "snp") {
+      console.log(placeFeatureData, trackState, getGenePadding, formattedData);
+    }
     // if (configOptions.forceSvg) {
     //   placeFeatureData.placements = placeFeatureData.placements.filter(
     //     (feature) => {
@@ -1589,7 +1591,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               ? errorInfo["error"]
               : "Something went wrong"}{" "}
           </span>
-          <span>Refresh page or click track to try again.</span>
+          <span>! Refresh page or click track to try again.</span>
           <span
             style={{
               marginLeft: "4px",
@@ -1884,7 +1886,9 @@ function formatBigBedData(genesArr: any[]) {
 }
 
 function formatSnpData(genesArr: any[]) {
-  return genesArr.map((record) => new Snp(record));
+  const formattedData = genesArr.map((record) => new Snp(record));
+  console.log(formattedData);
+  return formattedData;
 }
 function formatCategoricalData(genesArr: any[]) {
   const formattedData = genesArr.map(
