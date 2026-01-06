@@ -8,19 +8,19 @@ import ChromosomeInterval from "../../../../models/ChromosomeInterval";
  */
 
 export interface Variant {
-    ALT: string[];
-    REF: string;
-    CHROM: string;
-    POS: number;
-    FILTER: any;
-    ID: any;
-    INFO: any;
-    QUAL: number;
-    SAMPLES: any;
+  ALT: string[];
+  REF: string;
+  CHROM: string;
+  POS: number;
+  FILTER: any;
+  ID: any;
+  INFO: any;
+  QUAL: number;
+  SAMPLES: any;
 }
 
 class Vcf extends Feature {
-    /*
+  /*
      Variant
         ALT: ["C"]
         CHROM: "chr7"
@@ -54,23 +54,28 @@ class Vcf extends Feature {
      * Constructs a new Vcf, given a variant object from @gmod/vcf
      *
      */
-    // ref: string;
-    // alt: any[];
-    // quality: number;
-    // info: any;
-    // samples?: any;
-    variant: Variant;
-    constructor(variant: any) {
-        const locus = new ChromosomeInterval(variant.CHROM, variant.POS - 1, variant.POS - 1 + variant.REF.length);
-        super("", locus);
-        // super(variant.ID ? variant.ID : "", locus);
-        // this.info = variant.INFO;
-        // this.ref = variant.REF;
-        // this.alt = variant.ALT;
-        // this.quality = variant.QUAL;
-        // this.samples = variant.SAMPLES;
-        this.variant = variant;
-    }
+  // ref: string;
+  // alt: any[];
+  // quality: number;
+  // info: any;
+  // samples?: any;
+  variant: Variant;
+  samples: any;
+  constructor(variant: any) {
+    const locus = new ChromosomeInterval(
+      variant.CHROM,
+      variant.POS - 1,
+      variant.POS - 1 + variant.REF.length
+    );
+    super("", locus);
+    // super(variant.ID ? variant.ID : "", locus);
+    // this.info = variant.INFO;
+    // this.ref = variant.REF;
+    // this.alt = variant.ALT;
+    // this.quality = variant.QUAL;
+    this.samples = variant.SAMPLES;
+    this.variant = variant;
+  }
 }
 
 export default Vcf;

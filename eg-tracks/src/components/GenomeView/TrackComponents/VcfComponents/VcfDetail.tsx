@@ -1,9 +1,8 @@
-import PropTypes from "prop-types";
 import React from "react";
 import _ from "lodash";
 import { CopyToClip } from "../commonComponents/CopyToClipboard";
 import Vcf from "./Vcf";
-
+import "../commonComponents/HoverToolTips/Tooltip.css";
 const SAMPLE_ROWS_THRESHOLD = 10;
 
 /**
@@ -48,13 +47,12 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
         ));
       }
     }
-    let sampleKeys;
-    if (vcf.variant.SAMPLES) {
-      sampleKeys = Object.keys(vcf.variant.SAMPLES);
-      sampleKeys
-        .slice(0, SAMPLE_ROWS_THRESHOLD)
-        .forEach((k) => (trimmed[k] = vcf.variant.SAMPLES[k]));
-    }
+
+    const sampleKeys = Object.keys(vcf.variant.SAMPLES);
+    sampleKeys
+      .slice(0, SAMPLE_ROWS_THRESHOLD)
+      .forEach((k) => (trimmed[k] = vcf.variant.SAMPLES[k]));
+
     return (
       <div>
         {vcfId ? (

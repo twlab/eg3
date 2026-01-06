@@ -29,29 +29,6 @@ class VcfSource {
   }
 
   /**
-   * Recreates the VCF instance to clear any cached data
-   */
-  private recreateVcfInstance() {
-    let filehandle, tbiFilehandle;
-    if (Array.isArray(this.url)) {
-      filehandle = new BlobFile(
-        this.url.filter((f) => !f.name.endsWith(".tbi"))[0]
-      );
-      tbiFilehandle = new BlobFile(
-        this.url.filter((f) => f.name.endsWith(".tbi"))[0]
-      );
-    } else {
-      filehandle = new RemoteFile(this.url);
-      tbiFilehandle = new RemoteFile(
-        this.indexUrl ? this.indexUrl : this.url + ".tbi"
-      );
-    }
-    this.vcf = new TabixIndexedFile({ filehandle, tbiFilehandle });
-    this.header = null;
-    this.parser = null;
-  }
-
-  /**
    * Fetches data from VCF file for the given regions
    * @param {ChromosomeInterval[]} region - locations for which to fetch data
    * @param {any} options - fetch options including ensemblStyle
@@ -69,6 +46,7 @@ class VcfSource {
     );
     const dataForEachSegment = await Promise.all(promises);
     const flattened = _.flatten(dataForEachSegment);
+
     return flattened;
   }
 
@@ -108,15 +86,27 @@ class VcfSource {
     }
     //vcf is 1 based
     // -1 compensation happened in Vcf feature constructor
-    await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) =>
-      variants.push(this.parser.parseLine(line))
-    );
+    await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) => {
+      const parsed = this.parser.parseLine(line);
+      // Convert Variant class instance to plain object to preserve all properties including SAMPLES
+      const plainVariant = {
+        CHROM: parsed.CHROM,
+        POS: parsed.POS,
+        ID: parsed.ID,
+        REF: parsed.REF,
+        ALT: parsed.ALT,
+        QUAL: parsed.QUAL,
+        FILTER: parsed.FILTER,
+        INFO: parsed.INFO,
+        SAMPLES: parsed.SAMPLES,
+      };
+      variants.push(plainVariant);
+    });
     if (options && options.ensemblStyle) {
       for (let variant of variants) {
         variant.CHROM = locus.chr;
       }
     }
-    // console.log(variants);
     return variants;
   }
 }
