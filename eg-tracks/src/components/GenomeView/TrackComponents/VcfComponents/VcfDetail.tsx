@@ -68,11 +68,15 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
             <tbody>
               <tr>
                 <th>REF</th>
-                <td>{vcf.variant.REF}</td>
+                <td style={{ wordBreak: "break-all", maxWidth: "300px" }}>
+                  {vcf.variant.REF}
+                </td>
               </tr>
               <tr>
                 <th>ALT</th>
-                <td>{vcf.variant.ALT.join(", ")}</td>
+                <td style={{ wordBreak: "break-all", maxWidth: "300px" }}>
+                  {vcf.variant.ALT.join(", ")}
+                </td>
               </tr>
               <tr>
                 <th>QUAL</th>
