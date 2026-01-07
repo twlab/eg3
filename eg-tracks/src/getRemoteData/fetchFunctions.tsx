@@ -244,17 +244,12 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       (items) => items && items.type !== "genomealign"
     );
 
-    // No await here, just return the promise
     return Promise.all(
       leftOverTrackModels.map(async (item) => {
         const trackType = item?.type || item?.metadata["Track type"];
         const id = item.id;
 
-        if (
-          (item.metadata.genome &&
-            !(item.metadata.genome in genomicFetchCoord)) ||
-          !(item.type in componentMap)
-        ) {
+        if (!(item.type in componentMap)) {
           fetchResults.push({
             name: trackType,
             id: id,
@@ -262,6 +257,20 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             trackModel: item,
             result: {
               error: "This track type is currently not supported. ",
+              Error: "UnsupportedTrack",
+            },
+          });
+        } else if (
+          item.metadata.genome &&
+          !(item.metadata.genome in genomicFetchCoord)
+        ) {
+          fetchResults.push({
+            name: trackType,
+            id: id,
+            metadata: item.metadata,
+            trackModel: item,
+            result: {
+              error: `genomealign track with query genome "${item.metadata.genome}" is not found`,
               Error: "UnsupportedTrack",
             },
           });
@@ -348,11 +357,25 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       const { genome } = trackModel.metadata;
 
       if (genome && genome !== "" && genome !== primaryGenName) {
-        curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
-        visRegion = genomicFetchCoord[genome].queryRegion;
+        if (
+          genomicFetchCoord[genome]?.queryGenomicCoord &&
+          genomicFetchCoord[genome]?.queryRegion
+        ) {
+          curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
+          visRegion = genomicFetchCoord[genome].queryRegion;
+        } else if (
+          trackModel.type === "longrange" ||
+          trackModel.type === "biginteract" ||
+          trackModel.type === "hic"
+        ) {
+          curFetchNav = regionExpandLoci;
+        } else {
+          curFetchNav = genomicLoci;
+        }
       } else if (
         trackModel.type === "longrange" ||
-        trackModel.type === "biginteract"
+        trackModel.type === "biginteract" ||
+        trackModel.type === "hic"
       ) {
         curFetchNav = regionExpandLoci;
       } else {

@@ -97,6 +97,7 @@ export interface ITrackModel {
   id: number | string;
   isSelected: boolean;
   tracks?: ITrackModel[];
+  changeConfigInitial?: boolean;
 }
 
 export interface IHighlightInterval {

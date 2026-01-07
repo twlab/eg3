@@ -48,6 +48,7 @@ interface ITrackModel {
   isSelected?: any;
   tracks?: any;
   waitToUpdate?: boolean;
+  changeConfigInitial?: boolean;
 }
 
 /**
@@ -85,6 +86,7 @@ export class TrackModel {
   legendWidth?: any;
   details?: any;
   waitToUpdate: boolean = false;
+  changeConfigInitial: boolean = false;
   constructor(plainObject: ITrackModel) {
     const data = {
       ...plainObject,
@@ -120,6 +122,7 @@ export class TrackModel {
     this.apiConfig = this.apiConfig || {};
     this.queryEndpoint = this.queryEndpoint || {};
     this.waitToUpdate = this.waitToUpdate;
+    this.changeConfigInitial = this.changeConfigInitial;
     if (plainObject.querygenome) {
       // only set if there is value
       this.querygenome = plainObject.querygenome;
@@ -158,7 +161,7 @@ export class TrackModel {
    * @return {string} the display label of the track
    */
   getDisplayLabel(): string {
-    return this.options.label || "(unnamed track)";
+    return (this.options && this.options.label) || "(unnamed track)";
   }
 
   /**
@@ -227,6 +230,9 @@ export class TrackModel {
    */
   cloneAndSetOption(name: string, optionValue: any): TrackModel {
     const clone = this._cloneThisAndProp("options");
+    if (!clone.options) {
+      clone.options = {};
+    }
     clone.options[name] = optionValue;
     return clone;
   }

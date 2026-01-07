@@ -4,12 +4,16 @@ interface OutsideClickDetectorProps {
   onOutsideClick?: (event: MouseEvent) => void;
   innerRef?: (node: Node | null) => void;
   children: React.ReactNode;
+  onInnerClick?: (event: MouseEvent) => void;
+  items?: any;
 }
 
 const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
   onOutsideClick,
   innerRef,
   children,
+  onInnerClick,
+  items,
 }) => {
   const nodeRef = useRef<Node | null>(null);
 
@@ -27,6 +31,15 @@ const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
       onOutsideClick
     ) {
       onOutsideClick(event);
+    }
+    if (
+      nodeRef.current &&
+      nodeRef.current.contains(event.target as Node) &&
+      onInnerClick
+    ) {
+      if (items) {
+        onInnerClick(items);
+      }
     }
   };
 

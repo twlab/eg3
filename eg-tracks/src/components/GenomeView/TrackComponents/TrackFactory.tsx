@@ -229,9 +229,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     const primaryVisData =
       trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
     if (cacheTrackData.trackType !== "genomealign") {
-      let visRegion = !cacheTrackData.usePrimaryNav
-        ? trackState.genomicFetchCoord[cacheTrackData.queryGenome].queryRegion
-        : primaryVisData.visRegion;
+      let visRegion =
+        !cacheTrackData.usePrimaryNav &&
+        trackState.genomicFetchCoord[cacheTrackData.queryGenome]?.queryRegion
+          ? trackState.genomicFetchCoord[cacheTrackData.queryGenome].queryRegion
+          : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
     }
     trackState["visWidth"] = primaryVisData.visWidth
@@ -253,12 +255,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         trackIdx: trackIdx,
         usePrimaryNav: cacheTrackData.usePrimaryNav,
       });
-      fetchError.current = cacheTrackData["Error"]
-        ? cacheTrackData["Error"]
-        : null;
+
       initTrackStart.current = false;
     }
 
+    fetchError.current = cacheTrackData["Error"]
+      ? cacheTrackData["Error"]
+      : null;
     if (fetchError.current) {
       trackState["recreate"] = false;
       createSVGOrCanvas(trackState, [], dataIdx, null);
@@ -308,6 +311,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (viewWindow) {
         trackState["viewWindow"] = viewWindow;
       }
+
       if (combinedData) {
         createSVGOrCanvas(
           trackState,

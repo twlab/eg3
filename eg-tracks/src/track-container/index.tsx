@@ -68,6 +68,7 @@ export function TrackContainerRepresentable({
       isSelected: track.isSelected,
       fileObj: track.fileObj,
       files: track.files,
+      changeConfigInitial: track.changeConfigInitial,
     }),
     []
   );
@@ -90,6 +91,7 @@ export function TrackContainerRepresentable({
         isSelected: track.isSelected,
         fileObj: track.fileObj,
         files: track.files,
+        changeConfigInitial: track.changeConfigInitial,
       });
     };
 
@@ -111,6 +113,7 @@ export function TrackContainerRepresentable({
         cache.delete(key);
       }
     }
+
     return result;
   }, [tracks]);
 

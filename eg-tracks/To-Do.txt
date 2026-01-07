@@ -196,7 +196,7 @@ finished hic and bam working, and error for normal tracks
 2. error for hic and bam, genomealign
 3. check boxplot, bigbed
 
-4. fix when queryGenome but no genomealign track with query
+4. fix when queryGenome but no genomealign track with query  (working)
 5. outsideclick close tab
 6. tracklegend font color
 7. drag button stop drag 
