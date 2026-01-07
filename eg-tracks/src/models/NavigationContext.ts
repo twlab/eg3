@@ -183,7 +183,9 @@ class NavigationContext {
     const index = _.sortedLastIndex(this._sortedFeatureStarts, base) - 1;
     const feature = this._features[index];
     const coordinate = base - this._sortedFeatureStarts[index];
-    return new FeatureSegment(feature, coordinate, coordinate + 1);
+    return this._flipIfReverseStrand(
+      new FeatureSegment(feature, coordinate, coordinate + 1)
+    );
   }
 
   /**

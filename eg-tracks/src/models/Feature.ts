@@ -123,6 +123,11 @@ export class Feature {
    * @return {OpenInterval[]} coordinates in the navigation context
    */
   computeNavContextCoordinates(navContext: NavigationContext) {
+    console.log(
+      this.getLocus(),
+      navContext,
+      navContext.convertGenomeIntervalToBases(this.getLocus())
+    );
     return navContext.convertGenomeIntervalToBases(this.getLocus());
   }
 }

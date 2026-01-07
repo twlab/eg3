@@ -112,7 +112,6 @@ export class FeatureArranger {
       padding,
       sortItems
     );
-
     return {
       placements: results.placementsForward,
       numRowsAssigned,
