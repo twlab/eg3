@@ -5,6 +5,34 @@ import { RemoteFile } from "generic-filehandle";
 import { ensureMaxListLength } from "../models/util";
 // import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
 
+const ensembl: Array<string> = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "X",
+  "Y",
+  "M",
+];
+
 /**
  * A DataSource that gets BedRecords from remote bed files.  Designed to run in webworker context.  Only indexed bed
  * files supported.
@@ -16,6 +44,8 @@ class TabixSource {
   indexUrl?: any;
   dataLimit: number;
   tabix: TabixIndexedFile;
+  private chromNamingCache: boolean | null = null;
+  useEnsemblStyle: null | boolean;
   /**
    * Prepares to fetch data from a bed file located at the input url.  Assumes the index is located at the same url,
    * plus a file extension of ".tbi".  This method will request and store the tabix index from this url immediately.
@@ -30,6 +60,7 @@ class TabixSource {
       filehandle: new RemoteFile(url),
       tbiFilehandle: new RemoteFile(this.indexUrl),
     });
+    this.useEnsemblStyle = null;
   }
 
   /**
@@ -43,6 +74,33 @@ class TabixSource {
   }
 
   /**
+   * Detects if the Tabix file uses Ensembl
+   * @return {Promise<boolean>} True if Ensembl naming (1, 2, 3...), false if UCSC naming (chr1, chr2, chr3...)
+   */
+  async detectChromosomeNaming() {
+    try {
+      const referenceSequenceNames =
+        await this.tabix.getReferenceSequenceNames();
+
+      const firstChrom = referenceSequenceNames[0];
+
+      if (!firstChrom) {
+        this.chromNamingCache = false; // Default to UCSC naming if no chromosomes found
+        return false;
+      }
+
+      // Check if the first chromosome name is in the Ensembl array
+      this.chromNamingCache = ensembl.includes(firstChrom);
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error(
+        "Error detecting chromosome naming. Check URL and file format."
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Fetches data from Tabix file for the given loci
    * @param {ChromosomeInterval[]} loci - locations for which to fetch data
    * @param {any} options - fetch options including ensemblStyle
@@ -51,10 +109,9 @@ class TabixSource {
   private async fetchSource(loci, options) {
     const promises = loci.map((locus) => {
       // graph container uses this source directly w/o initial track, so options is null
-      let chrom =
-        options && options.ensemblStyle
-          ? locus.chr.replace("chr", "")
-          : locus.chr;
+      let chrom = this.useEnsemblStyle
+        ? locus.chr.replace("chr", "")
+        : locus.chr;
       if (chrom === "M") {
         chrom = "MT";
       }
@@ -62,11 +119,9 @@ class TabixSource {
     });
     const dataForEachLocus = await Promise.all(promises);
 
-    if (options && options.ensemblStyle) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
+    loci.forEach((locus, index) => {
+      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+    });
 
     return _.flatten(dataForEachLocus);
   }
@@ -78,6 +133,10 @@ class TabixSource {
    * @return {Promise<BedRecord[]>} Promise for the data
    */
   getData = async (loci, basesPerPixel, options) => {
+    if (this.useEnsemblStyle === null) {
+      this.useEnsemblStyle = await this.detectChromosomeNaming();
+    }
+
     try {
       return await this.fetchSource(loci, options);
     } catch (error) {
