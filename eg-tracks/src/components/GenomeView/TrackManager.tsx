@@ -1200,6 +1200,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         setConfigMenu(null);
       }
+    } else {
+      const trackId = trackDetails;
+
+      if (!(trackId in selectedTracks.current)) {
+        onTrackUnSelect();
+        onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+      }
     }
   }
   function handleRightClick(e: any, trackDetails: any) {
@@ -1254,7 +1261,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const onTrackUnSelect = useCallback(() => {
     if (Object.keys(selectedTracks.current).length !== 0) {
-      trackManagerState.current.tracks.map((trackModel) => {
+      trackManagerState.current.tracks.forEach((trackModel) => {
         trackModel.isSelected = false;
       });
 
@@ -3596,10 +3603,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
   }, [viewWindowConfigData.current]);
-  function checkOutsideClick() {}
-  function checkInnerClick(trackModel) {
-    // console.log("outside click detected", trackModel);
+  function checkOutsideClick() {
+    onTrackUnSelect();
+    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
+
   // MARK: render________________________________________
   return (
     <div
@@ -3617,219 +3625,218 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           onRegionSelected={onRegionSelected}
         />
       )}
-
-      {showToolBar === true ? (
-        <div
-          style={{
-            backgroundColor: "var(--bg-color)",
-            width: `${windowWidth + 120}px`,
-            marginTop: getPadding() ? getPadding() / 3 : 2,
-            marginBottom: getPadding() ? getPadding() / 3 : 2,
-            display: "flex",
-            flexDirection: windowWidth <= 1080 ? "column" : "row",
-            alignItems: windowWidth <= 1080 ? "stretch" : "center",
-            justifyContent: "end",
-          }}
-        >
+      <OutsideClickDetector onOutsideClick={checkOutsideClick}>
+        {showToolBar === true ? (
           <div
             style={{
+              backgroundColor: "var(--bg-color)",
+              width: `${windowWidth + 120}px`,
+              marginTop: getPadding() ? getPadding() / 3 : 2,
+              marginBottom: getPadding() ? getPadding() / 3 : 2,
               display: "flex",
-              width:
-                windowWidth <= 1080 ? "100%" : getResponsiveWidths().mainWidth,
-              alignItems: "center",
-              justifyContent: windowWidth <= 1080 ? "center" : "end",
-              flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
+              flexDirection: windowWidth <= 1080 ? "column" : "row",
+              alignItems: windowWidth <= 1080 ? "stretch" : "center",
+              justifyContent: "end",
             }}
           >
             <div
               style={{
                 display: "flex",
-                position: "relative",
-                zIndex: 999,
-                marginRight: getPadding() ? getPadding() : 5,
+                width:
+                  windowWidth <= 1080
+                    ? "100%"
+                    : getResponsiveWidths().mainWidth,
+                alignItems: "center",
+                justifyContent: windowWidth <= 1080 ? "center" : "end",
+                flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
               }}
             >
-              <div style={{ position: "relative" }}>
-                {Toolbar.toolbar ? (
-                  <Toolbar.toolbar
-                    highlights={highlights}
-                    onNewRegionSelect={
-                      !onNewRegionSelect ? () => {} : onNewRegionSelect
-                    }
-                    windowWidth={windowWidth}
-                    buttonPadding={getPadding() ? getPadding() / 2 : 3}
-                    gapSize={getGapSize()}
-                    fontSize={Math.max(16, getFontSize())}
-                  />
-                ) : (
-                  ""
-                )}
-              </div>
-            </div>
-            <div className="h-5 border-r border-gray-400" />
-            {userViewRegion && (
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
+                  position: "relative",
+                  zIndex: 999,
+                  marginRight: getPadding() ? getPadding() : 5,
                 }}
               >
-                <TrackRegionController
-                  selectedRegion={userViewRegion}
-                  onRegionSelected={onRegionSelected}
-                  contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                  genomeConfig={genomeConfig}
-                  trackManagerState={trackManagerState}
-                  genomeArr={[]}
-                  genomeIdx={0}
-                  addGlobalState={undefined}
-                  windowWidth={windowWidth}
-                  fontSize={Math.max(16, getFontSize())}
-                  padding={getPadding()}
-                />
+                <div style={{ position: "relative" }}>
+                  {Toolbar.toolbar ? (
+                    <Toolbar.toolbar
+                      highlights={highlights}
+                      onNewRegionSelect={
+                        !onNewRegionSelect ? () => {} : onNewRegionSelect
+                      }
+                      windowWidth={windowWidth}
+                      buttonPadding={getPadding() ? getPadding() / 2 : 3}
+                      gapSize={getGapSize()}
+                      fontSize={Math.max(16, getFontSize())}
+                    />
+                  ) : (
+                    ""
+                  )}
+                </div>
+              </div>
+              <div className="h-5 border-r border-gray-400" />
+              {userViewRegion && (
                 <div
-                  style={{
-                    paddingLeft: getPadding() ? getPadding() : 5,
-                    flexShrink: 0,
-                  }}
-                  className="h-5 border-r border-gray-400"
-                />
-                <div
-                  className="bg tool-element"
                   style={{
                     display: "flex",
-                    paddingLeft: getPadding() ? getPadding() : 5,
-                    paddingRight: getPadding() ? getPadding() : 5,
                     alignItems: "center",
+                    whiteSpace: "nowrap",
                     flexShrink: 0,
                   }}
                 >
-                  <p
+                  <TrackRegionController
+                    selectedRegion={userViewRegion}
+                    onRegionSelected={onRegionSelected}
+                    contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                    genomeConfig={genomeConfig}
+                    trackManagerState={trackManagerState}
+                    genomeArr={[]}
+                    genomeIdx={0}
+                    addGlobalState={undefined}
+                    windowWidth={windowWidth}
+                    fontSize={Math.max(16, getFontSize())}
+                    padding={getPadding()}
+                  />
+                  <div
                     style={{
-                      backgroundColor: "var(cd --bg-color)",
-                      color: "var(--font-color)",
-                      fontSize: `${Math.max(16, getFontSize())}px`,
-                      margin: 0,
-                      whiteSpace: "nowrap",
+                      paddingLeft: getPadding() ? getPadding() : 5,
+                      flexShrink: 0,
+                    }}
+                    className="h-5 border-r border-gray-400"
+                  />
+                  <div
+                    className="bg tool-element"
+                    style={{
+                      display: "flex",
+                      paddingLeft: getPadding() ? getPadding() : 5,
+                      paddingRight: getPadding() ? getPadding() : 5,
+                      alignItems: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    {niceBpCount(
-                      trackManagerState.current.viewRegion.getWidth()
-                    )}{" "}
-                    in {Math.round(windowWidth)}px, 1px equals{" "}
-                    {niceBpCount(basePerPixel.current, true)}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="h-5 border-r border-gray-400" />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-
-              marginTop:
-                windowWidth <= 1080 ? (getPadding() ? getPadding() / 2 : 3) : 0,
-            }}
-          >
-            <MetadataHeader
-              terms={metaSets.terms}
-              onNewTerms={onNewTerms}
-              suggestedMetaSets={metaSets.suggestedMetaSets}
-              onRemoveTerm={onRemoveTerm}
-              windowWidth={windowWidth}
-              fontSize={Math.max(16, getFontSize())}
-              padding={getPadding()}
-            />
-          </div>
-        </div>
-      ) : (
-        ""
-      )}
-
-      {/* ) : (
-          ""
-        )} */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          outline: "1px solid #9AA6B2",
-          width: `${windowWidth + 120}px`,
-          overflowX: "hidden",
-          overflowY: "hidden",
-        }}
-      >
-        <div
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-          ref={block}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            position: "relative",
-            cursor: (() => {
-              switch (tool) {
-                case Tool.Drag:
-                  return "pointer";
-                case Tool.Reorder:
-                  return "ns-resize";
-                case Tool.Highlight:
-                  return "ew-resize";
-                case Tool.Zoom:
-                  return "zoom-in";
-                default:
-                  return "crosshair";
-              }
-            })(),
-          }}
-        >
-          <div ref={horizontalLineRef} className="horizontal-line" />
-          <div ref={verticalLineRef} className="vertical-line" />
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-
-              width: `${windowWidth + 120}px`,
-            }}
-          >
-            {trackComponents ? (
-              <SortableList
-                items={trackComponents}
-                onChange={handleReorder}
-                renderItem={(item) => (
-                  <SortableList.Item
-                    id={item.id}
-                    onMouseDown={(event) => handleShiftSelect(event, item.id)}
-                    onContextMenu={(event) => handleRightClick(event, item)}
-                    selectedTool={selectedTool}
-                  >
-                    <div
-                      key={item.id}
+                    <p
                       style={{
-                        width: `${windowWidth + 120}px`,
-                        position: "relative",
+                        backgroundColor: "var(cd --bg-color)",
+                        color: "var(--font-color)",
+                        fontSize: `${Math.max(16, getFontSize())}px`,
+                        margin: 0,
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
+                      {niceBpCount(
+                        trackManagerState.current.viewRegion.getWidth()
+                      )}{" "}
+                      in {Math.round(windowWidth)}px, 1px equals{" "}
+                      {niceBpCount(basePerPixel.current, true)}
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="h-5 border-r border-gray-400" />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+
+                marginTop:
+                  windowWidth <= 1080
+                    ? getPadding()
+                      ? getPadding() / 2
+                      : 3
+                    : 0,
+              }}
+            >
+              <MetadataHeader
+                terms={metaSets.terms}
+                onNewTerms={onNewTerms}
+                suggestedMetaSets={metaSets.suggestedMetaSets}
+                onRemoveTerm={onRemoveTerm}
+                windowWidth={windowWidth}
+                fontSize={Math.max(16, getFontSize())}
+                padding={getPadding()}
+              />
+            </div>
+          </div>
+        ) : (
+          ""
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            outline: "1px solid #9AA6B2",
+            width: `${windowWidth + 120}px`,
+            overflowX: "hidden",
+            overflowY: "hidden",
+          }}
+        >
+          <div
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            ref={block}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              position: "relative",
+              cursor: (() => {
+                switch (tool) {
+                  case Tool.Drag:
+                    return "pointer";
+                  case Tool.Reorder:
+                    return "ns-resize";
+                  case Tool.Highlight:
+                    return "ew-resize";
+                  case Tool.Zoom:
+                    return "zoom-in";
+                  default:
+                    return "crosshair";
+                }
+              })(),
+            }}
+          >
+            <div ref={horizontalLineRef} className="horizontal-line" />
+            <div ref={verticalLineRef} className="vertical-line" />
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+
+                width: `${windowWidth + 120}px`,
+              }}
+            >
+              {trackComponents ? (
+                <SortableList
+                  items={trackComponents}
+                  onChange={handleReorder}
+                  renderItem={(item) => (
+                    <SortableList.Item
+                      id={item.id}
+                      onMouseDown={(event) => handleShiftSelect(event, item.id)}
+                      onContextMenu={(event) => handleRightClick(event, item)}
+                      selectedTool={selectedTool}
+                    >
+                      <div
+                        key={item.id}
+                        style={{
+                          width: `${windowWidth + 120}px`,
+                          position: "relative",
+                        }}
+                      >
+                        {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
                   track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing err.
                    */}
-                      {item.trackModel.isSelected ? (
-                        <div className="Track-border-container Track-selected-border"></div>
-                      ) : (
-                        <div className="Track-border-container"></div>
-                      )}
-                      <OutsideClickDetector
-                        onOutsideClick={checkOutsideClick}
-                        onInnerClick={checkInnerClick}
-                        items={item.trackModel}
-                      >
+                        {item.trackModel.isSelected ? (
+                          <div className="Track-border-container Track-selected-border"></div>
+                        ) : (
+                          <div className="Track-border-container"></div>
+                        )}
+
                         <item.component
                           id={item.trackModel.id}
                           trackModel={item.trackModel}
@@ -3865,50 +3872,51 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           initialLoad={initialLoad}
                           checkOutsideClick={checkOutsideClick}
                         />
-                      </OutsideClickDetector>
-                    </div>
-                  </SortableList.Item>
-                )}
-              />
-            ) : (
-              ""
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                position: "absolute",
-                width: `${windowWidth}px`,
-                zIndex: 10,
-              }}
-            >
-              {selectedTool &&
-              selectedTool.isSelected &&
-              selectedTool.title !== 1 ? (
-                <SelectableGenomeArea
-                  selectableRegion={userViewRegion}
-                  dragLimits={new OpenInterval(legendWidth, windowWidth + 120)}
-                  onRegionSelected={onRegionSelected}
-                  selectedTool={selectedTool}
-                >
-                  <div
-                    style={{
-                      height: block.current
-                        ? block.current?.getBoundingClientRect().height
-                        : 0,
-                      zIndex: 3,
-                      width: `${windowWidth + 120}px`,
-                    }}
-                  ></div>
-                </SelectableGenomeArea>
+                      </div>
+                    </SortableList.Item>
+                  )}
+                />
               ) : (
                 ""
               )}
+
+              <div
+                style={{
+                  display: "flex",
+                  position: "absolute",
+                  width: `${windowWidth}px`,
+                  zIndex: 10,
+                }}
+              >
+                {selectedTool &&
+                selectedTool.isSelected &&
+                selectedTool.title !== 1 ? (
+                  <SelectableGenomeArea
+                    selectableRegion={userViewRegion}
+                    dragLimits={
+                      new OpenInterval(legendWidth, windowWidth + 120)
+                    }
+                    onRegionSelected={onRegionSelected}
+                    selectedTool={selectedTool}
+                  >
+                    <div
+                      style={{
+                        height: block.current
+                          ? block.current?.getBoundingClientRect().height
+                          : 0,
+                        zIndex: 3,
+                        width: `${windowWidth + 120}px`,
+                      }}
+                    ></div>
+                  </SelectableGenomeArea>
+                ) : (
+                  ""
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
+      </OutsideClickDetector>
       {configMenu ? (
         <div
           style={{

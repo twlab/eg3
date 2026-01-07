@@ -50,8 +50,8 @@ function ConfigMenuComponent(props: any) {
             ref={ref}
             style={{
               position: "absolute",
-              left: Math.abs(left) + 2, // slight offset to avoid default right click menu
-              top: top + 2,
+              left: Math.abs(left), // slight offset to avoid default right click menu
+              top: top,
               color: darkTheme ? "white" : "black",
               zIndex: 1000,
             }}
