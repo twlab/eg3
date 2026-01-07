@@ -54,6 +54,7 @@ import {
   fetchGenomicData,
 } from "../../getRemoteData/fetchFunctions";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
+import { drag } from "d3";
 
 const groupManager = new GroupedTrackManager();
 
@@ -228,6 +229,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   });
   const initialLoad = useRef(true);
   const useFineModeNav = useRef(false);
+  const lastSelectedTool = useRef(tool);
+  const dragOn = useRef(true);
   const prevWindowWidth = useRef<number>(0);
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
@@ -601,6 +604,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
+    if (dragOn.current === false) {
+      return;
+    }
     if (isMouseInsideRef.current) {
       const parentRect = block.current!.getBoundingClientRect();
       const x = e.clientX - parentRect.left;
@@ -2227,8 +2233,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function toolSelect(toolTitle: string | number) {
     const newSelectedTool: { [key: string]: any } = {};
     newSelectedTool["isSelected"] = false;
-
-    if (toolTitle === 4) {
+    if (toolTitle === 0) {
+      dragOn.current = !dragOn.current;
+    } else if (toolTitle === 4) {
       onRegionSelected(
         Math.round(bpX.current - bpRegionSize.current),
         Math.round(bpX.current),
@@ -2784,16 +2791,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!initialLoad.current) {
-      setSelectedTool((prevState) => {
-        if (tool === null || tool === 0) {
-          const newSelectedTool = toolSelect(prevState.title);
+      let tempTool;
 
-          return newSelectedTool;
-        } else if (tool) {
-          const newSelectedTool = toolSelect(tool);
-          return newSelectedTool;
+      if (tool !== null) {
+        tempTool = tool;
+        lastSelectedTool.current = tool;
+
+        setSelectedTool(toolSelect(tempTool));
+      } else {
+        tempTool = lastSelectedTool.current;
+
+        if (tempTool === 0 || (tempTool >= 3 && tempTool <= 11)) {
+          setSelectedTool(toolSelect(tempTool));
         }
-      });
+      }
     }
   }, [tool]);
 
@@ -3785,8 +3796,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               position: "relative",
               cursor: (() => {
                 switch (tool) {
-                  case Tool.Drag:
-                    return "pointer";
                   case Tool.Reorder:
                     return "ns-resize";
                   case Tool.Highlight:
@@ -3794,6 +3803,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   case Tool.Zoom:
                     return "zoom-in";
                   default:
+                    if (dragOn.current) {
+                      return "pointer";
+                    }
                     return "crosshair";
                 }
               })(),
