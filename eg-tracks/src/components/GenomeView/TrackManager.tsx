@@ -1855,8 +1855,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const curTrackCache = trackFetchedDataCache.current[key];
 
           if (
-            (curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
-            curDataIdx !== curIdx
+            ((curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
+              curDataIdx !== curIdx) ||
+            curTrackCache.trackType === "genomealign"
           ) {
             continue;
           }
@@ -3029,6 +3030,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       for (let key in trackFetchedDataCache.current) {
         const cacheTrackData = trackFetchedDataCache.current[key];
+        if (!cacheTrackData.usePrimaryNav) {
+          continue;
+        }
         let curTrackModel;
         let configOptions;
         if (
@@ -3069,7 +3073,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         let combinedData: any = [];
         let noData = false;
-        if (!cacheTrackData?.[dataIdx]?.["xvalues"]) {
+        if (
+          !cacheTrackData?.[dataIdx]?.["xvalues"] &&
+          cacheTrackData.usePrimaryNav
+        ) {
           let currIdx = dataIdx + 1;
 
           for (let i = 0; i < 3; i++) {
@@ -3141,6 +3148,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     ? primaryVisData.visWidth
                     : windowWidth * 3,
                   configOptions,
+                  usePrimaryNav: cacheTrackData.usePrimaryNav,
                 };
               }
             } else {
@@ -3151,6 +3159,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   ? primaryVisData.visWidth
                   : windowWidth * 3,
                 configOptions,
+                usePrimaryNav: cacheTrackData.usePrimaryNav,
               };
             }
           }
@@ -3211,6 +3220,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const filteredTracks = tracks.filter(
         (trackModel) => trackModel.type !== "g3d"
       );
+      for (let i = 0; i < filteredTracks.length; i++) {
+        filteredTracks[i]["changeConfigInitial"] = false;
+      }
       const tracksInView = [...trackComponents.map((item) => item.trackModel)];
       // const tracksRemoved = tracksInView.filter(
       //   (trackInView) =>
@@ -3387,7 +3399,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
-        queueRegionToFetch(dataIdx.current);
+        // queueRegionToFetch(dataIdx.current);
       } else {
         // console.log(
         //   !initialLoad.current &&

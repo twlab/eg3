@@ -134,7 +134,10 @@ export class GroupedTrackManager {
           if (trackData[tid]) {
             const data = trackData[tid].data;
             let xvalues;
-            if (trackFetchedDataCache.current[tid][dataIdx]["xvalues"]) {
+            if (
+              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] &&
+              trackData[tid].usePrimaryNav
+            ) {
               continue;
             } else {
               if (tracks[i].type === "dynseq") {

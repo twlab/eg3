@@ -270,9 +270,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         !(scales.min === currentScale.current?.min))) ||
     scales.zeroLine !== currentScale.current?.zeroLine ||
     dataIdx !== currentViewDataIdx.current ||
-    !_.isEqual(options, currentViewOptions.current)
+    !_.isEqual(options, currentViewOptions.current) ||
+    !options.usePrimaryNav
   ) {
-    // console.log("UPDATEA", viewWindow);
     visualizer = hasReverse ? (
       <React.Fragment>
         {!forceSvg ? (

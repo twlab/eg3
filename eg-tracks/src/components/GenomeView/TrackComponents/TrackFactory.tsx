@@ -258,6 +258,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
       initTrackStart.current = false;
     }
+    configOptions.current["usePrimaryNav"] = cacheTrackData.usePrimaryNav;
 
     fetchError.current = cacheTrackData["Error"]
       ? cacheTrackData["Error"]
