@@ -137,7 +137,6 @@ class BigSourceWorkerGmod {
    * @override
    */
   getData = async (loci, basesPerPixel, options) => {
-    console.log(options);
     if (
       this.useEnsemblStyle === null &&
       options.trackType !== "rmskv2" &&
