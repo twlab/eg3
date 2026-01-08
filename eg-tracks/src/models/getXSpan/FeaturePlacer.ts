@@ -132,9 +132,9 @@ export class FeaturePlacer {
     } = options;
 
     const drawModel = new LinearDrawingModel(viewRegion, width);
-    const viewRegionBounds = viewRegion.getContextCoordinates();
-    const navContext = viewRegion.getNavigationContext();
 
+    const navContext = viewRegion.getNavigationContext();
+    const viewRegionBounds = viewRegion.getContextCoordinates();
     const placementsForward: Array<any> = [];
     const placementsReverse: Array<any> = [];
     // for Annotation, gene can be too small so we dont draw and increment numHidden
@@ -182,6 +182,7 @@ export class FeaturePlacer {
         )) {
           contextLocation = contextLocation.getOverlap(viewRegionBounds);
           if (contextLocation) {
+            feature;
             const xSpan = useCenter
               ? drawModel.baseSpanToXCenter(contextLocation)
               : drawModel.baseSpanToXSpan(contextLocation);
@@ -190,32 +191,39 @@ export class FeaturePlacer {
               navContext,
               contextLocation
             );
-            const placement = {
-              feature,
-              visiblePart,
-              contextLocation,
-              xSpan,
-              isReverse,
-            };
+            let tempPlacementParam;
+            if (mode === PlacementMode.ANNOTATION) {
+              tempPlacementParam = this._combineAdjacent([
+                {
+                  feature,
+                  visiblePart,
+                  contextLocation,
+                  xSpan,
+                  isReverse,
+                },
+              ]);
+            } else {
+              tempPlacementParam = {
+                feature,
+                visiblePart,
+                contextLocation,
+                xSpan,
+                isReverse,
+              };
+            }
 
             if (feature.value === undefined || feature.value >= 0) {
-              placementsForward.push(placement);
+              if (Array.isArray(tempPlacementParam)) {
+                placementsForward.push(...tempPlacementParam);
+              } else {
+                placementsForward.push(tempPlacementParam);
+              }
             } else if (feature.value < 0) {
-              placementsReverse.push(placement);
+              placementsReverse.push(tempPlacementParam);
             }
           }
         }
       }
-    }
-
-    // For ANNOTATION mode, combine adjacent features at the end
-    if (mode === PlacementMode.ANNOTATION) {
-      return {
-        placements: this._combineAdjacent(placementsForward),
-        placementsForward: this._combineAdjacent(placementsForward),
-        placementsReverse: this._combineAdjacent(placementsReverse),
-        numHidden: numHidden,
-      };
     }
 
     return {

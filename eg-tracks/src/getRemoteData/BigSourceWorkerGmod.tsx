@@ -8,14 +8,14 @@ import { RemoteFile } from "generic-filehandle2";
  */
 
 // Create a custom fetch wrapper that prevents cache conflicts
-// const createFetchWithNoCache = () => {
-//   return (input: RequestInfo | URL, options: any = {}) => {
-//     return fetch(input, {
-//       ...options,
-//       cache: "no-store", // Prevent cache conflicts between multiple App instances
-//     });
-//   };
-// };
+const createFetchWithNoCache = () => {
+  return (input: RequestInfo | URL, options: any = {}) => {
+    return fetch(input, {
+      ...options,
+      cache: "no-store", // Prevent cache conflicts between multiple App instances
+    });
+  };
+};
 
 const ensembl: Array<string> = [
   "1",
@@ -66,13 +66,13 @@ class BigSourceWorkerGmod {
   /**
    * Recreates the BigWig instance to clear any cached data
    */
-  // private recreateBigWigInstance() {
-  //   this.bw = new BigWig({
-  //     filehandle: new RemoteFile(this.url, { fetch: createFetchWithNoCache() }),
-  //   });
-  //   this.chromNamingCache = null;
-  //   this.useEnsemblStyle = null;
-  // }
+  private recreateBigWigInstance() {
+    this.bw = new BigWig({
+      filehandle: new RemoteFile(this.url, { fetch: createFetchWithNoCache() }),
+    });
+    this.chromNamingCache = null;
+    this.useEnsemblStyle = null;
+  }
 
   /**
    * Detects if the BigWig file uses Ensembl
@@ -137,30 +137,38 @@ class BigSourceWorkerGmod {
    * @override
    */
   getData = async (loci, basesPerPixel, options) => {
-    if (this.useEnsemblStyle === null) {
+    console.log(options);
+    if (
+      this.useEnsemblStyle === null &&
+      options.trackType !== "rmskv2" &&
+      options.trackType !== "repeatmasker"
+    ) {
       this.useEnsemblStyle = await this.detectChromosomeNaming();
     }
 
     try {
       return await this.fetchSource(loci);
     } catch (error) {
-      throw error;
-      // try {
-      //   if (typeof window !== "undefined" && "caches" in window) {
-      //     const cacheNames = await caches.keys();
-      //     await Promise.all(
-      //       cacheNames.map((cacheName) => caches.delete(cacheName))
-      //     );
-      //   }
-      //   // recreate the fetch instance and retry once, because it might a disk cache issue
-      //   this.recreateBigWigInstance();
-      //   if (this.useEnsemblStyle === null) {
-      //     this.useEnsemblStyle = await this.detectChromosomeNaming();
-      //   }
-      //   return await this.fetchSource(loci);
-      // } catch (error) {
-      //   throw error;
-      // }
+      try {
+        if (typeof window !== "undefined" && "caches" in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames.map((cacheName) => caches.delete(cacheName))
+          );
+        }
+        // recreate the fetch instance and retry once, because it might a disk cache issue
+        this.recreateBigWigInstance();
+        if (
+          this.useEnsemblStyle === null &&
+          options.trackType !== "rmskv2" &&
+          options.trackType !== "repeatmasker"
+        ) {
+          this.useEnsemblStyle = await this.detectChromosomeNaming();
+        }
+        return await this.fetchSource(loci);
+      } catch (error) {
+        throw error;
+      }
     }
   };
 }

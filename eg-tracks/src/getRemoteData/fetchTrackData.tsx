@@ -275,11 +275,7 @@ async function getRemoteData(regionData: any, trackType: string) {
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
   try {
     if (fetchInstance) {
-      const needsBasesPerPixel =
-        ((trackType === "repeat" || trackType === "rmskv2") &&
-          regionData.basesPerPixel <= 1000) ||
-        (trackType === "jaspar" && regionData.basesPerPixel <= 2);
-
+      regionData.trackModel.options["trackType"] = regionData.trackModel.type;
       if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
         return [];
       }
@@ -322,7 +318,11 @@ async function getRemoteData(regionData: any, trackType: string) {
           });
       } else {
         return fetchInstance
-          .getData(regionData.nav, regionData.trackModel.options)
+          .getData(
+            regionData.nav,
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
           .then((data: any) => {
             // cachedFetchInstance[regionData.trackModel.url] = null;
 
