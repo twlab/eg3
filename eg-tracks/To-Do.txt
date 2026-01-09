@@ -202,3 +202,35 @@ finished hic and bam working, and error for normal tracks
 7. drag button stop drag 
 8. copy in toolbar
 9. tracklegendwidth
+
+
+
+error check List:
+
+genome align rough 
+ 1. check for coorrect amount of fetch and render 
+ 2. other track following it every region region
+ 3. add/delete
+ 4. zoom/ change region
+ 5. with normal tracks 
+
+ genome align fine 
+    1. changes properly between zooms
+    2. all tracks follows it 
+    3. check for coorrect amount of fetch and render 
+
+
+trackConfigMenu
+
+1. positions 
+2. changes track correctly
+
+
+tracks to check:
+1. bigbed
+2. vcf
+3. categorical 
+
+
+all Tracks: 
+1. check
