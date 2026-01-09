@@ -47,8 +47,9 @@ function ConfigMenuComponent(props: any) {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      let left = mouseX;
-      let top = mouseY;
+      // Convert page coordinates to viewport coordinates for position: fixed
+      let left = mouseX - window.scrollX;
+      let top = mouseY - window.scrollY;
 
       // Check if menu would overflow right edge
       if (left + menuRect.width > viewportWidth) {
@@ -80,7 +81,7 @@ function ConfigMenuComponent(props: any) {
       style={{
         position: "fixed",
         left: position.left,
-        top: position.top - 100,
+        top: position.top,
         color: darkTheme ? "white" : "black",
         zIndex: 1000,
         pointerEvents: "auto",

@@ -20,6 +20,7 @@ interface HorizontalFragmentProps {
   children?: React.ReactNode;
   rectHeight: number;
   relativeX: number;
+  windowScrollY: number;
 }
 
 class HorizontalFragment extends Component<HorizontalFragmentProps> {
@@ -39,6 +40,7 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
       children,
       rectHeight,
       relativeX,
+      windowScrollY,
       ...otherProps
     } = this.props;
 
@@ -71,24 +73,19 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
       const queryX =
         strandList[xSpanIndex] === strand
           ? queryXSpan.start +
-            ((queryXSpan.end - queryXSpan.start) *
-              (relativeX - targetXSpan.start)) /
-              (targetXSpan.end - targetXSpan.start)
+          ((queryXSpan.end - queryXSpan.start) *
+            (relativeX - targetXSpan.start)) /
+          (targetXSpan.end - targetXSpan.start)
           : queryXSpan.end -
-            ((queryXSpan.end - queryXSpan.start) *
-              (relativeX - targetXSpan.start)) /
-              (targetXSpan.end - targetXSpan.start);
-      console.log(
-        relativeX,
-        queryX,
+          ((queryXSpan.end - queryXSpan.start) *
+            (relativeX - targetXSpan.start)) /
+          (targetXSpan.end - targetXSpan.start);
 
-        viewWindowStart
-      );
       lines = (
         <React.Fragment>
           {
             <HorizontalLine
-              relativeY={LINE_MARGIN}
+              relativeY={LINE_MARGIN + windowScrollY}
               xSpan={targetXSpan}
               viewWindowStart={viewWindowStart}
               color={primaryColor}
@@ -96,19 +93,20 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
               textHeight={10}
             />
           }
+
           {
             <Triangle
               relativeX={0 - 14}
-              relativeY={LINE_MARGIN + LINE_WIDTH + rectHeight}
+              relativeY={LINE_MARGIN + LINE_WIDTH + rectHeight + windowScrollY}
               color={primaryColor}
               direction={"down"}
             />
           }
-          {
+          {// subtrract 14 to center triangle on mouse, because of borderradius = 4  and + 10 to mousePosition to X in hoverToolTip
             <Triangle
               relativeX={queryX - relativeX - 14}
               relativeY={
-                height - rectHeight - LINE_MARGIN - LINE_WIDTH - TRIANGLE_SIZE
+                height - rectHeight - LINE_MARGIN - LINE_WIDTH - TRIANGLE_SIZE + windowScrollY
               }
               color={queryColor}
               direction={"up"}
@@ -116,7 +114,7 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
           }
           {
             <HorizontalLine
-              relativeY={height - LINE_MARGIN - LINE_WIDTH}
+              relativeY={height - LINE_MARGIN + windowScrollY}
               xSpan={queryXSpan}
               viewWindowStart={viewWindowStart}
               color={queryColor}
@@ -135,6 +133,7 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
           width: 225,
           height,
           overflow: "visible",
+          pointerEvents: "none",
         }}
         {...otherProps}
       >
@@ -154,17 +153,19 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
 function HorizontalLine(props) {
   const { relativeY, xSpan, viewWindowStart, color, locus, textHeight } = props;
   const width = xSpan ? xSpan.end - xSpan.start : 0;
-  const locusTextSpan = locus.length * FONT_SIZE;
+
 
   const horizontalLineStyle = {
     top: `${relativeY}px`,
     left: "0px",
     width: `${width}px`,
     height: `${LINE_WIDTH}px`,
-    borderColor: color,
+    color: color,
     willChange: "top",
+    pointerEvents: "none" as const,
   };
   const textStyle = {
+
     marginTop: `${textHeight}px`,
     whiteSpace: "nowrap" as const,
     marginLeft: "0px",
@@ -213,7 +214,8 @@ function Triangle(props) {
   const triangleStyle = {
     top: relativeY,
     left: relativeX,
-    color: "black",
+    color: color,
+    pointerEvents: "none" as const,
   };
   const triangeClass = direction === "up" ? "arrow-up" : "arrow-down";
   return <div className={triangeClass} style={triangleStyle} />;
