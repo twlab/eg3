@@ -381,6 +381,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let trackState = _.cloneDeep(
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
+        trackState["recreate"] = true;
+        console.log("HERE");
         handleTrackDraw({
           cacheTrackData,
           trackState,

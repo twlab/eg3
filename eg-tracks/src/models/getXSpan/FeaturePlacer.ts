@@ -191,39 +191,35 @@ export class FeaturePlacer {
               navContext,
               contextLocation
             );
-            let tempPlacementParam;
-            if (mode === PlacementMode.ANNOTATION) {
-              tempPlacementParam = this._combineAdjacent([
-                {
-                  feature,
-                  visiblePart,
-                  contextLocation,
-                  xSpan,
-                  isReverse,
-                },
-              ]);
-            } else {
-              tempPlacementParam = {
-                feature,
-                visiblePart,
-                contextLocation,
-                xSpan,
-                isReverse,
-              };
-            }
+
+            const placement = {
+              feature,
+              visiblePart,
+              contextLocation,
+              xSpan,
+              isReverse,
+            };
 
             if (feature.value === undefined || feature.value >= 0) {
-              if (Array.isArray(tempPlacementParam)) {
-                placementsForward.push(...tempPlacementParam);
-              } else {
-                placementsForward.push(tempPlacementParam);
-              }
+              placementsForward.push(placement);
             } else if (feature.value < 0) {
-              placementsReverse.push(tempPlacementParam);
+              placementsReverse.push(placement);
             }
           }
         }
       }
+    }
+
+    // Batch combine adjacent features for ANNOTATION mode
+    if (mode === PlacementMode.ANNOTATION) {
+      const groupedForward = this._combineAdjacent(placementsForward);
+      const groupedReverse = this._combineAdjacent(placementsReverse);
+      return {
+        placements: groupedForward,
+        placementsForward: groupedForward,
+        placementsReverse: groupedReverse,
+        numHidden: numHidden,
+      };
     }
 
     return {

@@ -101,14 +101,21 @@ const defaultTracks = [
   //   genome: "hg38",
   //   url: "https://vizhub",
   // }),
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  // }),
+  new TrackModel({
+    name: "test",
+    label: "test",
+    type: "genomealign",
+    querygenome: "HG00099_1",
+    filetype: "genomealign",
+    url: "https://hprc-epigenome.s3.us-east-2.amazonaws.com/samples/HG00097/hap1_vs_hg38.gz",
+  }),
+
+  new TrackModel({
+    type: "categorical",
+    name: "categorical test",
+    url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/CGI/categorical/HG00097.bed.gz",
+    metadata: { genome: "HG00099_1" },
+  }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",

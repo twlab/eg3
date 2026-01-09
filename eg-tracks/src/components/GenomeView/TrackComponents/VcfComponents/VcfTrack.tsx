@@ -174,6 +174,8 @@ class VcfTrack extends React.Component<VcfTrackProps> {
             unit="feature density"
             options={numericalOptions}
             xvaluesData={xvaluesData}
+            dataIdx={dataIdx}
+            initialLoad={initialLoad}
           />
         );
       } else {

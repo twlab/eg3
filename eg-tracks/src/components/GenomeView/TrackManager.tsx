@@ -1141,9 +1141,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
     } else {
+      console.log(newSelected);
       setApplyTrackConfigChange(newSelected);
     }
-
+    console.log(key, value, trackId, "onconfigchange");
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
 
@@ -1212,6 +1213,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (!(trackId in selectedTracks.current)) {
         onTrackUnSelect();
         onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+        setConfigMenu(null);
       }
     }
   }
@@ -1624,7 +1626,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               !cache.usePrimaryNav
             ) {
               // For fine mode or expanded loci, only check current index
-              if (cache[currentDataIdx] && cache[currentDataIdx]["dataCache"]) {
+              if (
+                (cache[currentDataIdx] && cache[currentDataIdx]["dataCache"]) ||
+                !cache.usePrimaryNav
+              ) {
                 cacheKeysWithData[trackToDrawKey] = false;
               }
             } else {
@@ -2080,6 +2085,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             numericalTracksGroup
         ) {
           const groupId = configOptions.group;
+
           if (!completedFetchedRegion.current.groups[`${groupId}`]) {
             completedFetchedRegion.current.groups[`${groupId}`] = {};
           }
@@ -2234,6 +2240,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function toolSelect(toolTitle: string | number) {
     const newSelectedTool: { [key: string]: any } = {};
     newSelectedTool["isSelected"] = false;
+
     if (toolTitle === 0) {
       dragOn.current = !dragOn.current;
     } else if (toolTitle === 4) {
@@ -2271,7 +2278,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else {
       newSelectedTool["title"] = toolTitle;
     }
+
     isToolSelected.current = newSelectedTool.isSelected;
+
     return newSelectedTool;
   }
   // MARK: InitState
@@ -3399,7 +3408,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
-        // queueRegionToFetch(dataIdx.current);
+        queueRegionToFetch(dataIdx.current);
+        onTracksChange(filteredTracks);
       } else {
         // console.log(
         //   !initialLoad.current &&
@@ -3629,6 +3639,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function checkOutsideClick() {
     onTrackUnSelect();
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+    setConfigMenu(null);
   }
 
   // MARK: render________________________________________
@@ -3940,26 +3951,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             </div>
           </div>
         </div>
-      </OutsideClickDetector>
-      {configMenu ? (
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1000,
-            flexDirection: "column",
-
-            backgroundColor: "white",
-          }}
-        >
+        {configMenu ? (
           <ConfigMenuComponent
             key={configMenu.key}
             menuData={configMenu}
             darkTheme={darkTheme}
           />
-        </div>
-      ) : (
-        ""
-      )}
+        ) : null}
+      </OutsideClickDetector>
     </div>
   );
 });

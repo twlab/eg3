@@ -736,6 +736,7 @@ export const getHoverTooltip = {
   genomealignRough: function genomeAlignRoughFetch(dataObj: {
     [key: string]: any;
   }) {
+    console.log(dataObj);
     const RECT_HEIGHT = 15;
     return {
       toolTip: (
@@ -746,7 +747,7 @@ export const getHoverTooltip = {
           queryColor={dataObj.options.queryColor}
           segmentArray={dataObj.data}
           strand={dataObj.data.plotStrand}
-          viewWindowStart={dataObj.width}
+          viewWindowStart={dataObj.data.primaryVisData.viewWindow.start}
           relativeX={dataObj.relativeX}
         />
       ),
@@ -830,7 +831,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     if (trackHoverTooltip) {
       setPosition({
         ...rectPosition,
-        mouseYPos: e.pageY + 10,
+        mouseYPos: trackType === "genomealignRough" ? rect.top : e.pageY + 10,
         mouseXPos: e.pageX + 10,
         toolTip: trackHoverTooltip.toolTip,
         beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
@@ -886,7 +887,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
                 position: "absolute",
                 top: rectPosition.mouseYPos,
                 left: rectPosition.mouseXPos,
-                backgroundColor: "lightBlue",
+
                 borderRadius: 4,
 
                 fontSize: 14,

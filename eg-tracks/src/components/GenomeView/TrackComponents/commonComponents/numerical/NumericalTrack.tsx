@@ -86,9 +86,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  let xvalues = xvaluesData
-    ? xvaluesData
-    : aggregator.xToValueMaker(data, viewRegion, width, options);
+  let xvalues =
+    xvaluesData && options.usePrimaryNav
+      ? xvaluesData
+      : aggregator.xToValueMaker(data, viewRegion, width, options);
 
   let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
 

@@ -181,7 +181,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       return (
         <svg key={svgKey} width={width} height={height}>
           {placements.map(renderAnnotation)}
-          {/* <line
+          <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -196,7 +196,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          /> */}
+          />
         </svg>
       );
     }
@@ -739,7 +739,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let height;
 
     height =
-      trackModel.type === "repeatmasker" || trackModel.type === "rmskv2"
+      trackModel.type === "repeatmasker" ||
+      trackModel.type === "rmskv2" ||
+      trackModel.type === "categorical"
         ? configOptions.height
         : placeFeatureData.numRowsAssigned
         ? getHeight(placeFeatureData.numRowsAssigned)
@@ -842,7 +844,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         }
       }
     }
-
+    console.log(formattedData);
     return (
       <VcfTrack
         viewWindow={
@@ -936,8 +938,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        // isLoading={false}
-        // error={undefined}
         getNumLegend={getNumLegend}
         dataIdx={trackState.dataIdx}
         unit={""}
