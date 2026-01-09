@@ -99,8 +99,8 @@ function ConfigMenuComponent(props: any) {
                 menuData.tracks[0] &&
                 menuData.tracks[0].options &&
                 menuData.tracks[0].options.label
-              ? menuData.tracks[0].options.label
-              : "(unnamed track)"
+                ? menuData.tracks[0].options.label
+                : "(unnamed track)"
           }
           numTracks={menuData.selectCount}
         />

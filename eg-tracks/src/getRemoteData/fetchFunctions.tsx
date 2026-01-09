@@ -332,7 +332,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           });
         } else {
           const responses = await fetchData(item);
-          console.log(responses);
+
           fetchResults.push({
             name: trackType,
             result: responses,
@@ -388,15 +388,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -404,8 +404,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                 "genome" in trackModel.metadata
                   ? trackModel.metadata.genome
                   : trackModel.genome
-                  ? trackModel.genome
-                  : primaryGenName,
+                    ? trackModel.genome
+                    : primaryGenName,
               name: trackModel.name,
 
               nav: curFetchNav,
@@ -715,7 +715,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       trackToDrawId,
       regionSetStartBp:
         data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-        data.bpRegionSize
+          data.bpRegionSize
           ? 0
           : null,
       fetchNewRegion: data.fetchNewRegion,
