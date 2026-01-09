@@ -736,7 +736,6 @@ export const getHoverTooltip = {
   genomealignRough: function genomeAlignRoughFetch(dataObj: {
     [key: string]: any;
   }) {
-    console.log(dataObj);
     const RECT_HEIGHT = 15;
     return {
       toolTip: (

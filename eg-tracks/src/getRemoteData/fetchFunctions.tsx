@@ -208,7 +208,6 @@ function parseNestedObject(str: string): any {
 
 // Main processing function that can be used both as worker and regular function
 export async function fetchGenomicData(data: any[]): Promise<any> {
-  console.log(data);
   // Ensure data is an array
   if (!Array.isArray(data)) {
     throw new Error(
