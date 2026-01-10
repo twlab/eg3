@@ -1,5 +1,5 @@
 # Version history
-## 59.0.5
+## 59.1.0
 - added config options to change tracklegend font color
 - fixed toolbar issue where click might not work
 - added more conditions to prevent tracks from redrawing 
