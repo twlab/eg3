@@ -32,17 +32,17 @@ const genome = new Genome("mCalJa1.2.pat.X", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr8:28982644-29067973");
+const defaultRegion = navContext.parse("chr8:29019461-29104790");
 const defaultTracks = [
     new TrackModel({
         type: "ruler",
         name: "Ruler",
     }),
     new TrackModel({
-        type: "geneAnnotation",
-        name: "ncbiGene",
-        label: "NCBI genes",
-        genome: "mCalJa1.2.pat.X",
+        name: "xenoRefGene",
+        label: "xenoRefGene",
+        type: "refbed",
+        url: "https://vizhub.wustl.edu/public/mCalJa1.2.pat.X/refbed.gz",
     }),
 ];
 

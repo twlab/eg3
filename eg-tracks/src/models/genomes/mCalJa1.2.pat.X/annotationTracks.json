@@ -8,9 +8,10 @@
     ],
     "Genes": [
         {
-            "name": "ncbiGene",
-            "label": "NCBI genes",
-            "filetype": "geneAnnotation"
+            "name": "xenoRefGene",
+            "label": "xenoRefGene",
+            "type": "refbed",
+            "url": "https://vizhub.wustl.edu/public/mCalJa1.2.pat.X/refbed.gz"
         }
     ]
 }
