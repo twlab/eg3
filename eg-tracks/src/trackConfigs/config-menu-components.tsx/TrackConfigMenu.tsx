@@ -47,27 +47,32 @@ function ConfigMenuComponent(props: any) {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
+      // Use page coordinates directly for position: absolute
       let left = mouseX;
-      let top = mouseY;
+      let top = mouseY - 200;
 
-      // Check if menu would overflow right edge
-      if (left + menuRect.width > viewportWidth) {
-        left = viewportWidth - menuRect.width - 10; // 10px padding from edge
+      // Convert to viewport coordinates to check overflow
+      const viewportX = mouseX - window.scrollX;
+      const viewportY = mouseY - window.scrollY;
+
+      // Check if menu would overflow right edge of viewport
+      if (viewportX + menuRect.width > viewportWidth) {
+        left = mouseX - menuRect.width;
       }
 
-      // Check if menu would overflow bottom edge
-      if (top + menuRect.height > viewportHeight) {
-        top = viewportHeight - menuRect.height - 10; // 10px padding from edge
+      // Check if menu would overflow bottom edge of viewport
+      if (viewportY + menuRect.height > viewportHeight) {
+        top = mouseY - menuRect.height;
       }
 
-      // Check if menu would overflow left edge
-      if (left < 0) {
-        left = 10;
+      // Ensure menu doesn't go off left edge
+      if (left - window.scrollX < 0) {
+        left = window.scrollX + 10;
       }
 
-      // Check if menu would overflow top edge
-      if (top < 0) {
-        top = 10;
+      // Ensure menu doesn't go off top edge
+      if (top - window.scrollY < 0) {
+        top = window.scrollY + 10;
       }
 
       setPosition({ left, top });
@@ -78,9 +83,9 @@ function ConfigMenuComponent(props: any) {
     <div
       ref={menuRef}
       style={{
-        position: "fixed",
+        position: "absolute",
         left: position.left,
-        top: position.top - 100,
+        top: position.top,
         color: darkTheme ? "white" : "black",
         zIndex: 1000,
         pointerEvents: "auto",
@@ -99,8 +104,8 @@ function ConfigMenuComponent(props: any) {
                 menuData.tracks[0] &&
                 menuData.tracks[0].options &&
                 menuData.tracks[0].options.label
-              ? menuData.tracks[0].options.label
-              : "(unnamed track)"
+                ? menuData.tracks[0].options.label
+                : "(unnamed track)"
           }
           numTracks={menuData.selectCount}
         />

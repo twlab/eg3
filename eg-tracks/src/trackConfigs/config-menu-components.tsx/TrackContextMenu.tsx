@@ -49,7 +49,9 @@ export function RemoveOption(props) {
 
 export function HicBinSizeNormOptionConfig(props) {
   const { tracks, fileInfos, onOptionSet } = props;
+
   const trackConfigs = tracks.map(getTrackConfig);
+
   const optionsObjects = trackConfigs.map((config) => config.getOptions());
   const isHicTracks = trackConfigs.map((config) => config.isHicTrack());
   if (!_.every(isHicTracks, Boolean)) {

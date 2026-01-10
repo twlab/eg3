@@ -17,7 +17,7 @@ interface Props {
 
 const HubTrackTable: React.FC<Props> = ({
   tracks,
-  onTracksAdded = () => {},
+  onTracksAdded = () => { },
   addedTrackSets,
   rowHeader = UNUSED_META_KEY,
   columnHeader = UNUSED_META_KEY,
@@ -70,16 +70,23 @@ const HubTrackTable: React.FC<Props> = ({
   const getAddTrackCell = useCallback(
     (row: any) => {
       const track = row.original;
+
       if (addedTrackSets.has(track.url) || addedTrackSets.has(track.name)) {
         return <span>✓</span>;
       }
       return (
-        <button onClick={() => onTracksAdded([filteredTracks[row.index]])}>
+        <button
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onTracksAdded([filteredTracks[row.index]]);
+          }}
+          style={{ cursor: "pointer" }}
+        >
           +
         </button>
       );
     },
-    [filteredTracks, addedTrackSets, onTracksAdded]
+    [addedTrackSets, onTracksAdded]
   );
 
   const handleAddAll = (page) => {

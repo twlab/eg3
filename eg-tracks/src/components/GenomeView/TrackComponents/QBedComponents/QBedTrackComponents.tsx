@@ -30,7 +30,7 @@ type Options = {
   horizontalLineValue: number;
   packageVersion?: boolean;
   label?: string;
-
+  usePrimaryNav?: boolean;
   forceSvg?: boolean;
 };
 
@@ -86,7 +86,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   const currentViewWindow = useRef<any | null>(null);
   const currentScale = useRef<any | null>(null);
   const initialRender = useRef(true);
-
+  const currentViewOptions = useRef({});
   const computeScales = (xToValue: any, height: number) => {
     const { yScale, yMin, yMax, logScale } = props.options;
     if (yMin > yMax) {
@@ -169,7 +169,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   } = options;
 
   const aggregator = useMemo(() => new FeatureAggregator(), []);
-  let xToValue: Array<any> = xvaluesData
+  let xToValue: Array<any> = xvaluesData && options.usePrimaryNav
     ? xvaluesData
     : aggregator.makeXMap(data, viewRegion, width, true).xToFeaturesForward;
   scalesRef.current = computeScales(xToValue, height);
@@ -207,17 +207,17 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
 
   let curParentStyle: any = forceSvg
     ? {
-        position: "relative",
+      position: "relative",
 
-        overflow: "hidden",
-        width: width / 3,
-      }
+      overflow: "hidden",
+      width: width / 3,
+    }
     : {};
   let curEleStyle: any = forceSvg
     ? {
-        position: "relative",
-        transform: `translateX(${-viewWindow.start}px)`,
-      }
+      position: "relative",
+      transform: `translateX(${-viewWindow.start}px)`,
+    }
     : {};
   let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
 
@@ -230,7 +230,9 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
       !_.isEqual(viewWindow, currentViewWindow.current) &&
       (!(scalesRef.current.max === currentScale.current?.max) ||
         !(scalesRef.current.min === currentScale.current?.min))) ||
-    dataIdx !== currentViewDataIdx.current
+    dataIdx !== currentViewDataIdx.current ||
+    !_.isEqual(options, currentViewOptions.current) ||
+    !options.usePrimaryNav
   ) {
     visualizer = (
       <React.Fragment>
@@ -293,6 +295,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   currentViewWindow.current = viewWindow;
   initialRender.current = false;
   currentScale.current = scalesRef.current;
+  currentViewOptions.current = options;
   xToValue = [];
   return visualizer;
 };

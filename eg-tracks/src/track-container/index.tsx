@@ -286,13 +286,13 @@ export function TrackContainerRepresentable({
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
         showToolBar={showToolBar}
-        onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
-        onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
-        onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
+        onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
+        onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
+        onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
         onNewRegionSelect={
-          !onNewRegionSelect ? () => {} : handleNewRegionSelect
+          !onNewRegionSelect ? () => { } : handleNewRegionSelect
         }
-        onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
+        onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
         viewRegion={convertedViewRegion}
         userViewRegion={
           convertedUserViewRegion

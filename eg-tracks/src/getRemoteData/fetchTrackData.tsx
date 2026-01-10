@@ -115,9 +115,8 @@ export const trackFetchFunction: { [key: string]: any } = {
           throw new Error("Region is higher then 30000");
         }
 
-        const url = `${api}/${region.chr.substr(3)}:${region.start}-${
-          region.end
-        }?content-type=application%2Fjson&feature=variation`;
+        const url = `${api}/${region.chr.substr(3)}:${region.start}-${region.end
+          }?content-type=application%2Fjson&feature=variation`;
 
         try {
           const response = await fetch(url, {
@@ -293,7 +292,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            // cachedFetchInstance[regionData.trackModel.url] = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })
@@ -302,6 +301,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             throw error;
           });
       } else if (trackType === "hic") {
+
         return fetchInstance
           .getData(
             objToInstanceAlign(regionData.visRegion),
@@ -324,7 +324,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            // cachedFetchInstance[regionData.trackModel.url] = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })

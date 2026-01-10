@@ -6,7 +6,7 @@ export interface ICollectionViewDataSource<T> {
   section?: string;
   id: string;
   title: string;
-  data: T;
+  data: any;
   genomeName?: string;
 }
 
@@ -19,10 +19,12 @@ export default function CollectionView<T>({
   data,
   onSelect,
   selectedIds,
+  isPrimaryGenome,
 }: {
   data: ICollectionViewDataSource<T>[];
   onSelect: (element: ICollectionViewDataSource<T>) => void;
-  selectedIds?: Set<string>;
+  selectedIds?: Set<string | undefined>;
+  isPrimaryGenome?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const searchBarGeometry = useElementGeometry();
@@ -91,12 +93,20 @@ export default function CollectionView<T>({
       key={item.id}
       className="flex items-center justify-between py-1 max-w-full min-w-0 gap-2"
     >
-      <span className="text-sm truncate min-w-0 flex-1" title={item.title}>
-        {item.title}
-      </span>
-      {selectedIds !== undefined && (
-        <>
-          {selectedIds.has(item.id) ? (
+      <div className="flex items-center min-w-0 flex-1 gap-2 overflow-hidden">
+        <span className="text-sm truncate min-w-0 flex-grow" style={{ maxWidth: '70%' }} title={item.title}>
+          {item.title}
+        </span>
+        {item?.section === 'Genome Comparison' && isPrimaryGenome === false && (
+          <span className="text-xs text-red-500 whitespace-nowrap ml-2 flex-shrink-0" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Only available in primary genome
+          </span>
+        )}
+      </div>
+      {selectedIds !== undefined && !(
+        item?.section === 'Genome Comparison' && isPrimaryGenome === false
+      ) && (
+          ((item?.section === 'Genome Comparison' && selectedIds.has(item.data.url)) || selectedIds.has(item.id)) ? (
             <div className="w-6 h-6 rounded-md bg-green-200 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
               <CheckIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
             </div>
@@ -110,9 +120,8 @@ export default function CollectionView<T>({
             >
               <PlusIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
             </button>
-          )}
-        </>
-      )}
+          )
+        )}
     </div>
   );
 

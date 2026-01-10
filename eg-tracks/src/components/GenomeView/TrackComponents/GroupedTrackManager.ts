@@ -105,6 +105,9 @@ export class GroupedTrackManager {
                 width,
                 trackData[tid].configOptions
               );
+              if (!trackFetchedDataCache.current[tid][dataIdx]) {
+                trackFetchedDataCache.current[tid][dataIdx] = {};
+              }
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
             }
 
@@ -172,6 +175,9 @@ export class GroupedTrackManager {
                 );
               }
 
+              if (!trackFetchedDataCache.current[tid][dataIdx]) {
+                trackFetchedDataCache.current[tid][dataIdx] = {};
+              }
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
             }
           }

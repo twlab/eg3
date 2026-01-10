@@ -119,12 +119,13 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         );
 
         max = _.max(visibleValues) || 1;
+
         xValues2 = xToValue2.filter((x) => x);
         min =
           (xValues2.length
             ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-              )
+              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+            )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -143,8 +144,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min < 0 && hasForward
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
           : hasForward
-          ? height
-          : 0;
+            ? height
+            : 0;
       if (!hasForward && hasReverse) {
         max = 0;
       }
@@ -249,11 +250,11 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   }
   let curParentStyle: any = forceSvg
     ? {
-        position: "relative",
+      position: "relative",
 
-        overflow: "hidden",
-        width: width / 3,
-      }
+      overflow: "hidden",
+      width: width / 3,
+    }
     : {};
   let curEleStyle: any = forceSvg
     ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
