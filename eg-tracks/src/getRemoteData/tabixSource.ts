@@ -133,7 +133,7 @@ class TabixSource {
    * @return {Promise<BedRecord[]>} Promise for the data
    */
   getData = async (loci, basesPerPixel, options) => {
-    if (this.useEnsemblStyle === null) {
+    if (this.useEnsemblStyle === null && options.trackType !== "longrange") {
       this.useEnsemblStyle = await this.detectChromosomeNaming();
     }
 
