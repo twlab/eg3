@@ -506,6 +506,7 @@ export class MultiAlignmentViewCalculator {
   }
 
   /**
+   * 
    * Groups and merges alignment records based on their proximity in the query (secondary) genome.  Then, calculates
    * draw positions for all records.
    *
@@ -520,7 +521,7 @@ export class MultiAlignmentViewCalculator {
     alignmentRecords: AlignmentRecord[],
     visData: ViewExpansion
   ): Alignment {
-    console.log(id, query, alignmentRecords, visData, "alignRough")
+
     const { visRegion, visWidth } = visData;
     const drawModel = new LinearDrawingModel(visRegion, visWidth);
     const mergeDistance = drawModel.xWidthToBases(MERGE_PIXEL_DISTANCE);

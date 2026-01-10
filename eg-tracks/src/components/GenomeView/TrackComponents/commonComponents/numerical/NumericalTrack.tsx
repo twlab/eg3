@@ -119,7 +119,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         );
 
         max = _.max(visibleValues) || 1;
-        console.log(_.max(visibleValues), visibleValues, width, viewWindow)
+
         xValues2 = xToValue2.filter((x) => x);
         min =
           (xValues2.length
@@ -211,7 +211,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   }, [options, props]);
 
   const scales = computeScales(xToValue, xToValue2, height);
-  console.log(scales)
+
   const getEffectiveDisplayMode = () => {
     const { displayMode, height } = options;
     if (

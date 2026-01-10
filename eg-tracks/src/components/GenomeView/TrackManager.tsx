@@ -229,7 +229,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   });
 
   const initialLoad = useRef(true);
-  const startingBaseRegion = useRef<{ start: number; end: number } | null>(null);
+
   const useFineModeNav = useRef(false);
   const lastSelectedTool = useRef(tool);
   const dragOn = useRef(true);
@@ -295,6 +295,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastDragX = useRef(0);
 
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
+  const isScreenShotOpenRef = useRef(false);
   const basePerPixel = useRef(0);
   const frameID = useRef(0);
   const lastX = useRef(0);
@@ -606,6 +607,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
+
     if (dragOn.current === false) {
       return;
     }
@@ -799,7 +801,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMouseUp() {
     isDragging.current = false;
-    if (lastDragX.current === dragX.current) {
+    if (lastDragX.current === dragX.current || isScreenShotOpenRef.current) {
       return;
     }
     lastDragX.current = dragX.current;
@@ -2206,11 +2208,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function createHighlight(highlightArr: Array<any>) {
     let resHighlights: Array<any> = [];
-    if (startingBaseRegion.current === null) {
-      return
-    }
-    const startBase = startingBaseRegion.current.start;
-    const endBase = startingBaseRegion.current.end;
+
+    const startBase = leftStartCoord.current;
+    const endBase = rightStartCoord.current;
     console.log(genomeConfig.defaultRegion, userViewRegion, viewRegion);
     let pixelPBase = windowWidth / (endBase - startBase);
     for (const curhighlight of highlightArr) {
@@ -2612,7 +2612,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           continue;
         }
       }
-      let curViewWindow =
+      let curViewWindow = globalTrackState.current.viewWindow ? globalTrackState.current.viewWindow :
         viewWindowConfigData.current &&
           viewWindowConfigData.current.dataIdx === dataIdx.current
           ? viewWindowConfigData.current.viewWindow
@@ -2732,7 +2732,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ),
         navContext: userViewRegion._navContext,
       });
-      startingBaseRegion.current = { start: userViewRegion._startBase!, end: userViewRegion._endBase! };
+
       trackManagerState.current.tracks.map(
         (items: { type: string }, _index: any) => {
           if (items.type === "genomealign") {
@@ -2983,9 +2983,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     basePerPixel.current = bpRegionSize.current / windowWidth;
     pixelPerBase.current = windowWidth / bpRegionSize.current;
-
     dragX.current =
-      (leftStartCoord.current - startingBaseRegion.current!.start) *
+      (leftStartCoord.current - genomeConfig.defaultRegion.start) *
       pixelPerBase.current;
     for (let i = 0; i < rightSectionSize.current.length; i++) {
       rightSectionSize.current[i] = windowWidth;
@@ -3505,7 +3504,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         updatedGenomeConfig.navContext = viewRegion._navContext;
       }
       Object.assign(genomeConfig, updatedGenomeConfig);
-      startingBaseRegion.current = { start: userViewRegion._startBase!, end: userViewRegion._endBase! };
+
       preload.current = true;
       refreshState();
       initializeTracks();
@@ -3529,7 +3528,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         );
         updatedGenomeConfig.navContext = userViewRegion._navContext;
         Object.assign(genomeConfig, updatedGenomeConfig);
-        startingBaseRegion.current = { start: userViewRegion._startBase!, end: userViewRegion._endBase! };
+
         preload.current = true;
         refreshState();
         initializeTracks();
@@ -3545,6 +3544,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       toolbarContainer.style.visibility = configMenu ? "hidden" : "visible";
     }
   }, [configMenu]);
+  useEffect(() => {
+
+    if (isScreenShotOpen === true) {
+      isScreenShotOpenRef.current = true;
+    }
+    else {
+      isScreenShotOpenRef.current = false;
+    }
+  }, [isScreenShotOpen]);
   // MARK: viewWIndow useeffect
   useEffect(() => {
     if (viewWindowConfigData.current) {

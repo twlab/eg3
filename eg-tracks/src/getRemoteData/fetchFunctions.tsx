@@ -549,7 +549,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     let multiCalInstance = new MultiAlignmentViewCalculator(
       data.primaryGenName
     );
-    console.log(visData, successFetch)
+
     let alignment = multiCalInstance.multiAlign(visData, successFetch);
 
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class

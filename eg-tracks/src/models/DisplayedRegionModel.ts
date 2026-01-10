@@ -32,7 +32,7 @@ class DisplayedRegionModel {
     this._navContext = navContext;
     if (!end) {
       end = navContext.getTotalBases();
-      console.log(start, end)
+
     }
 
     this.setRegion(start, end); // Sets this._startBase and this._endBase
