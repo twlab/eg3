@@ -1,4 +1,19 @@
 # Version history
+## 59.0.5
+- added config options to change tracklegend font color
+- fixed toolbar issue where click might not work
+- added more conditions to prevent tracks from redrawing 
+- fixed height issue with categorical tracks
+- fixed vcf zoom causing crash 
+- query genome follows genomealign in rough mode 
+- outsideclicks now unselects and close config menu
+- added query genome Annotation tracks selection when user add genomealign
+- fixed crash when user move tracks when screenshot is open
+- unselect Drag in toolbar will stop the track from moving
+- fixed bigwig, numerical track not displaying the right density, because of computation
+- reorganzing workers, and refactor code by moving them into one centralize location
+- bugs fixs with, highlight menu, hubs
+- implement old genome align rough hover css
 
 ## 59.0.0
 

@@ -160,43 +160,6 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     };
   }, []);
 
-  const renderTooltip = useCallback(
-    (relativeX: number, xMap: any, xAlias: any) => {
-      const value = xMap[xAlias[Math.round(relativeX)]];
-      const content = value ? (
-        <div className="Tooltip-major-text" style={{ marginRight: 3 }}>
-          <div>Total values: {value.count}</div>
-          <div>Low: {value.min}</div>
-          <div>High: {value.max}</div>
-          <div>Quantile 1: {value.q1}</div>
-          <div>Quantile 3: {value.q3}</div>
-          <div>Median: {value.median}</div>
-        </div>
-      ) : (
-        "(no data)"
-      );
-      return (
-        <div>
-          <div>
-            {content}
-            {unit && <span className="Tooltip-minor-text">{unit}</span>}
-          </div>
-          <div className="Tooltip-minor-text">
-            <GenomicCoordinates
-              viewRegion={viewRegion}
-              width={width}
-              x={relativeX}
-            />
-          </div>
-          <div className="Tooltip-minor-text">
-            {trackModel.getDisplayLabel()}
-          </div>
-        </div>
-      );
-    },
-    [trackModel, viewRegion, width, unit]
-  );
-
   const xAlias = makeXalias(width, options.windowSize);
   const xMap = aggregateFeatures(
     data,
@@ -214,9 +177,12 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     initialLoad ||
     options.forceSvg ||
     (dataIdx === currentViewDataIdx.current &&
-      !_.isEqual(viewWindow, currentViewWindow.current)) ||
+      !_.isEqual(viewWindow, currentViewWindow.current) &&
+      (!(scales.max === currentScale.current?.max) ||
+        !(scales.min === currentScale.current?.min))) ||
+    !_.isEqual(options, currentViewOptions.current) ||
     dataIdx !== currentViewDataIdx.current ||
-    !_.isEqual(options, currentViewOptions.current)
+    !options.usePrimaryNav
   ) {
     const legend = (
       <TrackLegend
@@ -235,16 +201,16 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
 
     let curParentStyle: any = forceSvg
       ? {
-          position: "relative",
-          overflow: "hidden",
-          width: width / 3,
-        }
+        position: "relative",
+        overflow: "hidden",
+        width: width / 3,
+      }
       : {};
     let curEleStyle: any = forceSvg
       ? {
-          position: "relative",
-          transform: `translateX(${-viewWindow.start}px)`,
-        }
+        position: "relative",
+        transform: `translateX(${-viewWindow.start}px)`,
+      }
       : {};
 
     visualizer = (

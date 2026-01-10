@@ -89,7 +89,7 @@ export default function GenomeView() {
       );
     }
   }
-  console.log(genomeConfig)
+
   return currentSession &&
     genomeConfig &&
     (currentSession.genomeId === genomeConfig.name ||

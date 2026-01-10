@@ -47,7 +47,9 @@ interface InteractionTrackProps {
     bothAnchorsInView?: boolean;
     clampHeight?: boolean;
     getNumLegend?: any;
+    forceSvg?: boolean;
   };
+  dataIdx?: number;
   forceSvg?: boolean;
   getBeamRefs?: any;
   onSetAnchors3d?: any;
@@ -86,7 +88,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
   const currentScale: any = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
-  const currentViewOptions = useRef(null);
+  const currentViewOptions = useRef<any>({});
 
   const featurePlacer = useMemo(() => new FeaturePlacer(), []);
 
@@ -204,7 +206,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     getBeamRefs,
     onSetAnchors3d,
     isThereG3dTrack,
-    getNumLegend,
+    getNumLegend, dataIdx
   } = props;
 
   const safeData = data || [];
@@ -220,7 +222,8 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     initialRender.current ||
     options.forceSvg ||
     !_.isEqual(viewWindow, currentViewWindow.current) ||
-    !_.isEqual(options, currentViewOptions.current)
+    !_.isEqual(options, currentViewOptions.current) ||
+    dataIdx !== currentViewDataIdx.current
   ) {
     const visualizerProps = {
       placedInteractions: interactionData,

@@ -78,7 +78,7 @@ function ConfigMenuComponent(props: any) {
       setPosition({ left, top });
     }
   }, [mouseX, mouseY]);
-  console.log(position)
+
   return (
     <div
       ref={menuRef}

@@ -7,7 +7,7 @@ import { scaleLinear } from "d3-scale";
 // import TrackLegend from './commonComponents/TrackLegend';
 // import configOptionMerging from './commonComponents/configOptionMerging';
 // import HoverTooltipContext from './commonComponents/tooltip/HoverTooltipContext';
-import GenomicCoordinates from "../commonComponents/HoverToolTips/GenomicCoordinates";
+
 import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
@@ -64,6 +64,7 @@ interface MethylCTrackProps {
     depthFilter: any;
     maxMethyl: any;
     forceSvg: boolean;
+    usePrimaryNav: boolean;
   };
   isLoading?: boolean;
   error?: any;
@@ -140,6 +141,8 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
           .domain([maxDepth, 0])
           .range([VERTICAL_PADDING, height])
           .clamp(true),
+        maxDepth: maxDepth,
+        maxMethyl: maxMethyl,
       };
     };
   }, []);
@@ -205,16 +208,16 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
 
   let curParentStyle: any = forceSvg
     ? {
-        position: "relative",
-        overflow: "hidden",
-        width: width / 3,
-      }
+      position: "relative",
+      overflow: "hidden",
+      width: width / 3,
+    }
     : {};
   let curEleStyle: any = forceSvg
     ? {
-        position: "relative",
-        transform: `translateX(${-viewWindow.start}px)`,
-      }
+      position: "relative",
+      transform: `translateX(${-viewWindow.start}px)`,
+    }
     : {};
 
   let visualizer;
@@ -223,9 +226,13 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     initialLoad ||
     options.forceSvg ||
     (dataIdx === currentViewDataIdx.current &&
-      !_.isEqual(viewWindow, currentViewWindow.current)) ||
+      !_.isEqual(viewWindow, currentViewWindow.current) && (!(scales.maxDepth === currentScale.current?.maxDepth) ||
+        !(scales.maxMethyl === currentScale.current?.maxMethyl))) ||
     dataIdx !== currentViewDataIdx.current ||
-    !_.isEqual(options, currentViewOptions.current)
+    !_.isEqual(options, currentViewOptions.current) ||
+    !options.usePrimaryNav
+
+
   ) {
     if (isCombineStrands) {
       strandRenderers = (
@@ -304,7 +311,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
   currentViewWindow.current = viewWindow;
   initialRender.current = false;
   currentScale.current = scales;
-
+  currentViewOptions.current = options;
   return visualizer;
 };
 

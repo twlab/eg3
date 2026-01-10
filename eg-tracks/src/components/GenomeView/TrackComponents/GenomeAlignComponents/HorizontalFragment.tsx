@@ -85,6 +85,7 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
         <React.Fragment>
           {
             <HorizontalLine
+              relativeX={0 - 14}
               relativeY={LINE_MARGIN + windowScrollY}
               xSpan={targetXSpan}
               viewWindowStart={viewWindowStart}
@@ -115,6 +116,7 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
           {
             <HorizontalLine
               relativeY={height - LINE_MARGIN + windowScrollY}
+              relativeX={queryX - relativeX - 14}
               xSpan={queryXSpan}
               viewWindowStart={viewWindowStart}
               color={queryColor}
@@ -151,16 +153,17 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
  * @return {JSX.Element} - element to render
  */
 function HorizontalLine(props) {
-  const { relativeY, xSpan, viewWindowStart, color, locus, textHeight } = props;
+  const { relativeY, xSpan, viewWindowStart, color, locus, textHeight, relativeX } = props;
   const width = xSpan ? xSpan.end - xSpan.start : 0;
 
 
   const horizontalLineStyle = {
     top: `${relativeY}px`,
-    left: "0px",
+    left: `${relativeX}px`,
+
     width: `${width}px`,
     height: `${LINE_WIDTH}px`,
-    color: color,
+    color: "#57595B",
     willChange: "top",
     pointerEvents: "none" as const,
   };
@@ -168,13 +171,13 @@ function HorizontalLine(props) {
 
     marginTop: `${textHeight}px`,
     whiteSpace: "nowrap" as const,
-    marginLeft: "0px",
+    marginLeft: "14px",
   };
 
   return xSpan ? (
     <div className="Fragment-horizontal-line" style={horizontalLineStyle}>
       {" "}
-      <p style={textStyle}>{locus}</p>{" "}
+      <p style={{ ...textStyle, color: color }}>{locus}</p>{" "}
     </div>
   ) : null;
 }

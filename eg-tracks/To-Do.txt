@@ -233,11 +233,29 @@ tracks to check:
 2. vcf   (finished) whening zooming
 3. categorical (finished)
 4. snp (need to have a diff error message)
+5.methylc
+6. dynseq
+7. bedgraph
+
+all Tracks that has redraw conditionals: 
+1. numerical
+2. vcf 
+3. interaction (might need to revisit)
+4. methylc
+5. dynseq
+6. bedgraph
+7. 
 
 
-all Tracks: 
-1. check
+
+    boxplot: string;
+    matplot: string;
+    longrange: string;
+    hic: string;
+
 
 trackResize
     1. working for normal track (finished)
     2. woorking for genomealign rough (finished) fixed by resetting complete and setting viewRegion for new computescale
+
+

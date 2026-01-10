@@ -1208,6 +1208,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
+
       />
     );
 
