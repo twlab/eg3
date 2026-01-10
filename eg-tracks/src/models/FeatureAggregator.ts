@@ -132,19 +132,6 @@ export class FeatureAggregator {
    * @param {object} viewWindow - optional window defining center region {start, end} for deduplication
    * @return {[any[], any[]]} tuple of [forwardAggregated, reverseAggregated]
    */
-
-  /**
-   * Aggregates features in a single pass, separating forward and reverse values based on feature.value.
-   * Also handles deduplication based on locus coordinates in one loop.
-   *
-   * @param {Feature[]} features - features to aggregate (may contain duplicates)
-   * @param {DisplayedRegionModel} viewRegion - used to compute drawing coordinates
-   * @param {number} width - width of the visualization
-   * @param {Function} aggregateFunc - aggregation function to apply to features at each x position
-   * @param {boolean} useCenter - whether to use center positioning
-   * @param {object} viewWindow - optional window defining center region {start, end} for deduplication
-   * @return {[any[], any[]]} tuple of [forwardAggregated, reverseAggregated]
-   */
   makeXMap(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
@@ -187,6 +174,7 @@ export class FeatureAggregator {
 
     return { xToFeaturesForward, xToFeaturesReverse };
   }
+
   makeXWindowMap(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
@@ -197,26 +185,29 @@ export class FeatureAggregator {
     const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
     for (let x = 0; x < width; x += windowSize) {
+      // Fill the array with empty arrays
+      // if (x < width) {
       map[x] = [];
+      // }
     }
     const placer = new FeaturePlacer();
-    placer.placeFeatures({
-    placer.placeFeatures({
+    const placement = placer.placeFeatures({
       features,
       viewRegion,
       width,
-      useCenter: true, // BOXPLOT always uses center
-      mode: PlacementMode.BOXPLOT,
-      windowSize,
-      xToWindowMap: map,
+      useCenter: true,
+      mode: PlacementMode.NUMERICAL,
     });
 
-      useCenter: true, // BOXPLOT always uses center
-      mode: PlacementMode.BOXPLOT,
-      windowSize,
-      xToWindowMap: map,
-    });
-
+    for (const placedFeature of placement.placementsForward) {
+      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
+      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+      for (let x = startX; x <= endX; x++) {
+        if (map.hasOwnProperty(x)) {
+          map[x].push(placedFeature.feature);
+        }
+      }
+    }
     return map;
   }
 }

@@ -3,8 +3,6 @@
 import { fetchGenomicData } from "./fetchFunctions";
 
 // Check if we're in a Web Worker
-
-// Check if we're in a Web Worker
 if (
   typeof self !== "undefined" &&
   "postMessage" in self &&

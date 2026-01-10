@@ -238,7 +238,6 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
 
   render() {
     const { children, ...otherProps } = this.props;
-
     return <canvas ref={(node) => (this.canvasNode = node)} {...otherProps} />;
   }
 }

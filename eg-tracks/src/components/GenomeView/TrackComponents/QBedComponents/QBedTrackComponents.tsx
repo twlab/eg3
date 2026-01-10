@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSX, useMemo, useRef } from "react";
 import _ from "lodash";
 import { scaleLinear, scaleLog } from "d3-scale";
 import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates";
@@ -11,6 +11,8 @@ import { DownsamplingChoices } from "../../../../models/DownsamplingChoices";
 import { FeatureAggregator } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import TrackLegend from "../commonComponents/TrackLegend";
+import { NumericalAggregator } from "../commonComponents/numerical/NumericalAggregator";
+import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 
 type Options = {
   height: number;
@@ -26,6 +28,10 @@ type Options = {
   markerSize: number;
   showHorizontalLine: boolean;
   horizontalLineValue: number;
+  packageVersion?: boolean;
+  label?: string;
+  usePrimaryNav?: boolean;
+  forceSvg?: boolean;
 };
 
 type QBed = {
@@ -37,7 +43,7 @@ type QBed = {
 };
 
 type QBedTrackProps = {
-  data: QBed[];
+  data: Array<any>;
   options: Options;
   isLoading: boolean;
   error: any;
@@ -47,6 +53,9 @@ type QBedTrackProps = {
   viewWindow: any;
   forceSvg: boolean;
   getNumLegend: any;
+  xvaluesData?: Array<any>;
+  dataIdx: number;
+  initialLoad: boolean;
 };
 
 export const DEFAULT_OPTIONS = {
@@ -70,32 +79,22 @@ const TOP_PADDING = 5;
 /**
  * Track specialized in showing qBED data.
  */
-class QBedTrackComponents extends React.PureComponent<QBedTrackProps> {
-  private xToValue: QBed[][];
-  private scales: any;
-
-  constructor(props: QBedTrackProps) {
-    super(props);
-    this.xToValue = [];
-    this.scales = null;
-    this.aggregateFeatures = this.aggregateFeatures.bind(this);
-    this.renderTooltip = this.renderTooltip.bind(this);
-  }
-
-  aggregateFeatures(data: Array<any>, viewRegion: any, width: number) {
-    const aggregator = new FeatureAggregator();
-    const xToFeatures = aggregator.makeXMap(data, viewRegion, width, true);
-    return xToFeatures;
-  }
-
-  computeScales(xToValue: any, height: number) {
-    const { yScale, yMin, yMax, logScale } = this.props.options;
+const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
+  const scalesRef = useRef<any>(null);
+  const currentVisualizer = useRef<JSX.Element | null>(null);
+  const currentViewDataIdx = useRef<number | null>(null);
+  const currentViewWindow = useRef<any | null>(null);
+  const currentScale = useRef<any | null>(null);
+  const initialRender = useRef(true);
+  const currentViewOptions = useRef({});
+  const computeScales = (xToValue: any, height: number) => {
+    const { yScale, yMin, yMax, logScale } = props.options;
     if (yMin > yMax) {
       console.log("Y-axis min must less than max", "error", 2000);
     }
     const visibleValues = xToValue.slice(
-      this.props.viewWindow.start,
-      this.props.viewWindow.end
+      props.viewWindow.start,
+      props.viewWindow.end
     );
     let max = _.max(_.flatten(visibleValues).map((x: any) => x.value)) || 0;
     let min = 0;
@@ -120,98 +119,21 @@ class QBedTrackComponents extends React.PureComponent<QBedTrackProps> {
       min,
       max,
     };
-  }
-
-  renderTooltip(relativeX: number, relativeY: number) {
-    const { trackModel, viewRegion, width } = this.props;
-    const { markerSize } = this.props.options;
-
-    let quanta: QBed[] = [];
-
-    for (let i = relativeX - markerSize; i <= relativeX + markerSize; i++) {
-      quanta = quanta.concat(this.xToValue[i]);
-    }
-
-    if (quanta !== undefined && quanta.length > 0) {
-      const nearest = this.nearestCards(
-        quanta,
-        relativeX,
-        relativeY,
-        markerSize
-      );
-      if (nearest.length > 0) {
-        return (
-          <div>
-            <div className="Tooltip-minor-text">
-              <GenomicCoordinates
-                viewRegion={viewRegion}
-                width={width}
-                x={relativeX}
-              />
-            </div>
-            <div className="Tooltip-minor-text">
-              {trackModel.getDisplayLabel()}
-            </div>
-            <div className="Tooltip-minor-text">
-              {this.formatCards(nearest)}
-            </div>
-          </div>
-        );
-      }
-    }
-  }
-
-  formatCards = (quanta: QBed[]) => {
-    const head = (
-      <thead>
-        <tr>
-          <th scope="col">Value</th>
-          <th scope="col">Strand</th>
-          <th scope="col">Annotation</th>
-        </tr>
-      </thead>
-    );
-    const rows = quanta.slice(0, 10).map((quantum, i) => (
-      <tr key={i}>
-        <td>{quantum.value}</td>
-        <td>{quantum.strand}</td>
-        <td>
-          {_.truncate(quantum.annotation, {
-            length: 75,
-            separator: /[,; ]/,
-          })}
-        </td>
-      </tr>
-    ));
-    return (
-      <table className="table table-striped table-sm">
-        {head}
-        <tbody>{rows}</tbody>
-      </table>
-    );
   };
 
-  nearestCards = (
-    quanta: QBed[],
-    relativeX: number,
-    relativeY: number,
-    radius: number
-  ) => {
-    const distances = quanta.map(
-      (quantum) =>
-        Math.pow(relativeX - (quantum.relativeX || 0), 2) +
-        Math.pow(relativeY - (quantum.relativeY || 0), 2)
-    );
-
-    const mindist = Math.min(...distances);
-    if (mindist < radius * radius) {
-      return quanta.filter((_, i) => distances[i] === mindist);
-    } else {
-      return [];
-    }
+  const downSample = (xToValue: any[], sampleSize: number) => {
+    if (xToValue.length === 0) return [];
+    let sampled_xToValue: any[] = new Array(xToValue.length).fill([]);
+    const randomSample = shuffleArray(xToValue.flat()).slice(0, sampleSize);
+    randomSample.forEach((sample: any) => {
+      sampled_xToValue[sample.relativeX] = sampled_xToValue[
+        sample.relativeX
+      ].concat([sample]);
+    });
+    return sampled_xToValue;
   };
 
-  shuffleArray = (a: any[]) => {
+  const shuffleArray = (a: any[]) => {
     let j, x, i;
     for (i = a.length - 1; i > 0; i--) {
       j = Math.floor(Math.random() * (i + 1));
@@ -222,92 +144,161 @@ class QBedTrackComponents extends React.PureComponent<QBedTrackProps> {
     return a;
   };
 
-  randomCards = (quanta: any[], n: number) => {
-    return this.shuffleArray(quanta).slice(0, n);
-  };
+  const {
+    data,
+    viewRegion,
+    width,
+    trackModel,
+    options,
+    forceSvg,
+    viewWindow,
+    xvaluesData,
+    dataIdx,
+    initialLoad,
+  } = props;
+  const {
+    height,
+    color,
+    color2,
+    markerSize,
+    opacity,
+    show,
+    sampleSize,
+    showHorizontalLine,
+    horizontalLineValue,
+  } = options;
 
-  downSample(xToValue: any[], sampleSize: number) {
-    if (xToValue.length === 0) return [];
-    let sampled_xToValue: any[] = new Array(xToValue.length).fill([]);
-    const randomSample = this.randomCards(xToValue.flat(), sampleSize);
-    randomSample.forEach((sample: any) => {
-      sampled_xToValue[sample.relativeX] = sampled_xToValue[
-        sample.relativeX
-      ].concat([sample]);
-    });
-    return sampled_xToValue;
+  const aggregator = useMemo(() => new FeatureAggregator(), []);
+  let xToValue: Array<any> = xvaluesData && options.usePrimaryNav
+    ? xvaluesData
+    : aggregator.makeXMap(data, viewRegion, width, true).xToFeaturesForward;
+  scalesRef.current = computeScales(xToValue, height);
+  for (let i = 0; i < xToValue.length; i++) {
+    for (let j = 0; j < xToValue[i].length; j++) {
+      xToValue[i][j].relativeX = i;
+      xToValue[i][j].relativeY = scalesRef.current.valueToY(
+        xToValue[i][j].value
+      );
+    }
   }
 
-  render() {
-    const {
-      data,
-      viewRegion,
-      width,
-      trackModel,
-      options,
-      forceSvg,
-      viewWindow,
-    } = this.props;
-    const {
-      height,
-      color,
-      color2,
-      markerSize,
-      opacity,
-      show,
-      sampleSize,
-      showHorizontalLine,
-      horizontalLineValue,
-    } = options;
-    this.xToValue =
-      data.length > 0 ? this.aggregateFeatures(data, viewRegion, width) : [];
-    this.scales = this.computeScales(this.xToValue, height);
+  if (show === DownsamplingChoices.SAMPLE && xToValue.length > sampleSize) {
+    xToValue = downSample(xToValue, sampleSize);
+  }
 
-    for (let i = 0; i < this.xToValue.length; i++) {
-      for (let j = 0; j < this.xToValue[i].length; j++) {
-        this.xToValue[i][j].relativeX = i;
-        this.xToValue[i][j].relativeY = this.scales.valueToY(
-          this.xToValue[i][j].value
-        );
-      }
-    }
-
-    if (show === DownsamplingChoices.SAMPLE && data.length > sampleSize) {
-      this.xToValue = this.downSample(this.xToValue, sampleSize);
-    }
-
-    const legend = (
+  const legend = (
+    <div
+      style={{
+        display: "flex",
+      }}
+    >
       <TrackLegend
         trackModel={trackModel}
         height={height}
-        axisScale={this.scales.valueToY}
+        axisScale={scalesRef.current.valueToY}
+        label={options.label}
+        forceSvg={forceSvg}
       />
-    );
-    if (this.props.getNumLegend) {
-      this.props.getNumLegend(legend);
-    }
-    const visualizer = (
-      <React.Fragment>
-        {forceSvg ? legend : ""}
-        <QBedPlot
-          xToValue={this.xToValue}
-          scales={this.scales}
-          height={height}
-          color={color}
-          color2={color2}
-          forceSvg={forceSvg}
-          markerSize={markerSize}
-          alpha={opacity[0] / 100}
-          show={show}
-          sampleSize={sampleSize}
-          showHorizontalLine={showHorizontalLine}
-          horizontalLineValue={horizontalLineValue}
-          viewWindow={viewWindow}
-        />      </React.Fragment>
-    );
-    return visualizer;
+    </div>
+  );
+  if (props.getNumLegend) {
+    props.getNumLegend(legend);
   }
-}
+
+  let curParentStyle: any = forceSvg
+    ? {
+      position: "relative",
+
+      overflow: "hidden",
+      width: width / 3,
+    }
+    : {};
+  let curEleStyle: any = forceSvg
+    ? {
+      position: "relative",
+      transform: `translateX(${-viewWindow.start}px)`,
+    }
+    : {};
+  let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+
+  let visualizer;
+
+  if (
+    initialLoad ||
+    options.forceSvg ||
+    (dataIdx === currentViewDataIdx.current &&
+      !_.isEqual(viewWindow, currentViewWindow.current) &&
+      (!(scalesRef.current.max === currentScale.current?.max) ||
+        !(scalesRef.current.min === currentScale.current?.min))) ||
+    dataIdx !== currentViewDataIdx.current ||
+    !_.isEqual(options, currentViewOptions.current) ||
+    !options.usePrimaryNav
+  ) {
+    visualizer = (
+      <React.Fragment>
+        {!forceSvg ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+              ...hoverStyle,
+            }}
+          >
+            <HoverToolTip
+              data={xToValue}
+              windowWidth={width}
+              trackType={"qbed"}
+              trackModel={trackModel}
+              height={height}
+              viewRegion={viewRegion}
+              hasReverse={true}
+              options={options}
+            />
+          </div>
+        ) : (
+          ""
+        )}
+
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {forceSvg || options.packageVersion ? legend : ""}
+          <div
+            style={{
+              ...curEleStyle,
+            }}
+          >
+            <QBedPlot
+              xToValue={xToValue}
+              scales={scalesRef.current}
+              height={height}
+              color={color}
+              color2={color2}
+              forceSvg={forceSvg}
+              markerSize={markerSize}
+              alpha={opacity[0] / 100}
+              show={show}
+              sampleSize={sampleSize}
+              showHorizontalLine={showHorizontalLine}
+              horizontalLineValue={horizontalLineValue}
+              viewWindow={viewWindow}
+            />
+          </div>{" "}
+        </div>
+      </React.Fragment>
+    );
+  } else {
+    visualizer = currentVisualizer.current;
+  }
+  currentVisualizer.current = visualizer;
+  currentViewDataIdx.current = dataIdx;
+  currentViewWindow.current = viewWindow;
+  initialRender.current = false;
+  currentScale.current = scalesRef.current;
+  currentViewOptions.current = options;
+  xToValue = [];
+  return visualizer;
+};
 
 type QBedPlotProps = {
   xToValue: QBed[][];

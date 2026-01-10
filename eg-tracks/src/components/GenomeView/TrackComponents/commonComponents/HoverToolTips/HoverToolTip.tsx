@@ -62,7 +62,7 @@ export const getHoverTooltip = {
 
     return {
       toolTip: (
-        <div>
+        <div >
           <div>
             <span className="Tooltip-major-text" style={{ marginRight: 3 }}>
               {dataObj.hasReverse && "Forward: "} {stringValue}
@@ -95,7 +95,96 @@ export const getHoverTooltip = {
       ),
     };
   },
+  qbed: function getTooltip(dataObj: { [key: string]: any }) {
+    function formatCards(quanta: any[]) {
+      const head = (
+        <thead>
+          <tr>
+            <th scope="col">Value</th>
+            <th scope="col">Strand</th>
+            <th scope="col">Annotation</th>
+          </tr>
+        </thead>
+      );
+      const rows = quanta.slice(0, 10).map((quantum, i) => (
+        <tr key={i}>
+          <td>{quantum.value}</td>
+          <td>{quantum.strand}</td>
+          <td>
+            {_.truncate(quantum.annotation, {
+              length: 75,
+              separator: /[,; ]/,
+            })}
+          </td>
+        </tr>
+      ));
+      return (
+        <table className="table table-striped table-sm">
+          {head}
+          <tbody>{rows}</tbody>
+        </table>
+      );
+    }
 
+    function nearestCards(
+      quanta: any[],
+      relativeX: number,
+      relativeY: number,
+      radius: number
+    ) {
+      const distances = quanta.map(
+        (quantum) =>
+          Math.pow(relativeX - (quantum.relativeX || 0), 2) +
+          Math.pow(relativeY - (quantum.relativeY || 0), 2)
+      );
+
+      const mindist = Math.min(...distances);
+      if (mindist < radius * radius) {
+        return quanta.filter((_, i) => distances[i] === mindist);
+      } else {
+        return [];
+      }
+    }
+    const {
+      trackModel,
+      viewRegion,
+      width,
+
+      data,
+      relativeY,
+      relativeX,
+    } = dataObj;
+    const { markerSize } = dataObj.options;
+
+    let quanta: any[] = [];
+
+    for (let i = relativeX - markerSize; i <= relativeX + markerSize; i++) {
+      quanta = quanta.concat(data[i]);
+    }
+
+    if (quanta !== undefined && quanta.length > 0) {
+      const nearest = nearestCards(quanta, relativeX, relativeY, markerSize);
+      if (nearest.length > 0) {
+        return {
+          toolTip: (
+            <div>
+              <div className="Tooltip-minor-text">
+                <GenomicCoordinates
+                  viewRegion={viewRegion}
+                  width={width}
+                  x={relativeX}
+                />
+              </div>
+              <div className="Tooltip-minor-text">
+                {trackModel.getDisplayLabel()}
+              </div>
+              <div className="Tooltip-minor-text">{formatCards(nearest)}</div>
+            </div>
+          ),
+        };
+      }
+    }
+  },
   dbedgraph: function getTooltip(dataObj: { [key: string]: any }) {
     const { trackModel, viewRegion, width, relativeX, data } = dataObj;
     if (!data) {
@@ -459,15 +548,15 @@ export const getHoverTooltip = {
 
     return beamElements
       ? {
-          beams: beamElements,
-          toolTip: (
-            <div>
-              <div>Locus1: {polygon.interaction.locus1.toString()}</div>
-              <div>Locus2: {polygon.interaction.locus2.toString()}</div>
-              <div>Score: {polygon.interaction.score}</div>
-            </div>
-          ),
-        }
+        beams: beamElements,
+        toolTip: (
+          <div>
+            <div>Locus1: {polygon.interaction.locus1.toString()}</div>
+            <div>Locus2: {polygon.interaction.locus2.toString()}</div>
+            <div>Score: {polygon.interaction.score}</div>
+          </div>
+        ),
+      }
       : "";
   },
   interactionArc: function getToolTip(dataObj: { [key: string]: any }) {
@@ -546,7 +635,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-              item[2]
+            item[2]
           ) <=
           0.5 * item[3]
         ) {
@@ -562,7 +651,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-              item[2]
+            item[2]
           ) <=
           0.5 * item[3]
         ) {
@@ -604,14 +693,14 @@ export const getHoverTooltip = {
 
     return polygon
       ? {
-          toolTip: (
-            <div>
-              <div>Locus1: {interaction.locus1.toString()}</div>
-              <div>Locus2: {interaction.locus2.toString()}</div>
-              <div>Score: {interaction.score}</div>
-            </div>
-          ),
-        }
+        toolTip: (
+          <div>
+            <div>Locus1: {interaction.locus1.toString()}</div>
+            <div>Locus2: {interaction.locus2.toString()}</div>
+            <div>Score: {interaction.score}</div>
+          </div>
+        ),
+      }
       : "";
   },
   genomealignFine: function genomeAlignFetch(dataObj: { [key: string]: any }) {
@@ -622,7 +711,7 @@ export const getHoverTooltip = {
     const indexOfCusorSegment = drawData.reduce(
       (iCusor, x, i) =>
         x.targetXSpan.start < dataObj.relativeX &&
-        x.targetXSpan.end >= dataObj.relativeX
+          x.targetXSpan.end >= dataObj.relativeX
           ? i
           : iCusor,
       NaN
@@ -651,13 +740,14 @@ export const getHoverTooltip = {
     return {
       toolTip: (
         <HorizontalFragment
+          windowScrollY={dataObj.windowScrollY}
           height={dataObj.options.height}
           rectHeight={RECT_HEIGHT}
           primaryColor={dataObj.options.primaryColor}
           queryColor={dataObj.options.queryColor}
           segmentArray={dataObj.data}
           strand={dataObj.data.plotStrand}
-          viewWindowStart={dataObj.width}
+          viewWindowStart={dataObj.data.primaryVisData.viewWindow.start}
           relativeX={dataObj.relativeX}
         />
       ),
@@ -721,7 +811,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
       trackModel,
       data2:
         isArrayNotEmpty(data2) ||
-        (isObjectNotEmpty(data2) && isDataValid(data2))
+          (isObjectNotEmpty(data2) && isDataValid(data2))
           ? data2
           : [],
       viewRegion,
@@ -729,6 +819,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
       unit,
       relativeX: dataIdxX,
       relativeY: dataIdxY,
+      windowScrollY: window.scrollY,
       hasReverse,
       options,
       viewWindow,
@@ -741,15 +832,16 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     if (trackHoverTooltip) {
       setPosition({
         ...rectPosition,
-        mouseYPos: e.pageY + 10,
+        mouseYPos: trackType === "genomealignRough" ? rect.top : e.pageY + 10,
         mouseXPos: e.pageX + 10,
         toolTip: trackHoverTooltip.toolTip,
         beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
       });
       setIsVisible(true);
-    } else {
-      setIsVisible(false);
     }
+    // else {
+    //   setIsVisible(false);
+    // }
   };
   // when creating mouse behavior and events for separate component you have to create handler function outside the useeffect or else state is based
   // of data in the element in array.  For example, hovering only works on the latest region of the track because the targetRef doesn't have any handler function to call
@@ -786,9 +878,9 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         <>
           {options && options.trackManagerRef
             ? ReactDOM.createPortal(
-                rectPosition.beams,
-                options.trackManagerRef.current
-              )
+              rectPosition.beams,
+              options.trackManagerRef.current
+            )
             : ""}
 
           {ReactDOM.createPortal(
@@ -797,9 +889,8 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
                 position: "absolute",
                 top: rectPosition.mouseYPos,
                 left: rectPosition.mouseXPos,
-                backgroundColor: "lightBlue",
                 borderRadius: 4,
-
+                backgroundColor: trackType === "genomealignRough" ? "transparent" : "lightblue",
                 fontSize: 14,
                 zIndex: 1000,
                 // prevent the tooltip from getting clipped off the edge of the screen viewport

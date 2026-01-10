@@ -7,6 +7,7 @@ import Feature from "../models/Feature";
 import ChromosomeInterval from "../models/ChromosomeInterval";
 import NavigationContext from "../models/NavigationContext";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
+import BigSourceWorker from "./BigSourceWorker";
 function objToInstanceAlign(alignment: { [key: string]: any }) {
   let visRegionFeatures: Feature[] = [];
 
@@ -37,14 +38,24 @@ const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
 let cachedFetchInstance: { [key: string]: any } = {};
 export const trackFetchFunction: { [key: string]: any } = {
-  // Custom implementations
   geneannotation: async function refGeneFetch(regionData: any) {
+    let genomeName;
+    let apiConfigPrefix;
     const trackModel = regionData.trackModel;
-    const genomeName = trackModel.apiConfig?.genome || regionData.genomeName;
-    const apiConfigPrefix =
-      trackModel.apiConfig?.format && apiConfigMap[trackModel.apiConfig.format]
-        ? apiConfigMap[trackModel.apiConfig.format]
-        : apiConfigMap.WashU;
+    if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
+      genomeName = trackModel["apiConfig"]["genome"];
+    } else {
+      genomeName = regionData.genomeName;
+    }
+
+    if (
+      trackModel["apiConfig"] &&
+      trackModel["apiConfig"]["format"] in apiConfigMap
+    ) {
+      apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`];
+    } else {
+      apiConfigPrefix = apiConfigMap.WashU;
+    }
 
     try {
       const fetchPromises = regionData.nav.map(async (region: any) => {
@@ -68,7 +79,7 @@ export const trackFetchFunction: { [key: string]: any } = {
             `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
             error
           );
-          return [];
+          throw error;
         }
       });
 
@@ -80,14 +91,17 @@ export const trackFetchFunction: { [key: string]: any } = {
     }
   },
   snp: async function snpFetch(regionData: any) {
-    const SNP_REGION_API: { [key: string]: string } = {
+    const SNP_REGION_API: { [key: string]: any } = {
       hg19: "https://grch37.rest.ensembl.org/overlap/region/human",
       hg38: "https://rest.ensembl.org/overlap/region/human",
     };
 
-    const api = SNP_REGION_API[regionData.genomeName];
+    const api =
+      regionData.genomeName in SNP_REGION_API
+        ? SNP_REGION_API[`${regionData.genomeName}`]
+        : null;
 
-    if (!api || regionData.end - regionData.start > 30000) {
+    if (!api) {
       return [];
     }
 
@@ -98,12 +112,11 @@ export const trackFetchFunction: { [key: string]: any } = {
     try {
       const fetchPromises = regionData.nav.map(async (region: any) => {
         if (region.end - region.start > 30000) {
-          return [];
+          throw new Error("Region is higher then 30000");
         }
 
-        const url = `${api}/${region.chr.substr(3)}:${region.start}-${
-          region.end
-        }?content-type=application%2Fjson&feature=variation`;
+        const url = `${api}/${region.chr.substr(3)}:${region.start}-${region.end
+          }?content-type=application%2Fjson&feature=variation`;
 
         try {
           const response = await fetch(url, {
@@ -122,12 +135,12 @@ export const trackFetchFunction: { [key: string]: any } = {
             `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
             error
           );
-          return [];
+          throw error;
         }
       });
 
       const results = await Promise.all(fetchPromises);
-      return results;
+      return results.flat();
     } catch (error) {
       console.error("Error in snpFetch:", error);
       throw error;
@@ -231,7 +244,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         indexUrl
       );
     } else if (trackType === "bigbed") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
         regionData.trackModel.url
       );
     } else if (trackType === "big") {
@@ -261,11 +274,7 @@ async function getRemoteData(regionData: any, trackType: string) {
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
   try {
     if (fetchInstance) {
-      const needsBasesPerPixel =
-        ((trackType === "repeat" || trackType === "rmskv2") &&
-          regionData.basesPerPixel <= 1000) ||
-        (trackType === "jaspar" && regionData.basesPerPixel <= 2);
-
+      regionData.trackModel.options["trackType"] = regionData.trackModel.type;
       if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
         return [];
       }
@@ -275,7 +284,7 @@ async function getRemoteData(regionData: any, trackType: string) {
       ) {
         return [];
       }
-      if (needsBasesPerPixel || trackType === "bigbed") {
+      if (trackType === "bigbed") {
         return fetchInstance
           .getData(
             regionData.nav,
@@ -292,6 +301,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             throw error;
           });
       } else if (trackType === "hic") {
+
         return fetchInstance
           .getData(
             objToInstanceAlign(regionData.visRegion),
@@ -299,7 +309,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
             return data;
           })
           .catch((error) => {
@@ -308,7 +318,11 @@ async function getRemoteData(regionData: any, trackType: string) {
           });
       } else {
         return fetchInstance
-          .getData(regionData.nav, regionData.trackModel.options)
+          .getData(
+            regionData.nav,
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
           .then((data: any) => {
             cachedFetchInstance[regionData.trackModel.url] = null;
 

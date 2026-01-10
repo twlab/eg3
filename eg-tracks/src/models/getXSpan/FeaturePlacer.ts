@@ -105,48 +105,8 @@ export interface PlaceFeaturesOptions {
   xToWindowMap?: { [x: number]: Feature[] }; // Output map for boxplot
 }
 
-export type PaddingFunc = (feature: Feature, xSpan: OpenInterval) => number;
-
-export enum PlacementMode {
-  NUMERICAL = "numerical", // Build aggregation arrays for numerical tracks
-  PLACEMENT = "placement", // Return PlacedFeature[]
-  ANNOTATION = "annotation", // Return PlacedFeatureGroup[] with adjacent features grouped and rows assigned
-  BOXPLOT = "boxplot", // Build windowed map for boxplot visualization
-}
-
-export interface PlaceFeaturesOptions {
-  features: Feature[] | any[];
-  viewRegion: DisplayedRegionModel;
-  width: number;
-  useCenter?: boolean;
-  mode?: PlacementMode; // Defaults to PLACEMENT
-  viewWindow?: { start: number; end: number };
-  // For ANNOTATION mode (combines adjacent + assigns rows)
-  padding?: number | PaddingFunc;
-  hiddenPixels?: number; // Minimum pixel width to display a feature
-  // For NUMERICAL mode
-  xToFeaturesForward?: Feature[][];
-  xToFeaturesReverse?: Feature[][];
-  aggregateFunc?: (features: Feature[]) => any;
-  xToAggregatedForward?: any[];
-  xToAggregatedReverse?: any[];
-  // For BOXPLOT mode
-  windowSize?: number; // Window size for binning features
-  xToWindowMap?: { [x: number]: Feature[] }; // Output map for boxplot
-}
-
 export class FeaturePlacer {
   /**
-   * Computes context and draw locations for a list of features.
-   * Accepts nested arrays (e.g., from combinedData with dataCache) and processes them without flattening.
-   *
-   * Three modes:
-   * 1. NUMERICAL: Builds aggregation arrays, returns empty array
-   * 2. PLACEMENT: Returns PlacedFeature[] for rendering
-   * 3. ANNOTATION: Returns PlacedFeatureGroup[] with adjacent features grouped and rows assigned
-   *
-   * @param {PlaceFeaturesOptions} options - configuration object
-   * @return {FeaturePlacementResult} draw info with placements and metadata
    * Computes context and draw locations for a list of features.
    * Accepts nested arrays (e.g., from combinedData with dataCache) and processes them without flattening.
    *
@@ -171,14 +131,10 @@ export class FeaturePlacer {
       hiddenPixels = 0.5,
     } = options;
 
-    const isNumerical = mode === PlacementMode.NUMERICAL;
-    const isAnnotation = mode === PlacementMode.ANNOTATION;
-    const isBoxplot = mode === PlacementMode.BOXPLOT;
     const drawModel = new LinearDrawingModel(viewRegion, width);
-    const viewRegionBounds = viewRegion.getContextCoordinates();
-    const navContext = viewRegion.getNavigationContext();
 
-    const placements: Array<any> = [];
+    const navContext = viewRegion.getNavigationContext();
+    const viewRegionBounds = viewRegion.getContextCoordinates();
     const placementsForward: Array<any> = [];
     const placementsReverse: Array<any> = [];
     // for Annotation, gene can be too small so we dont draw and increment numHidden
@@ -197,7 +153,9 @@ export class FeaturePlacer {
         : item && item.dataCache
         ? item.dataCache
         : [item];
-
+      if (!Array.isArray(featureArray)) {
+        continue;
+      }
       for (const feature of featureArray) {
         if (!feature) {
           continue;
@@ -222,6 +180,7 @@ export class FeaturePlacer {
         for (let contextLocation of feature.computeNavContextCoordinates(
           navContext
         )) {
+          contextLocation = contextLocation.getOverlap(viewRegionBounds);
           if (contextLocation) {
             feature;
             const xSpan = useCenter
@@ -232,40 +191,37 @@ export class FeaturePlacer {
               navContext,
               contextLocation
             );
-            let tempPlacementParam;
-            if (mode === PlacementMode.ANNOTATION) {
-              tempPlacementParam = this._combineAdjacent([
-                {
-                  feature,
-                  visiblePart,
-                  contextLocation,
-                  xSpan,
-                  isReverse,
-                },
-              ]);
-            } else {
-              tempPlacementParam = {
-                feature,
-                visiblePart,
-                contextLocation,
-                xSpan,
-                isReverse,
-              };
-            }
+
+            const placement = {
+              feature,
+              visiblePart,
+              contextLocation,
+              xSpan,
+              isReverse,
+            };
 
             if (feature.value === undefined || feature.value >= 0) {
-              if (Array.isArray(tempPlacementParam)) {
-                placementsForward.push(...tempPlacementParam);
-              } else {
-                placementsForward.push(tempPlacementParam);
-              }
+              placementsForward.push(placement);
             } else if (feature.value < 0) {
-              placementsReverse.push(tempPlacementParam);
+              placementsReverse.push(placement);
             }
           }
         }
       }
     }
+
+    // Batch combine adjacent features for ANNOTATION mode
+    if (mode === PlacementMode.ANNOTATION) {
+      const groupedForward = this._combineAdjacent(placementsForward);
+      const groupedReverse = this._combineAdjacent(placementsReverse);
+      return {
+        placements: groupedForward,
+        placementsForward: groupedForward,
+        placementsReverse: groupedReverse,
+        numHidden: numHidden,
+      };
+    }
+
     return {
       placements: placementsForward,
       placementsForward,
@@ -331,6 +287,7 @@ export class FeaturePlacer {
 
     // We have a base number, but it could be the end or the beginning of the context locus.
     let contextLocusStart;
+
     if (isReverse) {
       // placedBase is the end base number of the context locus.  Convert to the start.
       contextLocusStart = placedBase - contextLocation.getLength() + 1;

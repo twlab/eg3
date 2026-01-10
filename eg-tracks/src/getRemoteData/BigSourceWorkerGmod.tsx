@@ -58,7 +58,7 @@ class BigSourceWorkerGmod {
   constructor(url) {
     this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(this.url, { fetch: createFetchWithNoCache() }),
+      filehandle: new RemoteFile(this.url),
     });
     this.useEnsemblStyle = null;
   }
@@ -94,8 +94,7 @@ class BigSourceWorkerGmod {
       return this.chromNamingCache;
     } catch (error) {
       console.error(
-        "Error detecting chromosome naming. Check URL and file format.",
-        error
+        "Error detecting chromosome naming. Check URL and file format."
       );
       throw error;
     }
@@ -116,9 +115,7 @@ class BigSourceWorkerGmod {
         chrom = this.useEnsemblStyle ? "M" : "chrM";
       }
 
-      return this.bw.getFeatures(chrom, locus.start, locus.end, {
-        basesPerSpan: basesPerPixel,
-      });
+      return this.bw.getFeatures(chrom, locus.start, locus.end);
     });
 
     const dataForEachLocus = await Promise.all(promises);
@@ -140,15 +137,17 @@ class BigSourceWorkerGmod {
    * @override
    */
   getData = async (loci, basesPerPixel, options) => {
-    if (this.useEnsemblStyle === null) {
+    if (
+      this.useEnsemblStyle === null &&
+      options.trackType !== "rmskv2" &&
+      options.trackType !== "repeatmasker"
+    ) {
       this.useEnsemblStyle = await this.detectChromosomeNaming();
     }
 
     try {
       return await this.fetchSource(loci);
     } catch (error) {
-      console.error("Error fetching BigWig data, recreating instance:", error);
-
       try {
         if (typeof window !== "undefined" && "caches" in window) {
           const cacheNames = await caches.keys();
@@ -156,14 +155,15 @@ class BigSourceWorkerGmod {
             cacheNames.map((cacheName) => caches.delete(cacheName))
           );
         }
-
         // recreate the fetch instance and retry once, because it might a disk cache issue
         this.recreateBigWigInstance();
-
-        if (this.useEnsemblStyle === null) {
+        if (
+          this.useEnsemblStyle === null &&
+          options.trackType !== "rmskv2" &&
+          options.trackType !== "repeatmasker"
+        ) {
           this.useEnsemblStyle = await this.detectChromosomeNaming();
         }
-
         return await this.fetchSource(loci);
       } catch (error) {
         throw error;

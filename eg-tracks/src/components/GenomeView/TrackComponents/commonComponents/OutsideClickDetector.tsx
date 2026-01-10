@@ -1,23 +1,20 @@
 import React, { useRef, useEffect } from "react";
 
 interface OutsideClickDetectorProps {
-  onOutsideClick?: (event: MouseEvent) => void;
+  onOutsideClick?: () => void;
   innerRef?: (node: Node | null) => void;
   children: React.ReactNode;
 }
 
 const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
   onOutsideClick,
-  innerRef,
+
   children,
 }) => {
   const nodeRef = useRef<Node | null>(null);
 
   const handleRef = (node: Node | null) => {
     nodeRef.current = node;
-    if (innerRef) {
-      innerRef(node);
-    }
   };
 
   const detectOutsideClick = (event: MouseEvent) => {
@@ -26,7 +23,7 @@ const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
       !nodeRef.current.contains(event.target as Node) &&
       onOutsideClick
     ) {
-      onOutsideClick(event);
+      onOutsideClick();
     }
   };
 

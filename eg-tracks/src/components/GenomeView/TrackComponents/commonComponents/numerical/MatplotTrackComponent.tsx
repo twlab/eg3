@@ -101,6 +101,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
         `props.viewWindow` contains the range of x that is visible when no dragging.  
             It comes directly from the `ViewExpansion` object from `RegionExpander.ts`
         */
+
     const visibleValues = _.flatten(
       xToValue.map((d) =>
         d.slice(this.props.viewWindow.start, this.props.viewWindow.end)
@@ -187,25 +188,12 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       ? xvaluesData
       : smooth === 0
       ? data.map(
-          (d) =>
-            this.aggregator.xToValueMaker(
-              d,
-              viewRegion,
-              width,
-              options,
-              viewWindow
-            )[0]
+          (d) => this.aggregator.xToValueMaker(d, viewRegion, width, options)[0]
         )
       : Smooth(
           data.map(
             (d) =>
-              this.aggregator.xToValueMaker(
-                d,
-                viewRegion,
-                width,
-                options,
-                viewWindow
-              )[0]
+              this.aggregator.xToValueMaker(d, viewRegion, width, options)[0]
           ),
           smooth
         );
@@ -334,7 +322,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
         }
       })
       .filter((value) => value); // removes null from original
-    console.log(trackModel);
+
     const color =
       trackModel.tracks &&
       trackModel.tracks[trackIndex] &&

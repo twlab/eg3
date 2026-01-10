@@ -140,7 +140,7 @@ class NavigationContext {
    * @return {boolean} whether the base is navigable
    */
   getIsValidBase(base: number): boolean {
-    return 0 <= base && base < this._totalBases;
+    return 0 <= base && base < this._totalBases + 1;
   }
 
   /**
@@ -183,7 +183,9 @@ class NavigationContext {
     const index = _.sortedLastIndex(this._sortedFeatureStarts, base) - 1;
     const feature = this._features[index];
     const coordinate = base - this._sortedFeatureStarts[index];
-    return new FeatureSegment(feature, coordinate, coordinate + 1);
+    return this._flipIfReverseStrand(
+      new FeatureSegment(feature, coordinate, coordinate + 1)
+    );
   }
 
   /**
@@ -308,10 +310,6 @@ class NavigationContext {
 
       const [startChr, startPosStr] = startChromosomePart.split(":");
       const [endChr, endPosStr] = endChromosomePart.split(":");
-      const startPos = Math.round(
-        parseFloat(startPosStr.replace(/[^0-9.]/g, ""))
-      );
-      const endPos = Math.round(parseFloat(endPosStr.replace(/[^0-9.]/g, "")));
       const startPos = Math.round(
         parseFloat(startPosStr.replace(/[^0-9.]/g, ""))
       );

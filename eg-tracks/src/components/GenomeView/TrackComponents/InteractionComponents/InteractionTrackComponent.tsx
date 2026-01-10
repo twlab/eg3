@@ -1,6 +1,5 @@
-import React, { JSX } from "react";
-// import _ from "lodash";
-import memoizeOne from "memoize-one";
+import React, { JSX, useMemo, useRef } from "react";
+import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import percentile from "percentile";
 
@@ -48,7 +47,9 @@ interface InteractionTrackProps {
     bothAnchorsInView?: boolean;
     clampHeight?: boolean;
     getNumLegend?: any;
+    forceSvg?: boolean;
   };
+  dataIdx?: number;
   forceSvg?: boolean;
   getBeamRefs?: any;
   onSetAnchors3d?: any;
@@ -81,78 +82,82 @@ export const DEFAULT_OPTIONS = {
   normalization: NormalizationMode.NONE,
 };
 
-class InteractionTrackComponent extends React.PureComponent<
-  InteractionTrackProps,
-  {}
-> {
-  public featurePlacer: FeaturePlacer;
+const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
+  const currentViewDataIdx = useRef(0);
+  const initialRender = useRef(true);
+  const currentScale: any = useRef(null);
+  const currentViewWindow = useRef({ start: 0, end: 1 });
+  const currentVisualizer = useRef(null);
+  const currentViewOptions = useRef<any>({});
 
-  scales: any;
+  const featurePlacer = useMemo(() => new FeaturePlacer(), []);
 
-  constructor(props: InteractionTrackProps) {
-    super(props);
-    this.scales = null;
-    this.featurePlacer = new FeaturePlacer();
-    this.featurePlacer.placeInteractions = memoizeOne(
-      this.featurePlacer.placeInteractions
-    );
-  }
+  const placeInteractions = useMemo(() => {
+    return (
+      interactions: GenomeInteraction[],
+      region: DisplayedRegionModel,
+      width: number
+    ) => {
+      return featurePlacer.placeInteractions(interactions, region, width);
+    };
+  }, [featurePlacer]);
 
-  computeScale = () => {
-    const { data } = this.props;
-    const { scoreScale, scoreMin, scoreMax, height, scalePercentile } =
-      this.props.options;
-    // Safety check: handle null, undefined, or empty data
-    const safeData = data || [];
-    if (scoreScale === ScaleChoices.AUTO) {
-      // const maxScore = this.props.data.length > 0 ? _.maxBy(this.props.data, "score").score : 10;
-      const item = percentile(scalePercentile!, safeData, (item) => item.score);
-      // console.log(item)
-      const maxScore =
-        safeData.length > 0 ? (item as GenomeInteraction).score : 10;
-      // console.log(maxScore)
-      return {
-        opacityScale: scaleLinear()
-          .domain([0, maxScore])
-          .range([0, 1])
-          .clamp(true),
-        heightScale: scaleLinear()
-          .domain([0, maxScore])
-          .range([0, height - TOP_PADDING])
-          .clamp(true),
-        min: 0,
-        max: maxScore,
-      };
-    } else {
-      if (scoreMin! >= scoreMax!) {
-        // notify.show("Score min cannot be greater than Score max", "error", 2000);
+  const computeScale = useMemo(() => {
+    return (data: GenomeInteraction[], options: any) => {
+      const { scoreScale, scoreMin, scoreMax, height, scalePercentile } =
+        options;
+      // Safety check: handle null, undefined, or empty data
+      const safeData = data || [];
+      if (scoreScale === ScaleChoices.AUTO) {
+        const item = percentile(
+          scalePercentile!,
+          safeData,
+          (item) => item.score
+        );
+        const maxScore =
+          safeData.length > 0 ? (item as GenomeInteraction).score : 10;
         return {
           opacityScale: scaleLinear()
-            .domain([scoreMax! - 1, scoreMax!])
+            .domain([0, maxScore])
             .range([0, 1])
             .clamp(true),
           heightScale: scaleLinear()
-            .domain([scoreMax! - 1, scoreMax!])
+            .domain([0, maxScore])
             .range([0, height - TOP_PADDING])
             .clamp(true),
-          min: scoreMax! - 1,
+          min: 0,
+          max: maxScore,
+        };
+      } else {
+        if (scoreMin! >= scoreMax!) {
+          return {
+            opacityScale: scaleLinear()
+              .domain([scoreMax! - 1, scoreMax!])
+              .range([0, 1])
+              .clamp(true),
+            heightScale: scaleLinear()
+              .domain([scoreMax! - 1, scoreMax!])
+              .range([0, height - TOP_PADDING])
+              .clamp(true),
+            min: scoreMax! - 1,
+            max: scoreMax,
+          };
+        }
+        return {
+          opacityScale: scaleLinear()
+            .domain([scoreMin!, scoreMax!])
+            .range([0, 1])
+            .clamp(true),
+          heightScale: scaleLinear()
+            .domain([scoreMin!, scoreMax!])
+            .range([0, height - TOP_PADDING])
+            .clamp(true),
+          min: scoreMin,
           max: scoreMax,
         };
       }
-      return {
-        opacityScale: scaleLinear()
-          .domain([scoreMin!, scoreMax!])
-          .range([0, 1])
-          .clamp(true),
-        heightScale: scaleLinear()
-          .domain([scoreMin!, scoreMax!])
-          .range([0, height - TOP_PADDING])
-          .clamp(true),
-        min: scoreMin,
-        max: scoreMax,
-      };
-    }
-  };
+    };
+  }, []);
 
   //   showTooltip(event: React.MouseEvent, interaction: GenomeInteraction) {
   //     const tooltip = (
@@ -171,58 +176,63 @@ class InteractionTrackComponent extends React.PureComponent<
   //     this.props.onHideTooltip();
   //   }
 
-  filterData = (data: GenomeInteraction[]): GenomeInteraction[] => {
-    // Safety check: handle null or undefined data
-    if (!data) {
-      return [];
-    }
-    const { minValueFilter, maxValueFilter } = this.props.options;
-    let filteredData: GenomeInteraction[] = [];
-    if (maxValueFilter && !isNaN(maxValueFilter)) {
-      filteredData = data.filter((d) => d.score <= maxValueFilter);
-    } else {
-      filteredData = data;
-    }
-    if (minValueFilter && !isNaN(minValueFilter)) {
-      filteredData = filteredData.filter((d) => d.score >= minValueFilter);
-    }
-    return filteredData;
-  };
+  const filterData = useMemo(() => {
+    return (data: GenomeInteraction[], options: any): GenomeInteraction[] => {
+      if (!data) {
+        return [];
+      }
+      const { minValueFilter, maxValueFilter } = options;
+      let filteredData: GenomeInteraction[] = [];
+      if (maxValueFilter && !isNaN(maxValueFilter)) {
+        filteredData = data.filter((d) => d.score <= maxValueFilter);
+      } else {
+        filteredData = data;
+      }
+      if (minValueFilter && !isNaN(minValueFilter)) {
+        filteredData = filteredData.filter((d) => d.score >= minValueFilter);
+      }
+      return filteredData;
+    };
+  }, []);
 
-  render(): JSX.Element {
-    const {
-      data,
-      trackModel,
-      visRegion,
-      width,
-      viewWindow,
-      options,
-      forceSvg,
-      getBeamRefs,
-      onSetAnchors3d,
-      isThereG3dTrack,
-      getNumLegend,
-    } = this.props;
-    console.log(data);
-    // Safety check: ensure data is always an array
-    const safeData = data || [];
-    const filteredData = this.filterData(safeData);
+  const {
+    data,
+    trackModel,
+    visRegion,
+    width,
+    viewWindow,
+    options,
+    forceSvg,
+    getBeamRefs,
+    onSetAnchors3d,
+    isThereG3dTrack,
+    getNumLegend, dataIdx
+  } = props;
 
-    this.scales = this.computeScale();
+  const safeData = data || [];
+  const filteredData = filterData(safeData, options);
 
-    let interactionData = this.featurePlacer.placeInteractions(
-      filteredData,
-      visRegion,
-      width
-    );
+  const scales = computeScale(safeData, options);
+
+  let interactionData = placeInteractions(filteredData, visRegion, width);
+
+  let visualizer;
+
+  if (
+    initialRender.current ||
+    options.forceSvg ||
+    !_.isEqual(viewWindow, currentViewWindow.current) ||
+    !_.isEqual(options, currentViewOptions.current) ||
+    dataIdx !== currentViewDataIdx.current
+  ) {
     const visualizerProps = {
       placedInteractions: interactionData,
       viewWindow,
       options,
       width,
       height: options.height,
-      opacityScale: this.scales.opacityScale,
-      heightScale: this.scales.heightScale,
+      opacityScale: scales.opacityScale,
+      heightScale: scales.heightScale,
       color: options.color,
       color2: options.color2,
       lineWidth: options.lineWidth,
@@ -235,22 +245,24 @@ class InteractionTrackComponent extends React.PureComponent<
       isThereG3dTrack,
       clampHeight: options.clampHeight,
     };
-    let visualizer;
+
     const legend = (
       <TrackLegend
         trackModel={trackModel}
         height={options.height}
         axisScale={
           options.displayMode === InteractionDisplayMode.FLATARC
-            ? this.scales.heightScale
+            ? scales.heightScale
             : undefined
         }
         forceSvg={forceSvg}
       />
     );
+
     if (getNumLegend) {
       getNumLegend(legend);
     }
+
     switch (options.displayMode) {
       case InteractionDisplayMode.HEATMAP:
         visualizer = (
@@ -273,9 +285,17 @@ class InteractionTrackComponent extends React.PureComponent<
       default:
         visualizer = <ArcDisplay {...visualizerProps} legend={legend} />;
     }
-
-    return visualizer;
+  } else {
+    visualizer = currentVisualizer.current;
   }
-}
+
+  currentVisualizer.current = visualizer;
+  currentViewWindow.current = viewWindow;
+  initialRender.current = false;
+  currentScale.current = scales;
+  currentViewOptions.current = options;
+
+  return visualizer;
+};
 
 export default InteractionTrackComponent;

@@ -1,5 +1,6 @@
 import LabelConfig from "../config-menu-components.tsx/LabelConfig";
 import { TrackModel, TrackOptions } from "../../models/TrackModel";
+import { LegendFontColorConfig } from "../config-menu-components.tsx/ColorConfig";
 
 export class TrackConfig {
   isImageTrack() {
@@ -26,6 +27,6 @@ export class TrackConfig {
     return Object.assign(this.defaultOptions, defaults);
   }
   getMenuComponents(): any {
-    return [LabelConfig];
+    return [LabelConfig, LegendFontColorConfig];
   }
 }

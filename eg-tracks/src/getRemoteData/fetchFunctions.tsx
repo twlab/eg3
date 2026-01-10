@@ -20,7 +20,7 @@ import NavigationContext from "../models/NavigationContext";
 import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 
 import { niceBpCount } from "../models/util";
-
+import JSON5 from "json5";
 export interface PlacedAlignment {
   record: AlignmentRecord;
   visiblePart: AlignmentSegment;
@@ -156,55 +156,6 @@ export interface MultiAlignment {
   [genome: string]: Alignment;
 }
 
-// Custom parser for genome align data format
-function parseCustomFormat(str: string): any {
-  // Remove outer braces
-  str = str.slice(1, -1);
-
-  const result: any = {};
-
-  // Split by top-level commas (not inside nested objects)
-  const parts = str.split(/,(?![^{]*})/);
-
-  parts.forEach((part) => {
-    const colonIndex = part.indexOf(":");
-    const key = part.substring(0, colonIndex).trim();
-    let value = part.substring(colonIndex + 1).trim();
-
-    if (value.startsWith("{")) {
-      // Parse nested object
-      result[key] = parseNestedObject(value);
-    } else {
-      // Parse primitive value
-      result[key] = isNaN(Number(value)) ? value : Number(value);
-    }
-  });
-
-  return result;
-}
-
-function parseNestedObject(str: string): any {
-  str = str.slice(1, -1); // Remove braces
-  const obj: any = {};
-
-  const regex = /(\w+):(".*?"|[\w+-]+)/g;
-  let match;
-
-  while ((match = regex.exec(str)) !== null) {
-    const key = match[1];
-    let value: any = match[2];
-
-    if (value.startsWith('"') && value.endsWith('"')) {
-      value = value.slice(1, -1); // Remove quotes
-    } else if (!isNaN(Number(value))) {
-      value = Number(value);
-    }
-
-    obj[key] = value;
-  }
-
-  return obj;
-}
 
 // Main processing function that can be used both as worker and regular function
 export async function fetchGenomicData(data: any[]): Promise<any> {
@@ -244,17 +195,12 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       (items) => items && items.type !== "genomealign"
     );
 
-    // No await here, just return the promise
     return Promise.all(
       leftOverTrackModels.map(async (item) => {
         const trackType = item?.type || item?.metadata["Track type"];
         const id = item.id;
 
-        if (
-          (item.metadata.genome &&
-            !(item.metadata.genome in genomicFetchCoord)) ||
-          !(item.type in componentMap)
-        ) {
+        if (!(item.type in componentMap)) {
           fetchResults.push({
             name: trackType,
             id: id,
@@ -262,6 +208,20 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             trackModel: item,
             result: {
               error: "This track type is currently not supported. ",
+              Error: "UnsupportedTrack",
+            },
+          });
+        } else if (
+          item.metadata.genome &&
+          !(item.metadata.genome in genomicFetchCoord)
+        ) {
+          fetchResults.push({
+            name: trackType,
+            id: id,
+            metadata: item.metadata,
+            trackModel: item,
+            result: {
+              error: `genomealign track with query genome "${item.metadata.genome}" is not found`,
               Error: "UnsupportedTrack",
             },
           });
@@ -323,6 +283,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           });
         } else {
           const responses = await fetchData(item);
+
           fetchResults.push({
             name: trackType,
             result: responses,
@@ -348,11 +309,25 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       const { genome } = trackModel.metadata;
 
       if (genome && genome !== "" && genome !== primaryGenName) {
-        curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
-        visRegion = genomicFetchCoord[genome].queryRegion;
+        if (
+          genomicFetchCoord[genome]?.queryGenomicCoord &&
+          genomicFetchCoord[genome]?.queryRegion
+        ) {
+          curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
+          visRegion = genomicFetchCoord[genome].queryRegion;
+        } else if (
+          trackModel.type === "longrange" ||
+          trackModel.type === "biginteract" ||
+          trackModel.type === "hic"
+        ) {
+          curFetchNav = regionExpandLoci;
+        } else {
+          curFetchNav = genomicLoci;
+        }
       } else if (
         trackModel.type === "longrange" ||
-        trackModel.type === "biginteract"
+        trackModel.type === "biginteract" ||
+        trackModel.type === "hic"
       ) {
         curFetchNav = regionExpandLoci;
       } else {
@@ -364,15 +339,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -380,8 +355,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                 "genome" in trackModel.metadata
                   ? trackModel.metadata.genome
                   : trackModel.genome
-                  ? trackModel.genome
-                  : primaryGenName,
+                    ? trackModel.genome
+                    : primaryGenName,
               name: trackModel.name,
 
               nav: curFetchNav,
@@ -395,13 +370,9 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               trackModel,
               visRegion: visRegion,
             });
-            if (trackModel.type === "hic") {
-              console.log(responses);
-            }
           }
         }
       } catch (error) {
-        console.log(error);
         responses = {
           error: `Error fetching data for track ${trackModel.name}`,
           Error: error,
@@ -535,8 +506,12 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
           let records: AlignmentRecord[] = [];
 
           for (const record of responds) {
-            let data = parseCustomFormat("{" + record[3] + "}");
 
+            let data = JSON5.parse("{" + record[3] + "}");
+            if (!useFineModeNav) {
+              data.genomealign.targetseq = null;
+              data.genomealign.queryseq = null;
+            }
             record[3] = data;
             records.push(new AlignmentRecord(record));
           }
@@ -695,7 +670,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       trackToDrawId,
       regionSetStartBp:
         data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-        data.bpRegionSize
+          data.bpRegionSize
           ? 0
           : null,
       fetchNewRegion: data.fetchNewRegion,
