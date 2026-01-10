@@ -92,7 +92,7 @@ export class StoreManager {
   }
 
   /**
-   * Clean up orphaned localStorage entries that don't correspond to active stores
+   * Clean up localStorage entries that don't correspond to active stores
    */
   cleanupOrphanedStorage() {
     try {
@@ -102,12 +102,12 @@ export class StoreManager {
       persistKeys.forEach((key) => {
         const storeId = key.replace("persist:", "");
         if (!this.stores.has(storeId)) {
-          console.log(`Cleaning up orphaned storage for: ${storeId}`);
+          console.log(`Cleaning up storage for: ${storeId}`);
           localStorage.removeItem(key);
         }
       });
     } catch (error) {
-      console.error("Failed to cleanup orphaned storage:", error);
+      console.error("Failed to cleanup storage:", error);
     }
   }
 }

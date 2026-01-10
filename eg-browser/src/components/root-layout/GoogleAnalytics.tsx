@@ -60,7 +60,7 @@ export default function GoogleAnalytics() {
                     initial={{ y: 100 }}
                     animate={{ y: 0 }}
                     exit={{ y: 100 }}
-                    className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-lg flex items-center justify-between z-50"
+                    className="fixed bottom-0 left-0 right-0 bg-gray-400 p-2 shadow-lg flex items-center justify-between z-50"
                 >
                     <p className="text-sm text-primary">
                         We use cookies to analyze site usage and improve our services.

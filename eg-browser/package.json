@@ -1,7 +1,7 @@
 {
   "name": "wuepgg",
   "private": false,
-  "version": "58.0.1",
+  "version": "59.1.0",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -58,7 +58,7 @@
     "redux-undo": "^1.1.0",
     "tailwind-merge": "^3.3.1",
     "vite-plugin-dts": "^2.1.0",
-    "wuepgg3-track": "^3.0.3"
+    "wuepgg3-track": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

@@ -223,9 +223,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
           color={interval.color}
           disableAlpha={false}
           onChange={(color: any) => {
-            const newColor = `rgba(${color.rgb.r}, ${color.rgb.g},
-              color.rgb.b
-            }, ${0.15})`;
+            const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${0.15})`;
             const newInterval = new HighlightInterval(
               interval.start,
               interval.end,

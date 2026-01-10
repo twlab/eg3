@@ -46,7 +46,7 @@ export const GENOME_LIST: Genome[] = [
         "name": "Marmoset",
         "logoUrl": "default/marmoset.png",
         "croppedUrl": "cropped/marmoset.jpeg",
-        "versions": ["calJac4", "calJac3"]
+        "versions": ["mCalJa1.2.pat.X", "calJac4", "calJac3"]
     },
     {
         "name": "Cow",

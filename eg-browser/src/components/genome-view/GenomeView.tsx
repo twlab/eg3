@@ -92,7 +92,8 @@ export default function GenomeView() {
 
   return currentSession &&
     genomeConfig &&
-    currentSession.genomeId === genomeConfig.name ? (
+    (currentSession.genomeId === genomeConfig.name ||
+      currentSession.genomeId === genomeConfig.id) ? (
     <TrackContainerRepresentable
       key={currentSession.id}
       genomeName={currentSession?.genomeId ? currentSession?.genomeId : "hg38"}
