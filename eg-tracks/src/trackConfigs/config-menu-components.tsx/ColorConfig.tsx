@@ -61,7 +61,7 @@ export class ColorConfig extends React.PureComponent<ColorConfigProps> {
   }
 }
 export function LegendFontColorConfig(props) {
-  return <ColorConfig {...props} optionName="color" label="Legend font color" />;
+  return <ColorConfig {...props} optionName="legendFontColor" label="Legend font color" />;
 }
 /**
  * A menu item that configures `trackModel.options.color`

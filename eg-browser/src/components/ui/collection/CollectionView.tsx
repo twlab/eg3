@@ -97,16 +97,16 @@ export default function CollectionView<T>({
         <span className="text-sm truncate min-w-0 flex-grow" style={{ maxWidth: '70%' }} title={item.title}>
           {item.title}
         </span>
-        {item.section === 'Genome Comparison' && !isPrimaryGenome && (
+        {item?.section === 'Genome Comparison' && isPrimaryGenome === false && (
           <span className="text-xs text-red-500 whitespace-nowrap ml-2 flex-shrink-0" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Only available in primary genome
           </span>
         )}
       </div>
       {selectedIds !== undefined && !(
-        item.section === 'Genome Comparison' && !isPrimaryGenome
+        item?.section === 'Genome Comparison' && isPrimaryGenome === false
       ) && (
-          ((item.section === 'Genome Comparison' && selectedIds.has(item.data.url)) || selectedIds.has(item.id)) ? (
+          ((item?.section === 'Genome Comparison' && selectedIds.has(item.data.url)) || selectedIds.has(item.id)) ? (
             <div className="w-6 h-6 rounded-md bg-green-200 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
               <CheckIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
             </div>

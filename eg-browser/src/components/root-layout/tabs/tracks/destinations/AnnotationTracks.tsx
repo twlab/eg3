@@ -26,7 +26,7 @@ export default function AnnotationTracks() {
 
         trackId = track.url;
       } else {
-        track.name
+        trackId = track.name
       }
       return trackId
     }));

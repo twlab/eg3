@@ -837,11 +837,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const genomeName = genomeConfig.genome.getName();
     if (
       useFineModeNav.current &&
-      globalTrackState.current.trackStates[curDataIdx].trackState
+      globalTrackState.current.trackStates[curDataIdx]?.trackState
         .genomicFetchCoord
     ) {
       let trackState = {
-        ...globalTrackState.current.trackStates[curDataIdx].trackState,
+        ...globalTrackState.current.trackStates[curDataIdx]?.trackState,
       };
 
       const primaryVisData =
@@ -878,7 +878,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else {
       dataIdx.current = curDataIdx;
       if (
-        globalTrackState.current.trackStates[curDataIdx]?.trackState?.visData
+        globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
       ) {
         queueRegionToFetch(curDataIdx);
       }
@@ -1141,10 +1141,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
     } else {
-
-      setApplyTrackConfigChange(newSelected);
+      if (key !== "legendFontColor") { setApplyTrackConfigChange(newSelected); }
     }
-
+    console.log(key, value, trackId);
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
 
@@ -1828,8 +1827,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           const dataCacheKeyMissing =
             !("dataCache" in curTrackCache[idx]) ||
-            isGenomeAlignTrack ||
-            !curTrackCache.usePrimaryNav;
+            ((isGenomeAlignTrack ||
+              !curTrackCache.usePrimaryNav) && !useFineModeNav.current);
 
           if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
             needToFetchGenAlign = true;
@@ -1854,7 +1853,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         let trackToFetch: Array<TrackModel> = [];
         let trackState =
           curDataIdx in globalTrackState.current.trackStates
-            ? globalTrackState.current.trackStates[curDataIdx].trackState
+            ? globalTrackState.current.trackStates[curDataIdx]?.trackState
             : "";
         for (const key in trackFetchedDataCache.current) {
           const curTrackCache = trackFetchedDataCache.current[key];
@@ -1870,7 +1869,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             curDataIdx in curTrackCache &&
             (!("dataCache" in curTrackCache[curDataIdx]) ||
-              !curTrackCache.usePrimaryNav)
+              (!curTrackCache.usePrimaryNav && !useFineModeNav.current))
           ) {
             let curTrackModel: any = trackManagerState.current.tracks.find(
               (trackModel: any) =>
@@ -3411,7 +3410,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         queueRegionToFetch(dataIdx.current);
         onTracksChange(filteredTracks);
       } else {
-
+        // for options that don't need to redraw tracks, select, legend font color, reorder 
         const newTrackComponents: Array<any> = [];
 
         let needToToUpdate = false;
@@ -3426,11 +3425,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             const trackComponent = trackComponents[j];
             if (trackComponent.trackModel.id === curTrackModel.id) {
               if (
-                trackComponent.trackModel.isSelected !==
-                curTrackModel.isSelected ||
+                (trackComponent.trackModel.isSelected !==
+                  curTrackModel.isSelected) || (trackComponent.trackModel?.options?.legendFontColor !== curTrackModel.options?.legendFontColor) ||
                 i !== j
               ) {
                 trackComponent.trackModel.isSelected = curTrackModel.isSelected;
+                trackComponent.trackModel.options["legendFontColor"] = curTrackModel.options?.legendFontColor;
                 needToToUpdate = true;
               }
 
