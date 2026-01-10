@@ -227,7 +227,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     done: {},
     groups: {},
   });
+
   const initialLoad = useRef(true);
+  const startingBaseRegion = useRef<{ start: number; end: number } | null>(null);
   const useFineModeNav = useRef(false);
   const lastSelectedTool = useRef(tool);
   const dragOn = useRef(true);
@@ -2204,9 +2206,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function createHighlight(highlightArr: Array<any>) {
     let resHighlights: Array<any> = [];
-
-    const startBase = genomeConfig.defaultRegion.start;
-    const endBase = genomeConfig.defaultRegion.end;
+    if (startingBaseRegion.current === null) {
+      return
+    }
+    const startBase = startingBaseRegion.current.start;
+    const endBase = startingBaseRegion.current.end;
+    console.log(genomeConfig.defaultRegion, userViewRegion, viewRegion);
     let pixelPBase = windowWidth / (endBase - startBase);
     for (const curhighlight of highlightArr) {
       let highlightSide =
@@ -2372,7 +2377,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     rightSectionSize.current = [windowWidth];
     leftSectionSize.current = [];
 
-    let highlightElement = createHighlight(highlights);
+    // let highlightElement = createHighlight(highlights);
     globalTrackState.current = {
       rightIdx: 0,
       leftIdx: 1,
@@ -2380,7 +2385,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackStates: {},
     };
     trackFetchedDataCache.current = {};
-    setHighLightElements([...highlightElement]);
+    // setHighLightElements([...highlightElement]);
     dataIdx.current = -0;
 
     setConfigMenu(null);
@@ -2514,6 +2519,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // When a track refreshes or a new genome is initialize, we
         // select the region that was selected before the refresh after the track is
         // created
+        if (highlights) {
+
+          let highlightElement = createHighlight(highlights);
+          if (highlightElement)
+            setHighLightElements([...highlightElement]);
+        }
         const isSelected: Array<any> = [];
         tracks.map((item) => {
           if (item.isSelected) {
@@ -2721,6 +2732,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ),
         navContext: userViewRegion._navContext,
       });
+      startingBaseRegion.current = { start: userViewRegion._startBase!, end: userViewRegion._endBase! };
       trackManagerState.current.tracks.map(
         (items: { type: string }, _index: any) => {
           if (items.type === "genomealign") {
@@ -2973,7 +2985,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     pixelPerBase.current = windowWidth / bpRegionSize.current;
 
     dragX.current =
-      (leftStartCoord.current - genomeConfig.defaultRegion.start) *
+      (leftStartCoord.current - startingBaseRegion.current!.start) *
       pixelPerBase.current;
     for (let i = 0; i < rightSectionSize.current.length; i++) {
       rightSectionSize.current[i] = windowWidth;
@@ -3209,7 +3221,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: useeffects_____________________________________________________________
 
   useEffect(() => {
-    if (highlights) {
+    if (highlights && initialLoad.current === false) {
       let highlightElement = createHighlight(highlights);
       setHighLightElements([...highlightElement]);
     }
@@ -3493,7 +3505,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         updatedGenomeConfig.navContext = viewRegion._navContext;
       }
       Object.assign(genomeConfig, updatedGenomeConfig);
-
+      startingBaseRegion.current = { start: userViewRegion._startBase!, end: userViewRegion._endBase! };
       preload.current = true;
       refreshState();
       initializeTracks();
@@ -3517,6 +3529,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         );
         updatedGenomeConfig.navContext = userViewRegion._navContext;
         Object.assign(genomeConfig, updatedGenomeConfig);
+        startingBaseRegion.current = { start: userViewRegion._startBase!, end: userViewRegion._endBase! };
         preload.current = true;
         refreshState();
         initializeTracks();
