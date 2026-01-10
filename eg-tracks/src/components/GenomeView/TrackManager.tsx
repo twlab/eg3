@@ -2910,8 +2910,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   function trackSizeChange() {
     const trackToDrawId: { [key: string]: any } = {};
+    completedFetchedRegion.current.key = dataIdx.current;
+    completedFetchedRegion.current.done = {};
+    completedFetchedRegion.current.groups = {};
     for (const cacheKey in trackFetchedDataCache.current) {
       trackToDrawId[cacheKey] = false;
+      completedFetchedRegion.current.done[cacheKey] = false;
     }
     const prevStateWindowWidth = prevWindowWidth.current;
 
@@ -2978,6 +2982,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       leftSectionSize.current[i] = windowWidth;
     }
 
+
+
+    const newViewWindow =
+      side.current === "right"
+        ? new OpenInterval(
+          -((dragX.current % windowWidth) + -windowWidth),
+          -((dragX.current % windowWidth) + -windowWidth) + windowWidth
+        )
+        : new OpenInterval(
+          windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
+          windowWidth * 3 - (dragX.current % windowWidth)
+        );
+
+    globalTrackState.current.viewWindow = newViewWindow;
     if (hasGenomeAlign.current) {
       deleteCache();
 
@@ -3004,18 +3022,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       const tmpArr = [...trackComponents];
 
-      const newViewWindow =
-        side.current === "right"
-          ? new OpenInterval(
-            -((dragX.current % windowWidth) + -windowWidth),
-            -((dragX.current % windowWidth) + -windowWidth) + windowWidth
-          )
-          : new OpenInterval(
-            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
-            windowWidth * 3 - (dragX.current % windowWidth)
-          );
 
-      globalTrackState.current.viewWindow = newViewWindow;
 
       setTrackComponents(tmpArr);
       checkDrawData({
@@ -3429,8 +3436,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   curTrackModel.isSelected) || (trackComponent.trackModel?.options?.legendFontColor !== curTrackModel.options?.legendFontColor) ||
                 i !== j
               ) {
-                trackComponent.trackModel.isSelected = curTrackModel.isSelected;
-                trackComponent.trackModel.options["legendFontColor"] = curTrackModel.options?.legendFontColor;
+                trackComponent.trackModel = curTrackModel
+
                 needToToUpdate = true;
               }
 
