@@ -3,9 +3,8 @@ import RootLayout from "./components/root-layout/RootLayout";
 import AppProvider, { AppProviderProps } from "./lib/redux/AppProvider";
 import "./index.css";
 
-export interface AppProps extends Omit<AppProviderProps, "children"> {
+export interface AppProps {
   storeConfig?: AppProviderProps["storeConfig"];
-
   [key: string]: any;
 }
 

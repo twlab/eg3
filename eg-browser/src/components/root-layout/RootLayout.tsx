@@ -41,7 +41,7 @@ import {
   setToolBarVisibility,
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { useEffect, useRef } from "react";
+import { use, useEffect, useRef } from "react";
 
 import {
   GenomeSerializer,
@@ -104,7 +104,7 @@ export default function RootLayout(props: GenomeHubProps) {
     props.showGenomeNavigator !== undefined ||
     props.showNavBar !== undefined ||
     props.showToolBar !== undefined;
-
+  console.log(props)
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
@@ -170,6 +170,7 @@ export default function RootLayout(props: GenomeHubProps) {
     } else if (!initialState.current) {
       usePrevSession = false;
     }
+    console.log(usePrevSession)
     if (
       !usePrevSession &&
       ((props.genomeName && props.tracks && props.viewRegion) ||
@@ -182,13 +183,13 @@ export default function RootLayout(props: GenomeHubProps) {
             const genome = GenomeSerializer.serialize(genomeConfig);
 
             let additionalTracks: ITrackModel[] = props.tracks as ITrackModel[];
-
+            console.log('1')
             dispatch(
               createSession({
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                  props.viewRegion === null
+                    props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -196,17 +197,18 @@ export default function RootLayout(props: GenomeHubProps) {
             );
           }
         } else {
+          console.log('2')
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
