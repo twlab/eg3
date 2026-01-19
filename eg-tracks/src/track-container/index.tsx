@@ -41,6 +41,8 @@ export function TrackContainerRepresentable({
   overrideViewRegion,
   currentState,
   darkTheme,
+  height,
+  width
 }: ITrackContainerRepresentableProps) {
   // const [forceViewRegionUpdate, setForceViewRegionUpdate] = useState(0);
 
@@ -306,6 +308,8 @@ export function TrackContainerRepresentable({
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
         darkTheme={darkTheme}
+        width={width}
+        height={height}
       />
     </div>
   );

@@ -14,6 +14,14 @@ export interface AppProps {
  *
  * @param props configuration and layout props
  */
+
+// storeConfig={{ storeId: "genome-1" }}
+// viewRegion={viewRegionInput}
+// genomeName={genomeName}
+// tracks={tracks}
+// showGenomeNavigator={showGenomeNavigator}
+// showNavBar={showNavBar}
+// showToolBar={showToolBar}
 export default function App({ storeConfig, ...rootLayoutProps }: AppProps) {
   return (
     <MotionConfig transition={snappyTransition}>

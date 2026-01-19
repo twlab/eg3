@@ -82,6 +82,8 @@ export interface GenomeHubProps {
   showGenomeNavigator?: boolean;
   showNavBar?: boolean;
   showToolBar?: boolean;
+  width?: number;
+  height?: number;
 }
 
 export default function RootLayout(props: GenomeHubProps) {
@@ -104,7 +106,7 @@ export default function RootLayout(props: GenomeHubProps) {
     props.showGenomeNavigator !== undefined ||
     props.showNavBar !== undefined ||
     props.showToolBar !== undefined;
-  console.log(props)
+
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
@@ -170,7 +172,7 @@ export default function RootLayout(props: GenomeHubProps) {
     } else if (!initialState.current) {
       usePrevSession = false;
     }
-    console.log(usePrevSession)
+
     if (
       !usePrevSession &&
       ((props.genomeName && props.tracks && props.viewRegion) ||
@@ -183,7 +185,7 @@ export default function RootLayout(props: GenomeHubProps) {
             const genome = GenomeSerializer.serialize(genomeConfig);
 
             let additionalTracks: ITrackModel[] = props.tracks as ITrackModel[];
-            console.log('1')
+
             dispatch(
               createSession({
                 genome,
@@ -197,7 +199,7 @@ export default function RootLayout(props: GenomeHubProps) {
             );
           }
         } else {
-          console.log('2')
+
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
@@ -213,6 +215,8 @@ export default function RootLayout(props: GenomeHubProps) {
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
               customGenome: props.customGenome,
+              width: props.width,
+              height: props.height,
             })
           );
         }
