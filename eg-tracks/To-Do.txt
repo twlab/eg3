@@ -259,3 +259,9 @@ trackResize
     2. woorking for genomealign rough (finished) fixed by resetting complete and setting viewRegion for new computescale
 
 
+1/19/2026
+1. height, width prop
+2. custom genome for package, customGenome Prop as object or json
+3. isPackage in root, change, and what props are needed, and check what we have, and error display
+    if prop is not given, or add default props,
+4. error checked
