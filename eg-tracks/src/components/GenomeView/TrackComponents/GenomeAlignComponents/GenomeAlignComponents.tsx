@@ -300,7 +300,8 @@ export function renderRoughAlignment(
   plotReverse: boolean,
   roughHeight: number,
   targetGenome,
-  queryGenome
+  queryGenome,
+  options: { [key: string]: any }
 ) {
   const uniqueKey = generateUUID();
   const targetXSpan: { [key: string]: any } = placement.targetXSpan;
@@ -315,7 +316,7 @@ export function renderRoughAlignment(
       y={0}
       width={targetXSpan.end - targetXSpan.start}
       height={RECT_HEIGHT}
-      fill={DEFAULT_OPTIONS.primaryColor}
+      fill={options.primaryColor}
     // tslint:disable-next-line:jsx-no-lambda
     // onClick={() =>
     //   console.log("You clicked on " + queryFeature.getLocus().toString())
@@ -328,7 +329,7 @@ export function renderRoughAlignment(
       y={queryRectTopY}
       width={queryXSpan.end - queryXSpan.start}
       height={RECT_HEIGHT}
-      fill={DEFAULT_OPTIONS.queryColor}
+      fill={options.queryColor}
     // tslint:disable-next-line:jsx-no-lambda
     // onClick={() => console.log("You clicked on " + queryFeature.getLocus().toString())}
     />
@@ -382,7 +383,7 @@ export function renderRoughAlignment(
       <path
         key={uniqueKey + i}
         d={d_string}
-        fill={DEFAULT_OPTIONS.queryColor}
+        fill={options.queryColor}
         fillOpacity={0.5}
         // tslint:disable-next-line:jsx-no-lambda
         onClick={() =>

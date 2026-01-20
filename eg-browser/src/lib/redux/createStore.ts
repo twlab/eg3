@@ -97,7 +97,8 @@ const createStorageWithErrorHandling = (storage: any) => {
 const undoableConfig = {
   limit: 10, // Reduced from 20 to save storage space
   filter: excludeAction([setCurrentSession.type]),
-  debug: process.env.NODE_ENV === "development",
+  // debug: process.env.NODE_ENV === "development",
+  debug: false,
 };
 
 export interface StoreConfig {
@@ -169,9 +170,7 @@ export function createAppStore(config: StoreConfig = {}) {
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
-        serializableCheck: {
-          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        },
+        serializableCheck: false,
       }),
   });
 

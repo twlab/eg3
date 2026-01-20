@@ -13,8 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 16;
-const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
+const MAX_WORKERS = 10;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -50,10 +49,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
 
   const infiniteScrollWorkers = useRef<{
-    instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
   }>({
-    instance: [],
     worker: [],
   });
   const fetchGenomeAlignWorker = useRef<{
@@ -63,7 +60,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
-
+  const [workerReady, setWorkerReady] = useState(false);
   const [show3dGene, setShow3dGene] = useState();
   //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
   const g3dTracks = useRef<Array<any>>([]);
@@ -104,33 +101,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     }
 
-    const normalTracks = tracks.filter(
-      (t) => !(t.type in INSTANCE_FETCH_TYPES)
-    );
-    const instanceFetchTracks = tracks.filter(
-      (t) => t.type in INSTANCE_FETCH_TYPES
-    );
+    const normalCount = Math.min(tracks.length, MAX_WORKERS);
 
-    // Calculate how many workers we need
-    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-    const instanceFetchTracksCount = Math.min(
-      instanceFetchTracks.length,
-      MAX_WORKERS
-    );
-
-    // Only create NEW workers if we need more than we have
     const existingNormalWorkers = infiniteScrollWorkers.current.worker.length;
     for (let i = existingNormalWorkers; i < normalCount; i++) {
       infiniteScrollWorkers.current.worker.push({
-        fetchWorker: new FetchDataWorker(),
-        hasOnMessage: false,
-      });
-    }
-
-    const existingInstanceWorkers =
-      infiniteScrollWorkers.current.instance.length;
-    for (let i = existingInstanceWorkers; i < instanceFetchTracksCount; i++) {
-      infiniteScrollWorkers.current.instance.push({
         fetchWorker: new FetchDataWorker(),
         hasOnMessage: false,
       });
@@ -147,6 +122,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       };
     }
     genomeConfig.defaultTracks = tracks;
+    setWorkerReady(true);
   }, [tracks]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
@@ -286,14 +262,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         infiniteScrollWorkers.current.worker.forEach((workerObj) => {
           workerObj.fetchWorker.terminate();
         });
-        infiniteScrollWorkers.current.instance.forEach((workerObj) => {
-          workerObj.fetchWorker.terminate();
-        });
-
-        // Clear the arrays and references
 
         infiniteScrollWorkers.current = {
-          instance: [],
           worker: [],
         };
       }
@@ -318,7 +288,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks ? (
+      {!has3dTracks && workerReady ? (
         <TrackManager
           tracks={tracks}
           legendWidth={legendWidth}

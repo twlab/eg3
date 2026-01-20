@@ -56,6 +56,7 @@ import CHMV2 from "./t2t-chm13-v2.0/chm13v2";
 import GRCg7b from "./GRCg7b/GRCg7b";
 import GRCg7w from "./GRCg7w/GRCg7w";
 import phaw5 from "./phaw5/phaw5";
+import mCalJa1_2_pat_X from "./mCalJa1.2.pat.X/mCalJa1.2.pat.X";
 
 /**
  * All available genomes.
@@ -119,6 +120,7 @@ export const allGenomes = [
   GRCg7b,
   GRCg7w,
   phaw5,
+  mCalJa1_2_pat_X,
 ];
 
 export const genomeNameToConfig = {};
@@ -186,7 +188,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
   },
   marmoset: {
     logoUrl: "https://vizhub.wustl.edu/public/calJac3/Marmoset.png",
-    assemblies: [calJac4.genome.getName(), calJac3.genome.getName()],
+    assemblies: [mCalJa1_2_pat_X.genome.getName(), calJac4.genome.getName(), calJac3.genome.getName()],
     color: "yellow",
   },
   cow: {

@@ -14,7 +14,7 @@ import { GenomeCoordinate } from "../types";
 import NavigationContext from "../models/NavigationContext";
 import { fetchGenomicData } from "../getRemoteData/fetchFunctions";
 import { HicSource } from "../getRemoteData/hicSource";
-import { testCustomGenome } from "./testCustomGenome";
+// import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
 import "./GenomeView/track.css";
 import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickTooltipMap";
@@ -75,13 +75,13 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
 
   // MARK:Con/Reg/Opt
   function getConfig() {
-    if (testCustomGenome) {
-      try {
-        return GenomeSerializer.deserialize(testCustomGenome);
-      } catch {
-        return null;
-      }
-    }
+    // if (testCustomGenome) {
+    //   try {
+    //     return GenomeSerializer.deserialize(testCustomGenome);
+    //   } catch {
+    //     return null;
+    //   }
+    // }
     if (genomeName) {
       return getGenomeConfig(genomeName);
     }
@@ -107,16 +107,16 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
     const defaults = trackOptionMap[type]?.defaultOptions || {};
     return userOptions
       ? {
-        ...defaults,
-        ...userOptions,
-        packageVersion: true,
-        trackManagerRef: interactionTracks.has(type) ? block : null,
-      }
+          ...defaults,
+          ...userOptions,
+          packageVersion: true,
+          trackManagerRef: interactionTracks.has(type) ? block : null,
+        }
       : {
-        ...defaults,
-        packageVersion: true,
-        trackManagerRef: interactionTracks.has(type) ? block : null,
-      };
+          ...defaults,
+          packageVersion: true,
+          trackManagerRef: interactionTracks.has(type) ? block : null,
+        };
   }
   function getTrackModels(genomeConfig: any, genomeViewId: string) {
     let trackModelArr: TrackModel[] = [];
@@ -144,8 +144,8 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             name: track.name
               ? track.name
               : track.type === "ruler"
-                ? "ruler"
-                : `track ${idx + 1}`,
+              ? "ruler"
+              : `track ${idx + 1}`,
             url: track.url,
             options: getOptions(track.type, track.options),
             id: generateUUID(),
@@ -371,7 +371,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
           }}
         >
           {typeof svgResult === "object" &&
-            Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
+          Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
             ? svgResult.component
             : svgResult}
         </div>

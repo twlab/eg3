@@ -185,3 +185,83 @@ to do: 10/21/2025
 - check all track if working with new recode 
 - parsing interval
 - option to increase hic range 
+
+
+
+12/24/2025
+
+finished hic and bam working, and error for normal tracks 
+
+1. need to check if hic and bam is working with package (ITS WORKIGN)
+2. error for hic and bam, genomealign
+3. check boxplot, bigbed
+
+4. fix when queryGenome but no genomealign track with query  (working)
+5. outsideclick close tab
+6. tracklegend font color
+7. drag button stop drag 
+8. copy in toolbar
+9. tracklegendwidth
+
+
+
+error check List:
+
+genome align rough 
+ 1. check for coorrect amount of fetch and render   (finished)
+ 2. other track following it every region region (finished)
+ 3. add/delete  (finsihed) fixed parsing JSON5, annotation Track tab check if already in track using url, stop querygenome align from added ,can add other query annotation
+    (need to add for local, and remote)
+ 4. zoom/ change region (finished)
+ 5. with normal tracks  (finished)
+    6. finished genome align rough hover (kinda finish) hover line 
+
+ genome align fine 
+    1. changes properly between zooms (finished)
+    2. all tracks follows it  (finished)  fixed bug in queuefetch region, it doesn't use cache data
+    3. check for coorrect amount of fetch and render  (finished)
+
+
+trackConfigMenu
+
+1. positions (finshed) fixed positioning, using windowY scroll 
+2. changes track correctly 
+
+
+tracks to check:
+1. bigbed
+2. vcf   (finished) whening zooming
+3. categorical (finished)
+4. snp (need to have a diff error message)
+5.methylc
+6. dynseq
+7. bedgraph
+
+all Tracks that has redraw conditionals: 
+1. numerical
+2. vcf 
+3. interaction (might need to revisit)
+4. methylc
+5. dynseq
+6. bedgraph
+7. 
+
+
+
+    boxplot: string;
+    matplot: string;
+    longrange: string;
+    hic: string;
+
+
+trackResize
+    1. working for normal track (finished)
+    2. woorking for genomealign rough (finished) fixed by resetting complete and setting viewRegion for new computescale
+
+
+1/19/2026
+1. height, width prop
+2. custom genome for package, customGenome Prop as object or json
+3. isPackage in root, change, and what props are needed, and check what we have, and error display
+    if prop is not given, or add default props,
+4. error checked

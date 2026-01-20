@@ -43,7 +43,8 @@ interface MatplotTrackProps {
   viewRegion: any;
   width: any;
   forceSvg: any;
-  getNumLegend: any;
+
+  updatedLegend?: any;
   xvaluesData?: any; // Add xvaluesData property to the interface
 }
 const TOP_PADDING = 2;
@@ -101,6 +102,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
         `props.viewWindow` contains the range of x that is visible when no dragging.  
             It comes directly from the `ViewExpansion` object from `RegionExpander.ts`
         */
+
     const visibleValues = _.flatten(
       xToValue.map((d) =>
         d.slice(this.props.viewWindow.start, this.props.viewWindow.end)
@@ -176,7 +178,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       unit,
       options,
       forceSvg,
-      getNumLegend,
+      updatedLegend,
       viewWindow,
       xvaluesData,
     } = this.props;
@@ -186,59 +188,55 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
     this.xToValue = xvaluesData
       ? xvaluesData
       : smooth === 0
-      ? data.map(
-          (d) =>
-            this.aggregator.xToValueMaker(
-              d,
-              viewRegion,
-              width,
-              options,
-              viewWindow
-            )[0]
+        ? data.map(
+          (d) => this.aggregator.xToValueMaker(d, viewRegion, width, options)[0]
         )
-      : Smooth(
+        : Smooth(
           data.map(
             (d) =>
-              this.aggregator.xToValueMaker(
-                d,
-                viewRegion,
-                width,
-                options,
-                viewWindow
-              )[0]
+              this.aggregator.xToValueMaker(d, viewRegion, width, options)[0]
           ),
           smooth
         );
     this.scales = this.computeScales(this.xToValue, height);
     const legend = (
-      <TrackLegend
-        trackModel={trackModel}
-        height={height}
-        axisScale={this.scales.valueToY}
-        axisLegend={unit}
-      />
+      <div
+        style={{
+          display: "flex",
+        }}
+      >
+        <TrackLegend
+          trackModel={trackModel}
+          height={height}
+          axisScale={this.scales.valueToY}
+          axisLegend={unit}
+          forceSvg={forceSvg}
+        />
+      </div>
     );
-    if (getNumLegend) {
-      getNumLegend(legend);
+    if (updatedLegend) {
+      updatedLegend.current = legend;
     }
     let curParentStyle: any = forceSvg
       ? {
-          position: "relative",
+        position: "relative",
 
-          overflow: "hidden",
-          width: width / 3,
-        }
+        overflow: "hidden",
+        width: width / 3,
+      }
       : {};
     let curEleStyle: any = forceSvg
       ? {
-          position: "relative",
-          transform: `translateX(${-viewWindow.start}px)`,
-        }
+        position: "relative",
+        transform: `translateX(${-viewWindow.start}px)`,
+      }
       : {};
     const visualizer = (
       // <HoverTooltipContext tooltipRelativeY={height} getTooltipContents={this.renderTooltip} >
       <React.Fragment>
-        <div style={{ display: "flex" }}>
+
+
+        {!forceSvg ? (
           <div
             style={{
               display: "flex",
@@ -247,43 +245,42 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
               zIndex: 3,
             }}
           >
-            {!forceSvg ? (
-              <HoverToolTip
-                data={this.xToValue}
-                scale={this.scales}
-                windowWidth={width}
-                trackType={"matplot"}
-                trackModel={trackModel}
-                height={height}
-                viewRegion={viewRegion}
-                unit={unit ? unit : ""}
-                hasReverse={true}
-                options={options}
-              />
-            ) : (
-              ""
-            )}
-          </div>
-          <div style={{ display: "flex", ...curParentStyle }}>
-            {forceSvg || options.packageVersion ? legend : ""}
-            <div
-              style={{
-                ...curEleStyle,
-              }}
-            >
-              <LinePlot
-                trackModel={trackModel}
-                xToValue={this.xToValue}
-                scales={this.scales}
-                height={height}
-                forceSvg={forceSvg}
-                lineWidth={lineWidth}
-                width={width}
-                viewWindow={viewWindow}
-              />{" "}
-            </div>{" "}
+            <HoverToolTip
+              data={this.xToValue}
+              scale={this.scales}
+              windowWidth={width}
+              trackType={"matplot"}
+              trackModel={trackModel}
+              height={height}
+              viewRegion={viewRegion}
+              unit={unit ? unit : ""}
+              hasReverse={true}
+              options={options}
+            /></div>
+        ) : (
+          ""
+        )}
+
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {forceSvg || options.packageVersion ? legend : ""}
+          <div
+            style={{
+              ...curEleStyle,
+            }}
+          >
+            <LinePlot
+              trackModel={trackModel}
+              xToValue={this.xToValue}
+              scales={this.scales}
+              height={height}
+              forceSvg={forceSvg}
+              lineWidth={lineWidth}
+              width={width}
+              viewWindow={viewWindow}
+            />
           </div>
         </div>
+
       </React.Fragment>
     );
 
@@ -334,11 +331,11 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
         }
       })
       .filter((value) => value); // removes null from original
-    console.log(trackModel);
+
     const color =
       trackModel.tracks &&
-      trackModel.tracks[trackIndex] &&
-      trackModel.tracks[trackIndex].options
+        trackModel.tracks[trackIndex] &&
+        trackModel.tracks[trackIndex].options
         ? trackModel.tracks[trackIndex].options.color || "blue"
         : "blue";
     return (

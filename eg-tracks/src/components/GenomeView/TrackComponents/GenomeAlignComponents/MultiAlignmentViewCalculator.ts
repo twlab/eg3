@@ -1,5 +1,3 @@
-import TrackModel from "../../../../models/TrackModel";
-import { GenomeConfig } from "../../../../models/genomes/GenomeConfig";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
 // import { GuaranteeMap } from '../../model/GuaranteeMap';
@@ -24,7 +22,6 @@ import Feature from "../../../../models/Feature";
 import { ViewExpansion } from "../../../../models/RegionExpander";
 import {
   FeaturePlacer,
-  PlacedFeature,
   PlacementMode,
 } from "../../../../models/getXSpan/FeaturePlacer";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
@@ -146,19 +143,19 @@ export class MultiAlignmentViewCalculator {
           ...multiAlign,
           [records.query]: records.isBigChain
             ? this.alignRough(
-                records.id,
-                records.query,
-                records.records,
-                visData
-              )
+              records.id,
+              records.query,
+              records.records,
+              visData
+            )
             : this.alignFine(
-                records.id,
-                records.query,
-                records.records,
-                visData,
-                primaryVisData,
-                allGaps
-              ),
+              records.id,
+              records.query,
+              records.records,
+              visData,
+              primaryVisData,
+              allGaps
+            ),
         }),
         {}
       );
@@ -453,8 +450,8 @@ export class MultiAlignmentViewCalculator {
         preferredTargetStart <= lastXEnd || preferredTargetEnd >= xStart;
       const targetGapTextXSpan = shiftTargetTxt
         ? targetIntervalPlacer.place(
-            new OpenInterval(preferredTargetStart, preferredTargetEnd)
-          )
+          new OpenInterval(preferredTargetStart, preferredTargetEnd)
+        )
         : new OpenInterval(preferredTargetStart, preferredTargetEnd);
       const targetGapXSpan = new OpenInterval(lastXEnd, xStart);
 
@@ -468,8 +465,8 @@ export class MultiAlignmentViewCalculator {
         preferredQueryEnd >= placement.queryXSpan!.start;
       const queryGapTextXSpan = shiftQueryTxt
         ? queryIntervalPlacer.place(
-            new OpenInterval(preferredQueryStart, preferredQueryEnd)
-          )
+          new OpenInterval(preferredQueryStart, preferredQueryEnd)
+        )
         : new OpenInterval(preferredQueryStart, preferredQueryEnd);
       const queryGapXSpan = new OpenInterval(
         lastPlacement.queryXSpan!.end,
@@ -509,6 +506,7 @@ export class MultiAlignmentViewCalculator {
   }
 
   /**
+   * 
    * Groups and merges alignment records based on their proximity in the query (secondary) genome.  Then, calculates
    * draw positions for all records.
    *
@@ -523,6 +521,7 @@ export class MultiAlignmentViewCalculator {
     alignmentRecords: AlignmentRecord[],
     visData: ViewExpansion
   ): Alignment {
+
     const { visRegion, visWidth } = visData;
     const drawModel = new LinearDrawingModel(visRegion, visWidth);
     const mergeDistance = drawModel.xWidthToBases(MERGE_PIXEL_DISTANCE);
@@ -641,7 +640,9 @@ export class MultiAlignmentViewCalculator {
       width: visWidth,
       mode: PlacementMode.PLACEMENT,
     }) as FeaturePlacementResult;
-
+    if (!result.placements) {
+      return [];
+    }
     return result.placements.map((placement: any) => {
       return {
         record: placement.feature as AlignmentRecord,
@@ -816,6 +817,7 @@ export class MultiAlignmentViewCalculator {
     drawModel: LinearDrawingModel
   ) {
     const xSpans: Array<any> = [];
+
     if (drawReverse) {
       // place segments from right to left if drawReverse
       for (const locus of internalLoci) {
@@ -875,13 +877,13 @@ class IntervalPlacer {
         Math.abs(center - this.rightExtent);
       finalLocation = isInsertLeft
         ? new OpenInterval(
-            this.leftExtent - preferredLocation.getLength(),
-            this.leftExtent
-          )
+          this.leftExtent - preferredLocation.getLength(),
+          this.leftExtent
+        )
         : new OpenInterval(
-            this.rightExtent,
-            this.rightExtent + preferredLocation.getLength()
-          );
+          this.rightExtent,
+          this.rightExtent + preferredLocation.getLength()
+        );
     }
 
     this._placements.push(finalLocation);

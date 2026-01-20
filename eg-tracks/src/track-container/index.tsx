@@ -41,6 +41,8 @@ export function TrackContainerRepresentable({
   overrideViewRegion,
   currentState,
   darkTheme,
+  height,
+  width
 }: ITrackContainerRepresentableProps) {
   // const [forceViewRegionUpdate, setForceViewRegionUpdate] = useState(0);
 
@@ -68,6 +70,7 @@ export function TrackContainerRepresentable({
       isSelected: track.isSelected,
       fileObj: track.fileObj,
       files: track.files,
+      changeConfigInitial: track.changeConfigInitial,
     }),
     []
   );
@@ -90,6 +93,7 @@ export function TrackContainerRepresentable({
         isSelected: track.isSelected,
         fileObj: track.fileObj,
         files: track.files,
+        changeConfigInitial: track.changeConfigInitial,
       });
     };
 
@@ -111,6 +115,7 @@ export function TrackContainerRepresentable({
         cache.delete(key);
       }
     }
+
     return result;
   }, [tracks]);
 
@@ -155,18 +160,8 @@ export function TrackContainerRepresentable({
   }, [viewRegion, genomeConfig, selectedRegionSet]);
 
   const convertedUserViewRegion = useMemo(() => {
-    try {
-      let newViewRegion;
-      if (userViewRegion) {
-        newViewRegion = genomeConfig.navContext.parse(
-          userViewRegion as GenomeCoordinate
-        );
-      } else if (overrideViewRegion) {
-        newViewRegion = genomeConfig.navContext.parse(
-          overrideViewRegion as GenomeCoordinate
-        );
-      }
-
+    let newViewRegion;
+    if (userViewRegion) {
       if (selectedRegionSet) {
         let setNavContext;
         if (typeof selectedRegionSet === "object") {
@@ -176,19 +171,25 @@ export function TrackContainerRepresentable({
           setNavContext = selectedRegionSet.makeNavContext();
         }
 
-        return new DisplayedRegionModel(setNavContext, ...newViewRegion);
+        setNavContext.parse(userViewRegion as GenomeCoordinate);
+        return new DisplayedRegionModel(setNavContext);
       } else {
-        if (newViewRegion) {
-          return new DisplayedRegionModel(
-            genomeConfig.navContext,
-            ...newViewRegion
-          );
-        }
+        newViewRegion = genomeConfig.navContext.parse(
+          userViewRegion as GenomeCoordinate
+        );
       }
-    } catch (e) {
+    } else if (overrideViewRegion) {
+      newViewRegion = genomeConfig.navContext.parse(
+        overrideViewRegion as GenomeCoordinate
+      );
+    } else {
+      newViewRegion = genomeConfig.defaultRegion;
+    }
+
+    if (newViewRegion) {
       return new DisplayedRegionModel(
         genomeConfig.navContext,
-        ...genomeConfig.defaultRegion
+        ...newViewRegion
       );
     }
   }, [userViewRegion, genomeConfig, overrideViewRegion, selectedRegionSet]);
@@ -287,13 +288,13 @@ export function TrackContainerRepresentable({
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
         showToolBar={showToolBar}
-        onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
-        onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
-        onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
+        onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
+        onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
+        onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
         onNewRegionSelect={
-          !onNewRegionSelect ? () => {} : handleNewRegionSelect
+          !onNewRegionSelect ? () => { } : handleNewRegionSelect
         }
-        onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
+        onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
         viewRegion={convertedViewRegion}
         userViewRegion={
           convertedUserViewRegion
@@ -307,6 +308,8 @@ export function TrackContainerRepresentable({
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
         darkTheme={darkTheme}
+        width={width}
+        height={height}
       />
     </div>
   );

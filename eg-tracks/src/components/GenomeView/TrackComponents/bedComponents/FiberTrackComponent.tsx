@@ -1,5 +1,4 @@
-import React from "react";
-import memoizeOne from "memoize-one";
+import React, { useRef, useMemo } from "react";
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
@@ -37,10 +36,13 @@ interface FiberTrackProps {
     displayMode: FiberDisplayModes;
     hideMinimalItems: boolean;
     pixelsPadding?: number;
+    packageVersion?: boolean;
+    forceSvg?: boolean;
+    usePrimaryNav?: boolean;
   };
   forceSvg?: boolean;
   visRegion: DisplayedRegionModel;
-  getNumLegend: any;
+
   getAnnotationTrack: any;
   trackState: any;
   renderTooltip: any;
@@ -55,6 +57,8 @@ interface FiberTrackProps {
   ROW_HEIGHT: any;
   onClose: any;
   xvaluesData?: any;
+  dataIdx?: number;
+
 }
 
 interface AggregatedFiber {
@@ -82,26 +86,29 @@ export const DEFAULT_OPTIONS = {
  *
  * @author Daofeng Li
  */
-class FiberTrackComponent extends React.Component<FiberTrackProps> {
-  static displayName = "FiberTrack";
-  xMap: AggregatedFiber[] | undefined;
-  scales: any;
+const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
 
-  constructor(props: FiberTrackProps) {
-    super(props);
-    // this.renderAnnotation = this.renderAnnotation.bind(this);
-    this.aggregateFibers = memoizeOne(this.aggregateFibers);
-  }
 
-  paddingFunc = (feature: Fiber, xSpan: OpenInterval) => {
-    const width = xSpan.end - xSpan.start;
-    const estimatedLabelWidth = feature.getName().length * 9;
-    if (estimatedLabelWidth < 0.5 * width) {
-      return 5;
-    } else {
-      return 9 + estimatedLabelWidth;
-    }
-  };
+  const {
+    onClose,
+    ROW_HEIGHT,
+    getHeight,
+    data,
+    getGenePadding,
+    visRegion,
+    svgHeight,
+    width,
+    options,
+    trackModel,
+    getAnnotationTrack,
+    trackState,
+    renderTooltip,
+
+    updatedLegend,
+    viewWindow,
+  } = props;
+
+
 
   /**
    * Renders one annotation.
@@ -120,60 +127,62 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
    * @param width
    * @returns
    */
-  aggregateFibers = (
-    data: Fiber[],
-    viewRegion: DisplayedRegionModel,
-    width: number
-  ) => {
-    width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
-    const xToFibers = Array(width).fill(null);
-    for (let x = 0; x < width; x++) {
-      // Fill the array with empty arrays
-      xToFibers[x] = { on: 0, off: 0, count: 0 };
-    }
-    const placer = new FeaturePlacer();
-    const result: FeaturePlacementResult = placer.placeFeatures({
-      features: data,
-      viewRegion,
-      width,
-      mode: PlacementMode.PLACEMENT,
-    }) as FeaturePlacementResult;
-    for (const placedFeature of result.placements) {
-      const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
-      const { relativeStart, relativeEnd } = visiblePart;
-      const segmentWidth = relativeEnd - relativeStart;
-      const startX = Math.max(0, Math.floor(xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        xToFibers[x].count += 1;
+  const aggregateFibers = useMemo(
+    () => (
+      data: Fiber[],
+      viewRegion: DisplayedRegionModel,
+      width: number
+    ) => {
+      width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
+      const xToFibers = Array(width).fill(null);
+      for (let x = 0; x < width; x++) {
+        // Fill the array with empty arrays
+        xToFibers[x] = { on: 0, off: 0, count: 0 };
       }
-      (feature as Fiber).ons!.forEach((rbs) => {
-        const bs = Math.abs(rbs);
-        if (bs >= relativeStart && bs < relativeEnd) {
-          const x =
-            startX +
-            Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
-          xToFibers[x].on += 1;
+      const placer = new FeaturePlacer();
+      const result: FeaturePlacementResult = placer.placeFeatures({
+        features: data,
+        viewRegion,
+        width,
+        mode: PlacementMode.PLACEMENT,
+      }) as FeaturePlacementResult;
+      if (result && result.placements) {
+        for (const placedFeature of result.placements) {
+          const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
+          const { relativeStart, relativeEnd } = visiblePart;
+          const segmentWidth = relativeEnd - relativeStart;
+          const startX = Math.max(0, Math.floor(xSpan.start));
+          const endX = Math.min(width - 1, Math.ceil(xSpan.end));
+          for (let x = startX; x <= endX; x++) {
+            xToFibers[x].count += 1;
+          }
+          (feature as Fiber).ons!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
+              xToFibers[x].on += 1;
+            }
+          });
+          (feature as Fiber).offs!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
+              xToFibers[x].off += 1;
+            }
+          });
         }
-      });
-      (feature as Fiber).offs!.forEach((rbs) => {
-        const bs = Math.abs(rbs);
-        if (bs >= relativeStart && bs < relativeEnd) {
-          const x =
-            startX +
-            Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
-          xToFibers[x].off += 1;
-        }
-      });
-    }
-    return xToFibers;
-  };
+      }
+      return xToFibers;
+    }, []);
 
-  computeScales = () => {
-    const { height } = this.props.options;
-    const pcts = this.xMap!.map((x) => x.on / (x.on + x.off));
+  const computeScales = (xMap: AggregatedFiber[], height: number) => {
+    const pcts = xMap.map((x) => x.on / (x.on + x.off));
     const maxPct: any = _.max(pcts);
-    const counts = this.xMap!.map((x) => x.count);
+    const counts = xMap.map((x) => x.count);
     const maxCount: any = _.max(counts);
     return {
       pctToY: scaleLinear()
@@ -186,33 +195,20 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
         .clamp(true),
       pcts,
       maxPct,
+      maxCount,
       counts,
     };
   };
 
-  renderTooltipContents = (x: number) => {
-    const { pcts } = this.scales;
-    const index = Math.round(x);
-    const item = this.xMap![index];
-    if (!item.count) {
-      return null;
-    }
-    return (
-      <div>
-        <div>methylation level: {pcts[index].toFixed(3)}</div>
-        <div>
-          {item.on} modified base(s)/{item.off} canonical base(s)
-        </div>
-        <div>{item.count} reads</div>
-      </div>
-    );
-  };
 
-  visualizer = () => {
-    const { pctToY, countToY, pcts, counts } = this.scales;
-    const { height, color, color2, displayMode } = this.props.options;
-    const { width, trackModel, forceSvg, getNumLegend, options, visRegion } =
-      this.props;
+  const visualizer = (xMap: AggregatedFiber[], scales: any) => {
+    const { pctToY, countToY, pcts, counts } = scales;
+    const { height, color, color2, displayMode, packageVersion } =
+      options;
+    const {
+      forceSvg,
+      updatedLegend
+    } = props;
     const colorScale = scaleLinear()
       .domain([0, 1])
       .range([color2 as any, color as any])
@@ -264,103 +260,115 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
     }
 
     const legend = (
-      <div>
+      <div
+        style={{
+          display: "flex",
+        }}
+      >
         <TrackLegend
           trackModel={trackModel}
-          height={options.height}
-          axisScale={
-            options.displayMode === FiberDisplayModes.AUTO
-              ? this.scales.pctToY
-              : this.scales.countToY
-          }
+          height={height}
+          forceSvg={forceSvg}
         />
       </div>
     );
-    if (getNumLegend) {
-      getNumLegend(legend);
+    if (updatedLegend) {
+      updatedLegend.current = legend;
     }
+    let curParentStyle: any = forceSvg
+      ? {
+        position: "relative",
 
+        overflow: "hidden",
+        width: width / 3,
+      }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+        position: "relative",
+        transform: `translateX(${-viewWindow.start}px)`,
+      }
+      : {};
+    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
     return (
       <React.Fragment>
-        <div style={{ display: "flex" }}>
+        {!forceSvg ? (
           <div
             style={{
               display: "flex",
               flexDirection: "row",
               position: "absolute",
               zIndex: 3,
+              ...hoverStyle,
             }}
           >
-            {!forceSvg ? (
-              <HoverToolTip
-                data={this.xMap}
-                scale={this.scales}
-                windowWidth={width}
-                trackType={"modbed"}
-                trackModel={trackModel}
-                height={height}
-                viewRegion={visRegion}
-                unit={""}
-                hasReverse={true}
-                options={options}
-              />
-            ) : (
-              ""
-            )}
+            <HoverToolTip
+              data={xMap}
+              scale={scales}
+              windowWidth={width}
+              trackType={"modbed"}
+              trackModel={trackModel}
+              height={height}
+              viewRegion={visRegion}
+              unit={""}
+              hasReverse={true}
+              options={options}
+            />
           </div>
-          {forceSvg ? legend : ""}
-
-          <DesignRenderer
-            type={this.props.forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-            width={this.props.width}
-            height={height}
+        ) : (
+          ""
+        )}
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {forceSvg || options.packageVersion ? legend : ""}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              ...curEleStyle,
+            }}
           >
-            {bars}
-            {lines}
-          </DesignRenderer>
+            <>
+              <DesignRenderer
+                type={
+                  forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS
+                }
+                width={width}
+                height={height}
+                forceSvg={forceSvg}
+                viewWindow={viewWindow}
+              >
+                {bars}
+                {lines}
+              </DesignRenderer>
+            </>
+          </div>
         </div>
       </React.Fragment>
     );
   };
 
-  render() {
-    const {
-      onClose,
-      ROW_HEIGHT,
-      getHeight,
-      data,
-      getGenePadding,
-      visRegion,
-      svgHeight,
-      width,
-      options,
-      trackModel,
-      getAnnotationTrack,
-      trackState,
-      renderTooltip,
-      updatedLegend,
-    } = this.props;
-    if (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
-      this.xMap = this.aggregateFibers(data, visRegion, width);
-      this.scales = this.computeScales();
-      return this.visualizer();
-    }
-
-    return getAnnotationTrack["full"]({
-      formattedData: data,
-      trackState: trackState,
-      windowWidth: width / 3,
-      configOptions: options,
-      renderTooltip: renderTooltip,
-      svgHeight: svgHeight,
-      updatedLegend: updatedLegend,
-      trackModel: trackModel,
-      getGenePadding: getGenePadding,
-      getHeight: getHeight,
-      ROW_HEIGHT: ROW_HEIGHT,
-      onClose,
-    }).component;
+  if (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
+    const xMap = aggregateFibers(data, visRegion, width);
+    const scales = computeScales(xMap, options.height);
+    return visualizer(xMap, scales);
   }
-}
+
+  return getAnnotationTrack["full"]({
+    formattedData: data,
+    trackState: trackState,
+    windowWidth: width / 3,
+    configOptions: options,
+    renderTooltip: renderTooltip,
+    svgHeight: svgHeight,
+    updatedLegend: updatedLegend,
+    trackModel: trackModel,
+    getGenePadding: getGenePadding,
+    getHeight: getHeight,
+    ROW_HEIGHT: ROW_HEIGHT,
+    onClose,
+  }).component;
+};
+
+FiberTrackComponent.displayName = "FiberTrack";
 
 export default FiberTrackComponent;

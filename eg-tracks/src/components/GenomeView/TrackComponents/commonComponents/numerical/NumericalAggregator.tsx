@@ -12,27 +12,27 @@ export class NumericalAggregator {
     this.xToValueMaker = memoizeOne(this.xToValueMaker);
   }
 
-  // aggregateFeatures(data, viewRegion, width, aggregatorId) {
-  //   const aggregator = new FeatureAggregator();
-  //   let newAggregatorId = aggregatorId;
-  //   if (aggregatorId === "IMAGECOUNT" || !aggregatorId) {
-  //     newAggregatorId = "MEAN";
-  //   } else {
-  //     newAggregatorId = aggregatorId;
-  //   }
+  aggregateFeatures(data, viewRegion, width, aggregatorId) {
+    const aggregator = new FeatureAggregator();
+    let newAggregatorId = aggregatorId;
+    if (aggregatorId === "IMAGECOUNT" || !aggregatorId) {
+      newAggregatorId = "MEAN";
+    } else {
+      newAggregatorId = aggregatorId;
+    }
+    const { xToFeaturesForward, xToFeaturesReverse } = aggregator.makeXMap(
+      data,
+      viewRegion,
+      width
+    );
 
-  //   const aggregateFunc = DefaultAggregators.fromId(newAggregatorId);
+    return [
+      xToFeaturesForward.map(DefaultAggregators.fromId(newAggregatorId)),
+      xToFeaturesReverse.map(DefaultAggregators.fromId(newAggregatorId)),
+    ];
+  }
 
-  //   // Use optimized method that combines placement and aggregation in one pass
-  //   return aggregator.makeXMapWithAggregation(
-  //     data,
-  //     viewRegion,
-  //     width,
-  //     aggregateFunc
-  //   );
-  // }
-
-  xToValueMaker(data, viewRegion, width, options, viewWindow) {
+  xToValueMaker(data, viewRegion, width, options) {
     const withDefaultOptions = Object.assign({}, DEFAULT_OPTIONS, options);
     const { aggregateMethod, smooth, yScale, yMin } = withDefaultOptions;
 
@@ -42,20 +42,9 @@ export class NumericalAggregator {
       hasForward = false;
     if (data) {
       const aggregator = new FeatureAggregator();
-      let newAggregatorId = aggregateMethod;
-      if (aggregateMethod === "IMAGECOUNT" || !aggregateMethod) {
-        newAggregatorId = "MEAN";
-      }
-      const aggregateFunc = DefaultAggregators.fromId(newAggregatorId);
 
-      const [xToValueBeforeSmooth, xToValue2BeforeSmooth] = aggregator.makeXMap(
-        data,
-        viewRegion,
-        width,
-        aggregateFunc,
-        true,
-        viewWindow
-      );
+      const [xToValueBeforeSmooth, xToValue2BeforeSmooth] =
+        this.aggregateFeatures(data, viewRegion, width, aggregateMethod);
 
       const smoothNumber = Number.parseInt(smooth) || 0;
       xToValue =

@@ -91,7 +91,7 @@ interface RulerComponentProps {
   genomeConfig?: any;
   trackModel: TrackModel;
   selectedRegion: DisplayedRegionModel;
-  getNumLegend: any;
+  updatedLegend: any;
   options: any;
   viewWindow: any;
 }
@@ -107,24 +107,24 @@ class RulerComponent extends React.Component<RulerComponentProps> {
         forceSvg={this.props.options.forceSvg}
       />
     );
-    if (this.props.getNumLegend) {
-      this.props.getNumLegend(legend);
+    if (this.props.updatedLegend) {
+      this.props.updatedLegend.current = legend;
     }
     const forceSvg = this.props.options.forceSvg;
 
     let curParentStyle: any = forceSvg
       ? {
-          position: "relative",
+        position: "relative",
 
-          overflow: "hidden",
-          width: this.props.width / 3,
-        }
+        overflow: "hidden",
+        width: this.props.width / 3,
+      }
       : {};
     let curEleStyle: any = forceSvg
       ? {
-          position: "relative",
-          transform: `translateX(${-this.props.viewWindow.start}px)`,
-        }
+        position: "relative",
+        transform: `translateX(${-this.props.viewWindow.start}px)`,
+      }
       : {};
 
     let hoverStyle: any = this.props.options.packageVersion

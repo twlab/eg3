@@ -1548,7 +1548,7 @@ class ThreedmolContainer extends React.Component<
     const resString = resolution.toString();
 
     if (!modelDisplayConfig) {
-      console.log("modelDisplayConfig is null, skipping highlight");
+
       return;
     }
 
@@ -1581,19 +1581,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-            cartoon: {
-              color: highlightingColor,
-              style: "trace",
-              thickness: cartoonThickness,
-            },
-          }
+          cartoon: {
+            color: highlightingColor,
+            style: "trace",
+            thickness: cartoonThickness,
+          },
+        }
         : {
-            sphere: {
-              color: highlightingColor,
-              opacity: 1,
-              radius: cartoonThickness,
-            },
-          };
+          sphere: {
+            color: highlightingColor,
+            opacity: 1,
+            radius: cartoonThickness,
+          },
+        };
     let validateRegion = false;
     // console.log(regionRange);
     Object.keys(modelDisplayConfig).forEach((hap) => {
@@ -1602,9 +1602,8 @@ class ThreedmolContainer extends React.Component<
           regionRange[hap][region.chrom][0] !== undefined &&
           regionRange[hap][region.chrom][1] !== undefined
         ) {
-          const resiSelect = `${regionRange[hap][region.chrom][0]}-${
-            regionRange[hap][region.chrom][1]
-          }`;
+          const resiSelect = `${regionRange[hap][region.chrom][0]}-${regionRange[hap][region.chrom][1]
+            }`;
           this.viewer.setStyle(
             {
               chain: region.chrom,
@@ -1802,19 +1801,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-            cartoon: {
-              colorfunc: colorByValue,
-              style: "trace",
-              thickness: cartoonThickness,
-            },
-          }
+          cartoon: {
+            colorfunc: colorByValue,
+            style: "trace",
+            thickness: cartoonThickness,
+          },
+        }
         : {
-            sphere: {
-              colorfunc: colorByValue,
-              opacity: 1,
-              radius: cartoonThickness,
-            },
-          };
+          sphere: {
+            colorfunc: colorByValue,
+            opacity: 1,
+            radius: cartoonThickness,
+          },
+        };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -2633,19 +2632,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-            cartoon: {
-              colorfunc: colorByAnnotation,
-              style: "trace",
-              thickness: cartoonThickness,
-            },
-          }
+          cartoon: {
+            colorfunc: colorByAnnotation,
+            style: "trace",
+            thickness: cartoonThickness,
+          },
+        }
         : {
-            sphere: {
-              colorfunc: colorByAnnotation,
-              opacity: 1,
-              radius: cartoonThickness,
-            },
-          };
+          sphere: {
+            colorfunc: colorByAnnotation,
+            opacity: 1,
+            radius: cartoonThickness,
+          },
+        };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -3207,7 +3206,7 @@ class ThreedmolContainer extends React.Component<
         if (locus) {
           return { label, locus };
         }
-      } catch (error) {}
+      } catch (error) { }
       return getSymbolRegions(genomeName, symbol);
     });
     const parsed = await Promise.all(promise);
@@ -3856,9 +3855,8 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${
-                          numFormat === "bwtrack" ? "info" : ""
-                        }`}
+                        className={`control-group ${numFormat === "bwtrack" ? "info" : ""
+                          }`}
                         style={{
                           display: numFormat === "bwtrack" ? "block" : "none",
                         }}
@@ -3914,9 +3912,8 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${
-                          numFormat === "geneexp" ? "info" : ""
-                        }`}
+                        className={`control-group ${numFormat === "geneexp" ? "info" : ""
+                          }`}
                         style={{
                           display: numFormat === "geneexp" ? "block" : "none",
                         }}
@@ -4088,9 +4085,8 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${
-                          annoFormat === "cytoband" ? "hidden" : ""
-                        }`}
+                        className={`control-group ${annoFormat === "cytoband" ? "hidden" : ""
+                          }`}
                         style={{
                           display: annoFormat === "cytoband" ? "none" : "block",
                         }}
@@ -4120,9 +4116,8 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${
-                          annoFormat === "refgene" ? "" : "hidden"
-                        }`}
+                        className={`control-group ${annoFormat === "refgene" ? "" : "hidden"
+                          }`}
                         style={{
                           display: annoFormat === "refgene" ? "block" : "none",
                         }}
@@ -4375,12 +4370,12 @@ class ThreedmolContainer extends React.Component<
 
             {(paintMethod === "compartment" ||
               paintMethod === "annotation") && (
-              <CategoryLegend
-                categories={categories}
-                onUpdateLegendColor={this.updateLegendColor}
-                fullWidth={paintMethod === "annotation"}
-              />
-            )}
+                <CategoryLegend
+                  categories={categories}
+                  onUpdateLegendColor={this.updateLegendColor}
+                  fullWidth={paintMethod === "annotation"}
+                />
+              )}
           </div>
           <div id="static-legend">
             <StaticLegend categories={staticCategories} />

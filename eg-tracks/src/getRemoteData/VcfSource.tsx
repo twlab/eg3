@@ -7,7 +7,11 @@ class VcfSource {
   header: any;
   vcf: TabixIndexedFile;
   parser: any;
+  url: any;
+  indexUrl: any;
   constructor(url, indexUrl = null) {
+    this.url = url;
+    this.indexUrl = indexUrl;
     let filehandle, tbiFilehandle;
     if (Array.isArray(url)) {
       filehandle = new BlobFile(url.filter((f) => !f.name.endsWith(".tbi"))[0]);
@@ -19,12 +23,18 @@ class VcfSource {
       tbiFilehandle = new RemoteFile(indexUrl ? indexUrl : url + ".tbi");
     }
     this.vcf = new TabixIndexedFile({ filehandle, tbiFilehandle });
-    // console.log(this.vcf);
+
     this.header = null;
     this.parser = null;
   }
 
-  async getData(region, basesPerPixel, options) {
+  /**
+   * Fetches data from VCF file for the given regions
+   * @param {ChromosomeInterval[]} region - locations for which to fetch data
+   * @param {any} options - fetch options including ensemblStyle
+   * @return {Promise<any[]>} a Promise for the data
+   */
+  private async fetchSource(region, options) {
     if (!this.header) {
       this.header = await this.vcf.getHeader();
     }
@@ -36,7 +46,33 @@ class VcfSource {
     );
     const dataForEachSegment = await Promise.all(promises);
     const flattened = _.flatten(dataForEachSegment);
+
     return flattened;
+  }
+
+  async getData(region, basesPerPixel, options) {
+    try {
+      return await this.fetchSource(region, options);
+    } catch (error) {
+      console.error("Error fetching VCF data, recreating instance:", error);
+
+      // try {
+      //   if (typeof window !== "undefined" && "caches" in window) {
+      //     const cacheNames = await caches.keys();
+      //     await Promise.all(
+      //       cacheNames.map((cacheName) => caches.delete(cacheName))
+      //     );
+      //   }
+
+      //   // recreate the fetch instance and retry once, because it might be a disk cache issue
+      //   this.recreateVcfInstance();
+
+      //   return await this.fetchSource(region, options);
+      // } catch (error) {
+      //   throw error;
+      // }
+      throw error;
+    }
   }
 
   async _getDataInLocus(locus, options) {
@@ -50,15 +86,27 @@ class VcfSource {
     }
     //vcf is 1 based
     // -1 compensation happened in Vcf feature constructor
-    await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) =>
-      variants.push(this.parser.parseLine(line))
-    );
+    await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) => {
+      const parsed = this.parser.parseLine(line);
+      // Convert Variant class instance to plain object to preserve all properties including SAMPLES
+      const plainVariant = {
+        CHROM: parsed.CHROM,
+        POS: parsed.POS,
+        ID: parsed.ID,
+        REF: parsed.REF,
+        ALT: parsed.ALT,
+        QUAL: parsed.QUAL,
+        FILTER: parsed.FILTER,
+        INFO: parsed.INFO,
+        SAMPLES: parsed.SAMPLES,
+      };
+      variants.push(plainVariant);
+    });
     if (options && options.ensemblStyle) {
       for (let variant of variants) {
         variant.CHROM = locus.chr;
       }
     }
-    // console.log(variants);
     return variants;
   }
 }

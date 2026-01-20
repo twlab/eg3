@@ -3,9 +3,8 @@ import RootLayout from "./components/root-layout/RootLayout";
 import AppProvider, { AppProviderProps } from "./lib/redux/AppProvider";
 import "./index.css";
 
-export interface AppProps extends Omit<AppProviderProps, "children"> {
+export interface AppProps {
   storeConfig?: AppProviderProps["storeConfig"];
-
   [key: string]: any;
 }
 
@@ -15,6 +14,14 @@ export interface AppProps extends Omit<AppProviderProps, "children"> {
  *
  * @param props configuration and layout props
  */
+
+// storeConfig={{ storeId: "genome-1" }}
+// viewRegion={viewRegionInput}
+// genomeName={genomeName}
+// tracks={tracks}
+// showGenomeNavigator={showGenomeNavigator}
+// showNavBar={showNavBar}
+// showToolBar={showToolBar}
 export default function App({ storeConfig, ...rootLayoutProps }: AppProps) {
   return (
     <MotionConfig transition={snappyTransition}>

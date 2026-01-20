@@ -41,7 +41,7 @@ import {
   setToolBarVisibility,
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { useEffect, useRef } from "react";
+import { use, useEffect, useRef } from "react";
 
 import {
   GenomeSerializer,
@@ -82,6 +82,8 @@ export interface GenomeHubProps {
   showGenomeNavigator?: boolean;
   showNavBar?: boolean;
   showToolBar?: boolean;
+  width?: number;
+  height?: number;
 }
 
 export default function RootLayout(props: GenomeHubProps) {
@@ -170,6 +172,7 @@ export default function RootLayout(props: GenomeHubProps) {
     } else if (!initialState.current) {
       usePrevSession = false;
     }
+
     if (
       !usePrevSession &&
       ((props.genomeName && props.tracks && props.viewRegion) ||
@@ -188,7 +191,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                  props.viewRegion === null
+                    props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -196,21 +199,24 @@ export default function RootLayout(props: GenomeHubProps) {
             );
           }
         } else {
+
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
               customGenome: props.customGenome,
+              width: props.width,
+              height: props.height,
             })
           );
         }

@@ -30,9 +30,11 @@ class DisplayedRegionModel {
    */
   constructor(navContext: NavigationContext, start = MIN_BASE, end?: number) {
     this._navContext = navContext;
-    if (end === undefined) {
+    if (!end) {
       end = navContext.getTotalBases();
+
     }
+
     this.setRegion(start, end); // Sets this._startBase and this._endBase
   }
 

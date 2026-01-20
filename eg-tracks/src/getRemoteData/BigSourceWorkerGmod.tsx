@@ -64,6 +64,17 @@ class BigSourceWorkerGmod {
   }
 
   /**
+   * Recreates the BigWig instance to clear any cached data
+   */
+  private recreateBigWigInstance() {
+    this.bw = new BigWig({
+      filehandle: new RemoteFile(this.url, { fetch: createFetchWithNoCache() }),
+    });
+    this.chromNamingCache = null;
+    this.useEnsemblStyle = null;
+  }
+
+  /**
    * Detects if the BigWig file uses Ensembl
    * @return {Promise<boolean>} True if Ensembl naming (1, 2, 3...), false if UCSC naming (chr1, chr2, chr3...)
    */
@@ -82,35 +93,26 @@ class BigSourceWorkerGmod {
       this.chromNamingCache = ensembl.includes(firstChrom);
       return this.chromNamingCache;
     } catch (error) {
-      console.error("Error detecting chromosome naming:", error);
-      this.chromNamingCache = false; // Default to UCSC naming
-      return false;
+      console.error(
+        "Error detecting chromosome naming. Check URL and file format."
+      );
+      throw error;
     }
   }
 
   /**
-   * Gets BigWig or BigBed features inside the requested locations.
-   *
+   * Fetches features from BigWig/BigBed file for the given loci
    * @param {ChromosomeInterval[]} loci - locations for which to fetch data
-   * @param {number} [basesPerPixel] - used to determine fetch resolution
    * @return {Promise<DASFeature[]>} a Promise for the data
-   * @override
    */
-  getData = async (loci, basesPerPixel, options) => {
-    // Create a fresh BigWig instance for each getData call
-    // This prevents cache conflicts when multiple App instances exist
-    if (this.useEnsemblStyle === null) {
-      this.useEnsemblStyle = await this.detectChromosomeNaming();
-    }
-    const useEnsemblStyle = this.useEnsemblStyle;
+  private async fetchSource(loci) {
+    const promises = loci.map(async (locus) => {
+      let chrom = this.useEnsemblStyle
+        ? locus.chr.replace("chr", "")
+        : locus.chr;
 
-    const promises = loci.map((locus) => {
-      let chrom = useEnsemblStyle ? locus.chr.replace("chr", "") : locus.chr;
-
-      // Handle mitochondrial chromosome naming variations
       if (chrom === "M" || chrom === "chrM") {
-        // Try both M and MT depending on the file's naming convention
-        chrom = useEnsemblStyle ? "M" : "chrM";
+        chrom = this.useEnsemblStyle ? "M" : "chrM";
       }
 
       return this.bw.getFeatures(chrom, locus.start, locus.end);
@@ -124,6 +126,49 @@ class BigSourceWorkerGmod {
     const combinedData = dataForEachLocus.flat();
 
     return combinedData;
+  }
+
+  /**
+   * Gets BigWig or BigBed features inside the requested locations.
+   *
+   * @param {ChromosomeInterval[]} loci - locations for which to fetch data
+   * @param {number} [basesPerPixel] - used to determine fetch resolution
+   * @return {Promise<DASFeature[]>} a Promise for the data
+   * @override
+   */
+  getData = async (loci, basesPerPixel, options) => {
+    if (
+      this.useEnsemblStyle === null &&
+      options.trackType !== "rmskv2" &&
+      options.trackType !== "repeatmasker"
+    ) {
+      this.useEnsemblStyle = await this.detectChromosomeNaming();
+    }
+
+    try {
+      return await this.fetchSource(loci);
+    } catch (error) {
+      try {
+        if (typeof window !== "undefined" && "caches" in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames.map((cacheName) => caches.delete(cacheName))
+          );
+        }
+        // recreate the fetch instance and retry once, because it might a disk cache issue
+        this.recreateBigWigInstance();
+        if (
+          this.useEnsemblStyle === null &&
+          options.trackType !== "rmskv2" &&
+          options.trackType !== "repeatmasker"
+        ) {
+          this.useEnsemblStyle = await this.detectChromosomeNaming();
+        }
+        return await this.fetchSource(loci);
+      } catch (error) {
+        throw error;
+      }
+    }
   };
 }
 

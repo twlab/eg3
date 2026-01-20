@@ -4,6 +4,7 @@ import LocalTabixSource from "./localTabixSource";
 import TextSource from "./localTextSource";
 import BedTextSource from "./BedTextSource";
 import LongrangeAndreaTextSource from "./LongrangeAndreaTextSource";
+import LocalBigSource from "./LocalBigSource";
 
 let cachedLocalFetchInstance: { [key: string]: any } = {};
 
@@ -18,7 +19,7 @@ export const localTrackFetchFunction: { [key: string]: any } = {
     return getLocalData(regionData, "bedOrTabix");
   },
   bigbed: async function bigbedFetch(regionData: any) {
-    return getLocalData(regionData, "big");
+    return getLocalData(regionData, "bigbed");
   },
   refbed: async function refbedFetch(regionData: any) {
     return getLocalData(regionData, "bedOrTabix");
@@ -66,7 +67,10 @@ export const textFetchFunction: { [key: string]: any } = {
 
 async function getTextData(regionData: any) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
-    if (regionData.trackModel.textConfig.subType === "AndreaGillespie") {
+    if (
+      regionData.trackModel.type === "longrange" &&
+      regionData.trackModel.textConfig.subType === "AndreaGillespie"
+    ) {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LongrangeAndreaTextSource({
           blob: regionData.trackModel.fileObj,
@@ -91,7 +95,10 @@ async function getTextData(regionData: any) {
 
 async function getLocalData(regionData: any, trackType: string) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
-    if (trackType === "big") {
+    if (trackType === "bigbed") {
+      cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
+        new LocalBigSource(regionData.trackModel.fileObj);
+    } else if (trackType === "big") {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LocalBigSourceGmod(regionData.trackModel.fileObj);
     } else if (trackType === "bedOrTabix") {
@@ -102,13 +109,13 @@ async function getLocalData(regionData: any, trackType: string) {
 
   let fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
 
-  // if (trackType in { repeat: "", jaspar: "" }) {
-  //   return fetchInstance.getData(
-  //     regionData.nav,
-  //     regionData.basesPerPixel,
-  //     regionData.trackModel.options
-  //   );
-  // }
+  if (trackType in { bigbed: "" }) {
+    return await fetchInstance.getData(
+      regionData.nav,
+      regionData.basesPerPixel,
+      regionData.trackModel.options
+    );
+  }
 
   return await fetchInstance.getData(
     regionData.nav,

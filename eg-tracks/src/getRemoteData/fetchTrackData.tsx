@@ -1,7 +1,37 @@
 import TabixSource from "./tabixSource";
 import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
 import VcfSource from "./VcfSource";
+import { HicSource } from "./hicSource";
+import BamSource from "./BamSource";
+import Feature from "../models/Feature";
+import ChromosomeInterval from "../models/ChromosomeInterval";
+import NavigationContext from "../models/NavigationContext";
+import DisplayedRegionModel from "../models/DisplayedRegionModel";
+import BigSourceWorker from "./BigSourceWorker";
+function objToInstanceAlign(alignment: { [key: string]: any }) {
+  let visRegionFeatures: Feature[] = [];
 
+  for (let feature of alignment._navContext._features) {
+    let newChr = new ChromosomeInterval(
+      feature.locus.chr,
+      feature.locus.start,
+      feature.locus.end
+    );
+    visRegionFeatures.push(new Feature(feature.name, newChr));
+  }
+
+  let visRegionNavContext = new NavigationContext(
+    alignment._navContext._name,
+    visRegionFeatures
+  );
+
+  let visRegion = new DisplayedRegionModel(
+    visRegionNavContext,
+    alignment._startBase,
+    alignment._endBase
+  );
+  return visRegion;
+}
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
 // Map track types to their data source types
@@ -27,17 +57,38 @@ export const trackFetchFunction: { [key: string]: any } = {
       apiConfigPrefix = apiConfigMap.WashU;
     }
 
-    let url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    try {
+      const fetchPromises = regionData.nav.map(async (region: any) => {
+        const url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${region.chr}&start=${region.start}&end=${region.end}`;
 
-    // if (regionData.genomeName === "canFam6") {
-    //   url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
-    // }
+        try {
+          const genRefResponse = await fetch(url, {
+            method: "GET",
+            mode: "cors",
+            cache: "default",
+            credentials: "omit",
+          });
 
-    const genRefResponse = await fetch(url, {
-      method: "GET",
-    });
+          if (!genRefResponse.ok) {
+            throw new Error(`HTTP error! status: ${genRefResponse.status}`);
+          }
 
-    return genRefResponse.json();
+          return genRefResponse.json();
+        } catch (error) {
+          console.error(
+            `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
+            error
+          );
+          throw error;
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      return results.flat();
+    } catch (error) {
+      console.error("Error in refGeneFetch:", error);
+      throw error;
+    }
   },
   snp: async function snpFetch(regionData: any) {
     const SNP_REGION_API: { [key: string]: any } = {
@@ -58,24 +109,41 @@ export const trackFetchFunction: { [key: string]: any } = {
       "Content-Type": "application/json",
     };
 
-    if (regionData.end - regionData.start <= 30000) {
-      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
-        regionData.end + "?content-type=application%2Fjson&feature=variation"
-      }`;
+    try {
+      const fetchPromises = regionData.nav.map(async (region: any) => {
+        if (region.end - region.start > 30000) {
+          throw new Error("Region is higher then 30000");
+        }
 
-      return fetch(url, { headers })
-        .then((response) => {
+        const url = `${api}/${region.chr.substr(3)}:${region.start}-${region.end
+          }?content-type=application%2Fjson&feature=variation`;
+
+        try {
+          const response = await fetch(url, {
+            headers,
+            mode: "cors",
+            cache: "default",
+          });
+
           if (!response.ok) {
-            throw new Error("Network response was not ok");
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
+
           return response.json();
-        })
-        .catch((error) => {
-          console.error("There was a problem with the fetch operation:", error);
-          return { data: [] };
-        });
-    } else {
-      return [];
+        } catch (error) {
+          console.error(
+            `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
+            error
+          );
+          throw error;
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      return results.flat();
+    } catch (error) {
+      console.error("Error in snpFetch:", error);
+      throw error;
     }
   },
   bed: async function bedFetch(regionData: any) {
@@ -151,6 +219,14 @@ export const trackFetchFunction: { [key: string]: any } = {
   vcf: function vcfFetch(regionData: any) {
     return getRemoteData(regionData, "vcf");
   },
+
+  hic: function hicFetch(regionData: any) {
+    return getRemoteData(regionData, "hic");
+  },
+
+  bam: function bamFetch(regionData: any) {
+    return getRemoteData(regionData, "bam");
+  },
 };
 
 async function getRemoteData(regionData: any, trackType: string) {
@@ -168,7 +244,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         indexUrl
       );
     } else if (trackType === "bigbed") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
         regionData.trackModel.url
       );
     } else if (trackType === "big") {
@@ -183,18 +259,22 @@ async function getRemoteData(regionData: any, trackType: string) {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
+    } else if (trackType === "hic") {
+      cachedFetchInstance[regionData.trackModel.url] = new HicSource(
+        regionData.trackModel.url
+      );
+    } else if (trackType === "bam") {
+      cachedFetchInstance[regionData.trackModel.url] = new BamSource(
+        regionData.trackModel.url
+      );
     } else {
       throw new Error(`Unsupported track type: ${trackType}`);
     }
   }
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
-  if (fetchInstance) {
-    try {
-      const needsBasesPerPixel =
-        ((trackType === "repeat" || trackType === "rmskv2") &&
-          regionData.basesPerPixel <= 1000) ||
-        (trackType === "jaspar" && regionData.basesPerPixel <= 2);
-
+  try {
+    if (fetchInstance) {
+      regionData.trackModel.options["trackType"] = regionData.trackModel.type;
       if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
         return [];
       }
@@ -204,7 +284,7 @@ async function getRemoteData(regionData: any, trackType: string) {
       ) {
         return [];
       }
-      if (needsBasesPerPixel || trackType === "bigbed") {
+      if (trackType === "bigbed") {
         return fetchInstance
           .getData(
             regionData.nav,
@@ -213,29 +293,51 @@ async function getRemoteData(regionData: any, trackType: string) {
           )
           .then((data: any) => {
             cachedFetchInstance[regionData.trackModel.url] = null;
-            fetchInstance = null;
+
             return data;
           })
-          .catch(() => {
-            return { error: "Failed to fetch data. " };
+          .catch((error) => {
+            fetchInstance = null;
+            throw error;
+          });
+      } else if (trackType === "hic") {
+
+        return fetchInstance
+          .getData(
+            objToInstanceAlign(regionData.visRegion),
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
+          .then((data: any) => {
+            // cachedFetchInstance[regionData.trackModel.url] = null;
+            return data;
+          })
+          .catch((error) => {
+            fetchInstance = null;
+            throw error;
           });
       } else {
         return fetchInstance
-          .getData(regionData.nav, regionData.trackModel.options)
+          .getData(
+            regionData.nav,
+            regionData.basesPerPixel,
+            regionData.trackModel.options
+          )
           .then((data: any) => {
             cachedFetchInstance[regionData.trackModel.url] = null;
-            fetchInstance = null;
+
             return data;
           })
-          .catch(() => {
-            return { error: "Failed to fetch data. " };
+          .catch((error) => {
+            fetchInstance = null;
+            throw error;
           });
       }
-    } catch (error: any) {
-      return { error: "Failed to fetch data. " };
     }
+  } catch (error) {
+    fetchInstance = null;
+    throw error;
   }
-  return { error: "Failed to fetch data. " };
 }
 
 export default trackFetchFunction;

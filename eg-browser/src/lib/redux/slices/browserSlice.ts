@@ -33,6 +33,8 @@ export interface BrowserSession {
   overrideViewRegion: GenomeCoordinate | null;
   customGenome?: boolean | null;
   chromosomes?: Array<{ name: string; length: number }> | null;
+  height?: number;
+  width?: number;
 }
 
 // MARK: - State
@@ -217,9 +219,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-        state,
-        state.browser.present.currentSession
-      )
+      state,
+      state.browser.present.currentSession
+    )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

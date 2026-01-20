@@ -75,20 +75,20 @@ export class BamAlignment extends Feature {
   seq: string;
 
   constructor(rawObject: any) {
-    const start = rawObject.get("start");
-    const parsedCigar = parseCigar(rawObject.get("cigar"));
-    const end = rawObject.get("end");
+    const start = rawObject.data.start;
+    const parsedCigar = parseCigar(rawObject.data.cigar);
+    const end = rawObject.data.end;
     const locus = new ChromosomeInterval(rawObject.ref, start, end);
     const strand =
       rawObject.flags & REVERSE_COMPLEMENT_FLAG
         ? REVERSE_STRAND_CHAR
         : FORWARD_STRAND_CHAR;
-    super(rawObject.get("name"), locus, strand);
+    super(rawObject.data.name, locus, strand);
 
-    this.id = rawObject["_id"];
-    this.MD = rawObject.get("md");
+    this.id = rawObject._id;
+    this.MD = rawObject.data.md;
     this.cigar = parsedCigar;
-    this.seq = rawObject.getReadBases();
+    this.seq = rawObject.data.seq || ""; // Default to an empty string if seq is undefined
   }
 
   /**

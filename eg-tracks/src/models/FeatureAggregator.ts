@@ -3,6 +3,7 @@ import { Feature } from "./Feature";
 import DisplayedRegionModel from "./DisplayedRegionModel";
 import { FeaturePlacer, PlacementMode } from "./getXSpan/FeaturePlacer";
 import { FeaturePlacementResult } from "./FeatureArranger";
+import { mode } from "d3";
 
 const VALUE_PROP_NAME = "value";
 
@@ -135,46 +136,45 @@ export class FeatureAggregator {
     features: Feature[],
     viewRegion: DisplayedRegionModel,
     width: number,
-    aggregateFunc: (features: Array<any>) => any,
-    useCenter: boolean = false,
-    viewWindow?: { start: number; end: number }
-  ): [any[], any[]] {
-    width = Math.round(width);
+    useCenter: boolean = false
+  ): { [key: string]: Feature[] } {
+    width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
 
-    // Initialize arrays for both forward and reverse
-    // xToFeature holds genome element that sits at the same x position, we put them in an array to aggregate
-    // xToAggregated is the aggregated value at the x position from xToFeature, each element from xToFeature is an array of features
     const xToFeaturesForward = Array(width).fill(null);
-    const xToAggregatedForward = Array(width).fill(null);
     const xToFeaturesReverse = Array(width).fill(null);
-    const xToAggregatedReverse = Array(width).fill(null);
-
     for (let x = 0; x < width; x++) {
+      // Fill the array with empty arrays
       xToFeaturesForward[x] = [];
-      xToAggregatedForward[x] = null;
       xToFeaturesReverse[x] = [];
-      xToAggregatedReverse[x] = null;
     }
 
     const placer = new FeaturePlacer();
-
-    // Combined all functionality into one loop doing only a single pass: deduplicate, separate, place, and aggregate
-    placer.placeFeatures({
+    const result: any = placer.placeFeatures({
       features,
       viewRegion,
       width,
       useCenter,
       mode: PlacementMode.NUMERICAL,
-      viewWindow,
-      xToFeaturesForward,
-      xToFeaturesReverse,
-      aggregateFunc,
-      xToAggregatedForward,
-      xToAggregatedReverse,
     });
 
-    return [xToAggregatedForward, xToAggregatedReverse];
+    for (let i = 0; i < result.placementsForward.length; i++) {
+      sortXSpan(result.placementsForward[i], xToFeaturesForward);
+      if (result.placementsReverse[i]) {
+        sortXSpan(result.placementsReverse[i], xToFeaturesReverse);
+      }
+    }
+
+    function sortXSpan(placedFeature, xToFeatures) {
+      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
+      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+      for (let x = startX; x <= endX; x++) {
+        xToFeatures[x].push(placedFeature.feature);
+      }
+    }
+
+    return { xToFeaturesForward, xToFeaturesReverse };
   }
+
   makeXWindowMap(
     features: Feature[],
     viewRegion: DisplayedRegionModel,
@@ -185,19 +185,30 @@ export class FeatureAggregator {
     const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
     for (let x = 0; x < width; x += windowSize) {
+      // Fill the array with empty arrays
+      // if (x < width) {
       map[x] = [];
+      // }
     }
     const placer = new FeaturePlacer();
-    placer.placeFeatures({
+    const placement: any = placer.placeFeatures({
       features,
       viewRegion,
       width,
-      useCenter: true, // BOXPLOT always uses center
-      mode: PlacementMode.BOXPLOT,
-      windowSize,
-      xToWindowMap: map,
+      useCenter: true,
+      mode: PlacementMode.NUMERICAL,
     });
-
+    if (placement && placement.placementsForward) {
+      for (const placedFeature of placement.placementsForward) {
+        const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
+        const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+        for (let x = startX; x <= endX; x++) {
+          if (map.hasOwnProperty(x)) {
+            map[x].push(placedFeature.feature);
+          }
+        }
+      }
+    }
     return map;
   }
 }

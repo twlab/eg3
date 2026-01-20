@@ -14,7 +14,7 @@
 
 // Copied from utils.js so that utils.js is no longer a requirement. Can replace with $.extend() or _.extend()
 
-import { b64_sha1 } from './sha1';
+import { b64_sha1 } from "./sha1";
 
 function shallowCopy(o) {
   var n = {};
@@ -24,7 +24,7 @@ function shallowCopy(o) {
   return n;
 }
 
-function BlobFetchable(b) {
+export function BlobFetchable(b) {
   this.blob = b;
 }
 
@@ -45,13 +45,13 @@ BlobFetchable.prototype.slice = function (start, length) {
     }
   }
   return new BlobFetchable(b);
-}
+};
 
 BlobFetchable.prototype.salted = function () {
   return this;
-}
+};
 
-if (typeof (FileReader) !== 'undefined') {
+if (typeof FileReader !== "undefined") {
   // console.log('defining async BlobFetchable.fetch');
 
   BlobFetchable.prototype.fetch = function (callback) {
@@ -60,8 +60,7 @@ if (typeof (FileReader) !== 'undefined') {
       callback(bstringToBuffer(reader.result));
     };
     reader.readAsBinaryString(this.blob);
-  }
-
+  };
 } else {
   // if (console && console.log)
   //    console.log('defining sync BlobFetchable.fetch');
@@ -74,12 +73,12 @@ if (typeof (FileReader) !== 'undefined') {
     } catch (e) {
       callback(null, e);
     }
-  }
+  };
 }
 
 export function URLFetchable(url, start, end, opts) {
   if (!opts) {
-    if (typeof start === 'object') {
+    if (typeof start === "object") {
       opts = start;
       start = undefined;
     } else {
@@ -97,7 +96,7 @@ export function URLFetchable(url, start, end, opts) {
 
 URLFetchable.prototype.slice = function (s, l) {
   if (s < 0) {
-    throw 'Bad slice ' + s;
+    throw "Bad slice " + s;
   }
 
   var ns = this.start,
@@ -113,27 +112,29 @@ URLFetchable.prototype.slice = function (s, l) {
     ne = ne || l - 1;
   }
   return new URLFetchable(this.url, ns, ne, this.opts);
-}
+};
 
 var seed = 0;
-var isSafari = navigator.userAgent.indexOf('Safari') >= 0 && navigator.userAgent.indexOf('Chrome') < 0;
+var isSafari =
+  navigator.userAgent.indexOf("Safari") >= 0 &&
+  navigator.userAgent.indexOf("Chrome") < 0;
 
 URLFetchable.prototype.fetchAsText = function (callback) {
   try {
     var req = new XMLHttpRequest();
     var length;
     var url = this.url;
-    if ((isSafari || this.opts.salt) && url.indexOf('?') < 0) {
-      url = url + '?salt=' + b64_sha1('' + Date.now() + ',' + (++seed));
+    if ((isSafari || this.opts.salt) && url.indexOf("?") < 0) {
+      url = url + "?salt=" + b64_sha1("" + Date.now() + "," + ++seed);
     }
-    req.open('GET', url, true);
+    req.open("GET", url, true);
 
     if (this.end) {
       if (this.end - this.start > 100000000) {
-        throw 'Monster fetch!';
+        throw "Monster fetch!";
       }
-      req.setRequestHeader('Range', 'bytes=' + this.start + '-' + this.end);
-      req.setRequestHeader('accept-encoding', 'gzip,deflate');
+      req.setRequestHeader("Range", "bytes=" + this.start + "-" + this.end);
+      req.setRequestHeader("accept-encoding", "gzip,deflate");
       length = this.end - this.start + 1;
     }
 
@@ -149,17 +150,17 @@ URLFetchable.prototype.fetchAsText = function (callback) {
     if (this.opts.credentials) {
       req.withCredentials = true;
     }
-    req.send('');
+    req.send("");
   } catch (e) {
     return callback(null);
   }
-}
+};
 
 URLFetchable.prototype.salted = function () {
   var o = shallowCopy(this.opts);
   o.salt = true;
   return new URLFetchable(this.url, this.start, this.end, o);
-}
+};
 
 URLFetchable.prototype.fetch = function (callback, opts) {
   var thisB = this;
@@ -184,31 +185,34 @@ URLFetchable.prototype.fetch = function (callback, opts) {
     var req = new XMLHttpRequest();
     var length;
     var url = this.url;
-    if ((isSafari || this.opts.salt) && url.indexOf('?') < 0) {
-      url = url + '?salt=' + b64_sha1('' + Date.now() + ',' + (++seed));
+    if ((isSafari || this.opts.salt) && url.indexOf("?") < 0) {
+      url = url + "?salt=" + b64_sha1("" + Date.now() + "," + ++seed);
     }
-    req.open('GET', url, true);
-    req.overrideMimeType('text/plain; charset=x-user-defined');
+    req.open("GET", url, true);
+    req.overrideMimeType("text/plain; charset=x-user-defined");
     if (this.end) {
       if (this.end - this.start > 100000000) {
-        throw 'Monster fetch!';
+        throw "Monster fetch!";
       }
-      req.setRequestHeader('Range', 'bytes=' + this.start + '-' + this.end);
+      req.setRequestHeader("Range", "bytes=" + this.start + "-" + this.end);
       // req.setRequestHeader('accept-encoding', 'gzip,deflate');
       length = this.end - this.start + 1;
     }
-    req.responseType = 'arraybuffer';
+    req.responseType = "arraybuffer";
     req.onreadystatechange = function () {
       if (req.readyState == 4) {
-        if (timeout)
-          clearTimeout(timeout);
+        if (timeout) clearTimeout(timeout);
         if (req.status == 200 || req.status == 206) {
           if (req.response) {
             var bl = req.response.byteLength;
-            if (length && length != bl && (!truncatedLength || bl != truncatedLength)) {
+            if (
+              length &&
+              length != bl &&
+              (!truncatedLength || bl != truncatedLength)
+            ) {
               return thisB.fetch(callback, {
                 attempt: attempt + 1,
-                truncatedLength: bl
+                truncatedLength: bl,
               });
             } else {
               return callback(req.response);
@@ -217,10 +221,14 @@ URLFetchable.prototype.fetch = function (callback, opts) {
             return callback(req.mozResponseArrayBuffer);
           } else {
             var r = req.responseText;
-            if (length && length != r.length && (!truncatedLength || r.length != truncatedLength)) {
+            if (
+              length &&
+              length != r.length &&
+              (!truncatedLength || r.length != truncatedLength)
+            ) {
               return thisB.fetch(callback, {
                 attempt: attempt + 1,
-                truncatedLength: r.length
+                truncatedLength: r.length,
               });
             } else {
               return callback(bstringToBuffer(req.responseText));
@@ -228,7 +236,7 @@ URLFetchable.prototype.fetch = function (callback, opts) {
           }
         } else {
           return thisB.fetch(callback, {
-            attempt: attempt + 1
+            attempt: attempt + 1,
           });
         }
       }
@@ -237,11 +245,11 @@ URLFetchable.prototype.fetch = function (callback, opts) {
       // req.withCredentials = true;
       req.setRequestHeader("Authorization", this.opts.credentials);
     }
-    req.send('');
+    req.send("");
   } catch (e) {
     return callback(null);
   }
-}
+};
 
 function bstringToBuffer(result) {
   if (!result) {
@@ -266,18 +274,28 @@ function readFloat(buf, offset) {
   ba[2] = buf[offset + 2];
   ba[3] = buf[offset + 3];
   return fa[0];
-};
+}
 
 function readInt64(ba, offset) {
-  return (ba[offset + 7] << 24) | (ba[offset + 6] << 16) | (ba[offset + 5] << 8) | (ba[offset + 4]);
+  return (
+    (ba[offset + 7] << 24) |
+    (ba[offset + 6] << 16) |
+    (ba[offset + 5] << 8) |
+    ba[offset + 4]
+  );
 }
 
 function readInt(ba, offset) {
-  return (ba[offset + 3] << 24) | (ba[offset + 2] << 16) | (ba[offset + 1] << 8) | (ba[offset]);
+  return (
+    (ba[offset + 3] << 24) |
+    (ba[offset + 2] << 16) |
+    (ba[offset + 1] << 8) |
+    ba[offset]
+  );
 }
 
 function readShort(ba, offset) {
-  return (ba[offset + 1] << 8) | (ba[offset]);
+  return (ba[offset + 1] << 8) | ba[offset];
 }
 
 function readByte(ba, offset) {
@@ -285,7 +303,12 @@ function readByte(ba, offset) {
 }
 
 function readIntBE(ba, offset) {
-  return (ba[offset] << 24) | (ba[offset + 1] << 16) | (ba[offset + 2] << 8) | (ba[offset + 3]);
+  return (
+    (ba[offset] << 24) |
+    (ba[offset + 1] << 16) |
+    (ba[offset + 2] << 8) |
+    ba[offset + 3]
+  );
 }
 
 // module.exports = {

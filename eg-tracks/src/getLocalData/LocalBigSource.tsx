@@ -1,32 +1,32 @@
 import _ from "lodash";
 import { BigWigZoomLevels } from "../trackConfigs/config-menu-models.tsx/DisplayModes";
-import { makeBwg } from "./vendor/bbi-js/main/bigwig";
-import { URLFetchable } from "./vendor/bbi-js/utils/bin";
+import { makeBwg } from "../getRemoteData/vendor/bbi-js/main/bigwig";
+import { BlobFetchable } from "../getRemoteData/vendor/bbi-js/utils/bin";
+
 /**
- * Reads and gets data from bigwig or bigbed files hosted remotely.  Gets DASFeature records, which vary in schema
+ * Reads and gets data from bigwig or bigbed files in local.  Gets DASFeature records, which vary in schema
  * depending on the file.
  *
- * @license MIT
+ * @author Silas Hsu and Daofeng Li
  */
-class BigSourceWorker {
-  url: any;
-  bigWigPromise: Promise<unknown>;
-
+class LocalBigSource {
+  file: any;
+  bigWigPromise: Promise<any>;
   /**
-   * Prepares to fetch bigwig or bigbed data from a URL.
+   * Prepares to fetch bigwig or bigbed data a file blob.
    *
-   * @param {string} url - the URL from which to fetch data
+   * @param {blob} file - file blob object
    */
-  constructor(url) {
-    this.url = url;
-    this.bigWigPromise = this.loadBigWig(url);
+  constructor(file) {
+    this.file = file;
+    this.bigWigPromise = this.loadBigWig(file);
   }
 
   // Function to handle the dynamic loading of the BigWig data
-  private async loadBigWig(url: string): Promise<any> {
+  private async loadBigWig(file: any): Promise<any> {
     try {
       return new Promise((resolve, reject) => {
-        makeBwg(new URLFetchable(url), (bigWigObj: any, error: any) => {
+        makeBwg(new BlobFetchable(file), (bigWigObj: any, error: any) => {
           if (error) {
             reject(error);
           } else {
@@ -43,27 +43,22 @@ class BigSourceWorker {
   /**
    * Gets BigWig or BigBed features inside the requested locations.
    *
-   * @param {ChromosomeInterval[]} loci - locations for which to fetch data
+   * @param {DisplayedRegionModel} region - region for which to fetch data
    * @param {number} [basesPerPixel] - used to determine fetch resolution
    * @return {Promise<DASFeature[]>} a Promise for the data
    * @override
    */
-  async getData(loci: any, basesPerPixel: any, options: any): Promise<any[]> {
+  async getData(loci, basesPerPixel) {
     const bigWigObj = await this.bigWigPromise;
-    const zoomLevel =
-      options.zoomLevel === undefined ||
-      options.zoomLevel === BigWigZoomLevels.AUTO
-        ? this._getMatchingZoomLevel(bigWigObj, basesPerPixel)
-        : Number.parseInt(options.zoomLevel);
+    const zoomLevel = this._getMatchingZoomLevel(bigWigObj, basesPerPixel);
 
-    let promises = loci.map((locus: any) =>
+    let promises = loci.map((locus) =>
       this._getDataForChromosome(locus, bigWigObj, zoomLevel)
     );
     const dataForEachLocus = await Promise.all(promises);
-
     const combinedData = _.flatten(dataForEachLocus);
     for (let dasFeature of combinedData) {
-      dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
+      dasFeature.min -= 1; // bbi-js returns 1-indexed features; -1 to compensate.
     }
     return combinedData;
   }
@@ -78,23 +73,19 @@ class BigSourceWorker {
    * @param {number} [basesPerPixel] - bases per pixel to use to calculate an appropriate zoom level
    * @return {number} a zoom level index inside the BigWig file, or -1 if base pair resolution is appropriate.
    */
-  _getMatchingZoomLevel(bigWigObj: any, basesPerPixel: number): number {
+  _getMatchingZoomLevel(bigWigObj, basesPerPixel) {
     if (!basesPerPixel) {
       return -1;
-    }
-    if (bigWigObj.zoomLevels.length === 1) {
-      // just one zoom level
-      return 0;
     }
     // Sort zoom levels from largest to smallest
     let sortedZoomLevels = bigWigObj.zoomLevels
       .slice()
-      .sort((levelA: any, levelB: any) => levelB.reduction - levelA.reduction);
+      .sort((levelA, levelB) => levelB.reduction - levelA.reduction);
     let desiredZoom = sortedZoomLevels.find(
-      (zoomLevel: any) => zoomLevel.reduction < basesPerPixel
+      (zoomLevel) => zoomLevel.reduction < basesPerPixel
     );
     return bigWigObj.zoomLevels.findIndex(
-      (zoomLevel: any) => zoomLevel === desiredZoom
+      (zoomLevel) => zoomLevel === desiredZoom
     );
   }
 
@@ -106,12 +97,8 @@ class BigSourceWorker {
    * @param {number} zoomLevel - a zoom level index inside the BigWig file.  If -1, gets data at base pair resolution.
    * @return {Promise<DASFeature[]>} - a Promise for the data, an array of DASFeature provided by bbi-js
    */
-  _getDataForChromosome(
-    interval: any,
-    bigWigObj: any,
-    zoomLevel: number
-  ): Promise<any[]> {
-    // Compensate by adding +1 to start in 1-indexing.
+  _getDataForChromosome(interval, bigWigObj, zoomLevel) {
+    // bbi-js assumes coordinates are 1-indexed, while our coordinates are 0-indexed.  +1 to compensate.
     const start = interval.start + 1;
     const end = interval.end;
     return new Promise((resolve, reject) => {
@@ -130,4 +117,4 @@ class BigSourceWorker {
   }
 }
 
-export default BigSourceWorker;
+export default LocalBigSource;
