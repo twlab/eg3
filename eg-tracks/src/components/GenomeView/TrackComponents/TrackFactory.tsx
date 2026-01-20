@@ -6,7 +6,7 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import OpenInterval from "../../../models/OpenInterval";
 
 import {
-  anchorTracks,
+
   dynamicMatplotTracks,
   getDisplayModeFunction,
   interactionTracks,
@@ -453,7 +453,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               continue;
             }
 
-            combinedData.push(cacheTrackData[currIdx]);
+            combinedData.push(_.clone(cacheTrackData[currIdx]));
 
             currIdx--;
           }
@@ -469,7 +469,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
         } else {
           combinedData = cacheTrackData[dataIdx]
-            ? cacheTrackData[dataIdx].dataCache
+            ? _.clone(cacheTrackData[dataIdx].dataCache)
             : null;
 
           if (combinedData) {

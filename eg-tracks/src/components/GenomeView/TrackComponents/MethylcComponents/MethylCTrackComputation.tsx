@@ -76,7 +76,7 @@ interface MethylCTrackProps {
     end: number;
   };
   forceSvg: boolean;
-  getNumLegend: any;
+  updatedLegend: any;
   xvaluesData?: any;
   initialLoad: boolean;
   dataIdx: number;
@@ -84,7 +84,7 @@ interface MethylCTrackProps {
 
 const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
   const currentViewDataIdx = useRef(0);
-  const initialRender = useRef(true);
+
   const currentScale: any = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
@@ -95,12 +95,12 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     viewRegion,
     width,
     options,
-    getNumLegend,
+
     xvaluesData,
     forceSvg,
     viewWindow,
     dataIdx,
-    initialLoad,
+    initialLoad, updatedLegend
   } = props;
 
   const aggregateRecords = useMemo(() => {
@@ -200,8 +200,8 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     </div>
   );
 
-  if (getNumLegend) {
-    getNumLegend(legend);
+  if (updatedLegend) {
+    updatedLegend.current = legend;
   }
 
   let strandRenderers, tooltipY;
@@ -309,7 +309,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
   currentVisualizer.current = visualizer;
   currentViewDataIdx.current = dataIdx;
   currentViewWindow.current = viewWindow;
-  initialRender.current = false;
+
   currentScale.current = scales;
   currentViewOptions.current = options;
   return visualizer;

@@ -32,6 +32,7 @@ interface DynamicInteractionTrackComponentsProps {
   visRegion: any;
   width: number;
   viewWindow: any; updatedLegend?: any
+  dataIdx: number;
 }
 
 export const DEFAULT_OPTIONS = {
@@ -117,7 +118,7 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
     // Render tooltip as needed
   }
 
-  render(): JSX.Element {
+  render() {
     const {
       data,
       trackModel,

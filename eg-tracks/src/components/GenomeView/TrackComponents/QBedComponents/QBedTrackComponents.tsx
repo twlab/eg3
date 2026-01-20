@@ -52,7 +52,7 @@ type QBedTrackProps = {
   trackModel: any;
   viewWindow: any;
   forceSvg: boolean;
-  getNumLegend: any;
+  updatedLegend: any;
   xvaluesData?: Array<any>;
   dataIdx: number;
   initialLoad: boolean;
@@ -85,7 +85,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   const currentViewDataIdx = useRef<number | null>(null);
   const currentViewWindow = useRef<any | null>(null);
   const currentScale = useRef<any | null>(null);
-  const initialRender = useRef(true);
+
   const currentViewOptions = useRef({});
   const computeScales = (xToValue: any, height: number) => {
     const { yScale, yMin, yMax, logScale } = props.options;
@@ -154,7 +154,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     viewWindow,
     xvaluesData,
     dataIdx,
-    initialLoad,
+    initialLoad, updatedLegend
   } = props;
   const {
     height,
@@ -201,8 +201,8 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
       />
     </div>
   );
-  if (props.getNumLegend) {
-    props.getNumLegend(legend);
+  if (updatedLegend) {
+    updatedLegend.current = legend;
   }
 
   let curParentStyle: any = forceSvg
@@ -293,7 +293,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   currentVisualizer.current = visualizer;
   currentViewDataIdx.current = dataIdx;
   currentViewWindow.current = viewWindow;
-  initialRender.current = false;
+
   currentScale.current = scalesRef.current;
   currentViewOptions.current = options;
   xToValue = [];

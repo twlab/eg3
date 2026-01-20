@@ -61,7 +61,7 @@ interface DynseqTrackProps {
     end: number;
   };
   forceSvg: boolean;
-  getNumLegend: any;
+  updatedLegend: any;
   basesByPixel: number;
   genomeConfig: any;
   xvaluesData: any;
@@ -91,11 +91,11 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
     let min =
       (xToValue2.length > 0
         ? _.min(
-            xToValue2.slice(
-              this.props.viewWindow.start,
-              this.props.viewWindow.end
-            )
+          xToValue2.slice(
+            this.props.viewWindow.start,
+            this.props.viewWindow.end
           )
+        )
         : 0) || 0;
 
     if (yScale === ScaleChoices.FIXED) {
@@ -222,8 +222,8 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
         />
       );
 
-      if (this.props.getNumLegend) {
-        this.props.getNumLegend(legend);
+      if (this.props.updatedLegend) {
+        this.props.updatedLegend.current = legend;
       }
 
       const visualizer = (

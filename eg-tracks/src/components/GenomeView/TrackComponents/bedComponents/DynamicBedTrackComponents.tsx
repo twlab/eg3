@@ -29,6 +29,7 @@ interface DynamicBedTrackProps {
   trackModel: any;
   svgHeight?: any;
   updatedLegend?: any;
+  dataIdx: number;
 }
 
 const getBedPadding = (bed: any, rowHeight: number) =>

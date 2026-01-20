@@ -1,4 +1,15 @@
 # Version history
+
+## 59.1.1
+- fixed vcf not updating when changing zooming and viewRegion
+- fixed screenshot causing crash when dragging track after opening and closing screenshot menu
+- fixed dbedgraph not displaying 
+- fixed css for some track during screenshot view
+- change browser back to save state after refresh
+- refactor tracklegend 
+- mute some redux error
+
+
 ## 59.1.0
 - added config options to change tracklegend font color
 - fixed toolbar issue where click might not work

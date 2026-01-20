@@ -27,7 +27,7 @@ import App from "./App.tsx";
 //   showToolBar: true,
 // };
 createRoot(document.getElementById("root")!).render(
-  <App storeConfig={{ storeId: crypto.randomUUID() }
+  <App storeConfig={{ storeId: "main" }
     // {...testProps} 
 
   }
