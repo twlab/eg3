@@ -45,6 +45,7 @@ interface DynamicNumericalTrackProps {
   width: number;
   viewWindow: { start: number; end: number };
   updatedLegend?: any
+  dataIdx: number;
 }
 
 const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
@@ -67,7 +68,8 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
     memoizeOne((data, viewRegion, width, aggregatorId) => {
       const aggregator = new FeatureAggregator();
       const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
-      return xToFeatures.map(DefaultArrayAggregators.fromId(aggregatorId));
+      if (xToFeatures && xToFeatures.xToFeaturesForward) { return xToFeatures.xToFeaturesForward.map(DefaultArrayAggregators.fromId(aggregatorId)); }
+      return []
     }),
     []
   );
@@ -101,25 +103,7 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
     [xToValue, height]
   );
 
-  const renderTooltip = (relativeX: number) => {
-    const value = xToValue[Math.round(relativeX)];
-    const stringValues = _.compact(value).length
-      ? JSON.stringify(value)
-      : "(no data)";
-    return (
-      <div>
-        {stringValues}
-        <div className="Tooltip-minor-text">
-          <GenomicCoordinates
-            viewRegion={viewRegion}
-            width={width}
-            x={relativeX}
-          />
-        </div>
-        <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
-      </div>
-    );
-  };
+
   if (updatedLegend) {
     updatedLegend.current = (
       <TrackLegend trackModel={trackModel} height={height} axisScale={scales.valueToY} axisLegend={unit} />

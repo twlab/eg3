@@ -42,7 +42,7 @@ interface FiberTrackProps {
   };
   forceSvg?: boolean;
   visRegion: DisplayedRegionModel;
-  getNumLegend: any;
+
   getAnnotationTrack: any;
   trackState: any;
   renderTooltip: any;
@@ -58,6 +58,7 @@ interface FiberTrackProps {
   onClose: any;
   xvaluesData?: any;
   dataIdx?: number;
+
 }
 
 interface AggregatedFiber {
@@ -102,8 +103,8 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     getAnnotationTrack,
     trackState,
     renderTooltip,
-    updatedLegend,
 
+    updatedLegend,
     viewWindow,
   } = props;
 
@@ -145,34 +146,35 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
         width,
         mode: PlacementMode.PLACEMENT,
       }) as FeaturePlacementResult;
-
-      for (const placedFeature of result.placements) {
-        const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
-        const { relativeStart, relativeEnd } = visiblePart;
-        const segmentWidth = relativeEnd - relativeStart;
-        const startX = Math.max(0, Math.floor(xSpan.start));
-        const endX = Math.min(width - 1, Math.ceil(xSpan.end));
-        for (let x = startX; x <= endX; x++) {
-          xToFibers[x].count += 1;
+      if (result && result.placements) {
+        for (const placedFeature of result.placements) {
+          const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
+          const { relativeStart, relativeEnd } = visiblePart;
+          const segmentWidth = relativeEnd - relativeStart;
+          const startX = Math.max(0, Math.floor(xSpan.start));
+          const endX = Math.min(width - 1, Math.ceil(xSpan.end));
+          for (let x = startX; x <= endX; x++) {
+            xToFibers[x].count += 1;
+          }
+          (feature as Fiber).ons!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
+              xToFibers[x].on += 1;
+            }
+          });
+          (feature as Fiber).offs!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
+              xToFibers[x].off += 1;
+            }
+          });
         }
-        (feature as Fiber).ons!.forEach((rbs) => {
-          const bs = Math.abs(rbs);
-          if (bs >= relativeStart && bs < relativeEnd) {
-            const x =
-              startX +
-              Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
-            xToFibers[x].on += 1;
-          }
-        });
-        (feature as Fiber).offs!.forEach((rbs) => {
-          const bs = Math.abs(rbs);
-          if (bs >= relativeStart && bs < relativeEnd) {
-            const x =
-              startX +
-              Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
-            xToFibers[x].off += 1;
-          }
-        });
       }
       return xToFibers;
     }, []);
@@ -205,7 +207,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
       options;
     const {
       forceSvg,
-      getNumLegend,
+      updatedLegend
     } = props;
     const colorScale = scaleLinear()
       .domain([0, 1])
@@ -270,8 +272,8 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
         />
       </div>
     );
-    if (getNumLegend) {
-      getNumLegend(legend);
+    if (updatedLegend) {
+      updatedLegend.current = legend;
     }
     let curParentStyle: any = forceSvg
       ? {

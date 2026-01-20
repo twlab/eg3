@@ -191,20 +191,21 @@ export class FeatureAggregator {
       // }
     }
     const placer = new FeaturePlacer();
-    const placement = placer.placeFeatures({
+    const placement: any = placer.placeFeatures({
       features,
       viewRegion,
       width,
       useCenter: true,
       mode: PlacementMode.NUMERICAL,
     });
-
-    for (const placedFeature of placement.placementsForward) {
-      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        if (map.hasOwnProperty(x)) {
-          map[x].push(placedFeature.feature);
+    if (placement && placement.placementsForward) {
+      for (const placedFeature of placement.placementsForward) {
+        const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
+        const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+        for (let x = startX; x <= endX; x++) {
+          if (map.hasOwnProperty(x)) {
+            map[x].push(placedFeature.feature);
+          }
         }
       }
     }

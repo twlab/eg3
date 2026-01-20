@@ -691,30 +691,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
         ? (rowsToDraw + 1) * rowHeight + 2
         : rowsToDraw * rowHeight + TOP_PADDING;
     }
-    let featureArrange = new FeatureArranger();
 
+    let featureArrange = new FeatureArranger();
     let sortType = SortItemsOptions.NOSORT;
 
-    // let newFormattedData;
-    // if (configOptions.forceSvg) {
-    //   const viewStart = trackState.regionLoci[0].start;
-
-    //   const viewEnd = trackState.regionLoci[0].end;
-
-    //   const adjustXSpan = (xSpan, viewWindow) => {
-    //     return new OpenInterval(
-    //       xSpan.start - viewWindow.start,
-    //       xSpan.end - viewWindow.start
-    //     );
-    //   };
-
-    //   newFormattedData = formattedData.filter(
-    //     (obj) => obj.locus.start <= viewEnd && obj.locus.end >= viewStart
-    //   );
-    // } else {
-    //   newFormattedData = formattedData;
-    // }
-    let placeFeatureData = featureArrange.arrange(
+    const placeFeatureData = featureArrange.arrange(
       formattedData,
       objToInstanceAlign(trackState.visRegion),
       trackState.visWidth,
@@ -724,20 +705,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackState.viewWindow
     );
 
-    // if (configOptions.forceSvg) {
-    //   placeFeatureData.placements = placeFeatureData.placements.filter(
-    //     (feature) => {
-    //       const curXSpan = feature.xSpan;
-
-    //       return !(
-    //         curXSpan.end < trackState.viewWindow.start ||
-    //         curXSpan.start > trackState.viewWindow.end
-    //       );
-    //     }
-    //   );
-    // }
     let height;
-
     height =
       trackModel.type === "repeatmasker" ||
         trackModel.type === "rmskv2" ||
@@ -762,12 +730,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       />
     );
     if (updatedLegend) {
-      // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
-
       updatedLegend.current = legend;
     }
 
-    var svgDATA = createFullVisualizer(
+    const svgDATA = createFullVisualizer(
       placeFeatureData.placements,
       trackState.visWidth,
       height,
@@ -785,7 +751,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
   density: function getDensity({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
@@ -793,15 +758,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        if (updatedLegend) {
-          updatedLegend.current = legend;
-        }
-      }
-    }
 
-    let canvasElements = (
+    const canvasElements = (
       <NumericalTrack
         data={formattedData}
         options={configOptions}
@@ -814,7 +772,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         groupScale={groupScale}
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
@@ -837,13 +795,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        if (updatedLegend) {
-          updatedLegend.current = legend;
-        }
-      }
-    }
+
 
     return (
       <VcfTrack
@@ -858,13 +810,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getGenePadding={getGenePadding}
         renderTooltip={renderTooltip}
         svgHeight={svgHeight}
-        updatedLegend={updatedLegend}
+        forceSvg={configOptions.forceSvg}
         data={formattedData}
         trackState={trackState}
         options={configOptions}
         getHeight={getHeight}
         xvaluesData={xvaluesData}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
       />
@@ -873,20 +825,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
   qbed: function getqbed({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
     initialLoad,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        if (updatedLegend) {
-          updatedLegend.current = legend;
-        }
-      }
-    }
-    let canvasElements = (
+
+    const canvasElements = (
       <QBedTrackComponents
         data={formattedData}
         options={configOptions}
@@ -901,7 +846,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         isLoading={false}
         error={undefined}
         forceSvg={configOptions.forceSvg}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
       />
@@ -912,20 +857,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
   boxplot: function getboxplot({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        if (updatedLegend) {
-          updatedLegend.current = legend;
-        }
-      }
-    }
 
-    let canvasElements = (
+
+    const canvasElements = (
       <BoxplotTrackComponents
         data={formattedData}
         options={configOptions}
@@ -938,7 +876,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         unit={""}
       />
@@ -949,19 +887,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
   matplot: function getMatplot({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
     xvaluesData,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
 
-    let canvasElements = (
+
+    const canvasElements = (
       <MatplotTrackComponent
         data={formattedData}
         options={configOptions}
@@ -974,7 +907,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         xvaluesData={xvaluesData}
       />
     );
@@ -984,12 +917,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
   dynamichic: function getDynamichic({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
   }) {
-    let canvasElements = (
+    const canvasElements = (
       <DynamicInteractionTrackComponents
         data={formattedData}
         options={configOptions}
@@ -1009,23 +941,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
   dynamicbed: function getdynamicbed({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
-    renderTooltip,
     trackModel,
     svgHeight,
     updatedLegend,
-    getGenePadding,
-    getHeight,
-    ROW_HEIGHT,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
 
-    let canvasElements = (
+    const canvasElements = (
       <DynamicBedTrackComponents
         data={formattedData}
         options={configOptions}
@@ -1044,12 +966,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
   dbedgraph: function getdbedgraph({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
   }) {
-    let canvasElements = (
+    const canvasElements = (
       <DynamicNumericalTrack
         data={formattedData}
         options={configOptions}
@@ -1067,12 +988,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
   dynamic: function dynamic({
     formattedData,
     trackState,
-    windowWidth,
+
     configOptions,
     updatedLegend,
     trackModel,
   }) {
-    let canvasElements = (
+    const canvasElements = (
       <DynamicplotTrackComponent
         data={formattedData}
         options={configOptions}
@@ -1090,7 +1011,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
   modbed: function getModbed({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
@@ -1101,14 +1021,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
     ROW_HEIGHT,
     onClose,
     xvaluesData,
-  }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
 
-    let canvasElements = (
+  }) {
+
+    const canvasElements = (
       <FiberTrackComponent
         data={formattedData}
         options={configOptions}
@@ -1121,13 +1037,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
         forceSvg={configOptions.forceSvg}
         visRegion={objToInstanceAlign(trackState.visRegion)}
         trackModel={trackModel}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         isLoading={false}
         trackState={trackState}
         getAnnotationTrack={displayModeComponentMap}
         renderTooltip={renderTooltip}
         svgHeight={svgHeight}
-        updatedLegend={updatedLegend}
+
         getGenePadding={getGenePadding}
         getHeight={getHeight}
         ROW_HEIGHT={ROW_HEIGHT}
@@ -1143,18 +1059,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
   interaction: function getInteraction({
     formattedData,
     trackState,
-    windowWidth,
+
     configOptions,
     updatedLegend,
     trackModel,
+    initialLoad,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
 
-    let canvasElements = (
+
+    const canvasElements = (
       <InteractionTrackComponent
         data={formattedData}
         options={configOptions}
@@ -1167,8 +1080,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
       />
     );
 
@@ -1178,20 +1092,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
   methylc: function getMethylc({
     formattedData,
     trackState,
-    windowWidth,
+
     configOptions,
     updatedLegend,
     trackModel,
     xvaluesData,
     initialLoad,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
 
-    let canvasElements = (
+
+    const canvasElements = (
       <MethylCTrackComputation
         data={formattedData}
         options={configOptions}
@@ -1204,7 +1114,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
@@ -1227,13 +1137,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
 
-    let canvasElements = (
+    const canvasElements = (
       <DynseqTrackComponents
         data={formattedData}
         options={configOptions}
@@ -1246,7 +1151,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         basesByPixel={basesByPixel}
         genomeConfig={genomeConfig}
         xvaluesData={xvaluesData}
@@ -1265,13 +1170,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     genomeName,
     genomeConfig,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
 
-    let canvasElements = (
+    const canvasElements = (
       <RulerComponent
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
@@ -1289,7 +1189,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        getNumLegend={getNumLegend}
+        updatedLegend={updatedLegend}
         genomeConfig={genomeConfig}
         options={configOptions}
       />
@@ -1664,6 +1564,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     "dynamic",
     "dynamiclongrange",
     "dynamichic",
+    "vcf"
   ]);
 
   const isFullMode =
@@ -1753,7 +1654,8 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   // Fallback (should not reach here in normal operation)
   return null;
 }
-// MARK: FORMAT
+
+// MARK: FORMATData
 function formatGeneAnnotationData(genesArr: any[]) {
   return genesArr.map((record) => new Gene(record));
 }
@@ -2140,15 +2042,15 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   biginteract: formatBigInteract,
   vcf: formatVcf,
   longrange: formatLongRange,
-  // Add additional type-function mappings here
+
 };
 export function formatDataByType(genesArr: any[], type: string, reverse) {
-  // Check if genesArr is falsy
+
   if (!genesArr) {
     return { error: "No data available" };
   }
 
-  // Check if genesArr has an error property (cast to any to avoid TypeScript error)
+  // if genesArr has an error property then something wrong with fetch or other errors
   if (typeof genesArr === "object" && (genesArr as any).error) {
     return genesArr;
   }
@@ -2164,6 +2066,6 @@ export function formatDataByType(genesArr: any[], type: string, reverse) {
   if (formatter) {
     return formatter(genesArr);
   } else {
-    return genesArr; // Fallback if no formatter is found
+    return genesArr; //fallback if no formatter is found
   }
 }

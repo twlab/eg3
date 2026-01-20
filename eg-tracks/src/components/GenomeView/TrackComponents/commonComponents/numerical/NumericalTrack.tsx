@@ -30,10 +30,11 @@ interface NumericalTrackProps {
   viewRegion?: any;
   width?: any;
   forceSvg?: any;
-  getNumLegend?: any;
+
   xvaluesData?: Array<any>;
   dataIdx: number;
   initialLoad;
+  updatedLegend?: any
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -62,7 +63,6 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
  */
 const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const currentViewDataIdx = useRef(0);
-  const initialRender = useRef(true);
   const currentScale: any = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
@@ -75,7 +75,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     unit,
     options,
     forceSvg,
-    getNumLegend,
+    updatedLegend,
     groupScale,
     xvaluesData,
     viewWindow,
@@ -91,7 +91,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       ? xvaluesData
       : aggregator.xToValueMaker(data, viewRegion, width, options);
 
-  let [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
+  const [xToValue, xToValue2, hasReverse, hasForward] = xvalues;
 
   const computeScales = useMemo(() => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
@@ -245,8 +245,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     </div>
   );
 
-  if (getNumLegend) {
-    getNumLegend(legend);
+  if (updatedLegend) {
+    updatedLegend.current = legend;
   }
   let curParentStyle: any = forceSvg
     ? {
@@ -402,7 +402,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   currentVisualizer.current = visualizer;
   currentViewDataIdx.current = dataIdx;
   currentViewWindow.current = viewWindow;
-  initialRender.current = false;
+
   currentScale.current = scales;
   currentViewOptions.current = options;
   xvalues = [];

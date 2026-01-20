@@ -58,7 +58,8 @@ interface InteractionTrackProps {
   width: number; // Width of the visualizer
   viewWindow: OpenInterval; // Visible portion of the visualizer
   visRegion: DisplayedRegionModel;
-  getNumLegend: any;
+  updatedLegend: any;
+  initialLoad?: boolean;
 }
 
 export const DEFAULT_OPTIONS = {
@@ -84,7 +85,7 @@ export const DEFAULT_OPTIONS = {
 
 const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
   const currentViewDataIdx = useRef(0);
-  const initialRender = useRef(true);
+
   const currentScale: any = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
@@ -206,7 +207,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     getBeamRefs,
     onSetAnchors3d,
     isThereG3dTrack,
-    getNumLegend, dataIdx
+    updatedLegend, dataIdx, initialLoad
   } = props;
 
   const safeData = data || [];
@@ -217,14 +218,14 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
   let interactionData = placeInteractions(filteredData, visRegion, width);
 
   let visualizer;
-
   if (
-    initialRender.current ||
+    initialLoad ||
     options.forceSvg ||
     !_.isEqual(viewWindow, currentViewWindow.current) ||
     !_.isEqual(options, currentViewOptions.current) ||
     dataIdx !== currentViewDataIdx.current
   ) {
+
     const visualizerProps = {
       placedInteractions: interactionData,
       viewWindow,
@@ -259,8 +260,8 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
       />
     );
 
-    if (getNumLegend) {
-      getNumLegend(legend);
+    if (updatedLegend) {
+      updatedLegend.current = legend;
     }
 
     switch (options.displayMode) {
@@ -291,7 +292,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
 
   currentVisualizer.current = visualizer;
   currentViewWindow.current = viewWindow;
-  initialRender.current = false;
+
   currentScale.current = scales;
   currentViewOptions.current = options;
 

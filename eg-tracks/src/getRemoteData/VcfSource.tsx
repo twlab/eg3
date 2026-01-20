@@ -23,7 +23,7 @@ class VcfSource {
       tbiFilehandle = new RemoteFile(indexUrl ? indexUrl : url + ".tbi");
     }
     this.vcf = new TabixIndexedFile({ filehandle, tbiFilehandle });
-    // console.log(this.vcf);
+
     this.header = null;
     this.parser = null;
   }

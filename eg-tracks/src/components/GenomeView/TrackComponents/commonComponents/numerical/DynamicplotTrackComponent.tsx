@@ -75,6 +75,7 @@ interface DynamicplotTrackProps {
   trackModel: TrackModel;
   width: number;
   updatedLegend: any;
+  dataIdx: number;
 }
 
 interface DynamicplotTrackState {
@@ -126,8 +127,8 @@ class DynamicplotTrackComponent extends React.PureComponent<
       data,
       viewRegion,
       width,
-      this.props.options,
-      this.props.viewWindow
+      this.props.options
+
     )[0];
   }
 

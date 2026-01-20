@@ -295,7 +295,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastDragX = useRef(0);
 
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
-  const isScreenShotOpenRef = useRef(false);
   const basePerPixel = useRef(0);
   const frameID = useRef(0);
   const lastX = useRef(0);
@@ -783,7 +782,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMouseUp() {
     isDragging.current = false;
-    if (lastDragX.current === dragX.current || isScreenShotOpenRef.current) {
+    if (lastDragX.current === dragX.current) {
       return;
     }
     lastDragX.current = dragX.current;
@@ -1132,7 +1131,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
     } else {
-      if (key !== "legendFontColor") { setApplyTrackConfigChange(newSelected); }
+      if (key !== "legendFontColor") {
+
+        setApplyTrackConfigChange(newSelected);
+      }
     }
 
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
@@ -1986,11 +1988,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curTrack.trackType in trackUsingExpandedLoci ||
         !curTrack.usePrimaryNav
       ) {
+        minIdx = dataIdx.current - 2;
+        maxIdx = dataIdx.current + 2;
+      } else {
         minIdx = dataIdx.current - 3;
         maxIdx = dataIdx.current + 3;
-      } else {
-        minIdx = dataIdx.current - 4;
-        maxIdx = dataIdx.current + 4;
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
@@ -2404,26 +2406,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           useFineModeNav.current = true;
         }
       }
-      // if (trackManagerState.current.tracks[i].type === "hic") {
-      //   if (
-      //     !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
-      //   ) {
-      //     fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
-      //       new HicSource(trackManagerState.current.tracks[i].url);
-      //   }
-      // } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
-      //   trackManagerState.current.tracks[i].tracks?.map(
-      //     (_item: any, index: string | number) => {
-      //       fetchInstances.current[
-      //         `${trackManagerState.current.tracks[i].id}` +
-      //           "subtrack" +
-      //           `${index}`
-      //       ] = new HicSource(
-      //         trackManagerState.current.tracks[i].tracks![index].url
-      //       );
-      //     }
-      //   );
-      // } else
+
 
       if (
         trackManagerState.current.tracks[i].type in
@@ -3532,15 +3515,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       toolbarContainer.style.visibility = configMenu ? "hidden" : "visible";
     }
   }, [configMenu]);
-  useEffect(() => {
 
-    if (isScreenShotOpen === true) {
-      isScreenShotOpenRef.current = true;
-    }
-    else {
-      isScreenShotOpenRef.current = false;
-    }
-  }, [isScreenShotOpen]);
   // MARK: viewWIndow useeffect
   useEffect(() => {
     if (viewWindowConfigData.current) {

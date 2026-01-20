@@ -35,14 +35,14 @@ interface BoxplotTrackProps {
   options: any;
   forceSvg: boolean;
   viewWindow: any;
-  getNumLegend: any;
+  updatedLegend?: any;
   dataIdx?: number;
   initialLoad?: boolean;
 }
 
 const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
   const currentViewDataIdx = useRef(0);
-  const initialRender = useRef(true);
+
   const currentScale: any = useRef(null);
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
@@ -57,7 +57,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     options,
     forceSvg,
     viewWindow,
-    getNumLegend,
+    updatedLegend,
     dataIdx = 0,
     initialLoad = false,
   } = props;
@@ -195,8 +195,8 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
       />
     );
 
-    if (getNumLegend) {
-      getNumLegend(legend);
+    if (updatedLegend) {
+      updatedLegend.current = legend;
     }
 
     let curParentStyle: any = forceSvg
@@ -271,7 +271,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
   currentVisualizer.current = visualizer;
   currentViewDataIdx.current = dataIdx;
   currentViewWindow.current = viewWindow;
-  initialRender.current = false;
+
   currentScale.current = scales;
   currentViewOptions.current = options;
 

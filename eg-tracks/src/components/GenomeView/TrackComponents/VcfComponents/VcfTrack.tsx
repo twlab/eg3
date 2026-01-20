@@ -54,7 +54,7 @@ interface VcfTrackProps {
   getGenePadding: any;
   getHeight: any;
   xvaluesData?: any;
-  getNumLegend: any;
+  forceSvg?: boolean;
   dataIdx: number;
   initialLoad?: boolean;
 }
@@ -70,7 +70,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
   const currentViewDataIdx = useRef<number | undefined>(undefined);
   const currentViewWindow = useRef<any>(null);
   const currentScale = useRef<any>(null);
-  const initialRender = useRef(true);
+
   const currentViewOptions = useRef<any>(null);
 
   const {
@@ -89,6 +89,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
     xvaluesData,
     dataIdx,
     initialLoad,
+    forceSvg
   } = props;
 
   const computeColorScales = useMemo(
@@ -121,42 +122,6 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
       return colorScale;
     }, []);
 
-  /**
-   * Renders the tooltip for a feature.
-   *
-   * @param {React.MouseEvent} event - mouse event that triggered the tooltip request
-   * @param {Vcf} vcf - vcf for which to display details
-   */
-
-  /**
-   * Renders one annotation.
-   *
-   * @param {PlacedFeature} - feature and drawing info
-   * @param {number} y - y coordinate to render the annotation
-   * @param {boolean} isLastRow - whether the annotation is assigned to the last configured row
-   * @param {number} index - iteration index
-   * @return {JSX.Element} element visualizing the feature
-   */
-  const renderAnnotation = (
-    placedGroup: PlacedFeatureGroup,
-    y: number,
-    isLastRow: boolean,
-    index: number
-  ) => {
-    return placedGroup.placedFeatures.map((placement, i) => (
-      <VcfAnnotation
-        key={i}
-        feature={placement.feature as Vcf}
-        xSpan={placement.xSpan}
-        y={y}
-        isMinimal={isLastRow}
-        height={options.rowHeight}
-        colorScale={scalesRef.current}
-        onClick={renderTooltip}
-        alwaysDrawLabel={options.alwaysDrawLabel}
-      />
-    ));
-  };
 
   const currentViewLength =
     (viewRegion.getWidth() * viewWindow.getLength()) / width;
@@ -179,6 +144,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
         !_.isEqual(options, currentViewOptions.current) ||
         !options.usePrimaryNav
       ) {
+
         visualizer = (
           <NumericalTrack
             {...props}
@@ -187,6 +153,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
             xvaluesData={xvaluesData}
             dataIdx={dataIdx}
             initialLoad={initialLoad}
+            updatedLegend={updatedLegend}
           />
         );
       } else {
@@ -245,6 +212,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
             xvaluesData={xvaluesData}
             dataIdx={dataIdx}
             initialLoad={initialLoad}
+            updatedLegend={updatedLegend}
           />
         );
       } else {
@@ -289,7 +257,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
   currentVisualizer.current = visualizer;
   currentViewDataIdx.current = dataIdx;
   currentViewWindow.current = viewWindow;
-  initialRender.current = false;
+
   currentScale.current = scalesRef.current;
   currentViewOptions.current = options;
 
