@@ -118,6 +118,8 @@ export default function GenomeView() {
       overrideViewRegion={currentSession?.overrideViewRegion}
       currentState={currentState}
       darkTheme={darkTheme}
+      width={currentSession.width}
+      height={currentSession.height}
     />
   ) : null;
 }
