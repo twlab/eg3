@@ -49,7 +49,7 @@ const History: React.FC<Props> = ({
   }
   const renderHistory = () => {
     const { past, future } = state;
-
+    console.log(state)
     if ((past.length === 0 && future.length === 0) || checkStateEmpty) {
       return <div>No operation history yet!</div>;
     }
@@ -108,8 +108,8 @@ const History: React.FC<Props> = ({
             {stateData && stateData.userViewRegion
               ? stateData.userViewRegion
               : stateData && stateData.viewRegion
-              ? stateData.viewRegion
-              : "(None)"}
+                ? stateData.viewRegion
+                : "(None)"}
             , # of tracks:{" "}
             {stateData && stateData.tracks ? stateData.tracks.length : 0}
           </span>

@@ -48,7 +48,7 @@ const genome = new Genome("hg38", [
 // for omer4dn chr5:114534673-136928518
 // url parameter datahub test https://vizhub.wustl.edu/public/tmp/a.json
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:10000-20000");
 
 const defaultTracks = [
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
@@ -62,27 +62,43 @@ const defaultTracks = [
     name: "Ruler",
   }),
   new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
+    type: "ruler",
+    name: "Ruler",
   }),
   new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV47",
-    genome: "hg38",
+    type: "ruler",
+    name: "Ruler",
   }),
   new TrackModel({
-    type: "geneAnnotation",
-    name: "MANE_select_1.4",
-    label: "MANE selection v1.4",
-    genome: "hg38",
+    type: "ruler",
+    name: "Ruler",
   }),
   new TrackModel({
-    type: "repeatmasker",
-    name: "rmsk_all",
-    options: { label: "RepeatMasker" },
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+    type: "ruler",
+    name: "Ruler",
   }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV47",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "MANE_select_1.4",
+  //   label: "MANE selection v1.4",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "rmsk_all",
+  //   options: { label: "RepeatMasker" },
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  // }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig nochr",
