@@ -3637,7 +3637,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       style={{
         backgroundColor: "var(--bg-color)",
         paddingLeft: "20px",
-        marginBottom: "100px",
+        marginBottom: "50px",
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (

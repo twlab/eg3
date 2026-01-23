@@ -179,17 +179,28 @@ const HubTrackTable: React.FC<Props> = ({
     usePagination
   );
 
-  const buttonStyle = {
-    padding: "4px 8px",
-    margin: "0 2px",
-    backgroundColor: "#E1EBEE",
-    color: "black",
-    border: "none",
-    borderRadius: "2px",
+  const buttonStyle: React.CSSProperties = {
+    padding: "6px 12px",
+    margin: "0 4px",
+    backgroundColor: "#fff",
+    color: "#333",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
     cursor: "pointer",
-    disabled: {
-      backgroundColor: "#ddd",
-    },
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  };
+
+  const buttonHoverStyle: React.CSSProperties = {
+    backgroundColor: "#f5f5f5",
+    borderColor: "#999",
+  };
+
+  const buttonDisabledStyle: React.CSSProperties = {
+    backgroundColor: "#f9f9f9",
+    color: "#ccc",
+    cursor: "not-allowed",
+    borderColor: "#e0e0e0",
   };
 
   return (
@@ -199,163 +210,202 @@ const HubTrackTable: React.FC<Props> = ({
           display: "flex",
           flexDirection: "column",
           fontFamily: "Arial, sans-serif",
+          height: "100%",
+
         }}
       >
-        <h1>Track Table</h1>
-        <label htmlFor="searchTrack" style={{ marginBottom: "8px" }}>
-          Search tracks
-        </label>
-        <input
-          type="text"
-          id="searchTrack"
-          style={{
-            padding: "8px",
-            marginBottom: "10px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-          }}
-          placeholder="H1 or H3K4me3, etc..."
-          value={searchText}
-          onChange={handleSearchChangeRequest}
-        />
-        <small
-          id="searchTrackHelp"
-          style={{ color: "#6c757d", marginBottom: "16px" }}
-        >
-          Free text search over track labels and metadata.
-        </small>
-        <div style={{ textAlign: "right", marginBottom: "16px" }}>
-          <button
-            type="button"
+        <h1 style={{ margin: 0, paddingBottom: "5vpx", textAlign: "center" }}>Track Table</h1>
+        <div style={{ flex: "1", overflow: "auto" }}>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+
+
+            <input
+              type="text"
+              id="searchTrack"
+              style={{
+                padding: "8px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                width: "300px",
+              }}
+              placeholder="H1 or H3K4me3, etc..."
+              value={searchText}
+              onChange={handleSearchChangeRequest}
+            />
+            <small id="searchTrackHelp" style={{ color: "#6c757d" }}>
+              Free text search over track labels and metadata.
+            </small>
+            <button
+              type="button"
+              style={{
+                padding: "8px 12px",
+                backgroundColor: "#1F7D53",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                marginLeft: "auto",
+              }}
+              onClick={() => handleAddAll(page)}
+            >
+              Add all in page
+            </button>
+          </div>
+          <table
+            {...getTableProps()}
             style={{
-              padding: "8px 12px",
-              backgroundColor: "#1F7D53",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
+              width: "100%",
+              borderCollapse: "collapse",
+              marginBottom: "16px",
             }}
-            onClick={() => handleAddAll(page)}
           >
-            Add all in page
-          </button>
-        </div>
-        <table
-          {...getTableProps()}
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginBottom: "16px",
-          }}
-        >
-          <thead>
-            {headerGroups.map((headerGroup) => (
-              <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-                {headerGroup.headers.map((column) => (
-                  <th
-                    {...column.getHeaderProps()}
-                    key={column.id}
-                    style={{
-                      borderBottom: "2px solid #ddd",
-                      padding: "8px",
-                      textAlign: "left",
-                    }}
-                  >
-                    {column.render("Header")}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody {...getTableBodyProps()}>
-            {page.map((row) => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()} key={row.id}>
-                  {row.cells.map((cell) => (
-                    <td
-                      {...cell.getCellProps()}
-                      key={cell.column.id}
+            <thead>
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
+                  {headerGroup.headers.map((column) => (
+                    <th
+                      {...column.getHeaderProps()}
+                      key={column.id}
                       style={{
-                        borderBottom: "1px solid #ddd",
+                        borderBottom: "2px solid #ddd",
                         padding: "8px",
+                        textAlign: "left",
                       }}
                     >
-                      {cell.render("Cell")}
-                    </td>
+                      {column.render("Header")}
+                    </th>
                   ))}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <div style={{ textAlign: "center" }}>
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {page.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()} key={row.id}>
+                    {row.cells.map((cell) => (
+                      <td
+                        {...cell.getCellProps()}
+                        key={cell.column.id}
+                        style={{
+                          borderBottom: "1px solid #ddd",
+                          padding: "8px",
+                        }}
+                      >
+                        {cell.render("Cell")}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+
+          borderTop: "1px solid #e0e0e0",
+          flexShrink: 0
+        }}>
           <button
             onClick={() => gotoPage(0)}
             disabled={!canPreviousPage}
-            style={buttonStyle}
+            style={{
+              ...buttonStyle,
+              ...(!canPreviousPage && buttonDisabledStyle),
+            }}
+            onMouseEnter={(e) => canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
+            onMouseLeave={(e) => canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
           >
-            {"<< "} First
+            First
           </button>
           <button
             onClick={() => previousPage()}
             disabled={!canPreviousPage}
-            style={buttonStyle}
+            style={{
+              ...buttonStyle,
+              ...(!canPreviousPage && buttonDisabledStyle),
+              fontSize: "18px",
+            }}
+            onMouseEnter={(e) => canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
+            onMouseLeave={(e) => canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
           >
-            {"<"}
+            ‹
           </button>
-          <span style={{ margin: "0 8px" }}>
-            Page{" "}
-            <strong>
-              {pageIndex + 1} of {pageOptions.length}
-            </strong>
+          <span style={{
+            margin: "0 12px",
+            color: "#666",
+            fontSize: "14px"
+          }}>
+            Page <strong style={{ color: "#333" }}>{pageIndex + 1}</strong> of <strong style={{ color: "#333" }}>{pageOptions.length}</strong>
           </span>
           <button
             onClick={() => nextPage()}
             disabled={!canNextPage}
-            style={buttonStyle}
+            style={{
+              ...buttonStyle,
+              ...(!canNextPage && buttonDisabledStyle),
+              fontSize: "18px",
+            }}
+            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
+            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
           >
-            {">"}
+            ›
           </button>
           <button
             onClick={() => gotoPage(pageCount - 1)}
             disabled={!canNextPage}
-            style={buttonStyle}
+            style={{
+              ...buttonStyle,
+              ...(!canNextPage && buttonDisabledStyle),
+            }}
+            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
+            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
           >
             Last
-            {" >>"}
           </button>
-          <span style={{ margin: "0 8px" }}>
-            | Go to page:
-            <input
-              type="number"
-              defaultValue={pageIndex + 1}
-              onChange={(e) => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                gotoPage(page);
-              }}
-              style={{
-                width: "50px",
-                padding: "5px",
-                marginLeft: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-              }}
-            />
-          </span>
+          <div style={{
+            width: "1px",
+            height: "24px",
+            backgroundColor: "#ddd",
+            margin: "0 8px"
+          }}></div>
+          <input
+            type="number"
+            defaultValue={pageIndex + 1}
+            onChange={(e) => {
+              const page = e.target.value ? Number(e.target.value) - 1 : 0;
+              gotoPage(page);
+            }}
+            style={{
+              width: "60px",
+              padding: "6px 8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "14px",
+              textAlign: "center",
+            }}
+            placeholder="Page"
+          />
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
             style={{
-              marginLeft: "8px",
-              padding: "5px",
+              padding: "6px 8px",
               border: "1px solid #ddd",
               borderRadius: "4px",
+              fontSize: "14px",
+              backgroundColor: "#fff",
+              cursor: "pointer",
             }}
           >
             {[10, 20, 30, 40, 50].map((size) => (
               <option key={size} value={size}>
-                Show {size}
+                {size} per page
               </option>
             ))}
           </select>

@@ -190,6 +190,11 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
           size={20}
           placeholder="SNP id"
           onChange={handleInputChange}
+          style={{
+            padding: "6px 8px",
+            border: "1px solid #e2e8f0",
+            borderRadius: "4px",
+          }}
         />
         <button
           className="btn btn-secondary btn-sm"

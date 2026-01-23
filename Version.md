@@ -1,4 +1,9 @@
 # Version history
+## 59.2.1
+- recreated ReactModal and removed dependency on package
+- recreated trackfacet and table 
+- fixed zIndex issue in package version where modal components behind other components
+- fixed trackConfig positioning issue in package
 
 ## 59.1.1
 - fixed vcf not updating when changing zooming and viewRegion
