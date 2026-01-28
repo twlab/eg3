@@ -47,33 +47,33 @@ function ConfigMenuComponent(props: any) {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // Use page coordinates directly for position: absolute
-      let left = mouseX;
-      let top = mouseY - 200;
+      // exact position of mouse click inside trackmanager
+      let left = mouseX - 19; // padding of trackmanager is 20px so we need to adjust here, 1 px is border left
+      let top = mouseY - 167; // this is the height of navBar, 100px + genomeNavigator, 65px, 2px for border top and bottom
 
-      // Convert to viewport coordinates to check overflow
-      const viewportX = mouseX - window.scrollX;
-      const viewportY = mouseY - window.scrollY;
+      // // Convert to viewport coordinates to check overflow
+      // const viewportX = mouseX - window.scrollX;
+      // const viewportY = mouseY - window.scrollY;
 
       // Check if menu would overflow right edge of viewport
-      if (viewportX + menuRect.width > viewportWidth) {
-        left = mouseX - menuRect.width;
+      if (left + menuRect.width > viewportWidth) {
+        left = (left - menuRect.width);
       }
 
       // Check if menu would overflow bottom edge of viewport
-      if (viewportY + menuRect.height > viewportHeight) {
-        top = mouseY - menuRect.height;
+      if (top + menuRect.height > viewportHeight) {
+        top = (top - menuRect.height);
       }
 
-      // Ensure menu doesn't go off left edge
-      if (left - window.scrollX < 0) {
-        left = window.scrollX + 10;
-      }
+      // // Ensure menu doesn't go off left edge
+      // if (left - window.scrollX < 0) {
+      //   left = window.scrollX + 10;
+      // }
 
-      // Ensure menu doesn't go off top edge
-      if (top - window.scrollY < 0) {
-        top = window.scrollY + 10;
-      }
+      // // Ensure menu doesn't go off top edge
+      // if (top - window.scrollY < 0) {
+      //   top = window.scrollY + 10;
+      // }
 
       setPosition({ left, top });
     }

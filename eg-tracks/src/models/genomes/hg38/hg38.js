@@ -61,6 +61,22 @@ const defaultTracks = [
     type: "ruler",
     name: "Ruler",
   }),
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
   new TrackModel({
     type: "geneAnnotation",
     name: "refGene",

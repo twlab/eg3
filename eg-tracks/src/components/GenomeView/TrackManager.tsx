@@ -667,22 +667,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
 
-  function handleClick(e: MouseEvent) {
-    if (isToolSelected.current) {
-      return;
-    }
+  // function handleClick(e: MouseEvent) {
+  //   if (isToolSelected.current) {
+  //     return;
+  //   }
 
-    const currentTime = Date.now();
-    const timeSinceLastClick = currentTime - lastClickTimeRef.current;
+  //   const currentTime = Date.now();
+  //   const timeSinceLastClick = currentTime - lastClickTimeRef.current;
 
-    if (timeSinceLastClick < doubleClickThreshold) {
-      handleDoubleClick(e);
-    } else {
-      handleSingleClick(e);
-    }
+  //   if (timeSinceLastClick < doubleClickThreshold) {
+  //     handleDoubleClick(e);
+  //   } else {
+  //     handleSingleClick(e);
+  //   }
 
-    lastClickTimeRef.current = currentTime;
-  }
+  //   lastClickTimeRef.current = currentTime;
+  // }
 
   function handleSingleClick(e: MouseEvent) {
 
@@ -1199,10 +1199,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         setConfigMenu(null);
       }
-    } else {
+    }
+
+    else {
       const trackId = trackDetails;
 
-      if (!(trackId in selectedTracks.current)) {
+      if (trackId && Object.keys(selectedTracks.current).length > 0 && !(trackId in selectedTracks.current)) {
         onTrackUnSelect();
         onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
         setConfigMenu(null);
@@ -2750,7 +2752,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // Add click event listener to the track container
     const trackContainer = block.current;
     if (trackContainer) {
-      trackContainer.addEventListener("click", handleClick);
+      // trackContainer.addEventListener("click", handleClick);
       trackContainer.addEventListener("contextmenu", handleGenomeClick);
 
       // Add touch event listeners
@@ -2770,7 +2772,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // Remove click event listeners
       if (trackContainer) {
-        trackContainer.removeEventListener("click", handleClick);
+        // trackContainer.removeEventListener("click", handleClick);
         trackContainer.removeEventListener("contextmenu", handleGenomeClick);
 
         // Remove touch event listeners
@@ -3622,9 +3624,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [viewWindowConfigData.current]);
   function checkOutsideClick() {
-    onTrackUnSelect();
-    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
-    setConfigMenu(null);
+    if (Object.keys(selectedTracks.current).length > 0) {
+      onTrackUnSelect();
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+      setConfigMenu(null);
+    }
   }
 
   // MARK: render________________________________________
@@ -3633,7 +3637,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       style={{
         backgroundColor: "var(--bg-color)",
         paddingLeft: "20px",
-        marginBottom: "100px",
+        marginBottom: "50px",
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
