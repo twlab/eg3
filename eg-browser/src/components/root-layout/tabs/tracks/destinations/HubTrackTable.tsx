@@ -262,11 +262,11 @@ const HubTrackTable: React.FC<Props> = ({
           >
             <thead>
               {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
+                <tr {...headerGroup.getHeaderGroupProps()} key={crypto.randomUUID()}>
                   {headerGroup.headers.map((column) => (
                     <th
                       {...column.getHeaderProps()}
-                      key={column.id}
+                      key={crypto.randomUUID()}
                       style={{
                         borderBottom: "2px solid #ddd",
                         padding: "8px",

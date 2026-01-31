@@ -62,7 +62,11 @@ export function HicBinSizeNormOptionConfig(props) {
   const allResolutions: Array<any> = [],
     allNormOptions: Array<any> = [];
   if (fileInfos) {
+
     Object.keys(fileInfos).forEach((trackId) => {
+      if (!fileInfos[trackId]) {
+        return;
+      }
       allResolutions.push(fileInfos[trackId].resolutions);
       allNormOptions.push(fileInfos[trackId].normOptions);
     });
