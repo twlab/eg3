@@ -22,7 +22,7 @@ import hubReducer from "./slices/hubSlice";
 import settingsReducer from "./slices/settingsSlice";
 import searchReducer from "./slices/searchSlice";
 import undoRedoReducer from "./slices/undoRedoSlice";
-import { setCurrentSession } from "./slices/browserSlice";
+import { setCurrentSession, updateCurrentSession } from "./slices/browserSlice";
 
 /**
  * @deprecated This default store is maintained for backward compatibility.

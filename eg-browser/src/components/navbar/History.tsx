@@ -108,8 +108,8 @@ const History: React.FC<Props> = ({
             {stateData && stateData.userViewRegion
               ? stateData.userViewRegion
               : stateData && stateData.viewRegion
-              ? stateData.viewRegion
-              : "(None)"}
+                ? stateData.viewRegion
+                : "(None)"}
             , # of tracks:{" "}
             {stateData && stateData.tracks ? stateData.tracks.length : 0}
           </span>

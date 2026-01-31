@@ -4,6 +4,7 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
@@ -28,10 +29,13 @@ body {
 
 .btn {
   background-color: transparent;
-  color: #1d4ed8; /* text-blue-700 */
+  color: #1d4ed8;
+  /* text-blue-700 */
   /* padding: 0.25rem; px-1 */
-  border: 1px solid #3b82f6; /* border-blue-500 */
-  border-radius: 0.25rem; /* rounded */
+  border: 1px solid #3b82f6;
+  /* border-blue-500 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
 
 .btn-sm {
@@ -40,56 +44,78 @@ body {
 
 [data-theme="dark"] .btn {
   background-color: transparent;
-  color: #bfdbfe; /* text-blue-200 */
+  color: #bfdbfe;
+  /* text-blue-200 */
   /* padding: 0.25rem; px-1 */
-  border: 1px solid #e0f2fe; /* border-blue-100 */
-  border-radius: 0.25rem; /* rounded */
+  border: 1px solid #e0f2fe;
+  /* border-blue-100 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
 
 .TrackContextMenu-body button,
 .TrackContextMenu-body select,
 .TrackContextMenu-body input {
   background-color: transparent;
-  color: #1d4ed8; /* text-blue-700 */
-  padding: 0.25rem; /* px-1 */
-  border: 1px solid #3b82f6; /* border-blue-500 */
-  border-radius: 0.25rem; /* rounded */
+  color: #1d4ed8;
+  /* text-blue-700 */
+  padding: 0.25rem;
+  /* px-1 */
+  border: 1px solid #3b82f6;
+  /* border-blue-500 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
 
 [data-theme="dark"] .TrackContextMenu-body button,
 [data-theme="dark"] .TrackContextMenu-body select,
 [data-theme="dark"] .TrackContextMenu-body input {
   background-color: transparent;
-  color: #bfdbfe; /* text-blue-200 */
-  padding: 0.25rem; /* px-1 */
-  border: 1px solid #e0f2fe; /* border-blue-100 */
-  border-radius: 0.25rem; /* rounded */
+  color: #bfdbfe;
+  /* text-blue-200 */
+  padding: 0.25rem;
+  /* px-1 */
+  border: 1px solid #e0f2fe;
+  /* border-blue-100 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
 
 .HighlightMenu button,
 .HighlightMenu select,
 .HighlightMenu input {
   background-color: transparent;
-  color: #1d4ed8; /* text-blue-700 */
-  padding: 0.25rem; /* px-1 */
-  border: 1px solid #3b82f6; /* border-blue-500 */
-  border-radius: 0.25rem; /* rounded */
+  color: #1d4ed8;
+  /* text-blue-700 */
+  padding: 0.25rem;
+  /* px-1 */
+  border: 1px solid #3b82f6;
+  /* border-blue-500 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
 
 [data-theme="dark"] .HighlightMenu button,
 [data-theme="dark"] .HighlightMenu select,
 [data-theme="dark"] .HighlightMenu input {
   background-color: transparent;
-  color: #bfdbfe; /* text-blue-200 */
-  padding: 0.25rem; /* px-1 */
-  border: 1px solid #e0f2fe; /* border-blue-100 */
-  border-radius: 0.25rem; /* rounded */
+  color: #bfdbfe;
+  /* text-blue-200 */
+  padding: 0.25rem;
+  /* px-1 */
+  border: 1px solid #e0f2fe;
+  /* border-blue-100 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
 
 .table {
-  width: 100%; /* w-full */
-  border-collapse: collapse; /* border-collapse */
+  width: 100%;
+  /* w-full */
+  border-collapse: collapse;
+  /* border-collapse */
 }
+
 /* .btn:hover {
     @apply bg-blue-500 text-white border-transparent;
 } */
@@ -386,14 +412,17 @@ body {
 #shareUI .MuiTab-textColorSecondary {
   color: unset;
 }
+
 .Track-border-container {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 5; /*  above the child component so animated border will display */
-  pointer-events: none; /* Make sure it doesn't interfere with interactions */
+  z-index: 5;
+  /*  above the child component so animated border will display */
+  pointer-events: none;
+  /* Make sure it doesn't interfere with interactions */
   /* outline: 1px solid #9aa6b2; */
   border-bottom: 1px solid lightgray;
 }
@@ -486,31 +515,36 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
 
-.ReactModal__Content input {
-  border: #1eb7e9 1px solid;
-  border-radius: 4px;
-  padding: 4px;
-  margin: 2px;
-}
+
 
 .mybtn {
   background-color: transparent;
-  color: #1d4ed8; /* text-blue-700 */
-  padding: 2px; /* px-1 */
-  border: 1px solid #3b82f6; /* border-blue-500 */
-  border-radius: 0.25rem; /* rounded */
+  color: #1d4ed8;
+  /* text-blue-700 */
+  padding: 2px;
+  /* px-1 */
+  border: 1px solid #3b82f6;
+  /* border-blue-500 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
+
 [data-theme="dark"] .mybtn {
   background-color: transparent;
-  color: #bfdbfe; /* text-blue-200 */
-  padding: 2px; /* px-1 */
-  border: 1px solid #e0f2fe; /* border-blue-100 */
-  border-radius: 0.25rem; /* rounded */
+  color: #bfdbfe;
+  /* text-blue-200 */
+  padding: 2px;
+  /* px-1 */
+  border: 1px solid #e0f2fe;
+  /* border-blue-100 */
+  border-radius: 0.25rem;
+  /* rounded */
 }
 
 button:hover {
