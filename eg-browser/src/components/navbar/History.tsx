@@ -49,7 +49,7 @@ const History: React.FC<Props> = ({
   }
   const renderHistory = () => {
     const { past, future } = state;
-    console.log(state)
+
     if ((past.length === 0 && future.length === 0) || checkStateEmpty) {
       return <div>No operation history yet!</div>;
     }
