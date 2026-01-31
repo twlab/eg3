@@ -1,6 +1,6 @@
 # Version history
 ## 59.2.3
-- added height and  width property to package
+- added height and width property to package, user can change the size of container holding tracks
 
 ## 59.2.2
 - fixed config menu position in package
