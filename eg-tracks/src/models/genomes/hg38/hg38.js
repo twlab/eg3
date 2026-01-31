@@ -598,11 +598,11 @@ const defaultTracks = [
   //   ],
   //   showOnHubLoad: true,
   // }),
-  // new TrackModel({
-  //   type: "longrange",
-  //   name: "ES-E14 ChIA-PET",
-  //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  // }),
+  new TrackModel({
+    type: "longrange",
+    name: "ES-E14 ChIA-PET",
+    url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+  }),
   // new TrackModel({
   //   type: "biginteract",
   //   name: "test bigInteract",

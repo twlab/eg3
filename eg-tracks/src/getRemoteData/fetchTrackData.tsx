@@ -297,7 +297,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             return data;
           })
           .catch((error) => {
-            fetchInstance = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });
       } else if (trackType === "hic") {
@@ -309,13 +309,13 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
             const fileInfos = cachedFetchInstance[regionData.trackModel.url].getFileInfo();
             const result = { data, fileInfos }
             return result;
           })
           .catch((error) => {
-            fetchInstance = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });
       } else {
@@ -331,7 +331,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             return data;
           })
           .catch((error) => {
-            fetchInstance = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });
       }

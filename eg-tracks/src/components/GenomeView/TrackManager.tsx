@@ -245,7 +245,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const minBp = useRef(0);
   const selectedTracks = useRef<{ [key: string]: any }>({});
   const mousePositionRef = useRef({ x: 0, y: 0 });
-  const mouseGenomicPositionRef = useRef({ basePair: 0, chromosome: "" });
+  // const mouseGenomicPositionRef = useRef({ basePair: 0, chromosome: "" });
   const mouseRelativePositionRef = useRef({ x: 0, y: 0 });
   const lastClickTimeRef = useRef(0);
   const doubleClickThreshold = 300; // milliseconds
@@ -574,36 +574,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, []);
 
-  function calculateGenomicPosition(x: number) {
-    // Calculate the genomic position based on mouse x coordinate
-    if (
-      !trackManagerState.current.viewRegion._endBase ||
-      !trackManagerState.current.viewRegion._startBase
-    ) {
-      return { basePair: 0, chromosome: "" };
-    }
 
-    const viewportBp =
-      trackManagerState.current.viewRegion._endBase -
-      trackManagerState.current.viewRegion._startBase;
-    const pixelToBp = viewportBp / windowWidth;
-    const mouseBp =
-      trackManagerState.current.viewRegion._startBase +
-      (x - legendWidth) * pixelToBp;
-
-    // Find which chromosome this position belongs to
-    let chromosome = "";
-    if (genomeConfig.navContext && genomeConfig.navContext._features) {
-      for (const feature of genomeConfig.navContext._features) {
-        if (mouseBp >= feature.locus.start && mouseBp <= feature.locus.end) {
-          chromosome = feature.locus.chr;
-          break;
-        }
-      }
-    }
-
-    return { basePair: Math.round(mouseBp), chromosome };
-  }
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
 
@@ -618,7 +589,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // Update all mouse position references
       mousePositionRef.current = { x: e.clientX, y: e.clientY };
       mouseRelativePositionRef.current = { x, y };
-      mouseGenomicPositionRef.current = calculateGenomicPosition(x);
+
 
       // Show and update crosshair lines
       if (horizontalLineRef.current && verticalLineRef.current) {
@@ -667,106 +638,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
 
-  // function handleClick(e: MouseEvent) {
-  //   if (isToolSelected.current) {
-  //     return;
-  //   }
-
-  //   const currentTime = Date.now();
-  //   const timeSinceLastClick = currentTime - lastClickTimeRef.current;
-
-  //   if (timeSinceLastClick < doubleClickThreshold) {
-  //     handleDoubleClick(e);
-  //   } else {
-  //     handleSingleClick(e);
-  //   }
-
-  //   lastClickTimeRef.current = currentTime;
-  // }
-
-  function handleSingleClick(e: MouseEvent) {
-
-    // Add your single click logic here
-    // For example, you might want to select a track or feature at this position
-  }
-
-  function handleDoubleClick(e: MouseEvent) {
 
 
-    // Add your double click logic here
-    // For example, you might want to zoom in on the clicked position
-    const genomicPos = mouseGenomicPositionRef.current;
-    if (
-      genomicPos.basePair > 0 &&
-      trackManagerState.current.viewRegion._endBase &&
-      trackManagerState.current.viewRegion._startBase
-    ) {
-      const currentRegionSize =
-        trackManagerState.current.viewRegion._endBase -
-        trackManagerState.current.viewRegion._startBase;
-      const newRegionSize = currentRegionSize / 2; // Zoom in 2x
-      const newStart = Math.max(0, genomicPos.basePair - newRegionSize / 2);
-      const newEnd = newStart + newRegionSize;
-
-      onNewRegion(newStart, newEnd);
-    }
-  }
 
   function handleGenomeClick(e: MouseEvent, trackModel?: any) {
     e.preventDefault();
-
-
-    // Add your context menu logic here
-    // For example, you might want to show a context menu
   }
 
-  function handleWheel(e: WheelEvent) {
-    if (!isMouseInsideRef.current || isToolSelected.current) {
-      return;
-    }
 
-    e.preventDefault();
-
-    // Calculate zoom direction (positive = zoom out, negative = zoom in)
-    const zoomDirection = e.deltaY > 0 ? 1 : -1;
-    const zoomFactor = zoomDirection > 0 ? 1.2 : 0.8; // Zoom out 20% or zoom in 20%
-
-    if (
-      !trackManagerState.current.viewRegion._endBase ||
-      !trackManagerState.current.viewRegion._startBase
-    ) {
-      return;
-    }
-
-    const currentStart = trackManagerState.current.viewRegion._startBase;
-    const currentEnd = trackManagerState.current.viewRegion._endBase;
-    const currentSize = currentEnd - currentStart;
-    const newSize = currentSize * zoomFactor;
-
-    // Calculate zoom center based on mouse position
-    const mousePos = mouseGenomicPositionRef.current;
-    let centerBp = mousePos.basePair;
-
-    // If mouse position is not valid, use center of current view
-    if (!centerBp || centerBp < currentStart || centerBp > currentEnd) {
-      centerBp = currentStart + currentSize / 2;
-    }
-
-    // Calculate new start and end positions
-    const newStart = Math.max(0, centerBp - newSize / 2);
-    const newEnd = newStart + newSize;
-
-    // Ensure we don't exceed genome bounds
-    const maxBp = genomeConfig.navContext._totalBases || newEnd;
-    if (newEnd > maxBp) {
-      const adjustedStart = Math.max(0, maxBp - newSize);
-      onNewRegion(adjustedStart, maxBp);
-    } else {
-      onNewRegion(newStart, newEnd);
-    }
-
-
-  }
 
   function handleMouseDown(e: any) {
     if (e.button !== 0) {

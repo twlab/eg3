@@ -1,4 +1,7 @@
 # Version history
+## 59.2.3
+- added height and  width property to package
+
 ## 59.2.2
 - fixed config menu position in package
 - fixed bin and normalize options for hic track 

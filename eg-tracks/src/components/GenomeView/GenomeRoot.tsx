@@ -23,7 +23,6 @@ import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.t
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
-const packageVersion = false;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -45,6 +44,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   isScreenShotOpen,
   selectedRegionSet,
   darkTheme,
+  width, height,
 }) {
   const [resizeRef, size] = useResizeObserver();
 
@@ -177,7 +177,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           <TrackManager
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={
+            windowWidth={width ? width :
               (!size.width || size.width - legendWidth <= 0
                 ? window.innerWidth
                 : size.width) -
@@ -289,38 +289,41 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {!has3dTracks && workerReady ? (
-        <TrackManager
-          tracks={tracks}
-          legendWidth={legendWidth}
-          windowWidth={Math.round(
-            (!size.width || size.width - legendWidth <= 0
-              ? window.innerWidth
-              : size.width) -
+        <div style={{ ...(height && { height }) }}>
+          <TrackManager
+            tracks={tracks}
+            legendWidth={legendWidth}
+            windowWidth={Math.round(width ? width :
+              (!size.width || size.width - legendWidth <= 0
+                ? window.innerWidth
+                : size.width) -
               legendWidth -
               40
-          )}
-          userViewRegion={userViewRegion}
-          highlights={highlights}
-          genomeConfig={genomeConfig}
-          onNewRegion={onNewRegion}
-          onNewRegionSelect={onNewRegionSelect}
-          onNewHighlight={onNewHighlight}
-          onTracksChange={completeTracksChange}
-          tool={tool}
-          Toolbar={Toolbar}
-          viewRegion={viewRegion}
-          showGenomeNav={showGenomeNav}
-          showToolBar={showToolBar}
-          isThereG3dTrack={false}
-          setScreenshotData={setScreenshotData}
-          isScreenShotOpen={isScreenShotOpen}
-          selectedRegionSet={selectedRegionSet}
-          setShow3dGene={setShow3dGene}
-          infiniteScrollWorkers={infiniteScrollWorkers}
-          fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-          currentState={currentState}
-          darkTheme={darkTheme}
-        />
+            )}
+            // subtract legend width so it matches the width with eg2, 
+            // 40  = 20 left margin + 20 of right margin for scroll bar
+            userViewRegion={userViewRegion}
+            highlights={highlights}
+            genomeConfig={genomeConfig}
+            onNewRegion={onNewRegion}
+            onNewRegionSelect={onNewRegionSelect}
+            onNewHighlight={onNewHighlight}
+            onTracksChange={completeTracksChange}
+            tool={tool}
+            Toolbar={Toolbar}
+            viewRegion={viewRegion}
+            showGenomeNav={showGenomeNav}
+            showToolBar={showToolBar}
+            isThereG3dTrack={false}
+            setScreenshotData={setScreenshotData}
+            isScreenShotOpen={isScreenShotOpen}
+            selectedRegionSet={selectedRegionSet}
+            setShow3dGene={setShow3dGene}
+            infiniteScrollWorkers={infiniteScrollWorkers}
+            fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+            currentState={currentState}
+            darkTheme={darkTheme}
+          /> </div>
       ) : (
         <div style={{ width: size.width, height: 900 }}>
           <FlexLayout.Layout model={model} factory={factory} />
