@@ -1,4 +1,8 @@
 # Version history
+## 59.2.2
+- fixed config menu position in package
+- fixed bin and normalize options for hic track 
+
 ## 59.2.1
 - recreated ReactModal and removed dependency on package
 - recreated trackfacet and table 
