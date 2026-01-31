@@ -218,6 +218,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
   let interactionData = placeInteractions(filteredData, visRegion, width);
 
   let visualizer;
+
   if (
     initialLoad ||
     options.forceSvg ||
@@ -286,15 +287,16 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
       default:
         visualizer = <ArcDisplay {...visualizerProps} legend={legend} />;
     }
+    currentVisualizer.current = visualizer;
+    currentViewWindow.current = viewWindow;
+
+    currentScale.current = scales;
+    currentViewOptions.current = { ...options };
+
   } else {
     visualizer = currentVisualizer.current;
   }
 
-  currentVisualizer.current = visualizer;
-  currentViewWindow.current = viewWindow;
-
-  currentScale.current = scales;
-  currentViewOptions.current = options;
 
   return visualizer;
 };

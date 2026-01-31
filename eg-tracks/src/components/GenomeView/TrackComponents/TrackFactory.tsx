@@ -244,6 +244,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (interactionTracks.has(trackModel.type)) {
         configOptions.current["trackManagerRef"] = trackManagerRef;
       }
+
       configOptions.current = {
         ...configOptions.current,
         ...trackModel.options,
@@ -376,26 +377,29 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           id: id,
           trackIdx: trackIdx,
         });
-        let cacheDataIdx = dataIdx;
-        let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-        let trackState = _.cloneDeep(
-          globalTrackState.current.trackStates[cacheDataIdx].trackState
-        );
-        trackState["recreate"] = true;
+        // config options that needs a refetch so we can't reuse data
+        if (!applyTrackConfigChange[`${id}`]["normalization"] && !applyTrackConfigChange[`${id}`]["binSize"]) {
+          let cacheDataIdx = dataIdx;
+          let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+          let trackState = _.cloneDeep(
+            globalTrackState.current.trackStates[cacheDataIdx].trackState
+          );
+          trackState["recreate"] = true;
 
-        handleTrackDraw({
-          cacheTrackData,
-          trackState,
-          viewWindow: viewWindowConfigData.current?.viewWindow,
-          groupScale:
-            globalTrackState.current.trackStates[dataIdx].trackState[
-            "groupScale"
-            ],
-          xvalues: cacheTrackData[dataIdx]?.xvalues,
-          isInit: false,
-          matplotCheck: true,
-          skipNoData: false,
-        });
+          handleTrackDraw({
+            cacheTrackData,
+            trackState,
+            viewWindow: viewWindowConfigData.current?.viewWindow,
+            groupScale:
+              globalTrackState.current.trackStates[dataIdx].trackState[
+              "groupScale"
+              ],
+            xvalues: cacheTrackData[dataIdx]?.xvalues,
+            isInit: false,
+            matplotCheck: true,
+            skipNoData: false,
+          });
+        }
       }
     }
   }, [applyTrackConfigChange]);

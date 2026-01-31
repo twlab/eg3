@@ -8,6 +8,7 @@ import {
 } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 
+
 function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
@@ -63,8 +64,10 @@ function ConfigMenuComponent(props: any) {
       }
 
       // Check if menu would overflow bottom edge of viewport
-      if (top + menuRect.height > viewportHeight) {
-        top = (top - menuRect.height);
+      if (menuData.viewportY + menuRect.height > viewportHeight) {
+        const diff = (menuData.viewportY + menuRect.height) - viewportHeight
+
+        top = (top - diff);
       }
 
       // // Ensure menu doesn't go off left edge

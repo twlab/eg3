@@ -489,7 +489,7 @@ export default function RootLayout(props: GenomeHubProps) {
         </motion.div>
       )}
 
-      {/* Mouse-following tool tooltip */}
+
       <MouseFollowingTooltip />
     </div>
   );

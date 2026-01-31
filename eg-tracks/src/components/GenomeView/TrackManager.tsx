@@ -55,6 +55,7 @@ import {
 } from "../../getRemoteData/fetchFunctions";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
 import { drag } from "d3";
+import { viewport } from "@popperjs/core";
 
 const groupManager = new GroupedTrackManager();
 
@@ -913,6 +914,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       handleAdd,
       pageX: configMenuPos.current.left,
       pageY: configMenuPos.current.top,
+      viewportX: configMenuPos.current.viewportX,
+      viewportY: configMenuPos.current.viewportY,
       onConfigMenuClose: onConfigMenuClose,
       selectCount: selectCount,
       configOptions: optionsObjects,
@@ -978,8 +981,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       "dataCache" in
                       trackFetchedDataCache.current[key][cacheDataIdx]
                     ) {
-                      delete trackFetchedDataCache.current[key][cacheDataIdx]
-                        .dataCache;
+                      completedFetchedRegion.current.done[key] = false
+                      trackFetchedDataCache.current[key][cacheDataIdx] = {}
+
                     }
                   }
                 }
@@ -1010,13 +1014,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     }
     if (key === "normalization" || key === "binSize") {
-      queueRegionToFetch(dataIdx.current);
-    } else {
-      if (key !== "legendFontColor") {
 
-        setApplyTrackConfigChange(newSelected);
-      }
+      queueRegionToFetch(dataIdx.current);
     }
+
+
+    if (key !== "legendFontColor") {
+
+      setApplyTrackConfigChange(newSelected);
+    }
+
 
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
@@ -1024,9 +1031,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function renderTrackSpecificConfigMenu(
     x: number,
     y: number,
-    trackId: string
+    trackId: string,
+    viewportX: number,
+    viewportY: number
   ) {
-    configMenuPos.current = { left: x, top: y };
+    configMenuPos.current = { left: x, top: y, viewportX, viewportY };
 
     setConfigMenu(createConfigMenuData(trackId));
   }
@@ -1076,7 +1085,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onTracksChange(newTracks);
 
       if (configMenu && Object.keys(selectedTracks.current).length > 0) {
-        renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackId);
+        renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackId, e.clientX, e.clientY);
       } else {
         setConfigMenu(null);
       }
@@ -1099,7 +1108,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       renderTrackSpecificConfigMenu(
         e.pageX,
         e.pageY,
-        trackDetails.trackModel.id
+        trackDetails.trackModel.id,
+        e.clientX, e.clientY
       );
     } else {
       onTrackUnSelect();
@@ -1133,7 +1143,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       renderTrackSpecificConfigMenu(
         e.pageX,
         e.pageY,
-        trackDetails.trackModel.id
+        trackDetails.trackModel.id,
+        e.clientX, e.clientY
       );
     }
   }
@@ -1829,7 +1840,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           fetchNewRegion: true,
         });
       } else {
-        // console.log("fetch New Region with Primary Genome", dataToFetchArr);
+
+        console.log("fetch New Region with Primary Genome", dataToFetchArr);
         enqueueMessage(dataToFetchArr);
       }
     }
@@ -1996,7 +2008,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
         }
       }
-
+      console.log("Drawing tracks with data:", completedFetchedRegion.current.done);
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
@@ -2121,9 +2133,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     return resHighlights;
   }
-  function getHighlightState(highlightState: any) {
-    onNewHighlight(highlightState);
-  }
+
 
   function toolSelect(toolTitle: string | number) {
     const newSelectedTool: { [key: string]: any } = {};
