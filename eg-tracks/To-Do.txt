@@ -265,3 +265,10 @@ trackResize
 3. isPackage in root, change, and what props are needed, and check what we have, and error display
     if prop is not given, or add default props,
 4. error checked
+
+
+1/30/2026
+ 1. fix hic normal bins
+ 2. add height and width props to package
+ 3. fix config menu position in package
+ 4. 

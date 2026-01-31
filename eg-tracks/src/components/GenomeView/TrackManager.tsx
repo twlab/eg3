@@ -1009,10 +1009,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (value && key === "yScale") {
           trackModel.options!.yScale = value;
         }
-        // if (trackModel.type === "hic") {
-        //   fileInfos[`${trackModel.id}`] =
-        //     fetchInstances.current[`${trackModel.id}`].getFileInfo();
-        // }
+        if (trackModel.type === "hic") {
+
+          fileInfos[`${trackModel.id}`] =
+            trackFetchedDataCache.current[`${trackModel.id}`]?.fileInfos
+        }
+
         trackModel.options!["trackId"] = config;
         const trackConfig = getTrackConfig(trackModel);
         const menuItems = trackConfig.getMenuComponents();
@@ -1586,6 +1588,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             metadata: any;
             trackModel: any;
             curFetchNav: any;
+            fileInfos: any;
           }) => {
             trackToDrawId[`${item.id}`] = "";
             await createCache({
@@ -1601,6 +1604,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               trackModel: item.trackModel,
               curFetchNav: item.name === "bam" ? item.curFetchNav : "",
               missingIdx: dataItem.missingIdx,
+              fileInfos: item.fileInfos,
             });
           }
         );
@@ -2125,7 +2129,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: createCache
   async function createCache(fetchRes: { [key: string]: any }) {
     const result = fetchRes.result;
+    if (fetchRes["fileInfos"]) {
+      trackFetchedDataCache.current[`${fetchRes.id}`]["fileInfos"] = fetchRes.fileInfos;
 
+    }
     if (
       isInteger(fetchRes.missingIdx) &&
       trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx]
@@ -2136,10 +2143,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         !trackFetchedDataCache.current[`${fetchRes.id}`].usePrimaryNav &&
         !useFineModeNav.current
       );
-      if ("Error" in formattedData) {
-        trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
-          formattedData;
+      if (typeof formattedData === "object") {
+
+        if ("Error" in formattedData) {
+          trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
+            formattedData;
+        }
+
+
       }
+
       trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
         "dataCache"
       ] = formattedData;

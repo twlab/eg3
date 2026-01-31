@@ -292,7 +292,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })
@@ -309,8 +309,10 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            // cachedFetchInstance[regionData.trackModel.url] = null;
-            return data;
+            cachedFetchInstance[regionData.trackModel.url] = null;
+            const fileInfos = cachedFetchInstance[regionData.trackModel.url].getFileInfo();
+            const result = { data, fileInfos }
+            return result;
           })
           .catch((error) => {
             fetchInstance = null;
@@ -324,7 +326,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })

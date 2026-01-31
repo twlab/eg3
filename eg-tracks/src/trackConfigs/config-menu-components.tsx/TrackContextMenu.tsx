@@ -52,18 +52,22 @@ export function HicBinSizeNormOptionConfig(props) {
 
   const trackConfigs = tracks.map(getTrackConfig);
 
-  const optionsObjects = trackConfigs.map((config) => config.getOptions());
-  const isHicTracks = trackConfigs.map((config) => config.isHicTrack());
+  const isHicTracks = tracks.map((track) => track.type === "hic");
+
+
   if (!_.every(isHicTracks, Boolean)) {
     return null;
   }
+  const optionsObjects = trackConfigs.map((config) => config.getOptions());
   const allResolutions: Array<any> = [],
     allNormOptions: Array<any> = [];
+  if (fileInfos) {
+    Object.keys(fileInfos).forEach((trackId) => {
+      allResolutions.push(fileInfos[trackId].resolutions);
+      allNormOptions.push(fileInfos[trackId].normOptions);
+    });
+  }
 
-  Object.keys(fileInfos).forEach((trackId) => {
-    allResolutions.push(fileInfos[trackId].resolutions);
-    allNormOptions.push(fileInfos[trackId].normOptions);
-  });
   const commonResolutions = _.intersection(...allResolutions);
   const commonNormOptions = _.intersection(...allNormOptions);
   const commonResolutionsObj = { AUTO: 0 },

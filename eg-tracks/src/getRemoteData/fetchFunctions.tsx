@@ -241,18 +241,21 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             trackModel: item,
             result: [],
           });
-        } else if (trackType === "geneannotation") {
-          // Only await here, not in the map above
-          const genRefResponses = await fetchData(item);
+        }
+        // else if (trackType === "geneannotation") {
+        //   // Only await here, not in the map above
+        //   const genRefResponses = await fetchData(item);
 
-          fetchResults.push({
-            name: trackType,
-            result: genRefResponses,
-            id: id,
-            metadata: item.metadata,
-            trackModel: item,
-          });
-        } else if (
+        //   fetchResults.push({
+        //     name: trackType,
+        //     result: genRefResponses,
+        //     id: id,
+        //     metadata: item.metadata,
+        //     trackModel: item,
+        //   });
+        // }
+
+        else if (
           trackType in
           {
             matplot: "",
@@ -283,10 +286,11 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           });
         } else {
           const responses = await fetchData(item);
-
+          const result = typeof responses === "object" && "data" in responses ? responses.data : responses;
           fetchResults.push({
             name: trackType,
-            result: responses,
+            result: result,
+            fileInfos: typeof responses === "object" && "fileInfos" in responses ? responses.fileInfos : null,
             id: id,
             metadata: item.metadata,
             trackModel: item,
