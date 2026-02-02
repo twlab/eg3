@@ -21,6 +21,7 @@ import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComp
 
 import { niceBpCount } from "../models/util";
 import JSON5 from "json5";
+import { initial } from "lodash";
 export interface PlacedAlignment {
   record: AlignmentRecord;
   visiblePart: AlignmentSegment;
@@ -156,19 +157,19 @@ export interface MultiAlignment {
   [genome: string]: Alignment;
 }
 
-
 // Main processing function that can be used both as worker and regular function
 export async function fetchGenomicData(data: any[]): Promise<any> {
   // Ensure data is an array
+  console.log(data);
   if (!Array.isArray(data)) {
     throw new Error(
-      `fetchGenomicData expects an array, but received: ${typeof data}`
+      `fetchGenomicData expects an array, but received: ${typeof data}`,
     );
   }
 
   const objectPromises = data.map((dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
-    const initial = dataItem.initial;
+    const initialLoad = dataItem.initialLoad;
     const fetchResults: Array<any> = [];
     const genomicLoci = dataItem.genomicLoci;
     const regionExpandLoci = dataItem.regionExpandLoci
@@ -192,7 +193,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
     };
 
     const leftOverTrackModels = trackDefaults.filter(
-      (items) => items && items.type !== "genomealign"
+      (items) => items && items.type !== "genomealign",
     );
 
     return Promise.all(
@@ -254,7 +255,6 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         //     trackModel: item,
         //   });
         // }
-
         else if (
           trackType in
           {
@@ -286,17 +286,23 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           });
         } else {
           const responses = await fetchData(item);
-          const result = typeof responses === "object" && "data" in responses ? responses.data : responses;
+          const result =
+            typeof responses === "object" && "data" in responses
+              ? responses.data
+              : responses;
           fetchResults.push({
             name: trackType,
             result: result,
-            fileInfos: typeof responses === "object" && "fileInfos" in responses ? responses.fileInfos : null,
+            fileInfos:
+              typeof responses === "object" && "fileInfos" in responses
+                ? responses.fileInfos
+                : null,
             id: id,
             metadata: item.metadata,
             trackModel: item,
           });
         }
-      })
+      }),
     ).then(() => ({
       fetchResults,
       trackDataIdx,
@@ -334,6 +340,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         trackModel.type === "hic"
       ) {
         curFetchNav = regionExpandLoci;
+      } else if (initialLoad) {
+        curFetchNav = regionExpandLoci;
       } else {
         curFetchNav = genomicLoci;
       }
@@ -343,15 +351,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav,
-              trackModel,
-            })
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav,
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav,
-              trackModel,
-            });
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav,
+                trackModel,
+              });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -426,20 +434,20 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       let newChr = new ChromosomeInterval(
         feature.locus.chr,
         feature.locus.start,
-        feature.locus.end
+        feature.locus.end,
       );
       visRegionFeatures.push(new Feature(feature.name, newChr));
     }
 
     let visRegionNavContext = new NavigationContext(
       data.visData.visRegion._navContext._name,
-      visRegionFeatures
+      visRegionFeatures,
     );
 
     let visRegion = new DisplayedRegionModel(
       visRegionNavContext,
       curVisData._startBase,
-      curVisData._endBase
+      curVisData._endBase,
     );
 
     let viewWindowRegionFeatures: Feature[] = [];
@@ -448,20 +456,20 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       let newChr = new ChromosomeInterval(
         feature.locus.chr,
         feature.locus.start,
-        feature.locus.end
+        feature.locus.end,
       );
       viewWindowRegionFeatures.push(new Feature(feature.name, newChr));
     }
 
     let viewWindowRegionNavContext = new NavigationContext(
       data.visData.viewWindowRegion._navContext._name,
-      viewWindowRegionFeatures
+      viewWindowRegionFeatures,
     );
 
     let viewWindowRegion = new DisplayedRegionModel(
       viewWindowRegionNavContext,
       data.visData.viewWindowRegion._startBase,
-      data.visData.viewWindowRegion._endBase
+      data.visData.viewWindowRegion._endBase,
     );
 
     let visData: ViewExpansion = {
@@ -510,7 +518,6 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
           let records: AlignmentRecord[] = [];
 
           for (const record of responds) {
-
             let data = JSON5.parse("{" + record[3] + "}");
             if (!useFineModeNav) {
               data.genomealign.targetseq = null;
@@ -538,7 +545,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
           metadata: item.metadata,
           isBigChain: false,
         };
-      })
+      }),
     );
 
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
@@ -551,7 +558,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     }
 
     let multiCalInstance = new MultiAlignmentViewCalculator(
-      data.primaryGenName
+      data.primaryGenName,
     );
 
     let alignment = multiCalInstance.multiAlign(visData, successFetch);
@@ -565,29 +572,29 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
         segmentArray = [].concat.apply(
           [],
           alignment[`${query}`].drawData.map(
-            (placement) => placement.segments
-          ) as any
+            (placement) => placement.segments,
+          ) as any,
         );
         const strandList = segmentArray.map(
-          (segment) => segment.record.queryStrand
+          (segment) => segment.record.queryStrand,
         );
         const targetXSpanList = segmentArray.map(
-          (segment) => segment.targetXSpan
+          (segment) => segment.targetXSpan,
         );
         const queryXSpanList = segmentArray.map(
-          (segment) => segment.queryXSpan
+          (segment) => segment.queryXSpan,
         );
         const targetLocusList = segmentArray.map((segment) =>
-          segment.visiblePart.getLocus().toString()
+          segment.visiblePart.getLocus().toString(),
         );
         const queryLocusList = segmentArray.map((segment) =>
-          segment.visiblePart.getQueryLocus().toString()
+          segment.visiblePart.getQueryLocus().toString(),
         );
         const lengthList = segmentArray.map((segment) =>
-          niceBpCount(segment.visiblePart.getLength())
+          niceBpCount(segment.visiblePart.getLength()),
         );
         const queryLengthList = segmentArray.map((segment) =>
-          niceBpCount(segment.visiblePart.getQueryLocus().getLength())
+          niceBpCount(segment.visiblePart.getQueryLocus().getLength()),
         );
         let tempObj = {};
         tempObj = {
@@ -623,10 +630,10 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
           const queryLocus = placement.visiblePart.getQueryLocus().toString();
           const queryLocusFine = placement.visiblePart.getQueryLocusFine();
           const nonGapsTarget = placement.targetSegments.filter(
-            (segment) => !segment.isGap
+            (segment) => !segment.isGap,
           );
           const nonGapsQuery = placement.querySegments.filter(
-            (segment) => !segment.isGap
+            (segment) => !segment.isGap,
           );
 
           const isReverseStrandQuery =
@@ -674,7 +681,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       trackToDrawId,
       regionSetStartBp:
         data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-          data.bpRegionSize
+        data.bpRegionSize
           ? 0
           : null,
       fetchNewRegion: data.fetchNewRegion,

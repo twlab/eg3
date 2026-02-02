@@ -53,14 +53,14 @@ import {
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-};
+// const firebaseConfig = {
+//   apiKey: import.meta.env.VITE_FIREBASE_KEY,
+//   authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
+//   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
+//   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+// };
 
-firebase.initializeApp(firebaseConfig);
+// firebase.initializeApp(firebaseConfig);
 
 export interface RootLayoutProps {
   viewRegion?: string | null | undefined;
@@ -103,8 +103,8 @@ export default function RootLayout(props: GenomeHubProps) {
   const { clearHistory } = useUndoRedo();
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
-    ((props.genomeName && props.tracks && props.viewRegion) ||
-      props.customGenome)
+    (props.genomeName && props.tracks && props.viewRegion) ||
+    props.customGenome;
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
@@ -190,35 +190,46 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                    props.viewRegion === null
+                  props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
-                width: props.width !== null && props.width !== undefined ? props.width : null,
-                height: props.height !== null && props.height !== undefined ? props.height : null,
-              })
+                width:
+                  props.width !== null && props.width !== undefined
+                    ? props.width
+                    : null,
+                height:
+                  props.height !== null && props.height !== undefined
+                    ? props.height
+                    : null,
+              }),
             );
           }
         } else {
-
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
               customGenome: props.customGenome,
-              width: props.width !== null && props.width !== undefined ? props.width : null,
-              height: props.height !== null && props.height !== undefined ? props.height : null,
-            })
+              width:
+                props.width !== null && props.width !== undefined
+                  ? props.width
+                  : null,
+              height:
+                props.height !== null && props.height !== undefined
+                  ? props.height
+                  : null,
+            }),
           );
         }
       }
@@ -488,7 +499,6 @@ export default function RootLayout(props: GenomeHubProps) {
           </div>
         </motion.div>
       )}
-
 
       <MouseFollowingTooltip />
     </div>

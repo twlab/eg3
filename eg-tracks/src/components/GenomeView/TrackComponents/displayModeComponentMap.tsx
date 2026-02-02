@@ -88,6 +88,15 @@ export const dynamicMatplotTracks = new Set([
 ]);
 export const anchorTracks = new Set(["hic", "longrange"]);
 export const densityTracks = new Set(["bigwig", "qbed", "bedgraph"]);
+export const trackUsingExpandedLoci = {
+  biginteract: "",
+  dynamichic: "",
+  dynamiclongrange: "",
+  hic: "",
+  longrange: "",
+  genomealign: "",
+};
+
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 
 enum BedColumnIndex {
@@ -116,7 +125,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       height,
       rowHeight,
       maxRows,
-      legend
+      legend,
     ) {
       // FullVisualizer class from eg2
       function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
@@ -130,7 +139,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y,
           rowIndex === maxRowIndex,
           i,
-          configOptions.height
+          configOptions.height,
         );
       }
       let svgKey = generateUUID();
@@ -138,17 +147,17 @@ export const displayModeComponentMap: { [key: string]: any } = {
       if (configOptions.forceSvg || configOptions.packageVersion) {
         let curParentStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
+              position: "relative",
 
-            overflow: "hidden",
-            width: width / 3,
-          }
+              overflow: "hidden",
+              width: width / 3,
+            }
           : {};
         let curEleStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
-            transform: `translateX(${-trackState.viewWindow.start}px)`,
-          }
+              position: "relative",
+              transform: `translateX(${-trackState.viewWindow.start}px)`,
+            }
           : {};
 
         return (
@@ -218,7 +227,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -243,7 +252,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -261,7 +270,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         placedGroup: PlacedFeatureGroup,
         y: number,
         isLastRow: boolean,
-        index: number
+        index: number,
       ) {
         return placedGroup.placedFeatures.map((placement, i) => (
           <Bedcolor
@@ -279,7 +288,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         placedGroup: PlacedFeatureGroup,
         y: number,
         isLastRow: boolean,
-        index: number
+        index: number,
       ) {
         return placedGroup.placedFeatures.map((placement, i) => (
           <VcfAnnotation
@@ -300,7 +309,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         y,
         isLastRow,
         index,
-        height
+        height,
       ) {
         let scoreScale = scaleLinear()
           .domain([0, 1000])
@@ -316,7 +325,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -330,7 +339,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         y,
         isLastRow,
         index,
-        height
+        height,
       ) {
         return placedGroup.placedFeatures.map((placement, i) => (
           <FiberAnnotation
@@ -341,7 +350,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => { }}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onClose}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -355,7 +364,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         y,
         isLastRow,
         index,
-        height
+        height,
       ) {
         const { categoryColors } = configOptions;
         const TEXT_HEIGHT = 9; // height for both text label and arrows.
@@ -449,7 +458,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         y,
         isLastRow,
         index,
-        height
+        height,
       ) {
         const { categoryColors } = configOptions;
         const TEXT_HEIGHT = 9; // height for both text label and arrows.
@@ -542,7 +551,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         y,
         isLastRow,
         index,
-        height
+        height,
       ) {
         return placedGroup.placedFeatures.map((placement, i) => {
           const featureName = placement.feature.getName();
@@ -559,7 +568,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => { }}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -573,7 +582,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         y,
         isLastRow,
         index,
-        height
+        height,
       ) {
         return placedGroup.placedFeatures.map((placement, i) => (
           <SnpAnnotation
@@ -585,7 +594,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -597,14 +606,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
         y,
         isLastRow,
         index,
-        height
+        height,
       ) {
         return placedGroup.placedFeatures.map((placement, i) => (
           <BamAnnotation
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -618,15 +627,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
           end: trackState.visWidth,
         };
         const totalImgCount = _.sum(
-          formattedData.map((item) => item.images.length)
+          formattedData.map((item) => item.images.length),
         );
         const imgCount = Math.min(totalImgCount, MAX_NUMBER_THUMBNAILS);
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-          imgCount -
-          THUMBNAIL_PADDING,
-          0
+            imgCount -
+            THUMBNAIL_PADDING,
+          0,
         );
         const screenWidth = viewWindow.end - viewWindow.start;
         const rowsNeed = Math.floor(totalImageWidth / screenWidth) + 1;
@@ -669,7 +678,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => { }}
+          onSetImageInfo={() => {}}
           heightObj={heightObj}
         />
       );
@@ -702,14 +711,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
       getGenePadding,
       configOptions.hiddenPixels,
       sortType,
-      trackState.viewWindow
+      trackState.viewWindow,
     );
 
     let height;
     height =
       trackModel.type === "repeatmasker" ||
-        trackModel.type === "rmskv2" ||
-        trackModel.type === "categorical"
+      trackModel.type === "rmskv2" ||
+      trackModel.type === "categorical"
         ? configOptions.height
         : placeFeatureData.numRowsAssigned
           ? getHeight(placeFeatureData.numRowsAssigned)
@@ -739,7 +748,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       height,
       ROW_HEIGHT,
       configOptions.maxRows,
-      legend
+      legend,
     );
     if (svgHeight) {
       svgHeight.current = height;
@@ -758,7 +767,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
-
     const canvasElements = (
       <NumericalTrack
         data={formattedData}
@@ -795,8 +803,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
-
-
     return (
       <VcfTrack
         viewWindow={
@@ -830,7 +836,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     initialLoad,
   }) {
-
     const canvasElements = (
       <QBedTrackComponents
         data={formattedData}
@@ -861,8 +866,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
   }) {
-
-
     const canvasElements = (
       <BoxplotTrackComponents
         data={formattedData}
@@ -892,8 +895,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     xvaluesData,
   }) {
-
-
     const canvasElements = (
       <MatplotTrackComponent
         data={formattedData}
@@ -946,7 +947,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     svgHeight,
     updatedLegend,
   }) {
-
     const canvasElements = (
       <DynamicBedTrackComponents
         data={formattedData}
@@ -1021,9 +1021,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     ROW_HEIGHT,
     onClose,
     xvaluesData,
-
   }) {
-
     const canvasElements = (
       <FiberTrackComponent
         data={formattedData}
@@ -1043,7 +1041,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getAnnotationTrack={displayModeComponentMap}
         renderTooltip={renderTooltip}
         svgHeight={svgHeight}
-
         getGenePadding={getGenePadding}
         getHeight={getHeight}
         ROW_HEIGHT={ROW_HEIGHT}
@@ -1065,8 +1062,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     initialLoad,
   }) {
-
-
     const canvasElements = (
       <InteractionTrackComponent
         data={formattedData}
@@ -1099,8 +1094,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
-
-
     const canvasElements = (
       <MethylCTrackComputation
         data={formattedData}
@@ -1118,7 +1111,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
-
       />
     );
 
@@ -1137,7 +1129,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
-
     const canvasElements = (
       <DynseqTrackComponents
         data={formattedData}
@@ -1170,7 +1161,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     genomeName,
     genomeConfig,
   }) {
-
     const canvasElements = (
       <RulerComponent
         viewRegion={objToInstanceAlign(trackState.visRegion)}
@@ -1179,9 +1169,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         selectedRegion={
           trackState.genomicFetchCoord
             ? objToInstanceAlign(
-              trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
-                .viewWindowRegion
-            )
+                trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+                  .viewWindowRegion,
+              )
             : trackState.visRegion
         }
         viewWindow={
@@ -1226,13 +1216,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
         drawData.updatedLegend.current = legend;
       }
       svgElements = drawDatas.map((item, index) =>
-        renderFineAlignment(item, index, drawData.configOptions)
+        renderFineAlignment(item, index, drawData.configOptions),
       );
       const drawGapText = result.drawGapText as GapText[];
       svgElements.push(
         drawGapText.map((item, index) =>
-          renderGapText(item, index, drawData.configOptions)
-        )
+          renderGapText(item, index, drawData.configOptions),
+        ),
       );
       let element;
       if (drawData.configOptions.forceSvg) {
@@ -1319,14 +1309,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
           80,
           targetGenome,
           queryGenome,
-          drawData.configOptions
-        )
+          drawData.configOptions,
+        ),
       );
       const arrows = renderRoughStrand(
         "+",
         0,
         new OpenInterval(0, drawData.trackState.visWidth),
-        false
+        false,
       );
       svgElements.push(arrows);
 
@@ -1334,7 +1324,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         strand,
         80 - 15,
         new OpenInterval(0, drawData.trackState.visWidth),
-        true
+        true,
       );
       svgElements.push(primaryArrows);
       let element;
@@ -1342,25 +1332,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
       if (drawData.configOptions.forceSvg) {
         let curParentStyle: any = drawData.configOptions.forceSvg
           ? {
-            position: "relative",
+              position: "relative",
 
-            overflow: "hidden",
-            width: drawData.trackState.visWidth / 3,
-          }
+              overflow: "hidden",
+              width: drawData.trackState.visWidth / 3,
+            }
           : {};
         let curEleStyle: any = drawData.configOptions.forceSvg
           ? {
-            position: "relative",
-            transform: `translateX(${-drawData.trackState.viewWindow
-              .start}px)`,
-          }
+              position: "relative",
+              transform: `translateX(${-drawData.trackState.viewWindow
+                .start}px)`,
+            }
           : {};
 
         element = (
           <React.Fragment>
             <div style={{ display: "flex", ...curParentStyle }}>
               {drawData.configOptions.forceSvg ||
-                drawData.configOptions.packageVersion
+              drawData.configOptions.packageVersion
                 ? legend
                 : ""}
               <div
@@ -1485,7 +1475,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           <span>
             {Array.isArray(errorInfo)
               ? errorInfo.filter((gene) => typeof gene === "string")[0] ||
-              "Something went wrong"
+                "Something went wrong"
               : typeof errorInfo === "object" && errorInfo["error"]
                 ? errorInfo["error"]
                 : "Something went wrong"}{" "}
@@ -1538,7 +1528,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       createCommonParams({
         errorInfo: drawData.errorInfo,
         handleRetryFetchTrack: drawData.handleRetryFetchTrack,
-      })
+      }),
     );
   }
 
@@ -1548,7 +1538,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       createCommonParams({
         genomeName: drawData.genomeName,
         genomeConfig: drawData.genomeConfig,
-      })
+      }),
     );
   }
 
@@ -1564,7 +1554,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     "dynamic",
     "dynamiclongrange",
     "dynamichic",
-    "vcf"
+    "vcf",
   ]);
 
   const isFullMode =
@@ -1578,7 +1568,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
         ROW_HEIGHT: configOptions.rowHeight
           ? configOptions.rowHeight + 2
           : drawData.ROW_HEIGHT,
-      })
+      }),
     );
   }
 
@@ -1595,7 +1585,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
         ROW_HEIGHT: configOptions.rowHeight + 2,
         onHideToolTip: drawData.onHideToolTip,
         onClose: drawData.onClose,
-      })
+      }),
     );
   }
 
@@ -1607,7 +1597,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     return displayModeComponentMap.dynamichic(
       createFullParams({
         configOptions: { ...configOptions, displayMode: "heatmap" },
-      })
+      }),
     );
   }
 
@@ -1619,7 +1609,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     return displayModeComponentMap[displayType](
       createFullParams({
         ROW_HEIGHT: drawData.ROW_HEIGHT,
-      })
+      }),
     );
   }
 
@@ -1629,7 +1619,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       createFullParams({
         genomeConfig: drawData.genomeConfig,
         basesByPixel: drawData.basesByPixel,
-      })
+      }),
     );
   }
 
@@ -1647,7 +1637,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
         formattedData: genesArr, // Override since all cases use genesArr directly
         configOptions: { ...configOptions }, // Copy to avoid mutation
         groupScale: drawData.groupScale,
-      })
+      }),
     );
   }
 
@@ -1656,11 +1646,63 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
 }
 
 // MARK: FORMATData
-function formatGeneAnnotationData(genesArr: any[]) {
-  return genesArr.map((record) => new Gene(record));
+// Helper function to check if two genomic ranges overlap
+function checkOverlap(
+  featureChr: string,
+  featureStart: number,
+  featureEnd: number,
+  regionChr: string,
+  regionStart: number,
+  regionEnd: number,
+): boolean {
+  if (featureChr !== regionChr) return false;
+  // Check if there's any overlap: feature.start < region.end AND feature.end > region.start
+  return featureStart < regionEnd && featureEnd > regionStart;
 }
-function formatRepeatMasker(genesArr: any[]) {
-  return genesArr.map((record) => {
+
+// Helper function to check if feature overlaps with any region in a region group
+function checkOverlapWithRegionGroup(
+  featureChr: string,
+  featureStart: number,
+  featureEnd: number,
+  regionGroup: Array<{chr: string, start: number, end: number}>,
+): boolean {
+  return regionGroup.some(region => 
+    checkOverlap(featureChr, featureStart, featureEnd, region.chr, region.start, region.end)
+  );
+}
+
+function formatGeneAnnotationData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => new Gene(record));
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((gene: any) =>
+        checkOverlapWithRegionGroup(
+          gene.locus.chr,
+          gene.locus.start,
+          gene.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
+}
+function formatRepeatMasker(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => {
     const [
       label,
       scoreStr,
@@ -1700,16 +1742,59 @@ function formatRepeatMasker(genesArr: any[]) {
 
     return new RepeatMaskerFeature(output);
   });
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
-function formatRmskv2Masker(genesArr: any[]) {
+function formatRmskv2Masker(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
   const filteredArray: Array<any> = [];
   for (const record of genesArr) {
     filteredArray.push(new Rmskv2Feature(record));
   }
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = filteredArray.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
   return filteredArray;
 }
-function formatRefBedData(genesArr: any[]) {
-  return genesArr.map((record) => {
+function formatRefBedData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => {
     const refBedRecord: IdbRecord = {
       chrom: record.chr,
       txStart: record.start,
@@ -1726,39 +1811,149 @@ function formatRefBedData(genesArr: any[]) {
     };
     return new Gene(refBedRecord);
   });
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((gene: any) =>
+        checkOverlapWithRegionGroup(
+          gene.locus.chr,
+          gene.locus.start,
+          gene.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
 
-function formatBedColorData(genesArr: any[]) {
-  return genesArr.map((record) =>
+function formatBedColorData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) =>
     new ColoredFeature(
       "",
       new ChromosomeInterval(record.chr, record.start, record.end),
-      "+"
-    ).withColor(record[3])
+      "+",
+    ).withColor(record[3]),
   );
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
 
-function formatBedData(genesArr: any[]) {
-  return genesArr.map((record) =>
+function formatBedData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) =>
     new ColoredFeature(
       "",
       new ChromosomeInterval(record.chr, record.start, record.end),
-      "+"
-    ).withColor(record[3])
+      "+",
+    ).withColor(record[3]),
   );
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
-function formatBamData(genesArr: any[]) {
+function formatBamData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
   // const filteredArray = removeDuplicates(genesArr, "_id");
 
-  return BamAlignment.makeBamAlignments(genesArr);
+  const formattedData = BamAlignment.makeBamAlignments(genesArr);
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((bam: any) =>
+        checkOverlapWithRegionGroup(
+          bam.locus.chr,
+          bam.locus.start,
+          bam.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
 
-function formatOmeroidrData(genesArr: any[]) {
-  return genesArr.map((record) => new ImageRecord(record));
+function formatOmeroidrData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => new ImageRecord(record));
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((image: any) =>
+        checkOverlapWithRegionGroup(
+          image.locus.chr,
+          image.locus.start,
+          image.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
 
-function formatBigBedData(genesArr: any[]) {
-  return genesArr.map((record) => {
+function formatBigBedData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => {
     // Handle both old format (segment/min/max) and new format (chr/start/end)
     const chr = record.segment || record.chr;
     const start = record.min ?? record.start;
@@ -1781,56 +1976,187 @@ function formatBigBedData(genesArr: any[]) {
       name,
       new ChromosomeInterval(chr, start, end),
       orientation,
-      score
+      score,
     );
   });
-}
 
-function formatSnpData(genesArr: any[]) {
-  const formattedData = genesArr.map((record) => new Snp(record));
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
   return formattedData;
 }
-function formatCategoricalData(genesArr: any[]) {
+
+function formatSnpData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => new Snp(record));
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((snp: any) =>
+        checkOverlapWithRegionGroup(
+          snp.locus.chr,
+          snp.locus.start,
+          snp.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
+}
+function formatCategoricalData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
   const formattedData = genesArr.map(
     (record) =>
       new Feature(
         record[BedColumnIndex.CATEGORY],
-        new ChromosomeInterval(record.chr, record.start, record.end)
-      )
+        new ChromosomeInterval(record.chr, record.start, record.end),
+      ),
   );
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
   return formattedData;
 }
-function formatJasper(genesArr: any[]) {
-  return genesArr.map((record) => {
+function formatJasper(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => {
     const rest = record.rest.split("\t");
     return new JasparFeature(
       rest[3],
       new ChromosomeInterval(record.chr, record.start, record.end),
-      rest[2]
+      rest[2],
     ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
   });
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
-function formatModBedData(genesArr: any[]) {
-  return genesArr.map((record) => {
+function formatModBedData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => {
     return new Fiber(
       record[3],
       new ChromosomeInterval(record.chr, record.start, record.end),
-      record[5]
+      record[5],
     ).withFiber(parseNumberString(record[4]), record[6], record[7]);
   });
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((fiber: any) =>
+        checkOverlapWithRegionGroup(
+          fiber.locus.chr,
+          fiber.locus.start,
+          fiber.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
-function formatBigWigData(genesArr: any[]) {
+function formatBigWigData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
   //dynseq, boxplot track also
-  return genesArr.map((record) => {
+  const formattedData = genesArr.map((record) => {
     const newChrInt = new ChromosomeInterval(
       record.chr,
       record.start,
-      record.end
+      record.end,
     );
     return new NumericalFeature("", newChrInt).withValue(record.score);
   });
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
-function formatMatplotData(genesArr: any[]) {
+function formatMatplotData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
   let formattedData: Array<any> = [];
 
   for (let i = 0; i < genesArr.length; i++) {
@@ -1839,29 +2165,95 @@ function formatMatplotData(genesArr: any[]) {
         let newChrInt = new ChromosomeInterval(
           record.chr,
           record.start,
-          record.end
+          record.end,
         );
         return new NumericalFeature("", newChrInt).withValue(record.score);
-      })
+      }),
     );
   }
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    // For matplot with multiple arrays, group each array by region
+    return formattedData.map((dataArray: any[]) => {
+      const regionGroups: any[][] = [];
+      for (const regionGroup of regionLoci) {
+        const overlappingFeatures = dataArray.filter((feature: any) =>
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionGroup,
+          ),
+        );
+        regionGroups.push(overlappingFeatures);
+      }
+      return regionGroups;
+    });
+  }
+
   return formattedData;
 }
 
-function formatMethylcData(genesArr: any[]) {
-  return genesArr.map((record) => new MethylCRecord(record));
+function formatMethylcData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => new MethylCRecord(record));
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((methylc: any) =>
+        checkOverlapWithRegionGroup(
+          methylc.locus.chr,
+          methylc.locus.start,
+          methylc.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
 
-function formatDynamicBed(genesArr: any[]) {
-  return genesArr.map((geneArr: any) =>
+function formatDynamicBed(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((geneArr: any) =>
     geneArr.map(
       (record) =>
         new Feature(
           record[3],
-          new ChromosomeInterval(record.chr, record.start, record.end)
-        )
-    )
+          new ChromosomeInterval(record.chr, record.start, record.end),
+        ),
+    ),
   );
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    return formattedData.map((dataArray: any[]) => {
+      const regionGroups: any[][] = [];
+      for (const regionGroup of regionLoci) {
+        const overlappingFeatures = dataArray.filter((feature: any) =>
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionGroup,
+          ),
+        );
+        regionGroups.push(overlappingFeatures);
+      }
+      return regionGroups;
+    });
+  }
+
+  return formattedData;
 }
 function formatDynamicLongRange(genesArr: any[]) {
   return genesArr.map((geneArr: any) => {
@@ -1877,15 +2269,15 @@ function formatDynamicLongRange(genesArr: any[]) {
         const recordLocus1 = new ChromosomeInterval(
           record.chr,
           record.start,
-          record.end
+          record.end,
         );
         const recordLocus2 = new ChromosomeInterval(chr, start, end);
         tempLongrangeData.push(
-          new GenomeInteraction(recordLocus1, recordLocus2, score)
+          new GenomeInteraction(recordLocus1, recordLocus2, score),
         );
       } else {
         console.error(
-          `${record[3]} not formatted correctly in longrange track`
+          `${record[3]} not formatted correctly in longrange track`,
         );
       }
     });
@@ -1894,35 +2286,107 @@ function formatDynamicLongRange(genesArr: any[]) {
   });
 }
 
-function formatqBedData(genesArr: any[]) {
-  return genesArr.map((record) => new QBed(record));
+function formatqBedData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => new QBed(record));
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((qbed: any) =>
+        checkOverlapWithRegionGroup(
+          qbed.locus.chr,
+          qbed.locus.start,
+          qbed.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
-function formatDynamic(genesArr: any[]) {
-  return genesArr.map((geneArr: any) =>
+function formatDynamic(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((geneArr: any) =>
     geneArr.map((record) =>
       new NumericalFeature(
         "",
-        new ChromosomeInterval(record.chr, record.start, record.end)
-      ).withValue(record.score)
-    )
+        new ChromosomeInterval(record.chr, record.start, record.end),
+      ).withValue(record.score),
+    ),
   );
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    return formattedData.map((dataArray: any[]) => {
+      const regionGroups: any[][] = [];
+      for (const regionGroup of regionLoci) {
+        const overlappingFeatures = dataArray.filter((feature: any) =>
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionGroup,
+          ),
+        );
+        regionGroups.push(overlappingFeatures);
+      }
+      return regionGroups;
+    });
+  }
+
+  return formattedData;
 }
 
-function formatBedgraph(genesArr: any[]) {
+function formatBedgraph(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
   const VALUE_COLUMN_INDEX = 3;
 
-  return genesArr.map((record) => {
+  const formattedData = genesArr.map((record) => {
     const newChrInt = new ChromosomeInterval(
       record.chr,
       record.start,
-      record.end
+      record.end,
     );
     const unsafeValue = Number(record[VALUE_COLUMN_INDEX]);
     const value = Number.isFinite(unsafeValue) ? unsafeValue : 0;
     return new NumericalFeature("", newChrInt).withValue(value);
   });
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
-function formatdBedGraph(genesArr: any[]) {
+function formatdBedGraph(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
   const VALUE_COLUMN_INDEX = 3;
   let formattedData = genesArr.map((record) => {
     const locus = new ChromosomeInterval(record.chr, record.start, record.end);
@@ -1935,10 +2399,49 @@ function formatdBedGraph(genesArr: any[]) {
     }
     return new NumericalArrayFeature("", locus).withValues(parsedValue);
   });
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((feature: any) =>
+        checkOverlapWithRegionGroup(
+          feature.locus.chr,
+          feature.locus.start,
+          feature.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
   return formattedData;
 }
-function formatVcf(genesArr: any[]) {
-  return genesArr.map((record) => new Vcf(record));
+function formatVcf(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  const formattedData = genesArr.map((record) => new Vcf(record));
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = [];
+    for (const regionGroup of regionLoci) {
+      const overlappingFeatures = formattedData.filter((vcf: any) =>
+        checkOverlapWithRegionGroup(
+          vcf.locus.chr,
+          vcf.locus.start,
+          vcf.locus.end,
+          regionGroup,
+        ),
+      );
+      regionGroups.push(overlappingFeatures);
+    }
+    return regionGroups;
+  }
+
+  return formattedData;
 }
 function formatBigInteract(genesArr: any[]) {
   const formattedData: any = [];
@@ -1959,19 +2462,19 @@ function formatBigInteract(genesArr: any[]) {
       const recordLocus1 = new ChromosomeInterval(
         region1Chrom,
         region1Start,
-        region1End
+        region1End,
       );
       const recordLocus2 = new ChromosomeInterval(
         region2Chrom,
         region2Start,
-        region2End
+        region2End,
       );
       formattedData.push(
-        new GenomeInteraction(recordLocus1, recordLocus2, score)
+        new GenomeInteraction(recordLocus1, recordLocus2, score),
       );
     } else {
       console.error(
-        `${record[3]} not formatted correctly in BIGinteract track`
+        `${record[3]} not formatted correctly in BIGinteract track`,
       );
     }
   });
@@ -1991,11 +2494,11 @@ function formatLongRange(genesArr: any[]) {
       const recordLocus1 = new ChromosomeInterval(
         record.chr,
         record.start,
-        record.end
+        record.end,
       );
       const recordLocus2 = new ChromosomeInterval(chr, start, end);
       formattedData.push(
-        new GenomeInteraction(recordLocus1, recordLocus2, score)
+        new GenomeInteraction(recordLocus1, recordLocus2, score),
       );
     } else {
       console.error(`${record[3]} not formated correctly in longrange track`);
@@ -2014,7 +2517,13 @@ export const twoDataTypeTracks = {
   // snp: "",
 };
 
-const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
+const formatFunctions: {
+  [key: string]: (
+    genesArr: any[],
+    initialLoad: boolean,
+    regionLoci?: Array<any>,
+  ) => any[];
+} = {
   geneannotation: formatGeneAnnotationData,
   repeatmasker: formatRepeatMasker,
   rmskv2: formatRmskv2Masker,
@@ -2042,10 +2551,13 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   biginteract: formatBigInteract,
   vcf: formatVcf,
   longrange: formatLongRange,
-
 };
-export function formatDataByType(genesArr: any[], type: string, reverse) {
-
+export function formatDataByType(
+  genesArr: any[],
+  type: string,
+  initialLoad: boolean,
+  regionLoci: Array<any>,
+) {
   if (!genesArr) {
     return { error: "No data available" };
   }
@@ -2064,7 +2576,7 @@ export function formatDataByType(genesArr: any[], type: string, reverse) {
   const formatter = formatFunctions[type];
 
   if (formatter) {
-    return formatter(genesArr);
+    return formatter(genesArr, initialLoad, regionLoci);
   } else {
     return genesArr; //fallback if no formatter is found
   }
