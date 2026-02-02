@@ -1665,10 +1665,17 @@ function checkOverlapWithRegionGroup(
   featureChr: string,
   featureStart: number,
   featureEnd: number,
-  regionGroup: Array<{chr: string, start: number, end: number}>,
+  regionGroup: Array<{ chr: string; start: number; end: number }>,
 ): boolean {
-  return regionGroup.some(region => 
-    checkOverlap(featureChr, featureStart, featureEnd, region.chr, region.start, region.end)
+  return regionGroup.some((region) =>
+    checkOverlap(
+      featureChr,
+      featureStart,
+      featureEnd,
+      region.chr,
+      region.start,
+      region.end,
+    ),
   );
 }
 
