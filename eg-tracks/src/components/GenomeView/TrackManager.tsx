@@ -252,6 +252,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
   const fetchInstances = useRef<{ [key: string]: any }>({});
   const isMouseInsideRef = useRef(false);
+  const parentRectCache = useRef<DOMRect | null>(null);
+  const rafId = useRef<number | null>(null);
   const stateSize = useRef(currentState.limit);
   const stateIdx = useRef(currentState.index);
   const globalTrackConfig = useRef<{ [key: string]: any }>({
@@ -561,10 +563,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const handleMouseEnter = useCallback(() => {
     isMouseInsideRef.current = true;
+    // Cache the bounding rect when mouse enters
+    if (block.current) {
+      parentRectCache.current = block.current.getBoundingClientRect();
+    }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     isMouseInsideRef.current = false;
+    // Clear the cached rect when mouse leaves
+    parentRectCache.current = null;
+    // Cancel any pending animation frame
+    if (rafId.current !== null) {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = null;
+    }
     // Hide crosshair lines when mouse leaves
     if (horizontalLineRef.current && verticalLineRef.current) {
       horizontalLineRef.current.style.display = "none";
@@ -577,7 +590,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     if (isMouseInsideRef.current) {
-      const parentRect = block.current!.getBoundingClientRect();
+      // Use cached rect instead of calling getBoundingClientRect on every move
+      const parentRect =
+        parentRectCache.current || block.current!.getBoundingClientRect();
       const x = e.clientX - parentRect.left;
       const y = e.clientY - parentRect.top;
 
@@ -585,12 +600,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       mousePositionRef.current = { x: e.clientX, y: e.clientY };
       mouseRelativePositionRef.current = { x, y };
 
-      // Show and update crosshair lines
-      if (horizontalLineRef.current && verticalLineRef.current) {
-        horizontalLineRef.current.style.display = "block";
-        verticalLineRef.current.style.display = "block";
-        updateLinePosition(x, y);
+      // Use requestAnimationFrame to throttle crosshair updates
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
       }
+      rafId.current = requestAnimationFrame(() => {
+        // Show and update crosshair lines
+        if (horizontalLineRef.current && verticalLineRef.current) {
+          horizontalLineRef.current.style.display = "block";
+          verticalLineRef.current.style.display = "block";
+          updateLinePosition(x, y);
+        }
+        rafId.current = null;
+      });
     } else {
       // Hide crosshair lines when mouse is outside
       if (horizontalLineRef.current && verticalLineRef.current) {
@@ -2671,6 +2693,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, [trackComponents, windowWidth]);
 
+  // Update cached rect when window size changes or scrolls
+  useEffect(() => {
+    const updateCachedRect = () => {
+      if (block.current && isMouseInsideRef.current) {
+        parentRectCache.current = block.current.getBoundingClientRect();
+      }
+    };
+
+    const clearCachedRect = () => {
+      // Clear cache on scroll to force recalculation on next mouse move
+      // This ensures accurate positioning after scroll
+      parentRectCache.current = null;
+    };
+
+    window.addEventListener("resize", updateCachedRect);
+    window.addEventListener("scroll", clearCachedRect, true);
+
+    return () => {
+      window.removeEventListener("resize", updateCachedRect);
+      window.removeEventListener("scroll", clearCachedRect, true);
+    };
+  }, []);
+
   useEffect(() => {
     if (!initialLoad.current) {
       let tempTool;
@@ -2901,6 +2946,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     let highlightElement = createHighlight(highlights);
     setHighLightElements([...highlightElement]);
+    parentRectCache.current = null;
   }
   // MARK: viewWindowConfig
 
