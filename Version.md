@@ -1,4 +1,8 @@
 # Version history
+## 59.2.4
+- fixed performance issue when dragging track due to translateX
+- fixed performance issue when updating pointer position on track
+
 ## 59.2.3
 - added height and width property to package, user can change the size of container holding tracks
 
