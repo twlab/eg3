@@ -159,8 +159,7 @@ export interface MultiAlignment {
 
 // Main processing function that can be used both as worker and regular function
 export async function fetchGenomicData(data: any[]): Promise<any> {
-  // Ensure data is an array
-  console.log(data);
+
   if (!Array.isArray(data)) {
     throw new Error(
       `fetchGenomicData expects an array, but received: ${typeof data}`,
@@ -340,9 +339,11 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         trackModel.type === "hic"
       ) {
         curFetchNav = regionExpandLoci;
-      } else if (initialLoad) {
+      } else if (trackModel.shouldPlaceRegion) {
+
         curFetchNav = regionExpandLoci;
       } else {
+
         curFetchNav = genomicLoci;
       }
 
@@ -351,15 +352,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -681,7 +682,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       trackToDrawId,
       regionSetStartBp:
         data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-        data.bpRegionSize
+          data.bpRegionSize
           ? 0
           : null,
       fetchNewRegion: data.fetchNewRegion,

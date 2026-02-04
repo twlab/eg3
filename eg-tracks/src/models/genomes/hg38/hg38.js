@@ -57,10 +57,10 @@ const defaultTracks = [
   //   url: "",
   //   name: "NOTSUPPORTEDTRACEXAMPLE",
   // }),
-  new TrackModel({
-    type: "ruler",
-    name: "Ruler",
-  }),
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
   // new TrackModel({
   //   type: "ruler",
   //   name: "Ruler",
