@@ -159,7 +159,6 @@ export interface MultiAlignment {
 
 // Main processing function that can be used both as worker and regular function
 export async function fetchGenomicData(data: any[]): Promise<any> {
-
   if (!Array.isArray(data)) {
     throw new Error(
       `fetchGenomicData expects an array, but received: ${typeof data}`,
@@ -340,10 +339,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       ) {
         curFetchNav = regionExpandLoci;
       } else if (trackModel.shouldPlaceRegion) {
-
         curFetchNav = regionExpandLoci;
       } else {
-
         curFetchNav = genomicLoci;
       }
 
@@ -352,15 +349,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav,
-              trackModel,
-            })
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav,
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav,
-              trackModel,
-            });
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav,
+                trackModel,
+              });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -402,83 +399,75 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
 }
 
 export async function fetchGenomeAlignData(data: any): Promise<any> {
-  const regionExpandLoci = data.regionExpandLoci;
-  const trackToFetch = data.trackToFetch;
-  const genomicLoci = data.genomicLoci;
-
-  const fetchResults = {};
-  const trackToDrawId = {};
-  const genomicFetchCoord = {};
-  const useFineModeNav = data.useFineModeNav;
-  const primaryGenName = data.primaryGenName;
-  const initGenomicLoci = data.initGenomicLoci;
-
-  genomicFetchCoord[`${primaryGenName}`] = {
-    genomicLoci,
+  const {
     regionExpandLoci,
+    trackToFetch,
+    genomicLoci,
+    useFineModeNav,
+    primaryGenName,
     initGenomicLoci,
+    viewWindowGenomicLoci,
+    windowWidth,
+    visData,
+    trackDataIdx,
+    missingIdx,
+  } = data;
+
+  const fetchResults: any = {};
+  const trackToDrawId: any = {};
+  const genomicFetchCoord: any = {
+    [primaryGenName]: {
+      genomicLoci,
+      regionExpandLoci,
+      initGenomicLoci,
+    },
   };
-  const genomeAlignTracks = trackToFetch;
 
-  const fetchArrNav = useFineModeNav
-    ? regionExpandLoci
-    : data.viewWindowGenomicLoci;
+  const fetchArrNav = useFineModeNav ? regionExpandLoci : viewWindowGenomicLoci;
 
-  if (genomeAlignTracks.length > 0) {
-    await getGenomeAlignment(data.visData.visRegion, genomeAlignTracks);
-  }
-
-  async function getGenomeAlignment(curVisData, genomeAlignTracks) {
-    let visRegionFeatures: Feature[] = [];
-
-    for (let feature of data.visData.visRegion._navContext._features) {
-      let newChr = new ChromosomeInterval(
-        feature.locus.chr,
-        feature.locus.start,
-        feature.locus.end,
-      );
-      visRegionFeatures.push(new Feature(feature.name, newChr));
-    }
-
-    let visRegionNavContext = new NavigationContext(
-      data.visData.visRegion._navContext._name,
-      visRegionFeatures,
+  // Helper to map features to Feature objects
+  const mapFeatures = (features: any[]) =>
+    features.map(
+      (feature) =>
+        new Feature(
+          feature.name,
+          new ChromosomeInterval(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+          ),
+        ),
     );
 
-    let visRegion = new DisplayedRegionModel(
+  async function getGenomeAlignment(curVisData, genomeAlignTracks) {
+    const visRegionFeatures = mapFeatures(visData.visRegion._navContext._features);
+    const visRegionNavContext = new NavigationContext(
+      visData.visRegion._navContext._name,
+      visRegionFeatures,
+    );
+    const visRegion = new DisplayedRegionModel(
       visRegionNavContext,
       curVisData._startBase,
       curVisData._endBase,
     );
 
-    let viewWindowRegionFeatures: Feature[] = [];
-
-    for (let feature of data.visData.viewWindowRegion._navContext._features) {
-      let newChr = new ChromosomeInterval(
-        feature.locus.chr,
-        feature.locus.start,
-        feature.locus.end,
-      );
-      viewWindowRegionFeatures.push(new Feature(feature.name, newChr));
-    }
-
-    let viewWindowRegionNavContext = new NavigationContext(
-      data.visData.viewWindowRegion._navContext._name,
+    const viewWindowRegionFeatures = mapFeatures(
+      visData.viewWindowRegion._navContext._features,
+    );
+    const viewWindowRegionNavContext = new NavigationContext(
+      visData.viewWindowRegion._navContext._name,
       viewWindowRegionFeatures,
     );
-
-    let viewWindowRegion = new DisplayedRegionModel(
+    const viewWindowRegion = new DisplayedRegionModel(
       viewWindowRegionNavContext,
-      data.visData.viewWindowRegion._startBase,
-      data.visData.viewWindowRegion._endBase,
+      visData.viewWindowRegion._startBase,
+      visData.viewWindowRegion._endBase,
     );
 
-    let visData: ViewExpansion = {
-      visWidth: data.visData.visWidth,
-
+    const viewExpansion: ViewExpansion = {
+      visWidth: visData.visWidth,
       visRegion,
-      viewWindow: new OpenInterval(data.windowWidth, data.windowWidth * 2),
-
+      viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
       viewWindowRegion,
     };
 
@@ -516,28 +505,25 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
             trackModel: item,
           });
 
-          let records: AlignmentRecord[] = [];
-
-          for (const record of responds) {
-            let data = JSON5.parse("{" + record[3] + "}");
+          const records = responds.map((record) => {
+            const parsedData = JSON5.parse("{" + record[3] + "}");
             if (!useFineModeNav) {
-              data.genomealign.targetseq = null;
-              data.genomealign.queryseq = null;
+              parsedData.genomealign.targetseq = null;
+              parsedData.genomealign.queryseq = null;
             }
-            record[3] = data;
-            records.push(new AlignmentRecord(record));
-          }
-          // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
+            record[3] = parsedData;
+            return new AlignmentRecord(record);
+          });
 
           rawRecords = records;
-          trackToDrawId[`${item.id}`] = "";
+          trackToDrawId[item.id] = "";
         } catch (error) {
           rawRecords = {
             error: `Error fetching genome align track with id ${item.id}`,
           };
         }
 
-        fetchResults[`${item.id}`] = {
+        fetchResults[item.id] = {
           name: item.name,
           records: rawRecords,
           query: item.querygenome,
@@ -551,138 +537,110 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
 
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
-    let successFetch: Array<any> = [];
-    for (const key in fetchResults) {
-      if (!("error" in fetchResults[key].records)) {
-        successFetch.push(fetchResults[key]);
-      }
-    }
-
-    let multiCalInstance = new MultiAlignmentViewCalculator(
-      data.primaryGenName,
+    const successFetch = Object.values(fetchResults).filter(
+      (result: any) => !("error" in result.records),
     );
 
-    let alignment = multiCalInstance.multiAlign(visData, successFetch);
+    const multiCalInstance = new MultiAlignmentViewCalculator(primaryGenName);
+    const alignment = multiCalInstance.multiAlign(viewExpansion, successFetch);
 
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
-    for (let query in alignment) {
-      let segmentArray;
-      if (!useFineModeNav) {
-        segmentArray = [].concat.apply(
-          [],
-          alignment[`${query}`].drawData.map(
-            (placement) => placement.segments,
-          ) as any,
-        );
-        const strandList = segmentArray.map(
-          (segment) => segment.record.queryStrand,
-        );
-        const targetXSpanList = segmentArray.map(
-          (segment) => segment.targetXSpan,
-        );
-        const queryXSpanList = segmentArray.map(
-          (segment) => segment.queryXSpan,
-        );
-        const targetLocusList = segmentArray.map((segment) =>
-          segment.visiblePart.getLocus().toString(),
-        );
-        const queryLocusList = segmentArray.map((segment) =>
-          segment.visiblePart.getQueryLocus().toString(),
-        );
-        const lengthList = segmentArray.map((segment) =>
-          niceBpCount(segment.visiblePart.getLength()),
-        );
-        const queryLengthList = segmentArray.map((segment) =>
-          niceBpCount(segment.visiblePart.getQueryLocus().getLength()),
-        );
-        let tempObj = {};
-        tempObj = {
-          strandList,
-          targetXSpanList,
-          queryXSpanList,
-          targetLocusList,
-          queryLocusList,
-          lengthList,
-          queryLengthList,
-        };
+    for (const query in alignment) {
+      const queryAlignment = alignment[query];
 
-        alignment[`${query}`] = { ...alignment[`${query}`], ...tempObj };
+      if (!useFineModeNav) {
+        const segmentArray = queryAlignment.drawData.flatMap(
+          (placement) => placement.segments,
+        );
+
+        alignment[query] = {
+          ...queryAlignment,
+          strandList: segmentArray.map((segment) => segment.record.queryStrand),
+          targetXSpanList: segmentArray.map((segment) => segment.targetXSpan),
+          queryXSpanList: segmentArray.map((segment) => segment.queryXSpan),
+          targetLocusList: segmentArray.map((segment) =>
+            segment.visiblePart.getLocus().toString(),
+          ),
+          queryLocusList: segmentArray.map((segment) =>
+            segment.visiblePart.getQueryLocus().toString(),
+          ),
+          lengthList: segmentArray.map((segment) =>
+            niceBpCount(segment.visiblePart.getLength()),
+          ),
+          queryLengthList: segmentArray.map((segment) =>
+            niceBpCount(segment.visiblePart.getQueryLocus().getLength()),
+          ),
+        };
       }
 
-      genomicFetchCoord[`${query}`] = {
-        queryGenomicCoord: alignment[`${query}`].queryRegion
+      genomicFetchCoord[query] = {
+        queryGenomicCoord: queryAlignment.queryRegion
           .getGenomeIntervals()
           .map((locus) => locus.serialize()),
-        id: alignment[`${query}`].id,
-        queryRegion: alignment[`${query}`].queryRegion,
+        id: queryAlignment.id,
+        queryRegion: queryAlignment.queryRegion,
       };
 
-      for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
-        let placement = alignment[`${query}`].drawData[i];
-        let tempObj = {};
+      alignment[query].drawData = queryAlignment.drawData.map((placement) => {
         const { targetXSpan } = placement;
+
         if (useFineModeNav) {
           const targetSequence = placement.visiblePart.getTargetSequence();
           const querySequence = placement.visiblePart.getQuerySequence();
-          const baseWidth = targetXSpan.getLength() / targetSequence.length;
-          const targetLocus = placement.visiblePart.getLocus().toString();
-          const queryLocus = placement.visiblePart.getQueryLocus().toString();
-          const queryLocusFine = placement.visiblePart.getQueryLocusFine();
-          const nonGapsTarget = placement.targetSegments.filter(
-            (segment) => !segment.isGap,
-          );
-          const nonGapsQuery = placement.querySegments.filter(
-            (segment) => !segment.isGap,
-          );
 
-          const isReverseStrandQuery =
-            placement.record.getIsReverseStrandQuery();
-          tempObj = {
+          return {
+            ...placement,
             targetSequence,
             querySequence,
-            nonGapsQuery,
-            baseWidth,
-            targetLocus,
-            queryLocus,
-            nonGapsTarget,
-            isReverseStrandQuery,
-            queryLocusFine,
+            nonGapsQuery: placement.querySegments.filter(
+              (segment) => !segment.isGap,
+            ),
+            baseWidth: targetXSpan.getLength() / targetSequence.length,
+            targetLocus: placement.visiblePart.getLocus().toString(),
+            queryLocus: placement.visiblePart.getQueryLocus().toString(),
+            nonGapsTarget: placement.targetSegments.filter(
+              (segment) => !segment.isGap,
+            ),
+            isReverseStrandQuery: placement.record.getIsReverseStrandQuery(),
+            queryLocusFine: placement.visiblePart.getQueryLocusFine(),
           };
         } else {
-          let estimatedLabelWidth = placement.queryFeature.toString().length;
-          tempObj = { estimatedLabelWidth };
+          return {
+            ...placement,
+            estimatedLabelWidth: placement.queryFeature.toString().length,
+          };
         }
-        alignment[`${query}`].drawData[i] = {
-          ...placement,
-          ...tempObj,
-        };
-      }
+      });
 
       // step 4 create obj that holds primary and query genome genomic coordinate because some other tracks might
       // align to the query coord
 
-      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
-        alignment[`${query}`].primaryVisData;
+      genomicFetchCoord[primaryGenName].primaryVisData =
+        queryAlignment.primaryVisData;
 
-      //save the genomic location so that track that has query as parent can use that data to get data\
+      //save the genomic location so that track that has query as parent can use that data to get data
 
-      fetchResults[`${alignment[`${query}`].id}`]["records"] =
-        alignment[`${query}`];
+      fetchResults[queryAlignment.id].records = alignment[query];
     }
+  }
+
+  if (trackToFetch.length > 0) {
+    await getGenomeAlignment(visData.visRegion, trackToFetch);
   }
 
   return {
     fetchResults,
-
     navData: {
       ...data,
       genomicFetchCoord,
       trackToDrawId,
+      trackDataIdx,
+      missingIdx,
       regionSetStartBp:
-        data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-          data.bpRegionSize
+        visData?.visRegion?._endBase - visData?.visRegion?._startBase ===
+        data.bpRegionSize
           ? 0
           : null,
       fetchNewRegion: data.fetchNewRegion,

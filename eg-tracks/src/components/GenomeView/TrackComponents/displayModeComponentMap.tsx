@@ -147,17 +147,17 @@ export const displayModeComponentMap: { [key: string]: any } = {
       if (configOptions.forceSvg || configOptions.packageVersion) {
         let curParentStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
+              position: "relative",
 
-            overflow: "hidden",
-            width: width / 3,
-          }
+              overflow: "hidden",
+              width: width / 3,
+            }
           : {};
         let curEleStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
-            transform: `translateX(${-trackState.viewWindow.start}px)`,
-          }
+              position: "relative",
+              transform: `translateX(${-trackState.viewWindow.start}px)`,
+            }
           : {};
 
         return (
@@ -227,7 +227,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -252,7 +252,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -325,7 +325,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -350,7 +350,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => { }}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onClose}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -568,7 +568,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => { }}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -594,7 +594,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -613,7 +613,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -633,8 +633,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-          imgCount -
-          THUMBNAIL_PADDING,
+            imgCount -
+            THUMBNAIL_PADDING,
           0,
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -678,7 +678,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => { }}
+          onSetImageInfo={() => {}}
           heightObj={heightObj}
         />
       );
@@ -717,8 +717,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let height;
     height =
       trackModel.type === "repeatmasker" ||
-        trackModel.type === "rmskv2" ||
-        trackModel.type === "categorical"
+      trackModel.type === "rmskv2" ||
+      trackModel.type === "categorical"
         ? configOptions.height
         : placeFeatureData.numRowsAssigned
           ? getHeight(placeFeatureData.numRowsAssigned)
@@ -1169,9 +1169,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         selectedRegion={
           trackState.genomicFetchCoord
             ? objToInstanceAlign(
-              trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
-                .viewWindowRegion,
-            )
+                trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+                  .viewWindowRegion,
+              )
             : trackState.visRegion
         }
         viewWindow={
@@ -1332,25 +1332,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
       if (drawData.configOptions.forceSvg) {
         let curParentStyle: any = drawData.configOptions.forceSvg
           ? {
-            position: "relative",
+              position: "relative",
 
-            overflow: "hidden",
-            width: drawData.trackState.visWidth / 3,
-          }
+              overflow: "hidden",
+              width: drawData.trackState.visWidth / 3,
+            }
           : {};
         let curEleStyle: any = drawData.configOptions.forceSvg
           ? {
-            position: "relative",
-            transform: `translateX(${-drawData.trackState.viewWindow
-              .start}px)`,
-          }
+              position: "relative",
+              transform: `translateX(${-drawData.trackState.viewWindow
+                .start}px)`,
+            }
           : {};
 
         element = (
           <React.Fragment>
             <div style={{ display: "flex", ...curParentStyle }}>
               {drawData.configOptions.forceSvg ||
-                drawData.configOptions.packageVersion
+              drawData.configOptions.packageVersion
                 ? legend
                 : ""}
               <div
@@ -1475,7 +1475,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           <span>
             {Array.isArray(errorInfo)
               ? errorInfo.filter((gene) => typeof gene === "string")[0] ||
-              "Something went wrong"
+                "Something went wrong"
               : typeof errorInfo === "object" && errorInfo["error"]
                 ? errorInfo["error"]
                 : "Something went wrong"}{" "}
@@ -1684,32 +1684,92 @@ function formatGeneAnnotationData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => new Gene(record));
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((gene: any) =>
-        checkOverlapWithRegionGroup(
-          gene.locus.chr,
-          gene.locus.start,
-          gene.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const gene = new Gene(record);
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            gene.locus.chr,
+            gene.locus.start,
+            gene.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(gene);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) => new Gene(record));
 }
 function formatRepeatMasker(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => {
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const [
+        label,
+        scoreStr,
+        orientation,
+        swScore,
+        milliDiv,
+        milliDel,
+        milliIns,
+        genoLeft,
+        repClass,
+        repFamily,
+        repStart,
+        repEnd,
+        repLeft,
+      ] = record.rest.split("\t");
+
+      const feature = new RepeatMaskerFeature({
+        genoLeft,
+        label,
+        max: record.end,
+        milliDel,
+        milliDiv,
+        milliIns,
+        min: record.start,
+        orientation,
+        repClass,
+        repEnd,
+        repFamily,
+        repLeft,
+        repStart,
+        score: Number(scoreStr),
+        segment: record.chr,
+        swScore,
+        type: "bigbed",
+        _chromId: record.chromId,
+      });
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map((record) => {
     const [
       label,
       scoreStr,
@@ -1726,7 +1786,7 @@ function formatRepeatMasker(
       repLeft,
     ] = record.rest.split("\t");
 
-    const output: RepeatDASFeature = {
+    return new RepeatMaskerFeature({
       genoLeft,
       label,
       max: record.end,
@@ -1745,97 +1805,94 @@ function formatRepeatMasker(
       swScore,
       type: "bigbed",
       _chromId: record.chromId,
-    };
-
-    return new RepeatMaskerFeature(output);
+    });
   });
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
-    }
-    return regionGroups;
-  }
-
-  return formattedData;
 }
 function formatRmskv2Masker(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const filteredArray: Array<any> = [];
-  for (const record of genesArr) {
-    filteredArray.push(new Rmskv2Feature(record));
-  }
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = filteredArray.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const feature = new Rmskv2Feature(record);
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return filteredArray;
+  return genesArr.map((record) => new Rmskv2Feature(record));
 }
 function formatRefBedData(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => {
-    const refBedRecord: IdbRecord = {
-      chrom: record.chr,
-      txStart: record.start,
-      txEnd: record.end,
-      id: record[7],
-      name: record[6],
-      description: record[11] ? record[11] : "",
-      transcriptionClass: record[8],
-      exonStarts: record[9],
-      exonEnds: record[10],
-      cdsStart: Number.parseInt(record[3], 10),
-      cdsEnd: Number.parseInt(record[4], 10),
-      strand: record[5],
-    };
-    return new Gene(refBedRecord);
-  });
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((gene: any) =>
-        checkOverlapWithRegionGroup(
-          gene.locus.chr,
-          gene.locus.start,
-          gene.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const gene = new Gene({
+        chrom: record.chr,
+        txStart: record.start,
+        txEnd: record.end,
+        id: record[7],
+        name: record[6],
+        description: record[11] ? record[11] : "",
+        transcriptionClass: record[8],
+        exonStarts: record[9],
+        exonEnds: record[10],
+        cdsStart: Number.parseInt(record[3], 10),
+        cdsEnd: Number.parseInt(record[4], 10),
+        strand: record[5],
+      });
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            gene.locus.chr,
+            gene.locus.start,
+            gene.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(gene);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map(
+    (record) =>
+      new Gene({
+        chrom: record.chr,
+        txStart: record.start,
+        txEnd: record.end,
+        id: record[7],
+        name: record[6],
+        description: record[11] ? record[11] : "",
+        transcriptionClass: record[8],
+        exonStarts: record[9],
+        exonEnds: record[10],
+        cdsStart: Number.parseInt(record[3], 10),
+        cdsEnd: Number.parseInt(record[4], 10),
+        strand: record[5],
+      }),
+  );
 }
 
 function formatBedColorData(
@@ -1843,31 +1900,39 @@ function formatBedColorData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) =>
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const feature = new ColoredFeature(
+        "",
+        new ChromosomeInterval(record.chr, record.start, record.end),
+        "+",
+      ).withColor(record[3]);
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map((record) =>
     new ColoredFeature(
       "",
       new ChromosomeInterval(record.chr, record.start, record.end),
       "+",
     ).withColor(record[3]),
   );
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
-    }
-    return regionGroups;
-  }
-
-  return formattedData;
 }
 
 function formatBedData(
@@ -1875,31 +1940,39 @@ function formatBedData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) =>
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const feature = new ColoredFeature(
+        "",
+        new ChromosomeInterval(record.chr, record.start, record.end),
+        "+",
+      ).withColor(record[3]);
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map((record) =>
     new ColoredFeature(
       "",
       new ChromosomeInterval(record.chr, record.start, record.end),
       "+",
     ).withColor(record[3]),
   );
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
-    }
-    return regionGroups;
-  }
-
-  return formattedData;
 }
 function formatBamData(
   genesArr: any[],
@@ -1911,17 +1984,21 @@ function formatBamData(
   const formattedData = BamAlignment.makeBamAlignments(genesArr);
 
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((bam: any) =>
-        checkOverlapWithRegionGroup(
-          bam.locus.chr,
-          bam.locus.start,
-          bam.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const bam of formattedData) {
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            bam.locus.chr,
+            bam.locus.start,
+            bam.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(bam);
+        }
+      }
     }
     return regionGroups;
   }
@@ -1934,25 +2011,28 @@ function formatOmeroidrData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => new ImageRecord(record));
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((image: any) =>
-        checkOverlapWithRegionGroup(
-          image.locus.chr,
-          image.locus.start,
-          image.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const image = new ImageRecord(record);
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            image.locus.chr,
+            image.locus.start,
+            image.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(image);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) => new ImageRecord(record));
 }
 
 function formatBigBedData(
@@ -1960,7 +2040,52 @@ function formatBigBedData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => {
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      // Handle both old format (segment/min/max) and new format (chr/start/end)
+      const chr = record.segment || record.chr;
+      const start = record.min ?? record.start;
+      const end = record.max ?? record.end;
+
+      // Parse rest field if present (format: "name\tscore\torientation")
+      let name = record.name || record.label || "";
+      let score = record.score;
+      let orientation = record.orientation;
+
+      if (record.rest) {
+        const [parsedName, parsedScore, parsedOrientation] =
+          record.rest.split("\t");
+        name = parsedName || name;
+        score = parsedScore ? Number(parsedScore) : score;
+        orientation = parsedOrientation || orientation;
+      }
+
+      const feature = new Feature(
+        name,
+        new ChromosomeInterval(chr, start, end),
+        orientation,
+        score,
+      );
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map((record) => {
     // Handle both old format (segment/min/max) and new format (chr/start/end)
     const chr = record.segment || record.chr;
     const start = record.min ?? record.start;
@@ -1986,24 +2111,6 @@ function formatBigBedData(
       score,
     );
   });
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
-    }
-    return regionGroups;
-  }
-
-  return formattedData;
 }
 
 function formatSnpData(
@@ -2011,63 +2118,100 @@ function formatSnpData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => new Snp(record));
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((snp: any) =>
-        checkOverlapWithRegionGroup(
-          snp.locus.chr,
-          snp.locus.start,
-          snp.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const snp = new Snp(record);
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            snp.locus.chr,
+            snp.locus.start,
+            snp.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(snp);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) => new Snp(record));
 }
 function formatCategoricalData(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map(
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const feature = new Feature(
+        record[BedColumnIndex.CATEGORY],
+        new ChromosomeInterval(record.chr, record.start, record.end),
+      );
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map(
     (record) =>
       new Feature(
         record[BedColumnIndex.CATEGORY],
         new ChromosomeInterval(record.chr, record.start, record.end),
       ),
   );
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
-    }
-    return regionGroups;
-  }
-
-  return formattedData;
 }
 function formatJasper(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => {
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const rest = record.rest.split("\t");
+      const feature = new JasparFeature(
+        rest[3],
+        new ChromosomeInterval(record.chr, record.start, record.end),
+        rest[2],
+      ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map((record) => {
     const rest = record.rest.split("\t");
     return new JasparFeature(
       rest[3],
@@ -2075,55 +2219,45 @@ function formatJasper(
       rest[2],
     ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
   });
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
-    }
-    return regionGroups;
-  }
-
-  return formattedData;
 }
 function formatModBedData(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => {
-    return new Fiber(
-      record[3],
-      new ChromosomeInterval(record.chr, record.start, record.end),
-      record[5],
-    ).withFiber(parseNumberString(record[4]), record[6], record[7]);
-  });
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((fiber: any) =>
-        checkOverlapWithRegionGroup(
-          fiber.locus.chr,
-          fiber.locus.start,
-          fiber.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const fiber = new Fiber(
+        record[3],
+        new ChromosomeInterval(record.chr, record.start, record.end),
+        record[5],
+      ).withFiber(parseNumberString(record[4]), record[6], record[7]);
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            fiber.locus.chr,
+            fiber.locus.start,
+            fiber.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(fiber);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) =>
+    new Fiber(
+      record[3],
+      new ChromosomeInterval(record.chr, record.start, record.end),
+      record[5],
+    ).withFiber(parseNumberString(record[4]), record[6], record[7]),
+  );
 }
 function formatBigWigData(
   genesArr: any[],
@@ -2131,74 +2265,79 @@ function formatBigWigData(
   regionLoci?: Array<any>,
 ) {
   //dynseq, boxplot track also
-  const formattedData = genesArr.map((record) => {
-    const newChrInt = new ChromosomeInterval(
-      record.chr,
-      record.start,
-      record.end,
-    );
-    return new NumericalFeature("", newChrInt).withValue(record.score);
-  });
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
+    const regionGroups: any[][] = regionLoci.map(() => []);
 
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    for (const record of genesArr) {
+      const feature = new NumericalFeature(
+        "",
+        new ChromosomeInterval(record.chr, record.start, record.end),
+      ).withValue(record.score);
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) =>
+    new NumericalFeature(
+      "",
+      new ChromosomeInterval(record.chr, record.start, record.end),
+    ).withValue(record.score),
+  );
 }
 function formatMatplotData(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  let formattedData: Array<any> = [];
-
-  for (let i = 0; i < genesArr.length; i++) {
-    formattedData.push(
-      genesArr[i].map((record) => {
-        let newChrInt = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end,
-        );
-        return new NumericalFeature("", newChrInt).withValue(record.score);
-      }),
-    );
-  }
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     // For matplot with multiple arrays, group each array by region
-    return formattedData.map((dataArray: any[]) => {
-      const regionGroups: any[][] = [];
-      for (const regionGroup of regionLoci) {
-        const overlappingFeatures = dataArray.filter((feature: any) =>
-          checkOverlapWithRegionGroup(
-            feature.locus.chr,
-            feature.locus.start,
-            feature.locus.end,
-            regionGroup,
-          ),
-        );
-        regionGroups.push(overlappingFeatures);
+    return genesArr.map((geneArr: any[]) => {
+      const regionGroups: any[][] = regionLoci.map(() => []);
+
+      for (const record of geneArr) {
+        const feature = new NumericalFeature(
+          "",
+          new ChromosomeInterval(record.chr, record.start, record.end),
+        ).withValue(record.score);
+
+        for (let i = 0; i < regionLoci.length; i++) {
+          if (
+            checkOverlapWithRegionGroup(
+              feature.locus.chr,
+              feature.locus.start,
+              feature.locus.end,
+              regionLoci[i],
+            )
+          ) {
+            regionGroups[i].push(feature);
+          }
+        }
       }
       return regionGroups;
     });
   }
 
-  return formattedData;
+  return genesArr.map((geneArr) =>
+    geneArr.map((record) =>
+      new NumericalFeature(
+        "",
+        new ChromosomeInterval(record.chr, record.start, record.end),
+      ).withValue(record.score),
+    ),
+  );
 }
 
 function formatMethylcData(
@@ -2206,25 +2345,28 @@ function formatMethylcData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => new MethylCRecord(record));
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((methylc: any) =>
-        checkOverlapWithRegionGroup(
-          methylc.locus.chr,
-          methylc.locus.start,
-          methylc.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const methylc = new MethylCRecord(record);
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            methylc.locus.chr,
+            methylc.locus.start,
+            methylc.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(methylc);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) => new MethylCRecord(record));
 }
 
 function formatDynamicBed(
@@ -2232,7 +2374,34 @@ function formatDynamicBed(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((geneArr: any) =>
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    return genesArr.map((geneArr: any[]) => {
+      const regionGroups: any[][] = regionLoci.map(() => []);
+
+      for (const record of geneArr) {
+        const feature = new Feature(
+          record[3],
+          new ChromosomeInterval(record.chr, record.start, record.end),
+        );
+
+        for (let i = 0; i < regionLoci.length; i++) {
+          if (
+            checkOverlapWithRegionGroup(
+              feature.locus.chr,
+              feature.locus.start,
+              feature.locus.end,
+              regionLoci[i],
+            )
+          ) {
+            regionGroups[i].push(feature);
+          }
+        }
+      }
+      return regionGroups;
+    });
+  }
+
+  return genesArr.map((geneArr: any) =>
     geneArr.map(
       (record) =>
         new Feature(
@@ -2241,56 +2410,32 @@ function formatDynamicBed(
         ),
     ),
   );
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    return formattedData.map((dataArray: any[]) => {
-      const regionGroups: any[][] = [];
-      for (const regionGroup of regionLoci) {
-        const overlappingFeatures = dataArray.filter((feature: any) =>
-          checkOverlapWithRegionGroup(
-            feature.locus.chr,
-            feature.locus.start,
-            feature.locus.end,
-            regionGroup,
-          ),
-        );
-        regionGroups.push(overlappingFeatures);
-      }
-      return regionGroups;
-    });
-  }
-
-  return formattedData;
 }
 function formatDynamicLongRange(genesArr: any[]) {
-  return genesArr.map((geneArr: any) => {
-    let tempLongrangeData: any[] = [];
-    geneArr.map((record) => {
-      const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
+  return genesArr.map((geneArr: any) =>
+    geneArr
+      .map((record) => {
+        const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 
-      if (regexMatch) {
-        const chr = regexMatch[1];
-        const start = Number.parseInt(regexMatch[2], 10);
-        const end = Number.parseInt(regexMatch[3], 10);
-        const score = Number.parseFloat(record[3].split(",")[1]);
-        const recordLocus1 = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end,
-        );
-        const recordLocus2 = new ChromosomeInterval(chr, start, end);
-        tempLongrangeData.push(
-          new GenomeInteraction(recordLocus1, recordLocus2, score),
-        );
-      } else {
-        console.error(
-          `${record[3]} not formatted correctly in longrange track`,
-        );
-      }
-    });
-
-    return tempLongrangeData;
-  });
+        if (regexMatch) {
+          const chr = regexMatch[1];
+          const start = Number.parseInt(regexMatch[2], 10);
+          const end = Number.parseInt(regexMatch[3], 10);
+          const score = Number.parseFloat(record[3].split(",")[1]);
+          return new GenomeInteraction(
+            new ChromosomeInterval(record.chr, record.start, record.end),
+            new ChromosomeInterval(chr, start, end),
+            score,
+          );
+        } else {
+          console.error(
+            `${record[3]} not formatted correctly in longrange track`,
+          );
+          return null;
+        }
+      })
+      .filter(Boolean),
+  );
 }
 
 function formatqBedData(
@@ -2298,32 +2443,62 @@ function formatqBedData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => new QBed(record));
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((qbed: any) =>
-        checkOverlapWithRegionGroup(
-          qbed.locus.chr,
-          qbed.locus.start,
-          qbed.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const qbed = new QBed(record);
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            qbed.locus.chr,
+            qbed.locus.start,
+            qbed.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(qbed);
+        }
+      }
     }
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) => new QBed(record));
 }
 function formatDynamic(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((geneArr: any) =>
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    return genesArr.map((geneArr: any[]) => {
+      const regionGroups: any[][] = regionLoci.map(() => []);
+
+      for (const record of geneArr) {
+        const feature = new NumericalFeature(
+          "",
+          new ChromosomeInterval(record.chr, record.start, record.end),
+        ).withValue(record.score);
+
+        for (let i = 0; i < regionLoci.length; i++) {
+          if (
+            checkOverlapWithRegionGroup(
+              feature.locus.chr,
+              feature.locus.start,
+              feature.locus.end,
+              regionLoci[i],
+            )
+          ) {
+            regionGroups[i].push(feature);
+          }
+        }
+      }
+      return regionGroups;
+    });
+  }
+
+  return genesArr.map((geneArr: any) =>
     geneArr.map((record) =>
       new NumericalFeature(
         "",
@@ -2331,26 +2506,6 @@ function formatDynamic(
       ).withValue(record.score),
     ),
   );
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    return formattedData.map((dataArray: any[]) => {
-      const regionGroups: any[][] = [];
-      for (const regionGroup of regionLoci) {
-        const overlappingFeatures = dataArray.filter((feature: any) =>
-          checkOverlapWithRegionGroup(
-            feature.locus.chr,
-            feature.locus.start,
-            feature.locus.end,
-            regionGroup,
-          ),
-        );
-        regionGroups.push(overlappingFeatures);
-      }
-      return regionGroups;
-    });
-  }
-
-  return formattedData;
 }
 
 function formatBedgraph(
@@ -2361,14 +2516,12 @@ function formatBedgraph(
   const VALUE_COLUMN_INDEX = 3;
 
   const formattedData = genesArr.map((record) => {
-    const newChrInt = new ChromosomeInterval(
-      record.chr,
-      record.start,
-      record.end,
-    );
     const unsafeValue = Number(record[VALUE_COLUMN_INDEX]);
     const value = Number.isFinite(unsafeValue) ? unsafeValue : 0;
-    return new NumericalFeature("", newChrInt).withValue(value);
+    return new NumericalFeature(
+      "",
+      new ChromosomeInterval(record.chr, record.start, record.end),
+    ).withValue(value);
   });
 
   if (initialLoad && regionLoci && regionLoci.length > 0) {
@@ -2395,8 +2548,40 @@ function formatdBedGraph(
   regionLoci?: Array<any>,
 ) {
   const VALUE_COLUMN_INDEX = 3;
-  let formattedData = genesArr.map((record) => {
-    const locus = new ChromosomeInterval(record.chr, record.start, record.end);
+
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      let parsedValue;
+      try {
+        parsedValue = JSON.parse(record[VALUE_COLUMN_INDEX]);
+      } catch (e) {
+        console.error(e);
+        parsedValue = [0];
+      }
+      const feature = new NumericalArrayFeature(
+        "",
+        new ChromosomeInterval(record.chr, record.start, record.end),
+      ).withValues(parsedValue);
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map((record) => {
     let parsedValue;
     try {
       parsedValue = JSON.parse(record[VALUE_COLUMN_INDEX]);
@@ -2404,114 +2589,92 @@ function formatdBedGraph(
       console.error(e);
       parsedValue = [0];
     }
-    return new NumericalArrayFeature("", locus).withValues(parsedValue);
+    return new NumericalArrayFeature(
+      "",
+      new ChromosomeInterval(record.chr, record.start, record.end),
+    ).withValues(parsedValue);
   });
-
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((feature: any) =>
-        checkOverlapWithRegionGroup(
-          feature.locus.chr,
-          feature.locus.start,
-          feature.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
-    }
-    return regionGroups;
-  }
-
-  return formattedData;
 }
 function formatVcf(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  const formattedData = genesArr.map((record) => new Vcf(record));
-
+  console.log("here1");
   if (initialLoad && regionLoci && regionLoci.length > 0) {
-    const regionGroups: any[][] = [];
-    for (const regionGroup of regionLoci) {
-      const overlappingFeatures = formattedData.filter((vcf: any) =>
-        checkOverlapWithRegionGroup(
-          vcf.locus.chr,
-          vcf.locus.start,
-          vcf.locus.end,
-          regionGroup,
-        ),
-      );
-      regionGroups.push(overlappingFeatures);
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const vcf = new Vcf(record);
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            vcf.locus.chr,
+            vcf.locus.start,
+            vcf.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(vcf);
+        }
+      }
     }
+    console.log("here2");
     return regionGroups;
   }
 
-  return formattedData;
+  return genesArr.map((record) => new Vcf(record));
 }
 function formatBigInteract(genesArr: any[]) {
-  const formattedData: any = [];
-  genesArr.map((record) => {
-    const regexMatch = record.rest.match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
+  return genesArr
+    .map((record) => {
+      const regexMatch = record.rest.match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 
-    if (regexMatch) {
-      const fields = record.rest.split("\t");
-
-      const score = parseInt(fields[1]);
-      const region1Chrom = fields[5];
-      const region1Start = parseInt(fields[6]);
-      const region1End = parseInt(fields[7]);
-      const region2Chrom = fields[10];
-      const region2Start = parseInt(fields[11]);
-      const region2End = parseInt(fields[12]);
-
-      const recordLocus1 = new ChromosomeInterval(
-        region1Chrom,
-        region1Start,
-        region1End,
-      );
-      const recordLocus2 = new ChromosomeInterval(
-        region2Chrom,
-        region2Start,
-        region2End,
-      );
-      formattedData.push(
-        new GenomeInteraction(recordLocus1, recordLocus2, score),
-      );
-    } else {
-      console.error(
-        `${record[3]} not formatted correctly in BIGinteract track`,
-      );
-    }
-  });
-  return formattedData;
+      if (regexMatch) {
+        const fields = record.rest.split("\t");
+        const score = parseInt(fields[1]);
+        return new GenomeInteraction(
+          new ChromosomeInterval(
+            fields[5],
+            parseInt(fields[6]),
+            parseInt(fields[7]),
+          ),
+          new ChromosomeInterval(
+            fields[10],
+            parseInt(fields[11]),
+            parseInt(fields[12]),
+          ),
+          score,
+        );
+      } else {
+        console.error(
+          `${record[3]} not formatted correctly in BIGinteract track`,
+        );
+        return null;
+      }
+    })
+    .filter(Boolean);
 }
 function formatLongRange(genesArr: any[]) {
-  const formattedData: any = [];
-  genesArr.forEach((record) => {
-    const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
-    // console.log(regexMatch);
-    if (regexMatch) {
-      const chr = regexMatch[1];
-      const start = Number.parseInt(regexMatch[2], 10);
-      const end = Number.parseInt(regexMatch[3], 10);
-      // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
-      const score = Number.parseFloat(record[3].split(",")[1]);
-      const recordLocus1 = new ChromosomeInterval(
-        record.chr,
-        record.start,
-        record.end,
-      );
-      const recordLocus2 = new ChromosomeInterval(chr, start, end);
-      formattedData.push(
-        new GenomeInteraction(recordLocus1, recordLocus2, score),
-      );
-    } else {
-      console.error(`${record[3]} not formated correctly in longrange track`);
-    }
-  });
-  return formattedData;
+  return genesArr
+    .map((record) => {
+      const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
+      if (regexMatch) {
+        const chr = regexMatch[1];
+        const start = Number.parseInt(regexMatch[2], 10);
+        const end = Number.parseInt(regexMatch[3], 10);
+        const score = Number.parseFloat(record[3].split(",")[1]);
+        return new GenomeInteraction(
+          new ChromosomeInterval(record.chr, record.start, record.end),
+          new ChromosomeInterval(chr, start, end),
+          score,
+        );
+      } else {
+        console.error(`${record[3]} not formated correctly in longrange track`);
+        return null;
+      }
+    })
+    .filter(Boolean);
 }
 export const twoDataTypeTracks = {
   // bigbed: "",
@@ -2570,13 +2733,17 @@ export function formatDataByType(
   }
 
   // if genesArr has an error property then something wrong with fetch or other errors
-  if (typeof genesArr === "object" && (genesArr as any).error) {
-    return genesArr;
+  if (
+    !Array.isArray(genesArr) &&
+    typeof genesArr === "object" &&
+    (genesArr as any).error
+  ) {
+    return initialLoad ? [genesArr, genesArr, genesArr] : genesArr;
   }
   if (Array.isArray(genesArr) && genesArr.length > 0) {
     for (const obj of genesArr) {
       if (typeof obj === "object" && obj !== null && obj.error) {
-        return { error: obj.error };
+        return initialLoad ? [obj, obj, obj] : { error: obj.error };
       }
     }
   }

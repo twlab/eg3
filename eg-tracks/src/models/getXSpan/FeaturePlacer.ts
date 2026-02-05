@@ -42,7 +42,7 @@ export class PlacedInteraction {
   constructor(
     interaction: GenomeInteraction,
     xSpan1: OpenInterval,
-    xSpan2: OpenInterval
+    xSpan2: OpenInterval,
   ) {
     this.interaction = interaction;
     if (xSpan1.start <= xSpan2.start) {
@@ -119,7 +119,7 @@ export class FeaturePlacer {
    * @return {FeaturePlacementResult} draw info with placements and metadata
    */
   placeFeatures(
-    options: PlaceFeaturesOptions
+    options: PlaceFeaturesOptions,
   ): FeaturePlacementResult | PlacedFeature {
     const {
       features,
@@ -151,8 +151,8 @@ export class FeaturePlacer {
       const featureArray = Array.isArray(item)
         ? item
         : item && item.dataCache
-        ? item.dataCache
-        : [item];
+          ? item.dataCache
+          : [item];
       if (!Array.isArray(featureArray)) {
         continue;
       }
@@ -178,18 +178,17 @@ export class FeaturePlacer {
         seenLoci.add(locusId);
 
         for (let contextLocation of feature.computeNavContextCoordinates(
-          navContext
+          navContext,
         )) {
           contextLocation = contextLocation.getOverlap(viewRegionBounds);
           if (contextLocation) {
-            feature;
             const xSpan = useCenter
               ? drawModel.baseSpanToXCenter(contextLocation)
               : drawModel.baseSpanToXSpan(contextLocation);
             const { visiblePart, isReverse } = this._locatePlacement(
               feature,
               navContext,
-              contextLocation
+              contextLocation,
             );
 
             const placement = {
@@ -249,7 +248,7 @@ export class FeaturePlacer {
         row: -1,
         xSpan: new OpenInterval(
           firstPlacement.xSpan.start,
-          lastPlacement.xSpan.end
+          lastPlacement.xSpan.end,
         ),
         placedFeatures: placementsInGroup,
       });
@@ -276,11 +275,11 @@ export class FeaturePlacer {
   _locatePlacement(
     feature: Feature,
     navContext: NavigationContext,
-    contextLocation: OpenInterval
+    contextLocation: OpenInterval,
   ) {
     // First, get the genomic coordinates of the context location, i.e. the "context locus"
     const contextFeatureCoord = navContext.convertBaseToFeatureCoordinate(
-      contextLocation.start
+      contextLocation.start,
     );
     const placedBase = contextFeatureCoord.getLocus().start;
     const isReverse = contextFeatureCoord.feature.getIsReverseStrand();
@@ -301,7 +300,7 @@ export class FeaturePlacer {
 
     // Calculate the genomic length (in bases) that the context location represents
     const contextFeatureCoordEnd = navContext.convertBaseToFeatureCoordinate(
-      contextLocation.end
+      contextLocation.end,
     );
     const placedBaseEnd = contextFeatureCoordEnd.getLocus().start;
     const genomicLength = Math.abs(placedBaseEnd - placedBase);
@@ -310,7 +309,7 @@ export class FeaturePlacer {
       visiblePart: new FeatureSegment(
         feature,
         relativeStart,
-        relativeStart + genomicLength
+        relativeStart + genomicLength,
       ),
       isReverse,
     };
@@ -325,7 +324,7 @@ export class FeaturePlacer {
    */
   placeFeatureSegments(
     placedFeature: PlacedFeature,
-    segments: FeatureSegment[]
+    segments: FeatureSegment[],
   ): PlacedSegment[] {
     const pixelsPerBase =
       placedFeature.xSpan.getLength() /
@@ -358,7 +357,7 @@ export class FeaturePlacer {
   placeInteractions(
     interactions: GenomeInteraction[],
     viewRegion: DisplayedRegionModel,
-    width: number
+    width: number,
   ): PlacedInteraction[] {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const viewRegionBounds = viewRegion.getContextCoordinates();
@@ -367,17 +366,17 @@ export class FeaturePlacer {
     const mappedInteractions: Array<any> = [];
     for (const interaction of interactions) {
       let contextLocations1 = navContext.convertGenomeIntervalToBases(
-        interaction.locus1 as ChromosomeInterval
+        interaction.locus1 as ChromosomeInterval,
       );
       let contextLocations2 = navContext.convertGenomeIntervalToBases(
-        interaction.locus2 as ChromosomeInterval
+        interaction.locus2 as ChromosomeInterval,
       );
       // Clamp the locations to the view region
       contextLocations1 = contextLocations1.map(
-        (location) => location.getOverlap(viewRegionBounds)!
+        (location) => location.getOverlap(viewRegionBounds)!,
       );
       contextLocations2 = contextLocations2.map(
-        (location) => location.getOverlap(viewRegionBounds)!
+        (location) => location.getOverlap(viewRegionBounds)!,
       );
       for (const location1 of contextLocations1) {
         for (const location2 of contextLocations2) {
@@ -385,7 +384,7 @@ export class FeaturePlacer {
             const xSpan1 = drawModel.baseSpanToXSpan(location1);
             const xSpan2 = drawModel.baseSpanToXSpan(location2);
             mappedInteractions.push(
-              new PlacedInteraction(interaction, xSpan1, xSpan2)
+              new PlacedInteraction(interaction, xSpan1, xSpan2),
             );
           }
         }
@@ -406,7 +405,7 @@ export class FeaturePlacer {
   placeGraphNodes(
     nodes: GraphNode[],
     viewRegion: DisplayedRegionModel,
-    width: number
+    width: number,
   ): {
     placements: PlacedFeature[];
     nodesOutOfView: GraphNode[];
@@ -419,7 +418,7 @@ export class FeaturePlacer {
       nodesOutOfView: Array<any> = [];
     for (const node of nodes) {
       for (let contextLocation of node.computeNavContextCoordinates(
-        navContext
+        navContext,
       )) {
         contextLocation = contextLocation.getOverlap(viewRegionBounds)!; // Clamp the location to view region
         if (contextLocation) {
@@ -427,7 +426,7 @@ export class FeaturePlacer {
           const { visiblePart, isReverse } = this._locatePlacement(
             node,
             navContext,
-            contextLocation
+            contextLocation,
           );
           placements.push({
             feature: node,

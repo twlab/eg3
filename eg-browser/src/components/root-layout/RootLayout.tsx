@@ -53,14 +53,14 @@ import {
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
 
-// const firebaseConfig = {
-//   apiKey: import.meta.env.VITE_FIREBASE_KEY,
-//   authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
-//   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
-//   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-// };
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+};
 
-// firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 
 export interface RootLayoutProps {
   viewRegion?: string | null | undefined;

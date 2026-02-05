@@ -16,7 +16,7 @@ class VcfSource {
     if (Array.isArray(url)) {
       filehandle = new BlobFile(url.filter((f) => !f.name.endsWith(".tbi"))[0]);
       tbiFilehandle = new BlobFile(
-        url.filter((f) => f.name.endsWith(".tbi"))[0]
+        url.filter((f) => f.name.endsWith(".tbi"))[0],
       );
     } else {
       filehandle = new RemoteFile(url);
@@ -42,10 +42,10 @@ class VcfSource {
       this.parser = new VCF({ header: this.header });
     }
     const promises = region.map((locus) =>
-      this._getDataInLocus(locus, options)
+      this._getDataInLocus(locus, options),
     );
     const dataForEachSegment = await Promise.all(promises);
-    const flattened = _.flatten(dataForEachSegment);
+    const flattened = dataForEachSegment.flat();
 
     return flattened;
   }
@@ -87,26 +87,15 @@ class VcfSource {
     //vcf is 1 based
     // -1 compensation happened in Vcf feature constructor
     await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) => {
-      const parsed = this.parser.parseLine(line);
-      // Convert Variant class instance to plain object to preserve all properties including SAMPLES
-      const plainVariant = {
-        CHROM: parsed.CHROM,
-        POS: parsed.POS,
-        ID: parsed.ID,
-        REF: parsed.REF,
-        ALT: parsed.ALT,
-        QUAL: parsed.QUAL,
-        FILTER: parsed.FILTER,
-        INFO: parsed.INFO,
-        SAMPLES: parsed.SAMPLES,
-      };
-      variants.push(plainVariant);
-    });
-    if (options && options.ensemblStyle) {
-      for (let variant of variants) {
+      const variant = this.parser.parseLine(line);
+
+      // Set CHROM immediately if ensemblStyle
+      if (options && options.ensemblStyle) {
         variant.CHROM = locus.chr;
       }
-    }
+
+      variants.push(variant);
+    });
     return variants;
   }
 }
