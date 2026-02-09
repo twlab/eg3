@@ -1422,7 +1422,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-
+    console.log(trackState,
+      configOptions,
+      updatedLegend,
+      trackModel,
+      errorInfo,
+      handleRetryFetchTrack,)
     const legend = (
       <TrackLegend
         height={40}

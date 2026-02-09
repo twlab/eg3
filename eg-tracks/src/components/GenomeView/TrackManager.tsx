@@ -1520,12 +1520,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const cache = trackFetchedDataCache.current[trackToDrawKey];
 
           if (cache) {
-            if (
+            if (cache["Error"]) {
+              console.log("here")
+              cacheKeysWithData[trackToDrawKey] = false;
+            }
+            else if (
               useFineModeNav.current ||
               cache.useExpandedLoci ||
               !cache.usePrimaryNav
             ) {
               // For fine mode or expanded loci, only check current index
+
               if (
                 (cache[currentDataIdx] && cache[currentDataIdx]["dataCache"]) ||
                 !cache.usePrimaryNav
@@ -2074,32 +2079,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         [globalTrackState.current.trackStates[currDataIdx + 1].trackState.regionLoci, globalTrackState.current.trackStates[currDataIdx].trackState.regionLoci, globalTrackState.current.trackStates[currDataIdx - 1].trackState.regionLoci],
       );
 
+      const hasError = !Array.isArray(formattedData) && typeof formattedData === "object" && "Error" in formattedData;
 
-      if (!Array.isArray(formattedData) && typeof formattedData === "object") {
+      if (hasError) {
 
-        if ("Error" in formattedData) {
 
-          trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
-            formattedData;
-          if (fetchRes.trackModel.shouldPlaceRegion) {
-            formattedData = [formattedData, formattedData, formattedData]
-          }
-        }
+        trackFetchedDataCache.current[`${fetchRes.id}`]["Error"] =
+          formattedData;
+
       }
 
+      else {
+        if (fetchRes.trackModel.shouldPlaceRegion) {
 
-      if (fetchRes.trackModel.shouldPlaceRegion) {
+          for (let i = 0; i < 3; i++) {
+            trackFetchedDataCache.current[`${fetchRes.id}`][initialIdx[i]][
+              "dataCache"
+            ] = formattedData[i];
+          }
+        } else {
 
-        for (let i = 0; i < 3; i++) {
-          trackFetchedDataCache.current[`${fetchRes.id}`][initialIdx[i]][
+          trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
             "dataCache"
-          ] = formattedData[i];
+          ] = formattedData;
         }
-      } else {
-
-        trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
-          "dataCache"
-        ] = formattedData;
       }
     }
   }

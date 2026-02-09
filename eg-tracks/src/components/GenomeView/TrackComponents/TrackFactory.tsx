@@ -263,13 +263,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     fetchError.current = cacheTrackData["Error"]
       ? cacheTrackData["Error"]
       : null;
-    if (fetchError.current) {
-      trackState["recreate"] = false;
-      createSVGOrCanvas(trackState, [], dataIdx, null);
-      return;
-    }
 
-    if (!cacheTrackData.useExpandedLoci && cacheTrackData.usePrimaryNav) {
+    if (cacheTrackData["Error"]) {
+
+      createSVGOrCanvas(
+        trackState,
+        fetchError.current,
+        dataIdx,
+        xvalues ? xvalues : null,
+      );
+    }
+    else if (!cacheTrackData.useExpandedLoci && cacheTrackData.usePrimaryNav) {
       let combinedData: Array<any> = [];
       let currIdx = dataIdx + 1;
       let noData = false;
