@@ -140,7 +140,7 @@ const MouseFollowingTooltip: React.FC = () => {
       {/* Indicator for selected tracks */}
       {hasSelectedTracks && sessionId && (
         <motion.div
-          className="fixed top-2 left-1/2 transform -translate-x-1/2 z-[800] pointer-events-auto select-none cursor-pointer"
+          className="absolute top-2 left-1/2 transform -translate-x-1/2 z-[999] pointer-events-auto select-none cursor-pointer"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 0.9, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -176,8 +176,32 @@ const MouseFollowingTooltip: React.FC = () => {
                   {selectedTracksCount !== 1 ? "s" : ""} selected
                 </span>
                 <span style={{ opacity: 0.5 }}>•</span>
-
-                <span className="text-xs" style={{ opacity: 0.75 }}>
+                <div className="text-xs" style={{ opacity: 0.6 }}>
+                  Hold{" "}
+                  <kbd
+                    className="px-1 py-0.5 font-mono"
+                    style={{
+                      backgroundColor: "var(--foreground)",
+                      color: "var(--background)",
+                      opacity: 0.7,
+                    }}
+                  >
+                    Shift
+                  </kbd>{" "}
+                  +{" "}
+                  <kbd
+                    className="px-1 py-0.5 font-mono"
+                    style={{
+                      backgroundColor: "var(--foreground)",
+                      color: "var(--background)",
+                      opacity: 0.7,
+                    }}
+                  >
+                    Left Click
+                  </kbd>{" "}
+                  to select multiple
+                </div>
+                {/* <span className="text-xs" style={{ opacity: 0.75 }}>
                   Press{" "}
                   <kbd
                     className="px-1.5 py-0.5 font-mono"
@@ -190,33 +214,9 @@ const MouseFollowingTooltip: React.FC = () => {
                     Esc
                   </kbd>{" "}
                   or click to clear
-                </span>
+                </span> */}
               </div>
-              <div className="text-xs" style={{ opacity: 0.6 }}>
-                Hold{" "}
-                <kbd
-                  className="px-1 py-0.5 font-mono"
-                  style={{
-                    backgroundColor: "var(--foreground)",
-                    color: "var(--background)",
-                    opacity: 0.7,
-                  }}
-                >
-                  Shift
-                </kbd>{" "}
-                +{" "}
-                <kbd
-                  className="px-1 py-0.5 font-mono"
-                  style={{
-                    backgroundColor: "var(--foreground)",
-                    color: "var(--background)",
-                    opacity: 0.7,
-                  }}
-                >
-                  Left Click
-                </kbd>{" "}
-                a track to select multiple
-              </div>
+
             </div>
           </div>
         </motion.div>

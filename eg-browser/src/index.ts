@@ -23,3 +23,22 @@ export type { AppProviderProps } from "./lib/redux/AppProvider";
 
 // Export store manager for programmatic control of multiple instances
 export { StoreManager, globalStoreManager } from "./lib/redux/StoreManager";
+
+// Export browser selectors and actions
+export {
+  selectCurrentSession,
+  selectCurrentSessionId,
+  selectSessions,
+  selectSessionById,
+  selectCanUndo,
+  selectCanRedo,
+  createSession,
+  updateSession,
+  updateCurrentSession,
+  addTracks,
+  setCurrentSession,
+  deleteSession,
+  upsertSession,
+  clearAllSessions,
+} from "./lib/redux/slices/browserSlice";
+export type { BrowserSession, uuid } from "./lib/redux/slices/browserSlice";

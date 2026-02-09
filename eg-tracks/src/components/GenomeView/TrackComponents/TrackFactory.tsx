@@ -6,7 +6,6 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import OpenInterval from "../../../models/OpenInterval";
 
 import {
-
   dynamicMatplotTracks,
   getDisplayModeFunction,
   interactionTracks,
@@ -56,7 +55,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
       ? { ...trackOptionMap[`${trackModel.type}`].defaultOptions }
-      : { ...trackOptionMap["error"].defaultOptions }
+      : { ...trackOptionMap["error"].defaultOptions },
   );
   const initTrackStart = useRef(true);
   const svgHeight = useRef(0);
@@ -95,7 +94,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     genesArr,
 
     cacheDataIdx,
-    xvalues = null
+    xvalues = null,
   ) {
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
@@ -182,7 +181,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     type,
     onCount = "",
     onPct = "",
-    total = ""
+    total = "",
   ) {
     let currtooltip;
     if (type === "norm") {
@@ -244,6 +243,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (interactionTracks.has(trackModel.type)) {
         configOptions.current["trackManagerRef"] = trackManagerRef;
       }
+
       configOptions.current = {
         ...configOptions.current,
         ...trackModel.options,
@@ -263,13 +263,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     fetchError.current = cacheTrackData["Error"]
       ? cacheTrackData["Error"]
       : null;
-    if (fetchError.current) {
-      trackState["recreate"] = false;
-      createSVGOrCanvas(trackState, [], dataIdx, null);
-      return;
-    }
 
-    if (!cacheTrackData.useExpandedLoci && cacheTrackData.usePrimaryNav) {
+    if (cacheTrackData["Error"]) {
+
+      createSVGOrCanvas(
+        trackState,
+        fetchError.current,
+        dataIdx,
+        xvalues ? xvalues : null,
+      );
+    }
+    else if (!cacheTrackData.useExpandedLoci && cacheTrackData.usePrimaryNav) {
       let combinedData: Array<any> = [];
       let currIdx = dataIdx + 1;
       let noData = false;
@@ -302,7 +306,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackState,
           combinedData,
           dataIdx,
-          xvalues ? xvalues : null
+          xvalues ? xvalues : null,
         );
       }
     } else {
@@ -318,7 +322,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackState,
           combinedData,
           dataIdx,
-          xvalues ? xvalues : null
+          xvalues ? xvalues : null,
         );
       }
     }
@@ -376,26 +380,32 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           id: id,
           trackIdx: trackIdx,
         });
-        let cacheDataIdx = dataIdx;
-        let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-        let trackState = _.cloneDeep(
-          globalTrackState.current.trackStates[cacheDataIdx].trackState
-        );
-        trackState["recreate"] = true;
+        // config options that needs a refetch so we can't reuse data
+        if (
+          !applyTrackConfigChange[`${id}`]["normalization"] &&
+          !applyTrackConfigChange[`${id}`]["binSize"]
+        ) {
+          let cacheDataIdx = dataIdx;
+          let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+          let trackState = _.cloneDeep(
+            globalTrackState.current.trackStates[cacheDataIdx].trackState,
+          );
+          trackState["recreate"] = true;
 
-        handleTrackDraw({
-          cacheTrackData,
-          trackState,
-          viewWindow: viewWindowConfigData.current?.viewWindow,
-          groupScale:
-            globalTrackState.current.trackStates[dataIdx].trackState[
-            "groupScale"
-            ],
-          xvalues: cacheTrackData[dataIdx]?.xvalues,
-          isInit: false,
-          matplotCheck: true,
-          skipNoData: false,
-        });
+          handleTrackDraw({
+            cacheTrackData,
+            trackState,
+            viewWindow: viewWindowConfigData.current?.viewWindow,
+            groupScale:
+              globalTrackState.current.trackStates[dataIdx].trackState[
+              "groupScale"
+              ],
+            xvalues: cacheTrackData[dataIdx]?.xvalues,
+            isInit: false,
+            matplotCheck: true,
+            skipNoData: false,
+          });
+        }
       }
     }
   }, [applyTrackConfigChange]);
@@ -410,7 +420,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         configOptions.current.displayMode === "density")
     ) {
       let trackState = _.cloneDeep(
-        globalTrackState.current.trackStates[dataIdx].trackState
+        globalTrackState.current.trackStates[dataIdx].trackState,
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
       trackState["recreate"] = true;
@@ -439,7 +449,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let cacheTrackData = trackFetchedDataCache.current[`${id}`];
         let combinedData: any = [];
         let trackState = _.cloneDeep(
-          globalTrackState.current.trackStates[cacheDataIdx].trackState
+          globalTrackState.current.trackStates[cacheDataIdx].trackState,
         );
         if (!cacheTrackData.useExpandedLoci) {
           let currIdx = dataIdx + 1;
@@ -497,13 +507,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           updateSide.current === "right"
             ? new OpenInterval(
               -(dragX! + (xPos.current + windowWidth)),
-              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
             )
             : new OpenInterval(
               -(dragX! - (xPos.current + windowWidth)) + windowWidth,
               windowWidth * 3 -
               (dragX! - (xPos.current + windowWidth)) +
-              windowWidth
+              windowWidth,
             );
         let start = expandedViewWindow.start + width / 3;
 
@@ -560,7 +570,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           zIndex: 2,
           width: 120,
           backgroundColor: trackModel.isSelected ? "yellow" : "var(--bg-color)",
-          color: trackModel.options?.legendFontColor ? trackModel.options.legendFontColor : trackModel.isSelected ? "black" : "var(--font-color)",
+          color: trackModel.options?.legendFontColor
+            ? trackModel.options.legendFontColor
+            : trackModel.isSelected
+              ? "black"
+              : "var(--font-color)",
           marginBottom: "1px", // we need 1 px margin here for tracklegend axis, since it uses the full height and we are using outline
         }}
       >
@@ -660,9 +674,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : 40,
           position: "relative",
           WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-          WebkitPerspective: `${0}px`,
+          WebkitPerspective: `${windowWidth + 120}px`,
           backfaceVisibility: "hidden",
-          perspective: `${0}px`,
+          perspective: `${windowWidth + 120}px`,
         }}
       >
         <div

@@ -103,9 +103,8 @@ export default function RootLayout(props: GenomeHubProps) {
   const { clearHistory } = useUndoRedo();
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
-    props.showGenomeNavigator !== undefined ||
-    props.showNavBar !== undefined ||
-    props.showToolBar !== undefined;
+    (props.genomeName && props.tracks && props.viewRegion) ||
+    props.customGenome;
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
@@ -191,33 +190,46 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                    props.viewRegion === null
+                  props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
-              })
+                width:
+                  props.width !== null && props.width !== undefined
+                    ? props.width
+                    : null,
+                height:
+                  props.height !== null && props.height !== undefined
+                    ? props.height
+                    : null,
+              }),
             );
           }
         } else {
-
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
               customGenome: props.customGenome,
-              width: props.width,
-              height: props.height,
-            })
+              width:
+                props.width !== null && props.width !== undefined
+                  ? props.width
+                  : null,
+              height:
+                props.height !== null && props.height !== undefined
+                  ? props.height
+                  : null,
+            }),
           );
         }
       }
@@ -488,7 +500,6 @@ export default function RootLayout(props: GenomeHubProps) {
         </motion.div>
       )}
 
-      {/* Mouse-following tool tooltip */}
       <MouseFollowingTooltip />
     </div>
   );

@@ -1,4 +1,20 @@
 # Version history
+## 59.2.5
+- improved initial load 
+- fixed bug causing slow down when viewing vcf tracks
+- added export function, for users using package to obtain information about the trackstate
+
+## 59.2.4
+- fixed performance issue when dragging track due to translateX
+- fixed performance issue when updating pointer position on track
+
+## 59.2.3
+- added height and width property to package, user can change the size of container holding tracks
+
+## 59.2.2
+- fixed config menu position in package
+- fixed bin and normalize options for hic track 
+
 ## 59.2.1
 - recreated ReactModal and removed dependency on package
 - recreated trackfacet and table 

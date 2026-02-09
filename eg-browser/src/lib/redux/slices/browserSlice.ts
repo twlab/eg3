@@ -33,8 +33,8 @@ export interface BrowserSession {
   overrideViewRegion: GenomeCoordinate | null;
   customGenome?: boolean | null;
   chromosomes?: Array<{ name: string; length: number }> | null;
-  height?: number;
-  width?: number;
+  height?: null | number;
+  width?: null | number;
 }
 
 // MARK: - State
@@ -56,6 +56,8 @@ export const browserSlice = createSlice({
         genome: IGenome;
         viewRegion?: GenomeCoordinate;
         additionalTracks?: ITrackModel[];
+        width?: null | number;
+        height?: null | number;
       }>
     ) => {
       //TO DO url param to also get bundleId and get it here as a property for initial startup
@@ -63,6 +65,7 @@ export const browserSlice = createSlice({
         genome,
         viewRegion: overrideViewRegion,
         additionalTracks = [],
+        width = null, height = null
       } = action.payload;
 
       const { defaultRegion, defaultTracks: tracks = [] } = genome;
@@ -94,6 +97,8 @@ export const browserSlice = createSlice({
         metadataTerms: [],
         regionSets: [],
         selectedRegionSet: null,
+        width: width,
+        height: height,
       };
 
       browserSessionAdapter.addOne(state.sessions, nextSession);

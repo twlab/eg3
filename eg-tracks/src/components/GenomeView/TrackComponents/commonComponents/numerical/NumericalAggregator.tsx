@@ -23,7 +23,7 @@ export class NumericalAggregator {
     const { xToFeaturesForward, xToFeaturesReverse } = aggregator.makeXMap(
       data,
       viewRegion,
-      width
+      width,
     );
 
     return [
@@ -41,8 +41,6 @@ export class NumericalAggregator {
       hasReverse = false,
       hasForward = false;
     if (data) {
-      const aggregator = new FeatureAggregator();
-
       const [xToValueBeforeSmooth, xToValue2BeforeSmooth] =
         this.aggregateFeatures(data, viewRegion, width, aggregateMethod);
 

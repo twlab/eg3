@@ -26,10 +26,10 @@ class BamSource {
       });
     } else {
       const baiFilehandle = new BlobFile(
-        param.filter((f) => f.name.endsWith(".bai"))[0]
+        param.filter((f) => f.name.endsWith(".bai"))[0],
       );
       const bamFilehandle = new BlobFile(
-        param.filter((f) => !f.name.endsWith(".bai"))[0]
+        param.filter((f) => !f.name.endsWith(".bai"))[0],
       );
       this.bam = new BamFile({
         bamFilehandle,
@@ -48,14 +48,14 @@ class BamSource {
     }
 
     const promises = locusArr.map((locus) =>
-      this.bam.getRecordsForRange(locus.chr, locus.start, locus.end)
+      this.bam.getRecordsForRange(locus.chr, locus.start, locus.end),
     );
 
     const dataForEachSegment = await Promise.all(promises);
 
-    const flattened = dataForEachSegment.flat(1);
+    const flattened = dataForEachSegment.flat();
     const alignments = flattened.map((r) =>
-      Object.assign(r, { ref: this.bam.indexToChr[r.get("seq_id")].refName })
+      Object.assign(r, { ref: this.bam.indexToChr[r.get("seq_id")].refName }),
     );
 
     return alignments;

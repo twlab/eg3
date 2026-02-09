@@ -8,6 +8,7 @@ import {
 } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 
+
 function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
@@ -44,12 +45,14 @@ function ConfigMenuComponent(props: any) {
   useEffect(() => {
     if (menuRef.current) {
       const menuRect = menuRef.current.getBoundingClientRect();
+      const topFromPage = menuRect.top + window.scrollY;
+      const leftFromPage = menuRect.left + window.scrollX;
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // exact position of mouse click inside trackmanager
-      let left = mouseX - 19; // padding of trackmanager is 20px so we need to adjust here, 1 px is border left
-      let top = mouseY - 167; // this is the height of navBar, 100px + genomeNavigator, 65px, 2px for border top and bottom
+      // Calculate position relative to the positioned container
+      let left = mouseX - leftFromPage;
+      let top = mouseY - topFromPage;
 
       // // Convert to viewport coordinates to check overflow
       // const viewportX = mouseX - window.scrollX;
@@ -61,8 +64,10 @@ function ConfigMenuComponent(props: any) {
       }
 
       // Check if menu would overflow bottom edge of viewport
-      if (top + menuRect.height > viewportHeight) {
-        top = (top - menuRect.height);
+      if (menuData.viewportY + menuRect.height > viewportHeight) {
+        const diff = (menuData.viewportY + menuRect.height) - viewportHeight
+
+        top = (top - diff);
       }
 
       // // Ensure menu doesn't go off left edge
