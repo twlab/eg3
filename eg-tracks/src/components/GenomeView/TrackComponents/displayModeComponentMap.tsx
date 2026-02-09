@@ -1422,12 +1422,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-    console.log(trackState,
-      configOptions,
-      updatedLegend,
-      trackModel,
-      errorInfo,
-      handleRetryFetchTrack,)
+
     const legend = (
       <TrackLegend
         height={40}
@@ -2310,10 +2305,10 @@ function formatMatplotData(
 ) {
   if (initialLoad && regionLoci?.length) {
 
-    const groupResult = regionLoci.map(() => []);
+    const groupResult: any = regionLoci.map(() => []);
 
     genesArr.forEach((geneArr: any[]) => {
-      const regionGroups = regionLoci.map(() => []);
+      const regionGroups: any = regionLoci.map(() => []);
 
       geneArr.forEach((record) => {
         const feature = new NumericalFeature(

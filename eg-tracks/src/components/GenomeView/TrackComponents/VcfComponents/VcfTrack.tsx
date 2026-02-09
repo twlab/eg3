@@ -136,7 +136,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
 
   if (options.displayMode === VcfDisplayModes.AUTO) {
     if (currentViewLength > 100000) {
-      console.log("using density mode");
+
       if (
         initialLoad ||
         options.forceSvg ||
@@ -161,7 +161,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
         visualizer = currentVisualizer.current;
       }
     } else {
-      console.log("using HUH");
+
       scalesRef.current = computeColorScales(
         data,
         options.colorScaleKey,

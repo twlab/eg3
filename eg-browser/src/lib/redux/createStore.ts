@@ -2,12 +2,6 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import {
   persistStore,
   persistReducer,
-  FLUSH,
-  REHYDRATE,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER,
   createMigrate,
   createTransform,
 } from "redux-persist";
@@ -95,10 +89,10 @@ const createStorageWithErrorHandling = (storage: any) => {
 };
 
 const undoableConfig = {
-  limit: 10, // Reduced from 20 to save storage space
+  limit: 20,
   filter: excludeAction([setCurrentSession.type]),
-  // debug: process.env.NODE_ENV === "development",
-  debug: false,
+
+  debug: false, // Set to true to enable detailed logging of undoable actions and state changes
 };
 
 export interface StoreConfig {

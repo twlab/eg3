@@ -1,4 +1,9 @@
 # Version history
+## 59.2.5
+- improved initial load 
+- fixed bug causing slow down when viewing vcf tracks
+- added export function, for users using package to obtain information about the trackstate
+
 ## 59.2.4
 - fixed performance issue when dragging track due to translateX
 - fixed performance issue when updating pointer position on track

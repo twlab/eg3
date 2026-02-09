@@ -384,8 +384,9 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           }
         }
       } catch (error) {
+
         responses = {
-          error: `Error fetching data for track ${trackModel.name}`,
+          error: error["message"] || `Error fetching data for track ${trackModel.name}`,
           Error: error,
           trackModel: trackModel,
         };

@@ -1521,7 +1521,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           if (cache) {
             if (cache["Error"]) {
-              console.log("here")
               cacheKeysWithData[trackToDrawKey] = false;
             }
             else if (

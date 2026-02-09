@@ -131,11 +131,18 @@ export const trackFetchFunction: { [key: string]: any } = {
 
           return response.json();
         } catch (error) {
-          console.error(
-            `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
-            error
-          );
-          throw error;
+
+          if (region.end - region.start > 30000) {
+            throw new Error("Region is higher then 30000");
+          }
+          else {
+            console.error(
+              `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
+              error
+            );
+            throw error;
+          }
+
         }
       });
 
