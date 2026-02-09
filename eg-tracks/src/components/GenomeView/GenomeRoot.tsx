@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 16;
+const MAX_WORKERS = 30;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -182,10 +182,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               width
                 ? width
                 : (!size.width || size.width - legendWidth <= 0
-                    ? window.innerWidth
-                    : size.width) -
-                  legendWidth -
-                  40
+                  ? window.innerWidth
+                  : size.width) -
+                legendWidth -
+                40
             }
             userViewRegion={userViewRegion}
             highlights={highlights}
@@ -300,10 +300,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               width
                 ? width
                 : (!size.width || size.width - legendWidth <= 0
-                    ? window.innerWidth
-                    : size.width) -
-                    legendWidth -
-                    40,
+                  ? window.innerWidth
+                  : size.width) -
+                legendWidth -
+                40,
             )}
             // subtract legend width so it matches the width with eg2,
             // 40  = 20 left margin + 20 of right margin for scroll bar

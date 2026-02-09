@@ -79,8 +79,15 @@ class TabixSource {
    */
   async detectChromosomeNaming() {
     try {
-      const referenceSequenceNames =
-        await this.tabix.getReferenceSequenceNames();
+      // Add timeout to fail fast (5 seconds)
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout: Failed to detect chromosome naming")), 2000)
+      );
+
+      const referenceSequenceNames = await Promise.race([
+        this.tabix.getReferenceSequenceNames(),
+        timeoutPromise,
+      ]);
 
       const firstChrom = referenceSequenceNames[0];
 
@@ -94,7 +101,8 @@ class TabixSource {
       return this.chromNamingCache;
     } catch (error) {
       console.error(
-        "Error detecting chromosome naming. Check URL and file format."
+        "Error detecting chromosome naming. Check URL and file format.",
+        error
       );
       throw error;
     }

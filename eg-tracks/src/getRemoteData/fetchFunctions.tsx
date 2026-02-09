@@ -266,6 +266,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           let hasError = false;
           let responses: Array<any> | { [key: string]: any } = [];
           for (const trackItem of item.tracks) {
+            trackItem["shouldPlaceRegion"] = item.shouldPlaceRegion;
             const response: any = await fetchData(trackItem);
             if (typeof response === "object" && "Error" in response) {
               hasError = true;
@@ -349,15 +350,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -640,7 +641,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       missingIdx,
       regionSetStartBp:
         visData?.visRegion?._endBase - visData?.visRegion?._startBase ===
-        data.bpRegionSize
+          data.bpRegionSize
           ? 0
           : null,
       fetchNewRegion: data.fetchNewRegion,
