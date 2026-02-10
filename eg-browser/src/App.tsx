@@ -6,6 +6,7 @@ import { SessionData } from "./lib/hooks/useSessionData";
 import "./index.css";
 
 export interface AppProps {
+export interface AppProps {
   storeConfig?: AppProviderProps["storeConfig"];
   onSessionUpdate?: (data: SessionData | null) => void;
   [key: string]: any;
@@ -14,7 +15,10 @@ export interface AppProps {
 /**
  * app component can be exported and used as a package.
  * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
+ * app component can be exported and used as a package.
+ * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
  *
+ * @param props configuration and layout props
  * @param props configuration and layout props
  */
 

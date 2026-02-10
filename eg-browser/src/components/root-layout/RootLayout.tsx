@@ -42,6 +42,7 @@ import {
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
 import { use, useEffect, useRef } from "react";
+import { use, useEffect, useRef } from "react";
 
 import {
   GenomeSerializer,
@@ -82,6 +83,8 @@ export interface GenomeHubProps {
   showGenomeNavigator?: boolean;
   showNavBar?: boolean;
   showToolBar?: boolean;
+  width?: number;
+  height?: number;
   width?: number;
   height?: number;
 }
