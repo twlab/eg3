@@ -12,7 +12,6 @@ import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import {
   AppStateSaver,
   ITrackModel,
-  HighlightInterval,
   DisplayedRegionModel,
   OpenInterval,
   getGenomeConfig,
@@ -29,7 +28,7 @@ export interface BundleProps {
   customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
   darkTheme: boolean;
   genomeName: string;
-  highlights: HighlightInterval[];
+  highlights: Array<any>;
   isShowingNavigator: boolean;
   layout: any;
   metadataTerms: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
@@ -43,12 +42,6 @@ export interface BundleProps {
   genomeId: string | null;
   viewInterval: { start: number; end: number } | null;
   title?: string;
-}
-
-interface SessionBundle {
-  bundleId: string;
-  currentId: string;
-  sessionsInBundle: { [id: string]: Session };
 }
 
 interface Session {

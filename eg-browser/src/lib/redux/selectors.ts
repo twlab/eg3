@@ -7,6 +7,6 @@ export const selectCurrentState = createSelector(
   [(state: RootState) => state.browser, selectCurrentSession],
   // second argument get the results from array of input selectors use them in the function
   (browser, currentSession) => {
-    return currentSession ? { ...browser } : null;
+    return currentSession ? browser : null;
   }
 );

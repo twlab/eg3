@@ -41,7 +41,7 @@ import {
   setToolBarVisibility,
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { useEffect, useRef } from "react";
+import { use, useEffect, useRef } from "react";
 
 import {
   GenomeSerializer,
@@ -82,6 +82,8 @@ export interface GenomeHubProps {
   showGenomeNavigator?: boolean;
   showNavBar?: boolean;
   showToolBar?: boolean;
+  width?: number;
+  height?: number;
 }
 
 export default function RootLayout(props: GenomeHubProps) {
@@ -101,9 +103,8 @@ export default function RootLayout(props: GenomeHubProps) {
   const { clearHistory } = useUndoRedo();
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
-    props.showGenomeNavigator !== undefined ||
-    props.showNavBar !== undefined ||
-    props.showToolBar !== undefined;
+    (props.genomeName && props.tracks && props.viewRegion) ||
+    props.customGenome;
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
@@ -170,6 +171,7 @@ export default function RootLayout(props: GenomeHubProps) {
     } else if (!initialState.current) {
       usePrevSession = false;
     }
+
     if (
       !usePrevSession &&
       ((props.genomeName && props.tracks && props.viewRegion) ||
@@ -192,7 +194,15 @@ export default function RootLayout(props: GenomeHubProps) {
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
-              })
+                width:
+                  props.width !== null && props.width !== undefined
+                    ? props.width
+                    : null,
+                height:
+                  props.height !== null && props.height !== undefined
+                    ? props.height
+                    : null,
+              }),
             );
           }
         } else {
@@ -211,7 +221,15 @@ export default function RootLayout(props: GenomeHubProps) {
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
               customGenome: props.customGenome,
-            })
+              width:
+                props.width !== null && props.width !== undefined
+                  ? props.width
+                  : null,
+              height:
+                props.height !== null && props.height !== undefined
+                  ? props.height
+                  : null,
+            }),
           );
         }
       }
@@ -482,7 +500,6 @@ export default function RootLayout(props: GenomeHubProps) {
         </motion.div>
       )}
 
-      {/* Mouse-following tool tooltip */}
       <MouseFollowingTooltip />
     </div>
   );

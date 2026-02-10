@@ -183,7 +183,9 @@ export default function PublicDataHubs() {
     }
   }, [currentSession]);
   function onTracksAdded(tracks: TrackModel[]) {
+
     if (currentSession) {
+
       dispatch(
         updateCurrentSession({
           tracks: [...currentSession.tracks, ...tracks],

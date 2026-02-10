@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
+import ReactDOM from "react-dom";
 
 import _ from "lodash";
-import ReactModal from "react-modal";
 import HubTrackTable from "./HubTrackTable";
 import { TrackModel, ITrackModel, variableIsObject } from "wuepgg3-track";
 
@@ -373,38 +373,63 @@ const FacetTable: React.FC<FacetTableProps> = ({
         <button onClick={() => handleOpenModal(id)} className="facet-item">
           <span className="green">{addUrls.length}</span>/{found.length}
         </button>
-        <ReactModal
-          isOpen={showModalId === id}
-          contentLabel="track list"
-          ariaHideApp={false}
-          id={id}
-          style={{
-            overlay: { zIndex: 4, backgroundColor: "rgba(111,107,101, 0.7)" },
-            content: {},
-          }}
-        >
-          <span
-            className="text-right"
+        {showModalId === id && ReactDOM.createPortal(
+          <div
             style={{
-              cursor: "pointer",
-              color: "red",
-              fontSize: "2em",
-              position: "absolute",
-              top: "-5px",
-              right: "15px",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(111,107,101, 0.7)",
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onClick={handleCloseModal}
+            role="dialog"
+            aria-label="track list"
           >
-            ×
-          </span>
-          <HubTrackTable
-            tracks={found}
-            addedTrackSets={addedTrackSets}
-            onTracksAdded={onTracksAdded}
-            rowHeader={rowHeader}
-            columnHeader={columnHeader}
-          />
-        </ReactModal>
+            <div
+              style={{
+                position: "relative",
+                backgroundColor: "white",
+                padding: "16px 20px 10px 15px",
+                borderRadius: "4px",
+                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                textAlign: "left",
+                width: "90vw",
+                height: "90vh",
+                overflow: "auto",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span
+                className="text-right"
+                style={{
+                  cursor: "pointer",
+                  color: "red",
+                  fontSize: "2em",
+                  position: "absolute",
+                  top: "-5px",
+                  right: "20px",
+                }}
+                onClick={handleCloseModal}
+              >
+                ×
+              </span>
+              <HubTrackTable
+                tracks={found}
+                addedTrackSets={addedTrackSets}
+                onTracksAdded={onTracksAdded}
+                rowHeader={rowHeader}
+                columnHeader={columnHeader}
+              />
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     );
   };

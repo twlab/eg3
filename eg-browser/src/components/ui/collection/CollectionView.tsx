@@ -1,142 +1,150 @@
-import { useMemo, useState } from 'react';
-import { useElementGeometry } from '@/lib/hooks/useElementGeometry';
+import { useMemo, useState } from "react";
+import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
 
 export interface ICollectionViewDataSource<T> {
-    section?: string;
-    id: string;
-    title: string;
-    data: T;
+  section?: string;
+  id: string;
+  title: string;
+  data: any;
+  genomeName?: string;
 }
 
 interface IGroupedData<T> {
-    name: string;
-    items: ICollectionViewDataSource<T>[];
+  name: string;
+  items: ICollectionViewDataSource<T>[];
 }
 
 export default function CollectionView<T>({
-    data,
-    onSelect,
-    selectedIds,
+  data,
+  onSelect,
+  selectedIds,
+  isPrimaryGenome,
 }: {
-    data: ICollectionViewDataSource<T>[];
-    onSelect: (element: ICollectionViewDataSource<T>) => void;
-    selectedIds?: Set<string>;
+  data: ICollectionViewDataSource<T>[];
+  onSelect: (element: ICollectionViewDataSource<T>) => void;
+  selectedIds?: Set<string | undefined>;
+  isPrimaryGenome?: boolean;
 }) {
-    const [searchQuery, setSearchQuery] = useState("");
-    const searchBarGeometry = useElementGeometry();
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchBarGeometry = useElementGeometry();
 
-    const filteredData = useMemo(() => {
-        if (!searchQuery) return data;
+  const filteredData = useMemo(() => {
+    if (!searchQuery) return data;
 
-        return data.filter(item => {
-            const searchableValues = [
-                item.title,
-                item.id,
-                item.section,
-                ...Object.values(item.data as object || {})
-            ];
+    return data.filter((item) => {
+      const searchableValues = [
+        item.title,
+        item.id,
+        item.section,
+        ...Object.values((item.data as object) || {}),
+      ];
 
-            return searchableValues.some(value =>
-                String(value).toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        });
-    }, [data, searchQuery]);
+      return searchableValues.some((value) =>
+        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [data, searchQuery]);
 
-    const organizedData = useMemo(() => {
-        const hasAnySections = filteredData.some(item => item.section !== undefined);
-
-        if (!hasAnySections) {
-            return [{ name: '', items: filteredData }];
-        }
-
-        const grouped: Record<string, ICollectionViewDataSource<T>[]> = {};
-
-        filteredData.forEach(item => {
-            const sectionName = item.section || 'Other';
-            if (!grouped[sectionName]) {
-                grouped[sectionName] = [];
-            }
-            grouped[sectionName].push(item);
-        });
-
-        return Object.entries(grouped)
-            .map(([name, items]) => ({
-                name,
-                items
-            }))
-            .filter(group => group.items.length > 0);
-    }, [filteredData]);
-
-    const renderSearchBar = () => (
-        <div
-            ref={searchBarGeometry.ref}
-            className="sticky top-0 z-20 pb-2 flex items-center bg-white dark:bg-dark-background"
-        >
-            <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-1 border border-gray-300 rounded-full"
-            />
-        </div>
+  const organizedData = useMemo(() => {
+    const hasAnySections = filteredData.some(
+      (item) => item.section !== undefined
     );
 
-    const renderItem = (item: ICollectionViewDataSource<T>) => (
-        <div
-            key={item.id}
-            className="flex items-center justify-between py-1 max-w-full min-w-0 gap-2"
-        >
-            <span
-                className="text-sm truncate min-w-0 flex-1"
-                title={item.title}
-            >
-                {item.title}
-            </span>
-            {selectedIds !== undefined && (
-                <>
-                    {selectedIds.has(item.id) ? (
-                        <div className="w-6 h-6 rounded-md bg-green-200 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
-                            <CheckIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
-                        </div>
-                    ) : (
-                        <button
-                            className="w-6 h-6 rounded-md bg-secondary dark:bg-dark-secondary flex items-center justify-center hover:bg-purple-200 flex-shrink-0"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onSelect(item);
-                            }}
-                        >
-                            <PlusIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
-                        </button>
-                    )}
-                </>
-            )}
-        </div>
-    );
+    if (!hasAnySections) {
+      return [{ name: "", items: filteredData }];
+    }
 
-    const renderGroup = (group: IGroupedData<T>) => (
-        <div key={group.name} className="mb-4 relative">
-            {group.name && (
-                <h2
-                    className="text-base font-medium mb-1 sticky z-10 pb-1 bg-white dark:bg-dark-background"
+    const grouped: Record<string, ICollectionViewDataSource<T>[]> = {};
 
-                    style={{ top: `${searchBarGeometry.height}px` }}
-                >
-                    {group.name}
-                </h2>
-            )}
-            <div className={group.name ? "pl-3 border-l border-gray-200" : ""}>
-                {group.items.map(item => renderItem(item))}
+    filteredData.forEach((item) => {
+      const sectionName = item.section || "Other";
+      if (!grouped[sectionName]) {
+        grouped[sectionName] = [];
+      }
+      grouped[sectionName].push(item);
+    });
+
+    return Object.entries(grouped)
+      .map(([name, items]) => ({
+        name,
+        items,
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [filteredData]);
+
+  const renderSearchBar = () => (
+    <div
+      ref={searchBarGeometry.ref}
+      className="sticky top-0 z-20 pb-2 flex items-center bg-white dark:bg-dark-background"
+    >
+      <input
+        type="text"
+        placeholder="Search..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full px-4 py-1 border border-gray-300 rounded-full"
+      />
+    </div>
+  );
+
+  const renderItem = (item: ICollectionViewDataSource<T>) => (
+    <div
+      key={item.id}
+      className="flex items-center justify-between py-1 max-w-full min-w-0 gap-2"
+    >
+      <div className="flex items-center min-w-0 flex-1 gap-2 overflow-hidden">
+        <span className="text-sm truncate min-w-0 flex-grow" style={{ maxWidth: '70%' }} title={item.title}>
+          {item.title}
+        </span>
+        {item?.section === 'Genome Comparison' && isPrimaryGenome === false && (
+          <span className="text-xs text-red-500 whitespace-nowrap ml-2 flex-shrink-0" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Only available in primary genome
+          </span>
+        )}
+      </div>
+      {selectedIds !== undefined && !(
+        item?.section === 'Genome Comparison' && isPrimaryGenome === false
+      ) && (
+          ((item?.section === 'Genome Comparison' && selectedIds.has(item.data.url)) || selectedIds.has(item.id)) ? (
+            <div className="w-6 h-6 rounded-md bg-green-200 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
+              <CheckIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
             </div>
-        </div>
-    );
+          ) : (
+            <button
+              className="w-6 h-6 rounded-md bg-secondary dark:bg-dark-secondary flex items-center justify-center hover:bg-purple-200 flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(item);
+              }}
+            >
+              <PlusIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
+            </button>
+          )
+        )}
+    </div>
+  );
 
-    return (
-        <div className="max-w-full">
-            {renderSearchBar()}
-            {organizedData.map(group => renderGroup(group))}
-        </div>
-    );
+  const renderGroup = (group: IGroupedData<T>) => (
+    <div key={group.name} className="mb-4 relative">
+      {group.name && (
+        <h2
+          className="text-base font-medium mb-1 sticky z-10 pb-1 bg-white dark:bg-dark-background"
+          style={{ top: `${searchBarGeometry.height}px` }}
+        >
+          {group.name}
+        </h2>
+      )}
+      <div className={group.name ? "pl-3 border-l border-gray-200" : ""}>
+        {group.items.map((item) => renderItem(item))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="max-w-full">
+      {renderSearchBar()}
+      {organizedData.map((group) => renderGroup(group))}
+    </div>
+  );
 }

@@ -2,12 +2,6 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import {
   persistStore,
   persistReducer,
-  FLUSH,
-  REHYDRATE,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER,
   createMigrate,
   createTransform,
 } from "redux-persist";
@@ -95,9 +89,10 @@ const createStorageWithErrorHandling = (storage: any) => {
 };
 
 const undoableConfig = {
-  limit: 10, // Reduced from 20 to save storage space
+  limit: 20,
   filter: excludeAction([setCurrentSession.type]),
-  debug: process.env.NODE_ENV === "development",
+
+  debug: false, // Set to true to enable detailed logging of undoable actions and state changes
 };
 
 export interface StoreConfig {
@@ -142,6 +137,18 @@ export function createAppStore(config: StoreConfig = {}) {
     // Return a store without persistence
     const store = configureStore({
       reducer: rootReducer,
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+          serializableCheck: false,
+        }).concat((store) => (next) => (action) => {
+          console.log('Dispatching action:', action.type, action);
+          if (action.type === 'browser/updateCurrentSession') {
+            console.trace('Call stack for updateCurrentSession:');
+          }
+          const result = next(action);
+          // console.log('Next state:', store.getState());
+          return result;
+        }),
     });
 
     return { store, persistor: null };
@@ -169,9 +176,15 @@ export function createAppStore(config: StoreConfig = {}) {
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
-        serializableCheck: {
-          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        },
+        serializableCheck: false,
+      }).concat((store) => (next) => (action) => {
+        // console.log('Dispatching action:', action.type, action);
+        // if (action.type === 'browser/updateCurrentSession') {
+        //   console.trace('Call stack for updateCurrentSession:');
+        // }
+        const result = next(action);
+        // console.log('Next state:', store.getState());
+        return result;
       }),
   });
 

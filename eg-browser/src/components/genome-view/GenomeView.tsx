@@ -64,7 +64,7 @@ export default function GenomeView() {
     dispatch(
       updateCurrentSession({
         userViewRegion: coordinate,
-      })
+      }),
     );
   };
 
@@ -73,26 +73,27 @@ export default function GenomeView() {
       updateCurrentSession({
         viewRegion: coordinate,
         userViewRegion: coordinate,
-      })
+      }),
     );
   };
   function handleSetSelected(
     set: RegionSet | null,
-    coordinate: GenomeCoordinate | null
+    coordinate: GenomeCoordinate | null,
   ) {
     if (currentSession?.selectedRegionSet || set) {
       dispatch(
         updateCurrentSession({
           selectedRegionSet: set,
           userViewRegion: coordinate,
-        })
+        }),
       );
     }
   }
 
   return currentSession &&
     genomeConfig &&
-    currentSession.genomeId === genomeConfig.name ? (
+    (currentSession.genomeId === genomeConfig.name ||
+      currentSession.genomeId === genomeConfig.id) ? (
     <TrackContainerRepresentable
       key={currentSession.id}
       genomeName={currentSession?.genomeId ? currentSession?.genomeId : "hg38"}
@@ -117,6 +118,8 @@ export default function GenomeView() {
       overrideViewRegion={currentSession?.overrideViewRegion}
       currentState={currentState}
       darkTheme={darkTheme}
+      width={currentSession.width}
+      height={currentSession.height}
     />
   ) : null;
 }
