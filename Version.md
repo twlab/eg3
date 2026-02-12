@@ -1,4 +1,8 @@
 # Version history
+
+## 59.3.0
+- Allow consuming app, to obtain session data when used as a package
+
 ## 59.2.5
 - improved initial load 
 - fixed bug causing slow down when viewing vcf tracks
