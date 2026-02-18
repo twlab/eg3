@@ -58,7 +58,6 @@ interface FiberTrackProps {
   onClose: any;
   xvaluesData?: any;
   dataIdx?: number;
-
 }
 
 interface AggregatedFiber {
@@ -87,8 +86,6 @@ export const DEFAULT_OPTIONS = {
  * @author Daofeng Li
  */
 const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
-
-
   const {
     onClose,
     ROW_HEIGHT,
@@ -108,8 +105,6 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     viewWindow,
   } = props;
 
-
-
   /**
    * Renders one annotation.
    *
@@ -128,11 +123,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
    * @returns
    */
   const aggregateFibers = useMemo(
-    () => (
-      data: Fiber[],
-      viewRegion: DisplayedRegionModel,
-      width: number
-    ) => {
+    () => (data: Fiber[], viewRegion: DisplayedRegionModel, width: number) => {
       width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
       const xToFibers = Array(width).fill(null);
       for (let x = 0; x < width; x++) {
@@ -148,7 +139,8 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
       }) as FeaturePlacementResult;
       if (result && result.placements) {
         for (const placedFeature of result.placements) {
-          const { feature, xSpan, visiblePart } = placedFeature as PlacedFeature;
+          const { feature, xSpan, visiblePart } =
+            placedFeature as PlacedFeature;
           const { relativeStart, relativeEnd } = visiblePart;
           const segmentWidth = relativeEnd - relativeStart;
           const startX = Math.max(0, Math.floor(xSpan.start));
@@ -161,7 +153,9 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
             if (bs >= relativeStart && bs < relativeEnd) {
               const x =
                 startX +
-                Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
+                Math.floor(
+                  ((bs - relativeStart) / segmentWidth) * (endX - startX),
+                );
               xToFibers[x].on += 1;
             }
           });
@@ -170,14 +164,18 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
             if (bs >= relativeStart && bs < relativeEnd) {
               const x =
                 startX +
-                Math.floor(((bs - relativeStart) / segmentWidth) * (endX - startX));
+                Math.floor(
+                  ((bs - relativeStart) / segmentWidth) * (endX - startX),
+                );
               xToFibers[x].off += 1;
             }
           });
         }
       }
       return xToFibers;
-    }, []);
+    },
+    [],
+  );
 
   const computeScales = (xMap: AggregatedFiber[], height: number) => {
     const pcts = xMap.map((x) => x.on / (x.on + x.off));
@@ -200,15 +198,10 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     };
   };
 
-
   const visualizer = (xMap: AggregatedFiber[], scales: any) => {
     const { pctToY, countToY, pcts, counts } = scales;
-    const { height, color, color2, displayMode, packageVersion } =
-      options;
-    const {
-      forceSvg,
-      updatedLegend
-    } = props;
+    const { height, color, color2, displayMode, packageVersion } = options;
+    const { forceSvg, updatedLegend } = props;
     const colorScale = scaleLinear()
       .domain([0, 1])
       .range([color2 as any, color as any])
@@ -217,7 +210,11 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     const lines: Array<any> = [];
     pcts.forEach((pct: number, idx: number) => {
       if (pct) {
-        if (displayMode === FiberDisplayModes.AUTO) {
+        if (
+          (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
+            options.displayMode === FiberDisplayModes.AUTO) ||
+          options.displayMode === FiberDisplayModes.SUMMARY
+        ) {
           const y = pctToY(pct);
           bars.push(
             <rect
@@ -228,7 +225,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
               height={height - y}
               fill={color}
               fillOpacity={0.7}
-            />
+            />,
           );
         } else {
           const fillColor = colorScale(pct);
@@ -241,7 +238,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
               height={height}
               fill={fillColor as any}
               fillOpacity={0.5}
-            />
+            />,
           );
         }
       }
@@ -255,7 +252,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
       const y1 = countToY(current);
       const y2 = countToY(next);
       lines.push(
-        <line key={i} x1={i} y1={y1} x2={i + 1} y2={y2} stroke="#525252" />
+        <line key={i} x1={i} y1={y1} x2={i + 1} y2={y2} stroke="#525252" />,
       );
     }
 
@@ -277,17 +274,17 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     }
     let curParentStyle: any = forceSvg
       ? {
-        position: "relative",
+          position: "relative",
 
-        overflow: "hidden",
-        width: width / 3,
-      }
+          overflow: "hidden",
+          width: width / 3,
+        }
       : {};
     let curEleStyle: any = forceSvg
       ? {
-        position: "relative",
-        transform: `translateX(${-viewWindow.start}px)`,
-      }
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
       : {};
     let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
     return (
@@ -329,9 +326,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
           >
             <>
               <DesignRenderer
-                type={
-                  forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS
-                }
+                type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
                 width={width}
                 height={height}
                 forceSvg={forceSvg}
@@ -347,9 +342,15 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     );
   };
 
-  if (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
+  if (
+    (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
+      options.displayMode === FiberDisplayModes.AUTO) ||
+    options.displayMode === FiberDisplayModes.SUMMARY
+  ) {
     const xMap = aggregateFibers(data, visRegion, width);
+
     const scales = computeScales(xMap, options.height);
+
     return visualizer(xMap, scales);
   }
 
@@ -368,7 +369,5 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     onClose,
   }).component;
 };
-
-FiberTrackComponent.displayName = "FiberTrack";
 
 export default FiberTrackComponent;

@@ -108,7 +108,7 @@ class BigSourceWorkerGmod {
       console.error(
         "Error detecting chromosome naming. Check URL and file format.",
       );
-      throw error;
+      return null;
     }
   }
 

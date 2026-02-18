@@ -1,4 +1,6 @@
 # Version history
+## 59.3.1
+- Added summary and detail displayMode to modbed
 
 ## 59.3.0
 - Allow consuming app, to obtain session data when used as a package

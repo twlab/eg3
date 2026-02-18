@@ -54,5 +54,6 @@ export const VcfDisplayModes = {
 
 export enum FiberDisplayModes {
   AUTO = "auto",
-  HEATMAP = "heatmap",
+  SUMMARY = "summary",
+  DETAIL = "detail",
 }

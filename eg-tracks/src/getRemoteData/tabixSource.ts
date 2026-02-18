@@ -81,7 +81,11 @@ class TabixSource {
     try {
       // Add timeout to fail fast (5 seconds)
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout: Failed to detect chromosome naming")), 2000)
+        setTimeout(
+          () =>
+            reject(new Error("Timeout: Failed to detect chromosome naming")),
+          2000,
+        ),
       );
 
       const referenceSequenceNames = await Promise.race([
@@ -102,9 +106,9 @@ class TabixSource {
     } catch (error) {
       console.error(
         "Error detecting chromosome naming. Check URL and file format.",
-        error
+        error,
       );
-      throw error;
+      return null;
     }
   }
 
