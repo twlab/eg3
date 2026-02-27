@@ -57,6 +57,7 @@ import GRCg7b from "./GRCg7b/GRCg7b";
 import GRCg7w from "./GRCg7w/GRCg7w";
 import phaw5 from "./phaw5/phaw5";
 import mCalJa1_2_pat_X from "./mCalJa1.2.pat.X/mCalJa1.2.pat.X";
+import mT2T_Y_v1 from "./mT2T-Y_v1.0/mT2T-Y_v1.0";
 
 /**
  * All available genomes.
@@ -121,6 +122,7 @@ export const allGenomes = [
   GRCg7w,
   phaw5,
   mCalJa1_2_pat_X,
+  mT2T_Y_v1,
 ];
 
 export const genomeNameToConfig = {};
@@ -166,6 +168,12 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     assemblies: [gorGor4.genome.getName(), gorGor3.genome.getName()],
     color: "yellow",
   },
+  mT2T_Y_v1: {
+    logoUrl: "",
+    assemblies: [mT2T_Y_v1.genome.getName()],
+    color: "yellow",
+  },
+
   gibbon: {
     logoUrl: "https://vizhub.wustl.edu/public/nomLeu3/Gibbon.png",
     assemblies: [nomLeu3.genome.getName()],

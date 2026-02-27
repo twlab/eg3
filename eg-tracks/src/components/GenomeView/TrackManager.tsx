@@ -3186,7 +3186,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       (!initialLoad.current &&
         tracks &&
         !tracks.every((item) => item.waitToUpdate)) ||
-      (initialLoad.current && tracks.every((item) => item.changeConfigInitial))
+      (initialLoad.current && tracks.every((item) => item.changeConfigInitial)) || (initialLoad.current && tracks.length > 0 && trackManagerState.current.tracks.length === 0)
     ) {
       const filteredTracks = tracks.filter(
         (trackModel) => trackModel.type !== "g3d",

@@ -10,7 +10,7 @@ export const GENOME_LIST: Genome[] = [
         "name": "Human",
         "logoUrl": "default/human.png",
         "croppedUrl": "cropped/human.jpeg",
-        "versions": ["hg38", "hg19",  "t2t-chm13-v2.0", "t2t-chm13-v1.1"]
+        "versions": ["hg38", "hg19", "t2t-chm13-v2.0", "t2t-chm13-v1.1"]
     },
     {
         "name": "Chimp",
@@ -23,6 +23,12 @@ export const GENOME_LIST: Genome[] = [
         "logoUrl": "default/gorilla.png",
         "croppedUrl": "cropped/gorilla.jpeg",
         "versions": ["gorGor4", "gorGor3"]
+    },
+    {
+        "name": "mT2T-Y_v1.0",
+        "logoUrl": "",
+        "croppedUrl": "",
+        "versions": ["mT2T-Y_v1.0"]
     },
     {
         "name": "Gibbon",
