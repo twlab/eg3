@@ -1,6 +1,8 @@
 import Chromosome from "../../Chromosome";
 import Genome from "../../Genome";
+import TrackModel from "../../TrackModel";
 
+import annotationTracks from "./annotationTracks.json";
 const genome = new Genome("mT2T-Y_v1.0", [
     new Chromosome("chr1", 206961486),
     new Chromosome("chr2", 188881415),
@@ -32,88 +34,23 @@ const navContext = genome.makeNavContext();
 
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
-    // new TrackModel({
-    //     type: "ruler",
-    //     name: "Ruler",
-    // }),
-    // new TrackModel({
-    //     type: "geneAnnotation",
-    //     name: "refGene",
-    //     genome: "mT2T-Y_v1.0",
-    // }),
-    // new TrackModel({
-    //     type: "geneAnnotation",
-    //     name: "gencodeCompVM25",
-    //     genome: "mT2T-Y_v1.0",
-    // }),
-    // new TrackModel({
-    //     type: "repeatmasker",
-    //     name: "RepeatMasker",
-    //     url: "https://vizhub.wustl.edu/public/mm10/rmsk16.bb",
-    // }),
-    // new TrackModel({
-    //   name: "JASPAR Transcription Factors 2022",
-    //   type: "jaspar",
-    //   url: "https://hgdownload.soe.ucsc.edu/gbdb/mm10/jaspar/JASPAR2022.bb",
-    // }),
-    // new TrackModel({
-    //   type: "dbedgraph",
-    //   url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
-    //   options: {
-    //     dynamicLabels: [
-    //       "stage1",
-    //       "stage2",
-    //       "stage3",
-    //       "stage4",
-    //       "stage5",
-    //       "stage6",
-    //       "stage7",
-    //       "stage8",
-    //       "stage9",
-    //       "stage10",
-    //     ],
-    //     dynamicColors: ["red", "blue", "#00FF00", 0x000000],
-    //     useDynamicColors: true,
-    //   },
-    //   showOnHubLoad: true,
-    // }),
-    // new TrackModel({
-    //     type: "longrange",
-    //     name: "ES-E14 ChIA-PET",
-    //     url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-    // }),
-    // new TrackModel({
-    //     type: "biginteract",
-    //     name: "test bigInteract",
-    //     url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
-    // }),
-    // new TrackModel({
-    //   type: "repeatmasker",
-    //   name: "RepeatMasker",
-    //   url: "https://vizhub.wustl.edu/public/mm10/rmsk16.bb",
-    // }),
-    // new TrackModel({
-    //     type: 'cool',
-    //     name: 'Cool Track',
-    //     url: 'CQMd6V_cRw6iCI_-Unl3PQ'
-    // }),
-    // new TrackModel({
-    //     "type": "dynamicbed",
-    //     "name": "dynamic bed",
-    //     "showOnHubLoad": true,
-    //     "tracks": [
-    //     {
-    //         "type": "bed",
-    //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-    //         "name": "peak1"
-    //     },
-    //     {
-    //         "type": "bed",
-    //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
-    //         "name": "peak2"
-    //     }
-    //     ]
-    // })
+    new TrackModel({
+        type: "ruler",
+        name: "Ruler"
+    }),
+    new TrackModel({
+        "name": "mhaESC",
+        "label": "mhaESC",
+        "type": "refbed",
+        "url": "https://vizhub.wustl.edu/public/mT2T-Y_v1.0/mhaESC.annotation.v1.1.1.20250623.refbed.gz",
+
+    }),
+    new TrackModel({
+        type: "bigbed",
+        name: "mT2T-Y.repeats",
+        url: "https://vizhub.wustl.edu/public/mT2T-Y_v1.0/mT2T-Y.repeats.bb",
+
+    })
 ];
 
 const publicHubData = {
@@ -127,8 +64,8 @@ const mT2T_Y_v1 = {
     navContext: navContext,
     defaultRegion: defaultRegion,
     defaultTracks: defaultTracks,
-    twoBitURL: "",
-
+    twoBitURL: "https://vizhub.wustl.edu/public/mT2T-Y_v1.0/renamed_mhaESC_v1.1_with_mT2T-Y_v1.0.250617.2bit",
+    annotationTracks
 };
 
 export default mT2T_Y_v1;

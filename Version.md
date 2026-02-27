@@ -1,4 +1,8 @@
 # Version history
+## 59.4.0
+- fixed bug where you can't add tracks when there are no tracks
+- added genome
+
 ## 59.3.1
 - Added summary and detail displayMode to modbed
 
