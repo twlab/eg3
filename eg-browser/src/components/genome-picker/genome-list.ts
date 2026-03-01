@@ -25,12 +25,6 @@ export const GENOME_LIST: Genome[] = [
         "versions": ["gorGor4", "gorGor3"]
     },
     {
-        "name": "mT2T-Y_v1.0",
-        "logoUrl": "",
-        "croppedUrl": "",
-        "versions": ["mT2T-Y_v1.0"]
-    },
-    {
         "name": "Gibbon",
         "logoUrl": "default/gibbon.png",
         "croppedUrl": "cropped/gibbon.jpeg",
@@ -88,7 +82,7 @@ export const GENOME_LIST: Genome[] = [
         "name": "Mouse",
         "logoUrl": "default/mouse.png",
         "croppedUrl": "cropped/mouse.jpeg",
-        "versions": ["mm39", "mm10", "mm9"]
+        "versions": ["mm39", "mm10", "mm9", "mT2T-Y_v1.0"]
     },
     {
         "name": "Rat",
