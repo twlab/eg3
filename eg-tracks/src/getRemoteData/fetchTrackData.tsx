@@ -131,11 +131,18 @@ export const trackFetchFunction: { [key: string]: any } = {
 
           return response.json();
         } catch (error) {
-          console.error(
-            `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
-            error
-          );
-          throw error;
+
+          if (region.end - region.start > 30000) {
+            throw new Error("Region is higher then 30000");
+          }
+          else {
+            console.error(
+              `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
+              error
+            );
+            throw error;
+          }
+
         }
       });
 
@@ -292,12 +299,12 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })
           .catch((error) => {
-            fetchInstance = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });
       } else if (trackType === "hic") {
@@ -310,10 +317,12 @@ async function getRemoteData(regionData: any, trackType: string) {
           )
           .then((data: any) => {
             // cachedFetchInstance[regionData.trackModel.url] = null;
-            return data;
+            const fileInfos = cachedFetchInstance[regionData.trackModel.url].getFileInfo();
+            const result = { data, fileInfos }
+            return result;
           })
           .catch((error) => {
-            fetchInstance = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });
       } else {
@@ -324,12 +333,12 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })
           .catch((error) => {
-            fetchInstance = null;
+            cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });
       }

@@ -169,7 +169,6 @@ const GeneSearchBoxBase: React.FC<GeneSearchBoxBaseProps> = ({
               padding: "6px 8px",
               border: "1px solid #e2e8f0",
               borderRadius: "4px",
-              fontSize: "14px",
             },
           }}
           ref={inputRef}

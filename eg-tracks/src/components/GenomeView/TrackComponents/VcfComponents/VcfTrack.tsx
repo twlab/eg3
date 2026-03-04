@@ -3,7 +3,6 @@ import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 import VcfAnnotation from "./VcfAnnotation";
 
-
 import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
 import OpenInterval from "../../../../models/OpenInterval";
 import NumericalTrack from "../commonComponents/numerical/NumericalTrack";
@@ -89,39 +88,41 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
     xvaluesData,
     dataIdx,
     initialLoad,
-    forceSvg
+    forceSvg,
   } = props;
 
   const computeColorScales = useMemo(
-    () => (
-      data: { [key: string]: any },
-      colorKey: string,
-      lowValueColor: any,
-      highValueColor: any
-    ) => {
-      let values: any[];
-      // Flatten all dataCache arrays from each data object
+    () =>
+      (
+        data: { [key: string]: any },
+        colorKey: string,
+        lowValueColor: any,
+        highValueColor: any,
+      ) => {
+        let values: any[];
+        // Flatten all dataCache arrays from each data object
 
-      const allVariants = data.flatMap((d) => d.dataCache || []);
-      if (colorKey === VcfColorScaleKeys.QUAL) {
-        values = allVariants.map((v) => v.variant.QUAL);
-      } else if (colorKey === VcfColorScaleKeys.AF) {
-        values = allVariants.map((v) => {
-          if (v.variant.INFO && v.variant.INFO.hasOwnProperty("AF")) {
-            return v.variant.INFO.AF[0];
-          }
-          return 0;
-        });
-      } else {
-        values = [];
-      }
-      const colorScale = scaleLinear()
-        .domain([0, _.max(values)])
-        .range([lowValueColor, highValueColor])
-        .clamp(true);
-      return colorScale;
-    }, []);
-
+        const allVariants = data.flatMap((d) => d.dataCache || []);
+        if (colorKey === VcfColorScaleKeys.QUAL) {
+          values = allVariants.map((v) => v.variant.QUAL);
+        } else if (colorKey === VcfColorScaleKeys.AF) {
+          values = allVariants.map((v) => {
+            if (v.variant.INFO && v.variant.INFO.hasOwnProperty("AF")) {
+              return v.variant.INFO.AF[0];
+            }
+            return 0;
+          });
+        } else {
+          values = [];
+        }
+        const colorScale = scaleLinear()
+          .domain([0, _.max(values)])
+          .range([lowValueColor, highValueColor])
+          .clamp(true);
+        return colorScale;
+      },
+    [],
+  );
 
   const currentViewLength =
     (viewRegion.getWidth() * viewWindow.getLength()) / width;
@@ -135,6 +136,7 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
 
   if (options.displayMode === VcfDisplayModes.AUTO) {
     if (currentViewLength > 100000) {
+
       if (
         initialLoad ||
         options.forceSvg ||
@@ -144,7 +146,6 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
         !_.isEqual(options, currentViewOptions.current) ||
         !options.usePrimaryNav
       ) {
-
         visualizer = (
           <NumericalTrack
             {...props}
@@ -160,17 +161,17 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
         visualizer = currentVisualizer.current;
       }
     } else {
+
       scalesRef.current = computeColorScales(
         data,
         options.colorScaleKey,
         options.lowValueColor,
-        options.highValueColor
+        options.highValueColor,
       );
 
       if (
         initialLoad ||
         options.forceSvg ||
-
         dataIdx !== currentViewDataIdx.current ||
         !_.isEqual(options, currentViewOptions.current) ||
         !options.usePrimaryNav
@@ -223,13 +224,12 @@ const VcfTrack: React.FC<VcfTrackProps> = (props) => {
         data,
         options.colorScaleKey,
         options.lowValueColor,
-        options.highValueColor
+        options.highValueColor,
       );
 
       if (
         initialLoad ||
         options.forceSvg ||
-
         dataIdx !== currentViewDataIdx.current ||
         !_.isEqual(options, currentViewOptions.current) ||
         !options.usePrimaryNav

@@ -56,11 +56,23 @@ class BigSourceWorkerGmod {
    * @param {string} url - the URL from which to fetch data
    */
   constructor(url) {
-    this.url = url;
     this.bw = new BigWig({
-      filehandle: new RemoteFile(this.url),
+      filehandle: new RemoteFile(url, { fetch: createFetchWithNoCache() }),
     });
+    this.chromNamingCache = null;
     this.useEnsemblStyle = null;
+  }
+
+  /**
+   * Clears browser disk cache
+   */
+  private async clearDiskCache() {
+    if (typeof window !== "undefined" && "caches" in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map((cacheName) => caches.delete(cacheName)),
+      );
+    }
   }
 
   /**
@@ -94,9 +106,9 @@ class BigSourceWorkerGmod {
       return this.chromNamingCache;
     } catch (error) {
       console.error(
-        "Error detecting chromosome naming. Check URL and file format."
+        "Error detecting chromosome naming. Check URL and file format.",
       );
-      throw error;
+      return null;
     }
   }
 
@@ -146,13 +158,16 @@ class BigSourceWorkerGmod {
     }
 
     try {
-      return await this.fetchSource(loci);
+      // await this.clearDiskCache();
+      const result = await this.fetchSource(loci);
+
+      return result;
     } catch (error) {
       try {
         if (typeof window !== "undefined" && "caches" in window) {
           const cacheNames = await caches.keys();
           await Promise.all(
-            cacheNames.map((cacheName) => caches.delete(cacheName))
+            cacheNames.map((cacheName) => caches.delete(cacheName)),
           );
         }
         // recreate the fetch instance and retry once, because it might a disk cache issue

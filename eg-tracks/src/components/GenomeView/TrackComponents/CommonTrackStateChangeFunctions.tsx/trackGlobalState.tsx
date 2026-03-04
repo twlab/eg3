@@ -28,6 +28,7 @@ export function trackGlobalState({
       startWindow: primaryVisData.viewWindow.start,
       visWidth: primaryVisData.visWidth,
       viewWindow: trackState.viewWindow,
+      regionLociArr: trackState.regionLoci,
     };
 
     let trackState2 = {

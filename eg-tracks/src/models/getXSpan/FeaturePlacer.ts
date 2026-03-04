@@ -8,8 +8,6 @@ import { FeatureSegment } from "../FeatureSegment";
 import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
 import ChromosomeInterval from "../ChromosomeInterval";
 import { FeaturePlacementResult, PlacedFeatureGroup } from "../FeatureArranger";
-import _ from "lodash";
-import { off } from "process";
 
 /**
  * Draw information for a Feature
@@ -42,7 +40,7 @@ export class PlacedInteraction {
   constructor(
     interaction: GenomeInteraction,
     xSpan1: OpenInterval,
-    xSpan2: OpenInterval
+    xSpan2: OpenInterval,
   ) {
     this.interaction = interaction;
     if (xSpan1.start <= xSpan2.start) {
@@ -119,7 +117,7 @@ export class FeaturePlacer {
    * @return {FeaturePlacementResult} draw info with placements and metadata
    */
   placeFeatures(
-    options: PlaceFeaturesOptions
+    options: PlaceFeaturesOptions,
   ): FeaturePlacementResult | PlacedFeature {
     const {
       features,
@@ -132,95 +130,102 @@ export class FeaturePlacer {
     } = options;
 
     const drawModel = new LinearDrawingModel(viewRegion, width);
-
     const navContext = viewRegion.getNavigationContext();
     const viewRegionBounds = viewRegion.getContextCoordinates();
-    const placementsForward: Array<any> = [];
-    const placementsReverse: Array<any> = [];
-    // for Annotation, gene can be too small so we dont draw and increment numHidden
+    const placementsForward: PlacedFeature[] | PlacedFeatureGroup[] = [];
+    const placementsReverse: PlacedFeature[] | PlacedFeatureGroup[] = [];
     let numHidden = 0;
-
-    // used to store genome that we have already seen
     const seenLoci = new Set<string>();
+    const isAnnotationMode = mode === PlacementMode.ANNOTATION;
 
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
 
-      // check:  array, has dataCache property, or is a single feature
+      // check: array, has dataCache property, or is a single feature
       const featureArray = Array.isArray(item)
         ? item
-        : item && item.dataCache
-        ? item.dataCache
-        : [item];
+        : item?.dataCache
+          ? item.dataCache
+          : [item];
+
       if (!Array.isArray(featureArray)) {
         continue;
       }
+
       for (const feature of featureArray) {
         if (!feature) {
           continue;
         }
-        if (
-          mode === PlacementMode.ANNOTATION &&
-          drawModel.basesToXWidth(feature.getLength()) < hiddenPixels
-        ) {
+
+        // Check size for ANNOTATION mode
+        if (isAnnotationMode && drawModel.basesToXWidth(feature.getLength()) < hiddenPixels) {
           numHidden++;
           continue;
         }
 
-        const locusId = feature.id
-          ? feature.id
-          : `${feature.locus.start}-${feature.locus.end}`;
-
+        // Generate locusId and check for duplicates
+        const locusId = feature.id ?? `${feature.locus.start}-${feature.locus.end}`;
         if (seenLoci.has(locusId)) {
-          continue; // Skip duplicate feature entirely
+          continue;
         }
         seenLoci.add(locusId);
 
-        for (let contextLocation of feature.computeNavContextCoordinates(
-          navContext
-        )) {
+        // Collect placements for this feature
+        const tmpPlacementForward: PlacedFeature[] = [];
+        const tmpPlacementReverse: PlacedFeature[] = [];
+
+        for (let contextLocation of feature.computeNavContextCoordinates(navContext)) {
           contextLocation = contextLocation.getOverlap(viewRegionBounds);
-          if (contextLocation) {
-            feature;
-            const xSpan = useCenter
-              ? drawModel.baseSpanToXCenter(contextLocation)
-              : drawModel.baseSpanToXSpan(contextLocation);
-            const { visiblePart, isReverse } = this._locatePlacement(
-              feature,
-              navContext,
-              contextLocation
-            );
+          if (!contextLocation) {
+            continue;
+          }
 
-            const placement = {
-              feature,
-              visiblePart,
-              contextLocation,
-              xSpan,
-              isReverse,
-            };
+          const xSpan = useCenter
+            ? drawModel.baseSpanToXCenter(contextLocation)
+            : drawModel.baseSpanToXSpan(contextLocation);
 
-            if (feature.value === undefined || feature.value >= 0) {
-              placementsForward.push(placement);
-            } else if (feature.value < 0) {
-              placementsReverse.push(placement);
-            }
+          const { visiblePart, isReverse } = this._locatePlacement(
+            feature,
+            navContext,
+            contextLocation,
+          );
+
+          const placement: PlacedFeature = {
+            feature,
+            visiblePart,
+            contextLocation,
+            xSpan,
+            isReverse,
+          };
+
+          if (feature.value === undefined || feature.value >= 0) {
+            tmpPlacementForward.push(placement);
+          } else {
+            tmpPlacementReverse.push(placement);
+          }
+        }
+
+
+        if (isAnnotationMode) {
+          if (tmpPlacementForward.length > 0) {
+            placementsForward.push(...this._combineAdjacent(tmpPlacementForward));
+          }
+          if (tmpPlacementReverse.length > 0) {
+            placementsReverse.push(...this._combineAdjacent(tmpPlacementReverse));
+          }
+        } else {
+          if (tmpPlacementForward.length > 0) {
+            placementsForward.push(...tmpPlacementForward);
+          }
+          if (tmpPlacementReverse.length > 0) {
+            placementsReverse.push(...tmpPlacementReverse);
           }
         }
       }
     }
 
-    // Batch combine adjacent features for ANNOTATION mode
-    if (mode === PlacementMode.ANNOTATION) {
-      const groupedForward = this._combineAdjacent(placementsForward);
-      const groupedReverse = this._combineAdjacent(placementsReverse);
-      return {
-        placements: groupedForward,
-        placementsForward: groupedForward,
-        placementsReverse: groupedReverse,
-        numHidden: numHidden,
-      };
-    }
+
 
     return {
       placements: placementsForward,
@@ -230,20 +235,32 @@ export class FeaturePlacer {
     };
   }
 
+
   _combineAdjacent(placements: PlacedFeature[]): PlacedFeatureGroup[] {
-    placements.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    if (placements.length === 0) {
+      return [];
+    }
 
     const groups: PlacedFeatureGroup[] = [];
     let i = 0;
+
     while (i < placements.length) {
       let j = i + 1;
-      while (j < placements.length && lociAreAdjacent(j - 1, j)) {
+
+
+      while (j < placements.length) {
+        const locusA = placements[j - 1].visiblePart.getLocus();
+        const locusB = placements[j].visiblePart.getLocus();
+        if (locusA.end !== locusB.start && locusA.start !== locusB.end) {
+          break;
+        }
         j++;
       }
 
       const placementsInGroup = placements.slice(i, j);
-      const firstPlacement = _.first(placementsInGroup);
-      const lastPlacement = _.last(placementsInGroup);
+      const firstPlacement = placementsInGroup[0];
+      const lastPlacement = placementsInGroup[placementsInGroup.length - 1];
+
       groups.push({
         feature: firstPlacement.feature,
         row: -1,
@@ -253,17 +270,13 @@ export class FeaturePlacer {
         ),
         placedFeatures: placementsInGroup,
       });
+
       i = j;
     }
 
     return groups;
-
-    function lociAreAdjacent(a: number, b: number) {
-      const locusA = placements[a].visiblePart.getLocus();
-      const locusB = placements[b].visiblePart.getLocus();
-      return locusA.end === locusB.start || locusA.start === locusB.end;
-    }
   }
+
   /**
    * Gets the visible part of a feature after it has been placed in a navigation context, as well as if was placed
    * into a reversed part of the nav context.
@@ -287,7 +300,6 @@ export class FeaturePlacer {
 
     // We have a base number, but it could be the end or the beginning of the context locus.
     let contextLocusStart;
-
     if (isReverse) {
       // placedBase is the end base number of the context locus.  Convert to the start.
       contextLocusStart = placedBase - contextLocation.getLength() + 1;
@@ -298,24 +310,15 @@ export class FeaturePlacer {
     // Now, we can compare the context location locus to the feature's locus.
     const distFromFeatureLocus = contextLocusStart - feature.getLocus().start;
     const relativeStart = Math.max(0, distFromFeatureLocus);
-
-    // Calculate the genomic length (in bases) that the context location represents
-    const contextFeatureCoordEnd = navContext.convertBaseToFeatureCoordinate(
-      contextLocation.end
-    );
-    const placedBaseEnd = contextFeatureCoordEnd.getLocus().start;
-    const genomicLength = Math.abs(placedBaseEnd - placedBase);
-
     return {
       visiblePart: new FeatureSegment(
         feature,
         relativeStart,
-        relativeStart + genomicLength
+        relativeStart + contextLocation.getLength()
       ),
       isReverse,
     };
   }
-
   /**
    * Gets draw spans for feature segments, given a parent feature that has already been placed.
    *
@@ -325,7 +328,7 @@ export class FeaturePlacer {
    */
   placeFeatureSegments(
     placedFeature: PlacedFeature,
-    segments: FeatureSegment[]
+    segments: FeatureSegment[],
   ): PlacedSegment[] {
     const pixelsPerBase =
       placedFeature.xSpan.getLength() /
@@ -358,7 +361,7 @@ export class FeaturePlacer {
   placeInteractions(
     interactions: GenomeInteraction[],
     viewRegion: DisplayedRegionModel,
-    width: number
+    width: number,
   ): PlacedInteraction[] {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const viewRegionBounds = viewRegion.getContextCoordinates();
@@ -367,17 +370,17 @@ export class FeaturePlacer {
     const mappedInteractions: Array<any> = [];
     for (const interaction of interactions) {
       let contextLocations1 = navContext.convertGenomeIntervalToBases(
-        interaction.locus1 as ChromosomeInterval
+        interaction.locus1 as ChromosomeInterval,
       );
       let contextLocations2 = navContext.convertGenomeIntervalToBases(
-        interaction.locus2 as ChromosomeInterval
+        interaction.locus2 as ChromosomeInterval,
       );
       // Clamp the locations to the view region
       contextLocations1 = contextLocations1.map(
-        (location) => location.getOverlap(viewRegionBounds)!
+        (location) => location.getOverlap(viewRegionBounds)!,
       );
       contextLocations2 = contextLocations2.map(
-        (location) => location.getOverlap(viewRegionBounds)!
+        (location) => location.getOverlap(viewRegionBounds)!,
       );
       for (const location1 of contextLocations1) {
         for (const location2 of contextLocations2) {
@@ -385,7 +388,7 @@ export class FeaturePlacer {
             const xSpan1 = drawModel.baseSpanToXSpan(location1);
             const xSpan2 = drawModel.baseSpanToXSpan(location2);
             mappedInteractions.push(
-              new PlacedInteraction(interaction, xSpan1, xSpan2)
+              new PlacedInteraction(interaction, xSpan1, xSpan2),
             );
           }
         }
@@ -406,7 +409,7 @@ export class FeaturePlacer {
   placeGraphNodes(
     nodes: GraphNode[],
     viewRegion: DisplayedRegionModel,
-    width: number
+    width: number,
   ): {
     placements: PlacedFeature[];
     nodesOutOfView: GraphNode[];
@@ -419,7 +422,7 @@ export class FeaturePlacer {
       nodesOutOfView: Array<any> = [];
     for (const node of nodes) {
       for (let contextLocation of node.computeNavContextCoordinates(
-        navContext
+        navContext,
       )) {
         contextLocation = contextLocation.getOverlap(viewRegionBounds)!; // Clamp the location to view region
         if (contextLocation) {
@@ -427,7 +430,7 @@ export class FeaturePlacer {
           const { visiblePart, isReverse } = this._locatePlacement(
             node,
             navContext,
-            contextLocation
+            contextLocation,
           );
           placements.push({
             feature: node,

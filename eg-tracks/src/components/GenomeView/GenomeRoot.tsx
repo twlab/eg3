@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 10;
+const MAX_WORKERS = 30;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -23,7 +23,6 @@ import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.t
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
-const packageVersion = false;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -45,6 +44,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   isScreenShotOpen,
   selectedRegionSet,
   darkTheme,
+  width,
+  height,
 }) {
   const [resizeRef, size] = useResizeObserver();
 
@@ -66,7 +67,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const g3dTracks = useRef<Array<any>>([]);
   const has3dTracks = useMemo(
     () => tracks.some((track) => track.type === "g3d"),
-    [tracks]
+    [tracks],
   );
 
   // Initialize workers based on tracks when they change
@@ -74,7 +75,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     if (tracks.length > 0 && has3dTracks) {
       const curG3dTracks = findAllG3dTabs(layout.current);
       const newG3dTracks: Array<any> = tracks.filter(
-        (track) => track.type === "g3d"
+        (track) => track.type === "g3d",
       );
 
       if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
@@ -144,7 +145,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       onTracksChange(
         tracks.filter((item, _index) => {
           return item.id !== g3dtrack.id;
-        })
+        }),
       );
     });
 
@@ -178,11 +179,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             tracks={tracks}
             legendWidth={legendWidth}
             windowWidth={
-              (!size.width || size.width - legendWidth <= 0
-                ? window.innerWidth
-                : size.width) -
-              legendWidth -
-              40
+              width
+                ? width
+                : (!size.width || size.width - legendWidth <= 0
+                  ? window.innerWidth
+                  : size.width) -
+                legendWidth -
+                40
             }
             userViewRegion={userViewRegion}
             highlights={highlights}
@@ -228,7 +231,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       showGenomeNav,
       showToolBar,
       selectedRegionSet,
-    ]
+    ],
   );
 
   function findAllG3dTabs(layout: any) {
@@ -289,38 +292,44 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {!has3dTracks && workerReady ? (
-        <TrackManager
-          tracks={tracks}
-          legendWidth={legendWidth}
-          windowWidth={Math.round(
-            (!size.width || size.width - legendWidth <= 0
-              ? window.innerWidth
-              : size.width) -
-              legendWidth -
-              40
-          )}
-          userViewRegion={userViewRegion}
-          highlights={highlights}
-          genomeConfig={genomeConfig}
-          onNewRegion={onNewRegion}
-          onNewRegionSelect={onNewRegionSelect}
-          onNewHighlight={onNewHighlight}
-          onTracksChange={completeTracksChange}
-          tool={tool}
-          Toolbar={Toolbar}
-          viewRegion={viewRegion}
-          showGenomeNav={showGenomeNav}
-          showToolBar={showToolBar}
-          isThereG3dTrack={false}
-          setScreenshotData={setScreenshotData}
-          isScreenShotOpen={isScreenShotOpen}
-          selectedRegionSet={selectedRegionSet}
-          setShow3dGene={setShow3dGene}
-          infiniteScrollWorkers={infiniteScrollWorkers}
-          fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-          currentState={currentState}
-          darkTheme={darkTheme}
-        />
+        <div style={{ ...(height && { height }) }}>
+          <TrackManager
+            tracks={tracks}
+            legendWidth={legendWidth}
+            windowWidth={Math.round(
+              width
+                ? width
+                : (!size.width || size.width - legendWidth <= 0
+                  ? window.innerWidth
+                  : size.width) -
+                legendWidth -
+                40,
+            )}
+            // subtract legend width so it matches the width with eg2,
+            // 40  = 20 left margin + 20 of right margin for scroll bar
+            userViewRegion={userViewRegion}
+            highlights={highlights}
+            genomeConfig={genomeConfig}
+            onNewRegion={onNewRegion}
+            onNewRegionSelect={onNewRegionSelect}
+            onNewHighlight={onNewHighlight}
+            onTracksChange={completeTracksChange}
+            tool={tool}
+            Toolbar={Toolbar}
+            viewRegion={viewRegion}
+            showGenomeNav={showGenomeNav}
+            showToolBar={showToolBar}
+            isThereG3dTrack={false}
+            setScreenshotData={setScreenshotData}
+            isScreenShotOpen={isScreenShotOpen}
+            selectedRegionSet={selectedRegionSet}
+            setShow3dGene={setShow3dGene}
+            infiniteScrollWorkers={infiniteScrollWorkers}
+            fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+            currentState={currentState}
+            darkTheme={darkTheme}
+          />{" "}
+        </div>
       ) : (
         <div style={{ width: size.width, height: 900 }}>
           <FlexLayout.Layout model={model} factory={factory} />

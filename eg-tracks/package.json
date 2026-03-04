@@ -1,7 +1,7 @@
 {
   "name": "wuepgg3-track",
   "private": false,
-  "version": "4.0.0",
+  "version": "5.0.1",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -71,9 +71,8 @@
     "react-autosuggest": "^10.1.0",
     "react-color": "^2.19.3",
     "react-compound-slider": "^3.4.0",
-    "react-modal": "^3.16.1",
     "react-popper": "^2.3.0",
-    "vite-plugin-dts": "^2.1.0",
+    "vite-plugin-dts": "^4.5.4",
     "framer-motion": "^12.12.1",
     "vite-plugin-node-polyfills": "^0.24.0"
   },

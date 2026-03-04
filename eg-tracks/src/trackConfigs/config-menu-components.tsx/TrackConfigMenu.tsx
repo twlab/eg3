@@ -8,6 +8,7 @@ import {
 } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 
+
 function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
@@ -44,36 +45,40 @@ function ConfigMenuComponent(props: any) {
   useEffect(() => {
     if (menuRef.current) {
       const menuRect = menuRef.current.getBoundingClientRect();
+      const topFromPage = menuRect.top + window.scrollY;
+      const leftFromPage = menuRect.left + window.scrollX;
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // Use page coordinates directly for position: absolute
-      let left = mouseX;
-      let top = mouseY - 200;
+      // Calculate position relative to the positioned container
+      let left = mouseX - leftFromPage;
+      let top = mouseY - topFromPage;
 
-      // Convert to viewport coordinates to check overflow
-      const viewportX = mouseX - window.scrollX;
-      const viewportY = mouseY - window.scrollY;
+      // // Convert to viewport coordinates to check overflow
+      // const viewportX = mouseX - window.scrollX;
+      // const viewportY = mouseY - window.scrollY;
 
       // Check if menu would overflow right edge of viewport
-      if (viewportX + menuRect.width > viewportWidth) {
-        left = mouseX - menuRect.width;
+      if (left + menuRect.width > viewportWidth) {
+        left = (left - menuRect.width);
       }
 
       // Check if menu would overflow bottom edge of viewport
-      if (viewportY + menuRect.height > viewportHeight) {
-        top = mouseY - menuRect.height;
+      if (menuData.viewportY + menuRect.height > viewportHeight) {
+        const diff = (menuData.viewportY + menuRect.height) - viewportHeight
+
+        top = (top - diff);
       }
 
-      // Ensure menu doesn't go off left edge
-      if (left - window.scrollX < 0) {
-        left = window.scrollX + 10;
-      }
+      // // Ensure menu doesn't go off left edge
+      // if (left - window.scrollX < 0) {
+      //   left = window.scrollX + 10;
+      // }
 
-      // Ensure menu doesn't go off top edge
-      if (top - window.scrollY < 0) {
-        top = window.scrollY + 10;
-      }
+      // // Ensure menu doesn't go off top edge
+      // if (top - window.scrollY < 0) {
+      //   top = window.scrollY + 10;
+      // }
 
       setPosition({ left, top });
     }

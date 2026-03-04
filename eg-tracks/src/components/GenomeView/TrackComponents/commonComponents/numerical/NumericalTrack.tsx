@@ -16,7 +16,6 @@ import { NumericalAggregator } from "./NumericalAggregator";
 
 import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
-import { current } from "@reduxjs/toolkit";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data?: Array<any>;
@@ -34,7 +33,7 @@ interface NumericalTrackProps {
   xvaluesData?: Array<any>;
   dataIdx: number;
   initialLoad;
-  updatedLegend?: any
+  updatedLegend?: any;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -54,7 +53,6 @@ export const DEFAULT_OPTIONS = {
 
 const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap
 const TOP_PADDING = 2;
-const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
 
 /**
  * Track specialized in showing numerical data.
@@ -115,7 +113,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       } else {
         const visibleValues = xToValue.slice(
           props.viewWindow.start,
-          props.viewWindow.end
+          props.viewWindow.end,
         );
 
         max = _.max(visibleValues) || 1;
@@ -124,7 +122,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+              xToValue2.slice(props.viewWindow.start, props.viewWindow.end),
             )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
@@ -491,7 +489,7 @@ const ValuePlot = (props) => {
       props.height,
       props.color,
       props.colorOut,
-    ]
+    ],
   );
 
   const { xToValue, height, forceSvg, width, viewWindow } = props;
