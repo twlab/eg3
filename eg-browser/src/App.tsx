@@ -5,7 +5,7 @@ import SessionDataMonitor from "./components/SessionDataMonitor";
 import { SessionData } from "./lib/hooks/useSessionData";
 import "./index.css";
 
-export interface AppProps {
+
 export interface AppProps {
   storeConfig?: AppProviderProps["storeConfig"];
   onSessionUpdate?: (data: SessionData | null) => void;
@@ -33,7 +33,7 @@ export default function App({ storeConfig, onSessionUpdate, ...rootLayoutProps }
   return (
     <MotionConfig transition={snappyTransition}>
       <AppProvider storeConfig={storeConfig}>
-        <SessionDataMonitor onSessionUpdate={onSessionUpdate} />
+        {onSessionUpdate ? <SessionDataMonitor onSessionUpdate={onSessionUpdate} /> : null}
         <RootLayout {...rootLayoutProps} />
       </AppProvider>
     </MotionConfig>

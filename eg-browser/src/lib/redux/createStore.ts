@@ -149,18 +149,6 @@ export function createAppStore(config: StoreConfig = {}) {
           // console.log('Next state:', store.getState());
           return result;
         }),
-      middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware({
-          serializableCheck: false,
-        }).concat((store) => (next) => (action) => {
-          console.log('Dispatching action:', action.type, action);
-          if (action.type === 'browser/updateCurrentSession') {
-            console.trace('Call stack for updateCurrentSession:');
-          }
-          const result = next(action);
-          // console.log('Next state:', store.getState());
-          return result;
-        }),
     });
 
     return { store, persistor: null };
@@ -188,15 +176,6 @@ export function createAppStore(config: StoreConfig = {}) {
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
-        serializableCheck: false,
-      }).concat((store) => (next) => (action) => {
-        // console.log('Dispatching action:', action.type, action);
-        // if (action.type === 'browser/updateCurrentSession') {
-        //   console.trace('Call stack for updateCurrentSession:');
-        // }
-        const result = next(action);
-        // console.log('Next state:', store.getState());
-        return result;
         serializableCheck: false,
       }).concat((store) => (next) => (action) => {
         // console.log('Dispatching action:', action.type, action);
