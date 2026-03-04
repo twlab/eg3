@@ -3571,11 +3571,6 @@ evp_bytestokey@^1.0.0, evp_bytestokey@^1.0.3:
     md5.js "^1.3.4"
     safe-buffer "^5.1.1"
 
-exenv@^1.2.0:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/exenv/-/exenv-1.2.2.tgz#2ae78e85d9894158670b03d47bec1f03bd91bb9d"
-  integrity sha512-Z+ktTxTwv9ILfgKCk32OX3n/doe+OcLTRtqK9pcL+JsP3J1/VW8Uvl4ZjLlKqeW4rzK4oesDOGMEMRIZqtP4Iw==
-
 exsolve@^1.0.7:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/exsolve/-/exsolve-1.0.8.tgz#7f5e34da61cd1116deda5136e62292c096f50613"
@@ -5627,21 +5622,6 @@ react-is@^18.2.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.3.1.tgz#e83557dc12eae63a99e003a46388b1dcbb44db7e"
   integrity sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==
 
-react-lifecycles-compat@^3.0.0:
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
-  integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
-
-react-modal@^3.16.1:
-  version "3.16.3"
-  resolved "https://registry.yarnpkg.com/react-modal/-/react-modal-3.16.3.tgz#c412d41915782e3c261253435d01468e2439b11b"
-  integrity sha512-yCYRJB5YkeQDQlTt17WGAgFJ7jr2QYcWa1SHqZ3PluDmnKJ/7+tVU+E6uKyZ0nODaeEj+xCpK4LcSnKXLMC0Nw==
-  dependencies:
-    exenv "^1.2.0"
-    prop-types "^15.7.2"
-    react-lifecycles-compat "^3.0.0"
-    warning "^4.0.3"
-
 react-plotly.js@^2.6.0:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/react-plotly.js/-/react-plotly.js-2.6.0.tgz#ad6b68ee64f1b5cfa142ee92c59687f9c2c09209"
@@ -6676,10 +6656,10 @@ wrappy@1:
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
   integrity sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
 
-wuepgg3-track@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/wuepgg3-track/-/wuepgg3-track-5.0.0.tgz#8c4796a28abb0391b07ffdd231569b4af4e625b1"
-  integrity sha512-0yZzWO9jXrnOe7VCW6twauQug6E9B4NyzZCPPW6aM1LbbXXyydldSRj4PrYki3KlF3aAfYnbC0kfQKDcdxEJAw==
+wuepgg3-track@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/wuepgg3-track/-/wuepgg3-track-5.0.1.tgz#4f2fb5f2eddd651255997d57a4b9cc0d2d0f1f80"
+  integrity sha512-rbhads2MX1UGrZuXylXtoxh/4imVu2e3imWn03Cs1bv/W4STF6Aj4ptCeCviXpBVExS9MOGylgV05JacTzLF/g==
   dependencies:
     "3dmol" "^2.4.0"
     "@dnd-kit/core" "^6.3.1"
@@ -6725,8 +6705,8 @@ wuepgg3-track@^5.0.0:
     react-autosuggest "^10.1.0"
     react-color "^2.19.3"
     react-compound-slider "^3.4.0"
-    react-modal "^3.16.1"
     react-popper "^2.3.0"
+    vite-plugin-dts "^4.5.4"
     vite-plugin-node-polyfills "^0.24.0"
 
 "xtend@>=4.0.0 <4.1.0-0", xtend@^4.0.0, xtend@^4.0.2, xtend@~4.0.1:
