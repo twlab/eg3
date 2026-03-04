@@ -1,4 +1,7 @@
 # Version history
+## 59.4.1
+- when zoomed in, while in modbed summary mode, rect now has same width as base instead of one pixel line
+
 ## 59.4.0
 - fixed bug where you can't add tracks when there are no tracks
 - added genome
