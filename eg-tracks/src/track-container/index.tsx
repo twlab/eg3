@@ -280,37 +280,37 @@ export function TrackContainerRepresentable({
   };
 
   return (
-    <div>
-      <GenomeRoot
-        tracks={convertedTracks}
-        highlights={highlights}
-        genomeConfig={modifiedGenomeConfig}
-        legendWidth={legendWidth}
-        showGenomeNav={showGenomeNav}
-        showToolBar={showToolBar}
-        onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
-        onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
-        onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
-        onNewRegionSelect={
-          !onNewRegionSelect ? () => { } : handleNewRegionSelect
-        }
-        onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
-        viewRegion={convertedViewRegion}
-        userViewRegion={
-          convertedUserViewRegion
-            ? convertedUserViewRegion
-            : convertedViewRegion
-        }
-        tool={tool}
-        Toolbar={Toolbar}
-        selectedRegionSet={selectedRegionSet}
-        setScreenshotData={setScreenshotData}
-        isScreenShotOpen={isScreenShotOpen}
-        currentState={currentState}
-        darkTheme={darkTheme}
-        width={width}
-        height={height}
-      />
-    </div>
+
+    <GenomeRoot
+      tracks={convertedTracks}
+      highlights={highlights}
+      genomeConfig={modifiedGenomeConfig}
+      legendWidth={legendWidth}
+      showGenomeNav={showGenomeNav}
+      showToolBar={showToolBar}
+      onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
+      onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
+      onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
+      onNewRegionSelect={
+        !onNewRegionSelect ? () => { } : handleNewRegionSelect
+      }
+      onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
+      viewRegion={convertedViewRegion}
+      userViewRegion={
+        convertedUserViewRegion
+          ? convertedUserViewRegion
+          : convertedViewRegion
+      }
+      tool={tool}
+      Toolbar={Toolbar}
+      selectedRegionSet={selectedRegionSet}
+      setScreenshotData={setScreenshotData}
+      isScreenShotOpen={isScreenShotOpen}
+      currentState={currentState}
+      darkTheme={darkTheme}
+      width={width}
+      height={height}
+    />
+
   );
 }

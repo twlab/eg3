@@ -189,7 +189,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       return (
-        <svg key={svgKey} width={width} height={height}>
+        <svg key={svgKey} width={width} height={height} display={"block"} overflow={"visible"}>
           {placements.map(renderAnnotation)}
           {/* <line
             x1={width / 3}
