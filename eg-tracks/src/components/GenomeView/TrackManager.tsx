@@ -2394,7 +2394,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       //     new BamSource(trackManagerState.current.tracks[i].url);
       // }
 
-      const newPosRef = createRef();
+
       const newLegendRef = createRef();
 
       trackManagerState.current.tracks[i]["legendWidth"] = legendWidth;
@@ -2403,7 +2403,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackIdx: i,
         id: trackManagerState.current.tracks[i].id,
         component: TrackFactory,
-        posRef: newPosRef,
         legendRef: newLegendRef,
         trackModel: trackManagerState.current.tracks[i],
         hasAllRegionData: false,
@@ -3338,7 +3337,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             //create initial state for the new track, give it all the prevregion trackstate, and trigger fetch by updating trackcomponents
             needToFetchAddTrack.current = true;
-            const newPosRef = createRef();
+
             const newLegendRef = createRef();
 
             curTrackModel["legendWidth"] = legendWidth;
@@ -3347,7 +3346,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               trackIdx: i,
               id: curTrackModel.id,
               component: TrackFactory,
-              posRef: newPosRef,
+
               legendRef: newLegendRef,
               trackModel: curTrackModel,
             });
@@ -3855,7 +3854,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           <item.component
                             id={item.trackModel.id}
                             trackModel={item.trackModel}
-                            posRef={item.posRef}
+
                             legendRef={item.legendRef}
                             bpRegionSize={bpRegionSize.current}
                             useFineModeNav={useFineModeNav.current}

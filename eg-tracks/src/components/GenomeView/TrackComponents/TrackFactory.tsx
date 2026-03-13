@@ -43,7 +43,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   globalTrackState,
   isScreenShotOpen,
   legendRef,
-  posRef,
+
   highlightElements,
   viewWindowConfigData,
   metaSets,
@@ -664,7 +664,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       )}
 
       <div
-        ref={posRef}
         style={{
           display: "flex",
           height:
