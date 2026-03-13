@@ -42,6 +42,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackFetchedDataCache,
   globalTrackState,
   isScreenShotOpen,
+  legendRef,
   posRef,
   highlightElements,
   viewWindowConfigData,
@@ -566,9 +567,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }}
     >
       <div
+        ref={legendRef}
         style={{
           zIndex: 2,
           width: 120,
+          willChange: "transform",
           backgroundColor: trackModel.isSelected ? "yellow" : "var(--bg-color)",
           color: trackModel.options?.legendFontColor
             ? trackModel.options.legendFontColor
@@ -673,7 +676,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? configOptions.current.height
                 : 40,
           position: "relative",
-          willChange: "transform",
+          willChange: "transform"
         }}
       >
         <div

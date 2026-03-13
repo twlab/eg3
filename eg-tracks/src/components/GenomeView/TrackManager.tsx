@@ -297,6 +297,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
   const frameID = useRef(0);
+  const trackWrapperRef = useRef<HTMLDivElement>(null);
   const lastX = useRef(0);
   const dragX = useRef(0);
   const hasGenomeAlign = useRef(false);
@@ -648,9 +649,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // .5 = * 1 ,1 =
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
+      if (trackWrapperRef.current) {
+        trackWrapperRef.current.style.transform = `translateX(${dragX.current}px)`;
+      }
       trackComponents.forEach((component) => {
-        if (component.posRef.current) {
-          component.posRef.current.style.transform = `translateX(${dragX.current}px)`;
+        if (component.legendRef.current) {
+          (component.legendRef.current as HTMLElement).style.transform = `translateX(${-dragX.current}px)`;
         }
       });
     });
@@ -2694,9 +2698,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
+      if (trackWrapperRef.current) {
+        trackWrapperRef.current.style.transform = `translateX(${dragX.current}px)`;
+      }
       trackComponents.forEach((component) => {
-        if (component.posRef.current) {
-          component.posRef.current.style.transform = `translateX(${dragX.current}px)`;
+        if (component.legendRef.current) {
+          (component.legendRef.current as HTMLElement).style.transform = `translateX(${-dragX.current}px)`;
         }
       });
     });
@@ -3818,71 +3825,74 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }}
             >
               {trackComponents ? (
-                <SortableList
-                  items={trackComponents}
-                  onChange={handleReorder}
-                  renderItem={(item) => (
-                    <SortableList.Item
-                      id={item.id}
-                      onMouseDown={(event) => handleShiftSelect(event, item.id)}
-                      onContextMenu={(event) => handleRightClick(event, item)}
-                      selectedTool={selectedTool}
-                    >
-                      <div
-                        key={item.id}
-                        style={{
-                          width: `${windowWidth + 120}px`,
-                          position: "relative",
-                        }}
+                <div ref={trackWrapperRef} >
+                  <SortableList
+                    items={trackComponents}
+                    onChange={handleReorder}
+                    renderItem={(item) => (
+                      <SortableList.Item
+                        id={item.id}
+                        onMouseDown={(event) => handleShiftSelect(event, item.id)}
+                        onContextMenu={(event) => handleRightClick(event, item)}
+                        selectedTool={selectedTool}
                       >
-                        {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
+                        <div
+                          key={item.id}
+                          style={{
+                            width: `${windowWidth + 120}px`,
+                            position: "relative",
+                          }}
+                        >
+                          {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
                   track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing err.
                    */}
-                        {item.trackModel.isSelected ? (
-                          <div className="Track-border-container Track-selected-border"></div>
-                        ) : (
-                          <div className="Track-border-container"></div>
-                        )}
+                          {item.trackModel.isSelected ? (
+                            <div className="Track-border-container Track-selected-border"></div>
+                          ) : (
+                            <div className="Track-border-container"></div>
+                          )}
 
-                        <item.component
-                          id={item.trackModel.id}
-                          trackModel={item.trackModel}
-                          posRef={item.posRef}
-                          bpRegionSize={bpRegionSize.current}
-                          useFineModeNav={useFineModeNav.current}
-                          basePerPixel={basePerPixel.current}
-                          side={side.current}
-                          windowWidth={windowWidth}
-                          genomeConfig={genomeConfig}
-                          dataIdx={dataIdx.current}
-                          trackManagerRef={block}
-                          setShow3dGene={setShow3dGene}
-                          isThereG3dTrack={isThereG3dTrack}
-                          updateGlobalTrackConfig={updateGlobalTrackConfig}
-                          applyTrackConfigChange={applyTrackConfigChange}
-                          dragX={dragX.current}
-                          signalTrackLoadComplete={signalTrackLoadComplete}
-                          sentScreenshotData={sentScreenshotData}
-                          newDrawData={draw}
-                          trackFetchedDataCache={trackFetchedDataCache}
-                          globalTrackState={globalTrackState}
-                          isScreenShotOpen={isScreenShotOpen}
-                          highlightElements={highlightElements}
-                          viewWindowConfigData={viewWindowConfigData}
-                          viewWindowConfigChange={viewWindowConfigChange}
-                          metaSets={metaSets}
-                          onColorBoxClick={onColorBoxClick}
-                          userViewRegion={userViewRegion}
-                          messageData={messageData}
-                          Toolbar={Toolbar}
-                          handleRetryFetchTrack={handleRetryFetchTrack}
-                          initialLoad={initialLoad}
-                          checkOutsideClick={checkOutsideClick}
-                        />
-                      </div>
-                    </SortableList.Item>
-                  )}
-                />
+                          <item.component
+                            id={item.trackModel.id}
+                            trackModel={item.trackModel}
+                            posRef={item.posRef}
+                            legendRef={item.legendRef}
+                            bpRegionSize={bpRegionSize.current}
+                            useFineModeNav={useFineModeNav.current}
+                            basePerPixel={basePerPixel.current}
+                            side={side.current}
+                            windowWidth={windowWidth}
+                            genomeConfig={genomeConfig}
+                            dataIdx={dataIdx.current}
+                            trackManagerRef={block}
+                            setShow3dGene={setShow3dGene}
+                            isThereG3dTrack={isThereG3dTrack}
+                            updateGlobalTrackConfig={updateGlobalTrackConfig}
+                            applyTrackConfigChange={applyTrackConfigChange}
+                            dragX={dragX.current}
+                            signalTrackLoadComplete={signalTrackLoadComplete}
+                            sentScreenshotData={sentScreenshotData}
+                            newDrawData={draw}
+                            trackFetchedDataCache={trackFetchedDataCache}
+                            globalTrackState={globalTrackState}
+                            isScreenShotOpen={isScreenShotOpen}
+                            highlightElements={highlightElements}
+                            viewWindowConfigData={viewWindowConfigData}
+                            viewWindowConfigChange={viewWindowConfigChange}
+                            metaSets={metaSets}
+                            onColorBoxClick={onColorBoxClick}
+                            userViewRegion={userViewRegion}
+                            messageData={messageData}
+                            Toolbar={Toolbar}
+                            handleRetryFetchTrack={handleRetryFetchTrack}
+                            initialLoad={initialLoad}
+                            checkOutsideClick={checkOutsideClick}
+                          />
+                        </div>
+                      </SortableList.Item>
+                    )}
+                  />
+                </div>
               ) : (
                 ""
               )}
