@@ -178,7 +178,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                   key={svgKey}
                   width={width}
                   height={height}
-                  display={"block"}
+
                 >
                   {placements.map(renderAnnotation)}
                 </svg>
@@ -189,7 +189,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       return (
-        <svg key={svgKey} width={width} height={height} display={"block"} overflow={"visible"}>
+        <svg key={svgKey} width={width} height={height} >
           {placements.map(renderAnnotation)}
           {/* <line
             x1={width / 3}
@@ -1248,7 +1248,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 key={generateUUID()}
                 width={drawData.trackState.visWidth}
                 height={drawData.configOptions.height}
-                display={"block"}
+
               >
                 {svgElements}
               </svg>
@@ -1285,7 +1285,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               key={generateUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
-              display={"block"}
+
             >
               {svgElements}
             </svg>
@@ -1364,7 +1364,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 <svg
                   width={drawData.trackState.visWidth}
                   height={drawData.configOptions.height}
-                  display={"block"}
+
                 >
                   {svgElements}
                 </svg>
@@ -1397,7 +1397,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             <svg
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
-              display={"block"}
+
             >
               {svgElements}
             </svg>

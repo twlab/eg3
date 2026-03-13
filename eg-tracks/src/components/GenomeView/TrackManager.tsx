@@ -649,7 +649,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     trackComponents.forEach((component, _i) => {
       frameID.current = requestAnimationFrame(() => {
-        component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+        component.posRef.current!.style.transform = `translateX(${dragX.current}px)`;
       });
     });
   }
@@ -2693,7 +2693,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     cancelAnimationFrame(frameID.current);
     trackComponents.forEach((component, _i) => {
       frameID.current = requestAnimationFrame(() => {
-        component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+        component.posRef.current!.style.transform = `translateX(${dragX.current}px)`;
       });
     });
 

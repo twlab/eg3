@@ -181,9 +181,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             windowWidth={
               width
                 ? width
-                : (!size.width || size.width - legendWidth <= 0
-                  ? window.innerWidth
-                  : size.width) -
+                : size.width -
                 legendWidth -
                 40
             }
@@ -299,9 +297,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             windowWidth={Math.round(
               width
                 ? width
-                : (!size.width || size.width - legendWidth <= 0
-                  ? window.innerWidth
-                  : size.width) -
+                : size.width -
                 legendWidth -
                 40,
             )}
