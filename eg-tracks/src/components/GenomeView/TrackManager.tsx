@@ -320,7 +320,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const updateLinePosition = useRef(
     throttle((x, y) => {
       horizontalLineRef.current.style.transform = `translateY(${y}px)`;
-      verticalLineRef.current.style.transform = `translateX(${x}px)`;
+      verticalLineRef.current.style.transform = `translate3d(${x}px, 0, 0)`;
     }, 16),
   ).current;
   const startingBpArr = useRef<Array<any>>([]);
@@ -650,11 +650,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
       if (trackWrapperRef.current) {
-        trackWrapperRef.current.style.transform = `translateX(${dragX.current}px)`;
+        trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
       }
       trackComponents.forEach((component) => {
         if (component.legendRef.current) {
-          (component.legendRef.current as HTMLElement).style.transform = `translateX(${-dragX.current}px)`;
+          (component.legendRef.current as HTMLElement).style.transform = `translate3d(${-dragX.current}px, 0, 0)`;
         }
       });
     });
@@ -672,12 +672,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     isDragging.current = true;
     lastX.current = e.pageX;
-
+    if (horizontalLineRef.current && verticalLineRef.current) {
+      horizontalLineRef.current.style.display = "none";
+      verticalLineRef.current.style.display = "none";
+    }
     e.preventDefault();
   }
 
   function handleMouseUp() {
     isDragging.current = false;
+    if (horizontalLineRef.current && verticalLineRef.current) {
+      horizontalLineRef.current.style.display = "block";
+      verticalLineRef.current.style.display = "block";
+    }
     if (lastDragX.current === dragX.current) {
       return;
     }
@@ -2698,11 +2705,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
       if (trackWrapperRef.current) {
-        trackWrapperRef.current.style.transform = `translateX(${dragX.current}px)`;
+        trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
       }
       trackComponents.forEach((component) => {
         if (component.legendRef.current) {
-          (component.legendRef.current as HTMLElement).style.transform = `translateX(${-dragX.current}px)`;
+          (component.legendRef.current as HTMLElement).style.transform = `translate3d(${-dragX.current}px, 0, 0)`;
         }
       });
     });

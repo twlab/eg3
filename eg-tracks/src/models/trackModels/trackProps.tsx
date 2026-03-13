@@ -32,6 +32,7 @@ export interface TrackProps {
   isThereG3dTrack: boolean;
   signalTrackLoadComplete?: any;
   legendRef: any;
+  staticRef: any;
   posRef: any;
   updateGlobalTrackConfig: any;
   sentScreenshotData: any;

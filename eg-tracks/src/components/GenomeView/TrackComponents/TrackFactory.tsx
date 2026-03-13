@@ -569,99 +569,143 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       <div
         ref={legendRef}
         style={{
-          zIndex: 2,
-          width: 120,
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: "100%",
+          height: "100%",
           willChange: "transform",
-          backgroundColor: trackModel.isSelected ? "yellow" : "var(--bg-color)",
-          color: trackModel.options?.legendFontColor
-            ? trackModel.options.legendFontColor
-            : trackModel.isSelected
-              ? "black"
-              : "var(--font-color)",
-          marginBottom: "1px", // we need 1 px margin here for tracklegend axis, since it uses the full height and we are using outline
+          zIndex: 2,
+          pointerEvents: "none",
         }}
       >
-        {legend}
-      </div>
+        <div
+          style={{
+            width: 120,
+            backgroundColor: trackModel.isSelected ? "yellow" : "var(--bg-color)",
+            color: trackModel.options?.legendFontColor
+              ? trackModel.options.legendFontColor
+              : trackModel.isSelected
+                ? "black"
+                : "var(--font-color)",
+            marginBottom: "1px",
+            pointerEvents: "auto",
+          }}
+        >
+          {legend}
+        </div>
+        {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
+        <Loading
+          buttonLabel={
+            (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
+              ? "Loading View"
+              : "Getting Data"
+          }
+          height={
+            !viewComponent
+              ? 40
+              : configOptions.current.displayMode === "full"
+                ? !fetchError.current
+                  ? svgHeight.current
+                  : 40
+                : !fetchError.current
+                  ? configOptions.current.height
+                  : 40
+          }
+          color={trackModel.isSelected ? "black" : "var(--font-color)"}
+          // Control visibility - show when loading
+          isVisible={
+            trackModel.id in messageData ||
+            !viewComponent ||
+            (viewComponent && dataIdx !== viewComponent.dataIdx)
+          }
+        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+        // xOffset={0}
+        >
+          <div>
+            {trackModel.id in messageData
+              ? messageData[`${trackModel.id}`].map((item, index) => {
+                return (
+                  <div key={`${trackModel.index}loading-` + `${index}`}>
+                    {item.genomicLoci
+                      ? item.genomicLoci.map((item) => item.toString())
+                      : ""}{" "}
+                  </div>
+                );
+              })
+              : ""}
+          </div>
+        </Loading>
 
-      {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
-      <Loading
-        buttonLabel={
-          (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
-            ? "Loading View"
-            : "Getting Data"
-        }
-        height={
-          !viewComponent
-            ? 40
-            : configOptions.current.displayMode === "full"
+        <HiddenIndicator
+          numHidden={
+            viewComponent && viewComponent.numHidden
+              ? viewComponent.numHidden
+              : ""
+          }
+          color={trackModel.isSelected ? "black" : "var(--font-color)"}
+          height={
+            configOptions.current.displayMode === "full"
               ? !fetchError.current
                 ? svgHeight.current
                 : 40
               : !fetchError.current
                 ? configOptions.current.height
                 : 40
-        }
-        color={trackModel.isSelected ? "black" : "var(--font-color)"}
-        // Control visibility - show when loading
-        isVisible={
-          trackModel.id in messageData ||
-          !viewComponent ||
-          (viewComponent && dataIdx !== viewComponent.dataIdx)
-        }
-      // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-      // xOffset={0}
-      >
-        <div>
-          {trackModel.id in messageData
-            ? messageData[`${trackModel.id}`].map((item, index) => {
-              return (
-                <div key={`${trackModel.index}loading-` + `${index}`}>
-                  {item.genomicLoci
-                    ? item.genomicLoci.map((item) => item.toString())
-                    : ""}{" "}
-                </div>
-              );
-            })
-            : ""}
-        </div>
-      </Loading>
+          }
+          xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
+          // Control visibility - show when data is loaded and items are hidden, but not when loading
+          isVisible={
+            viewComponent &&
+            viewComponent.numHidden &&
+            !(
+              trackModel.id in messageData ||
+              !viewComponent ||
+              (viewComponent && dataIdx !== viewComponent.dataIdx)
+            )
+          }
+        />
+        {Toolbar.skeleton && !viewComponent ? (
+          <div style={{}}>
+            <Toolbar.skeleton width={windowWidth} height={40} />
+          </div>
+        ) : (
+          ""
+        )}
 
-      <HiddenIndicator
-        numHidden={
-          viewComponent && viewComponent.numHidden
-            ? viewComponent.numHidden
-            : ""
-        }
-        color={trackModel.isSelected ? "black" : "var(--font-color)"}
-        height={
-          configOptions.current.displayMode === "full"
-            ? !fetchError.current
-              ? svgHeight.current
-              : 40
-            : !fetchError.current
-              ? configOptions.current.height
-              : 40
-        }
-        xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
-        // Control visibility - show when data is loaded and items are hidden, but not when loading
-        isVisible={
-          viewComponent &&
-          viewComponent.numHidden &&
-          !(
-            trackModel.id in messageData ||
-            !viewComponent ||
-            (viewComponent && dataIdx !== viewComponent.dataIdx)
-          )
-        }
-      />
-      {Toolbar.skeleton && !viewComponent ? (
-        <div style={{}}>
-          <Toolbar.skeleton width={windowWidth} height={40} />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            zIndex: 3,
+            pointerEvents: "auto",
+            height:
+              configOptions.current.displayMode === "full"
+                ? !fetchError.current
+                  ? svgHeight.current
+                  : 40
+                : !fetchError.current
+                  ? configOptions.current.height
+                  : 40,
+            left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
+          }}
+        >
+          <MetadataIndicator
+            track={trackModel}
+            terms={metaSets.terms}
+            onClick={onColorBoxClick}
+            height={
+              configOptions.current.displayMode === "full"
+                ? !fetchError.current
+                  ? svgHeight.current
+                  : 40
+                : !fetchError.current
+                  ? configOptions.current.height
+                  : 40
+            }
+          />
         </div>
-      ) : (
-        ""
-      )}
+      </div>
 
       <div
         style={{
@@ -726,37 +770,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             })
             : ""
         }
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          zIndex: 3,
-          height:
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-                ? configOptions.current.height
-                : 40,
-          left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
-        }}
-      >
-        <MetadataIndicator
-          track={trackModel}
-          terms={metaSets.terms}
-          onClick={onColorBoxClick}
-          height={
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-                ? configOptions.current.height
-                : 40
-          }
-        />
       </div>
     </div>
   );
