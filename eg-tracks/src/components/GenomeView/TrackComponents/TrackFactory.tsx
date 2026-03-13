@@ -719,7 +719,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? configOptions.current.height
                 : 40,
           position: "relative",
-          willChange: "transform"
+          willChange: "transform",
+          left: 120
         }}
       >
         <div
