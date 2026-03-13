@@ -318,9 +318,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   });
   const updateLinePosition = useRef(
     throttle((x, y) => {
-      horizontalLineRef.current.style.top = `${y}px`;
-      verticalLineRef.current.style.left = `${x}px`;
-    }, 10),
+      horizontalLineRef.current.style.transform = `translateY(${y}px)`;
+      verticalLineRef.current.style.transform = `translateX(${x}px)`;
+    }, 16),
   ).current;
   const startingBpArr = useRef<Array<any>>([]);
   const viewWindowConfigData = useRef<{
@@ -601,18 +601,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       mouseRelativePositionRef.current = { x, y };
 
       // Use requestAnimationFrame to throttle crosshair updates
-      if (rafId.current !== null) {
-        cancelAnimationFrame(rafId.current);
-      }
-      rafId.current = requestAnimationFrame(() => {
-        // Show and update crosshair lines
-        if (horizontalLineRef.current && verticalLineRef.current) {
-          horizontalLineRef.current.style.display = "block";
-          verticalLineRef.current.style.display = "block";
-          updateLinePosition(x, y);
+      if (!isDragging.current) {
+        if (rafId.current !== null) {
+          cancelAnimationFrame(rafId.current);
         }
-        rafId.current = null;
-      });
+        rafId.current = requestAnimationFrame(() => {
+          if (horizontalLineRef.current && verticalLineRef.current) {
+            horizontalLineRef.current.style.display = "block";
+            verticalLineRef.current.style.display = "block";
+            updateLinePosition(x, y);
+          }
+          rafId.current = null;
+        });
+      }
     } else {
       // Hide crosshair lines when mouse is outside
       if (horizontalLineRef.current && verticalLineRef.current) {
@@ -646,10 +647,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 =
     cancelAnimationFrame(frameID.current);
-
-    trackComponents.forEach((component, _i) => {
-      frameID.current = requestAnimationFrame(() => {
-        component.posRef.current!.style.transform = `translateX(${dragX.current}px)`;
+    frameID.current = requestAnimationFrame(() => {
+      trackComponents.forEach((component) => {
+        if (component.posRef.current) {
+          component.posRef.current.style.transform = `translateX(${dragX.current}px)`;
+        }
       });
     });
   }
@@ -2691,9 +2693,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // this also include other state changes values such windowWidth
 
     cancelAnimationFrame(frameID.current);
-    trackComponents.forEach((component, _i) => {
-      frameID.current = requestAnimationFrame(() => {
-        component.posRef.current!.style.transform = `translateX(${dragX.current}px)`;
+    frameID.current = requestAnimationFrame(() => {
+      trackComponents.forEach((component) => {
+        if (component.posRef.current) {
+          component.posRef.current.style.transform = `translateX(${dragX.current}px)`;
+        }
       });
     });
 
