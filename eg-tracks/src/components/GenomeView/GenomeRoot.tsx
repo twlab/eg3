@@ -287,9 +287,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           <TrackManager
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width - legendWidth - 44}
+            windowWidth={size.width - legendWidth - 45}
             // subtract legend width so it matches the width with eg2,
-            // 40  = 20 left margin + 20 of right margin for scroll bar
+            // 15 + 15 paddig left right, to match old browser, and + 15 for scroll bar
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={genomeConfig}
