@@ -123,7 +123,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       };
     }
     genomeConfig.defaultTracks = tracks;
-
   }, [tracks]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
@@ -178,13 +177,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           <TrackManager
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={
-              width
-                ? width
-                : size.width -
-                legendWidth -
-                40
-            }
+            windowWidth={width ? width : size.width - legendWidth - 40}
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={genomeConfig}
@@ -294,13 +287,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           <TrackManager
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={
-
-
-              size.width -
-              legendWidth -
-              40
-            }
+            windowWidth={size.width - legendWidth - 44}
             // subtract legend width so it matches the width with eg2,
             // 40  = 20 left margin + 20 of right margin for scroll bar
             userViewRegion={userViewRegion}

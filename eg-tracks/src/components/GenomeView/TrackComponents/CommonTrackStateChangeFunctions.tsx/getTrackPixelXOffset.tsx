@@ -1,6 +1,6 @@
 export function getTrackXOffset(
   trackState: { [key: string]: any },
-  windowWidth: number
+  windowWidth: number,
 ) {
   let resXPos;
 
