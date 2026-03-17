@@ -3,6 +3,7 @@ import OpenInterval from "./OpenInterval";
 import { FeatureSegment } from "./FeatureSegment";
 import ChromosomeInterval from "./ChromosomeInterval";
 import { Feature } from "./Feature";
+import { start } from "repl";
 
 const GAP_CHR = ""; // The special chromosome that gaps lie in.
 
@@ -343,9 +344,8 @@ class NavigationContext {
       // for chromosomes, we can use them directly
       let startInterval: string;
       if (isStandardChromosome) {
-        startInterval = `${startChr}:${startPos}-${
-          startFeature.getLocus().end
-        }`;
+        startInterval = `${startChr}:${startPos}-${startFeature.getLocus().end
+          }`;
       } else {
         // for gene features, use the actual chromosome from the locus
         const startLocus = startFeature.getLocus();
@@ -369,9 +369,8 @@ class NavigationContext {
           const chrName = `chr${chrNum}`;
           const chrFeature = this._featuresForChr[chrName]?.[0];
           if (chrFeature) {
-            const chrInterval = `${chrName}:${chrFeature.getLocus().start}-${
-              chrFeature.getLocus().end
-            }`;
+            const chrInterval = `${chrName}:${chrFeature.getLocus().start}-${chrFeature.getLocus().end
+              }`;
             const chrContextCoords = this.convertGenomeIntervalToBases(
               ChromosomeInterval.parse(chrInterval)
             )[0];
@@ -383,9 +382,8 @@ class NavigationContext {
 
         // add the ending chromosome interval (from start of chromosome to endPos)
         if (startChrNum !== endChrNum) {
-          const endInterval = `${endChr}:${
-            endFeature.getLocus().start
-          }-${endPos}`;
+          const endInterval = `${endChr}:${endFeature.getLocus().start
+            }-${endPos}`;
           const endContextCoords = this.convertGenomeIntervalToBases(
             ChromosomeInterval.parse(endInterval)
           )[0];
@@ -440,9 +438,10 @@ class NavigationContext {
       const endPos = Math.round(parseFloat(endStr.replace(/[^0-9.]/g, "")));
 
       // Format with space for ChromosomeInterval.parse compatibility
-      const cleanedStr = `${chrPart} ${startPos} ${endPos}`;
+      const cleanedStr = `${chrPart}:${startPos}-${endPos}`;
 
       const locus = ChromosomeInterval.parse(cleanedStr);
+
       const contextCoordsArray = this.convertGenomeIntervalToBases(locus);
 
       if (contextCoordsArray.length === 0) {
@@ -464,16 +463,14 @@ class NavigationContext {
           .slice(0, 20)
           .join(", ");
         throw new RangeError(
-          `Location unavailable. Available chromosomes: ${availableChrs}${
-            Object.keys(this._featuresForChr).length > 20 ? "..." : ""
+          `Location unavailable. Available chromosomes: ${availableChrs}${Object.keys(this._featuresForChr).length > 20 ? "..." : ""
           }`
         );
       }
       return contextCoordsArray[0];
     } catch (error) {
       throw new RangeError(
-        `Could not parse location "${str}". ${
-          error instanceof Error ? error.message : ""
+        `Could not parse location "${str}". ${error instanceof Error ? error.message : ""
         }`
       );
     }

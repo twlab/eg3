@@ -158,7 +158,7 @@ export class FeatureSegment {
     } else {
       name = this.getName();
     }
-    return `${name}:${this.relativeStart}-${this.relativeEnd}`;
+    return `${name}:${this.relativeStart + 1}-${this.relativeEnd}`;
   }
 
   // /**

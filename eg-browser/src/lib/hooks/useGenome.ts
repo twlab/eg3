@@ -30,11 +30,15 @@ export default function useGenome(genomeId: string) {
     const defaultGenome = getGenomeConfig(genomeId);
 
     if (defaultGenome && defaultGenome.genome) {
+
       setGenome(GenomeSerializer.serialize(defaultGenome));
     } else {
+
       GenomeHubManager.getInstance()
         .getGenomeById(genomeId)
         .then((genome) => {
+
+
           setGenome(genome);
         })
         .catch((error) => {

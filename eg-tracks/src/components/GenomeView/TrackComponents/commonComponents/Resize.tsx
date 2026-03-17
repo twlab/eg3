@@ -3,9 +3,9 @@ import { ResizeObserver } from "@juggle/resize-observer";
 import { debounce } from "lodash";
 
 const useResizeObserver = () => {
-  const [size, setSize] = useState({ width: window.innerWidth - 20, height: 0 });
+  const [size, setSize] = useState({ width: window.innerWidth, height: 0 });
   const ref = useRef<HTMLDivElement | null>(null);
-  const prevSize = useRef({ width: window.innerWidth - 20, height: 0 });
+  const prevSize = useRef({ width: window.innerWidth, height: 0 });
 
 
   useEffect(() => {
@@ -13,23 +13,22 @@ const useResizeObserver = () => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
 
-        const roundWidth = Math.floor(width);
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
         if (
 
-          Math.abs(roundWidth - prevSize.current.width) > 50
+          Math.abs(width - prevSize.current.width) > 20
         ) {
 
-          setSize({ width: roundWidth, height: prevSize.current.height });
-          prevSize.current = { width: roundWidth, height: prevSize.current.height };
+          setSize({ width: width, height: prevSize.current.height });
+          prevSize.current = { width: width, height: prevSize.current.height };
 
         }
-        const roundHeight = Math.floor(height);
+
         if (
-          Math.abs(roundHeight - prevSize.current.height) > 25
+          Math.abs(height - prevSize.current.height) > 25
         ) {
-          setSize({ width: prevSize.current.width, height: roundHeight });
-          prevSize.current = { width: prevSize.current.width, height: roundHeight };
+          setSize({ width: prevSize.current.width, height: height });
+          prevSize.current = { width: prevSize.current.width, height: height };
 
         }
       }

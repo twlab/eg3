@@ -8,10 +8,7 @@ import { validateGenomeData } from "./genome-schema";
 
 export default class GenomeSerializer {
   static serialize(genomeConfig: GenomeConfig): IGenome {
-    const defaultRegion = new DisplayedRegionModel(
-      genomeConfig.navContext,
-      ...genomeConfig.defaultRegion
-    ).currentRegionAsString();
+    const defaultRegion = genomeConfig.defaultRegion
 
     const serialized: IGenome = {
       name: genomeConfig.genome.getName(),
@@ -43,6 +40,7 @@ export default class GenomeSerializer {
 
     const genome = new Genome(object.name, chromosomes);
     const navContext = genome.makeNavContext();
+
     const defaultRegion = navContext.parse(
       object.defaultRegion
         ? object.defaultRegion

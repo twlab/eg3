@@ -49,6 +49,7 @@ export function TrackContainerRepresentable({
   // MARK: Genome Config
 
   const genomeConfig = useMemo(() => {
+
     return GenomeSerializer.deserialize(_genomeConfig);
   }, [_genomeConfig]);
 
@@ -183,6 +184,7 @@ export function TrackContainerRepresentable({
         overrideViewRegion as GenomeCoordinate
       );
     } else {
+
       newViewRegion = genomeConfig.defaultRegion;
     }
 

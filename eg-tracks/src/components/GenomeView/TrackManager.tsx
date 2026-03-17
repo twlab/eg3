@@ -648,6 +648,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 =
     cancelAnimationFrame(frameID.current);
+
     frameID.current = requestAnimationFrame(() => {
       if (trackWrapperRef.current) {
         trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
@@ -672,6 +673,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     isDragging.current = true;
     lastX.current = e.pageX;
+
     if (horizontalLineRef.current && verticalLineRef.current) {
       horizontalLineRef.current.style.display = "none";
       verticalLineRef.current.style.display = "none";
@@ -1474,6 +1476,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState: newTrackState,
       globalTrackState: globalTrackState,
     });
+    console.log(globalTrackState.current)
   }
 
   // MARK: onmessInfin

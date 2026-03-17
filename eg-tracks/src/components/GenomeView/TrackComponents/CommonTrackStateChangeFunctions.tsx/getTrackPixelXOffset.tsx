@@ -15,5 +15,6 @@ export function getTrackXOffset(
       Math.floor(trackState.xDist / windowWidth) * windowWidth -
       trackState.startWindow;
   }
+
   return resXPos;
 }
