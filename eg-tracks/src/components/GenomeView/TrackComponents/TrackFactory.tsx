@@ -724,14 +724,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : 40,
           position: "relative",
           willChange: "transform",
+          left: 120,
         }}
       >
         <div
           style={{
             position: "absolute",
             lineHeight: 0,
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            transform:
+              updateSide.current === "right"
+                ? `translateX(${xPos.current}px)`
+                : `translateX(-${xPos.current}px)`,
             backgroundColor: configOptions.current.backgroundColor,
           }}
         >

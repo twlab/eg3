@@ -156,7 +156,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         let curEleStyle: any = configOptions.forceSvg
           ? {
               position: "relative",
-              transform: `translateX(${-trackState.viewWindow.start}px)`,
+              transform: `translateX(${-trackState.visData.viewWindow.start}px)`,
             }
           : {};
 
@@ -173,7 +173,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
                   ...curEleStyle,
                 }}
               >
-                <svg key={svgKey} width={width} height={height}>
+                <svg
+                  key={svgKey}
+                  width={trackState.visData.visWidth}
+                  height={height}
+                >
                   {placements.map(renderAnnotation)}
                 </svg>
               </div>
@@ -183,24 +187,24 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       return (
-        <svg key={svgKey} width={width} height={height}>
+        <svg key={svgKey} width={trackState.visData.visWidth} height={height}>
           {placements.map(renderAnnotation)}
-          {/* <line
-            x1={width / 3}
+          <line
+            x1={trackState.visData.viewWindow.start}
             y1={0}
-            x2={width / 3}
+            x2={trackState.visData.viewWindow.start}
             y2={height}
             stroke="black"
             strokeWidth={1}
           />
           <line
-            x1={(2 * width) / 3}
+            x1={trackState.visData.viewWindow.end}
             y1={0}
-            x2={(2 * width) / 3}
+            x2={trackState.visData.viewWindow.end}
             y2={height}
             stroke="black"
             strokeWidth={1}
-          /> */}
+          />
         </svg>
       );
     }
@@ -1158,8 +1162,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
   }) {
     const canvasElements = (
       <RulerComponent
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
-        width={trackState.visWidth}
+        viewRegion={objToInstanceAlign(trackState.visData.visRegion)}
+        width={trackState.visData.visWidth}
         trackModel={trackModel}
         selectedRegion={
           trackState.genomicFetchCoord
@@ -1170,9 +1174,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
             : trackState.visRegion
         }
         viewWindow={
-          trackState.viewWindow
-            ? trackState.viewWindow
-            : new OpenInterval(0, trackState.visWidth)
+          trackState?.visData?.viewWindow
+            ? trackState?.visData?.viewWindow
+            : new OpenInterval(0, trackState.visData.visWidth)
         }
         updatedLegend={updatedLegend}
         genomeConfig={genomeConfig}
