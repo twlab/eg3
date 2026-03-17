@@ -41,6 +41,12 @@ import {
 } from "@/lib/redux/slices/settingsSlice";
 import { version } from "../../../package.json";
 import History from "./History";
+import TracksTab from "../root-layout/tabs/tracks/TracksTab";
+import AppsTab from "../root-layout/tabs/apps/AppsTab";
+import HelpTab from "../root-layout/tabs/HelpTab";
+import ShareTab from "../root-layout/tabs/ShareTab";
+import SettingsTab from "../root-layout/tabs/SettingsTab";
+import { OutsideClickDetector } from "wuepgg3-track";
 
 import { selectCurrentState } from "../../lib/redux/selectors";
 import { selectBundle, updateBundle } from "@/lib/redux/slices/hubSlice";
@@ -70,6 +76,13 @@ export default function NavBar() {
     versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
+
+  // Close mobile dropdown when the modal is dismissed externally (e.g. Escape key)
+  useEffect(() => {
+    if (currentTab === null) {
+      setMobileMenuOpen(false);
+    }
+  }, [currentTab]);
 
   // Monitor localStorage quota errors
   useEffect(() => {
@@ -202,10 +215,18 @@ export default function NavBar() {
         <div className="flex items-center gap-2">
           {isSmallScreen ? (
             <IconButton
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => {
+                if (currentTab !== null) {
+                  // modal is open — close it
+                  dispatch(setNavigationTab(null));
+                  setMobileMenuOpen(false);
+                } else {
+                  setMobileMenuOpen(!mobileMenuOpen);
+                }
+              }}
               title="Menu"
             >
-              {mobileMenuOpen ? (
+              {mobileMenuOpen || currentTab !== null ? (
                 <XMarkIcon className="h-6 w-6" />
               ) : (
                 <Bars3Icon className="h-6 w-6" />
@@ -254,60 +275,75 @@ export default function NavBar() {
                     clearHistory={clearHistory}
                   />
                   <div className="h-5 border-r border-gray-400" />
-                  <Button
-                    onClick={() =>
-                      dispatch(
-                        setNavigationTab(
-                          currentTab === "tracks" ? null : "tracks"
-                        )
-                      )
-                    }
-                    active={currentTab === "tracks"}
-                  >
-                    Tracks
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      dispatch(
-                        setNavigationTab(currentTab === "apps" ? null : "apps")
-                      )
-                    }
-                    active={currentTab === "apps"}
-                  >
-                    Apps
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      dispatch(
-                        setNavigationTab(currentTab === "share" ? null : "share")
-                      )
-                    }
-                    active={currentTab === "share"}
-                  >
-                    Share
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      dispatch(
-                        setNavigationTab(
-                          currentTab === "settings" ? null : "settings"
-                        )
-                      )
-                    }
-                    active={currentTab === "settings"}
-                  >
-                    Settings
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      dispatch(
-                        setNavigationTab(currentTab === "help" ? null : "help")
-                      )
-                    }
-                    active={currentTab === "help"}
-                  >
-                    Help
-                  </Button>
+                  <div className="relative">
+                    <OutsideClickDetector onOutsideClick={() => dispatch(setNavigationTab(null))}>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => dispatch(setNavigationTab(currentTab === "tracks" ? null : "tracks"))}
+                          active={currentTab === "tracks"}
+                        >
+                          Tracks
+                        </Button>
+                        <Button
+                          onClick={() => dispatch(setNavigationTab(currentTab === "apps" ? null : "apps"))}
+                          active={currentTab === "apps"}
+                        >
+                          Apps
+                        </Button>
+                        <Button
+                          onClick={() => dispatch(setNavigationTab(currentTab === "share" ? null : "share"))}
+                          active={currentTab === "share"}
+                        >
+                          Share
+                        </Button>
+                        <Button
+                          onClick={() => dispatch(setNavigationTab(currentTab === "settings" ? null : "settings"))}
+                          active={currentTab === "settings"}
+                        >
+                          Settings
+                        </Button>
+                        <Button
+                          onClick={() => dispatch(setNavigationTab(currentTab === "help" ? null : "help"))}
+                          active={currentTab === "help"}
+                        >
+                          Help
+                        </Button>
+                      </div>
+                      <AnimatePresence>
+                        {currentTab !== null && (
+                          <motion.div
+                            className="absolute top-full right-0 mt-2 bg-white dark:bg-dark-background border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl z-50 overflow-hidden"
+                            style={{ width: "55vw", maxHeight: "80vh" }}
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                              <h2 className="text-lg text-gray-800 dark:text-white capitalize">{currentTab}</h2>
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Press Esc to close</span>
+                                <button
+                                  onClick={() => dispatch(setNavigationTab(null))}
+                                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                  title="Close"
+                                >
+                                  <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="overflow-y-auto" style={{ height: "calc(80vh - 56px)" }}>
+                              {currentTab === "tracks" && <TracksTab />}
+                              {currentTab === "apps" && <AppsTab />}
+                              {currentTab === "help" && <HelpTab />}
+                              {currentTab === "share" && <ShareTab />}
+                              {currentTab === "settings" && <SettingsTab />}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </OutsideClickDetector>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div

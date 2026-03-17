@@ -3853,8 +3853,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
-                  track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing err.
-                   */}
+                          track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing err.
+                          */}
                           {item.trackModel.isSelected ? (
                             <div className="Track-border-container Track-selected-border"></div>
                           ) : (
