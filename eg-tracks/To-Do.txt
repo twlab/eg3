@@ -272,3 +272,12 @@ trackResize
  2. add height and width props to package
  3. fix config menu position in package
  4. 
+
+
+
+
+
+
+ 3/17 
+
+ fix serilize and deserilize for defaultRegion double check it in sessions, customGenome, genomePicker, useCurrentGenome
