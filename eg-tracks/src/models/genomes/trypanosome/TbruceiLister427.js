@@ -102,7 +102,7 @@ const genome = new Genome("TbruceiLister427", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("Chr1_3A_Tb427v10:0-7906");
+const defaultRegion = "Chr1_3A_Tb427v10:0-7906";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

@@ -30,7 +30,7 @@ const genome = new Genome("mm9", [
 ]);
 // chr6:52675982-53147856 dynamiclongrange
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:52115672-52119450");
+const defaultRegion = "chr6:52115672-52119450";
 const defaultTracks = [
   new TrackModel({
     type: "ruler",

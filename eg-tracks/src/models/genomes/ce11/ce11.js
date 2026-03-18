@@ -15,7 +15,7 @@ const genome = new Genome("ce11", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chrII:14646376-14667875");
+const defaultRegion = "chrII:14646376-14667875";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

@@ -5,7 +5,7 @@ import TrackModel from "../../TrackModel";
 const genome = new Genome("hpv16", [new Chromosome("NC_001526.4", 7906)]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("NC_001526.4:0-7906");
+const defaultRegion = "NC_001526.4:0-7906";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

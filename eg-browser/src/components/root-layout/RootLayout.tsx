@@ -49,6 +49,7 @@ import {
   ITrackModel,
   GenomeCoordinate,
   GenomeConfig,
+  IGenome,
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
@@ -124,7 +125,7 @@ export default function RootLayout(props: GenomeHubProps) {
   function getConfig() {
     if (props.customGenome) {
       try {
-        return GenomeSerializer.deserialize(props.customGenome);
+        return props.customGenome
       } catch {
         return null;
       }
@@ -177,11 +178,11 @@ export default function RootLayout(props: GenomeHubProps) {
       ((props.genomeName && props.tracks && props.viewRegion) ||
         props.customGenome)
     ) {
-      const genomeConfig: GenomeConfig | null = getConfig();
+      const genomeConfig: IGenome | null = getConfig();
       if (genomeConfig) {
         if (!sessionId) {
-          if (genomeConfig?.genome) {
-            const genome = GenomeSerializer.serialize(genomeConfig);
+          if (genomeConfig?.chromosomes && genomeConfig?.name) {
+            const genome = genomeConfig;
 
             let additionalTracks: ITrackModel[] = props.tracks as ITrackModel[];
 

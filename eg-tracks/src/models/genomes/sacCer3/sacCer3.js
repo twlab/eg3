@@ -25,7 +25,7 @@ const genome = new Genome("sacCer3", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chrII:235244-243590");
+const defaultRegion = "chrII:235244-243590";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

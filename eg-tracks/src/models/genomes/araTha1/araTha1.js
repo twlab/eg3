@@ -15,7 +15,7 @@ const genome = new Genome("araTha1", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr1:1187814-1197077");
+const defaultRegion = "chr1:1187814-1197077";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

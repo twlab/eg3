@@ -32,7 +32,7 @@ const genome = new Genome("mCalJa1.2.pat.X", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr8:29019461-29104790");
+const defaultRegion = "chr8:29019461-29104790";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

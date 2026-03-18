@@ -32,7 +32,7 @@ const genome = new Genome("mT2T-Y_v1.0", [
 const navContext = genome.makeNavContext();
 
 
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = "chr7:27053397-27373765";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

@@ -750,13 +750,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       rightSectionSize.current.push(windowWidth);
 
-      fetchGenomeData(0, "right", curViewWindow);
+      createRegionTrackState(0, "right", curViewWindow);
     } else if (
       dragX.current >= sumArray(leftSectionSize.current) &&
       dragX.current > 0
     ) {
       leftSectionSize.current.push(windowWidth);
-      fetchGenomeData(0, "left", curViewWindow);
+      createRegionTrackState(0, "left", curViewWindow);
     }
     globalTrackState.current.viewWindow = curViewWindow;
     if (dataIdx.current === curDataIdx) {
@@ -1236,14 +1236,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onConfigMenuClose();
     }
   }
-  // MARK: FETCHGEN
+  // MARK: RegionTrackState
   // FUNCTION TO FETCH DATA AND CHANGE STATE TO INDICATE THERE ARE NEW DATA AFTER GETTING NAV COORD TELLING THE each TRACK
   // COMPONENTS TO UPDATE AND DRAW WITH THE NEW DATA
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
 
-  async function fetchGenomeData(
+  async function createRegionTrackState(
     initial: number = 0,
     trackSide: string,
     viewWindow: OpenInterval,
@@ -1258,16 +1258,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let regionExpandLoci;
     let regionLoci: Array<any>;
 
-    const trackWindowWidth =
-      selectedRegionSet &&
-        bpRegionSize.current === genomeConfig.navContext._totalBases
-        ? windowWidth / 3
-        : windowWidth;
-    let curViewWindow =
-      selectedRegionSet &&
-        bpRegionSize.current === genomeConfig.navContext._totalBases
-        ? new OpenInterval(0, trackWindowWidth)
-        : new OpenInterval(trackWindowWidth, trackWindowWidth * 2);
+
+
     if (initial === 1) {
       initExpandBpLoci = [
         { start: minBp.current - bpRegionSize.current * 2, end: maxBp.current },
@@ -1324,12 +1316,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const rightExtraPixels = rightBaseDiff * pixelsPerBase;
 
       newVisData = {
-        visWidth: expandedWidth,
+        visWidth: selectedRegionSet &&
+          bpRegionSize.current === genomeConfig.navContext._totalBases
+          ? leftExtraPixels : expandedWidth,
         visRegion: curVisRegion,
-        viewWindow: new OpenInterval(
-          leftExtraPixels,
-          expandedWidth - rightExtraPixels,
-        ),
+        viewWindow: selectedRegionSet &&
+          bpRegionSize.current === genomeConfig.navContext._totalBases
+          ? new OpenInterval(0, leftExtraPixels) : new OpenInterval(
+            leftExtraPixels,
+            expandedWidth - rightExtraPixels,
+          ),
         viewWindowRegion: curFetchRegionNav,
       };
 
@@ -1344,10 +1340,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
       minBp.current = minBp.current - bpRegionSize.current * 2;
       maxBp.current = maxBp.current + bpRegionSize.current * 2;
-      curViewWindow = new OpenInterval(
-        leftExtraPixels,
-        expandedWidth - rightExtraPixels,
-      );
+
       regionLoci = bpNavToGenNav(initBpLoci, genomeConfig);
     } else {
       if (trackSide === "right") {
@@ -1400,12 +1393,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const rightExtraPixels = rightBaseDiff * pixelsPerBase;
 
         newVisData = {
-          visWidth: expandedWidth,
+          visWidth: selectedRegionSet &&
+            bpRegionSize.current === genomeConfig.navContext._totalBases
+            ? leftExtraPixels : expandedWidth,
           visRegion: curVisRegion,
-          viewWindow: new OpenInterval(
-            leftExtraPixels,
-            expandedWidth - rightExtraPixels,
-          ),
+          viewWindow: selectedRegionSet &&
+            bpRegionSize.current === genomeConfig.navContext._totalBases
+            ? new OpenInterval(0, leftExtraPixels) : new OpenInterval(
+              leftExtraPixels,
+              expandedWidth - rightExtraPixels,
+            ),
           viewWindowRegion: regionNav,
         };
 
@@ -1463,7 +1460,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         const leftBaseDiff =
           originalContextInterval.start - expandedContextInterval.start;
-        console.log(originalContextInterval.start - expandedContextInterval.start)
+
         const rightBaseDiff =
           expandedContextInterval.end - originalContextInterval.end;
 
@@ -1471,12 +1468,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const rightExtraPixels = rightBaseDiff * pixelsPerBase;
 
         newVisData = {
-          visWidth: expandedWidth,
+          visWidth: selectedRegionSet &&
+            bpRegionSize.current === genomeConfig.navContext._totalBases
+            ? leftExtraPixels : expandedWidth,
           visRegion: curVisRegion,
-          viewWindow: new OpenInterval(
-            leftExtraPixels,
-            expandedWidth - rightExtraPixels,
-          ),
+          viewWindow: selectedRegionSet &&
+            bpRegionSize.current === genomeConfig.navContext._totalBases
+            ? new OpenInterval(0, leftExtraPixels) : new OpenInterval(
+              leftExtraPixels,
+              expandedWidth - rightExtraPixels,
+            ),
           viewWindowRegion: regionNav,
         };
 
@@ -1543,7 +1544,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const rightExtraPixels = rightBaseDiff * pixelsPerBase;
 
           return {
-            visWidth: expandedWidth,
+            visWidth: selectedRegionSet &&
+              bpRegionSize.current === genomeConfig.navContext._totalBases
+              ? leftExtraPixels : expandedWidth,
             visRegion: curVisRegion,
             viewWindow: new OpenInterval(
               leftExtraPixels,
@@ -2510,7 +2513,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     addTermToMetaSets(trackManagerState.current.tracks);
 
-    fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
+    createRegionTrackState(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
 
     queueRegionToFetch(0);
 

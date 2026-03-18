@@ -38,7 +38,7 @@ export default function useGenome(genomeId: string) {
         .getGenomeById(genomeId)
         .then((genome) => {
 
-
+          console.log(genome)
           setGenome(genome);
         })
         .catch((error) => {

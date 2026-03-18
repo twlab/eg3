@@ -33,7 +33,7 @@ const genome = new Genome("panTro5", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:52003276-52425961");
+const defaultRegion = "chr6:52003276-52425961";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

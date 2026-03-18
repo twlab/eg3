@@ -31,7 +31,7 @@ const genome = new Genome("rheMac8", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr16:41269989-41277524");
+const defaultRegion = "chr16:41269989-41277524";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

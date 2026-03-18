@@ -27,11 +27,11 @@ const genome = new Genome("rn6", [
     new Chromosome("chr20", 56205956),
     new Chromosome("chrM", 16313),
     new Chromosome("chrX", 159970021),
-    new Chromosome("chrY", 3310458),    
+    new Chromosome("chrY", 3310458),
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:52003276-52425961");
+const defaultRegion = "chr6:52003276-52425961";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

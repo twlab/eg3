@@ -9,7 +9,7 @@ const allSize = chromSize.map((genom) => new Chromosome(genom.chr, genom.size));
 const genome = new Genome("panTro6", allSize);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27270738-27274218");
+const defaultRegion = "chr7:27270738-27274218";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

@@ -22,7 +22,7 @@ const genome = new Genome("Pfal3D7", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr1:256704-310866");
+const defaultRegion = "chr1:256704-310866";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",
