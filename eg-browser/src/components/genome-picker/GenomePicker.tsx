@@ -54,11 +54,13 @@ export default function GenomePicker() {
       const genomeConfig = getGenomeConfig(selectedPath[1]);
 
       // timeout = setTimeout(() => {
-      dispatch(
-        createSession({
-          genome: GenomeSerializer.serialize(genomeConfig),
-        })
-      );
+      if (genomeConfig) {
+        dispatch(
+          createSession({
+            genome: GenomeSerializer.serialize(genomeConfig),
+          }),
+        );
+      }
       // }, 10000);
     }
 
@@ -77,7 +79,7 @@ export default function GenomePicker() {
       return (
         genome.name.toLowerCase().includes(searchLower) ||
         genome.versions.some((version) =>
-          version.toLowerCase().includes(searchLower)
+          version.toLowerCase().includes(searchLower),
         )
       );
     });
@@ -164,8 +166,9 @@ export default function GenomePicker() {
             </div>
           </div>
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${selectedPath !== null ? "items-center" : ""
-              }`}
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+              selectedPath !== null ? "items-center" : ""
+            }`}
           >
             {filteredGenomes
               // selectedPath === null
@@ -174,8 +177,9 @@ export default function GenomePicker() {
               .map((genome) => (
                 <motion.div
                   key={genome.name}
-                  className={`rounded-xl shadow-md dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""
-                    }`}
+                  className={`rounded-xl shadow-md dark:bg-dark-surface ${
+                    selectedPath !== null ? "col-start-2" : ""
+                  }`}
                   layout
                   initial={{ opacity: 0 }}
                   animate={{
@@ -189,7 +193,7 @@ export default function GenomePicker() {
                       !import.meta || !import.meta.env
                         ? "/browser/"
                         : import.meta.env.BASE_URL +
-                        (genome.logoUrl ?? placeholder)
+                          (genome.logoUrl ?? placeholder)
                     }
                     alt={genome.name}
                     className="rounded-xl h-28 w-full object-cover object-top"
@@ -225,10 +229,11 @@ export default function GenomePicker() {
                           <ChevronRightIcon className="w-4 h-4" />
                         )}
                         <motion.p
-                          className={`${selectedPath !== null
-                            ? "text-center text-xl w-full"
-                            : ""
-                            }`}
+                          className={`${
+                            selectedPath !== null
+                              ? "text-center text-xl w-full"
+                              : ""
+                          }`}
                         >
                           {version}
                         </motion.p>

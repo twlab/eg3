@@ -64,7 +64,7 @@ export default function GenomeView() {
     dispatch(
       updateCurrentSession({
         userViewRegion: coordinate,
-      })
+      }),
     );
   };
 
@@ -73,19 +73,19 @@ export default function GenomeView() {
       updateCurrentSession({
         viewRegion: coordinate,
         userViewRegion: coordinate,
-      })
+      }),
     );
   };
   function handleSetSelected(
     set: RegionSet | null,
-    coordinate: GenomeCoordinate | null
+    coordinate: GenomeCoordinate | null,
   ) {
     if (currentSession?.selectedRegionSet || set) {
       dispatch(
         updateCurrentSession({
           selectedRegionSet: set,
           userViewRegion: coordinate,
-        })
+        }),
       );
     }
   }

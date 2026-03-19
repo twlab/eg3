@@ -56,7 +56,7 @@ const Session: React.FC = () => {
 
     const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
     const navContext = genomeConfig.navContext as NavigationContext;
-    console.log(currentSession, genomeConfig);
+
     const curViewInterval = userViewRegion
       ? navContext.parse(userViewRegion)
       : navContext.parse(genomeConfig.defaultRegion);
