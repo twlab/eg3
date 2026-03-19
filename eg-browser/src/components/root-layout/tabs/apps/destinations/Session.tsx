@@ -4,7 +4,6 @@ import {
   updateCurrentSession,
 } from "../../../../../lib/redux/slices/browserSlice";
 import {
-  resetState,
   selectBundle,
   selectCustomTracksPool,
   updateBundle,

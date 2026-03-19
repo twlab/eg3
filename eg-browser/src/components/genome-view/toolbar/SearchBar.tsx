@@ -44,7 +44,7 @@ interface SearchBarProps {
   onNewRegionSelect: (
     start: number,
     end: number,
-    highlightSearch?: boolean
+    highlightSearch?: boolean,
   ) => void;
   windowWidth?: number;
   fontSize?: number;
@@ -91,7 +91,7 @@ let currentSnpSearchController: AbortController | null = null;
 
 const geneSearch = async (
   query: string,
-  genomeName: string
+  genomeName: string,
 ): Promise<GeneResult[]> => {
   if (query.trim().length < MIN_CHARS_FOR_SUGGESTIONS) return [];
 
@@ -118,7 +118,7 @@ const geneSearch = async (
     };
     const url = new URL(`${AWS_API}/${genomeName}/genes/queryName`);
     Object.keys(params).forEach((key) =>
-      url.searchParams.append(key, params[key])
+      url.searchParams.append(key, params[key]),
     );
 
     const response = await fetch(url.toString(), {
@@ -168,7 +168,7 @@ const geneSearch = async (
 
 const snpSearch = async (
   query: string,
-  genomeName: string
+  genomeName: string,
 ): Promise<SnpResult[]> => {
   if (!query || query.trim().length < 1) return [];
 
@@ -361,7 +361,11 @@ export default function SearchBar({
   const genome = useCurrentGenome();
   const [isShowingIsoforms, setIsShowingIsoforms] = useState(false);
   const [isShowingSNPforms, setIsShowingSNPforms] = useState(false);
-
+  const genomeConfig = useMemo(() => {
+    if (genome) {
+      return GenomeSerializer.deserialize(genome!);
+    }
+  }, [genome]);
   // Helper functions for responsive sizing (matching Toolbar.tsx)
   const getIconSize = () => {
     return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
@@ -388,12 +392,6 @@ export default function SearchBar({
     return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
   };
 
-  const genomeConfig = useMemo(() => {
-    if (genome) {
-      return GenomeSerializer.deserialize(genome!);
-    }
-  }, [genome]);
-
   const parseRegion = (query: string) => {
     const navContext = genomeConfig?.navContext;
     let parsedRegion;
@@ -417,14 +415,14 @@ export default function SearchBar({
     onNewRegionSelect(
       parsedRegion.start,
       parsedRegion.end,
-      highlightSearch.current
+      highlightSearch.current,
     );
   };
   function onGeneSelected(gene: Gene) {
     const navContext = genomeConfig?.navContext;
 
     const contextInterval = navContext!.convertGenomeIntervalToBases(
-      gene.locus
+      gene.locus,
     );
 
     const baseStart = contextInterval[0].start;
@@ -437,7 +435,7 @@ export default function SearchBar({
     const chrInterval = new ChromosomeInterval(
       `chr${mapping.seq_region_name}`,
       mapping.start - 1,
-      mapping.end
+      mapping.end,
     );
     const interval = navContext!.convertGenomeIntervalToBases(chrInterval)[0];
 
@@ -447,7 +445,7 @@ export default function SearchBar({
       console.log(
         "SNP not available in current region set view",
         "error",
-        2000
+        2000,
       );
     }
   }
@@ -557,7 +555,7 @@ export default function SearchBar({
           text={`"${searchInput}"`}
           desc="You're entering coordinates. Press enter or click here to jump to this region."
           onClick={() => parseRegion(searchInput)}
-        />
+        />,
       );
       return suggestions;
     }
@@ -567,7 +565,7 @@ export default function SearchBar({
       suggestions.push(
         <div key="loading" className="px-3 py-2 text-gray-500 text-center">
           <span style={{ fontSize: fontSize }}>Searching...</span>
-        </div>
+        </div>,
       );
       return suggestions;
     }
@@ -579,7 +577,7 @@ export default function SearchBar({
           text="Filters"
           highlightSearch={highlightSearch}
           fontSize={fontSize}
-        />
+        />,
       );
       SLASH_COMMANDS.forEach((command) => {
         suggestions.push(
@@ -597,17 +595,17 @@ export default function SearchBar({
             >
               /{command}
             </span>
-          </motion.div>
+          </motion.div>,
         );
       });
     }
 
     if (searchResults.length > 0) {
       const geneResults = searchResults.filter(
-        (r): r is GeneResult => r.type === "gene"
+        (r): r is GeneResult => r.type === "gene",
       );
       const snpResults = searchResults.filter(
-        (r): r is SnpResult => r.type === "snp"
+        (r): r is SnpResult => r.type === "snp",
       );
 
       if (geneResults.length > 0) {
@@ -616,7 +614,7 @@ export default function SearchBar({
             key="genes"
             text="Genes"
             fontSize={fontSize}
-          />
+          />,
         );
         geneResults.forEach((result) => {
           suggestions.push(
@@ -634,7 +632,7 @@ export default function SearchBar({
                   {result.description}
                 </span>
               </div>
-            </motion.div>
+            </motion.div>,
           );
         });
       }
@@ -645,7 +643,7 @@ export default function SearchBar({
             key="snps"
             text="Variants"
             fontSize={fontSize}
-          />
+          />,
         );
         snpResults.forEach((result) => {
           suggestions.push(
@@ -658,7 +656,7 @@ export default function SearchBar({
                 snp={result.snpData}
                 onSnpSelected={onSnpSelected}
               />
-            </motion.div>
+            </motion.div>,
           );
         });
       }

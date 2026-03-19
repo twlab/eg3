@@ -25,26 +25,20 @@ export const FetchSequence: React.FC = () => {
 
   const genomeConfig = useMemo(
     () => (_genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null),
-    [_genomeConfig]
+    [_genomeConfig],
   );
   // Memoize selectedRegion to avoid unnecessary recalculation
   const selectedRegion = useMemo(() => {
-    if (
-      genomeConfig &&
-      genomeConfig.navContext &&
-      userViewRegion
-    ) {
-
+    if (genomeConfig && genomeConfig.navContext && userViewRegion) {
       const navContext = genomeConfig.navContext as NavigationContext;
       const parsed = navContext.parse(userViewRegion);
       const { start, end } = parsed;
 
       return new DisplayedRegionModel(genomeConfig.navContext, start, end);
-
     } else if (genomeConfig && genomeConfig.navContext) {
       return new DisplayedRegionModel(
         genomeConfig.navContext,
-        ...genomeConfig.defaultRegion
+        ...genomeConfig.navContext.parse(genomeConfig.defaultRegion),
       );
     }
     return null;
@@ -107,7 +101,7 @@ export const FetchSequence: React.FC = () => {
     const context = selectedRegion.getNavigationContext();
     if (inputList.length === 0) {
       window.alert(
-        "Input content is empty or cannot find any location on genome"
+        "Input content is empty or cannot find any location on genome",
       );
       setListRegionSeq("");
       return null;

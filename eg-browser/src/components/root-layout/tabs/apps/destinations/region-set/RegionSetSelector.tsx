@@ -19,7 +19,7 @@ import {
 
 // Custom Hooks
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-const RegionSetSelector: React.FC = ({ }) => {
+const RegionSetSelector: React.FC = ({}) => {
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
   const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
@@ -37,14 +37,14 @@ const RegionSetSelector: React.FC = ({ }) => {
   }
   const sets = currentSession?.regionSets
     ? currentSession?.regionSets.map((item) => {
-      if (typeof item === "object") {
-        const newRegionSet = RegionSet.deserialize(item);
+        if (typeof item === "object") {
+          const newRegionSet = RegionSet.deserialize(item);
 
-        return newRegionSet;
-      } else {
-        return item;
-      }
-    })
+          return newRegionSet;
+        } else {
+          return item;
+        }
+      })
     : [];
 
   const setConfigured = (newSet: RegionSet) => {
@@ -60,7 +60,7 @@ const RegionSetSelector: React.FC = ({ }) => {
     dispatch(
       updateCurrentSession({
         regionSets: [...currentSession?.regionSets, newSet],
-      })
+      }),
     );
   };
   function onSetSelected(set: RegionSet | null) {
@@ -69,29 +69,23 @@ const RegionSetSelector: React.FC = ({ }) => {
       const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
       coordinate =
         newVisData.currentRegionAsString() as GenomeCoordinate | null;
-
     } else {
       if (genomeConfig) {
-        const navContext = genomeConfig.navContext;
-        coordinate = new DisplayedRegionModel(
-          navContext,
-          genomeConfig.defaultRegion.start,
-          genomeConfig.defaultRegion.end
-        ).currentRegionAsString() as GenomeCoordinate | null;
+        coordinate = genomeConfig.defaultRegion;
       }
     }
     dispatch(
       updateCurrentSession({
         selectedRegionSet: set,
         userViewRegion: coordinate,
-      })
+      }),
     );
   }
   function onSetsChanged(newSets: Array<RegionSet>) {
     dispatch(
       updateCurrentSession({
         regionSets: newSets,
-      })
+      }),
     );
   }
   const replaceSet = (index: number, replacement: RegionSet) => {
@@ -111,7 +105,7 @@ const RegionSetSelector: React.FC = ({ }) => {
 
   const handleSetChangeSideEffects = (
     changedIndex: number,
-    newSet: RegionSet | null
+    newSet: RegionSet | null,
   ) => {
     const oldSet = sets[changedIndex];
     if (selectedRegionSet) {
