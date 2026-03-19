@@ -8,7 +8,7 @@ import { validateGenomeData } from "./genome-schema";
 
 export default class GenomeSerializer {
   static serialize(genomeConfig: GenomeConfig): IGenome {
-    const defaultRegion = genomeConfig.defaultRegion
+    const defaultRegion = genomeConfig.defaultRegion;
 
     const serialized: IGenome = {
       name: genomeConfig.genome.getName(),
@@ -17,12 +17,12 @@ export default class GenomeSerializer {
         (chr: Chromosome) => ({
           name: chr.getName(),
           length: chr.getLength(),
-        })
+        }),
       ),
       cytobands: genomeConfig.cytobands ?? {},
       defaultRegion,
       defaultTracks: genomeConfig.defaultTracks.map((track) =>
-        track.serialize()
+        track.serialize(),
       ),
       publicHubList: genomeConfig.publicHubList,
       publicHubData: genomeConfig.publicHubData,
@@ -35,20 +35,15 @@ export default class GenomeSerializer {
 
   static deserialize(object: IGenome): GenomeConfig {
     const chromosomes = object.chromosomes.map(
-      (chr) => new Chromosome(chr.name, chr.length)
+      (chr) => new Chromosome(chr.name, chr.length),
     );
 
     const genome = new Genome(object.name, chromosomes);
     const navContext = genome.makeNavContext();
 
-    const defaultRegion = navContext.parse(
-      object.defaultRegion
-        ? object.defaultRegion
-        : `${object.chromosomes[0].name}` + ":0-1"
-    );
-
+    const defaultRegion = object.defaultRegion ? object.defaultRegion : "";
     const defaultTracks = object.defaultTracks?.map((track) =>
-      TrackModel.deserialize(track)
+      TrackModel.deserialize(track),
     );
 
     return {

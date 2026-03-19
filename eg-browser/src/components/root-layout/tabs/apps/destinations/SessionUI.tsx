@@ -96,8 +96,17 @@ export const onRetrieveSession = async (retrieveId: string) => {
               end: 1,
             };
           }
+
           let newBundle = {
-            genomeId: object.genomeId,
+            genomeId: object.genomeId
+              ? object.genomeId
+              : object.genomeName
+                ? object.genomeName
+                : object.name
+                  ? object.name
+                  : object.id
+                    ? object.id
+                    : null,
             viewInterval,
             chromosomes: object.chromosomes || null,
             tracks: object.tracks,
@@ -125,7 +134,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
       console.log(
         "No data available for the provided Session Bundle ID.",
         "error",
-        2000
+        2000,
       );
       return null;
     }
@@ -148,13 +157,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
   const [newSessionLabel, setNewSessionLabel] = useState<string>(
     curBundle.title && curBundle.title !== "Untitled Session"
       ? curBundle.title
-      : ""
+      : "",
   );
   const [retrieveId, setRetrieveId] = useState<string>("");
   const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
   const [sortSession, setSortSession] = useState<string>("date"); // or label
   const [bundle, setBundle] = useState<{ [key: string]: any }>(
-    curBundle ? curBundle : {}
+    curBundle ? curBundle : {},
   );
   const saveSession = async () => {
     const newSessionObj = {
@@ -260,7 +269,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       // Now set the new bundle
       await set(
         ref(db, `sessions/${curBundleId}`),
-        JSON.parse(JSON.stringify(newBundle))
+        JSON.parse(JSON.stringify(newBundle)),
       );
 
       console.log("Session saved!", "success", 2000);
@@ -274,21 +283,25 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const downloadSession = (asHub = false) => {
-    const sessionInJSON = new AppStateSaver().toObject(state);
-    const content = asHub ? (sessionInJSON as any).tracks : sessionInJSON;
-    const descriptor = asHub ? "hub" : "session";
-    const sessionString =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(content));
-    const dl = document.createElement("a");
-    document.body.appendChild(dl); // This line makes it work in Firefox.
-    dl.setAttribute("href", sessionString);
-    dl.setAttribute(
-      "download",
-      `eg-${descriptor}-${bundle.currentId}-${bundle.bundleId}.json`
-    );
-    dl.click();
-    console.log("Session downloaded!", "success", 2000);
+    if (state) {
+      state["bundleId"] = bundle.bundleId;
+
+      const sessionInJSON = new AppStateSaver().toObject(state);
+      const content = asHub ? (sessionInJSON as any).tracks : sessionInJSON;
+      const descriptor = asHub ? "hub" : "session";
+      const sessionString =
+        "data:text/json;charset=utf-8," +
+        encodeURIComponent(JSON.stringify(content));
+      const dl = document.createElement("a");
+      document.body.appendChild(dl); // This line makes it work in Firefox.
+      dl.setAttribute("href", sessionString);
+      dl.setAttribute(
+        "download",
+        `eg-${descriptor}-${bundle.currentId}-${bundle.bundleId}.json`,
+      );
+      dl.click();
+      console.log("Session downloaded!", "success", 2000);
+    }
   };
 
   const downloadAsSession = () => {
@@ -311,7 +324,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       const session = sessionsInBundle[k];
       zip.file(
         `${session.label}-${k}.json`,
-        JSON.stringify(session.state) + "\n"
+        JSON.stringify(session.state) + "\n",
       );
     });
     zip.generateAsync({ type: "base64" }).then((content) => {
@@ -351,7 +364,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       try {
         await set(
           ref(db, `sessions/${bundle.bundleId}`),
-          JSON.parse(JSON.stringify(newBundle))
+          JSON.parse(JSON.stringify(newBundle)),
         );
 
         setNewSessionLabel("");
@@ -384,7 +397,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
     try {
       await remove(
-        ref(db, `sessions/${bundle.bundleId}/sessionsInBundle/${sessionId}`)
+        ref(db, `sessions/${bundle.bundleId}/sessionsInBundle/${sessionId}`),
       );
       console.log("Session deleted.", "success", 2000);
     } catch (error) {
@@ -446,7 +459,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       }
       if (sortSession === "label") {
         sessions.sort(([, a]: any, [, b]: any) =>
-          a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+          a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
         );
       }
       const buttons = sessions.map(([id, session]: any) => (
@@ -636,7 +649,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
           bundleSession["viewRegion"] = new DisplayedRegionModel(
             genomeConfig.navContext,
             viewInterval.start,
-            viewInterval.end
+            viewInterval.end,
           );
         }
         onRestoreSession(bundleSession);
@@ -661,7 +674,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
     if (regionSetView) {
       return new DisplayedRegionModel(
         regionSetView.makeNavContext(),
-        ...viewInterval
+        ...viewInterval,
       );
     } else {
       return new DisplayedRegionModel(genomeConfig.navContext, ...viewInterval);
@@ -1410,7 +1423,7 @@ function getFunName() {
     array[Math.floor(Math.random() * array.length)];
 
   return `${getRandomElement(adjectives)}-${getRandomElement(
-    colors
+    colors,
   )}-${getRandomElement(nouns)}`;
 }
 

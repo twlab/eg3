@@ -54,20 +54,12 @@ const Session: React.FC = () => {
     const selectedRegionSet = currentSession.selectedRegionSet;
     const userViewRegion = currentSession.userViewRegion;
 
-    let curViewInterval;
     const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
-    if (userViewRegion) {
-      const navContext = genomeConfig.navContext as NavigationContext;
-      const parsed = navContext.parse(userViewRegion);
-      const { start, end } = parsed;
-
-      curViewInterval = {
-        start,
-        end,
-      };
-    } else {
-      curViewInterval = genomeConfig.defaultRegion;
-    }
+    const navContext = genomeConfig.navContext as NavigationContext;
+    console.log(currentSession, genomeConfig);
+    const curViewInterval = userViewRegion
+      ? navContext.parse(userViewRegion)
+      : navContext.parse(genomeConfig.defaultRegion);
 
     curUserState = {
       bundleId: bundle.bundleId,
@@ -90,7 +82,7 @@ const Session: React.FC = () => {
       regionSets,
       trackLegendWidth: 120,
       tracks,
-      viewRegion: userViewRegion,
+      viewRegion: userViewRegion ? userViewRegion : currentSession.viewRegion,
       viewInterval: curViewInterval,
     };
   }
@@ -119,7 +111,7 @@ const Session: React.FC = () => {
       typeof sessionBundle.viewRegion === "object"
     ) {
       newGenomeConfig = getGenomeConfig(
-        sessionBundle.viewRegion._navContext._name
+        sessionBundle.viewRegion._navContext._name,
       );
     }
     if (
@@ -130,7 +122,7 @@ const Session: React.FC = () => {
       coordinate = new DisplayedRegionModel(
         newGenomeConfig?.navContext,
         sessionBundle.viewRegion._startBase,
-        sessionBundle.viewRegion._endBase
+        sessionBundle.viewRegion._endBase,
       ).currentRegionAsString() as GenomeCoordinate | null;
     } else if (newGenomeConfig && sessionBundle.viewRegion !== undefined) {
       coordinate = sessionBundle.viewRegion;
@@ -138,7 +130,7 @@ const Session: React.FC = () => {
       coordinate = new DisplayedRegionModel(
         newGenomeConfig?.navContext,
         sessionBundle.viewInterval.start,
-        sessionBundle.viewInterval.end
+        sessionBundle.viewInterval.end,
       ).currentRegionAsString() as GenomeCoordinate | null;
     }
 
@@ -175,7 +167,7 @@ const Session: React.FC = () => {
         dispatch(
           updateCurrentSession({
             bundleId: newBundle.bundleId,
-          })
+          }),
         );
       }
     }
@@ -184,8 +176,11 @@ const Session: React.FC = () => {
   //add or delete session from bundle
   function onUpdateBundle(bundle: any) {
     let title = "Untitled Session";
-    if (bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
-      title = bundle.sessionsInBundle[`${bundle.currentId}`].label
+    if (
+      bundle.sessionsInBundle &&
+      bundle.sessionsInBundle[`${bundle.currentId}`]
+    ) {
+      title = bundle.sessionsInBundle[`${bundle.currentId}`].label;
     }
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId, title }));
@@ -193,7 +188,6 @@ const Session: React.FC = () => {
   return (
     <SessionUI
       onRestoreSession={onRestoreSession}
-
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
       bundleId={bundle.bundleId ? bundle.bundleId : ""}
