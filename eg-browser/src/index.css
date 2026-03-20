@@ -438,6 +438,8 @@ body {
   pointer-events: none;
   /* Make sure it doesn't interfere with interactions */
   /* outline: 1px solid #9aa6b2; */
+  padding-top: 1px;
+  padding-bottom: 1px;
   border-bottom: 1px solid lightgray;
 }
 

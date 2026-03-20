@@ -2508,10 +2508,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     newTrackComponents.map((item, _index) => {
       trackFetchedDataCache.current[`${item.trackModel.id}`] = {};
-      trackFetchedDataCache.current[`${item.trackModel.id}`]["cacheDataIdx"] = {
-        leftIdx: 1,
-        rightIdx: 0,
-      };
       initTrackFetchCache(item.trackModel);
     });
 
@@ -3471,18 +3467,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               globalTrackState.current.trackStates,
             );
 
-            trackFetchedDataCache.current[`${curTrackModel.id}`][
-              "cacheDataIdx"
-            ] = {
-              rightIdx:
-                curTrackModel.type in trackUsingExpandedLoci
-                  ? globalTrackState.current.rightIdx + 1
-                  : globalTrackState.current.rightIdx,
-              leftIdx:
-                curTrackModel.type in trackUsingExpandedLoci
-                  ? globalTrackState.current.leftIdx - 1
-                  : globalTrackState.current.leftIdx,
-            };
+
 
             initTrackFetchCache(curTrackModel);
           }
@@ -3960,11 +3945,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           style={{
                             width: `${windowWidth + 120}px`,
                             position: "relative",
+                            marginTop: "1px",
+                            marginBottom: "1px",
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
-                  track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing err.
-                   */}
+                            track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing err.
+                            */}
                           {item.trackModel.isSelected ? (
                             <div className="Track-border-container Track-selected-border"></div>
                           ) : (

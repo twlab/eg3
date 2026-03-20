@@ -577,8 +577,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           position: "absolute",
           left: 0,
           top: 0,
-          width: "100%",
-          height: "100%",
+
           willChange: "transform",
           zIndex: 2,
           pointerEvents: "none",
@@ -595,7 +594,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : trackModel.isSelected
                 ? "black"
                 : "var(--font-color)",
-            marginBottom: "1px",
+
             pointerEvents: "auto",
           }}
         >
@@ -653,13 +652,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
           color={trackModel.isSelected ? "black" : "var(--font-color)"}
           height={
-            configOptions.current.displayMode === "full"
+            (configOptions.current.displayMode === "full"
               ? !fetchError.current
                 ? svgHeight.current
                 : 40
               : !fetchError.current
                 ? configOptions.current.height
-                : 40
+                : 40)
           }
           xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
           // Control visibility - show when data is loaded and items are hidden, but not when loading
@@ -688,13 +687,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             zIndex: 3,
             pointerEvents: "auto",
             height:
-              configOptions.current.displayMode === "full"
-                ? !fetchError.current
-                  ? svgHeight.current
-                  : 40
-                : !fetchError.current
-                  ? configOptions.current.height
-                  : 40,
+              fetchError.current ? 40 : configOptions.current.displayMode === "full" ? svgHeight.current :
+                !configOptions.current.isCombinedStrand && trackModel.type === "methylc" ? configOptions.current.height * 2 : configOptions.current.height,
             left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
           }}
         >
@@ -703,13 +697,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             terms={metaSets.terms}
             onClick={onColorBoxClick}
             height={
-              configOptions.current.displayMode === "full"
-                ? !fetchError.current
-                  ? svgHeight.current
-                  : 40
-                : !fetchError.current
-                  ? configOptions.current.height
-                  : 40
+              fetchError.current ? 40 : configOptions.current.displayMode === "full" ? svgHeight.current :
+                !configOptions.current.isCombinedStrand && trackModel.type === "methylc" ? configOptions.current.height * 2 : configOptions.current.height
             }
           />
         </div>
@@ -719,13 +708,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         style={{
           display: "flex",
           height:
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-                ? configOptions.current.height
-                : 40,
+            fetchError.current ? 40 : configOptions.current.displayMode === "full" ? svgHeight.current :
+              !configOptions.current.isCombinedStrand && trackModel.type === "methylc" ? configOptions.current.height * 2 : configOptions.current.height,
+
           position: "relative",
           willChange: "transform",
           left: 120,
@@ -735,8 +720,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           style={{
             position: "absolute",
             lineHeight: 0,
-            //             right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            // left: updateSide.current === "right" ? `${xPos.current}px` : "",
+
             transform: `translateX(${xPos.current}px)`,
             backgroundColor: configOptions.current.backgroundColor,
           }}
