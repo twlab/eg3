@@ -157,6 +157,7 @@ class GenomeNavigator extends React.Component<
    * @inheritdoc
    */
   render() {
+
     return (
       <div>
         <MainPane

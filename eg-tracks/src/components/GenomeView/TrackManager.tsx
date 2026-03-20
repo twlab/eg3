@@ -55,6 +55,7 @@ import {
 } from "../../getRemoteData/fetchFunctions";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
 
+
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
  * don't exist in the second array
@@ -380,9 +381,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     };
   };
+  const onNewRegionSelectRef = useRef(onNewRegionSelect);
+  onNewRegionSelectRef.current = onNewRegionSelect;
+
   const throttleOnNewRegionSelect = useRef(
     throttleViewRegion((startbase, endbase, highlightSearch) => {
-      onNewRegionSelect(startbase, endbase, highlightSearch);
+      onNewRegionSelectRef.current(startbase, endbase, highlightSearch);
     }, 150),
   );
 
@@ -1318,11 +1322,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       newVisData = {
         visWidth: selectedRegionSet &&
           bpRegionSize.current === genomeConfig.navContext._totalBases
-          ? leftExtraPixels : expandedWidth,
+          ? expandedWidth - rightExtraPixels : expandedWidth,
         visRegion: curVisRegion,
         viewWindow: selectedRegionSet &&
           bpRegionSize.current === genomeConfig.navContext._totalBases
-          ? new OpenInterval(0, leftExtraPixels) : new OpenInterval(
+          ? new OpenInterval(0, expandedWidth - rightExtraPixels) : new OpenInterval(
             leftExtraPixels,
             expandedWidth - rightExtraPixels,
           ),
@@ -1395,11 +1399,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newVisData = {
           visWidth: selectedRegionSet &&
             bpRegionSize.current === genomeConfig.navContext._totalBases
-            ? leftExtraPixels : expandedWidth,
+            ? rightExtraPixels : expandedWidth,
           visRegion: curVisRegion,
           viewWindow: selectedRegionSet &&
             bpRegionSize.current === genomeConfig.navContext._totalBases
-            ? new OpenInterval(0, leftExtraPixels) : new OpenInterval(
+            ? new OpenInterval(0, rightExtraPixels) : new OpenInterval(
               leftExtraPixels,
               expandedWidth - rightExtraPixels,
             ),
@@ -1470,11 +1474,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newVisData = {
           visWidth: selectedRegionSet &&
             bpRegionSize.current === genomeConfig.navContext._totalBases
-            ? leftExtraPixels : expandedWidth,
+            ? rightExtraPixels : expandedWidth,
           visRegion: curVisRegion,
           viewWindow: selectedRegionSet &&
             bpRegionSize.current === genomeConfig.navContext._totalBases
-            ? new OpenInterval(0, leftExtraPixels) : new OpenInterval(
+            ? new OpenInterval(0, rightExtraPixels) : new OpenInterval(
               leftExtraPixels,
               expandedWidth - rightExtraPixels,
             ),
@@ -1546,7 +1550,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return {
             visWidth: selectedRegionSet &&
               bpRegionSize.current === genomeConfig.navContext._totalBases
-              ? leftExtraPixels : expandedWidth,
+              ? expandedWidth - rightExtraPixels : expandedWidth,
             visRegion: curVisRegion,
             viewWindow: new OpenInterval(
               leftExtraPixels,

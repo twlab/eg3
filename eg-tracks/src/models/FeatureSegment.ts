@@ -153,12 +153,10 @@ export class FeatureSegment {
    */
   toString(): string {
     let name;
-    if (isGenomeCoordinate(this.getName())) {
-      name = parseChromosomeName(this.getName());
-    } else {
-      name = this.getName();
-    }
-    return `${name}:${this.relativeStart + 1}-${this.relativeEnd}`;
+
+    name = this.getName();
+
+    return `${name}:${this.relativeStart + this.feature.locus.start}-${this.relativeEnd + this.feature.locus.start}`;
   }
 
   // /**
@@ -171,16 +169,12 @@ export class FeatureSegment {
   toStringWithOther(other: FeatureSegment): string {
     let name1;
     let name2;
-    if (isGenomeCoordinate(this.getName())) {
-      name1 = parseChromosomeName(this.getName());
-    } else {
-      name1 = this.getName();
-    }
-    if (isGenomeCoordinate(other.getName())) {
-      name2 = parseChromosomeName(other.getName());
-    } else {
-      name2 = other.getName();
-    }
-    return `${name1}:${this.relativeStart + 1}-${name2}:${other.relativeEnd}`;
+
+    name1 = this.getName();
+
+
+    name2 = other.getName();
+
+    return `${name1}:${this.relativeStart + this.feature.locus.start}-${name2}:${other.relativeEnd + other.feature.locus.start}`;
   }
 }

@@ -92,7 +92,7 @@ const undoableConfig = {
   limit: 20,
   filter: excludeAction([setCurrentSession.type]),
 
-  debug: false, // Set to true to enable detailed logging of undoable actions and state changes
+  debug: true, // Set to true to enable detailed logging of undoable actions and state changes
 };
 
 export interface StoreConfig {

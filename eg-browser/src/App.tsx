@@ -1,14 +1,13 @@
 import { MotionConfig } from "framer-motion";
 import RootLayout from "./components/root-layout/RootLayout";
 import AppProvider, { AppProviderProps } from "./lib/redux/AppProvider";
-import SessionDataMonitor from "./components/SessionDataMonitor";
-import { SessionData } from "./lib/hooks/useSessionData";
+
+
 import "./index.css";
 
 
 export interface AppProps {
   storeConfig?: AppProviderProps["storeConfig"];
-  onSessionUpdate?: (data: SessionData | null) => void;
   [key: string]: any;
 }
 
@@ -33,7 +32,6 @@ export default function App({ storeConfig, onSessionUpdate, ...rootLayoutProps }
   return (
     <MotionConfig transition={snappyTransition}>
       <AppProvider storeConfig={storeConfig}>
-        {onSessionUpdate ? <SessionDataMonitor onSessionUpdate={onSessionUpdate} /> : null}
         <RootLayout {...rootLayoutProps} />
       </AppProvider>
     </MotionConfig>

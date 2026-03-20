@@ -20,6 +20,7 @@ import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
 import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import VerticalDivider from "./commonComponents/VerticalDivider";
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -147,6 +148,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         component: result,
         dataIdx: cacheDataIdx,
         numHidden: numHidden,
+        visData: trackState.visData
+
       });
 
       xPos.current = curXPos;
@@ -737,7 +740,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             backgroundColor: configOptions.current.backgroundColor,
           }}
         >
-          {viewComponent ? viewComponent.component : ""}
+          {viewComponent ? (
+            <div style={{ position: "relative", overflow: "hidden" }}>
+              {viewComponent.component}
+              <VerticalDivider visData={viewComponent.visData} />
+            </div>
+          ) : ""}
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
