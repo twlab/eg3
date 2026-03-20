@@ -17,7 +17,14 @@ const VerticalDivider: React.FC<VerticalDividerProps> = ({ visData }) => {
     const verticalLines: React.ReactNode[] = [];
     let x = 0;
 
-    for (const segment of visRegion.getFeatureSegments()) {
+    let featureSegments;
+    try {
+        featureSegments = visRegion.getFeatureSegments();
+    } catch {
+        return null;
+    }
+
+    for (const segment of featureSegments) {
         const drawWidth = drawModel.basesToXWidth(segment.getLength());
         if (x > 0) {
             verticalLines.push(

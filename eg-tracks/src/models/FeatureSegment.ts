@@ -155,8 +155,9 @@ export class FeatureSegment {
     let name;
 
     name = this.getName();
-
-    return `${name}:${this.relativeStart + this.feature.locus.start}-${this.relativeEnd + this.feature.locus.start}`;
+    const start = this.relativeStart + this.feature.locus.start;
+    const end = this.relativeEnd + this.feature.locus.start
+    return `${name}:${start}-${end}`;
   }
 
   // /**
@@ -174,7 +175,10 @@ export class FeatureSegment {
 
 
     name2 = other.getName();
+    let thisStart = this.feature.strand === "+" ? this.relativeStart + this.feature.locus.start : this.relativeEnd + this.feature.locus.start
+    let otherEnd = other.feature.strand === "+" ? other.relativeEnd + other.feature.locus.start : other.relativeStart + other.feature.locus.start
 
-    return `${name1}:${this.relativeStart + this.feature.locus.start}-${name2}:${other.relativeEnd + other.feature.locus.start}`;
+
+    return `${name1}:${thisStart}-${name2}:${otherEnd}`;
   }
 }

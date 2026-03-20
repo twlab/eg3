@@ -21,6 +21,7 @@ import { geneClickToolTipMap } from "./renderClickTooltipMap";
 import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
+import { RegionSet } from "@/models";
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -52,7 +53,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   messageData,
   Toolbar,
   handleRetryFetchTrack,
-  initialLoad,
+  initialLoad, selectedRegionSet
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -743,7 +744,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           {viewComponent ? (
             <div style={{ position: "relative", overflow: "hidden" }}>
               {viewComponent.component}
-              <VerticalDivider visData={viewComponent.visData} />
+              {selectedRegionSet ? <VerticalDivider visData={viewComponent.visData} /> : ""}
+
             </div>
           ) : ""}
         </div>

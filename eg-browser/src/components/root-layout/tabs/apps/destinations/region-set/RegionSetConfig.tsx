@@ -100,9 +100,11 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         try {
           const locus = ChromosomeInterval.parse(symbol);
           if (locus) {
-            return new Feature(symbol, locus, "+"); // coordinates default have + as strand
+
+            const displayName = symbol.replace(/[:\-]/g, " ");
+            return new Feature(displayName, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) {}
+        } catch (error) { }
         return getSymbolRegions(genome.getName(), symbol);
       })
     );
@@ -116,10 +118,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                  gene.name,
-                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                  gene.strand
-                )
+                gene.name,
+                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                gene.strand
+              )
               : null
           )
           .filter((hit) => hit);
@@ -132,7 +134,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         return item;
       }
     });
-
+    console.log(parsed, parsed2);
     const nullList = parsed2.filter(
       (item) => item === null || "statusCode" in item
     );

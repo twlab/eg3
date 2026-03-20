@@ -172,9 +172,8 @@ export function TrackContainerRepresentable({
         }
         setNavContext._isRegionSet = true
 
-        console.log(userViewRegion)
+
         const contextCoord = setNavContext.parse(userViewRegion as GenomeCoordinate);
-        console.log(contextCoord)
 
         return new DisplayedRegionModel(setNavContext, ...contextCoord);
       } else {
@@ -228,12 +227,36 @@ export function TrackContainerRepresentable({
   }
   const handleNewRegion = useCallback(
     (startbase: number, endbase: number) => {
-      const genomeFeatureSegment: Array<FeatureSegment> =
-        genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
-      const coordinate = currentRegionAsString(
-        genomeFeatureSegment,
-      ) as GenomeCoordinate;
-      onNewRegion(coordinate);
+      let newCoordinate;
+      if (selectedRegionSet) {
+
+        let setNavContext;
+        if (typeof selectedRegionSet === "object") {
+          const newRegionSet = RegionSet.deserialize(selectedRegionSet);
+          setNavContext = newRegionSet.makeNavContext();
+        } else {
+          setNavContext = selectedRegionSet.makeNavContext();
+        }
+        setNavContext._isRegionSet = true
+
+        const genomeFeatureSegment: Array<FeatureSegment> =
+          setNavContext.getFeaturesInInterval(startbase, endbase);
+        console.log(genomeFeatureSegment)
+        newCoordinate = currentRegionAsString(
+          genomeFeatureSegment,
+        ) as GenomeCoordinate;
+
+      } else {
+
+        const genomeFeatureSegment: Array<FeatureSegment> =
+          genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
+        newCoordinate = currentRegionAsString(
+          genomeFeatureSegment,
+        ) as GenomeCoordinate;
+
+      }
+      console.log(newCoordinate, startbase, endbase)
+      onNewRegion(newCoordinate);
     },
     [onNewRegion, selectedRegionSet],
   );
