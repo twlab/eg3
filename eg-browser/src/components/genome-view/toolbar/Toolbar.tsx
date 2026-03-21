@@ -93,9 +93,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${
-      tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
-    }`;
+    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
+      }`;
   };
 
   const getButtonStyle = () => ({
@@ -103,9 +102,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
   });
 
   const handleToolClick = (selectedTool: Tool | null): any => {
+    console.log(tool, selectedTool);
     if (tool === selectedTool) {
+
       dispatch(setTool(null));
     } else {
+
       dispatch(setTool(selectedTool));
     }
   };
@@ -154,11 +156,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-          // animate={{
-          //   opacity: isSearchFocused ? 0.5 : 1,
-          //   scale: isSearchFocused ? 0.95 : 1,
-          // }}
-          // transition={{ duration: 0.2 }}
+        // animate={{
+        //   opacity: isSearchFocused ? 0.5 : 1,
+        //   scale: isSearchFocused ? 0.95 : 1,
+        // }}
+        // transition={{ duration: 0.2 }}
         >
           <motion.div
             className="flex flex-row items-center"

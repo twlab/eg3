@@ -656,6 +656,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     frameID.current = requestAnimationFrame(() => {
       if (trackWrapperRef.current) {
         trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
+        trackWrapperRef.current.querySelectorAll('.Track-border-container').forEach((border) => {
+          (border as HTMLElement).style.transform = `translate3d(${-dragX.current}px, 0, 0)`;
+        });
       }
       trackComponents.forEach((component) => {
         if (component.legendRef.current) {
@@ -2792,6 +2795,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     frameID.current = requestAnimationFrame(() => {
       if (trackWrapperRef.current) {
         trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
+        trackWrapperRef.current.querySelectorAll('.Track-border-container').forEach((border) => {
+          (border as HTMLElement).style.transform = `translate3d(${-dragX.current}px, 0, 0)`;
+        });
       }
       trackComponents.forEach((component) => {
         if (component.legendRef.current) {
@@ -3008,25 +3014,59 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       const prevStateWindowWidth = prevWindowWidth.current;
 
-      const curWindowWidth = windowWidth;
+      const newWindowWidth = windowWidth;
       prevWindowWidth.current = windowWidth;
 
       for (let id in globalTrackState.current.trackStates) {
         const curTrackState = _.cloneDeep(
           globalTrackState.current.trackStates[id].trackState,
         );
+        if (!curTrackState.visData) {
+          continue
+        }
 
         const prevXDist =
           globalTrackState.current.trackStates[id].trackState.xDist;
 
-        const newXDist = (prevXDist / prevStateWindowWidth) * curWindowWidth;
-        curTrackState.startWindow = curWindowWidth;
-        curTrackState["visWidth"] = curWindowWidth * 3;
-        curTrackState.xDist = newXDist;
+        const newXDist = (prevXDist / prevStateWindowWidth) * newWindowWidth;
 
+
+        const curFetchRegionNav = globalTrackState.current.trackStates[id].trackState.visData.viewWindowRegion
+
+        const curVisRegion = globalTrackState.current.trackStates[id].trackState.visData.visRegion;
+
+        const pixelsPerBase = windowWidth / curFetchRegionNav.getWidth();
+        const expandedWidth = curVisRegion.getWidth() * pixelsPerBase;
+
+        const originalContextInterval = curFetchRegionNav.getContextCoordinates();
+        const expandedContextInterval = curVisRegion.getContextCoordinates();
+
+        const leftBaseDiff =
+          originalContextInterval.start - expandedContextInterval.start;
+        const rightBaseDiff =
+          expandedContextInterval.end - originalContextInterval.end;
+
+        const leftExtraPixels = leftBaseDiff * pixelsPerBase;
+        const rightExtraPixels = rightBaseDiff * pixelsPerBase;
+
+        const newVisData = {
+          visWidth: selectedRegionSet &&
+            bpRegionSize.current === genomeConfig.navContext._totalBases
+            ? expandedWidth - rightExtraPixels : expandedWidth,
+          visRegion: curVisRegion,
+          viewWindow: selectedRegionSet &&
+            bpRegionSize.current === genomeConfig.navContext._totalBases
+            ? new OpenInterval(0, expandedWidth - rightExtraPixels) : new OpenInterval(
+              leftExtraPixels,
+              expandedWidth - rightExtraPixels,
+            ),
+          viewWindowRegion: curFetchRegionNav,
+        };
+
+
+        curTrackState.xDist = newXDist;
         if (curTrackState["visData"]) {
-          curTrackState.visData.visWidth = curWindowWidth * 3;
-          curTrackState.visData.viewWindow = new OpenInterval(curWindowWidth, curWindowWidth * 2);
+          curTrackState.visData = newVisData;
         }
         if (
           "genomicFetchCoord" in
@@ -3034,14 +3074,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) {
           curTrackState.genomicFetchCoord[
             `${curTrackState.primaryGenName}`
-          ].primaryVisData.visWidth = curWindowWidth * 3;
+          ].primaryVisData = _.cloneDeep(
+            newVisData
+          );
 
-          curTrackState.genomicFetchCoord[
-            `${curTrackState.primaryGenName}`
-          ].primaryVisData.viewWindow = {
-            start: windowWidth,
-            end: windowWidth * 2,
-          };
+
         }
         globalTrackState.current.trackStates[id].trackState = curTrackState;
       }

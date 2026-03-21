@@ -22,6 +22,7 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import { RegionSet } from "@/models";
+import TrackLegend from "./commonComponents/TrackLegend";
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -61,7 +62,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : { ...trackOptionMap["error"].defaultOptions },
   );
   const initTrackStart = useRef(true);
-  const svgHeight = useRef(0);
+  const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
   const fetchError = useRef<boolean>(false);
@@ -231,7 +232,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     skipNoData,
   }) {
     const primaryVisData =
-      trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
+      trackState.genomicFetchCoord ? trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData : trackState.visData;
     if (cacheTrackData.trackType !== "genomealign") {
       let visRegion =
         !cacheTrackData.usePrimaryNav &&
@@ -563,7 +564,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }, [isScreenShotOpen]);
 
   // MARK: RENDER
-
+  console.log(svgHeight.current)
   return (
     <div
       style={{
@@ -583,6 +584,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           pointerEvents: "none",
         }}
       >
+
+
         <div
           style={{
             width: 120,
@@ -596,9 +599,23 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : "var(--font-color)",
 
             pointerEvents: "auto",
+
           }}
         >
-          {legend}
+          {legend ?? (
+            <TrackLegend
+              trackModel={trackModel}
+              height={40}
+              label={
+                trackModel.options?.label
+                  ? trackModel.options.label
+                  : trackModel.label
+                    ? trackModel.label
+                    : ""
+              }
+              forceSvg={false}
+            />
+          )}
         </div>
         {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
         <Loading
@@ -708,8 +725,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         style={{
           display: "flex",
           height:
-            fetchError.current ? 40 : configOptions.current.displayMode === "full" ? svgHeight.current :
-              !configOptions.current.isCombinedStrand && trackModel.type === "methylc" ? configOptions.current.height * 2 : configOptions.current.height,
+            configOptions.current.displayMode === "full" ? svgHeight.current :
+              !configOptions.current.isCombinedStrand && trackModel.type === "methylc" ? configOptions.current.height * 2 : configOptions.current.height ? configOptions.current.height : 40,
 
           position: "relative",
           willChange: "transform",

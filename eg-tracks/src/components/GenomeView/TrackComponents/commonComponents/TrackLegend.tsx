@@ -41,6 +41,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
   static defaultProps = {
     width: 120,
     forceSvg: false,
+
   };
 
   private gNode: any;
@@ -216,22 +217,24 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
     let plotLegend = false;
     let chromLabel = "";
     if (trackModel.type === "ruler") {
-      const drawModel = new LinearDrawingModel(trackViewRegion!, trackWidth!);
-      if (drawModel.basesToXWidth(1) > Sequence.MIN_X_WIDTH_PER_BASE) {
-        plotLegend = true;
-      } else {
-        plotLegend = false;
-      }
-      const segmentsAll = selectedRegion!.getFeatureSegments();
-      // not showing Gap
-      const segments = segmentsAll.filter(
-        (s) => s && s.feature.getName() !== "Gap"
-      );
-      if (segments.length === 1) {
-        chromLabel = segments[0].feature.getName();
-      }
-      if (segments.length > 1) {
-        chromLabel += `-${segments[segments.length - 1].feature.getName()}`;
+      if (trackViewRegion) {
+        const drawModel = new LinearDrawingModel(trackViewRegion!, trackWidth!);
+        if (drawModel.basesToXWidth(1) > Sequence.MIN_X_WIDTH_PER_BASE) {
+          plotLegend = true;
+        } else {
+          plotLegend = false;
+        }
+        const segmentsAll = selectedRegion!.getFeatureSegments();
+        // not showing Gap
+        const segments = segmentsAll.filter(
+          (s) => s && s.feature.getName() !== "Gap"
+        );
+        if (segments.length === 1) {
+          chromLabel = segments[0].feature.getName();
+        }
+        if (segments.length > 1) {
+          chromLabel += `-${segments[segments.length - 1].feature.getName()}`;
+        }
       }
     }
     let labelList;

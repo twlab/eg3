@@ -78,12 +78,7 @@ const MouseFollowingTooltip: React.FC = () => {
   // Handle escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        // Clear tool selection
-        if (selectedTool !== null) {
-          dispatch(setTool(Tool.Drag));
-        }
-      }
+
     };
 
     document.addEventListener("keydown", handleKeyDown);

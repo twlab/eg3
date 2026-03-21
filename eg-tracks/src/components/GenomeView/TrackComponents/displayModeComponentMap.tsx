@@ -176,7 +176,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               >
                 <svg
                   key={svgKey}
-                  width={trackState.visData.visWidth}
+                  width={trackState.visWidth}
                   height={height}
                 >
                   {placements.map(renderAnnotation)}
@@ -188,7 +188,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       return (
-        <svg key={svgKey} width={trackState.visData.visWidth} height={height}>
+        <svg key={svgKey} width={trackState.visWidth} height={height}>
           {placements.map(renderAnnotation)}
           <line
             x1={trackState.visData.viewWindow.start}
