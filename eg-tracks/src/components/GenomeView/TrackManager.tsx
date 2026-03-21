@@ -3838,26 +3838,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     flexShrink: 0,
                   }}
                 >
-                  <TrackRegionController
-                    selectedRegion={userViewRegion}
-                    onRegionSelected={onRegionSelected}
-                    contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                    genomeConfig={genomeConfig}
-                    trackManagerState={trackManagerState}
-                    genomeArr={[]}
-                    genomeIdx={0}
-                    addGlobalState={undefined}
-                    windowWidth={windowWidth}
-                    fontSize={Math.max(16, getFontSize())}
-                    padding={getPadding()}
-                  />
-                  <div
-                    style={{
-                      paddingLeft: getPadding() ? getPadding() : 5,
-                      flexShrink: 0,
-                    }}
-                    className="h-5 border-r border-gray-400"
-                  />
                   <div
                     className="bg tool-element"
                     style={{

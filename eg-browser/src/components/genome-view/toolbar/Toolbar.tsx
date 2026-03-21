@@ -1,5 +1,11 @@
-import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
+import { useAppSelector, useAppDispatch, useUndoRedo } from "@/lib/redux/hooks";
 import { selectTool, setTool } from "@/lib/redux/slices/utilitySlice";
+import {
+  selectNavigationTab,
+  selectSessionPanelOpen,
+  setNavigationTab,
+} from "@/lib/redux/slices/navigationSlice";
+import { selectCurrentState } from "@/lib/redux/selectors";
 
 import {
   BoltIcon,
@@ -11,9 +17,14 @@ import {
   ArrowRightCircleIcon,
   ArrowsUpDownIcon,
   ArrowPathRoundedSquareIcon,
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
 } from "@heroicons/react/24/outline";
 import { useMemo, useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import Button from "../../ui/button/Button";
+import IconButton from "../../ui/button/IconButton";
+import History from "../../navbar/History";
 import SearchBar from "./SearchBar";
 import { GenomeSerializer, Tool } from "wuepgg3-track";
 import HighlightMenu from "./HighlightMenu";
@@ -42,6 +53,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const tool = useAppSelector(selectTool);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
+  const currentTab = useAppSelector(selectNavigationTab);
+  const currentState = useAppSelector(selectCurrentState);
+  const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
+  const { undo, redo, canUndo, canRedo, jumpToPast, jumpToFuture, clearHistory } = useUndoRedo();
   const _genomeConfig = useCurrentGenome();
   const genomeConfig = useMemo(() => {
     return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
@@ -324,12 +339,60 @@ const Toolbar: React.FC<ToolbarProps> = ({
               />
             </button>
 
+            <div className="h-full border-r border-gray-400" />
+
+            <AnimatePresence>
+              {currentSession !== null && (
+                <motion.div
+                  className="flex flex-row items-center gap-4"
+                  style={{
+                    pointerEvents: sessionPanelOpen ? "none" : "auto",
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{
+                    opacity: sessionPanelOpen ? 0 : 1,
+                    y: 0,
+                  }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <IconButton
+                    onClick={undo}
+                    disabled={!canUndo}
+                    title="Undo"
+                    className={!canUndo ? "opacity-50 cursor-not-allowed" : ""}
+                  >
+                    <ArrowUturnLeftIcon className="h-5 w-5" />
+                  </IconButton>
+
+                  <IconButton
+                    onClick={redo}
+                    disabled={!canRedo}
+                    title="Redo"
+                    className={!canRedo ? "opacity-50 cursor-not-allowed" : ""}
+                  >
+                    <ArrowUturnRightIcon className="h-5 w-5" />
+                  </IconButton>
+                  <History
+                    state={{
+                      past: currentState ? currentState.past : [],
+                      future: currentState ? currentState.future : [],
+                    }}
+                    jumpToPast={jumpToPast}
+                    jumpToFuture={jumpToFuture}
+                    clearHistory={clearHistory}
+                  />
+
+
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <button
               onClick={() => handleToolClick(Tool.Highlight)}
               className={getButtonClass(Tool.Highlight)}
               style={getButtonStyle()}
-              title="Highlight tool
-(Alt+N)"
+              title="Highlight tool (Alt+N)"
             >
               <BoltIcon
                 className="text-gray-600 dark:text-dark-primary"

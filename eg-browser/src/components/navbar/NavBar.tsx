@@ -5,8 +5,6 @@ import {
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 import {
-  ArrowUturnLeftIcon,
-  ArrowUturnRightIcon,
   SunIcon,
   MoonIcon,
   BackspaceIcon,
@@ -15,14 +13,13 @@ import {
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 import Logo from "../../assets/logo.png";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
   useAppDispatch,
   useAppSelector,
-  useUndoRedo,
 } from "../../lib/redux/hooks";
 import {
   selectNavigationTab,
@@ -40,16 +37,19 @@ import {
   setDarkTheme,
 } from "@/lib/redux/slices/settingsSlice";
 import { version } from "../../../package.json";
-import History from "./History";
-
 import TracksTab from "../root-layout/tabs/tracks/TracksTab";
 import AppsTab from "../root-layout/tabs/apps/AppsTab";
 import HelpTab from "../root-layout/tabs/HelpTab";
 import ShareTab from "../root-layout/tabs/ShareTab";
 import SettingsTab from "../root-layout/tabs/SettingsTab";
-import { OutsideClickDetector } from "wuepgg3-track";
+import {
+  OutsideClickDetector,
+  GenomeSerializer,
+  DisplayedRegionModel,
+  TrackRegionController,
+} from "wuepgg3-track";
+import type { GenomeCoordinate } from "wuepgg3-track";
 
-import { selectCurrentState } from "../../lib/redux/selectors";
 import { selectBundle, updateBundle } from "@/lib/redux/slices/hubSlice";
 import { getDatabase, ref, set } from "firebase/database";
 
@@ -64,13 +64,43 @@ export default function NavBar() {
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
 
-  const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const { undo, redo, canUndo, canRedo, jumpToPast, jumpToFuture, clearHistory } =
-    useUndoRedo();
 
   const genome = useCurrentGenome();
+
+  const genomeConfig = useMemo(() => {
+    return genome ? GenomeSerializer.deserialize(genome) : null;
+  }, [genome]);
+
+  const userViewRegionModel = useMemo(() => {
+    if (!currentSession?.userViewRegion || !genomeConfig) return null;
+    try {
+      const parsed = genomeConfig.navContext.parse(currentSession.userViewRegion);
+      return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
+    } catch {
+      return null;
+    }
+  }, [currentSession?.userViewRegion, genomeConfig]);
+
+  const handleRegionSelected = useCallback(
+    (start: number, end: number) => {
+      if (!genomeConfig) return;
+      const segments: any[] = genomeConfig.navContext.getFeaturesInInterval(start, end);
+      if (!segments || segments.length === 0) return;
+      const coordinate: string =
+        segments.length === 1
+          ? segments[0].toString()
+          : segments[0].toStringWithOther(segments[segments.length - 1]);
+      dispatch(
+        updateCurrentSession({
+          viewRegion: coordinate as GenomeCoordinate,
+          userViewRegion: coordinate as GenomeCoordinate,
+        }),
+      );
+    },
+    [genomeConfig, dispatch],
+  );
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
@@ -120,7 +150,7 @@ export default function NavBar() {
         </div>
       )}
       <OutsideClickDetector onOutsideClick={() => dispatch(setNavigationTab(null))}>
-        <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
+        <div className="flex flex-row  items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
           <div className="flex flex-row items-center gap-3 relative">
             {currentSession && (
               <BackspaceIcon
@@ -245,32 +275,21 @@ export default function NavBar() {
                     exit={{ opacity: 0, y: 20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <IconButton
-                      onClick={undo}
-                      disabled={!canUndo}
-                      title="Undo"
-                      className={!canUndo ? "opacity-50 cursor-not-allowed" : ""}
-                    >
-                      <ArrowUturnLeftIcon className="h-5 w-5" />
-                    </IconButton>
-
-                    <IconButton
-                      onClick={redo}
-                      disabled={!canRedo}
-                      title="Redo"
-                      className={!canRedo ? "opacity-50 cursor-not-allowed" : ""}
-                    >
-                      <ArrowUturnRightIcon className="h-5 w-5" />
-                    </IconButton>
-                    <History
-                      state={{
-                        past: currentState ? currentState.past : [],
-                        future: currentState ? currentState.future : [],
-                      }}
-                      jumpToPast={jumpToPast}
-                      jumpToFuture={jumpToFuture}
-                      clearHistory={clearHistory}
-                    />
+                    {userViewRegionModel && genomeConfig && (
+                      <TrackRegionController
+                        selectedRegion={userViewRegionModel}
+                        onRegionSelected={handleRegionSelected}
+                        contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                        genomeConfig={genomeConfig as any}
+                        trackManagerState={null}
+                        genomeArr={[]}
+                        genomeIdx={0}
+                        addGlobalState={undefined}
+                        windowWidth={window.innerWidth}
+                        fontSize={16}
+                        padding={6}
+                      />
+                    )}
                     <div className="h-5 border-r border-gray-400" />
                     <Button
                       onClick={() =>
@@ -376,28 +395,7 @@ export default function NavBar() {
                 <div className="flex flex-col p-4 gap-2">
                   {currentSession !== null ? (
                     <>
-                      <div className="flex gap-2 mb-2">
-                        <IconButton
-                          onClick={undo}
-                          disabled={!canUndo}
-                          title="Undo"
-                          className={
-                            !canUndo ? "opacity-50 cursor-not-allowed" : ""
-                          }
-                        >
-                          <ArrowUturnLeftIcon className="h-5 w-5" />
-                        </IconButton>
-                        <IconButton
-                          onClick={redo}
-                          disabled={!canRedo}
-                          title="Redo"
-                          className={
-                            !canRedo ? "opacity-50 cursor-not-allowed" : ""
-                          }
-                        >
-                          <ArrowUturnRightIcon className="h-5 w-5" />
-                        </IconButton>
-                      </div>
+
                       <Button
                         onClick={() => {
                           dispatch(
