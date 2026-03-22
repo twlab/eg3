@@ -4,6 +4,7 @@ import _ from "lodash";
 import NavigationContext from "../../../models/NavigationContext";
 
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
+import { GenomeCoordinate } from "@/types";
 
 const DEBOUNCE_INTERVAL = 250;
 const SNP_ENDPOINTS = {
@@ -14,9 +15,7 @@ const SNP_ENDPOINTS = {
 interface SnpSearchBoxProps {
   genomeConfig: any;
   navContext: NavigationContext;
-  onRegionSelected: (newStart: number,
-    newEnd: number,
-    toolTitle: number | string,
+  onRegionSelected: (query: string | GenomeCoordinate,
     highlightSearch: boolean,) => void;
   handleCloseModal: () => void;
   onNewHighlight?: (start: number, end: number, text: string) => void;
@@ -47,8 +46,7 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
   genomeConfig,
   navContext,
   onRegionSelected,
-  handleCloseModal,
-  onNewHighlight,
+
   doHighlight,
   color,
   background,
@@ -111,14 +109,11 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
       mapping.start - 1,
       mapping.end
     );
-    const interval = navContext.convertGenomeIntervalToBases(chrInterval)[0];
 
-    if (interval) {
-      onRegionSelected(interval.start, interval.end, "isJump", doHighlight);
-      handleCloseModal();
-      if (doHighlight && onNewHighlight) {
-        onNewHighlight(interval.start, interval.end, inputValue.trim());
-      }
+
+    if (chrInterval) {
+      onRegionSelected(chrInterval.toString(), doHighlight)
+
     } else {
       console.log(
         "SNP not available in current region set view",

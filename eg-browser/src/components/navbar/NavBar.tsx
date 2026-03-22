@@ -47,11 +47,13 @@ import {
   GenomeSerializer,
   DisplayedRegionModel,
   TrackRegionController,
+  RegionSet,
 } from "wuepgg3-track";
 import type { GenomeCoordinate } from "wuepgg3-track";
 
 import { selectBundle, updateBundle } from "@/lib/redux/slices/hubSlice";
 import { getDatabase, ref, set } from "firebase/database";
+import SearchBar from "../genome-view/toolbar/SearchBar";
 
 export default function NavBar() {
   const bundle = useAppSelector(selectBundle);
@@ -68,7 +70,7 @@ export default function NavBar() {
   const darkTheme = useAppSelector(selectDarkTheme);
 
   const genome = useCurrentGenome();
-
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const genomeConfig = useMemo(() => {
     return genome ? GenomeSerializer.deserialize(genome) : null;
   }, [genome]);
@@ -83,15 +85,38 @@ export default function NavBar() {
     }
   }, [currentSession?.userViewRegion, genomeConfig]);
 
-  const handleRegionSelected = useCallback(
-    (start: number, end: number) => {
-      if (!genomeConfig) return;
-      const segments: any[] = genomeConfig.navContext.getFeaturesInInterval(start, end);
-      if (!segments || segments.length === 0) return;
-      const coordinate: string =
-        segments.length === 1
-          ? segments[0].toString()
-          : segments[0].toStringWithOther(segments[segments.length - 1]);
+  const handleNewRegionSelect = useCallback(
+    (coordinate: GenomeCoordinate | string, highlightSearch?: boolean | undefined) => {
+      if (!genomeConfig || !coordinate) return;
+      if (highlightSearch && currentSession) {
+        let contextCoord: any;
+        if (currentSession.selectedRegionSet) {
+          let setNavContext: any;
+          if (typeof currentSession.selectedRegionSet === "object") {
+            const newRegionSet = RegionSet.deserialize(currentSession.selectedRegionSet);
+            setNavContext = newRegionSet.makeNavContext();
+          } else {
+            setNavContext = (currentSession.selectedRegionSet as RegionSet).makeNavContext();
+          }
+          contextCoord = setNavContext.parse(coordinate as GenomeCoordinate);
+        } else {
+          contextCoord = genomeConfig.navContext.parse(
+            coordinate
+          );
+        }
+
+
+        const newHightlight = {
+          start: contextCoord.start,
+          end: contextCoord.end,
+          display: true,
+          color: "rgba(0, 123, 255, 0.25)",
+          tag: "",
+        };
+        const tmpHighlight = [...currentSession.highlights, newHightlight];
+        dispatch(updateCurrentSession({ highlights: tmpHighlight }));
+      }
+      console.log(coordinate)
       dispatch(
         updateCurrentSession({
           viewRegion: coordinate as GenomeCoordinate,
@@ -278,7 +303,7 @@ export default function NavBar() {
                     {userViewRegionModel && genomeConfig && (
                       <TrackRegionController
                         selectedRegion={userViewRegionModel}
-                        onRegionSelected={handleRegionSelected}
+                        onRegionSelected={handleNewRegionSelect}
                         contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
                         genomeConfig={genomeConfig as any}
                         trackManagerState={null}
@@ -379,6 +404,17 @@ export default function NavBar() {
                     </Button>
                   </motion.div>
                 )}
+
+
+                <SearchBar
+                  isSearchFocused={isSearchFocused}
+                  onSearchFocusChange={setIsSearchFocused}
+                  onNewRegionSelect={handleNewRegionSelect}
+                  windowWidth={window.innerWidth}
+                  fontSize={16}
+                  buttonPadding={6}
+                  gapSize={8}
+                />
               </AnimatePresence>
             )}
           </div>

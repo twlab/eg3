@@ -241,7 +241,7 @@ export function TrackContainerRepresentable({
 
         const genomeFeatureSegment: Array<FeatureSegment> =
           setNavContext.getFeaturesInInterval(startbase, endbase);
-        console.log(genomeFeatureSegment)
+
         newCoordinate = currentRegionAsString(
           genomeFeatureSegment,
         ) as GenomeCoordinate;
@@ -255,7 +255,7 @@ export function TrackContainerRepresentable({
         ) as GenomeCoordinate;
 
       }
-      console.log(newCoordinate, startbase, endbase)
+
       onNewRegion(newCoordinate);
     },
     [onNewRegion, selectedRegionSet],
@@ -300,7 +300,7 @@ export function TrackContainerRepresentable({
         newCoordinate = currentRegionAsString(
           genomeFeatureSegment,
         ) as GenomeCoordinate;
-        console.log({ startbase, endbase, newCoordinate, genomeFeatureSegment })
+
       } else {
 
         const genomeFeatureSegment: Array<FeatureSegment> =
@@ -308,7 +308,7 @@ export function TrackContainerRepresentable({
         newCoordinate = currentRegionAsString(
           genomeFeatureSegment,
         ) as GenomeCoordinate;
-        console.log({ startbase, endbase, newCoordinate, genomeFeatureSegment })
+
       }
 
       onNewRegionSelect(newCoordinate as GenomeCoordinate);
@@ -318,7 +318,7 @@ export function TrackContainerRepresentable({
           start: startbase,
           end: endbase,
           display: true,
-          color: "rgba(0, 123, 255, 0.15)",
+          color: "rgba(0, 123, 255, 0.25)",
           tag: "",
         };
         const tmpHighlight = [...highlights, newHightlight];

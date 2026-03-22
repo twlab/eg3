@@ -6,13 +6,12 @@ import Gene from "../../../models/Gene";
 import GeneSearchBoxBase from "./GeneSearchBoxBase";
 
 import Genome from "../../../models/Genome";
+import { GenomeCoordinate } from "@/types";
 
 interface GeneSearchBoxProps {
   navContext: NavigationContext; // The current navigation context
   onRegionSelected: (
-    newStart: number,
-    newEnd: number,
-    toolTitle: number | string,
+    query: string | GenomeCoordinate,
     highlightSearch: boolean,
   ) => void;
   handleCloseModal: () => void;
@@ -38,7 +37,7 @@ const GeneSearchBox: FC<GeneSearchBoxProps> = ({
       gene.getLocus()
     )[0];
     if (interval) {
-      onRegionSelected(interval.start, interval.end, "isJump", doHighlight);
+      onRegionSelected(gene.locus.toString(), doHighlight);
       handleCloseModal();
     } else {
       console.log(

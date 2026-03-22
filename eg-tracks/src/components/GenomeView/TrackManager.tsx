@@ -54,7 +54,9 @@ import {
   fetchGenomicData,
 } from "../../getRemoteData/fetchFunctions";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
-
+import { motion } from "framer-motion";
+import MetadataSelectionMenu from "./ToolComponents/MetadataSelectionMenu";
+import { ChevronRightIcon } from "@primer/octicons-react";
 
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
@@ -337,7 +339,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // New data are fetched only if the user drags to the either ends of the track
   const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
-
+  const [isShowingEditMenu, setIsShowingEditMenu] = useState(false);
   const [selectedTool, setSelectedTool] = useState<{ [key: string]: any }>({
     isSelected: false,
     title: "none",
@@ -2256,7 +2258,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         start: startbase,
         end: endbase,
         display: true,
-        color: "rgba(0, 123, 255, 0.15)",
+        color: "rgba(0, 123, 255, 0.25)",
         tag: "",
       };
       const tmpHighlight = [...highlights, newHightlight];
@@ -3786,8 +3788,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               marginTop: getPadding() ? getPadding() / 3 : 2,
               marginBottom: getPadding() ? getPadding() / 3 : 2,
               display: "flex",
-              flexDirection: windowWidth <= 1080 ? "column" : "row",
-              alignItems: windowWidth <= 1080 ? "stretch" : "center",
+              flexDirection: windowWidth <= 600 ? "column" : "row",
+              alignItems: windowWidth <= 600 ? "stretch" : "center",
               justifyContent: "end",
             }}
           >
@@ -3795,11 +3797,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               style={{
                 display: "flex",
                 width:
-                  windowWidth <= 1080
-                    ? "100%"
-                    : getResponsiveWidths().mainWidth,
+                  "100%",
                 alignItems: "center",
-                justifyContent: windowWidth <= 1080 ? "center" : "end",
+                justifyContent: "start",
                 flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
               }}
             >
@@ -3866,6 +3866,44 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   </div>
                 </div>
               )}
+
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div
+                  className="MetadataHeader-button"
+                  style={{ paddingLeft: getPadding() ?? (getPadding() || 5) }}
+                >
+                  <button
+                    onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
+                    className="flex items-center gap-2 rounded-sm px-2"
+                    style={{
+                      border: isShowingEditMenu
+                        ? "1px solid #1e40af"
+                        : "1px solid #1d4ed8",
+                      backgroundColor: "#eff6ff",
+                      color: isShowingEditMenu ? "#1d4ed8" : "#2563eb",
+                      transition: "all 0.2s",
+                    }}
+                    title="Metadata options"
+                  >
+                    <span className="text-base font-medium">Metadata</span>
+                    <motion.div
+                      animate={{ rotate: isShowingEditMenu ? 90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronRightIcon className="w-4 h-4" />
+                    </motion.div>
+                  </button>
+                  <div>
+                    <MetadataSelectionMenu
+                      terms={metaSets.terms}
+                      style={isShowingEditMenu ? undefined : { display: "none" }}
+                      onNewTerms={onNewTerms}
+                      suggestedMetaSets={metaSets.suggestedMetaSets}
+                      onRemoveTerm={onRemoveTerm}
+                    />
+                  </div>
+                </div>
+              </div>
               <div className="h-5 border-r border-gray-400" />
             </div>
 

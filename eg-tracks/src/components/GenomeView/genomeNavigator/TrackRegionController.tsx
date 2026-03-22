@@ -7,6 +7,7 @@ import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import Genome from "../../../models/Genome";
 import { parse } from "path";
+import { GenomeCoordinate } from "@/types/track-container";
 
 const MODAL_STYLE = {
   content: {
@@ -44,9 +45,7 @@ const X_BUTTON_STYLE: React.CSSProperties = {
 interface TrackRegionControllerProps {
   selectedRegion: DisplayedRegionModel; // The current view of the genome navigator
   onRegionSelected: (
-    newStart: number,
-    newEnd: number,
-    toolTitle: number | string,
+    query: string | GenomeCoordinate,
     highlightSearch: boolean
   ) => void;
 
@@ -91,28 +90,14 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   };
 
   const parseRegion = () => {
-    const navContext = selectedRegion.getNavigationContext();
-    let parsedRegion;
 
-    try {
-      parsedRegion = navContext.parse(inputRef.current?.value || "");
-    } catch (error) {
-      if (error instanceof RangeError) {
-        setBadInputMessage(error.message);
-        return;
-      } else {
-        throw error;
-      }
-    }
 
     // Parsing successful
     if (badInputMessage) {
       setBadInputMessage("");
     }
     onRegionSelected(
-      parsedRegion ? parsedRegion.start : selectedRegion._startBase,
-      parsedRegion ? parsedRegion.end : selectedRegion._endBase,
-      "isJump",
+      inputRef.current?.value || "",
       doHighlight
     );
 

@@ -30,6 +30,7 @@ import {
   GenomeSerializer,
   OutsideClickDetector,
   IsoformSelection,
+  GenomeCoordinate,
 } from "wuepgg3-track";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
@@ -42,8 +43,7 @@ interface SearchBarProps {
   isSearchFocused: boolean;
   onSearchFocusChange: (focused: boolean) => void;
   onNewRegionSelect: (
-    start: number,
-    end: number,
+    query: string | GenomeCoordinate,
     highlightSearch?: boolean,
   ) => void;
   windowWidth?: number;
@@ -393,54 +393,24 @@ export default function SearchBar({
   };
 
   const parseRegion = (query: string) => {
-    const navContext = genomeConfig?.navContext;
-    let parsedRegion;
-
-    try {
-      parsedRegion = navContext!.parse(query || "");
-    } catch (error) {
-      if (error instanceof RangeError) {
-        setBadInputMessage(error.message);
-        return;
-      } else {
-        throw error;
-      }
-    }
-
-    // Parsing successful
-    if (badInputMessage) {
-      setBadInputMessage("");
-    }
-
     onNewRegionSelect(
-      parsedRegion.start,
-      parsedRegion.end,
+      query,
       highlightSearch.current,
     );
   };
   function onGeneSelected(gene: Gene) {
-    const navContext = genomeConfig?.navContext;
-
-    const contextInterval = navContext!.convertGenomeIntervalToBases(
-      gene.locus,
-    );
-
-    const baseStart = contextInterval[0].start;
-    const baseEnd = contextInterval[contextInterval.length - 1].end;
-    onNewRegionSelect(baseStart, baseEnd, highlightSearch.current);
+    onNewRegionSelect(gene.locus.toString(), highlightSearch.current);
   }
 
   function onSnpSelected(mapping: SnpMapping) {
-    const navContext = genomeConfig?.navContext;
     const chrInterval = new ChromosomeInterval(
       `chr${mapping.seq_region_name}`,
       mapping.start - 1,
       mapping.end,
     );
-    const interval = navContext!.convertGenomeIntervalToBases(chrInterval)[0];
 
-    if (interval) {
-      onNewRegionSelect(interval.start, interval.end, highlightSearch.current);
+    if (chrInterval) {
+      onNewRegionSelect(chrInterval.toString(), highlightSearch.current);
     } else {
       console.log(
         "SNP not available in current region set view",
@@ -759,7 +729,7 @@ export default function SearchBar({
       >
         <AnimatePresence>
           {isSearchFocused &&
-          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: -10, maxHeight: 0 }}

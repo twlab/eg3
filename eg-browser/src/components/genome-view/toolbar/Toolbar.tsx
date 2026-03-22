@@ -53,7 +53,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const tool = useAppSelector(selectTool);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
-  const currentTab = useAppSelector(selectNavigationTab);
+
   const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const { undo, redo, canUndo, canRedo, jumpToPast, jumpToFuture, clearHistory } = useUndoRedo();
@@ -61,7 +61,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const genomeConfig = useMemo(() => {
     return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
   }, [_genomeConfig]);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
 
   // Keyboard shortcuts handler
   useEffect(() => {
@@ -154,15 +154,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       >
         {/* Search Bar */}
 
-        <SearchBar
-          isSearchFocused={isSearchFocused}
-          onSearchFocusChange={setIsSearchFocused}
-          onNewRegionSelect={onNewRegionSelect}
-          windowWidth={windowWidth}
-          fontSize={fontSize}
-          buttonPadding={buttonPadding}
-          gapSize={gapSize}
-        />
+
 
         <div
           className="h-5 border-r border-gray-400"
