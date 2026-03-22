@@ -11,3 +11,4 @@ export {
   fetchDataHubTracks,
   generateUUID
 } from "./util";
+export { getSpeciesInfo } from "./models/genomes/allGenomes";

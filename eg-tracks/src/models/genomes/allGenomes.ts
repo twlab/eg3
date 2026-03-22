@@ -145,7 +145,7 @@ interface SpeciesConfig {
 
 export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
   human: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Human.png",
+    logoUrl: "",
     assemblies: [
       HG19.genome.getName(),
       HG38.genome.getName(),
@@ -155,7 +155,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   chimp: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Chimp.png",
+    logoUrl: "",
     assemblies: [
       PANTRO6.genome.getName(),
       PANTRO5.genome.getName(),
@@ -225,7 +225,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "yellow",
   },
   mouse: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Mouse.png",
+    logoUrl: "",
     assemblies: [
       MM39.genome.getName(),
       MM10.genome.getName(),
@@ -234,7 +234,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "yellow",
   },
   rat: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Rat.png",
+    logoUrl: "",
     assemblies: [
       RN7.genome.getName(),
       RN6.genome.getName(),
@@ -248,7 +248,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   chicken: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Chicken.png",
+    logoUrl: "",
     assemblies: [
       GRCg7w.genome.getName(),
       GRCg7b.genome.getName(),
@@ -263,7 +263,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   zebrafish: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Zebrafish.png",
+    logoUrl: "",
     assemblies: [
       DAN_RER11.genome.getName(),
       DAN_RER10.genome.getName(),
@@ -282,18 +282,18 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   "fruit fly": {
-    logoUrl: "https://epigenomegateway.wustl.edu/legacy/images/Fruit%20fly.png",
+    logoUrl: "",
     assemblies: [DM6.genome.getName()],
     color: "white",
   },
   "c.elegans": {
-    logoUrl: "https://epigenomegateway.wustl.edu/legacy/images/C.elegans.png",
+    logoUrl: "",
     assemblies: [CE11.genome.getName()],
     color: "black",
   },
   arabidopsis: {
     logoUrl:
-      "https://epigenomegateway.wustl.edu/browser/images/Arabidopsis.png",
+      "",
     assemblies: [AraTha1.genome.getName()],
     color: "yellow",
   },
@@ -308,13 +308,13 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   yeast: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Yeast.png",
+    logoUrl: "",
     assemblies: [SACCER3.genome.getName()],
     color: "black",
   },
   "P. falciparum": {
     logoUrl:
-      "https://epigenomegateway.wustl.edu/browser/images/Pfalciparum.png",
+      "",
     assemblies: [Pfal3D7.genome.getName()],
     color: "black",
   },

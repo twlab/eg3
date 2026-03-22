@@ -48,6 +48,7 @@ import {
   DisplayedRegionModel,
   TrackRegionController,
   RegionSet,
+  getSpeciesInfo,
 } from "wuepgg3-track";
 import type { GenomeCoordinate } from "wuepgg3-track";
 
@@ -116,7 +117,7 @@ export default function NavBar() {
         const tmpHighlight = [...currentSession.highlights, newHightlight];
         dispatch(updateCurrentSession({ highlights: tmpHighlight }));
       }
-      console.log(coordinate)
+
       dispatch(
         updateCurrentSession({
           viewRegion: coordinate as GenomeCoordinate,
@@ -128,8 +129,9 @@ export default function NavBar() {
   );
 
   const genomeLogoUrl: string | null = genome?.name
-    ? versionToLogoUrl[genome.name]?.croppedUrl ??
-    versionToLogoUrl[genome.name]?.logoUrl
+    ? (getSpeciesInfo(genome.name)?.logo || null) ??
+    (versionToLogoUrl[genome.name]?.croppedUrl || null) ??
+    (versionToLogoUrl[genome.name]?.logoUrl || null)
     : null;
   // const genomeLogoUrl: string | null = null;
 
@@ -186,15 +188,26 @@ export default function NavBar() {
                 }}
               />
             )}
-            <img
-              src={genomeLogoUrl ? import.meta.env.BASE_URL + genomeLogoUrl : Logo}
-              alt="logo"
+            <div
+              style={{
+                backgroundImage: `url(${genomeLogoUrl
+                  ? (genomeLogoUrl.startsWith('http') ? genomeLogoUrl : import.meta.env.BASE_URL + genomeLogoUrl)
+                  : Logo})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+                opacity: genomeLogoUrl ? 0.8 : 1,
+              }}
+              onMouseEnter={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+              onMouseLeave={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
               className={classNames(
                 "z-10",
                 "size-12",
+                "rounded-md",
+                "flex-shrink-0",
+                "transition-opacity",
                 currentSession ? "cursor-pointer" : "cursor-default",
                 sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                genomeLogoUrl ? "rounded-full p-1" : "rounded-md p-2",
                 genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : ""
               )}
               onClick={() => {
