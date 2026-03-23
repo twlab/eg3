@@ -21,7 +21,7 @@ import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComp
 
 import { niceBpCount } from "../models/util";
 import JSON5 from "json5";
-import { initial } from "lodash";
+
 export interface PlacedAlignment {
   record: AlignmentRecord;
   visiblePart: AlignmentSegment;
