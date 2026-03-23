@@ -3808,7 +3808,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   display: "flex",
                   position: "relative",
                   zIndex: 999,
-                  marginRight: getPadding() ? getPadding() : 5,
+
                 }}
               >
                 <div style={{ position: "relative" }}>
@@ -3846,6 +3846,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       paddingRight: getPadding() ? getPadding() : 5,
                       alignItems: "center",
                       flexShrink: 0,
+                      fontStyle: "italic"
                     }}
                   >
                     <p
@@ -3855,6 +3856,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         fontSize: `${Math.max(16, getFontSize())}px`,
                         margin: 0,
                         whiteSpace: "nowrap",
+
                       }}
                     >
                       {niceBpCount(
@@ -3866,7 +3868,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   </div>
                 </div>
               )}
-
+              <div className="h-5 border-r border-gray-400" />
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div
                   className="MetadataHeader-button"
@@ -3904,7 +3906,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   </div>
                 </div>
               </div>
-              <div className="h-5 border-r border-gray-400" />
+
             </div>
 
             <div

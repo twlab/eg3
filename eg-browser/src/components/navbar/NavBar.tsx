@@ -13,7 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 import Logo from "../../assets/logo.png";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
@@ -26,7 +26,6 @@ import {
   selectSessionPanelOpen,
   setNavigationTab,
   setSessionPanelOpen,
-  type NavigationRoute,
 } from "../../lib/redux/slices/navigationSlice";
 import { versionToLogoUrl } from "../genome-picker/genome-list";
 import Button from "../ui/button/Button";
@@ -73,22 +72,6 @@ export default function NavBar() {
 
   const genome = useCurrentGenome();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [dropdownLeft, setDropdownLeft] = useState<number | null>(null);
-  const navbarRef = useRef<HTMLDivElement>(null);
-
-  const handleTabClick = useCallback((tab: NavigationRoute, e: React.MouseEvent) => {
-    const button = e.currentTarget;
-    const navbar = navbarRef.current;
-    if (navbar) {
-      const buttonRect = button.getBoundingClientRect();
-      const navbarRect = navbar.getBoundingClientRect();
-      const dropdownWidth = window.innerWidth * 0.35;
-      const left = buttonRect.left - navbarRect.left;
-      const clampedLeft = Math.min(left, navbarRect.width - dropdownWidth);
-      setDropdownLeft(Math.max(0, clampedLeft));
-    }
-    dispatch(setNavigationTab(currentTab === tab ? null : tab));
-  }, [currentTab, dispatch]);
   const genomeConfig = useMemo(() => {
     return genome ? GenomeSerializer.deserialize(genome) : null;
   }, [genome]);
@@ -194,7 +177,7 @@ export default function NavBar() {
         </div>
       )}
       <OutsideClickDetector onOutsideClick={() => dispatch(setNavigationTab(null))}>
-        <div ref={navbarRef} className="flex flex-row  items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
+        <div className="flex flex-row  items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
           <div className="flex flex-row items-center gap-3 relative">
             {currentSession && (
               <BackspaceIcon
@@ -347,31 +330,55 @@ export default function NavBar() {
                     )}
                     <div className="h-5 border-r border-gray-400" />
                     <Button
-                      onClick={(e) => handleTabClick("tracks", e)}
+                      onClick={() =>
+                        dispatch(
+                          setNavigationTab(
+                            currentTab === "tracks" ? null : "tracks"
+                          )
+                        )
+                      }
                       active={currentTab === "tracks"}
                     >
                       Tracks
                     </Button>
                     <Button
-                      onClick={(e) => handleTabClick("apps", e)}
+                      onClick={() =>
+                        dispatch(
+                          setNavigationTab(currentTab === "apps" ? null : "apps")
+                        )
+                      }
                       active={currentTab === "apps"}
                     >
                       Apps
                     </Button>
                     <Button
-                      onClick={(e) => handleTabClick("share", e)}
+                      onClick={() =>
+                        dispatch(
+                          setNavigationTab(currentTab === "share" ? null : "share")
+                        )
+                      }
                       active={currentTab === "share"}
                     >
                       Share
                     </Button>
                     <Button
-                      onClick={(e) => handleTabClick("settings", e)}
+                      onClick={() =>
+                        dispatch(
+                          setNavigationTab(
+                            currentTab === "settings" ? null : "settings"
+                          )
+                        )
+                      }
                       active={currentTab === "settings"}
                     >
                       Settings
                     </Button>
                     <Button
-                      onClick={(e) => handleTabClick("help", e)}
+                      onClick={() =>
+                        dispatch(
+                          setNavigationTab(currentTab === "help" ? null : "help")
+                        )
+                      }
                       active={currentTab === "help"}
                     >
                       Help
@@ -548,8 +555,9 @@ export default function NavBar() {
           <AnimatePresence>
             {currentTab !== null && currentSession !== null && (
               <motion.div
-                className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : "w-[35vw]"} bg-white dark:bg-dark-background border border-gray-200 dark:border-gray-600 shadow-xl z-50 flex flex-col rounded-b-lg overflow-hidden`}
-                style={{ height: "60vh", ...(!isSmallScreen && dropdownLeft !== null ? { left: `${dropdownLeft}px` } : {}) }}
+                className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : "right-0 w-[35vw]"
+                  } bg-white dark:bg-dark-background border border-gray-200 dark:border-gray-600 shadow-xl z-50 flex flex-col rounded-b-lg overflow-hidden`}
+                style={{ height: "70vh" }}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}

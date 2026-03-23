@@ -153,16 +153,16 @@ const History: React.FC<Props> = ({
         <button
           onClick={handleToggleModal}
           title="Operation history"
-          className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1 mx-2 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 cursor-pointer"
         >
-          <ClockIcon className="w-4 h-4" />
-          <span className="text-base font-medium">History</span>
-          <motion.div
-            animate={{ rotate: showModal ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
+
+          <span
+            className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+
           >
-            <ChevronRightIcon className="w-4 h-4" />
-          </motion.div>
+            📗
+          </span>
+
         </button>
 
         <AnimatePresence>

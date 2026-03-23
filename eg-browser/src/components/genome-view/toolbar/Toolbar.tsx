@@ -108,7 +108,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
+    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${tool === buttonTool ? "bg-gray-300 dark:bg-dark-secondary" : ""
       }`;
   };
 
@@ -152,14 +152,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
         }}
         transition={{ duration: 0.2 }}
       >
-        {/* Search Bar */}
 
 
 
-        <div
-          className="h-5 border-r border-gray-400"
-          style={{ paddingLeft: buttonPadding * 2, marginRight: buttonPadding }}
-        />
+
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
@@ -180,25 +176,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
               title="Drag tool
 (Alt+H or Alt+D)"
             >
-              <HandRaisedIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
-            </button>
-
-            <button
-              onClick={() => handleToolClick(Tool.Zoom)}
-              className={getButtonClass(Tool.Zoom)}
-              style={getButtonStyle()}
-              title="Zoom-in tool
-(Alt+M)"
-            >
               <span
-                className="flex flex-row items-center justify-center text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
               >
-                <span>⬚</span>
-                <span>+</span>
+                ✋
               </span>
             </button>
             <button
@@ -208,177 +190,29 @@ const Toolbar: React.FC<ToolbarProps> = ({
               title="Reorder tool
 (Alt+R or Alt+S)"
             >
-              <ArrowsUpDownIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
-            </button>
-            <button
-              onClick={() => handleToolClick(Tool.ReorderMany)}
-              className={getButtonClass(Tool.ReorderMany)}
-              style={getButtonStyle()}
-              title="Re-order Many"
-            >
-              <ArrowPathRoundedSquareIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
-            </button>
-
-            <div className="h-full border-r border-gray-400" />
-
-            <button
-              onClick={() => handleToolClick(Tool.PanLeft)}
-              className={getButtonClass(Tool.PanLeft)}
-              style={getButtonStyle()}
-              title="Pan left"
-            >
-              <ArrowLeftCircleIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
-            </button>
-
-            <button
-              onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
-              className={getButtonClass(Tool.ZoomOutFiveFold)}
-              style={getButtonStyle()}
-              title="Zoom out 5x"
-            >
               <span
                 className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
                 style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
               >
-                -5
+                🔀
               </span>
             </button>
             <button
-              onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
-              className={getButtonClass(Tool.ZoomOutOneFold)}
+              onClick={() => handleToolClick(Tool.Zoom)}
+              className={getButtonClass(Tool.Zoom)}
               style={getButtonStyle()}
-              title="Zoom out 1x"
+              title="Zoom-in tool
+(Alt+M)"
             >
               <span
-                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                className="flex flex-row items-center justify-center text-gray-600 dark:text-dark-primary"
+                style={{ height: `${getIconSize()}px`, fontSize: `${Math.round(fontSize * 0.9)}px`, gap: 0 }}
               >
-                -1
+                <span>⬚</span>
+                <span style={{ marginLeft: '-1px' }}>🔍</span>
+                <span style={{ marginLeft: '-2px' }}>+</span>
               </span>
             </button>
-
-            <button
-              onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
-              className={getButtonClass(Tool.ZoomOutOneThirdFold)}
-              style={getButtonStyle()}
-              title="Zoom out ⅓"
-            >
-              <span
-                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
-              >
-                -⅓
-              </span>
-            </button>
-            <button
-              onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
-              className={getButtonClass(Tool.ZoomInOneThirdFold)}
-              style={getButtonStyle()}
-              title="Zoom in ⅓"
-            >
-              <span
-                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
-              >
-                +⅓
-              </span>
-            </button>
-            <button
-              onClick={() => handleToolClick(Tool.ZoomInOneFold)}
-              className={getButtonClass(Tool.ZoomInOneFold)}
-              style={getButtonStyle()}
-              title="Zoom in 1x"
-            >
-              <span
-                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
-              >
-                +1
-              </span>
-            </button>
-            <button
-              onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
-              className={getButtonClass(Tool.ZoomInFiveFold)}
-              style={getButtonStyle()}
-              title="Zoom in 5x"
-            >
-              <span
-                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
-              >
-                +5
-              </span>
-            </button>
-
-            <button
-              onClick={() => handleToolClick(Tool.PanRight)}
-              className={getButtonClass(Tool.PanRight)}
-              style={getButtonStyle()}
-              title="Pan right"
-            >
-              <ArrowRightCircleIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
-            </button>
-
-            <div className="h-full border-r border-gray-400" />
-
-            <AnimatePresence>
-              {currentSession !== null && (
-                <motion.div
-                  className="flex flex-row items-center gap-4"
-                  style={{
-                    pointerEvents: sessionPanelOpen ? "none" : "auto",
-                  }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{
-                    opacity: sessionPanelOpen ? 0 : 1,
-                    y: 0,
-                  }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <IconButton
-                    onClick={undo}
-                    disabled={!canUndo}
-                    title="Undo"
-                    className={!canUndo ? "opacity-50 cursor-not-allowed" : ""}
-                  >
-                    <ArrowUturnLeftIcon className="h-5 w-5" />
-                  </IconButton>
-
-                  <IconButton
-                    onClick={redo}
-                    disabled={!canRedo}
-                    title="Redo"
-                    className={!canRedo ? "opacity-50 cursor-not-allowed" : ""}
-                  >
-                    <ArrowUturnRightIcon className="h-5 w-5" />
-                  </IconButton>
-                  <History
-                    state={{
-                      past: currentState ? currentState.past : [],
-                      future: currentState ? currentState.future : [],
-                    }}
-                    jumpToPast={jumpToPast}
-                    jumpToFuture={jumpToFuture}
-                    clearHistory={clearHistory}
-                  />
-
-
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             <button
               onClick={() => handleToolClick(Tool.Highlight)}
@@ -386,11 +220,185 @@ const Toolbar: React.FC<ToolbarProps> = ({
               style={getButtonStyle()}
               title="Highlight tool (Alt+N)"
             >
-              <BoltIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                ⛅
+              </span>
             </button>
+
+            <button
+              onClick={() => handleToolClick(Tool.ReorderMany)}
+              className={getButtonClass(Tool.ReorderMany)}
+              style={getButtonStyle()}
+              title="Re-order Many"
+            >
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                🔃
+              </span>
+
+
+            </button>
+
+            <div className="h-full border-r border-gray-400" />
+
+            <div className="flex">
+              <button
+                onClick={() => handleToolClick(Tool.PanLeft)}
+                className={`${getButtonClass(Tool.PanLeft)} border border-gray-300 dark:border-gray-600 !rounded-r-none`}
+                style={getButtonStyle()}
+                title="Pan left"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  ◀
+                </span>
+              </button>
+              <button
+                onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
+                className={`${getButtonClass(Tool.ZoomInFiveFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
+                style={getButtonStyle()}
+                title="Zoom in 5x"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  +5
+                </span>
+              </button>
+              <button
+                onClick={() => handleToolClick(Tool.ZoomInOneFold)}
+                className={`${getButtonClass(Tool.ZoomInOneFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
+                style={getButtonStyle()}
+                title="Zoom in 1x"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  +1
+                </span>
+              </button>
+              <button
+                onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
+                className={`${getButtonClass(Tool.ZoomInOneThirdFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
+                style={getButtonStyle()}
+                title="Zoom in ⅓"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  +⅓
+                </span>
+              </button>
+              <button
+                onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
+                className={`${getButtonClass(Tool.ZoomOutOneThirdFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
+                style={getButtonStyle()}
+                title="Zoom out ⅓"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  -⅓
+                </span>
+              </button>
+              <button
+                onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
+                className={`${getButtonClass(Tool.ZoomOutOneFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
+                style={getButtonStyle()}
+                title="Zoom out 1x"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  -1
+                </span>
+              </button>
+              <button
+                onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
+                className={`${getButtonClass(Tool.ZoomOutFiveFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
+                style={getButtonStyle()}
+                title="Zoom out 5x"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  -5
+                </span>
+              </button>
+              <button
+                onClick={() => handleToolClick(Tool.PanRight)}
+                className={`${getButtonClass(Tool.PanRight)} border border-gray-300 dark:border-gray-600 !rounded-l-none -ml-px`}
+                style={getButtonStyle()}
+                title="Pan right"
+              >
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  ▶
+                </span>
+              </button>
+            </div>
+
+            <div className="h-full border-r border-gray-400" />
+
+
+            {currentSession !== null && (
+
+              <><IconButton
+                onClick={undo}
+                disabled={!canUndo}
+                title="Undo"
+                className={`hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 !rounded-md ${!canUndo ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  ⟲
+                </span>
+              </IconButton><IconButton
+                onClick={redo}
+                disabled={!canRedo}
+                title="Redo"
+                className={`hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 !rounded-md ${!canRedo ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+
+                  <span
+                    className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                    style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                  >
+                    ⟳
+                  </span>
+                </IconButton><History
+                  state={{
+                    past: currentState ? currentState.past : [],
+                    future: currentState ? currentState.future : [],
+                  }}
+                  jumpToPast={jumpToPast}
+                  jumpToFuture={jumpToFuture}
+                  clearHistory={clearHistory} /></>
+
+
+
+            )}
+
+
+
 
             <button
               className={getButtonClass(Tool.highlightMenu)}
@@ -402,10 +410,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
               onClick={() => handleToolClick(Tool.highlightMenu)}
               title="Highlight list"
             >
-              <LightBulbIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                ⚡
+              </span>
             </button>
           </motion.div>
 
