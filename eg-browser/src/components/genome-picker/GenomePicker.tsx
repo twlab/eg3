@@ -176,8 +176,8 @@ export default function GenomePicker() {
               .map((genome) => (
                 <motion.div
                   key={genome.name}
-                  style={{ borderRadius: "12px", overflow: "hidden" }}
-                  className={`shadow-md dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""
+                  style={{ borderRadius: "12px", overflow: "hidden", boxShadow: "0 0 0 1px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.25)" }}
+                  className={`dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""
                     }`}
                   layout
                   initial={{ opacity: 0 }}
@@ -225,7 +225,7 @@ export default function GenomePicker() {
                       <motion.div
                         layout
                         key={version}
-                        className="flex items-center gap-2 cursor-pointer"
+                        className="flex items-center gap-2 cursor-pointer rounded-md px-2 py-0.5 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
                         onClick={() => setSelectedPath([genome.name, version])}
                       >
                         {selectedPath === null && (
