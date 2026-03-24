@@ -23,7 +23,7 @@ export const utilitySlice = createSlice({
     },
     setShortLink: (
       state,
-      action: PayloadAction<{ shortLink: string; fullUrl: string }>
+      action: PayloadAction<{ shortLink: string; fullUrl: string }>,
     ) => {
       state.shortLink = action.payload.shortLink;
       state.fullUrlForShortLink = action.payload.fullUrl;

@@ -17,6 +17,7 @@ import settingsReducer from "./slices/settingsSlice";
 import searchReducer from "./slices/searchSlice";
 import undoRedoReducer from "./slices/undoRedoSlice";
 import { setCurrentSession } from "./slices/browserSlice";
+import tabPanelReducer from "./slices/tabPanelSlice";
 
 // Transform to reduce the size of persisted browser state
 const browserTransform = createTransform(
@@ -33,7 +34,7 @@ const browserTransform = createTransform(
   },
   // transform state being rehydrated
   (outboundState) => outboundState,
-  { whitelist: ["browser"] }
+  { whitelist: ["browser"] },
 );
 
 const migrations = {
@@ -76,7 +77,7 @@ const createStorageWithErrorHandling = (storage: any) => {
             console.error("Failed to save even after clearing:", retryError);
             // Optionally notify user
             alert(
-              "Storage is full. Please delete some old sessions to continue."
+              "Storage is full. Please delete some old sessions to continue.",
             );
             throw retryError;
           }
@@ -124,6 +125,7 @@ export function createAppStore(config: StoreConfig = {}) {
     navigation: navigationReducer,
     browser: undoable(browserReducer, undoableConfig),
     utility: utilityReducer,
+    tabPanel: tabPanelReducer,
     hub: hubReducer,
     genomeHub: genomeHubReducer,
     settings: settingsReducer,
@@ -141,9 +143,9 @@ export function createAppStore(config: StoreConfig = {}) {
         getDefaultMiddleware({
           serializableCheck: false,
         }).concat((store) => (next) => (action) => {
-          console.log('Dispatching action:', action.type, action);
-          if (action.type === 'browser/updateCurrentSession') {
-            console.trace('Call stack for updateCurrentSession:');
+          console.log("Dispatching action:", action.type, action);
+          if (action.type === "browser/updateCurrentSession") {
+            console.trace("Call stack for updateCurrentSession:");
           }
           const result = next(action);
           // console.log('Next state:', store.getState());
@@ -169,7 +171,7 @@ export function createAppStore(config: StoreConfig = {}) {
 
   const persistedReducer = persistReducer<RootReducerType>(
     persistConfig,
-    rootReducer
+    rootReducer,
   );
 
   const store = configureStore({

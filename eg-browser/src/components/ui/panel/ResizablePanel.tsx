@@ -1,4 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../../lib/redux/hooks";
+import {
+  setWidth as setTabWidth,
+  setHeight as setTabHeight,
+  selectTabPanelWidth,
+  selectTabPanelHeight,
+} from "../../../lib/redux/slices/tabPanelSlice";
 
 interface ResizablePanelProps {
   title?: string;
@@ -46,6 +53,79 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     startH: number;
   } | null>(null);
 
+  const dispatch = useAppDispatch();
+  const sliceWidth = useAppSelector(selectTabPanelWidth);
+  const sliceHeight = useAppSelector(selectTabPanelHeight);
+
+  const THROTTLE_MS = 100;
+  const DIFF_THRESHOLD = 15;
+  const lastDispatchRef = useRef<number>(0);
+  const pendingRef = useRef<{ w?: number; h?: number } | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const latestSliceRef = useRef({ w: sliceWidth, h: sliceHeight });
+
+  useEffect(() => {
+    latestSliceRef.current = { w: sliceWidth, h: sliceHeight };
+  }, [sliceWidth, sliceHeight]);
+
+  const flushPending = () => {
+    const pending = pendingRef.current;
+    if (!pending) return;
+
+    const { w, h } = pending;
+
+    if (typeof w === "number") {
+      if (Math.abs(w - latestSliceRef.current.w) >= DIFF_THRESHOLD) {
+        dispatch(setTabWidth(Math.round(w)));
+        latestSliceRef.current.w = Math.round(w);
+      }
+    }
+
+    if (typeof h === "number") {
+      if (Math.abs(h - latestSliceRef.current.h) >= DIFF_THRESHOLD) {
+        dispatch(setTabHeight(Math.round(h)));
+        latestSliceRef.current.h = Math.round(h);
+      }
+    }
+
+    pendingRef.current = null;
+    lastDispatchRef.current = Date.now();
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const scheduleDispatch = (w: number, h: number) => {
+    const now = Date.now();
+    const since = now - lastDispatchRef.current;
+    pendingRef.current = { ...(pendingRef.current || {}), w, h };
+
+    if (since >= THROTTLE_MS) {
+      flushPending();
+      return;
+    }
+
+    if (!timeoutRef.current) {
+      timeoutRef.current = window.setTimeout(() => {
+        flushPending();
+      }, THROTTLE_MS - since) as unknown as number;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  // Watch local width/height state and schedule throttled slice updates
+  useEffect(() => {
+    const numericW = parseSizeToNumber(width, 0);
+    const numericH = parseSizeToNumber(height, 0);
+    scheduleDispatch(numericW, numericH);
+  }, [width, height]);
+
   // helper to convert sizes like '70vh' to pixels
   const parseSizeToNumber = (val: number | string, fallback: number) => {
     if (typeof val === "number") return val;
@@ -80,6 +160,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         newH = Math.max(minHeight, newH);
         setWidth(newW);
         setHeight(newH);
+        // update local size state; a separate useEffect will schedule slice updates
       }
     };
 

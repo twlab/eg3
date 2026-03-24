@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 
 import _ from "lodash";
 import HubTrackTable from "./HubTrackTable";
@@ -18,6 +18,8 @@ type FacetTableProps = {
   addedTrackSets: Set<string>;
   publicTrackSets?: Set<string>;
   contentColorSetup: any;
+  width?: number;
+  height?: number;
 };
 
 const FacetTable: React.FC<FacetTableProps> = ({
@@ -27,6 +29,8 @@ const FacetTable: React.FC<FacetTableProps> = ({
   addTermToMetaSets,
   addedTrackSets,
   publicTrackSets,
+  width,
+  height,
 }) => {
   const [state, setState] = useState<any>({
     tracks: [] as TrackModel[],
@@ -161,7 +165,9 @@ const FacetTable: React.FC<FacetTableProps> = ({
   useEffect(() => {
     initializeTracks(tracks);
   }, [tracks]);
-
+  useEffect(() => {
+    console.log(state);
+  }, [state]);
   const handleOpenModal = (id: string, found: any[]) => {
     setState((prevState) => ({
       ...prevState,
@@ -228,56 +234,80 @@ const FacetTable: React.FC<FacetTableProps> = ({
     return list;
   };
 
-  const renderHeader = (attr: string) => {
-    let attrList, rowClass, colClass, expandClass;
-    if (attr === state.rowHeader) {
-      attrList = state.rowList;
-      rowClass = "facet-row-header";
-    } else {
-      attrList = state.columnList;
-      colClass = "facet-column-header";
-    }
+  // Header components memoized to avoid re-render on unrelated changes
+  const ColumnHeaders = React.memo(({ list }: { list: any[] }) => {
+    const colClass = "facet-column-header";
+    return (
+      <>
+        {list.map((element: any, idx: number) => {
+          const hasChildren = element.children && element.children.size;
+          const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
+          const expandClass = hasChildren && element.expanded ? "expanded" : "";
+          return (
+            <div key={`${element.name}-${idx}`} className={`${colClass}`}>
+              {hasChildren ? (
+                <button
+                  name={element.name}
+                  type="button"
+                  onClick={toggleHeader}
+                  className={expandClass}
+                >
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              ) : (
+                <button name={element.name} className="not-button">
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </>
+    );
+  });
 
-    return attrList.map((element, idx) => {
-      let prefix = "";
-      if (element.children && element.children.size) {
-        prefix = element.expanded ? "⊟" : "⊞";
-        expandClass = element.expanded ? "expanded" : "";
-        return (
-          <div
-            key={`${element.name}-${idx}`}
-            className={`${rowClass} ${colClass}`}
-          >
-            <button
-              name={element.name}
-              type="button"
-              onClick={toggleHeader}
-              className={expandClass}
-            >
-              <span>
-                {prefix}
-                {element.name}
-              </span>
-            </button>
-          </div>
-        );
-      } else {
-        return (
-          <div
-            key={`${element.name}-${idx}`}
-            className={`${rowClass} ${colClass}`}
-          >
-            <button name={element.name} className="not-button">
-              <span>
-                {prefix}
-                {element.name}
-              </span>
-            </button>
-          </div>
-        );
-      }
-    });
-  };
+  const RowHeaders = React.memo(({ list }: { list: any[] }) => {
+    const rowClass = "facet-row-header";
+    return (
+      <>
+        {list.map((element: any, idx: number) => {
+          const hasChildren = element.children && element.children.size;
+          const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
+          const expandClass = hasChildren && element.expanded ? "expanded" : "";
+          return (
+            <div key={`${element.name}-${idx}`} className={`${rowClass}`}>
+              {hasChildren ? (
+                <button
+                  name={element.name}
+                  type="button"
+                  onClick={toggleHeader}
+                  className={expandClass}
+                >
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              ) : (
+                <button name={element.name} className="not-button">
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </>
+    );
+  });
 
   const swapHeader = () => {
     let { rowHeader, columnHeader, rowList, columnList } = state;
@@ -297,38 +327,48 @@ const FacetTable: React.FC<FacetTableProps> = ({
     setColNumber();
   };
 
-  const buildMatrix = () => {
-    const { columnHeader, rowList, columnList } = state;
-    let divs: Array<any> = [];
-    if (columnHeader !== UNUSED_META_KEY) {
-      for (let row of rowList) {
-        for (let col of columnList) {
-          if (row.expanded || col.expanded) {
-            divs.push(<div key={`${row.name}-${col.name}`}></div>);
+  const MatrixGrid = React.memo(
+    ({
+      rowList,
+      columnList,
+      columnHeader,
+    }: {
+      rowList: any[];
+      columnList: any[];
+      columnHeader: string;
+    }) => {
+      const divs: Array<any> = [];
+      if (columnHeader !== UNUSED_META_KEY) {
+        for (let row of rowList) {
+          for (let col of columnList) {
+            if (row.expanded || col.expanded) {
+              divs.push(<div key={`${row.name}-${col.name}`}></div>);
+            } else {
+              divs.push(
+                <div key={`${row.name}-${col.name}`}>
+                  {countTracks(row, col)}
+                </div>,
+              );
+            }
+          }
+        }
+      } else {
+        for (let row of rowList) {
+          if (row.expanded) {
+            divs.push(<div key={`${row.name}-col`}></div>);
           } else {
             divs.push(
-              <div key={`${row.name}-${col.name}`}>
-                {countTracks(row, col)}
+              <div key={`${row.name}-col`}>
+                {countTracks(row, UNUSED_META_KEY)}
               </div>,
             );
           }
         }
       }
-    } else {
-      for (let row of rowList) {
-        if (row.expanded) {
-          divs.push(<div key={`${row.name}-col`}></div>);
-        } else {
-          divs.push(
-            <div key={`${row.name}-col`}>
-              {countTracks(row, UNUSED_META_KEY)}
-            </div>,
-          );
-        }
-      }
-    }
-    return divs;
-  };
+
+      return <>{divs}</>;
+    },
+  );
 
   const trackMetadataBelongsTo = (
     tkMeta: string | string[],
@@ -397,6 +437,11 @@ const FacetTable: React.FC<FacetTableProps> = ({
       (colNum + 1).toString(),
     );
   };
+
+  // update column number when column list length or panel size changes
+  useEffect(() => {
+    setColNumber();
+  }, [state.columnList.length, width, height]);
 
   const renderHeaderSelection = (isColumn: boolean) => {
     let stateToRead, otherState, changeCallback;
@@ -481,21 +526,26 @@ const FacetTable: React.FC<FacetTableProps> = ({
       <>
         <div className="facet-container">
           <div className="facet-config">
-            {/* <div>{renderHeaderSelection(false)}</div>
-          <div
-            className="facet-swap"
-            title="swap row/column"
-            onClick={swapHeader}
-          ></div> */}
-            {/* <div>{renderHeaderSelection(true)}</div> */}
+            <div>{renderHeaderSelection(false)}</div>
+            <div
+              className="facet-swap"
+              title="swap row/column"
+              onClick={swapHeader}
+            >
+              &#8646;
+            </div>
+            <div>{renderHeaderSelection(true)}</div>
           </div>
           <div className="facet-outer">
             <div className="facet-content">
               <div className="facet-holder"></div>
-              {renderHeader(state.columnHeader)}
-              {renderHeader(state.rowHeader)}
-              {buildMatrix()}
-              {setColNumber()}
+              <ColumnHeaders list={state.columnList} />
+              <RowHeaders list={state.rowList} />
+              <MatrixGrid
+                rowList={state.rowList}
+                columnList={state.columnList}
+                columnHeader={state.columnHeader}
+              />
             </div>
           </div>
         </div>

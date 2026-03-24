@@ -18,6 +18,10 @@ import {
   selectPublicTracksPool,
   updateLoadedPublicHub,
 } from "@/lib/redux/slices/hubSlice";
+import {
+  selectTabPanelWidth,
+  selectTabPanelHeight,
+} from "@/lib/redux/slices/tabPanelSlice";
 // Local Hooks
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
@@ -30,11 +34,13 @@ export default function PublicDataHubs() {
   const genomeConfig = useCurrentGenome();
   const loadedPublicHub = useAppSelector(selectLoadedPublicHub);
   const publicTracksPool = useAppSelector(selectPublicTracksPool);
+  const tabPanelWidth = useAppSelector(selectTabPanelWidth);
+  const tabPanelHeight = useAppSelector(selectTabPanelHeight);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingHubs, setLoadingHubs] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
 
   const secondaryGenomes: Array<any> = [];
@@ -54,12 +60,15 @@ export default function PublicDataHubs() {
   }, [secondaryGenomes, selectedGenomeName, genomeConfig]);
 
   const groupedHubs = useMemo(() => {
-    const hubs = selectedGenomeConfig && selectedGenomeConfig.publicHubList ? selectedGenomeConfig.publicHubList : [];
+    const hubs =
+      selectedGenomeConfig && selectedGenomeConfig.publicHubList
+        ? selectedGenomeConfig.publicHubList
+        : [];
 
     const filteredHubs = hubs.filter((hub: any) =>
       Object.values(hub).some((value: any) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
-      )
+        String(value).toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
     );
 
     return _.groupBy(filteredHubs, "collection");
@@ -81,7 +90,7 @@ export default function PublicDataHubs() {
         hub.genome,
         hub.oldHubFormat,
         tracksStartIndex,
-        hubBase
+        hubBase,
       );
       dispatch(addPublicTracksPool([...publicTracksPool, ...tracks]));
       const tracksToShow = tracks.filter((track: any) => track.showOnHubLoad);
@@ -89,7 +98,7 @@ export default function PublicDataHubs() {
         dispatch(
           updateCurrentSession({
             tracks: [...currentSession!.tracks, ...tracksToShow],
-          })
+          }),
         );
       }
       dispatch(updateLoadedPublicHub({ ...loadedPublicHub, [hub.url]: true }));
@@ -121,10 +130,11 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${isLoaded
-                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-                }`}
+              className={`size-6 rounded-md flex items-center justify-center ${
+                isLoaded
+                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+              }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -176,20 +186,18 @@ export default function PublicDataHubs() {
   const addedTrackUrls = useMemo(() => {
     if (currentSession) {
       return new Set(
-        currentSession.tracks.map((track) => track.url || track.name)
+        currentSession.tracks.map((track) => track.url || track.name),
       );
     } else {
       return new Set();
     }
   }, [currentSession]);
   function onTracksAdded(tracks: TrackModel[]) {
-
     if (currentSession) {
-
       dispatch(
         updateCurrentSession({
           tracks: [...currentSession.tracks, ...tracks],
-        })
+        }),
       );
     }
   }
@@ -204,8 +212,10 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
+            width={tabPanelWidth}
+            height={tabPanelHeight}
           />
         </div>
       ) : (
@@ -214,7 +224,7 @@ export default function PublicDataHubs() {
       {renderSearchBar()}
       <div>
         {Object.entries(groupedHubs).map(([collection, hubs]) =>
-          renderHubGroup(collection, hubs)
+          renderHubGroup(collection, hubs),
         )}
       </div>
     </div>
