@@ -23,6 +23,7 @@ import {
   useAppSelector,
 } from "../../lib/redux/hooks";
 import {
+  NavigationRoute,
   selectNavigationTab,
   selectSessionPanelOpen,
   setNavigationTab,
@@ -30,6 +31,7 @@ import {
 } from "../../lib/redux/slices/navigationSlice";
 import { GENOME_LIST, versionToLogoUrl } from "../genome-picker/genome-list";
 import Button from "../ui/button/Button";
+import ResizablePanel from "../ui/panel/ResizablePanel";
 import IconButton from "../ui/button/IconButton";
 import InlineEditable from "../ui/input/InlineEditable";
 import Switch from "../ui/switch/Switch";
@@ -64,6 +66,8 @@ export default function NavBar() {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const [tabAnchorLeft, setTabAnchorLeft] = useState<number | null>(null);
 
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
@@ -130,6 +134,21 @@ export default function NavBar() {
     [genomeConfig, dispatch],
   );
 
+  const openTab = (tab: string | null, e?: React.MouseEvent) => {
+    if (e && navRef.current) {
+      const btnRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const navRect = navRef.current.getBoundingClientRect();
+      setTabAnchorLeft(btnRect.left - navRect.left);
+    }
+
+    if (currentTab === tab) {
+      setTabAnchorLeft(null);
+      dispatch(setNavigationTab(null));
+    } else {
+      dispatch(setNavigationTab(tab as NavigationRoute));
+    }
+  };
+
   const genomeLogoUrl: string | null = genome?.name
     ? (getSpeciesInfo(genome.name)?.logo || null) ??
     (versionToLogoUrl[genome.name]?.croppedUrl || null) ??
@@ -194,7 +213,7 @@ export default function NavBar() {
   return (
     <>
       {storageError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 text-sm flex justify-between items-center">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 text-sm flex justify-between items-center ">
           <span>{storageError}</span>
           <button
             onClick={() => {
@@ -211,7 +230,7 @@ export default function NavBar() {
       )}
       <OutsideClickDetector onOutsideClick={() => dispatch(setNavigationTab(null))}>
         <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
-          <div className="flex flex-row items-center  relative gap-1">
+          <div ref={navRef} className="flex flex-row items-center  relative gap-1">
             {currentSession ? (
               <BackspaceIcon
                 className="size-5 text-gray-600 dark:text-dark-primary cursor-pointer"
@@ -230,7 +249,7 @@ export default function NavBar() {
                 "h-12",
                 "w-20",
                 "rounded-sm",
-                "flex-shrink-0",
+
                 "relative",
                 "overflow-hidden",
                 currentSession ? "cursor-pointer" : "cursor-default",
@@ -349,20 +368,14 @@ export default function NavBar() {
                   )}
                 </IconButton>
               ) : (
-                <AnimatePresence>
+                <div>
                   {currentSession !== null ? (
-                    <motion.div
+                    <div
                       className="flex flex-row items-center gap-1"
-                      style={{
-                        pointerEvents: sessionPanelOpen ? "none" : "auto",
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{
-                        opacity: sessionPanelOpen ? 0 : 1,
-                        y: 0,
-                      }}
-                      exit={{ opacity: 0, y: 20 }}
-                      transition={{ duration: 0.2 }}
+                    // style={{
+                    //   pointerEvents: sessionPanelOpen ? "none" : "auto",
+                    // }}
+
                     >
                       {userViewRegionModel && genomeConfig && (
 
@@ -376,66 +389,42 @@ export default function NavBar() {
                           genomeIdx={0}
                           addGlobalState={undefined}
                           windowWidth={window.innerWidth}
-                          fontSize={14}
+                          fontSize={16}
                           padding={0}
                         />
 
                       )}
 
                       <Button
-                        onClick={() =>
-                          dispatch(
-                            setNavigationTab(
-                              currentTab === "tracks" ? null : "tracks"
-                            )
-                          )
-                        }
+                        onClick={(e) => openTab("tracks", e)}
                         active={currentTab === "tracks"}
                         style={{ backgroundColor: "#bec6fb", color: "black" }}
                       >
                         Tracks
                       </Button>
                       <Button
-                        onClick={() =>
-                          dispatch(
-                            setNavigationTab(currentTab === "apps" ? null : "apps")
-                          )
-                        }
+                        onClick={(e) => openTab("apps", e)}
                         active={currentTab === "apps"}
                         style={{ backgroundColor: "#95E1D3", color: "#0f172a" }}
                       >
                         Apps
                       </Button>
                       <Button
-                        onClick={() =>
-                          dispatch(
-                            setNavigationTab(currentTab === "share" ? null : "share")
-                          )
-                        }
+                        onClick={(e) => openTab("share", e)}
                         active={currentTab === "share"}
                         style={{ backgroundColor: "#EAFFD0", color: "#0f172a" }}
                       >
                         Share
                       </Button>
                       <Button
-                        onClick={() =>
-                          dispatch(
-                            setNavigationTab(
-                              currentTab === "settings" ? null : "settings"
-                            )
-                          )
-                        }
+                        onClick={(e) => openTab("settings", e)}
                         active={currentTab === "settings"}
                         style={{ backgroundColor: "#ffbebe", color: "black" }}
                       >
                         Settings
                       </Button>
                       <Button
-                        onClick={() =>
-                          dispatch(
-                            setNavigationTab(currentTab === "help" ? null : "help")
-                          )
-                        }
+                        onClick={(e) => openTab("help", e)}
                         active={currentTab === "help"}
                         style={{ backgroundColor: "#FCE38A", color: "#0f172a" }}
                       >
@@ -450,25 +439,25 @@ export default function NavBar() {
                         buttonPadding={6}
                         gapSize={8}
                       />
-                    </motion.div>
+                    </div>
                   ) : ""}
 
+                  {!currentSession && (
+                    <div style={{ fontSize: 24 }} >
+                      <span>WashU </span> Epigenome Browser
+                    </div>
+                  )}
 
-
-                </AnimatePresence>
+                </div>
               )}
             </div>
-            {!currentSession && (
-              <h1 className="text-xl font-light">
-                <span className="font-medium">WashU </span> Epigenome Browser
-              </h1>
-            )}
+
           </div>
 
           {!isSmallScreen &&
             (currentSession ? (
 
-              <div className="flex flex-row items-center gap-2 z-10">
+              <div className="flex flex-row items-center gap-2 z-10" style={{ marginRight: 15 }}>
 
                 <InlineEditable
                   value={
@@ -528,7 +517,7 @@ export default function NavBar() {
                 />
               </div>
             ) : (
-              <div className="flex flex-row items-center gap-2 z-10">
+              <div className="flex flex-row items-center gap-2 z-10" style={{ marginRight: 15 }}>
 
                 <Button
                   style={{
@@ -647,50 +636,31 @@ export default function NavBar() {
           <AnimatePresence>
             {currentTab !== null && currentSession !== null && (
               <motion.div
-                className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : "right-0 w-[35vw]"
-                  } bg-white dark:bg-dark-background border border-gray-200 dark:border-gray-600 shadow-xl z-50 flex flex-col rounded-b-lg overflow-hidden`}
-                style={{ height: "70vh" }}
+                className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : ""} bg-transparent z-50`}
+                style={
+                  !isSmallScreen && tabAnchorLeft != null
+                    ? ({ left: `${tabAnchorLeft}px`, right: 'auto' } as any)
+                    : ({} as any)
+                }
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 flex-shrink-0">
-                  <h2 className="text-xl text-gray-800 dark:text-white capitalize">
-                    {currentTab}
-                  </h2>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Press Esc to close
-                    </span>
-                    <button
-                      onClick={() => dispatch(setNavigationTab(null))}
-                      className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                      title="Close"
-                    >
-                      <svg
-                        className="w-5 h-5 text-gray-600 dark:text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <div className="flex-1 min-h-0 overflow-hidden">
+                <ResizablePanel
+                  title={currentTab || undefined}
+                  initialWidth={480}
+                  initialHeight={"70vh"}
+                  minWidth={220}
+                  maxWidth={600}
+                  onClose={() => dispatch(setNavigationTab(null))}
+                >
                   {currentTab === "tracks" && <TracksTab />}
                   {currentTab === "apps" && <AppsTab />}
                   {currentTab === "help" && <HelpTab />}
                   {currentTab === "share" && <ShareTab />}
                   {currentTab === "settings" && <SettingsTab />}
-                </div>
+                </ResizablePanel>
               </motion.div>
             )}
           </AnimatePresence>

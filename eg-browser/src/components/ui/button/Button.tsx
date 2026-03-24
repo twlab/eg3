@@ -36,8 +36,8 @@ export default function Button({
       s.backgroundColor = 'white';
       s.color = 'black';
       // colored shadow and border using the active blue
-      s.boxShadow = '0px 0px 0px 4px rgba(125, 199, 255, 0.7)';
-      s.border = '2px solid #8494FF';
+      s.boxShadow = `0px 0px 0px 5px ${originalBg.current ? originalBg.current : "lightblue"}`;
+      s.outline = '2px solid blue';
 
     }
     return s;

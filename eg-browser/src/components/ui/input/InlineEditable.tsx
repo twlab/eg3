@@ -79,9 +79,14 @@ function InlineEditable(props: InlineEditableProps) {
 
   let body;
 
+  const currentLength = editing ? value.length : props.value.length;
   const commonStyle = {
-    width: `${Math.max(props.value.length, 10)}ch`,
+    width: `${Math.max(currentLength, 10)}ch`,
     minWidth: "75px",
+
+    height: "40px",
+    display: "inline-flex",
+    alignItems: "center",
   };
 
   if (editing) {
@@ -120,7 +125,7 @@ function InlineEditable(props: InlineEditableProps) {
           }`}
       >
         {body}
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-gray-200 shadow-lg rounded">
+        <div className="absolute top-full right-0 mt-3 z-50 bg-white border border-gray-200 shadow-lg rounded origin-top-right">
           <Session />
         </div>
       </div>

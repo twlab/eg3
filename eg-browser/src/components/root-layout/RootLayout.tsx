@@ -236,7 +236,19 @@ export default function RootLayout(props: GenomeHubProps) {
       <GoogleAnalytics />
 
       <div className="flex flex-col h-full text-primary dark:text-white">
-        {showNavBar === false ? "" : <NavBar />}
+        {showNavBar === false ? "" : (() => {
+
+          return (
+            <div
+              style={{
+                width: `calc(100% + ${15}px)`,
+                marginRight: `-${15}px`,
+              }}
+            >
+              <NavBar />
+            </div>
+          );
+        })()}
 
         <div className="flex flex-row flex-1 relative bg-black">
 

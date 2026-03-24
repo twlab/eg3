@@ -58,7 +58,7 @@ export default function SessionList({
         <div className="flex flex-row gap-2 w-full justify-start items-center">
           <Button
             leftIcon={<PlusIcon className="w-4 h-4" />}
-            active
+            active={false}
             onClick={() => {
               navigation.push({
                 path: "import-session",
