@@ -304,7 +304,10 @@ const HubTrackTable: React.FC<Props> = ({
           >
             <thead>
               {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id || headerGroup.getHeaderGroupProps().key}>
+                <tr
+                  {...headerGroup.getHeaderGroupProps()}
+                  key={headerGroup.id || headerGroup.getHeaderGroupProps().key}
+                >
                   {headerGroup.headers.map((column) => (
                     <th
                       {...column.getHeaderProps()}
