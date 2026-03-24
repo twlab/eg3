@@ -211,7 +211,7 @@ export default function NavBar() {
       )}
       <OutsideClickDetector onOutsideClick={() => dispatch(setNavigationTab(null))}>
         <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
-          <div className="flex flex-row items-center  relative">
+          <div className="flex flex-row items-center  relative gap-1">
             {currentSession ? (
               <BackspaceIcon
                 className="size-5 text-gray-600 dark:text-dark-primary cursor-pointer"
@@ -246,7 +246,7 @@ export default function NavBar() {
               {currentSession && currentSession.title.length > 0 && genome?.name && (
                 <>
                   <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
-                    <span className="text-red-500 dark:text-red-400 font-mono leading-none" style={{ fontSize: '9px' }}> v{version}</span>
+                    <span className="text-red-500 blue-100 font-mono leading-none" style={{ fontSize: '12px' }}> v{version}</span>
                   </div>
 
                 </>
@@ -336,7 +336,7 @@ export default function NavBar() {
               </div>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               {isSmallScreen ? (
                 <IconButton
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -352,7 +352,7 @@ export default function NavBar() {
                 <AnimatePresence>
                   {currentSession !== null ? (
                     <motion.div
-                      className="flex flex-row items-center gap-4"
+                      className="flex flex-row items-center gap-1"
                       style={{
                         pointerEvents: sessionPanelOpen ? "none" : "auto",
                       }}
@@ -365,6 +365,7 @@ export default function NavBar() {
                       transition={{ duration: 0.2 }}
                     >
                       {userViewRegionModel && genomeConfig && (
+
                         <TrackRegionController
                           selectedRegion={userViewRegionModel}
                           onRegionSelected={handleNewRegionSelect}
@@ -375,11 +376,12 @@ export default function NavBar() {
                           genomeIdx={0}
                           addGlobalState={undefined}
                           windowWidth={window.innerWidth}
-                          fontSize={16}
-                          padding={6}
+                          fontSize={14}
+                          padding={0}
                         />
+
                       )}
-                      <div className="h-5 border-r border-gray-400" />
+
                       <Button
                         onClick={() =>
                           dispatch(
@@ -389,6 +391,7 @@ export default function NavBar() {
                           )
                         }
                         active={currentTab === "tracks"}
+                        style={{ backgroundColor: "#bec6fb", color: "black" }}
                       >
                         Tracks
                       </Button>
@@ -399,6 +402,7 @@ export default function NavBar() {
                           )
                         }
                         active={currentTab === "apps"}
+                        style={{ backgroundColor: "#95E1D3", color: "#0f172a" }}
                       >
                         Apps
                       </Button>
@@ -409,6 +413,7 @@ export default function NavBar() {
                           )
                         }
                         active={currentTab === "share"}
+                        style={{ backgroundColor: "#EAFFD0", color: "#0f172a" }}
                       >
                         Share
                       </Button>
@@ -421,6 +426,7 @@ export default function NavBar() {
                           )
                         }
                         active={currentTab === "settings"}
+                        style={{ backgroundColor: "#ffbebe", color: "black" }}
                       >
                         Settings
                       </Button>
@@ -431,6 +437,7 @@ export default function NavBar() {
                           )
                         }
                         active={currentTab === "help"}
+                        style={{ backgroundColor: "#FCE38A", color: "#0f172a" }}
                       >
                         Help
                       </Button>
@@ -529,6 +536,7 @@ export default function NavBar() {
                       "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
                     padding: "4px 8px",
                     color: "black",
+                    width: "150px"
                   }}
                   onClick={() =>
                     window.open(

@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, FC, KeyboardEvent } from "react";
 import ReactDOM from "react-dom";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import GeneSearchBox from "./GeneSearchBox";
-
+import classNames from "classnames";
 import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import Genome from "../../../models/Genome";
@@ -109,37 +109,30 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   const coordinates = selectedRegion.currentRegionAsString();
 
   return (
-    <div
-      className="bg tool-element"
-      style={{
-        fontSize: `${fontSize || Math.max(11, Math.min(15, windowWidth * 0.009))
-          }px`,
-        paddingLeft: padding ? padding : 5,
-      }}
+    <div className={classNames(
+      "w-55 h-10 rounded-xs flex items-center justify-center",
+      "text-sm font-medium select-none",
+      "text-gray-700 dark:text-gray-300 bg-gray-100/70 dark:bg-gray-800/50",
+      "transition-all duration-150 cursor-pointer",
+      "hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white hover:shadow-sm",
+      "bg-tint dark:bg-dark-tint text-white",
+      "bg-alert text-white"
+
+    )}
     >
       <button
         onClick={handleOpenModal}
         style={{
-          fontSize: `${fontSize || Math.max(11, Math.min(15, windowWidth * 0.009))
-            }px`,
+          fontSize: "16px",
           cursor: "pointer",
-          background: "none",
-          border: "none",
-          color: "inherit",
-          fontFamily: "inherit",
-          padding: "2px 6px",
-          borderRadius: "6px",
-          transition: "background-color 0.15s ease",
-          textDecoration: "underline",
 
+          transition: "background-color 0.15s ease",
+          paddingLeft: 4,
+          paddingRight: 4,
           transform: "translateY(.5px)",
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.05)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "transparent";
-        }}
+
+
       >
         {coordinates}
       </button>
