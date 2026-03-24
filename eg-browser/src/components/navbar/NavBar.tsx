@@ -1,5 +1,6 @@
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import {
+  createSession,
   selectCurrentSession,
   setCurrentSession,
   updateCurrentSession,
@@ -13,7 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
 import Logo from "../../assets/logo.png";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
@@ -27,7 +28,7 @@ import {
   setNavigationTab,
   setSessionPanelOpen,
 } from "../../lib/redux/slices/navigationSlice";
-import { versionToLogoUrl } from "../genome-picker/genome-list";
+import { GENOME_LIST, versionToLogoUrl } from "../genome-picker/genome-list";
 import Button from "../ui/button/Button";
 import IconButton from "../ui/button/IconButton";
 import InlineEditable from "../ui/input/InlineEditable";
@@ -49,6 +50,7 @@ import {
   TrackRegionController,
   RegionSet,
   getSpeciesInfo,
+  getGenomeConfig,
 } from "wuepgg3-track";
 import type { GenomeCoordinate } from "wuepgg3-track";
 
@@ -135,6 +137,37 @@ export default function NavBar() {
     : null;
   // const genomeLogoUrl: string | null = null;
 
+  const [genomePickerOpen, setGenomePickerOpen] = useState(false);
+  const [genomeSearchQuery, setGenomeSearchQuery] = useState('');
+  const genomePickerRef = useRef<HTMLDivElement>(null);
+
+  const filteredGenomes = useMemo(() =>
+    GENOME_LIST.filter(g =>
+      !genomeSearchQuery ||
+      g.name.toLowerCase().includes(genomeSearchQuery.toLowerCase()) ||
+      g.versions.some(v => v.toLowerCase().includes(genomeSearchQuery.toLowerCase()))
+    ), [genomeSearchQuery]);
+
+  const handlePickGenome = (assemblyName: string) => {
+    const config = getGenomeConfig(assemblyName);
+    if (config) {
+      dispatch(createSession({ genome: GenomeSerializer.serialize(config) }));
+    }
+    setGenomePickerOpen(false);
+    setGenomeSearchQuery('');
+  };
+
+  useEffect(() => {
+    if (!genomePickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (genomePickerRef.current && !genomePickerRef.current.contains(e.target as Node)) {
+        setGenomePickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [genomePickerOpen]);
+
   // Monitor localStorage quota errors
   useEffect(() => {
     const handleStorageError = (e: ErrorEvent) => {
@@ -177,9 +210,9 @@ export default function NavBar() {
         </div>
       )}
       <OutsideClickDetector onOutsideClick={() => dispatch(setNavigationTab(null))}>
-        <div className="flex flex-row  items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
-          <div className="flex flex-row items-center gap-3 relative">
-            {currentSession && (
+        <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
+          <div className="flex flex-row items-center  relative">
+            {currentSession ? (
               <BackspaceIcon
                 className="size-5 text-gray-600 dark:text-dark-primary cursor-pointer"
                 onClick={() => {
@@ -187,250 +220,334 @@ export default function NavBar() {
                   dispatch(setCurrentSession(null));
                 }}
               />
+            ) : (
+              <div className="size-5 flex-shrink-0" />
             )}
+
             <div
-              style={{
-                backgroundImage: `url(${genomeLogoUrl
-                  ? (genomeLogoUrl.startsWith('http') ? genomeLogoUrl : import.meta.env.BASE_URL + genomeLogoUrl)
-                  : Logo})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                opacity: genomeLogoUrl ? 0.8 : 1,
-              }}
-              onMouseEnter={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-              onMouseLeave={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
               className={classNames(
                 "z-10",
-                "size-12",
-                "rounded-md",
+                "h-12",
+                "w-20",
+                "rounded-sm",
                 "flex-shrink-0",
-                "transition-opacity",
+                "relative",
+                "overflow-hidden",
                 currentSession ? "cursor-pointer" : "cursor-default",
-                sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : ""
+
               )}
+              style={{ marginLeft: -10 }}
               onClick={() => {
                 dispatch(setSessionPanelOpen(false));
                 dispatch(setCurrentSession(null));
               }}
-            />
-            {!isSmallScreen &&
-              (currentSession ? (
-                <div className="flex flex-row items-center gap-2 z-10">
-                  {currentSession.title.length > 0 && genome?.name && (
-                    //replaced text-primary with var font color
-                    <>
-                      <p className="text-xl  font-medium">{genome?.name}</p>
+            >
+              <img src={Logo} alt="" className="absolute inset-0 w-full h-full object-contain" />
+              {currentSession && currentSession.title.length > 0 && genome?.name && (
+                <>
+                  <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
+                    <span className="text-red-500 dark:text-red-400 font-mono leading-none" style={{ fontSize: '9px' }}> v{version}</span>
+                  </div>
 
-                      <p className="text-xl font-light">/</p>
-                    </>
+                </>
+              )}
+            </div>
+            {currentSession && (
+              <div className="relative flex-shrink-0" ref={genomePickerRef}>
+                <div
+                  style={{
+                    backgroundImage: `url(${genomeLogoUrl
+                      ? (genomeLogoUrl.startsWith('http') ? genomeLogoUrl : import.meta.env.BASE_URL + genomeLogoUrl)
+                      : ""})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    opacity: genomeLogoUrl ? 0.8 : 1,
+                  }}
+                  onMouseEnter={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+                  onMouseLeave={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
+                  className={classNames(
+                    "z-10",
+                    "h-10",
+                    "w-45",
+                    "rounded-xs",
+                    "flex-shrink-0",
+                    "transition-opacity",
+                    "relative",
+                    "overflow-hidden",
+                    "cursor-pointer",
+                    genomePickerOpen ? "ring-2 ring-blue-400" : "",
+                    sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
+                    genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : ""
                   )}
-                  <InlineEditable
-                    value={
-                      currentSession.title.length > 0
-                        ? currentSession.title
-                        : "Untitled Session"
-                    }
-                    onChange={async (value) => {
-                      try {
-                        if (bundle && bundle.bundleId && bundle.currentId && bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
-
-                          const newSessionObj = { ...bundle.sessionsInBundle[`${bundle.currentId}`], label: value };
-
-                          const newBundle = { ...bundle, sessionsInBundle: { ...bundle.sessionsInBundle, [bundle.currentId]: newSessionObj } };
-
-                          dispatch(updateBundle(newBundle));
-
-                          const db = getDatabase();
-                          try {
-                            await set(
-                              ref(db, `sessions/${bundle.bundleId}`),
-                              JSON.parse(JSON.stringify(newBundle))
-                            );
-
-                            console.log("Session saved!", "success", 2000);
-                          } catch (error) {
-                            console.error(error);
-                            console.log("Error while saving session", "error", 2000);
-                          }
-
-                        }
-
-                        dispatch(updateCurrentSession({ title: value }));
-                      } catch (error: any) {
-                        if (error?.name === 'QuotaExceededError') {
-                          setStorageError('Storage limit reached. Unable to save changes.');
-                        }
-                        console.error('Error updating session:', error);
-                      }
-                    }
-
-                    }
-                    style={`text-xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                      }`}
-                    tooltip={
-                      currentSession.title.length > 0
-                        ? "Click to edit"
-                        : "Click to add title"
-                    }
-                  />
+                  onClick={() => {
+                    setGenomeSearchQuery('');
+                    setGenomePickerOpen(v => !v);
+                  }}
+                >
+                  {currentSession.title.length > 0 && genome?.name && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span
+                        className="leading-tight text-center break-words w-full"
+                        style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: '16px' }}
+                      >
+                        <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
+                          {versionToLogoUrl[genome.name]?.name
+                            ? <>{versionToLogoUrl[genome.name].name} - <i>{genome.name}</i></>
+                            : <i>{genome.name}</i>}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <h1 className="text-xl font-light">
-                  <span className="font-medium">WashU </span> Epigenome Browser
-                </h1>
-              ))}
-            {!isSmallScreen && (
-              <span className="text-xs text-red-500">{version}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {isSmallScreen ? (
-              <IconButton
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                title="Menu"
-              >
-                {mobileMenuOpen ? (
-                  <XMarkIcon className="h-6 w-6" />
-                ) : (
-                  <Bars3Icon className="h-6 w-6" />
+                {genomePickerOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-[32rem] bg-white dark:bg-dark-background border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl z-50 overflow-hidden">
+                    <div className="p-2 border-b border-gray-200 dark:border-gray-600">
+                      <input
+                        type="text"
+                        value={genomeSearchQuery}
+                        onChange={e => setGenomeSearchQuery(e.target.value)}
+                        placeholder="Search genomes..."
+                        className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-background text-gray-800 dark:text-dark-primary outline-none focus:border-blue-400"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="max-h-80 overflow-y-auto p-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        {filteredGenomes.map(g => (
+                          <div key={g.name} className="flex flex-col gap-1">
+                            <div className="text-xs text-gray-400 dark:text-gray-500 uppercase font-semibold tracking-wide text-center pb-0.5 border-b border-gray-200 dark:border-gray-600">{g.name}</div>
+                            {g.versions.map(v => (
+                              <button
+                                key={v}
+                                onClick={() => handlePickGenome(v)}
+                                className="text-center px-1 py-1.5 text-xs italic text-gray-700 dark:text-dark-primary bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-dark-secondary border border-gray-200 dark:border-gray-600 rounded transition-colors truncate"
+                                title={v}
+                              >
+                                {v}
+                              </button>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </IconButton>
-            ) : (
-              <AnimatePresence>
-                {currentSession !== null ? (
-                  <motion.div
-                    className="flex flex-row items-center gap-4"
-                    style={{
-                      pointerEvents: sessionPanelOpen ? "none" : "auto",
-                    }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{
-                      opacity: sessionPanelOpen ? 0 : 1,
-                      y: 0,
-                    }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {userViewRegionModel && genomeConfig && (
-                      <TrackRegionController
-                        selectedRegion={userViewRegionModel}
-                        onRegionSelected={handleNewRegionSelect}
-                        contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                        genomeConfig={genomeConfig as any}
-                        trackManagerState={null}
-                        genomeArr={[]}
-                        genomeIdx={0}
-                        addGlobalState={undefined}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              {isSmallScreen ? (
+                <IconButton
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  title="Menu"
+                >
+                  {mobileMenuOpen ? (
+                    <XMarkIcon className="h-6 w-6" />
+                  ) : (
+                    <Bars3Icon className="h-6 w-6" />
+                  )}
+                </IconButton>
+              ) : (
+                <AnimatePresence>
+                  {currentSession !== null ? (
+                    <motion.div
+                      className="flex flex-row items-center gap-4"
+                      style={{
+                        pointerEvents: sessionPanelOpen ? "none" : "auto",
+                      }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{
+                        opacity: sessionPanelOpen ? 0 : 1,
+                        y: 0,
+                      }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {userViewRegionModel && genomeConfig && (
+                        <TrackRegionController
+                          selectedRegion={userViewRegionModel}
+                          onRegionSelected={handleNewRegionSelect}
+                          contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                          genomeConfig={genomeConfig as any}
+                          trackManagerState={null}
+                          genomeArr={[]}
+                          genomeIdx={0}
+                          addGlobalState={undefined}
+                          windowWidth={window.innerWidth}
+                          fontSize={16}
+                          padding={6}
+                        />
+                      )}
+                      <div className="h-5 border-r border-gray-400" />
+                      <Button
+                        onClick={() =>
+                          dispatch(
+                            setNavigationTab(
+                              currentTab === "tracks" ? null : "tracks"
+                            )
+                          )
+                        }
+                        active={currentTab === "tracks"}
+                      >
+                        Tracks
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          dispatch(
+                            setNavigationTab(currentTab === "apps" ? null : "apps")
+                          )
+                        }
+                        active={currentTab === "apps"}
+                      >
+                        Apps
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          dispatch(
+                            setNavigationTab(currentTab === "share" ? null : "share")
+                          )
+                        }
+                        active={currentTab === "share"}
+                      >
+                        Share
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          dispatch(
+                            setNavigationTab(
+                              currentTab === "settings" ? null : "settings"
+                            )
+                          )
+                        }
+                        active={currentTab === "settings"}
+                      >
+                        Settings
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          dispatch(
+                            setNavigationTab(currentTab === "help" ? null : "help")
+                          )
+                        }
+                        active={currentTab === "help"}
+                      >
+                        Help
+                      </Button>
+                      <SearchBar
+                        isSearchFocused={isSearchFocused}
+                        onSearchFocusChange={setIsSearchFocused}
+                        onNewRegionSelect={handleNewRegionSelect}
                         windowWidth={window.innerWidth}
                         fontSize={16}
-                        padding={6}
+                        buttonPadding={6}
+                        gapSize={8}
                       />
-                    )}
-                    <div className="h-5 border-r border-gray-400" />
-                    <Button
-                      onClick={() =>
-                        dispatch(
-                          setNavigationTab(
-                            currentTab === "tracks" ? null : "tracks"
-                          )
-                        )
-                      }
-                      active={currentTab === "tracks"}
-                    >
-                      Tracks
-                    </Button>
-                    <Button
-                      onClick={() =>
-                        dispatch(
-                          setNavigationTab(currentTab === "apps" ? null : "apps")
-                        )
-                      }
-                      active={currentTab === "apps"}
-                    >
-                      Apps
-                    </Button>
-                    <Button
-                      onClick={() =>
-                        dispatch(
-                          setNavigationTab(currentTab === "share" ? null : "share")
-                        )
-                      }
-                      active={currentTab === "share"}
-                    >
-                      Share
-                    </Button>
-                    <Button
-                      onClick={() =>
-                        dispatch(
-                          setNavigationTab(
-                            currentTab === "settings" ? null : "settings"
-                          )
-                        )
-                      }
-                      active={currentTab === "settings"}
-                    >
-                      Settings
-                    </Button>
-                    <Button
-                      onClick={() =>
-                        dispatch(
-                          setNavigationTab(currentTab === "help" ? null : "help")
-                        )
-                      }
-                      active={currentTab === "help"}
-                    >
-                      Help
-                    </Button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className="flex flex-row items-center gap-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Switch
-                      checked={darkTheme}
-                      onChange={(checked) => dispatch(setDarkTheme(checked))}
-                      checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                      uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-                    />
-                    <Button
-                      style={{
-                        backgroundColor:
-                          "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
-                        padding: "4px 8px",
-                        color: "black",
-                      }}
-                      onClick={() =>
-                        window.open(
-                          "https://epigenomegateway.wustl.edu/browser2022/",
-                          "_blank"
-                        )
-                      }
-                      active={currentTab === "tracks"}
-                    >
-                      Previous Version
-                    </Button>
-                  </motion.div>
-                )}
+                    </motion.div>
+                  ) : ""}
 
 
-                <SearchBar
-                  isSearchFocused={isSearchFocused}
-                  onSearchFocusChange={setIsSearchFocused}
-                  onNewRegionSelect={handleNewRegionSelect}
-                  windowWidth={window.innerWidth}
-                  fontSize={16}
-                  buttonPadding={6}
-                  gapSize={8}
-                />
-              </AnimatePresence>
+
+                </AnimatePresence>
+              )}
+            </div>
+            {!currentSession && (
+              <h1 className="text-xl font-light">
+                <span className="font-medium">WashU </span> Epigenome Browser
+              </h1>
             )}
           </div>
+
+          {!isSmallScreen &&
+            (currentSession ? (
+
+              <div className="flex flex-row items-center gap-2 z-10">
+
+                <InlineEditable
+                  value={
+                    currentSession.title.length > 0
+                      ? currentSession.title
+                      : "Untitled Session"
+                  }
+                  onChange={async (value) => {
+                    try {
+                      if (bundle && bundle.bundleId && bundle.currentId && bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
+
+                        const newSessionObj = { ...bundle.sessionsInBundle[`${bundle.currentId}`], label: value };
+
+                        const newBundle = { ...bundle, sessionsInBundle: { ...bundle.sessionsInBundle, [bundle.currentId]: newSessionObj } };
+
+                        dispatch(updateBundle(newBundle));
+
+                        const db = getDatabase();
+                        try {
+                          await set(
+                            ref(db, `sessions/${bundle.bundleId}`),
+                            JSON.parse(JSON.stringify(newBundle))
+                          );
+
+                          console.log("Session saved!", "success", 2000);
+                        } catch (error) {
+                          console.error(error);
+                          console.log("Error while saving session", "error", 2000);
+                        }
+
+                      }
+
+                      dispatch(updateCurrentSession({ title: value }));
+                    } catch (error: any) {
+                      if (error?.name === 'QuotaExceededError') {
+                        setStorageError('Storage limit reached. Unable to save changes.');
+                      }
+                      console.error('Error updating session:', error);
+                    }
+                  }
+
+                  }
+                  style={`text-xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
+                    }`}
+                  tooltip={
+                    currentSession.title.length > 0
+                      ? "Click to edit"
+                      : "Click to add title"
+                  }
+                />
+
+                <Switch
+                  checked={darkTheme}
+                  onChange={(checked) => dispatch(setDarkTheme(checked))}
+                  checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                  uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-row items-center gap-2 z-10">
+
+                <Button
+                  style={{
+                    backgroundColor:
+                      "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
+                    padding: "4px 8px",
+                    color: "black",
+                  }}
+                  onClick={() =>
+                    window.open(
+                      "https://epigenomegateway.wustl.edu/browser2022/",
+                      "_blank"
+                    )
+                  }
+                  active={currentTab === "tracks"}
+                >
+                  Previous Version
+                </Button>
+                <Switch
+                  checked={darkTheme}
+                  onChange={(checked) => dispatch(setDarkTheme(checked))}
+                  checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                  uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+                />
+              </div>
+            ))}
 
           <AnimatePresence>
             {isSmallScreen && mobileMenuOpen && (
@@ -512,40 +629,7 @@ export default function NavBar() {
                         Help
                       </Button>
                     </>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Dark Mode</span>
-                        <Switch
-                          checked={darkTheme}
-                          onChange={(checked) => dispatch(setDarkTheme(checked))}
-                          checkedIcon={
-                            <MoonIcon className="w-4 h-4 text-gray-400" />
-                          }
-                          uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-                        />
-                      </div>
-                      <Button
-                        style={{
-                          backgroundColor:
-                            "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
-                          padding: "8px 16px",
-                          color: "black",
-                          width: "100%",
-                          justifyContent: "flex-start",
-                        }}
-                        onClick={() => {
-                          window.open(
-                            "https://epigenomegateway.wustl.edu/browser2022/",
-                            "_blank"
-                          );
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        Previous Version
-                      </Button>
-                    </>
-                  )}
+                  ) : ""}
                 </div>
               </motion.div>
             )}

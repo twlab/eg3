@@ -161,11 +161,11 @@ export const GENOME_LIST: Genome[] = [
     }
 ]
 
-export const versionToLogoUrl: Record<string, { logoUrl: string, croppedUrl: string | undefined }> = {};
+export const versionToLogoUrl: Record<string, { logoUrl: string, croppedUrl: string | undefined, name: string }> = {};
 
 
 for (const genome of GENOME_LIST) {
     for (const version of genome.versions) {
-        versionToLogoUrl[version] = { logoUrl: genome.logoUrl, croppedUrl: genome.croppedUrl };
+        versionToLogoUrl[version] = { logoUrl: genome.logoUrl, croppedUrl: genome.croppedUrl, name: genome.name };
     }
 }

@@ -3786,7 +3786,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               backgroundColor: "var(--bg-color)",
               width: `${windowWidth + 120}px`,
               marginTop: getPadding() ? getPadding() / 3 : 2,
-              marginBottom: getPadding() ? getPadding() / 3 : 2,
+              marginBottom: (getPadding() ? getPadding() / 3 : 2) + 1,
               display: "flex",
               flexDirection: windowWidth <= 600 ? "column" : "row",
               alignItems: windowWidth <= 600 ? "stretch" : "center",
@@ -3942,6 +3942,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             display: "flex",
             flexDirection: "row",
             outline: "1px solid #9AA6B2",
+
             width: `${windowWidth + 120}px`,
             overflowX: "hidden",
             overflowY: "hidden",

@@ -231,6 +231,7 @@ export default function RootLayout(props: GenomeHubProps) {
     <div
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
+
     >
       <GoogleAnalytics />
 

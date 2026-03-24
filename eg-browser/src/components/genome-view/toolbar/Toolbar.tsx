@@ -113,7 +113,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonStyle = () => ({
-    padding: `${buttonPadding}px`,
+    padding: `${buttonPadding - 1}px`,
   });
 
   const handleToolClick = (selectedTool: Tool | null): any => {
@@ -172,7 +172,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.Drag)}
               className={getButtonClass(Tool.Drag)}
-              style={getButtonStyle()}
+              style={{ padding: "8px" }}
               title="Drag tool
 (Alt+H or Alt+D)"
             >
@@ -186,7 +186,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.Reorder)}
               className={getButtonClass(Tool.Reorder)}
-              style={getButtonStyle()}
+              style={{ padding: "9px" }}
               title="Reorder tool
 (Alt+R or Alt+S)"
             >
@@ -200,7 +200,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.Zoom)}
               className={getButtonClass(Tool.Zoom)}
-              style={getButtonStyle()}
+              style={{ padding: "8px" }}
               title="Zoom-in tool
 (Alt+M)"
             >
@@ -217,7 +217,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.Highlight)}
               className={getButtonClass(Tool.Highlight)}
-              style={getButtonStyle()}
+              style={{ padding: "8px" }}
               title="Highlight tool (Alt+N)"
             >
               <span
@@ -231,7 +231,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.ReorderMany)}
               className={getButtonClass(Tool.ReorderMany)}
-              style={getButtonStyle()}
+              style={{ padding: "8px" }}
               title="Re-order Many"
             >
               <span
@@ -246,11 +246,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
             <div className="h-full border-r border-gray-400" />
 
-            <div className="flex">
+            <div className="flex border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
               <button
                 onClick={() => handleToolClick(Tool.PanLeft)}
-                className={`${getButtonClass(Tool.PanLeft)} border border-gray-300 dark:border-gray-600 !rounded-r-none`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.PanLeft)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Pan left"
               >
                 <span
@@ -262,8 +262,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </button>
               <button
                 onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
-                className={`${getButtonClass(Tool.ZoomInFiveFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.ZoomInFiveFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Zoom in 5x"
               >
                 <span
@@ -275,8 +275,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </button>
               <button
                 onClick={() => handleToolClick(Tool.ZoomInOneFold)}
-                className={`${getButtonClass(Tool.ZoomInOneFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.ZoomInOneFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Zoom in 1x"
               >
                 <span
@@ -288,8 +288,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </button>
               <button
                 onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
-                className={`${getButtonClass(Tool.ZoomInOneThirdFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.ZoomInOneThirdFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Zoom in ⅓"
               >
                 <span
@@ -301,8 +301,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </button>
               <button
                 onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
-                className={`${getButtonClass(Tool.ZoomOutOneThirdFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.ZoomOutOneThirdFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Zoom out ⅓"
               >
                 <span
@@ -314,8 +314,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </button>
               <button
                 onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
-                className={`${getButtonClass(Tool.ZoomOutOneFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.ZoomOutOneFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Zoom out 1x"
               >
                 <span
@@ -327,8 +327,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </button>
               <button
                 onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
-                className={`${getButtonClass(Tool.ZoomOutFiveFold)} border border-gray-300 dark:border-gray-600 !rounded-none -ml-px`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.ZoomOutFiveFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Zoom out 5x"
               >
                 <span
@@ -340,8 +340,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </button>
               <button
                 onClick={() => handleToolClick(Tool.PanRight)}
-                className={`${getButtonClass(Tool.PanRight)} border border-gray-300 dark:border-gray-600 !rounded-l-none -ml-px`}
-                style={getButtonStyle()}
+                className={`${getButtonClass(Tool.PanRight)} !rounded-none`}
+                style={{ padding: "8px" }}
                 title="Pan right"
               >
                 <span
