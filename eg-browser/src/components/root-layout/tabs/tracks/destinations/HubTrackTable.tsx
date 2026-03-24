@@ -90,7 +90,7 @@ const HubTrackTable: React.FC<Props> = ({
         </button>
       );
     },
-    [addedTrackSets, onTracksAdded],
+    [addedTrackSets, onTracksAdded, filteredTracks],
   );
 
   const handleAddAll = (page) => {
@@ -181,6 +181,36 @@ const HubTrackTable: React.FC<Props> = ({
     },
     useFilters,
     usePagination,
+  );
+
+  // Memoized row to avoid re-rendering entire table when unrelated props change
+  const MemoRow = React.memo(
+    ({ row, prepareRow }: any) => {
+      prepareRow(row);
+      return (
+        <tr {...row.getRowProps()} key={row.id}>
+          {row.cells.map((cell: any) => (
+            <td
+              {...cell.getCellProps()}
+              key={cell.column.id}
+              style={{ borderBottom: "1px solid #ddd", padding: "8px" }}
+            >
+              {cell.render("Cell")}
+            </td>
+          ))}
+        </tr>
+      );
+    },
+    (prev: any, next: any) => {
+      if (prev.row.id !== next.row.id) return false;
+      const prevVals = prev.row.cells.map((c: any) => c.value);
+      const nextVals = next.row.cells.map((c: any) => c.value);
+      if (prevVals.length !== nextVals.length) return false;
+      for (let i = 0; i < prevVals.length; i++) {
+        if (prevVals[i] !== nextVals[i]) return false;
+      }
+      return true;
+    },
   );
 
   const buttonStyle: React.CSSProperties = {
@@ -274,14 +304,11 @@ const HubTrackTable: React.FC<Props> = ({
           >
             <thead>
               {headerGroups.map((headerGroup) => (
-                <tr
-                  {...headerGroup.getHeaderGroupProps()}
-                  key={crypto.randomUUID()}
-                >
+                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id || headerGroup.getHeaderGroupProps().key}>
                   {headerGroup.headers.map((column) => (
                     <th
                       {...column.getHeaderProps()}
-                      key={crypto.randomUUID()}
+                      key={column.id}
                       style={{
                         borderBottom: "2px solid #ddd",
                         padding: "8px",
@@ -295,25 +322,9 @@ const HubTrackTable: React.FC<Props> = ({
               ))}
             </thead>
             <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()} key={row.id}>
-                    {row.cells.map((cell) => (
-                      <td
-                        {...cell.getCellProps()}
-                        key={cell.column.id}
-                        style={{
-                          borderBottom: "1px solid #ddd",
-                          padding: "8px",
-                        }}
-                      >
-                        {cell.render("Cell")}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
+              {page.map((row) => (
+                <MemoRow row={row} prepareRow={prepareRow} key={row.id} />
+              ))}
             </tbody>
           </table>
         </div>
