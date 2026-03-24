@@ -13,8 +13,7 @@ export default function NavigationToolbar({
 
   return (
     <div
-      className={`${navigationBarEmpty ? "h-4" : "p-4"
-        } flex flex-row justify-between items-center gap-2`}
+
     >
       {canGoBack && (
         <button

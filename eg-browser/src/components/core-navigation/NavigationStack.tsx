@@ -109,7 +109,7 @@ export default function NavigationStack({
     <NavigationStackContext.Provider value={{ path, setPath }}>
       <div className="flex flex-col h-full bg-white dark:bg-dark-background">
         <NavigationToolbar options={currentOptions} />
-        <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
+        <div className="relative flex-1 overflow-hidden min-w-[5vw]" ref={ref}>
           <motion.div
             className="px-4 pb-4 absolute overflow-y-scroll"
             animate={{

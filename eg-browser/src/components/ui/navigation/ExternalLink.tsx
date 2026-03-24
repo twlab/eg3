@@ -4,16 +4,26 @@ interface ExternalLinkProps {
   title: string;
   description?: string;
   href: string;
+  compact?: boolean;
 }
 
 export default function ExternalLink({
   title,
   description,
   href,
+  compact = false,
 }: ExternalLinkProps) {
   const handleClick = () => {
     window.open(href, "_blank", "noopener,noreferrer");
   };
+  if (compact) {
+    return (
+      <div onClick={handleClick} className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-base">
+        <div className="text-primary dark:text-dark-primary font-medium">{title}</div>
+        <ArrowTopRightOnSquareIcon className="h-5 w-5 text-gray-500 dark:text-gray-300" />
+      </div>
+    );
+  }
 
   return (
     <div

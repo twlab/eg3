@@ -15,9 +15,9 @@ interface ResizablePanelProps {
 export default function ResizablePanel(props: ResizablePanelProps) {
     const {
         title,
-        initialWidth = 480,
+        initialWidth = 300,
         initialHeight = "70vh",
-        minWidth = 220,
+        minWidth = 300,
         maxWidth,
         minHeight = 200,
         maxHeight,
@@ -94,8 +94,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
     const onResizePointerDown = (e: React.PointerEvent) => {
         (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
-        const numericW = parseSizeToNumber(width, 480);
-        const numericH = parseSizeToNumber(height, 400);
+        const numericW = parseSizeToNumber(width, 680);
+        const numericH = parseSizeToNumber(height, 680);
         resizeState.current = {
             resizing: true,
             startX: e.clientX,
@@ -171,13 +171,15 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             <div className="flex-1 overflow-auto" style={{ padding: 12 }}>{children}</div>
             <div
                 onPointerDown={onResizePointerDown}
-                className="absolute bottom-3 right-3 w-6 h-6 bg-transparent cursor-se-resize"
+                className="absolute bottom-3 right-10 w-6 h-6 bg-transparent cursor-se-resize"
                 style={{ touchAction: "none" }}
             >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-blue-500">
-                    <path d="M21 21v-4h-2v2h-2v2h4zM17 21v-2h-2v2h2zM13 21v-1h-2v1h2z" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 18 18" mirror-in-rtl="true">
+                    <path fill="#494c4e" d="M14.228 16.227a1 1 0 0 1-.707-1.707l1-1a1 1 0 0 1 1.416 1.414l-1 1a1 1 0 0 1-.707.293zm-5.638 0a1 1 0 0 1-.707-1.707l6.638-6.638a1 1 0 0 1 1.416 1.414l-6.638 6.638a1 1 0 0 1-.707.293zm-5.84 0a1 1 0 0 1-.707-1.707L14.52 2.043a1 1 0 1 1 1.415 1.414L3.457 15.934a1 1 0 0 1-.707.293z" />
                 </svg>
+
+
             </div>
-        </div>
+        </div >
     );
 }

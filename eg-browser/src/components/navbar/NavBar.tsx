@@ -649,10 +649,9 @@ export default function NavBar() {
               >
                 <ResizablePanel
                   title={currentTab || undefined}
-                  initialWidth={480}
-                  initialHeight={"70vh"}
-                  minWidth={220}
-                  maxWidth={600}
+                  initialWidth={300}
+                  initialHeight={"50vh"}
+
                   onClose={() => dispatch(setNavigationTab(null))}
                 >
                   {currentTab === "tracks" && <TracksTab />}
