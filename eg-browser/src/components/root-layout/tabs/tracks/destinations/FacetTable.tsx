@@ -235,79 +235,113 @@ const FacetTable: React.FC<FacetTableProps> = ({
   };
 
   // Header components memoized to avoid re-render on unrelated changes
-  const ColumnHeaders = React.memo(({ list }: { list: any[] }) => {
-    const colClass = "facet-column-header";
-    return (
-      <>
-        {list.map((element: any, idx: number) => {
-          const hasChildren = element.children && element.children.size;
-          const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
-          const expandClass = hasChildren && element.expanded ? "expanded" : "";
-          return (
-            <div key={`${element.name}-${idx}`} className={`${colClass}`}>
-              {hasChildren ? (
-                <button
-                  name={element.name}
-                  type="button"
-                  onClick={toggleHeader}
-                  className={expandClass}
-                >
-                  <span>
-                    {prefix}
-                    {element.name}
-                  </span>
-                </button>
-              ) : (
-                <button name={element.name} className="not-button">
-                  <span>
-                    {prefix}
-                    {element.name}
-                  </span>
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </>
-    );
-  });
+  const ColumnHeaders = React.memo(
+    ({
+      list,
+      width,
+      height,
+    }: {
+      list: any[];
+      width?: number;
+      height?: number;
+    }) => {
+      const colClass = "facet-column-header";
+      const style: React.CSSProperties = {
+        width: width ? `${width}px` : undefined,
+        height: height ? `${height}px` : undefined,
+        overflow: "hidden",
+        flex: "0 0 auto",
+      };
+      return (
+        <div style={style}>
+          {list.map((element: any, idx: number) => {
+            const hasChildren = element.children && element.children.size;
+            const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
+            const expandClass =
+              hasChildren && element.expanded ? "expanded" : "";
+            return (
+              <div key={`${element.name}-${idx}`} className={`${colClass}`}>
+                {hasChildren ? (
+                  <button
+                    name={element.name}
+                    type="button"
+                    onClick={toggleHeader}
+                    className={expandClass}
+                  >
+                    <span>
+                      {prefix}
+                      {element.name}
+                    </span>
+                  </button>
+                ) : (
+                  <button name={element.name} className="not-button">
+                    <span>
+                      {prefix}
+                      {element.name}
+                    </span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    },
+  );
 
-  const RowHeaders = React.memo(({ list }: { list: any[] }) => {
-    const rowClass = "facet-row-header";
-    return (
-      <>
-        {list.map((element: any, idx: number) => {
-          const hasChildren = element.children && element.children.size;
-          const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
-          const expandClass = hasChildren && element.expanded ? "expanded" : "";
-          return (
-            <div key={`${element.name}-${idx}`} className={`${rowClass}`}>
-              {hasChildren ? (
-                <button
-                  name={element.name}
-                  type="button"
-                  onClick={toggleHeader}
-                  className={expandClass}
-                >
-                  <span>
-                    {prefix}
-                    {element.name}
-                  </span>
-                </button>
-              ) : (
-                <button name={element.name} className="not-button">
-                  <span>
-                    {prefix}
-                    {element.name}
-                  </span>
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </>
-    );
-  });
+  const RowHeaders = React.memo(
+    ({
+      list,
+      width,
+      height,
+    }: {
+      list: any[];
+      width?: number;
+      height?: number;
+    }) => {
+      const rowClass = "facet-row-header";
+      const style: React.CSSProperties = {
+        width: width ? `${width}px` : undefined,
+        height: height ? `${height}px` : undefined,
+        overflow: "hidden",
+        flex: "0 0 auto",
+      };
+      return (
+        <div style={style}>
+          {list.map((element: any, idx: number) => {
+            const hasChildren = element.children && element.children.size;
+            const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
+            const expandClass =
+              hasChildren && element.expanded ? "expanded" : "";
+            return (
+              <div key={`${element.name}-${idx}`} className={`${rowClass}`}>
+                {hasChildren ? (
+                  <button
+                    name={element.name}
+                    type="button"
+                    onClick={toggleHeader}
+                    className={expandClass}
+                  >
+                    <span>
+                      {prefix}
+                      {element.name}
+                    </span>
+                  </button>
+                ) : (
+                  <button name={element.name} className="not-button">
+                    <span>
+                      {prefix}
+                      {element.name}
+                    </span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    },
+  );
 
   const swapHeader = () => {
     let { rowHeader, columnHeader, rowList, columnList } = state;
@@ -332,11 +366,21 @@ const FacetTable: React.FC<FacetTableProps> = ({
       rowList,
       columnList,
       columnHeader,
+      width,
+      height,
     }: {
       rowList: any[];
       columnList: any[];
       columnHeader: string;
+      width?: number;
+      height?: number;
     }) => {
+      const style: React.CSSProperties = {
+        width: width ? `${width}px` : undefined,
+        height: height ? `${height}px` : undefined,
+        overflow: "auto",
+        flex: "0 0 auto",
+      };
       const divs: Array<any> = [];
       if (columnHeader !== UNUSED_META_KEY) {
         for (let row of rowList) {
@@ -366,7 +410,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
         }
       }
 
-      return <>{divs}</>;
+      return <div style={style}>{divs}</div>;
     },
   );
 
@@ -437,7 +481,9 @@ const FacetTable: React.FC<FacetTableProps> = ({
       (colNum + 1).toString(),
     );
   };
-
+  useEffect(() => {
+    console.log(width, height, state);
+  }, [state, width, height]);
   // update column number when column list length or panel size changes
   useEffect(() => {
     setColNumber();
@@ -532,6 +578,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
               title="swap row/column"
               onClick={swapHeader}
             >
+              {" "}
               &#8646;
             </div>
             <div>{renderHeaderSelection(true)}</div>
@@ -539,12 +586,18 @@ const FacetTable: React.FC<FacetTableProps> = ({
           <div className="facet-outer">
             <div className="facet-content">
               <div className="facet-holder"></div>
-              <ColumnHeaders list={state.columnList} />
-              <RowHeaders list={state.rowList} />
+              <ColumnHeaders
+                list={state.columnList}
+                width={width}
+                height={height}
+              />
+              <RowHeaders list={state.rowList} width={width} height={height} />
               <MatrixGrid
                 rowList={state.rowList}
                 columnList={state.columnList}
                 columnHeader={state.columnHeader}
+                width={width}
+                height={height}
               />
             </div>
           </div>
@@ -599,6 +652,8 @@ const FacetTable: React.FC<FacetTableProps> = ({
                 onTracksAdded={onTracksAdded}
                 rowHeader={state.rowHeader}
                 columnHeader={state.columnHeader}
+                width={width}
+                height={height}
               />
             </div>
           </div>

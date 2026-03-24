@@ -13,14 +13,18 @@ interface Props {
   addedTrackSets: Set<string>;
   rowHeader?: string;
   columnHeader?: string;
+  width?: number;
+  height?: number;
 }
 
 const HubTrackTable: React.FC<Props> = ({
   tracks,
-  onTracksAdded = () => { },
+  onTracksAdded = () => {},
   addedTrackSets,
   rowHeader = UNUSED_META_KEY,
   columnHeader = UNUSED_META_KEY,
+  width,
+  height,
 }) => {
   const [filteredTracks, setFilteredTracks] = useState(tracks);
   const [searchText, setSearchText] = useState("");
@@ -56,11 +60,11 @@ const HubTrackTable: React.FC<Props> = ({
         setFilteredTracks(tracks);
       }
     }, 250),
-    [fuse, tracks]
+    [fuse, tracks],
   );
 
   const handleSearchChangeRequest = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const search = event.target.value.trim();
     setSearchText(search);
@@ -86,7 +90,7 @@ const HubTrackTable: React.FC<Props> = ({
         </button>
       );
     },
-    [addedTrackSets, onTracksAdded]
+    [addedTrackSets, onTracksAdded],
   );
 
   const handleAddAll = (page) => {
@@ -96,7 +100,7 @@ const HubTrackTable: React.FC<Props> = ({
     }
     const availableTracks = pageTracks.filter(
       (track: TrackModel) =>
-        !(addedTrackSets.has(track.url) || addedTrackSets.has(track.name))
+        !(addedTrackSets.has(track.url) || addedTrackSets.has(track.name)),
     );
     onTracksAdded(availableTracks);
   };
@@ -176,7 +180,7 @@ const HubTrackTable: React.FC<Props> = ({
       initialState: { pageSize: 10 },
     },
     useFilters,
-    usePagination
+    usePagination,
   );
 
   const buttonStyle: React.CSSProperties = {
@@ -203,23 +207,31 @@ const HubTrackTable: React.FC<Props> = ({
     borderColor: "#e0e0e0",
   };
 
+  const containerStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    fontFamily: "Arial, sans-serif",
+    height: height ? `${height}px` : "100%",
+    width: width ? `${width}px` : undefined,
+    boxSizing: "border-box",
+    minWidth: 0,
+  };
+
   return (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          fontFamily: "Arial, sans-serif",
-          height: "100%",
-
-        }}
-      >
-        <h1 style={{ margin: 0, paddingBottom: "5vpx", textAlign: "center" }}>Track Table</h1>
+      <div style={containerStyle}>
+        <h1 style={{ margin: 0, paddingBottom: "5vpx", textAlign: "center" }}>
+          Track Table
+        </h1>
         <div style={{ flex: "1", overflow: "auto" }}>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-
-
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "8px",
+            }}
+          >
             <input
               type="text"
               id="searchTrack"
@@ -262,7 +274,10 @@ const HubTrackTable: React.FC<Props> = ({
           >
             <thead>
               {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()} key={crypto.randomUUID()}>
+                <tr
+                  {...headerGroup.getHeaderGroupProps()}
+                  key={crypto.randomUUID()}
+                >
                   {headerGroup.headers.map((column) => (
                     <th
                       {...column.getHeaderProps()}
@@ -302,15 +317,17 @@ const HubTrackTable: React.FC<Props> = ({
             </tbody>
           </table>
         </div>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
 
-          borderTop: "1px solid #e0e0e0",
-          flexShrink: 0
-        }}>
+            borderTop: "1px solid #e0e0e0",
+            flexShrink: 0,
+          }}
+        >
           <button
             onClick={() => gotoPage(0)}
             disabled={!canPreviousPage}
@@ -318,8 +335,17 @@ const HubTrackTable: React.FC<Props> = ({
               ...buttonStyle,
               ...(!canPreviousPage && buttonDisabledStyle),
             }}
-            onMouseEnter={(e) => canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             First
           </button>
@@ -331,17 +357,29 @@ const HubTrackTable: React.FC<Props> = ({
               ...(!canPreviousPage && buttonDisabledStyle),
               fontSize: "18px",
             }}
-            onMouseEnter={(e) => canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             ‹
           </button>
-          <span style={{
-            margin: "0 12px",
-            color: "#666",
-            fontSize: "14px"
-          }}>
-            Page <strong style={{ color: "#333" }}>{pageIndex + 1}</strong> of <strong style={{ color: "#333" }}>{pageOptions.length}</strong>
+          <span
+            style={{
+              margin: "0 12px",
+              color: "#666",
+              fontSize: "14px",
+            }}
+          >
+            Page <strong style={{ color: "#333" }}>{pageIndex + 1}</strong> of{" "}
+            <strong style={{ color: "#333" }}>{pageOptions.length}</strong>
           </span>
           <button
             onClick={() => nextPage()}
@@ -351,8 +389,17 @@ const HubTrackTable: React.FC<Props> = ({
               ...(!canNextPage && buttonDisabledStyle),
               fontSize: "18px",
             }}
-            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             ›
           </button>
@@ -363,17 +410,28 @@ const HubTrackTable: React.FC<Props> = ({
               ...buttonStyle,
               ...(!canNextPage && buttonDisabledStyle),
             }}
-            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             Last
           </button>
-          <div style={{
-            width: "1px",
-            height: "24px",
-            backgroundColor: "#ddd",
-            margin: "0 8px"
-          }}></div>
+          <div
+            style={{
+              width: "1px",
+              height: "24px",
+              backgroundColor: "#ddd",
+              margin: "0 8px",
+            }}
+          ></div>
           <input
             type="number"
             defaultValue={pageIndex + 1}

@@ -37,6 +37,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const [height, setHeight] = useState<number | string>(initialHeight);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [headerHover, setHeaderHover] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
 
   const dragState = useRef<{
     dragging: boolean;
@@ -57,12 +58,16 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const sliceWidth = useAppSelector(selectTabPanelWidth);
   const sliceHeight = useAppSelector(selectTabPanelHeight);
 
-  const THROTTLE_MS = 100;
+  const THROTTLE_MS = 1000; // throttle before dispatching
   const DIFF_THRESHOLD = 15;
   const lastDispatchRef = useRef<number>(0);
   const pendingRef = useRef<{ w?: number; h?: number } | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const latestSliceRef = useRef({ w: sliceWidth, h: sliceHeight });
+  // preview during drag: don't update React state on every pointermove
+  const pendingPreviewRef = useRef<{ w?: number; h?: number } | null>(null);
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     latestSliceRef.current = { w: sliceWidth, h: sliceHeight };
@@ -119,6 +124,69 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     };
   }, []);
 
+  // Ghost overlay helpers: lightweight DOM element updated via rAF
+  const createGhost = (left: number, top: number, w: number, h: number) => {
+    if (ghostRef.current) return;
+    const el = document.createElement("div");
+    el.style.position = "absolute";
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (rect) {
+      el.style.left = `${rect.left}px`;
+      el.style.top = `${rect.top}px`;
+    } else {
+      el.style.left = `0px`;
+      el.style.top = `0px`;
+    }
+    el.style.width = `${w}px`;
+    el.style.height = `${h}px`;
+    el.style.border = "2px dashed rgba(31,111,255,0.7)";
+    el.style.background = "rgba(31,111,255,0.12)";
+    el.style.transition =
+      "width 80ms linear, height 80ms linear, left 80ms linear, top 80ms linear";
+    el.style.zIndex = "900";
+    el.style.pointerEvents = "none";
+    el.style.zIndex = "9999";
+    el.style.boxSizing = "border-box";
+    document.body.appendChild(el);
+    ghostRef.current = el;
+  };
+
+  const updateGhost = (w: number, h: number) => {
+    const el = ghostRef.current;
+    if (!el || !panelRef.current) return;
+    // position ghost relative to viewport using panel rect so it won't be clipped
+    const rect = panelRef.current.getBoundingClientRect();
+    el.style.left = `${Math.round(rect.left)}px`;
+    el.style.top = `${Math.round(rect.top)}px`;
+    el.style.width = `${Math.round(w)}px`;
+    el.style.height = `${Math.round(h)}px`;
+  };
+
+  const removeGhost = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    if (ghostRef.current) {
+      try {
+        document.body.removeChild(ghostRef.current);
+      } catch (e) {}
+      ghostRef.current = null;
+    }
+    pendingPreviewRef.current = null;
+  };
+
+  const scheduleGhostUpdate = (w: number, h: number) => {
+    pendingPreviewRef.current = { ...(pendingPreviewRef.current || {}), w, h };
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const p = pendingPreviewRef.current;
+      if (p && typeof p.w === "number" && typeof p.h === "number")
+        updateGhost(p.w, p.h);
+    });
+  };
+
   // Watch local width/height state and schedule throttled slice updates
   useEffect(() => {
     const numericW = parseSizeToNumber(width, 0);
@@ -158,15 +226,30 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         // enforce minimums only; allow unlimited maximum unless provided
         newW = Math.max(minWidth, newW);
         newH = Math.max(minHeight, newH);
-        setWidth(newW);
-        setHeight(newH);
-        // update local size state; a separate useEffect will schedule slice updates
+        // update a lightweight ghost preview instead of React state to avoid reflow churn
+        scheduleGhostUpdate(newW, newH);
+        pendingPreviewRef.current = { w: newW, h: newH };
       }
     };
 
     const onPointerUp = () => {
       if (dragState.current) dragState.current.dragging = false;
-      if (resizeState.current) resizeState.current.resizing = false;
+      if (resizeState.current && resizeState.current.resizing) {
+        // finalize previewed size (if any)
+        const p = pendingPreviewRef.current;
+        if (p && typeof p.w === "number" && typeof p.h === "number") {
+          // apply final sizes to React state
+          setWidth(Math.round(p.w));
+          setHeight(Math.round(p.h));
+          // schedule immediate dispatch by setting pendingRef and flushing
+          pendingRef.current = { w: Math.round(p.w), h: Math.round(p.h) };
+          flushPending();
+        }
+        // clean up preview
+        removeGhost();
+        setIsResizing(false);
+        resizeState.current.resizing = false;
+      }
     };
 
     document.addEventListener("pointermove", onPointerMove);
@@ -199,6 +282,10 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       startW: numericW,
       startH: numericH,
     };
+    // create a lightweight ghost overlay so dragging doesn't cause React re-renders
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (rect) createGhost(rect.left, rect.top, numericW, numericH);
+    setIsResizing(true);
   };
 
   const panelStyle: React.CSSProperties = {
@@ -206,13 +293,16 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     height: typeof height === "number" ? `${height}px` : height,
     transform: `translate(${translate.x}px, ${translate.y}px)`,
     position: "relative",
-    background: "var(--bg, white)",
+    background: isResizing ? "transparent" : "var(--bg, white)",
     color: "var(--text, #111827)",
     display: "flex",
     flexDirection: "column",
+    boxSizing: "border-box",
+    minWidth: 0,
     borderRadius: 5,
     overflow: "hidden",
     boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
+    zIndex: 1000,
   };
 
   const headerBg = headerHover
@@ -222,6 +312,15 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const headerBorder = headerHover
     ? "1px solid rgba(255,255,255,0.28)"
     : "1px solid rgba(255,255,255,0.36)";
+
+  const contentStyle: React.CSSProperties = {
+    padding: 12,
+    minWidth: 0,
+    opacity: isResizing ? 0.5 : 1,
+    transition: "opacity 120ms linear",
+    pointerEvents: isResizing ? "none" : undefined,
+    willChange: "opacity",
+  };
 
   return (
     <div
@@ -286,7 +385,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-auto" style={{ padding: 12 }}>
+      <div className="flex-1 overflow-auto" style={contentStyle}>
         {children}
       </div>
       <div
