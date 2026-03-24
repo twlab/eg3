@@ -35,7 +35,7 @@ interface ToolbarProps {
   onNewRegionSelect: (
     start: number,
     end: number,
-    highlightSearch?: boolean
+    highlightSearch?: boolean,
   ) => void;
   windowWidth?: number;
   buttonPadding?: number;
@@ -56,12 +56,19 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
-  const { undo, redo, canUndo, canRedo, jumpToPast, jumpToFuture, clearHistory } = useUndoRedo();
+  const {
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    jumpToPast,
+    jumpToFuture,
+    clearHistory,
+  } = useUndoRedo();
   const _genomeConfig = useCurrentGenome();
   const genomeConfig = useMemo(() => {
     return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
   }, [_genomeConfig]);
-
 
   // Keyboard shortcuts handler
   useEffect(() => {
@@ -108,21 +115,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${tool === buttonTool ? "bg-gray-300 dark:bg-dark-secondary" : ""
-      }`;
+    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${
+      tool === buttonTool ? "bg-gray-300 dark:bg-dark-secondary" : ""
+    }`;
   };
-
-  const getButtonStyle = () => ({
-    padding: `${buttonPadding - 1}px`,
-  });
 
   const handleToolClick = (selectedTool: Tool | null): any => {
     console.log(tool, selectedTool);
     if (tool === selectedTool) {
-
       dispatch(setTool(null));
     } else {
-
       dispatch(setTool(selectedTool));
     }
   };
@@ -135,7 +137,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         style={{
           height: `${Math.max(
             30,
-            Math.min(15, (windowWidth || 1920) * 0.01)
+            Math.min(15, (windowWidth || 1920) * 0.01),
           )}px`,
           // gap: `${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
           // padding: `${Math.max(
@@ -144,7 +146,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           // )}px ${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
           borderRadius: `${Math.max(
             6,
-            Math.min(10, (windowWidth || 1920) * 0.005)
+            Math.min(10, (windowWidth || 1920) * 0.005),
           )}px`,
         }}
         animate={{
@@ -152,18 +154,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
         }}
         transition={{ duration: 0.2 }}
       >
-
-
-
-
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-        // animate={{
-        //   opacity: isSearchFocused ? 0.5 : 1,
-        //   scale: isSearchFocused ? 0.95 : 1,
-        // }}
-        // transition={{ duration: 0.2 }}
+          // animate={{
+          //   opacity: isSearchFocused ? 0.5 : 1,
+          //   scale: isSearchFocused ? 0.95 : 1,
+          // }}
+          // transition={{ duration: 0.2 }}
         >
           <motion.div
             className="flex flex-row items-center"
@@ -172,7 +170,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.Drag)}
               className={getButtonClass(Tool.Drag)}
-              style={{ padding: "8px" }}
+              style={{ padding: "7px 8px" }}
               title="Drag tool
 (Alt+H or Alt+D)"
             >
@@ -200,24 +198,28 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.Zoom)}
               className={getButtonClass(Tool.Zoom)}
-              style={{ padding: "8px" }}
+              style={{ padding: "7px 8px" }}
               title="Zoom-in tool
 (Alt+M)"
             >
               <span
                 className="flex flex-row items-center justify-center text-gray-600 dark:text-dark-primary"
-                style={{ height: `${getIconSize()}px`, fontSize: `${Math.round(fontSize * 0.9)}px`, gap: 0 }}
+                style={{
+                  height: `${getIconSize()}px`,
+                  fontSize: `${Math.round(fontSize * 0.9)}px`,
+                  gap: 0,
+                }}
               >
                 <span>⬚</span>
-                <span style={{ marginLeft: '-1px' }}>🔍</span>
-                <span style={{ marginLeft: '-2px' }}>+</span>
+                <span style={{ marginLeft: "-1px" }}>🔍</span>
+                <span style={{ marginLeft: "-2px" }}>+</span>
               </span>
             </button>
 
             <button
               onClick={() => handleToolClick(Tool.Highlight)}
               className={getButtonClass(Tool.Highlight)}
-              style={{ padding: "8px" }}
+              style={{ padding: "7px 8px" }}
               title="Highlight tool (Alt+N)"
             >
               <span
@@ -231,7 +233,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               onClick={() => handleToolClick(Tool.ReorderMany)}
               className={getButtonClass(Tool.ReorderMany)}
-              style={{ padding: "8px" }}
+              style={{ padding: "7px 8px" }}
               title="Re-order Many"
             >
               <span
@@ -240,8 +242,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
               >
                 🔃
               </span>
-
-
             </button>
 
             <div className="h-full border-r border-gray-400" />
@@ -250,7 +250,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.PanLeft)}
                 className={`${getButtonClass(Tool.PanLeft)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Pan left"
               >
                 <span
@@ -263,7 +263,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
                 className={`${getButtonClass(Tool.ZoomInFiveFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Zoom in 5x"
               >
                 <span
@@ -276,7 +276,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.ZoomInOneFold)}
                 className={`${getButtonClass(Tool.ZoomInOneFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Zoom in 1x"
               >
                 <span
@@ -289,7 +289,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
                 className={`${getButtonClass(Tool.ZoomInOneThirdFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Zoom in ⅓"
               >
                 <span
@@ -302,7 +302,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
                 className={`${getButtonClass(Tool.ZoomOutOneThirdFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Zoom out ⅓"
               >
                 <span
@@ -315,7 +315,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
                 className={`${getButtonClass(Tool.ZoomOutOneFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Zoom out 1x"
               >
                 <span
@@ -328,7 +328,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
                 className={`${getButtonClass(Tool.ZoomOutFiveFold)} border-r border-gray-300 dark:border-gray-600 !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Zoom out 5x"
               >
                 <span
@@ -341,7 +341,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <button
                 onClick={() => handleToolClick(Tool.PanRight)}
                 className={`${getButtonClass(Tool.PanRight)} !rounded-none`}
-                style={{ padding: "8px" }}
+                style={{ padding: "7px 8px" }}
                 title="Pan right"
               >
                 <span
@@ -355,60 +355,50 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
             <div className="h-full border-r border-gray-400" />
 
-
             {currentSession !== null && (
-
-              <><IconButton
-                onClick={undo}
-                disabled={!canUndo}
-                title="Undo"
-                className={`hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 !rounded-md ${!canUndo ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-              >
-
-                <span
-                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              <>
+                <IconButton
+                  onClick={undo}
+                  disabled={!canUndo}
+                  title="Undo"
+                  className={`hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 !rounded-md ${!canUndo ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 >
-                  ⟲
-                </span>
-              </IconButton><IconButton
-                onClick={redo}
-                disabled={!canRedo}
-                title="Redo"
-                className={`hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 !rounded-md ${!canRedo ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-              >
-
+                  <span
+                    className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                    style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                  >
+                    ⟲
+                  </span>
+                </IconButton>
+                <IconButton
+                  onClick={redo}
+                  disabled={!canRedo}
+                  title="Redo"
+                  className={`hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 !rounded-md ${!canRedo ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                >
                   <span
                     className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
                     style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
                   >
                     ⟳
                   </span>
-                </IconButton><History
+                </IconButton>
+                <History
                   state={{
                     past: currentState ? currentState.past : [],
                     future: currentState ? currentState.future : [],
                   }}
                   jumpToPast={jumpToPast}
                   jumpToFuture={jumpToFuture}
-                  clearHistory={clearHistory} /></>
-
-
-
+                  clearHistory={clearHistory}
+                />
+              </>
             )}
 
-
-
-
-            <button
-              className={getButtonClass(Tool.highlightMenu)}
-              style={{
-                ...getButtonStyle(),
-                display: "flex",
-                alignItems: "center",
-              }}
+            <IconButton
               onClick={() => handleToolClick(Tool.highlightMenu)}
               title="Highlight list"
+              className={`${getButtonClass(Tool.highlightMenu)} !rounded-md`}
             >
               <span
                 className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
@@ -416,7 +406,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               >
                 ⚡
               </span>
-            </button>
+            </IconButton>
           </motion.div>
 
           {tool === Tool.highlightMenu ? (

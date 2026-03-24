@@ -393,10 +393,7 @@ export default function SearchBar({
   };
 
   const parseRegion = (query: string) => {
-    onNewRegionSelect(
-      query,
-      highlightSearch.current,
-    );
+    onNewRegionSelect(query, highlightSearch.current);
   };
   function onGeneSelected(gene: Gene) {
     onNewRegionSelect(gene.locus.toString(), highlightSearch.current);
@@ -729,7 +726,7 @@ export default function SearchBar({
       >
         <AnimatePresence>
           {isSearchFocused &&
-            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: -10, maxHeight: 0 }}
@@ -767,7 +764,7 @@ export default function SearchBar({
               />
             )}
             <input
-              className="h-10 flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
+              className="h-9 flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
               style={{
                 minWidth: fontSize,
                 fontSize: fontSize,

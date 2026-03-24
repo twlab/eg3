@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import ReactDOM from "react-dom";
 
 import _ from "lodash";
 import HubTrackTable from "./HubTrackTable";
@@ -42,6 +41,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
     rowHeader: "",
     columnHeader: "",
     showModalId: null as string | null,
+    modalFound: null as any[] | null,
     metaKeys: [] as string[],
   });
 
@@ -155,19 +155,27 @@ const FacetTable: React.FC<FacetTableProps> = ({
         columnHeader: columnHeader || UNUSED_META_KEY,
       }));
     },
-    [addTermToMetaSets]
+    [addTermToMetaSets],
   );
 
   useEffect(() => {
     initializeTracks(tracks);
   }, [tracks]);
 
-  const handleOpenModal = (id: string) => {
-    setState((prevState) => ({ ...prevState, showModalId: id }));
+  const handleOpenModal = (id: string, found: any[]) => {
+    setState((prevState) => ({
+      ...prevState,
+      showModalId: id,
+      modalFound: found,
+    }));
   };
 
   const handleCloseModal = () => {
-    setState((prevState) => ({ ...prevState, showModalId: null }));
+    setState((prevState) => ({
+      ...prevState,
+      showModalId: null,
+      modalFound: null,
+    }));
   };
 
   const toggleHeader = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -299,7 +307,9 @@ const FacetTable: React.FC<FacetTableProps> = ({
             divs.push(<div key={`${row.name}-${col.name}`}></div>);
           } else {
             divs.push(
-              <div key={`${row.name}-${col.name}`}>{countTracks(row, col)}</div>
+              <div key={`${row.name}-${col.name}`}>
+                {countTracks(row, col)}
+              </div>,
             );
           }
         }
@@ -312,7 +322,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
           divs.push(
             <div key={`${row.name}-col`}>
               {countTracks(row, UNUSED_META_KEY)}
-            </div>
+            </div>,
           );
         }
       }
@@ -322,7 +332,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
 
   const trackMetadataBelongsTo = (
     tkMeta: string | string[],
-    metaType: string
+    metaType: string,
   ) => {
     if (Array.isArray(tkMeta)) {
       return tkMeta.includes(metaType);
@@ -366,70 +376,16 @@ const FacetTable: React.FC<FacetTableProps> = ({
     if (!found.length) return null;
     const id = `modal-${row.name}-${col.name}`;
     const addUrls = found.filter(
-      (tk) => addedTrackSets?.has(tk.url) || addedTrackSets?.has(tk.name)
+      (tk) => addedTrackSets?.has(tk.url) || addedTrackSets?.has(tk.name),
     );
     return (
       <div>
-        <button onClick={() => handleOpenModal(id)} className="facet-item">
+        <button
+          onClick={() => handleOpenModal(id, found)}
+          className="facet-item"
+        >
           <span className="green">{addUrls.length}</span>/{found.length}
         </button>
-        {showModalId === id && ReactDOM.createPortal(
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(111,107,101, 0.7)",
-              zIndex: 9999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onClick={handleCloseModal}
-            role="dialog"
-            aria-label="track list"
-          >
-            <div
-              style={{
-                position: "relative",
-                backgroundColor: "white",
-                padding: "16px 20px 10px 15px",
-                borderRadius: "4px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                textAlign: "left",
-                width: "90vw",
-                height: "90vh",
-                overflow: "auto",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span
-                className="text-right"
-                style={{
-                  cursor: "pointer",
-                  color: "red",
-                  fontSize: "2em",
-                  position: "absolute",
-                  top: "-5px",
-                  right: "20px",
-                }}
-                onClick={handleCloseModal}
-              >
-                ×
-              </span>
-              <HubTrackTable
-                tracks={found}
-                addedTrackSets={addedTrackSets}
-                onTracksAdded={onTracksAdded}
-                rowHeader={rowHeader}
-                columnHeader={columnHeader}
-              />
-            </div>
-          </div>,
-          document.body
-        )}
       </div>
     );
   };
@@ -438,7 +394,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
     let colNum = Math.max(1, state.columnList.length);
     document.documentElement.style.setProperty(
       "--colNum",
-      (colNum + 1).toString()
+      (colNum + 1).toString(),
     );
   };
 
@@ -522,28 +478,82 @@ const FacetTable: React.FC<FacetTableProps> = ({
     return <p>Table is empty, please add some tracks.</p>;
   } else {
     return (
-      <div className="facet-container">
-        <div className="facet-config">
-          <div>{renderHeaderSelection(false)}</div>
+      <>
+        <div className="facet-container">
+          <div className="facet-config">
+            {/* <div>{renderHeaderSelection(false)}</div>
           <div
             className="facet-swap"
             title="swap row/column"
             onClick={swapHeader}
+          ></div> */}
+            {/* <div>{renderHeaderSelection(true)}</div> */}
+          </div>
+          <div className="facet-outer">
+            <div className="facet-content">
+              <div className="facet-holder"></div>
+              {renderHeader(state.columnHeader)}
+              {renderHeader(state.rowHeader)}
+              {buildMatrix()}
+              {setColNumber()}
+            </div>
+          </div>
+        </div>
+
+        {state.showModalId && state.modalFound && (
+          <div
+            style={{
+              backgroundColor: "rgba(111,107,101, 0.07)",
+              padding: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onClick={handleCloseModal}
+            role="dialog"
+            aria-label="track list"
           >
-            &#8646;
+            <div
+              style={{
+                position: "relative",
+                backgroundColor: "white",
+                padding: "16px 20px 10px 15px",
+                borderRadius: "4px",
+                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                textAlign: "left",
+                width: "100%",
+                maxWidth: "90vw",
+                maxHeight: "70vh",
+                overflow: "auto",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span
+                className="text-right"
+                style={{
+                  cursor: "pointer",
+                  color: "red",
+                  fontSize: "2em",
+                  position: "absolute",
+                  top: "-5px",
+                  right: "20px",
+                }}
+                onClick={handleCloseModal}
+              >
+                ×
+              </span>
+              <HubTrackTable
+                key={state.showModalId || "modal"}
+                tracks={state.modalFound}
+                addedTrackSets={addedTrackSets}
+                onTracksAdded={onTracksAdded}
+                rowHeader={state.rowHeader}
+                columnHeader={state.columnHeader}
+              />
+            </div>
           </div>
-          <div>{renderHeaderSelection(true)}</div>
-        </div>
-        <div className="facet-outer">
-          <div className="facet-content">
-            <div className="facet-holder"></div>
-            {renderHeader(state.columnHeader)}
-            {renderHeader(state.rowHeader)}
-            {buildMatrix()}
-            {setColNumber()}
-          </div>
-        </div>
-      </div>
+        )}
+      </>
     );
   }
 };

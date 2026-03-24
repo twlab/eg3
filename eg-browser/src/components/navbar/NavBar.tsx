@@ -18,10 +18,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
 import Logo from "../../assets/logo.png";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
-import {
-  useAppDispatch,
-  useAppSelector,
-} from "../../lib/redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
 import {
   NavigationRoute,
   selectNavigationTab,
@@ -85,33 +82,40 @@ export default function NavBar() {
   const userViewRegionModel = useMemo(() => {
     if (!currentSession?.userViewRegion || !genomeConfig) return null;
     try {
-      const parsed = genomeConfig.navContext.parse(currentSession.userViewRegion);
-      return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
+      const parsed = genomeConfig.navContext.parse(
+        currentSession.userViewRegion,
+      );
+      if (parsed)
+        return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
     } catch {
       return null;
     }
   }, [currentSession?.userViewRegion, genomeConfig]);
 
   const handleNewRegionSelect = useCallback(
-    (coordinate: GenomeCoordinate | string, highlightSearch?: boolean | undefined) => {
+    (
+      coordinate: GenomeCoordinate | string,
+      highlightSearch?: boolean | undefined,
+    ) => {
       if (!genomeConfig || !coordinate) return;
       if (highlightSearch && currentSession) {
         let contextCoord: any;
         if (currentSession.selectedRegionSet) {
           let setNavContext: any;
           if (typeof currentSession.selectedRegionSet === "object") {
-            const newRegionSet = RegionSet.deserialize(currentSession.selectedRegionSet);
+            const newRegionSet = RegionSet.deserialize(
+              currentSession.selectedRegionSet,
+            );
             setNavContext = newRegionSet.makeNavContext();
           } else {
-            setNavContext = (currentSession.selectedRegionSet as RegionSet).makeNavContext();
+            setNavContext = (
+              currentSession.selectedRegionSet as RegionSet
+            ).makeNavContext();
           }
           contextCoord = setNavContext.parse(coordinate as GenomeCoordinate);
         } else {
-          contextCoord = genomeConfig.navContext.parse(
-            coordinate
-          );
+          contextCoord = genomeConfig.navContext.parse(coordinate);
         }
-
 
         const newHightlight = {
           start: contextCoord.start,
@@ -150,22 +154,28 @@ export default function NavBar() {
   };
 
   const genomeLogoUrl: string | null = genome?.name
-    ? (getSpeciesInfo(genome.name)?.logo || null) ??
-    (versionToLogoUrl[genome.name]?.croppedUrl || null) ??
-    (versionToLogoUrl[genome.name]?.logoUrl || null)
+    ? ((getSpeciesInfo(genome.name)?.logo || null) ??
+      (versionToLogoUrl[genome.name]?.croppedUrl || null) ??
+      (versionToLogoUrl[genome.name]?.logoUrl || null))
     : null;
   // const genomeLogoUrl: string | null = null;
 
   const [genomePickerOpen, setGenomePickerOpen] = useState(false);
-  const [genomeSearchQuery, setGenomeSearchQuery] = useState('');
+  const [genomeSearchQuery, setGenomeSearchQuery] = useState("");
   const genomePickerRef = useRef<HTMLDivElement>(null);
 
-  const filteredGenomes = useMemo(() =>
-    GENOME_LIST.filter(g =>
-      !genomeSearchQuery ||
-      g.name.toLowerCase().includes(genomeSearchQuery.toLowerCase()) ||
-      g.versions.some(v => v.toLowerCase().includes(genomeSearchQuery.toLowerCase()))
-    ), [genomeSearchQuery]);
+  const filteredGenomes = useMemo(
+    () =>
+      GENOME_LIST.filter(
+        (g) =>
+          !genomeSearchQuery ||
+          g.name.toLowerCase().includes(genomeSearchQuery.toLowerCase()) ||
+          g.versions.some((v) =>
+            v.toLowerCase().includes(genomeSearchQuery.toLowerCase()),
+          ),
+      ),
+    [genomeSearchQuery],
+  );
 
   const handlePickGenome = (assemblyName: string) => {
     const config = getGenomeConfig(assemblyName);
@@ -173,31 +183,36 @@ export default function NavBar() {
       dispatch(createSession({ genome: GenomeSerializer.serialize(config) }));
     }
     setGenomePickerOpen(false);
-    setGenomeSearchQuery('');
+    setGenomeSearchQuery("");
   };
 
   useEffect(() => {
     if (!genomePickerOpen) return;
     const handler = (e: MouseEvent) => {
-      if (genomePickerRef.current && !genomePickerRef.current.contains(e.target as Node)) {
+      if (
+        genomePickerRef.current &&
+        !genomePickerRef.current.contains(e.target as Node)
+      ) {
         setGenomePickerOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [genomePickerOpen]);
 
   // Monitor localStorage quota errors
   useEffect(() => {
     const handleStorageError = (e: ErrorEvent) => {
-      if (e.error?.name === 'QuotaExceededError') {
-        console.error('Error storing data', e.error);
-        setStorageError('Storage limit reached. Some changes may not be saved.');
+      if (e.error?.name === "QuotaExceededError") {
+        console.error("Error storing data", e.error);
+        setStorageError(
+          "Storage limit reached. Some changes may not be saved.",
+        );
       }
     };
 
-    window.addEventListener('error', handleStorageError);
-    return () => window.removeEventListener('error', handleStorageError);
+    window.addEventListener("error", handleStorageError);
+    return () => window.removeEventListener("error", handleStorageError);
   }, []);
 
   useEffect(() => {
@@ -217,7 +232,11 @@ export default function NavBar() {
           <span>{storageError}</span>
           <button
             onClick={() => {
-              if (confirm('Clear all local sessions to free up space? This cannot be undone.')) {
+              if (
+                confirm(
+                  "Clear all local sessions to free up space? This cannot be undone.",
+                )
+              ) {
                 localStorage.clear();
                 window.location.reload();
               }
@@ -228,9 +247,14 @@ export default function NavBar() {
           </button>
         </div>
       )}
-      <OutsideClickDetector onOutsideClick={() => dispatch(setNavigationTab(null))}>
-        <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
-          <div ref={navRef} className="flex flex-row items-center  relative gap-1">
+      <OutsideClickDetector
+        onOutsideClick={() => dispatch(setNavigationTab(null))}
+      >
+        <div className="flex flex-row justify-between items-center outline outline-gray-300 bg-white dark:bg-dark-background relative">
+          <div
+            ref={navRef}
+            className="flex flex-row items-center  relative gap-1"
+          >
             {currentSession ? (
               <BackspaceIcon
                 className="size-5 text-gray-600 dark:text-dark-primary cursor-pointer"
@@ -246,14 +270,13 @@ export default function NavBar() {
             <div
               className={classNames(
                 "z-10",
-                "h-12",
+                "h-9",
                 "w-20",
                 "rounded-sm",
 
                 "relative",
                 "overflow-hidden",
                 currentSession ? "cursor-pointer" : "cursor-default",
-
               )}
               style={{ marginLeft: -10 }}
               onClick={() => {
@@ -261,33 +284,54 @@ export default function NavBar() {
                 dispatch(setCurrentSession(null));
               }}
             >
-              <img src={Logo} alt="" className="absolute inset-0 w-full h-full object-contain" />
-              {currentSession && currentSession.title.length > 0 && genome?.name && (
-                <>
-                  <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
-                    <span className="text-red-500 blue-100 font-mono leading-none" style={{ fontSize: '12px' }}> v{version}</span>
-                  </div>
-
-                </>
-              )}
+              <img
+                src={Logo}
+                alt=""
+                className="absolute inset-0 w-full h-full object-contain"
+              />
+              {currentSession &&
+                currentSession.title.length > 0 &&
+                genome?.name && (
+                  <>
+                    <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
+                      <span
+                        className="text-red-500 blue-100 font-mono leading-none"
+                        style={{ fontSize: "12px" }}
+                      >
+                        {" "}
+                        v{version}
+                      </span>
+                    </div>
+                  </>
+                )}
             </div>
             {currentSession && (
               <div className="relative flex-shrink-0" ref={genomePickerRef}>
                 <div
                   style={{
-                    backgroundImage: `url(${genomeLogoUrl
-                      ? (genomeLogoUrl.startsWith('http') ? genomeLogoUrl : import.meta.env.BASE_URL + genomeLogoUrl)
-                      : ""})`,
+                    backgroundImage: `url(${
+                      genomeLogoUrl
+                        ? genomeLogoUrl.startsWith("http")
+                          ? genomeLogoUrl
+                          : import.meta.env.BASE_URL + genomeLogoUrl
+                        : ""
+                    })`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
                     opacity: genomeLogoUrl ? 0.8 : 1,
                   }}
-                  onMouseEnter={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-                  onMouseLeave={e => { if (genomeLogoUrl) (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
+                  onMouseEnter={(e) => {
+                    if (genomeLogoUrl)
+                      (e.currentTarget as HTMLElement).style.opacity = "1";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (genomeLogoUrl)
+                      (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                  }}
                   className={classNames(
                     "z-10",
-                    "h-10",
+                    "h-9",
                     "w-45",
                     "rounded-xs",
                     "flex-shrink-0",
@@ -296,24 +340,42 @@ export default function NavBar() {
                     "overflow-hidden",
                     "cursor-pointer",
                     genomePickerOpen ? "ring-2 ring-blue-400" : "",
-                    sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                    genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : ""
+                    sessionPanelOpen
+                      ? "bg-secondary dark:bg-dark-secondary"
+                      : "",
+                    genomeLogoUrl && !sessionPanelOpen
+                      ? "outline outline-gray-200"
+                      : "",
                   )}
                   onClick={() => {
-                    setGenomeSearchQuery('');
-                    setGenomePickerOpen(v => !v);
+                    setGenomeSearchQuery("");
+                    setGenomePickerOpen((v) => !v);
                   }}
                 >
                   {currentSession.title.length > 0 && genome?.name && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span
                         className="leading-tight text-center break-words w-full"
-                        style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: '16px' }}
+                        style={{
+                          color: genomeLogoUrl ? "white" : undefined,
+                          fontSize: "16px",
+                        }}
                       >
-                        <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
-                          {versionToLogoUrl[genome.name]?.name
-                            ? <>{versionToLogoUrl[genome.name].name} - <i>{genome.name}</i></>
-                            : <i>{genome.name}</i>}
+                        <span
+                          className={
+                            genomeLogoUrl
+                              ? ""
+                              : "text-gray-700 dark:text-dark-primary"
+                          }
+                        >
+                          {versionToLogoUrl[genome.name]?.name ? (
+                            <>
+                              {versionToLogoUrl[genome.name].name} -{" "}
+                              <i>{genome.name}</i>
+                            </>
+                          ) : (
+                            <i>{genome.name}</i>
+                          )}
                         </span>
                       </span>
                     </div>
@@ -325,7 +387,7 @@ export default function NavBar() {
                       <input
                         type="text"
                         value={genomeSearchQuery}
-                        onChange={e => setGenomeSearchQuery(e.target.value)}
+                        onChange={(e) => setGenomeSearchQuery(e.target.value)}
                         placeholder="Search genomes..."
                         className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-background text-gray-800 dark:text-dark-primary outline-none focus:border-blue-400"
                         autoFocus
@@ -333,10 +395,12 @@ export default function NavBar() {
                     </div>
                     <div className="max-h-80 overflow-y-auto p-2">
                       <div className="grid grid-cols-3 gap-2">
-                        {filteredGenomes.map(g => (
+                        {filteredGenomes.map((g) => (
                           <div key={g.name} className="flex flex-col gap-1">
-                            <div className="text-xs text-gray-400 dark:text-gray-500 uppercase font-semibold tracking-wide text-center pb-0.5 border-b border-gray-200 dark:border-gray-600">{g.name}</div>
-                            {g.versions.map(v => (
+                            <div className="text-xs text-gray-400 dark:text-gray-500 uppercase font-semibold tracking-wide text-center pb-0.5 border-b border-gray-200 dark:border-gray-600">
+                              {g.name}
+                            </div>
+                            {g.versions.map((v) => (
                               <button
                                 key={v}
                                 onClick={() => handlePickGenome(v)}
@@ -372,17 +436,18 @@ export default function NavBar() {
                   {currentSession !== null ? (
                     <div
                       className="flex flex-row items-center gap-1"
-                    // style={{
-                    //   pointerEvents: sessionPanelOpen ? "none" : "auto",
-                    // }}
-
+                      // style={{
+                      //   pointerEvents: sessionPanelOpen ? "none" : "auto",
+                      // }}
                     >
                       {userViewRegionModel && genomeConfig && (
-
                         <TrackRegionController
                           selectedRegion={userViewRegionModel}
                           onRegionSelected={handleNewRegionSelect}
-                          contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                          contentColorSetup={{
+                            background: "#F8FAFC",
+                            color: "#222",
+                          }}
                           genomeConfig={genomeConfig as any}
                           trackManagerState={null}
                           genomeArr={[]}
@@ -392,7 +457,6 @@ export default function NavBar() {
                           fontSize={16}
                           padding={0}
                         />
-
                       )}
 
                       <Button
@@ -440,25 +504,26 @@ export default function NavBar() {
                         gapSize={8}
                       />
                     </div>
-                  ) : ""}
+                  ) : (
+                    ""
+                  )}
 
                   {!currentSession && (
-                    <div style={{ fontSize: 24 }} >
+                    <div style={{ fontSize: 24 }}>
                       <span>WashU </span> Epigenome Browser
                     </div>
                   )}
-
                 </div>
               )}
             </div>
-
           </div>
 
           {!isSmallScreen &&
             (currentSession ? (
-
-              <div className="flex flex-row items-center gap-2 z-10" style={{ marginRight: 15 }}>
-
+              <div
+                className="flex flex-row items-center gap-2 z-10"
+                style={{ marginRight: 15 }}
+              >
                 <InlineEditable
                   value={
                     currentSession.title.length > 0
@@ -467,11 +532,25 @@ export default function NavBar() {
                   }
                   onChange={async (value) => {
                     try {
-                      if (bundle && bundle.bundleId && bundle.currentId && bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
+                      if (
+                        bundle &&
+                        bundle.bundleId &&
+                        bundle.currentId &&
+                        bundle.sessionsInBundle &&
+                        bundle.sessionsInBundle[`${bundle.currentId}`]
+                      ) {
+                        const newSessionObj = {
+                          ...bundle.sessionsInBundle[`${bundle.currentId}`],
+                          label: value,
+                        };
 
-                        const newSessionObj = { ...bundle.sessionsInBundle[`${bundle.currentId}`], label: value };
-
-                        const newBundle = { ...bundle, sessionsInBundle: { ...bundle.sessionsInBundle, [bundle.currentId]: newSessionObj } };
+                        const newBundle = {
+                          ...bundle,
+                          sessionsInBundle: {
+                            ...bundle.sessionsInBundle,
+                            [bundle.currentId]: newSessionObj,
+                          },
+                        };
 
                         dispatch(updateBundle(newBundle));
 
@@ -479,29 +558,33 @@ export default function NavBar() {
                         try {
                           await set(
                             ref(db, `sessions/${bundle.bundleId}`),
-                            JSON.parse(JSON.stringify(newBundle))
+                            JSON.parse(JSON.stringify(newBundle)),
                           );
 
                           console.log("Session saved!", "success", 2000);
                         } catch (error) {
                           console.error(error);
-                          console.log("Error while saving session", "error", 2000);
+                          console.log(
+                            "Error while saving session",
+                            "error",
+                            2000,
+                          );
                         }
-
                       }
 
                       dispatch(updateCurrentSession({ title: value }));
                     } catch (error: any) {
-                      if (error?.name === 'QuotaExceededError') {
-                        setStorageError('Storage limit reached. Unable to save changes.');
+                      if (error?.name === "QuotaExceededError") {
+                        setStorageError(
+                          "Storage limit reached. Unable to save changes.",
+                        );
                       }
-                      console.error('Error updating session:', error);
+                      console.error("Error updating session:", error);
                     }
-                  }
-
-                  }
-                  style={`text-xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                    }`}
+                  }}
+                  style={`text-xl font-light border border-blue-500 px-2 ${
+                    currentSession.title.length > 0 ? "" : "font-medium"
+                  }`}
                   tooltip={
                     currentSession.title.length > 0
                       ? "Click to edit"
@@ -517,20 +600,22 @@ export default function NavBar() {
                 />
               </div>
             ) : (
-              <div className="flex flex-row items-center gap-2 z-10" style={{ marginRight: 15 }}>
-
+              <div
+                className="flex flex-row items-center gap-2 z-10"
+                style={{ marginRight: 15 }}
+              >
                 <Button
                   style={{
                     backgroundColor:
                       "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
                     padding: "4px 8px",
                     color: "black",
-                    width: "150px"
+                    width: "150px",
                   }}
                   onClick={() =>
                     window.open(
                       "https://epigenomegateway.wustl.edu/browser2022/",
-                      "_blank"
+                      "_blank",
                     )
                   }
                   active={currentTab === "tracks"}
@@ -558,13 +643,12 @@ export default function NavBar() {
                 <div className="flex flex-col p-4 gap-2">
                   {currentSession !== null ? (
                     <>
-
                       <Button
                         onClick={() => {
                           dispatch(
                             setNavigationTab(
-                              currentTab === "tracks" ? null : "tracks"
-                            )
+                              currentTab === "tracks" ? null : "tracks",
+                            ),
                           );
                           setMobileMenuOpen(false);
                         }}
@@ -576,7 +660,9 @@ export default function NavBar() {
                       <Button
                         onClick={() => {
                           dispatch(
-                            setNavigationTab(currentTab === "apps" ? null : "apps")
+                            setNavigationTab(
+                              currentTab === "apps" ? null : "apps",
+                            ),
                           );
                           setMobileMenuOpen(false);
                         }}
@@ -589,8 +675,8 @@ export default function NavBar() {
                         onClick={() => {
                           dispatch(
                             setNavigationTab(
-                              currentTab === "share" ? null : "share"
-                            )
+                              currentTab === "share" ? null : "share",
+                            ),
                           );
                           setMobileMenuOpen(false);
                         }}
@@ -603,8 +689,8 @@ export default function NavBar() {
                         onClick={() => {
                           dispatch(
                             setNavigationTab(
-                              currentTab === "settings" ? null : "settings"
-                            )
+                              currentTab === "settings" ? null : "settings",
+                            ),
                           );
                           setMobileMenuOpen(false);
                         }}
@@ -616,7 +702,9 @@ export default function NavBar() {
                       <Button
                         onClick={() => {
                           dispatch(
-                            setNavigationTab(currentTab === "help" ? null : "help")
+                            setNavigationTab(
+                              currentTab === "help" ? null : "help",
+                            ),
                           );
                           setMobileMenuOpen(false);
                         }}
@@ -626,7 +714,9 @@ export default function NavBar() {
                         Help
                       </Button>
                     </>
-                  ) : ""}
+                  ) : (
+                    ""
+                  )}
                 </div>
               </motion.div>
             )}
@@ -639,7 +729,7 @@ export default function NavBar() {
                 className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : ""} bg-transparent z-50`}
                 style={
                   !isSmallScreen && tabAnchorLeft != null
-                    ? ({ left: `${tabAnchorLeft}px`, right: 'auto' } as any)
+                    ? ({ left: `${tabAnchorLeft}px`, right: "auto" } as any)
                     : ({} as any)
                 }
                 initial={{ opacity: 0, y: -8 }}
@@ -650,8 +740,7 @@ export default function NavBar() {
                 <ResizablePanel
                   title={currentTab || undefined}
                   initialWidth={300}
-                  initialHeight={"50vh"}
-
+                  initialHeight={325}
                   onClose={() => dispatch(setNavigationTab(null))}
                 >
                   {currentTab === "tracks" && <TracksTab />}

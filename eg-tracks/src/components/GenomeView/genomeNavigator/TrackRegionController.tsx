@@ -46,7 +46,7 @@ interface TrackRegionControllerProps {
   selectedRegion: DisplayedRegionModel; // The current view of the genome navigator
   onRegionSelected: (
     query: string | GenomeCoordinate,
-    highlightSearch: boolean
+    highlightSearch: boolean,
   ) => void;
 
   contentColorSetup: { color: string; background: string };
@@ -90,16 +90,11 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   };
 
   const parseRegion = () => {
-
-
     // Parsing successful
     if (badInputMessage) {
       setBadInputMessage("");
     }
-    onRegionSelected(
-      inputRef.current?.value || "",
-      doHighlight
-    );
+    onRegionSelected(inputRef.current?.value || "", doHighlight);
 
     handleCloseModal();
   };
@@ -109,16 +104,16 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   const coordinates = selectedRegion.currentRegionAsString();
 
   return (
-    <div className={classNames(
-      "w-55 h-10 rounded-xs flex items-center justify-center",
-      "text-sm font-medium select-none",
-      "text-gray-700 dark:text-gray-300 bg-gray-100/70 dark:bg-gray-800/50",
-      "transition-all duration-150 cursor-pointer",
-      "hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white hover:shadow-sm",
-      "bg-tint dark:bg-dark-tint text-white",
-      "bg-alert text-white"
-
-    )}
+    <div
+      className={classNames(
+        "w-55 h-9 rounded-xs flex items-center justify-center",
+        "text-sm font-medium select-none",
+        "text-gray-700 dark:text-gray-300 bg-gray-100/70 dark:bg-gray-800/50",
+        "transition-all duration-150 cursor-pointer",
+        "hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white hover:shadow-sm",
+        "bg-tint dark:bg-dark-tint text-white",
+        "bg-alert text-white",
+      )}
     >
       <button
         onClick={handleOpenModal}
@@ -131,94 +126,93 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
           paddingRight: 4,
           transform: "translateY(.5px)",
         }}
-
-
       >
         {coordinates}
       </button>
-      {showModal && ReactDOM.createPortal(
-        <div
-          style={MODAL_STYLE.overlay}
-          onClick={handleCloseModal}
-          role="dialog"
-          aria-label="Gene & Region search"
-        >
+      {showModal &&
+        ReactDOM.createPortal(
           <div
-            style={{ ...MODAL_STYLE.content, color, background }}
-            onClick={(e) => e.stopPropagation()}
+            style={MODAL_STYLE.overlay}
+            onClick={handleCloseModal}
+            role="dialog"
+            aria-label="Gene & Region search"
           >
-            <span
-              className="text-right"
-              style={X_BUTTON_STYLE}
-              onClick={handleCloseModal}
+            <div
+              style={{ ...MODAL_STYLE.content, color, background }}
+              onClick={(e) => e.stopPropagation()}
             >
-              ×
-            </span>
-            <div>
-              <span>
-                Highlight search{" "}
-                <input
-                  type="checkbox"
-                  name="do-highlight"
-                  checked={doHighlight}
-                  onChange={handleHighlightToggle}
-                />
+              <span
+                className="text-right"
+                style={X_BUTTON_STYLE}
+                onClick={handleCloseModal}
+              >
+                ×
               </span>
+              <div>
+                <span>
+                  Highlight search{" "}
+                  <input
+                    type="checkbox"
+                    name="do-highlight"
+                    checked={doHighlight}
+                    onChange={handleHighlightToggle}
+                  />
+                </span>
+              </div>
+              <h6>Gene search</h6>
+              <GeneSearchBox
+                navContext={selectedRegion.getNavigationContext()}
+                onRegionSelected={onRegionSelected}
+                doHighlight={doHighlight}
+                handleCloseModal={handleCloseModal}
+                color={color}
+                background={background}
+                genomeConfig={genomeConfig}
+              />
+              {!virusBrowserMode && (
+                <>
+                  <h6 style={{ marginTop: "5px" }}>SNP search</h6>
+                  <SnpSearchBox
+                    navContext={selectedRegion.getNavigationContext()}
+                    onRegionSelected={onRegionSelected}
+                    handleCloseModal={handleCloseModal}
+                    color={color}
+                    background={background}
+                    doHighlight={doHighlight}
+                    genomeConfig={genomeConfig}
+                  />
+                </>
+              )}
+              <h6>
+                Region search (current region is {coordinates}{" "}
+                <CopyToClip value={coordinates} />)
+              </h6>
+              <input
+                ref={inputRef}
+                type="text"
+                size={30}
+                placeholder="Coordinate"
+                onKeyDown={keyPress}
+                style={{
+                  padding: "6px 8px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "4px",
+                }}
+              />
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ marginLeft: "2px" }}
+                onClick={parseRegion}
+              >
+                Go
+              </button>
+              {badInputMessage && (
+                <span className="alert-danger">{badInputMessage}</span>
+              )}
             </div>
-            <h6>Gene search</h6>
-            <GeneSearchBox
-              navContext={selectedRegion.getNavigationContext()}
-              onRegionSelected={onRegionSelected}
-              doHighlight={doHighlight}
-              handleCloseModal={handleCloseModal}
-              color={color}
-              background={background}
-              genomeConfig={genomeConfig}
-            />
-            {!virusBrowserMode && (
-              <>
-                <h6 style={{ marginTop: "5px" }}>SNP search</h6>
-                <SnpSearchBox
-                  navContext={selectedRegion.getNavigationContext()}
-                  onRegionSelected={onRegionSelected}
-                  handleCloseModal={handleCloseModal}
-                  color={color}
-                  background={background}
-                  doHighlight={doHighlight}
-                  genomeConfig={genomeConfig}
-                />
-              </>
-            )}
-            <h6>
-              Region search (current region is {coordinates}{" "}
-              <CopyToClip value={coordinates} />)
-            </h6>
-            <input
-              ref={inputRef}
-              type="text"
-              size={30}
-              placeholder="Coordinate"
-              onKeyDown={keyPress}
-              style={{
-                padding: "6px 8px",
-                border: "1px solid #e2e8f0",
-                borderRadius: "4px",
-              }}
-            />
-            <button
-              className="btn btn-secondary btn-sm"
-              style={{ marginLeft: "2px" }}
-              onClick={parseRegion}
-            >
-              Go
-            </button>
-            {badInputMessage && (
-              <span className="alert-danger">{badInputMessage}</span>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

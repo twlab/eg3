@@ -38,7 +38,7 @@ interface NavigationStackContext {
 }
 
 const NavigationStackContext = createContext<NavigationStackContext | null>(
-  null
+  null,
 );
 
 export function useNavigation() {
@@ -52,7 +52,7 @@ export function useNavigation() {
     (path: NavigationPathElement) => {
       context?.setPath([...context.path, path]);
     },
-    [context]
+    [context],
   );
 
   const pop = useCallback(() => {
@@ -87,22 +87,25 @@ export default function NavigationStack({
 
   const destinationMap: Record<string, NavigationDestination> = useMemo(
     () =>
-      destinations.reduce((acc, destination) => {
-        acc[destination.path] = destination;
-        return acc;
-      }, {} as Record<string, NavigationDestination>),
-    [destinations]
+      destinations.reduce(
+        (acc, destination) => {
+          acc[destination.path] = destination;
+          return acc;
+        },
+        {} as Record<string, NavigationDestination>,
+      ),
+    [destinations],
   );
 
   const currentDestination = useMemo(
     () =>
       path.length > 0 ? destinationMap[path[path.length - 1]?.path] : null,
-    [destinationMap, path]
+    [destinationMap, path],
   );
 
   const currentOptions = useMemo(
     () => (path.length > 0 ? currentDestination?.options : rootOptions),
-    [path.length, currentDestination?.options, rootOptions]
+    [path.length, currentDestination?.options, rootOptions],
   );
 
   return (

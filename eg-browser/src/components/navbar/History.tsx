@@ -58,7 +58,7 @@ const History: React.FC<Props> = ({
     const futureItems = makeItemList(
       future,
       (index) => jumpToFuture(index),
-      "future"
+      "future",
     );
 
     return (
@@ -75,7 +75,7 @@ const History: React.FC<Props> = ({
   const makeItemList = (
     stateList: any[],
     callback: (index: number) => void,
-    _type: string
+    _type: string,
   ) => {
     const items = stateList.map((value, index) => {
       const currentSessionKey = value.currentSession;
@@ -155,14 +155,12 @@ const History: React.FC<Props> = ({
           title="Operation history"
           className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 transition-colors duration-150 cursor-pointer"
         >
-
           <span
             className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-
+            style={{ height: "16px", width: "16px" }}
           >
             📗
           </span>
-
         </button>
 
         <AnimatePresence>

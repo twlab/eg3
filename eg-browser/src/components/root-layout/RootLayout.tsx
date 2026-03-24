@@ -107,7 +107,7 @@ export default function RootLayout(props: GenomeHubProps) {
   function getConfig() {
     if (props.customGenome) {
       try {
-        return props.customGenome
+        return props.customGenome;
       } catch {
         return null;
       }
@@ -173,7 +173,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                    props.viewRegion === null
+                  props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -194,12 +194,12 @@ export default function RootLayout(props: GenomeHubProps) {
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
@@ -225,41 +225,39 @@ export default function RootLayout(props: GenomeHubProps) {
     sessionId,
   ]);
 
-
-
   return (
     <div
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
-
     >
       <GoogleAnalytics />
 
       <div className="flex flex-col h-full text-primary dark:text-white">
-        {showNavBar === false ? "" : (() => {
-
-          return (
-            <div
-              style={{
-                width: `calc(100% + ${15}px)`,
-                marginRight: `-${15}px`,
-              }}
-            >
-              <NavBar />
-            </div>
-          );
-        })()}
+        {showNavBar === false
+          ? ""
+          : (() => {
+              return (
+                <div
+                  style={{
+                    width: `calc(100% + ${15}px)`,
+                    marginRight: `-${15}px`,
+                  }}
+                >
+                  <NavBar />
+                </div>
+              );
+            })()}
 
         <div className="flex flex-row flex-1 relative bg-black">
-
-
           <div
             className="h-full overflow-hidden absolute top-0 left-0 z-20"
             style={{
               width: "25vw",
               borderTopRightRadius: CURL_RADIUS,
               borderBottomRightRadius: CURL_RADIUS,
-              transform: sessionPanelOpen ? "translateX(0)" : "translateX(-100%)",
+              transform: sessionPanelOpen
+                ? "translateX(0)"
+                : "translateX(-100%)",
               transition: "transform 0.3s ease",
               willChange: "transform",
             }}
@@ -287,6 +285,7 @@ export default function RootLayout(props: GenomeHubProps) {
               style={{
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
                 zIndex: 5,
+                paddingTop: 1,
               }}
             >
               {!sessionId && (
@@ -300,7 +299,6 @@ export default function RootLayout(props: GenomeHubProps) {
                 </GenomeErrorBoundary>
               )}
             </div>
-
 
             <div
               style={{
@@ -318,8 +316,7 @@ export default function RootLayout(props: GenomeHubProps) {
         </div>
       </div>
 
-
       <MouseFollowingTooltip />
-    </div >
+    </div>
   );
 }
