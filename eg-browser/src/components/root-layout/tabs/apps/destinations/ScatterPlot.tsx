@@ -106,17 +106,17 @@ const ScatterPlot: React.FC = () => {
   const renderTrackXList = () => {
     const trackList = tracks
       .filter((item) =>
-        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : "")
+        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : ""),
       )
       .map((item, index) => (
         <option key={index} value={item.name}>
           {item.label
             ? item.label
             : item.options && item.options.label
-            ? item.options.label
-            : item.name
-            ? item.name
-            : "track position " + index}
+              ? item.options.label
+              : item.name
+                ? item.name
+                : "track position " + index}
         </option>
       ));
     return (
@@ -135,17 +135,17 @@ const ScatterPlot: React.FC = () => {
   const renderTrackYList = () => {
     const trackList = tracks
       .filter((item) =>
-        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : "")
+        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : ""),
       )
       .map((item, index) => (
         <option key={index} value={item.name}>
           {item.label
             ? item.label
             : item.options && item.options.label
-            ? item.options.label
-            : item.name
-            ? item.name
-            : "track position " + index}
+              ? item.options.label
+              : item.name
+                ? item.name
+                : "track position " + index}
         </option>
       ));
     return (
@@ -175,7 +175,7 @@ const ScatterPlot: React.FC = () => {
 
     const set = getSetByName(setName);
     const flankedFeatures = set!.features.map((feature) =>
-      set!.flankingStrategy.makeFlankedFeature(feature, set!.genome)
+      set!.flankingStrategy.makeFlankedFeature(feature, set!.genome),
     );
 
     const rawDataX = await Promise.all(
@@ -188,25 +188,25 @@ const ScatterPlot: React.FC = () => {
               end: item.locus.end,
             },
           ],
-          trackModel: trackX,
-        })
-      )
+          trackModel: trackConfigX.trackModel,
+        }),
+      ),
     );
     let dataXall = rawDataX.map((item, index) => {
       return item.map((record) => {
         let newChrInt = new ChromosomeInterval(
           record.chr,
           record.start,
-          record.end
+          record.end,
         );
         return new NumericalFeature("", newChrInt).withValue(
-          record.score ? record.score : record["3"]
+          record.score ? record.score : record["3"],
         );
       });
     });
 
     const dataX = dataXall.map((all: any) =>
-      _.meanBy(all, (item) => Number(item.value))
+      _.meanBy(all, (item) => Number(item.value)),
     );
 
     const rawDataY = await Promise.all(
@@ -219,9 +219,9 @@ const ScatterPlot: React.FC = () => {
               end: item.locus.end,
             },
           ],
-          trackModel: trackY,
-        })
-      )
+          trackModel: trackConfigY.trackModel,
+        }),
+      ),
     );
 
     let dataYall = rawDataY.map((item, index) => {
@@ -229,16 +229,16 @@ const ScatterPlot: React.FC = () => {
         let newChrInt = new ChromosomeInterval(
           record.chr,
           record.start,
-          record.end
+          record.end,
         );
         return new NumericalFeature("", newChrInt).withValue(
-          record.score ? record.score : record["3"]
+          record.score ? record.score : record["3"],
         );
       });
     });
 
     const dataY = dataYall.map((all: any) =>
-      _.meanBy(all, (item) => Number(item.value))
+      _.meanBy(all, (item) => Number(item.value)),
     );
     const featureNames = flankedFeatures.map((feature) => feature.getName());
     const pcor = pcorr(dataX, dataY);

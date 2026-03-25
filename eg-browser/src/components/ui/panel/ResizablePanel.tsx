@@ -128,11 +128,12 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const createGhost = (left: number, top: number, w: number, h: number) => {
     if (ghostRef.current) return;
     const el = document.createElement("div");
-    el.style.position = "absolute";
+    // Use fixed positioning so the ghost doesn't change document flow/height
+    el.style.position = "fixed";
     const rect = panelRef.current?.getBoundingClientRect();
     if (rect) {
-      el.style.left = `${rect.left}px`;
-      el.style.top = `${rect.top}px`;
+      el.style.left = `${Math.round(rect.left)}px`;
+      el.style.top = `${Math.round(rect.top)}px`;
     } else {
       el.style.left = `0px`;
       el.style.top = `0px`;
@@ -314,7 +315,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     : "1px solid rgba(255,255,255,0.36)";
 
   const contentStyle: React.CSSProperties = {
-    padding: 12,
+    // padding: 12,
     minWidth: 0,
     opacity: isResizing ? 0.5 : 1,
     transition: "opacity 120ms linear",
@@ -331,8 +332,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       <div
         className="flex items-center justify-between px-4 py-2 relative transition-all"
         style={{
-          paddingTop: 8,
-          paddingBottom: 8,
+          paddingTop: 2,
+          paddingBottom: 2,
           cursor: "move",
           userSelect: "none",
           touchAction: "none",
@@ -373,12 +374,23 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-700 dark:text-gray-200">
-            Press Esc to close
+            Press{" "}
+            <kbd
+              className="px-1 font-mono"
+              style={{
+                backgroundColor: "var(--foreground)",
+                color: "var(--background)",
+                opacity: 0.7,
+              }}
+            >
+              Esc
+            </kbd>{" "}
+            to close or
           </span>
           <button
             onClick={onClose}
             onPointerDown={(e) => e.stopPropagation()}
-            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+            className="px-1 rounded transition-colors bg-red-100 text-red-700 hover:bg-red-600 hover:text-white dark:bg-red-800/30 dark:text-red-200 dark:hover:bg-red-700 dark:hover:text-white"
             title="Close"
           >
             ✕

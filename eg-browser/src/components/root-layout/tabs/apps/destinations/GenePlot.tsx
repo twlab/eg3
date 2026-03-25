@@ -105,17 +105,17 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   const renderTrackList = () => {
     const trackList = tracks
       .filter((item) =>
-        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : "")
+        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : ""),
       )
       .map((item, index) => (
         <option key={index} value={item.name}>
           {item.label
             ? item.label
             : item.options && item.options.label
-            ? item.options.label
-            : item.name
-            ? item.name
-            : "track position " + index}
+              ? item.options.label
+              : item.name
+                ? item.name
+                : "track position " + index}
         </option>
       ));
 
@@ -170,7 +170,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     const set = getSetByName(setName);
 
     const flankedFeatures = set.features.map((feature) =>
-      set.flankingStrategy.makeFlankedFeature(feature, set.genome)
+      set.flankingStrategy.makeFlankedFeature(feature, set.genome),
     );
 
     const rawData = await Promise.all(
@@ -183,9 +183,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
               end: item.locus.end,
             },
           ],
-          trackModel: track,
-        })
-      )
+          trackModel: trackConfig.trackModel,
+        }),
+      ),
     );
 
     let data = rawData.map((item, index) => {
@@ -193,10 +193,10 @@ const Geneplot: React.FC<GeneplotProps> = () => {
         let newChrInt = new ChromosomeInterval(
           record.chr,
           record.start,
-          record.end
+          record.end,
         );
         return new NumericalFeature("", newChrInt).withValue(
-          record.score ? record.score : record["3"]
+          record.score ? record.score : record["3"],
         );
       });
     });
@@ -204,12 +204,12 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     // const data = rawData.map((raw) => trackConfig.formatData(raw));
     const binned = flankedFeatures.map((feature, idx) => {
       const step = Math.round(
-        (feature.locus.end - feature.locus.start) / dataPoints
+        (feature.locus.end - feature.locus.start) / dataPoints,
       );
       const lefts = _.range(
         feature.locus.start,
         feature.locus.end - step / 2,
-        step
+        step,
       );
       const rights = [
         ...lefts.slice(0, -1).map((x) => x + step),
@@ -222,7 +222,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     });
 
     const adjusted = binned.map((d, i) =>
-      flankedFeatures[i].getIsForwardStrand() ? d.slice() : _.reverse(d.slice())
+      flankedFeatures[i].getIsForwardStrand()
+        ? d.slice()
+        : _.reverse(d.slice()),
     );
     const featureNames = flankedFeatures.map((feature) => feature.getName());
     const plotData = _.zip(...adjusted);
@@ -266,12 +268,12 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const groupDataToBins = (data, bins, rights) => {
     const indexes = data.map((d) =>
-      Math.min(_.sortedIndex(rights, d.locus.end), bins.length - 1)
+      Math.min(_.sortedIndex(rights, d.locus.end), bins.length - 1),
     );
     let results = Array.from({ length: bins.length }, () => 0);
 
     data.forEach(
-      (d, i) => (results[indexes[i]] += d.locus.getLength() * d.value)
+      (d, i) => (results[indexes[i]] += d.locus.getLength() * d.value),
     );
     return results.map((d, i) => d / (bins[i][1] - bins[i][0]));
   };
@@ -295,14 +297,14 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
 
   const handlePlotTypeChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setPlotType(event.target.value);
     setShowLegend(event.target.value === "line");
   };
 
   const handleDataPointsChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setDataPoints(Number.parseInt(event.target.value));
   };

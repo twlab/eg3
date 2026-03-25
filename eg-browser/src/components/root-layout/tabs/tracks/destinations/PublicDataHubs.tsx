@@ -9,7 +9,8 @@ import {
 } from "@/lib/redux/slices/browserSlice";
 
 import FacetTable from "./FacetTable";
-import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { ITrackModel } from "wuepgg3-track";
 
 import {
@@ -42,6 +43,7 @@ export default function PublicDataHubs() {
   const [loadingHubs, setLoadingHubs] = useState<{ [key: string]: boolean }>(
     {},
   );
+  const [infoHub, setInfoHub] = useState<any | null>(null);
 
   const secondaryGenomes: Array<any> = [];
   let selectedGenomeName: any = null;
@@ -120,17 +122,25 @@ export default function PublicDataHubs() {
 
     return (
       <div key={hub.url} className="flex items-center justify-between py-1">
-        <span className="text-sm">
-          {hub.name} ({hub.numTracks} tracks)
-        </span>
-        <div className="flex-shrink-0 ml-2">
+        <div className="flex items-center">
+          <span className="text-sm mr-2">{hub.name}</span>
+          <button
+            className="size-5 rounded-md flex items-center justify-center bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
+            onClick={() => setInfoHub(hub)}
+            aria-label={`More info about ${hub.name}`}
+          >
+            <InformationCircleIcon className="size-4 text-primary dark:text-dark-primary" />
+          </button>
+        </div>
+        <div className="flex items-center flex-shrink-0 ml-2">
+          <span className="text-sm mr-2">{hub.numTracks} tracks</span>
           {isLoading ? (
-            <div className="size-6 rounded-md bg-gray-200 flex items-center justify-center">
+            <div className="size-6 rounded-md bg-gray-200 flex items-center justify-center mr-2">
               <div className="size-4 border-1 border-gray-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${
+              className={`size-6 rounded-md flex items-center justify-center mr-2 ${
                 isLoaded
                   ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
                   : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
@@ -155,22 +165,22 @@ export default function PublicDataHubs() {
   const renderSearchBar = () => (
     <div
       ref={searchBarGeometry.ref}
-      className="sticky top-0 z-20 pb-2 bg-white dark:bg-dark-background"
+      className="sticky top-0 z-20 bg-white dark:bg-dark-background"
     >
       <input
         type="text"
         placeholder="Search hubs..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+        className="w-full px-4 py-2 mt-2 outline outline-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
       />
     </div>
   );
 
   const renderHubGroup = (collection: string, hubs: any[]) => (
-    <div key={collection} className="mb-4 relative">
+    <div key={collection} className="mb-2 relative">
       <h2
-        className="text-base font-medium mb-1 sticky z-10 py-2 bg-white dark:bg-dark-background"
+        className="text-base font-medium mt-1 sticky z-10  bg-white dark:bg-dark-background"
         style={{
           top: `${searchBarGeometry.height}px`,
         }}
@@ -182,6 +192,74 @@ export default function PublicDataHubs() {
       </div>
     </div>
   );
+
+  const renderInfoModal = () => {
+    if (!infoHub) return null;
+
+    const renderField = (val: any) => {
+      if (val === null || val === undefined) return null;
+      if (
+        typeof val === "string" ||
+        typeof val === "number" ||
+        typeof val === "boolean"
+      ) {
+        return <span>{String(val)}</span>;
+      }
+      if (Array.isArray(val)) {
+        return (
+          <ul className="list-disc ml-5 text-sm">
+            {val.map((v, i) => (
+              <li key={i}>
+                {typeof v === "object" ? JSON.stringify(v) : String(v)}
+              </li>
+            ))}
+          </ul>
+        );
+      }
+      if (typeof val === "object") {
+        return (
+          <div className="text-sm">
+            {Object.entries(val).map(([k, v]) => (
+              <div key={k} className="flex">
+                <strong className="mr-1">{k}:</strong>
+                <span>
+                  {typeof v === "object" ? JSON.stringify(v) : String(v)}
+                </span>
+              </div>
+            ))}
+          </div>
+        );
+      }
+      return <span>{String(val)}</span>;
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => setInfoHub(null)}
+        />
+        <div className="relative bg-white dark:bg-dark-background rounded-md p-4 max-w-lg mx-4 z-10 shadow-lg">
+          <div className="flex justify-between items-start">
+            <h3 className="text-lg font-semibold">{infoHub.name}</h3>
+            <button onClick={() => setInfoHub(null)} className="ml-2">
+              <XMarkIcon className="size-5 text-gray-600" />
+            </button>
+          </div>
+          {infoHub.description ? (
+            <div className="mt-2 text-sm">
+              {renderField(infoHub.description)}
+            </div>
+          ) : null}
+          {infoHub.collection ? (
+            <div className="mt-2 text-sm text-gray-500">
+              Collection: {renderField(infoHub.collection)}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  };
 
   const addedTrackUrls = useMemo(() => {
     if (currentSession) {
@@ -205,7 +283,7 @@ export default function PublicDataHubs() {
     <div>
       {currentSession && publicTracksPool.length > 0 ? (
         <div>
-          <h2 className="text-base font-medium mb-4">Available Tracks</h2>
+          <h2 className="text-base font-medium mb-2">Available Tracks</h2>
           <FacetTable
             tracks={publicTracksPool}
             addedTracks={currentSession!.tracks as ITrackModel[]}
@@ -214,8 +292,6 @@ export default function PublicDataHubs() {
             addedTrackSets={addedTrackUrls as Set<string>}
             addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
-            width={tabPanelWidth}
-            height={tabPanelHeight}
           />
         </div>
       ) : (
@@ -227,6 +303,7 @@ export default function PublicDataHubs() {
           renderHubGroup(collection, hubs),
         )}
       </div>
+      {renderInfoModal()}
     </div>
   );
 }
