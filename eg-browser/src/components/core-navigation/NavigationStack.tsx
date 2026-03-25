@@ -8,7 +8,7 @@ import {
 import NotFound from "./NotFound";
 import NavigationToolbar from "./NavigationToolbar";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
-import { motion, AnimatePresence } from "framer-motion";
+// animations removed: no framer-motion
 
 export interface NavigationPathElement {
   path: string;
@@ -111,40 +111,46 @@ export default function NavigationStack({
   return (
     <NavigationStackContext.Provider value={{ path, setPath }}>
       <div className="flex flex-col h-full bg-white dark:bg-dark-background">
-        <NavigationToolbar options={currentOptions} />
+        <NavigationToolbar
+          options={currentOptions}
+          canGoBack={path.length > 0}
+          pop={() => setPath(path.slice(0, -1))}
+        />
         <div className="relative flex-1 overflow-hidden min-w-[5vw]" ref={ref}>
-          <motion.div
+          <div
             className="px-4 pb-4 absolute overflow-y-scroll"
-            animate={{
-              x: path.length > 0 ? "-33%" : 0,
-              opacity: path.length > 0 ? 0.3 : 1,
+            style={{
+              width,
+              height,
+              // transform: path.length > 0 ? "translateX(-33%)" : "translateX(0)",
+              // opacity: path.length > 0 ? 0.3 : 1,
+              // transition: "transform 220ms ease, opacity 220ms ease",
             }}
-            style={{ width, height }}
           >
             {children}
-          </motion.div>
-          <AnimatePresence mode="popLayout">
-            {path.map((element, idx) => {
-              const destination =
-                destinationMap[element.path] ?? notFoundDestination;
+          </div>
 
-              return (
-                <motion.div
-                  key={element.path}
-                  className="px-4 pb-4 absolute overflow-y-scroll bg-white dark:bg-dark-background"
-                  initial={{ x: "100%" }}
-                  animate={{ x: idx === path.length - 1 ? 0 : "-33%" }}
-                  exit={{ x: "100%" }}
-                  style={{
-                    width,
-                    height,
-                  }}
-                >
-                  <destination.component params={element.params} />
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+          {path.map((element, idx) => {
+            const destination =
+              destinationMap[element.path] ?? notFoundDestination;
+            // const transform =
+            //   idx === path.length - 1 ? "translateX(0)" : "translateX(-33%)";
+
+            return (
+              <div
+                key={element.path}
+                className="px-4 pb-4 absolute overflow-y-scroll bg-white dark:bg-dark-background"
+                style={{
+                  width,
+                  height,
+                  // transform,
+                  // transition: "transform 220ms ease",
+                }}
+              >
+                <destination.component params={element.params} />
+              </div>
+            );
+          })}
         </div>
       </div>
     </NavigationStackContext.Provider>

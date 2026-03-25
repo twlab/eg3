@@ -1,13 +1,15 @@
 import { ChevronLeftIcon } from "@heroicons/react/16/solid";
-import { NavigationDestinationOptions, useNavigation } from "./NavigationStack";
+import { NavigationDestinationOptions } from "./NavigationStack";
 
 export default function NavigationToolbar({
   options,
+  canGoBack,
+  pop,
 }: {
   options?: NavigationDestinationOptions;
+  canGoBack: boolean;
+  pop: () => void;
 }) {
-  const { canGoBack, pop } = useNavigation();
-
   const navigationBarEmpty =
     !canGoBack && !options?.title && !options?.trailing;
 

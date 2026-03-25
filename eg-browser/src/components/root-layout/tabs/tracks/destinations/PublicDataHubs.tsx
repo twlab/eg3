@@ -35,8 +35,6 @@ export default function PublicDataHubs() {
   const genomeConfig = useCurrentGenome();
   const loadedPublicHub = useAppSelector(selectLoadedPublicHub);
   const publicTracksPool = useAppSelector(selectPublicTracksPool);
-  const tabPanelWidth = useAppSelector(selectTabPanelWidth);
-  const tabPanelHeight = useAppSelector(selectTabPanelHeight);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");

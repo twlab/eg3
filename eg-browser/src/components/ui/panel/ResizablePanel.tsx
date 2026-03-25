@@ -6,6 +6,7 @@ import {
   selectTabPanelWidth,
   selectTabPanelHeight,
 } from "../../../lib/redux/slices/tabPanelSlice";
+import { selectExpandNavigationTab } from "../../../lib/redux/slices/navigationSlice";
 
 interface ResizablePanelProps {
   title?: string;
@@ -57,7 +58,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const dispatch = useAppDispatch();
   const sliceWidth = useAppSelector(selectTabPanelWidth);
   const sliceHeight = useAppSelector(selectTabPanelHeight);
-
+  const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const THROTTLE_MS = 1000; // throttle before dispatching
   const DIFF_THRESHOLD = 15;
   const lastDispatchRef = useRef<number>(0);
@@ -68,6 +69,11 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const pendingPreviewRef = useRef<{ w?: number; h?: number } | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const preExpandRef = useRef<{
+    translate: { x: number; y: number };
+    width: number | string;
+    height: number | string;
+  } | null>(null);
 
   useEffect(() => {
     latestSliceRef.current = { w: sliceWidth, h: sliceHeight };
@@ -208,6 +214,66 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     }
     return fallback;
   };
+
+  // when navigation tab expands, double the panel dimensions
+  useEffect(() => {
+    const numericW = parseSizeToNumber(
+      width,
+      typeof width === "number"
+        ? (width as number)
+        : (initialWidth as number) || 300,
+    );
+    const numericH = parseSizeToNumber(
+      height,
+      typeof height === "number"
+        ? (height as number)
+        : (initialHeight as number) || 325,
+    );
+    if (expandNavigationTab) {
+      // setWidth(Math.round(numericW * 4));
+      // setHeight(Math.round(numericH * 2));
+
+      const newW = Math.round(1200);
+      const newH = Math.round(700);
+
+      // store current translate/size so we can restore on collapse
+      if (!preExpandRef.current) {
+        preExpandRef.current = { translate: { ...translate }, width, height };
+      }
+
+      setWidth(newW);
+      setHeight(newH);
+
+      // center the panel visually using current DOM rect and stored translate
+      // don't change any positioning CSS; adjust the transform only
+      // if the panel is currently being dragged or resized, skip centering
+      const rect = panelRef.current?.getBoundingClientRect();
+      if (
+        rect &&
+        !dragState.current?.dragging &&
+        !resizeState.current?.resizing
+      ) {
+        const desiredLeft = (window.innerWidth - newW) / 2;
+        const desiredTop = (window.innerHeight - newH) / 2;
+        const deltaX = Math.round(desiredLeft - rect.left);
+        const deltaY = Math.round(desiredTop - rect.top + 10); // adjust for navbar height
+        setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+      }
+    } else {
+      // restore to initial sizes (or keep current if already small)
+      setWidth(initialWidth);
+      setHeight(initialHeight);
+      // restore previous translate if we saved one
+      if (
+        preExpandRef.current &&
+        !dragState.current?.dragging &&
+        !resizeState.current?.resizing
+      ) {
+        setTranslate(preExpandRef.current.translate);
+      }
+      preExpandRef.current = null;
+    }
+  }, [expandNavigationTab]);
 
   useEffect(() => {
     const onPointerMove = (ev: PointerEvent) => {
@@ -402,15 +468,18 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       </div>
       <div
         onPointerDown={onResizePointerDown}
-        className="absolute bottom-3 right-10 w-6 h-6 bg-transparent cursor-se-resize"
-        style={{ touchAction: "none" }}
+        className="rounded cursor-se-resize flex items-center justify-center mt-auto self-end"
+        style={{
+          touchAction: "none",
+          backgroundColor: "rgba(183, 224, 255, 1)",
+          height: 30,
+          width: 30,
+        }}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="25px"
-          height="25px"
           viewBox="0 0 18 18"
-          mirror-in-rtl="true"
+          aria-hidden="true"
         >
           <path
             fill="#494c4e"

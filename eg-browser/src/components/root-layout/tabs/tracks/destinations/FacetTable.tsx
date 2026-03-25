@@ -548,7 +548,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
           <div
             style={{
               backgroundColor: "rgba(111,107,101, 0.07)",
-              padding: "12px",
+
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
