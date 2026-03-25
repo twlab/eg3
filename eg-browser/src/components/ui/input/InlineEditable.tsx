@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Session from "../../root-layout/tabs/apps/destinations/Session";
 
-
 /**
  * A component that allows inline editing of text.
  * @author Shane Liu (original)
@@ -16,8 +15,6 @@ interface InlineEditableProps {
 }
 
 function InlineEditable(props: InlineEditableProps) {
-
-
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const [hovering, setHovering] = useState(false);
@@ -77,54 +74,39 @@ function InlineEditable(props: InlineEditableProps) {
 
   const textStyle = props.style || "text-base";
 
-  let body;
-
   const currentLength = editing ? value.length : props.value.length;
   const commonStyle = {
     width: `${Math.max(currentLength, 10)}ch`,
     minWidth: "75px",
 
-    height: "40px",
+    height: "100%",
     display: "inline-flex",
     alignItems: "center",
   };
 
   if (editing) {
-    body = (
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleFinish();
-
-
-          } else if (e.key === "Escape") {
-            setEditing(false);
-          }
-        }}
-        autoFocus
-        onFocus={handleFocus}
-        className={`outline-none ${textStyle}`}
-        style={commonStyle}
-      />
-    );
-  } else {
-    body = (
-      <span className={`${textStyle} inline-block`} style={commonStyle}>
-        {props.value}
-      </span>
-    );
-  }
-
-  if (editing) {
     return (
       <div
         ref={containerRef}
-        className={`relative inline-block ${hovering && !editing ? "outline outline-1 outline-gray-300" : ""
-          }`}
+        className={`h-9 relative inline-block ${
+          hovering && !editing ? "outline outline-1 outline-gray-300" : ""
+        }`}
       >
-        {body}
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleFinish();
+            } else if (e.key === "Escape") {
+              setEditing(false);
+            }
+          }}
+          autoFocus
+          onFocus={handleFocus}
+          className={`outline-none ${textStyle}`}
+          style={commonStyle}
+        />
         <div className="absolute top-full right-0 mt-3 z-50 bg-white border border-gray-200 shadow-lg rounded origin-top-right">
           <Session />
         </div>
@@ -135,14 +117,17 @@ function InlineEditable(props: InlineEditableProps) {
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="inline-block"
+        className="inline-block h-9"
       >
         <div
           onClick={handleClick}
-          className={`inline-block cursor-pointer ${hovering ? "outline outline-1 outline-gray-300" : ""
-            }`}
+          className={`h-9 inline-block cursor-pointer ${
+            hovering ? "outline outline-1 outline-gray-300" : ""
+          }`}
         >
-          {body}
+          <span className={`${textStyle} inline-block`} style={commonStyle}>
+            {props.value}
+          </span>
           <div className="absolute invisible group-hover:visible top-full mt-1 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-ml-1 before:border-4 before:border-transparent before:border-b-gray-800">
             {props.tooltip ?? "Click to edit"}
           </div>

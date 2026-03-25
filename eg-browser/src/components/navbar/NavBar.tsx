@@ -521,7 +521,7 @@ export default function NavBar() {
           {!isSmallScreen &&
             (currentSession ? (
               <div
-                className="flex flex-row items-center gap-2 z-10"
+                className="h-9 flex flex-row items-center gap-2 z-10"
                 style={{ marginRight: 15 }}
               >
                 <InlineEditable

@@ -721,7 +721,7 @@ export default function SearchBar({
       </AnimatePresence>
       <motion.div
         ref={searchContainerRef}
-        className="flex flex-col relative border-1 outline-gray-400 rounded-sm"
+        className="flex flex-col relative outline-1 outline-gray-400 rounded-sm"
         transition={{ duration: 0.2 }}
       >
         <AnimatePresence>
