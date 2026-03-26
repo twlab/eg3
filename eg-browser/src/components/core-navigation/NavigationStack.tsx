@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -35,6 +36,7 @@ export interface NavigationDestinationOptions {
 interface NavigationStackContext {
   path: NavigationPath;
   setPath: (path: NavigationPath) => void;
+  panelCounter?: number;
 }
 
 const NavigationStackContext = createContext<NavigationStackContext | null>(
@@ -76,14 +78,25 @@ export default function NavigationStack({
   children,
   destinations = [],
   rootOptions,
+  panelCounter,
+  onPathChange,
 }: {
   children: React.ReactNode;
   destinations?: NavigationDestination[];
   rootOptions?: NavigationDestinationOptions;
+  panelCounter?: number;
+  onPathChange?: (path: NavigationPath) => void;
 }) {
   const { ref, width, height } = useElementGeometry();
+  useEffect(() => {
+    if (panelCounter) { if (path.length > 0) setPath(path.slice(0, -1)); }
 
-  const [path, setPath] = useState<NavigationPath>([]);
+  }, [panelCounter]);
+  const [path, setPathState] = useState<NavigationPath>([]);
+  const setPath = (p: NavigationPath) => {
+    setPathState(p);
+    onPathChange?.(p);
+  };
 
   const destinationMap: Record<string, NavigationDestination> = useMemo(
     () =>
@@ -109,7 +122,7 @@ export default function NavigationStack({
   );
 
   return (
-    <NavigationStackContext.Provider value={{ path, setPath }}>
+    <NavigationStackContext.Provider value={{ path, setPath, panelCounter }}>
       <div className="flex flex-col h-full bg-white dark:bg-dark-background">
         <NavigationToolbar
           options={currentOptions}

@@ -11,7 +11,7 @@ import LocalTracks from "./destinations/LocalTracks";
 import LocalTextTracks from "./destinations/LocalTextTracks";
 import TrackListUi from "./destinations/TrackListUi";
 
-export default function TracksTab() {
+export default function TracksTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
   const destinations: NavigationDestination[] = useMemo(
     () => [
       {
@@ -68,7 +68,7 @@ export default function TracksTab() {
   );
 
   return (
-    <NavigationStack destinations={destinations}>
+    <NavigationStack destinations={destinations} panelCounter={panelCounter} onPathChange={onNavigationPathChange}>
       <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
         <DescriptiveNavigationLink compact path="annotation" title="Annotation Tracks" description="View and manage genomic annotation tracks like genes, transcripts, and regulatory elements" />
         <DescriptiveNavigationLink compact path="public-data-hubs" title="Public Data Hubs" description="Connect to public genomic data repositories and track collections" />

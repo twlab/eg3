@@ -42,6 +42,7 @@ import AppsTab from "../root-layout/tabs/apps/AppsTab";
 import HelpTab from "../root-layout/tabs/HelpTab";
 import ShareTab from "../root-layout/tabs/ShareTab";
 import SettingsTab from "../root-layout/tabs/SettingsTab";
+import type { NavigationPath } from "../core-navigation/NavigationStack";
 import {
   OutsideClickDetector,
   GenomeSerializer,
@@ -69,6 +70,16 @@ export default function NavBar() {
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
+
+  const [panelCounter, setPanelCounter] = useState(0);
+  const incrementPanelCounter = useCallback(() => {
+    setPanelCounter((c) => c + 1);
+  }, []);
+
+  const [navigationPath, setNavigationPath] = useState<NavigationPath>([]);
+  const handleNavigationPathChange = useCallback((p: NavigationPath) => {
+    setNavigationPath(p);
+  }, []);
 
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
@@ -309,13 +320,12 @@ export default function NavBar() {
               <div className="relative flex-shrink-0" ref={genomePickerRef}>
                 <div
                   style={{
-                    backgroundImage: `url(${
-                      genomeLogoUrl
-                        ? genomeLogoUrl.startsWith("http")
-                          ? genomeLogoUrl
-                          : import.meta.env.BASE_URL + genomeLogoUrl
-                        : ""
-                    })`,
+                    backgroundImage: `url(${genomeLogoUrl
+                      ? genomeLogoUrl.startsWith("http")
+                        ? genomeLogoUrl
+                        : import.meta.env.BASE_URL + genomeLogoUrl
+                      : ""
+                      })`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
@@ -436,9 +446,9 @@ export default function NavBar() {
                   {currentSession !== null ? (
                     <div
                       className="flex flex-row items-center gap-1"
-                      // style={{
-                      //   pointerEvents: sessionPanelOpen ? "none" : "auto",
-                      // }}
+                    // style={{
+                    //   pointerEvents: sessionPanelOpen ? "none" : "auto",
+                    // }}
                     >
                       {userViewRegionModel && genomeConfig && (
                         <TrackRegionController
@@ -582,9 +592,8 @@ export default function NavBar() {
                       console.error("Error updating session:", error);
                     }
                   }}
-                  style={`text-xl font-light border border-blue-500 px-2 ${
-                    currentSession.title.length > 0 ? "" : "font-medium"
-                  }`}
+                  style={`text-xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
+                    }`}
                   tooltip={
                     currentSession.title.length > 0
                       ? "Click to edit"
@@ -742,12 +751,39 @@ export default function NavBar() {
                   initialWidth={300}
                   initialHeight={325}
                   onClose={() => dispatch(setNavigationTab(null))}
+                  onIncrement={incrementPanelCounter}
+                  navigationPath={navigationPath}
                 >
-                  {currentTab === "tracks" && <TracksTab />}
-                  {currentTab === "apps" && <AppsTab />}
-                  {currentTab === "help" && <HelpTab />}
-                  {currentTab === "share" && <ShareTab />}
-                  {currentTab === "settings" && <SettingsTab />}
+                  {currentTab === "tracks" && (
+                    <TracksTab
+                      panelCounter={panelCounter}
+                      onNavigationPathChange={handleNavigationPathChange}
+                    />
+                  )}
+                  {currentTab === "apps" && (
+                    <AppsTab
+                      panelCounter={panelCounter}
+                      onNavigationPathChange={handleNavigationPathChange}
+                    />
+                  )}
+                  {currentTab === "help" && (
+                    <HelpTab
+                      panelCounter={panelCounter}
+                      onNavigationPathChange={handleNavigationPathChange}
+                    />
+                  )}
+                  {currentTab === "share" && (
+                    <ShareTab
+                      panelCounter={panelCounter}
+                      onNavigationPathChange={handleNavigationPathChange}
+                    />
+                  )}
+                  {currentTab === "settings" && (
+                    <SettingsTab
+                      panelCounter={panelCounter}
+                      onNavigationPathChange={handleNavigationPathChange}
+                    />
+                  )}
                 </ResizablePanel>
               </motion.div>
             )}

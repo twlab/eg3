@@ -16,7 +16,7 @@ import { useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { ArrowTurnDownLeftIcon } from "@heroicons/react/24/outline";
 
-export default function SettingsTab() {
+export default function SettingsTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
   const dispatch = useAppDispatch();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const isToolbarVisible = useAppSelector(selectIsToolBarVisible);
@@ -39,7 +39,7 @@ export default function SettingsTab() {
   };
 
   return (
-    <NavigationStack destinations={destinations}>
+    <NavigationStack destinations={destinations} panelCounter={panelCounter} onPathChange={onNavigationPathChange}>
       <div className="flex flex-col gap-4 pt-4">
         <div className="w-full flex items-center justify-between">
           <p>Show Navigator</p>

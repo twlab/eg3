@@ -22,7 +22,7 @@ function compressString(str: string): string {
   return enc.replace(/\+/g, ".").replace(/\//g, "_").replace(/=/g, "-");
 }
 
-export default function ShareTab() {
+export default function ShareTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
   const session = useAppSelector(selectCurrentSession);
   const currentTab = useAppSelector(selectNavigationTab);
   const shortLink = useAppSelector(selectShortLink);

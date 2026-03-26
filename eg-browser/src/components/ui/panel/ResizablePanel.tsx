@@ -17,7 +17,9 @@ interface ResizablePanelProps {
   minHeight?: number;
   maxHeight?: number;
   onClose?: () => void;
+  onIncrement?: () => void;
   children?: React.ReactNode;
+  navigationPath: []
 }
 
 export default function ResizablePanel(props: ResizablePanelProps) {
@@ -29,8 +31,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     maxWidth,
     minHeight = 200,
     maxHeight,
-    onClose,
-    children,
+    onClose, navigationPath,
+    children
   } = props;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -177,7 +179,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     if (ghostRef.current) {
       try {
         document.body.removeChild(ghostRef.current);
-      } catch (e) {}
+      } catch (e) { }
       ghostRef.current = null;
     }
     pendingPreviewRef.current = null;
@@ -215,7 +217,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     return fallback;
   };
 
-  // when navigation tab expands, double the panel dimensions
+  // when navigation tab expands, need bigger panel for content
   useEffect(() => {
     const numericW = parseSizeToNumber(
       width,
@@ -230,12 +232,13 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         : (initialHeight as number) || 325,
     );
     if (expandNavigationTab) {
+
       // setWidth(Math.round(numericW * 4));
       // setHeight(Math.round(numericH * 2));
+      const windowSize = { width: window.innerWidth, height: window.innerHeight };
 
-      const newW = Math.round(1200);
-      const newH = Math.round(700);
-
+      const newW = Math.round(windowSize.width * 0.6);
+      const newH = Math.round(windowSize.height * 0.9);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
@@ -244,9 +247,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       setWidth(newW);
       setHeight(newH);
 
-      // center the panel visually using current DOM rect and stored translate
-      // don't change any positioning CSS; adjust the transform only
-      // if the panel is currently being dragged or resized, skip centering
+      // center the panel when opening for the first time  
       const rect = panelRef.current?.getBoundingClientRect();
       if (
         rect &&
@@ -254,24 +255,25 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         !resizeState.current?.resizing
       ) {
         const desiredLeft = (window.innerWidth - newW) / 2;
-        const desiredTop = (window.innerHeight - newH) / 2;
+        // const desiredTop = (window.innerHeight - newH) / 2;
         const deltaX = Math.round(desiredLeft - rect.left);
-        const deltaY = Math.round(desiredTop - rect.top + 10); // adjust for navbar height
+
+        const deltaY = Math.round(-rect.top); // 36 for navbar height
         setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
       }
     } else {
-      // restore to initial sizes (or keep current if already small)
+      // restore to initial sizes
       setWidth(initialWidth);
       setHeight(initialHeight);
-      // restore previous translate if we saved one
-      if (
-        preExpandRef.current &&
-        !dragState.current?.dragging &&
-        !resizeState.current?.resizing
-      ) {
-        setTranslate(preExpandRef.current.translate);
-      }
-      preExpandRef.current = null;
+      // reset tab selection to navbar when using back button
+      // if (
+      //   preExpandRef.current &&
+      //   !dragState.current?.dragging &&
+      //   !resizeState.current?.resizing
+      // ) {
+      //   setTranslate(preExpandRef.current.translate);
+      // }
+      // preExpandRef.current = null;
     }
   }, [expandNavigationTab]);
 
@@ -453,6 +455,17 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             </kbd>{" "}
             to close or
           </span>
+          {navigationPath.length > 0 ? <button
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onIncrement?.();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white dark:bg-blue-800/30 dark:text-blue-200"
+            title="Increment counter"
+          >
+            BACK
+          </button> : ""}
           <button
             onClick={onClose}
             onPointerDown={(e) => e.stopPropagation()}

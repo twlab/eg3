@@ -12,7 +12,7 @@ import DynamicRecord from "./destinations/DynamicRecord";
 import FetchSequence from "./destinations/FetchSequence";
 import RegionSetSelector from "./destinations/region-set/RegionSetSelector";
 
-export default function AppsTab() {
+export default function AppsTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
   const destinations: NavigationDestination[] = useMemo(
     () => [
       {
@@ -76,7 +76,7 @@ export default function AppsTab() {
   );
 
   return (
-    <NavigationStack destinations={destinations}>
+    <NavigationStack destinations={destinations} panelCounter={panelCounter} onPathChange={onNavigationPathChange}>
       <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
         <DescriptiveNavigationLink compact path="region-set-view" title="Region Set View" description="View and analyze sets of genomic regions" />
         <DescriptiveNavigationLink compact path="gene-plot" title="Gene Plot" description="Create and customize gene-centric visualizations" />
