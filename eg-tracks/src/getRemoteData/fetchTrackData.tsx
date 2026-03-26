@@ -251,6 +251,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         indexUrl
       );
     } else if (trackType === "bigbed") {
+
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
         regionData.trackModel.url
       );

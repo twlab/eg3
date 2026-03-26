@@ -11,7 +11,7 @@ import {
 import FacetTable from "./FacetTable";
 import { PlusIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { ITrackModel } from "wuepgg3-track";
+import { getGenomeConfig, ITrackModel } from "wuepgg3-track";
 
 import {
   addPublicTracksPool,
@@ -19,10 +19,7 @@ import {
   selectPublicTracksPool,
   updateLoadedPublicHub,
 } from "@/lib/redux/slices/hubSlice";
-import {
-  selectTabPanelWidth,
-  selectTabPanelHeight,
-} from "@/lib/redux/slices/tabPanelSlice";
+
 // Local Hooks
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
@@ -32,7 +29,7 @@ import { DataHubParser, Json5Fetcher, TrackModel } from "wuepgg3-track";
 
 export default function PublicDataHubs() {
   useExpandedNavigationTab();
-  const genomeConfig = useCurrentGenome();
+  const _genomeConfig = useCurrentGenome();
   const loadedPublicHub = useAppSelector(selectLoadedPublicHub);
   const publicTracksPool = useAppSelector(selectPublicTracksPool);
   const dispatch = useAppDispatch();
@@ -42,37 +39,68 @@ export default function PublicDataHubs() {
     {},
   );
   const [infoHub, setInfoHub] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<string | null>(null);
 
-  const secondaryGenomes: Array<any> = [];
-  let selectedGenomeName: any = null;
-  if (currentSession) {
-    selectedGenomeName = currentSession!.genomeId;
-  }
 
-  const selectedGenomeConfig = useMemo(() => {
-    // if (selectedGenomeName && selectedGenomeName !== selectedGenomeName) {
-    //   return secondaryGenomes.find(
-    //     (g) => g.genome.getName() === selectedGenomeName
-    //   );
-    // }
 
-    return genomeConfig;
-  }, [secondaryGenomes, selectedGenomeName, genomeConfig]);
+
+  const selectedGenomeHub = useMemo(() => {
+    let selectedHub: Array<any> = []
+    if (currentSession &&
+      _genomeConfig &&
+      (currentSession.genomeId === _genomeConfig.name ||
+        currentSession.genomeId === _genomeConfig.id)) {
+      const hub = _genomeConfig?.publicHubList
+      if (hub) {
+        hub.forEach((x: { genome: any }) => (x.genome = _genomeConfig.id));
+        selectedHub = hub
+      }
+
+
+    }
+    return selectedHub
+
+  }, [_genomeConfig]);
+
+  const secondaryGenomesHub = useMemo(() => {
+    const allSecondaryGenomes: Array<any> = [];
+    if (currentSession) {
+      if (currentSession?.tracks) {
+
+        for (let track of currentSession.tracks) {
+          if (track.querygenome && track.querygenome !== _genomeConfig?.id) {
+            const secondGenomeConfig = getGenomeConfig((track.querygenome));
+            const secondHub = secondGenomeConfig?.publicHubList
+            if (secondHub) {
+              secondHub.forEach((x: { genome: any }) => (x.genome = secondGenomeConfig.genome.getName()));
+              allSecondaryGenomes.push(secondHub);
+            }
+
+
+
+          }
+        }
+
+
+      }
+    }
+    return allSecondaryGenomes.flat()
+
+  }, [currentSession?.tracks]);
+
+
 
   const groupedHubs = useMemo(() => {
-    const hubs =
-      selectedGenomeConfig && selectedGenomeConfig.publicHubList
-        ? selectedGenomeConfig.publicHubList
-        : [];
+    const combinedHubs = [...selectedGenomeHub, ...secondaryGenomesHub];
 
-    const filteredHubs = hubs.filter((hub: any) =>
+    const filteredHubs = combinedHubs.filter((hub: any) =>
       Object.values(hub).some((value: any) =>
         String(value).toLowerCase().includes(searchQuery.toLowerCase()),
       ),
     );
 
     return _.groupBy(filteredHubs, "collection");
-  }, [selectedGenomeConfig, searchQuery]);
+  }, [selectedGenomeHub, secondaryGenomesHub, searchQuery]);
 
   const loadHub = async (hub: any) => {
     const parser = new DataHubParser();
@@ -92,6 +120,7 @@ export default function PublicDataHubs() {
         tracksStartIndex,
         hubBase,
       );
+
       dispatch(addPublicTracksPool([...publicTracksPool, ...tracks]));
       const tracksToShow = tracks.filter((track: any) => track.showOnHubLoad);
       if (tracksToShow.length > 0) {
@@ -121,6 +150,7 @@ export default function PublicDataHubs() {
     return (
       <div key={hub.url} className="flex items-center justify-between py-1">
         <div className="flex items-center">
+          <span className="text-sm mr-2">{hub.genome}</span>
           <span className="text-sm mr-2">{hub.name}</span>
           <button
             className="size-5 rounded-md flex items-center justify-center bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -138,11 +168,10 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center mr-2 ${
-                isLoaded
-                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-              }`}
+              className={`size-6 rounded-md flex items-center justify-center mr-2 ${isLoaded
+                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+                }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -277,6 +306,7 @@ export default function PublicDataHubs() {
       );
     }
   }
+
   return (
     <div>
       {currentSession && publicTracksPool.length > 0 ? (
@@ -288,20 +318,22 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
+            setIsModalOpen={setIsModalOpen}
           />
         </div>
       ) : (
         ""
       )}
-      {renderSearchBar()}
-      <div>
-        {Object.entries(groupedHubs).map(([collection, hubs]) =>
-          renderHubGroup(collection, hubs),
-        )}
-      </div>
-      {renderInfoModal()}
+      {!isModalOpen ? <>{renderSearchBar()}
+        <div>
+          {Object.entries(groupedHubs).map(([collection, hubs]) =>
+            renderHubGroup(collection, hubs),
+          )}
+        </div>
+        {renderInfoModal()}  </> : ''}
+
     </div>
   );
 }

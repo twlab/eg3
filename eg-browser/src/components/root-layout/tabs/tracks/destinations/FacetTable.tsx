@@ -5,6 +5,7 @@ import HubTrackTable from "./HubTrackTable";
 import { TrackModel, ITrackModel, variableIsObject } from "wuepgg3-track";
 
 import "./FacetTable.css";
+import { useNavigation } from "@/components/core-navigation/NavigationStack";
 
 const DEFAULT_ROW = "Sample";
 const DEFAULT_COLUMN = "Assay";
@@ -18,6 +19,7 @@ type FacetTableProps = {
   addedTrackSets: Set<string>;
   publicTrackSets?: Set<string>;
   contentColorSetup: any;
+  setIsModalOpen?: any
 };
 
 const FacetTable: React.FC<FacetTableProps> = ({
@@ -26,7 +28,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
   onTracksAdded,
   addTermToMetaSets,
   addedTrackSets,
-  publicTrackSets,
+  publicTrackSets, setIsModalOpen
 }) => {
   const [state, setState] = useState<any>({
     tracks: [] as TrackModel[],
@@ -163,6 +165,8 @@ const FacetTable: React.FC<FacetTableProps> = ({
   }, [tracks]);
 
   const handleOpenModal = (id: string, found: any[]) => {
+    if (setIsModalOpen)
+      setIsModalOpen(id)
     setState((prevState) => ({
       ...prevState,
       showModalId: id,
@@ -171,6 +175,8 @@ const FacetTable: React.FC<FacetTableProps> = ({
   };
 
   const handleCloseModal = () => {
+    if (setIsModalOpen)
+      setIsModalOpen(null)
     setState((prevState) => ({
       ...prevState,
       showModalId: null,
@@ -436,7 +442,12 @@ const FacetTable: React.FC<FacetTableProps> = ({
   useEffect(() => {
     setColNumber();
   }, [state.columnList.length]);
-
+  useEffect(() => {
+    return () => {
+      if (setIsModalOpen)
+        setIsModalOpen(null)
+    }
+  }, []);
   const renderHeaderSelection = (isColumn: boolean) => {
     let stateToRead, otherState, changeCallback;
     if (isColumn) {
@@ -518,33 +529,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
   } else {
     return (
       <>
-        <div className="facet-container">
-          <div className="facet-config">
-            <div>{renderHeaderSelection(false)}</div>
-            <div
-              className="facet-swap"
-              title="swap row/column"
-              onClick={swapHeader}
-            >
-              &#8646;
-            </div>
-            <div>{renderHeaderSelection(true)}</div>
-          </div>
-          <div className="facet-outer">
-            <div className="facet-content">
-              <div className="facet-holder"></div>
-              <ColumnHeaders list={state.columnList} />
-              <RowHeaders list={state.rowList} />
-              <MatrixGrid
-                rowList={state.rowList}
-                columnList={state.columnList}
-                columnHeader={state.columnHeader}
-              />
-            </div>
-          </div>
-        </div>
-
-        {state.showModalId && state.modalFound && (
+        {state.showModalId && state.modalFound ? (
           <div
             style={{
               backgroundColor: "rgba(111,107,101, 0.07)",
@@ -559,16 +544,16 @@ const FacetTable: React.FC<FacetTableProps> = ({
           >
             <div
               style={{
-                position: "relative",
+
                 backgroundColor: "white",
                 padding: "16px 20px 10px 15px",
-                borderRadius: "4px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+
+
                 textAlign: "left",
                 width: "100%",
                 maxWidth: "90vw",
-                maxHeight: "70vh",
-                overflow: "auto",
+
+
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -596,7 +581,31 @@ const FacetTable: React.FC<FacetTableProps> = ({
               />
             </div>
           </div>
-        )}
+        ) : <div className="facet-container">
+          <div className="facet-config">
+            <div>{renderHeaderSelection(false)}</div>
+            <div
+              className="facet-swap"
+              title="swap row/column"
+              onClick={swapHeader}
+            >
+              &#8646;
+            </div>
+            <div>{renderHeaderSelection(true)}</div>
+          </div>
+          <div className="facet-outer">
+            <div className="facet-content">
+              <div className="facet-holder"></div>
+              <ColumnHeaders list={state.columnList} />
+              <RowHeaders list={state.rowList} />
+              <MatrixGrid
+                rowList={state.rowList}
+                columnList={state.columnList}
+                columnHeader={state.columnHeader}
+              />
+            </div>
+          </div>
+        </div>}
       </>
     );
   }

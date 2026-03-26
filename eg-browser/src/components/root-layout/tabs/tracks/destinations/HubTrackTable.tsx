@@ -19,12 +19,11 @@ interface Props {
 
 const HubTrackTable: React.FC<Props> = ({
   tracks,
-  onTracksAdded = () => {},
+  onTracksAdded = () => { },
   addedTrackSets,
   rowHeader = UNUSED_META_KEY,
   columnHeader = UNUSED_META_KEY,
-  width,
-  height,
+
 }) => {
   const [filteredTracks, setFilteredTracks] = useState(tracks);
   const [searchText, setSearchText] = useState("");
@@ -106,6 +105,7 @@ const HubTrackTable: React.FC<Props> = ({
   };
 
   const columns: Column<TrackModel>[] = useMemo(() => {
+
     const baseColumns: Column<TrackModel>[] = [
       {
         Header: "Genome",
@@ -157,7 +157,7 @@ const HubTrackTable: React.FC<Props> = ({
 
     return baseColumns;
   }, [filteredTracks, getAddTrackCell, rowHeader, columnHeader]);
-
+  console.log(filteredTracks)
   const {
     getTableProps,
     getTableBodyProps,
@@ -238,13 +238,7 @@ const HubTrackTable: React.FC<Props> = ({
   };
 
   const containerStyle: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    fontFamily: "Arial, sans-serif",
-    height: height ? `${height}px` : "100%",
-    width: width ? `${width}px` : undefined,
-    boxSizing: "border-box",
-    minWidth: 0,
+
   };
 
   return (
@@ -266,9 +260,8 @@ const HubTrackTable: React.FC<Props> = ({
               type="text"
               id="searchTrack"
               style={{
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
+                padding: "4px",
+
                 width: "300px",
               }}
               placeholder="H1 or H3K4me3, etc..."
@@ -299,7 +292,7 @@ const HubTrackTable: React.FC<Props> = ({
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              marginBottom: "16px",
+              marginBottom: "8px",
             }}
           >
             <thead>
@@ -336,9 +329,7 @@ const HubTrackTable: React.FC<Props> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px",
-
-            borderTop: "1px solid #e0e0e0",
+            gap: "4px",
             flexShrink: 0,
           }}
         >

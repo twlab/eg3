@@ -52,7 +52,7 @@ class BigSourceWorker {
     const bigWigObj = await this.bigWigPromise;
     const zoomLevel =
       options.zoomLevel === undefined ||
-      options.zoomLevel === BigWigZoomLevels.AUTO
+        options.zoomLevel === BigWigZoomLevels.AUTO
         ? this._getMatchingZoomLevel(bigWigObj, basesPerPixel)
         : Number.parseInt(options.zoomLevel);
 

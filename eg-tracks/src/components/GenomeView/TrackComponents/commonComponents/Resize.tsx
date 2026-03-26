@@ -18,7 +18,7 @@ const useResizeObserver = () => {
           prevSize.current = { width: width, height: prevSize.current.height };
         }
 
-        if (Math.abs(height - prevSize.current.height) > 40) {
+        if (Math.abs(height - prevSize.current.height) > 1) {
           setSize({ width: prevSize.current.width, height: height });
           prevSize.current = { width: prevSize.current.width, height: height };
         }

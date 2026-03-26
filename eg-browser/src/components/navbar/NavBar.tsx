@@ -102,7 +102,7 @@ export default function NavBar() {
       return null;
     }
   }, [currentSession?.userViewRegion, genomeConfig]);
-
+  console.log(navigationPath)
   const handleNewRegionSelect = useCallback(
     (
       coordinate: GenomeCoordinate | string,
