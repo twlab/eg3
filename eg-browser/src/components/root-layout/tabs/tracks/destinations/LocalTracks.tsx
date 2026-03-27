@@ -9,6 +9,7 @@ import React from "react";
 import JSON5 from "json5";
 
 import { readFileAsText, TrackModel } from "wuepgg3-track";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
 export default function LocalTracks() {
   return (
@@ -62,6 +63,7 @@ const ONE_TRACK_FILE_LIST = [
 ]; // all lower case
 
 function AddLocalTracks() {
+  useExpandedNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
   const [trackState, setTrackState] = React.useState<LocalTrackState>({

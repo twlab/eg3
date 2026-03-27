@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux/hooks";
 import {
   setWidth as setTabWidth,
@@ -25,11 +26,11 @@ interface ResizablePanelProps {
 export default function ResizablePanel(props: ResizablePanelProps) {
   const {
     title,
-    initialWidth = 300,
-    initialHeight = 325,
-    minWidth = 300,
+    initialWidth,
+    initialHeight,
+    minWidth = 250,
     maxWidth,
-    minHeight = 200,
+    minHeight = 250,
     maxHeight,
     onClose, navigationPath,
     children
@@ -237,8 +238,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       // setHeight(Math.round(numericH * 2));
       const windowSize = { width: window.innerWidth, height: window.innerHeight };
 
-      const newW = width !== initialWidth ? width : Math.round(windowSize.width * 0.7);
-      const newH = height !== initialHeight ? height : Math.round(windowSize.height * 0.94);
+      const newW = width !== initialWidth ? width : Math.round(windowSize.width * 0.6);
+      const newH = height !== initialHeight ? height : Math.round(windowSize.height * 0.8);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
@@ -400,7 +401,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
     >
       <div
-        className="flex items-center justify-between px-4 py-2 relative transition-all"
+        className="flex items-center justify-between px-2 py-2 relative transition-all"
         style={{
           paddingTop: 2,
           paddingBottom: 2,
@@ -436,17 +437,22 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {navigationPath.length > 0 ? <button
-            onClick={(e) => {
-              e.stopPropagation();
-              props.onIncrement?.();
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="px-2 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white dark:bg-blue-800/30 dark:text-blue-200"
-            title="Increment counter"
-          >
-            BACK
-          </button> : ""}
+          {navigationPath.length > 0 ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onIncrement?.();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="p-1 rounded-full hover:bg-blue-600 hover:text-white dark:hover:bg-blue-800/60 dark:text-blue-200 transition-colors"
+              title="Increment counter"
+              aria-label="Back"
+            >
+              <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+            </button>
+          ) : (
+            ""
+          )}
           <div className="flex items-center">
             <strong className="text-md text-gray-900 dark:text-white font-semibold" >
 
@@ -456,9 +462,9 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             </strong>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           <span className="text-sm text-gray-700 dark:text-gray-200">
-            Press{" "}
+
             <kbd
               className="px-1 font-mono"
               style={{
@@ -475,7 +481,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           <button
             onClick={onClose}
             onPointerDown={(e) => e.stopPropagation()}
-            className="px-1 rounded transition-colors bg-red-100 text-red-700 hover:bg-red-600 hover:text-white dark:bg-red-800/30 dark:text-red-200 dark:hover:bg-red-700 dark:hover:text-white"
+            className="px-1 ml-1 rounded transition-colors border border-red-600 text-red-700 hover:bg-red-600 hover:text-white dark:bg-red-800/30 dark:text-red-200 dark:hover:bg-red-700 dark:hover:text-white"
             title="Close"
           >
             ✕

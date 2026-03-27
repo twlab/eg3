@@ -10,8 +10,10 @@ import {
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
 export default function AnnotationTracks() {
+  useExpandedNavigationTab();
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectCurrentSession);
   const genomeConfig = useCurrentGenome();

@@ -755,8 +755,8 @@ export default function NavBar() {
               >
                 <ResizablePanel
                   title={currentTab || undefined}
-                  initialWidth={300}
-                  initialHeight={325}
+                  initialWidth={250}
+                  initialHeight={300}
                   onClose={() => dispatch(setNavigationTab(null))}
                   onIncrement={incrementPanelCounter}
                   navigationPath={navigationPath}

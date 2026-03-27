@@ -1,3 +1,4 @@
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 import React, { useMemo } from "react";
 import { useTable, Column, useFilters } from "react-table";
 import { ITrackModel } from "wuepgg3-track";
@@ -19,6 +20,7 @@ const TrackList: React.FC<TrackListProps> = ({
   addTracktoAvailable,
   removeTrackFromAvailable,
 }) => {
+  useExpandedNavigationTab();
   const removeTrack = (index: number) => {
     const track = addedTracks[index];
     onTrackRemoved(track.id);
