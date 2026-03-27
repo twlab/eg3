@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import _ from "lodash";
 
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
@@ -40,6 +40,16 @@ export default function PublicDataHubs() {
   );
   const [infoHub, setInfoHub] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<string | null>(null);
+  const [showPoolNotice, setShowPoolNotice] = useState(true);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (publicTracksPool && publicTracksPool.length > 0) {
+      setShowPoolNotice(true);
+      const t = window.setTimeout(() => setShowPoolNotice(false), 5000);
+      return () => window.clearTimeout(t);
+    }
+  }, [publicTracksPool.length]);
 
 
 
@@ -193,14 +203,50 @@ export default function PublicDataHubs() {
     <div
       ref={searchBarGeometry.ref}
       className="sticky top-0 z-20 bg-white dark:bg-dark-background"
+
     >
       <input
         type="text"
         placeholder="Search hubs..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full px-4 py-2 mt-2 outline outline-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+        className="w-full px-4 py-1 mt-3 outline outline-blue-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
       />
+      {publicTracksPool.length > 0 && showPoolNotice ? (
+        <div className="px-4 mt-1 flex justify-center">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => rootRef.current?.scrollIntoView({ behavior: "smooth" })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                rootRef.current?.scrollIntoView({ behavior: "smooth" });
+              }
+            }}
+            className="cursor-pointer text-sm rounded-md px-3 py-2 shadow z-30 flex items-center justify-between mx-auto"
+            aria-live="polite"
+            style={{
+              width: "30%",
+              background: "#B0E4CC",
+            }}
+          >
+            <span>
+              Track facet updated. Click to view.
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPoolNotice(false);
+              }}
+              aria-label="Dismiss"
+              className="ml-2 p-1"
+            >
+              <XMarkIcon className="size-4 text-gray-600 dark:text-gray-200" />
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 
@@ -308,10 +354,10 @@ export default function PublicDataHubs() {
   }
 
   return (
-    <div>
+    <div ref={rootRef}>
       {currentSession && publicTracksPool.length > 0 ? (
         <div>
-          <h2 className="text-base font-medium mb-2">Available Tracks</h2>
+
           <FacetTable
             tracks={publicTracksPool}
             addedTracks={currentSession!.tracks as ITrackModel[]}
@@ -322,11 +368,15 @@ export default function PublicDataHubs() {
             contentColorSetup={{ color: "#222", background: "white" }}
             setIsModalOpen={setIsModalOpen}
           />
+          <hr style={{ borderTop: "2px solid black" }} />
         </div>
+
       ) : (
         ""
       )}
-      {!isModalOpen ? <>{renderSearchBar()}
+
+      {!isModalOpen ? <>
+        {renderSearchBar()}
         <div>
           {Object.entries(groupedHubs).map(([collection, hubs]) =>
             renderHubGroup(collection, hubs),

@@ -149,7 +149,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     el.style.width = `${w}px`;
     el.style.height = `${h}px`;
     el.style.border = "2px dashed rgba(31,111,255,0.7)";
-    el.style.background = "rgba(31,111,255,0.12)";
+    el.style.background = "rgba(255, 255, 255, 0.8)";
     el.style.transition =
       "width 80ms linear, height 80ms linear, left 80ms linear, top 80ms linear";
     el.style.zIndex = "900";
@@ -237,8 +237,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       // setHeight(Math.round(numericH * 2));
       const windowSize = { width: window.innerWidth, height: window.innerHeight };
 
-      const newW = Math.round(windowSize.width * 0.6);
-      const newH = Math.round(windowSize.height * 0.9);
+      const newW = width !== initialWidth ? width : Math.round(windowSize.width * 0.7);
+      const newH = height !== initialHeight ? height : Math.round(windowSize.height * 0.94);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
@@ -248,19 +248,19 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       setHeight(newH);
 
       // center the panel when opening for the first time  
-      const rect = panelRef.current?.getBoundingClientRect();
-      if (
-        rect &&
-        !dragState.current?.dragging &&
-        !resizeState.current?.resizing
-      ) {
-        const desiredLeft = (window.innerWidth - newW) / 2;
-        // const desiredTop = (window.innerHeight - newH) / 2;
-        const deltaX = Math.round(desiredLeft - rect.left);
+      // const rect = panelRef.current?.getBoundingClientRect();
+      // if (
+      //   rect &&
+      //   !dragState.current?.dragging &&
+      //   !resizeState.current?.resizing
+      // ) {
+      //   const desiredLeft = (window.innerWidth - Number(newW)) / 2;
+      //   // const desiredTop = (window.innerHeight - newH) / 2;
+      //   const deltaX = Math.round(desiredLeft - rect.left);
 
-        const deltaY = Math.round(-rect.top); // 36 for navbar height
-        setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
-      }
+      //   const deltaY = Math.round(-rect.top); // 36 for navbar height
+      //   setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+      // }
     } else {
       // restore to initial sizes
       setWidth(initialWidth);
@@ -371,7 +371,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     borderRadius: 5,
     overflow: "hidden",
     boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
-    zIndex: 1000,
+
+
   };
 
   const headerBg = headerHover
@@ -394,8 +395,9 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   return (
     <div
       ref={panelRef}
-      style={panelStyle}
+      style={{ ...panelStyle, zIndex: 51 }}
       className="shadow-lg border dark:border-gray-700 bg-white dark:bg-dark-background"
+
     >
       <div
         className="flex items-center justify-between px-4 py-2 relative transition-all"
@@ -433,13 +435,27 @@ export default function ResizablePanel(props: ResizablePanelProps) {
               : "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0))",
           }}
         />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {navigationPath.length > 0 ? <button
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onIncrement?.();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="px-2 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white dark:bg-blue-800/30 dark:text-blue-200"
+            title="Increment counter"
+          >
+            BACK
+          </button> : ""}
+          <div className="flex items-center">
+            <strong className="text-md text-gray-900 dark:text-white font-semibold" >
 
-        <div className="flex items-center">
-          <div className="text-md text-gray-900 dark:text-white">
-            {title ? title.charAt(0).toUpperCase() + title.slice(1) : title}
+              {title ? title.charAt(0).toUpperCase() + title.slice(1) : title}
+
+              {navigationPath.length > 0 && navigationPath[navigationPath.length - 1]?.path ? ` / ${String(navigationPath[navigationPath.length - 1].path).split("-").map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s).join(" ")}` : ""}
+            </strong>
           </div>
         </div>
-
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-700 dark:text-gray-200">
             Press{" "}
@@ -455,17 +471,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             </kbd>{" "}
             to close or
           </span>
-          {navigationPath.length > 0 ? <button
-            onClick={(e) => {
-              e.stopPropagation();
-              props.onIncrement?.();
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white dark:bg-blue-800/30 dark:text-blue-200"
-            title="Increment counter"
-          >
-            BACK
-          </button> : ""}
+
           <button
             onClick={onClose}
             onPointerDown={(e) => e.stopPropagation()}

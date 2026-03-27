@@ -178,8 +178,8 @@ const TrackList: React.FC<TrackListProps> = ({
                 {...restRowProps}
                 style={trStyle}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    trHoverStyle.backgroundColor)
+                (e.currentTarget.style.backgroundColor =
+                  trHoverStyle.backgroundColor)
                 }
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "")}
               >
@@ -199,7 +199,7 @@ const TrackList: React.FC<TrackListProps> = ({
       </table>
       {savedDeleteTrackList.length > 0 && (
         <React.Fragment>
-          <h3 style={{ marginTop: "10px" }}>Available tracks</h3>
+
           <table {...getTablePropsAdd()} style={tableStyle}>
             <thead>
               {headerGroupsAdd.map((headerGroup) => {
@@ -240,8 +240,8 @@ const TrackList: React.FC<TrackListProps> = ({
                     {...restRowProps}
                     style={trStyle}
                     onMouseOver={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        trHoverStyle.backgroundColor)
+                    (e.currentTarget.style.backgroundColor =
+                      trHoverStyle.backgroundColor)
                     }
                     onMouseOut={(e) =>
                       (e.currentTarget.style.backgroundColor = "")

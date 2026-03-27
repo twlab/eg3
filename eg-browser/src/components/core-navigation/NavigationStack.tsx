@@ -124,11 +124,11 @@ export default function NavigationStack({
   return (
     <NavigationStackContext.Provider value={{ path, setPath, panelCounter }}>
       <div className="flex flex-col h-full bg-white dark:bg-dark-background">
-        <NavigationToolbar
+        {/* <NavigationToolbar
           options={currentOptions}
           canGoBack={path.length > 0}
           pop={() => setPath(path.slice(0, -1))}
-        />
+        /> */}
         <div className="relative flex-1 overflow-hidden min-w-[5vw]" ref={ref}>
           <div
             className="px-4 pb-4 absolute overflow-y-scroll"

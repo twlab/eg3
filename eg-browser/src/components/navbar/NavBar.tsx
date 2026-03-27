@@ -90,6 +90,11 @@ export default function NavBar() {
     return genome ? GenomeSerializer.deserialize(genome) : null;
   }, [genome]);
 
+  useEffect(() => {
+
+    setNavigationPath([])
+
+  }, [currentTab]);
   const userViewRegionModel = useMemo(() => {
     if (!currentSession?.userViewRegion || !genomeConfig) return null;
     try {
@@ -102,7 +107,7 @@ export default function NavBar() {
       return null;
     }
   }, [currentSession?.userViewRegion, genomeConfig]);
-  console.log(navigationPath)
+
   const handleNewRegionSelect = useCallback(
     (
       coordinate: GenomeCoordinate | string,
@@ -740,6 +745,8 @@ export default function NavBar() {
                   !isSmallScreen && tabAnchorLeft != null
                     ? ({ left: `${tabAnchorLeft}px`, right: "auto" } as any)
                     : ({} as any)
+
+
                 }
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -789,7 +796,7 @@ export default function NavBar() {
             )}
           </AnimatePresence>
         </div>
-      </OutsideClickDetector>
+      </OutsideClickDetector >
     </>
   );
 }

@@ -696,6 +696,7 @@ export default function SearchBar({
         setSelectedInput("");
         setSearchResults([]);
       }}
+
     >
       <AnimatePresence>
         {isShowingIsoforms ? (
@@ -726,7 +727,7 @@ export default function SearchBar({
       >
         <AnimatePresence>
           {isSearchFocused &&
-          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: -10, maxHeight: 0 }}
@@ -742,7 +743,7 @@ export default function SearchBar({
         </AnimatePresence>
 
         {/* Outer row for search input + dynamic buttons; increased flex growth & min width */}
-        <div className="flex flex-row items-center w-full h-full flex-grow ">
+        <div className="flex flex-row items-center w-full h-full flex-grow">
           {/* Inner container: give it stronger flex and a minimum width so it claims more horizontal space */}
           <div className="flex flex-row items-center w-full flex-[2]">
             {activeCommand ? (
