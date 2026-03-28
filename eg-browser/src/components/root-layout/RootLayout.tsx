@@ -9,6 +9,13 @@ import {
 } from "../../lib/redux/slices/navigationSlice";
 
 import GenomePicker from "../genome-picker/GenomePicker";
+import NavigationStack from "../core-navigation/NavigationStack";
+import TabView from "../ui/tab-view/TabView";
+import AddCustomGenome from "../genome-hub/AddCustomGenome";
+import ImportSession from "../sessions/ImportSession";
+import SessionList from "../sessions/SessionList";
+import GenomeHubPanel from "../genome-hub/GenomeHubPanel";
+import GenomeSchemaView from "../genome-hub/GenomeSchemaView";
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
 import {
@@ -31,7 +38,10 @@ import {
   setToolBarVisibility,
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import useSmallScreen from "@/lib/hooks/useSmallScreen";
+import { motion } from "framer-motion";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
 
 import {
   getGenomeConfig,
@@ -84,6 +94,8 @@ export default function RootLayout(props: GenomeHubProps) {
   const darkTheme = useAppSelector(selectDarkTheme);
   const initialState = useRef(true);
   const { clearHistory } = useUndoRedo();
+  const isSmallScreen = useSmallScreen();
+  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
     (props.genomeName && props.tracks && props.viewRegion) ||
@@ -98,9 +110,6 @@ export default function RootLayout(props: GenomeHubProps) {
     dispatch(resetState());
     clearHistory();
   }, [sessionId]);
-
-  // For package mode: use Redux state (controlled by props)
-  // For web mode: default to true (ignore persisted state)
   const showNavBar = isPackageMode
     ? useAppSelector(selectIsNavBarVisible)
     : true;
@@ -242,7 +251,91 @@ export default function RootLayout(props: GenomeHubProps) {
         )}
 
         <div className="flex flex-row flex-1 relative bg-black">
-          {!sessionId && (<div
+          {/* Sliding left overlay panel (appears over main tabs, doesn't push layout) */}
+          {!isSmallScreen && !sessionId && (
+            <>
+              <motion.div
+                initial={{ x: "-30vw" }}
+                animate={{ x: leftPanelOpen ? 0 : "-30vw" }}
+                transition={{ type: "tween" }}
+                className="h-full overflow-hidden"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  height: "100%",
+                  width: "30vw",
+                  minWidth: 384,
+                  borderTopRightRadius: CURL_RADIUS,
+                  borderBottomRightRadius: CURL_RADIUS,
+                  zIndex: 60,
+                  background: "var(--color-bg, #fff)",
+                  boxShadow:
+                    "0 0 0 1px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.25)",
+                }}
+              >
+                <NavigationStack
+                  destinations={[
+                    {
+                      component: AddCustomGenome,
+                      path: "add-custom-genome",
+                      options: { title: "Add Custom Genome" },
+                    },
+                    {
+                      component: GenomeSchemaView,
+                      path: "genome-schema",
+                      options: { title: "Genome Schema" },
+                    },
+                    {
+                      component: ImportSession,
+                      path: "import-session",
+                      options: { title: "Import Session" },
+                    },
+                  ]}
+                >
+                  <TabView<"sessions" | "genomes">
+                    initialTab={"sessions"}
+                    tabs={[
+                      {
+                        label: "Sessions",
+                        value: "sessions",
+                        component: (
+                          <SessionList
+                            onSessionClick={(s) => {
+                              dispatch(setCurrentSession(s.id));
+                              setLeftPanelOpen(false);
+                            }}
+                            showImportSessionButton
+                          />
+                        ),
+                      },
+                      {
+                        label: "Genomes",
+                        value: "genomes",
+                        component: <GenomeHubPanel />,
+                      },
+                    ]}
+                  />
+                </NavigationStack>
+              </motion.div>
+
+              <motion.button
+                onClick={() => setLeftPanelOpen((v) => !v)}
+                initial={false}
+                animate={{ x: leftPanelOpen ? "30vw" : 0 }}
+                transition={{ type: "tween" }}
+                className="absolute top-12 left-15 p-2 rounded-full bg-white shadow"
+                style={{ zIndex: 70 }}
+                aria-label={leftPanelOpen ? "Close panel" : "Open panel"}
+              >
+                <ChevronRightIcon
+                  className={`w-5 h-5 transform ${leftPanelOpen ? "rotate-180" : ""}`}
+                />
+              </motion.button>
+            </>
+          )}
+          {/* {!sessionId && (
+            <div
             className="h-full overflow-hidden absolute top-0 left-0 z-20"
             style={{
               width: "25vw",
@@ -256,7 +349,10 @@ export default function RootLayout(props: GenomeHubProps) {
             }}
           >
             <SessionPanel />
-          </div>)}
+          </div>
+          )
+
+          } */}
 
           {/* MARK: - Main Content */}
 
@@ -266,11 +362,11 @@ export default function RootLayout(props: GenomeHubProps) {
               borderRadius: sessionPanelOpen ? CURL_RADIUS : 0,
               transition: "border-radius 0.3s ease",
             }}
-            onClick={
-              sessionPanelOpen
-                ? () => dispatch(setSessionPanelOpen(false))
-                : undefined
-            }
+          // onClick={
+          //   sessionPanelOpen
+          //     ? () => dispatch(setSessionPanelOpen(false))
+          //     : undefined
+          // }
           >
             {/* MARK: - Genome View */}
             <div
@@ -283,7 +379,39 @@ export default function RootLayout(props: GenomeHubProps) {
             >
               {!sessionId && (
                 <div className="h-full w-full">
-                  <GenomePicker />
+                  <NavigationStack
+                    destinations={[
+                      {
+                        component: AddCustomGenome,
+                        path: "add-custom-genome",
+                      },
+                      {
+                        component: ImportSession,
+                        path: "import-session",
+                      },
+                    ]}
+                  >
+                    <TabView<"picker" | "add" | "import">
+                      initialTab={"picker"}
+                      tabs={[
+                        {
+                          label: "Picker",
+                          value: "picker",
+                          component: <GenomePicker />,
+                        },
+                        {
+                          label: "Add Genome",
+                          value: "add",
+                          component: <AddCustomGenome />,
+                        },
+                        {
+                          label: "Import Session",
+                          value: "import",
+                          component: <ImportSession />,
+                        },
+                      ]}
+                    />
+                  </NavigationStack>
                 </div>
               )}
               {sessionId && (
@@ -293,7 +421,7 @@ export default function RootLayout(props: GenomeHubProps) {
               )}
             </div>
 
-            <div
+            {/* <div
               style={{
                 position: "absolute",
                 inset: 0,
@@ -304,7 +432,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 transition: "opacity 0.3s ease",
               }}
               onClick={() => dispatch(setSessionPanelOpen(false))}
-            />
+            /> */}
           </div>
         </div>
       </div>

@@ -10,7 +10,8 @@ import TabView from "@/components/ui/tab-view/TabView";
 import Button from "@/components/ui/button/Button";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
-import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
+
+import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
 
 function compressString(str: string): string {
   const bytes = new TextEncoder().encode(str);
@@ -25,7 +26,7 @@ function compressString(str: string): string {
 
 export default function ShareTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
 
-  useExpandedNavigationTab();
+  useMidSizeNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const currentTab = useAppSelector(selectNavigationTab);
   const shortLink = useAppSelector(selectShortLink);
