@@ -1,5 +1,6 @@
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import {
+  BrowserSession,
   createSession,
   selectCurrentSession,
   setCurrentSession,
@@ -47,16 +48,17 @@ import {
   OutsideClickDetector,
   GenomeSerializer,
   DisplayedRegionModel,
-  TrackRegionController,
   RegionSet,
   getSpeciesInfo,
   getGenomeConfig,
 } from "wuepgg3-track";
+import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
 
 import { selectBundle, updateBundle } from "@/lib/redux/slices/hubSlice";
 import { getDatabase, ref, set } from "firebase/database";
 import SearchBar from "../genome-view/toolbar/SearchBar";
+
 
 export default function NavBar() {
   const bundle = useAppSelector(selectBundle);
@@ -69,7 +71,7 @@ export default function NavBar() {
 
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
-  const currentSession = useAppSelector(selectCurrentSession);
+  const currentSession: BrowserSession | null = useAppSelector(selectCurrentSession);
 
   const [panelCounter, setPanelCounter] = useState(0);
   const incrementPanelCounter = useCallback(() => {
@@ -80,6 +82,7 @@ export default function NavBar() {
   const handleNavigationPathChange = useCallback((p: NavigationPath) => {
     setNavigationPath(p);
   }, []);
+
 
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
@@ -95,17 +98,34 @@ export default function NavBar() {
     setNavigationPath([])
 
   }, [currentTab]);
-  const userViewRegionModel = useMemo(() => {
-    if (!currentSession?.userViewRegion || !genomeConfig) return null;
-    try {
-      const parsed = genomeConfig.navContext.parse(
-        currentSession.userViewRegion,
-      );
-      if (parsed)
-        return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
-    } catch {
-      return null;
+
+  const currentDisplayRegionModel = useMemo(() => {
+
+    if (currentSession && genomeConfig) {
+      if (currentSession.userViewRegion) {
+        const parsed = genomeConfig.navContext.parse(
+          currentSession.userViewRegion as GenomeCoordinate
+
+        )
+        if (parsed)
+          return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
+
+      }
+      else if (currentSession.viewRegion) {
+        const parsed = genomeConfig.navContext.parse(
+          currentSession.viewRegion as GenomeCoordinate
+        );
+        if (parsed)
+          return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
+
+      }
+      else {
+
+        return new DisplayedRegionModel(genomeConfig.navContext)
+
+      }
     }
+
   }, [currentSession?.userViewRegion, genomeConfig]);
 
   const handleNewRegionSelect = useCallback(
@@ -455,25 +475,15 @@ export default function NavBar() {
                     //   pointerEvents: sessionPanelOpen ? "none" : "auto",
                     // }}
                     >
-                      {userViewRegionModel && genomeConfig && (
-                        <TrackRegionController
-                          selectedRegion={userViewRegionModel}
-                          onRegionSelected={handleNewRegionSelect}
-                          contentColorSetup={{
-                            background: "#F8FAFC",
-                            color: "#222",
-                          }}
-                          genomeConfig={genomeConfig as any}
-                          trackManagerState={null}
-                          genomeArr={[]}
-                          genomeIdx={0}
-                          addGlobalState={undefined}
-                          windowWidth={window.innerWidth}
-                          fontSize={16}
-                          padding={0}
-                        />
-                      )}
 
+                      {currentDisplayRegionModel && genomeConfig &&
+                        <Button
+                          onClick={(e) => openTab("regions", e)}
+                          active={currentTab === "regions"}
+                          style={{ backgroundColor: "#1f2e46", color: "white", width: "225px" }}
+                        >
+                          {currentDisplayRegionModel.currentRegionAsString()}
+                        </Button>}
                       <Button
                         onClick={(e) => openTab("tracks", e)}
                         active={currentTab === "tracks"}
@@ -761,6 +771,15 @@ export default function NavBar() {
                   onIncrement={incrementPanelCounter}
                   navigationPath={navigationPath}
                 >
+                  {currentTab === 'regions' && currentDisplayRegionModel && genomeConfig && (
+                    <RegionsPanel
+                      selectedRegion={currentDisplayRegionModel}
+                      onRegionSelected={handleNewRegionSelect}
+                      contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                      genomeConfig={genomeConfig as any}
+                      onClose={() => dispatch(setNavigationTab(null))}
+                    />
+                  )}
                   {currentTab === "tracks" && (
                     <TracksTab
                       panelCounter={panelCounter}

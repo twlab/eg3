@@ -135,27 +135,51 @@ export function TrackContainerRepresentable({
       if (!viewRegion) {
         if (userViewRegion) {
           const navContext = genomeConfig.navContext as NavigationContext;
-          const parsed = navContext.parse(userViewRegion);
-          const { start, end } = parsed;
-          return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+          const parsed: any = navContext.parse(userViewRegion);
+          if (parsed) {
+            const { start, end } = parsed;
+            return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+          }
         } else {
-          return new DisplayedRegionModel(
-            genomeConfig.navContext,
-            ...genomeConfig.navContext.parse(genomeConfig.defaultRegion),
-          );
+          const parsed = genomeConfig.navContext.parse(genomeConfig.defaultRegion)
+          if (parsed) {
+            return new DisplayedRegionModel(
+              genomeConfig.navContext,
+              ...parsed,
+            );
+          }
+          else {
+            return new DisplayedRegionModel(
+              genomeConfig.navContext
+
+            );
+          }
         }
       } else {
         const navContext = genomeConfig.navContext as NavigationContext;
         const parsed = navContext.parse(viewRegion);
-        const { start, end } = parsed;
-        return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+        if (parsed) {
+          const { start, end } = parsed;
+          return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+        }
       }
     } catch (e) {
       // console.error(e);
-      return new DisplayedRegionModel(
-        genomeConfig.navContext,
-        ...genomeConfig.navContext.parse(genomeConfig.defaultRegion),
-      );
+
+      const parsed = genomeConfig.navContext.parse(genomeConfig.defaultRegion)
+      if (parsed) {
+        return new DisplayedRegionModel(
+          genomeConfig.navContext,
+          ...parsed,
+        );
+      }
+      else {
+        return new DisplayedRegionModel(
+          genomeConfig.navContext
+
+        );
+      }
+
     }
   }, [viewRegion, genomeConfig, selectedRegionSet]);
 

@@ -7,7 +7,7 @@ import {
   selectTabPanelWidth,
   selectTabPanelHeight,
 } from "../../../lib/redux/slices/tabPanelSlice";
-import { selectExpandNavigationTab } from "../../../lib/redux/slices/navigationSlice";
+import { selectExpandNavigationTab, selectMidSizeNavigationTab } from "../../../lib/redux/slices/navigationSlice";
 
 interface ResizablePanelProps {
   title?: string;
@@ -20,7 +20,7 @@ interface ResizablePanelProps {
   onClose?: () => void;
   onIncrement?: () => void;
   children?: React.ReactNode;
-  navigationPath: []
+  navigationPath: Array<any>;
 }
 
 export default function ResizablePanel(props: ResizablePanelProps) {
@@ -37,8 +37,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   } = props;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState<number | string>(initialWidth);
-  const [height, setHeight] = useState<number | string>(initialHeight);
+  const [width, setWidth] = useState<number | string>(initialWidth as number);
+  const [height, setHeight] = useState<number | string>(initialHeight as number);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [headerHover, setHeaderHover] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -62,6 +62,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const sliceWidth = useAppSelector(selectTabPanelWidth);
   const sliceHeight = useAppSelector(selectTabPanelHeight);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
+  const midSizeNavTab = useAppSelector(selectMidSizeNavigationTab);
   const THROTTLE_MS = 1000; // throttle before dispatching
   const DIFF_THRESHOLD = 15;
   const lastDispatchRef = useRef<number>(0);
@@ -262,10 +263,26 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       //   const deltaY = Math.round(-rect.top); // 36 for navbar height
       //   setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
       // }
-    } else {
+    }
+    else if (midSizeNavTab) {
+
+      const windowSize = { width: window.innerWidth, height: window.innerHeight };
+
+      const newW = width !== initialWidth && width !== Math.round(windowSize.width * 0.6) ? width : Math.round(windowSize.width * 0.3);
+      const newH = height !== initialHeight && height !== Math.round(windowSize.height * 0.8) ? height : Math.round(windowSize.height * 0.5);
+      // store current translate/size so we can restore on collapse
+      if (!preExpandRef.current) {
+        preExpandRef.current = { translate: { ...translate }, width, height };
+      }
+
+      setWidth(newW);
+      setHeight(newH);
+    }
+
+    else {
       // restore to initial sizes
-      setWidth(initialWidth);
-      setHeight(initialHeight);
+      setWidth(Number(initialWidth));
+      setHeight(Number(initialHeight));
       // reset tab selection to navbar when using back button
       // if (
       //   preExpandRef.current &&
@@ -276,7 +293,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       // }
       // preExpandRef.current = null;
     }
-  }, [expandNavigationTab]);
+  }, [expandNavigationTab, midSizeNavTab]);
 
   useEffect(() => {
     const onPointerMove = (ev: PointerEvent) => {

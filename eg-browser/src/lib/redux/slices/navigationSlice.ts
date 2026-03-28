@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "../store";
+import { RootState } from "../createStore";
 
-export type NavigationRoute = 'tracks' | 'apps' | 'help' | 'share' | 'settings';
+
+export type NavigationRoute = 'tracks' | 'apps' | 'help' | 'share' | 'settings' | 'regions';
 
 export interface NavigationPathElement {
     path: NavigationRoute,
@@ -17,6 +18,7 @@ export const navigationSlice = createSlice({
         tab: null as NavigationRoute | null,
         sessionPanelOpen: false,
         expandNavigationTab: false,
+        useMidSizeNavigationTab: false
     },
     reducers: {
         setNavigationPath: (state, action: PayloadAction<NavigationPath>) => {
@@ -33,6 +35,9 @@ export const navigationSlice = createSlice({
         },
         setExpandNavigationTab: (state, action: PayloadAction<boolean>) => {
             state.expandNavigationTab = action.payload;
+        },
+        setMidSizeNavigationTab: (state, action: PayloadAction<boolean>) => {
+            state.useMidSizeNavigationTab = action.payload;
         }
     }
 });
@@ -42,12 +47,14 @@ export const {
     pushNavigationPath,
     setNavigationTab,
     setSessionPanelOpen,
-    setExpandNavigationTab
+    setExpandNavigationTab,
+    setMidSizeNavigationTab
 } = navigationSlice.actions;
 
 export const selectNavigationPath = (state: RootState) => state.navigation.path;
 export const selectNavigationTab = (state: RootState) => state.navigation.tab;
 export const selectSessionPanelOpen = (state: RootState) => state.navigation.sessionPanelOpen;
 export const selectExpandNavigationTab = (state: RootState) => state.navigation.expandNavigationTab;
+export const selectMidSizeNavigationTab = (state: RootState) => state.navigation.useMidSizeNavigationTab;
 
 export default navigationSlice.reducer;

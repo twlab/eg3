@@ -702,9 +702,7 @@ export default function SearchBar({
         {isShowingIsoforms ? (
           <motion.div
             className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-50"
-            initial={{ opacity: 0, y: -10, maxHeight: 0 }}
-            animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
-            exit={{ opacity: 0, y: -10, maxHeight: 0 }}
+
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <IsoformSelection
@@ -730,9 +728,7 @@ export default function SearchBar({
             ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
-              initial={{ opacity: 0, y: -10, maxHeight: 0 }}
-              animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
-              exit={{ opacity: 0, y: -10, maxHeight: 0 }}
+
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {renderSearchSuggestions()}
