@@ -239,8 +239,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       // setHeight(Math.round(numericH * 2));
       const windowSize = { width: window.innerWidth, height: window.innerHeight };
 
-      const newW = width !== initialWidth ? width : Math.round(windowSize.width * 0.6);
-      const newH = height !== initialHeight ? height : Math.round(windowSize.height * 0.8);
+      const newW = width !== initialWidth && width !== Math.round(windowSize.width * 0.3) ? width : Math.round(windowSize.width * 0.6);
+      const newH = height !== initialHeight && height !== Math.round(windowSize.height * 0.5) ? height : Math.round(windowSize.height * 0.8);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };

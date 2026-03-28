@@ -1,7 +1,6 @@
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import {
   BrowserSession,
-  createSession,
   selectCurrentSession,
   setCurrentSession,
   updateCurrentSession,
@@ -27,7 +26,8 @@ import {
   setNavigationTab,
   setSessionPanelOpen,
 } from "../../lib/redux/slices/navigationSlice";
-import { GENOME_LIST, versionToLogoUrl } from "../genome-picker/genome-list";
+import { getSpeciesInfo } from "../genome-picker/genome-list";
+import TabGenomePicker from "./TabGenomePicker";
 import Button from "../ui/button/Button";
 import ResizablePanel from "../ui/panel/ResizablePanel";
 import IconButton from "../ui/button/IconButton";
@@ -49,8 +49,8 @@ import {
   GenomeSerializer,
   DisplayedRegionModel,
   RegionSet,
-  getSpeciesInfo,
-  getGenomeConfig,
+
+
 } from "wuepgg3-track";
 import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
@@ -189,52 +189,14 @@ export default function NavBar() {
     }
   };
 
-  const genomeLogoUrl: string | null = genome?.name
-    ? ((getSpeciesInfo(genome.name)?.logo || null) ??
-      (versionToLogoUrl[genome.name]?.croppedUrl || null) ??
-      (versionToLogoUrl[genome.name]?.logoUrl || null))
+  const genomeLogoUrl: { name: string; logo: string } | null = genome?.name
+    ? (getSpeciesInfo(genome.name))
+
     : null;
+  console.log(getSpeciesInfo("hg38"))
   // const genomeLogoUrl: string | null = null;
 
-  const [genomePickerOpen, setGenomePickerOpen] = useState(false);
-  const [genomeSearchQuery, setGenomeSearchQuery] = useState("");
-  const genomePickerRef = useRef<HTMLDivElement>(null);
-
-  const filteredGenomes = useMemo(
-    () =>
-      GENOME_LIST.filter(
-        (g) =>
-          !genomeSearchQuery ||
-          g.name.toLowerCase().includes(genomeSearchQuery.toLowerCase()) ||
-          g.versions.some((v) =>
-            v.toLowerCase().includes(genomeSearchQuery.toLowerCase()),
-          ),
-      ),
-    [genomeSearchQuery],
-  );
-
-  const handlePickGenome = (assemblyName: string) => {
-    const config = getGenomeConfig(assemblyName);
-    if (config) {
-      dispatch(createSession({ genome: GenomeSerializer.serialize(config) }));
-    }
-    setGenomePickerOpen(false);
-    setGenomeSearchQuery("");
-  };
-
-  useEffect(() => {
-    if (!genomePickerOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        genomePickerRef.current &&
-        !genomePickerRef.current.contains(e.target as Node)
-      ) {
-        setGenomePickerOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [genomePickerOpen]);
+  // Genome picker is now a tabbed panel component (TabGenomePicker).
 
   // Monitor localStorage quota errors
   useEffect(() => {
@@ -341,118 +303,7 @@ export default function NavBar() {
                   </>
                 )}
             </div>
-            {currentSession && (
-              <div className="relative flex-shrink-0" ref={genomePickerRef}>
-                <div
-                  style={{
-                    backgroundImage: `url(${genomeLogoUrl
-                      ? genomeLogoUrl.startsWith("http")
-                        ? genomeLogoUrl
-                        : import.meta.env.BASE_URL + genomeLogoUrl
-                      : ""
-                      })`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                    opacity: genomeLogoUrl ? 0.8 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (genomeLogoUrl)
-                      (e.currentTarget as HTMLElement).style.opacity = "1";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (genomeLogoUrl)
-                      (e.currentTarget as HTMLElement).style.opacity = "0.8";
-                  }}
-                  className={classNames(
-                    "z-10",
-                    "h-9",
-                    "w-45",
-                    "rounded-xs",
-                    "flex-shrink-0",
-                    "transition-opacity",
-                    "relative",
-                    "overflow-hidden",
-                    "cursor-pointer",
-                    genomePickerOpen ? "ring-2 ring-blue-400" : "",
-                    sessionPanelOpen
-                      ? "bg-secondary dark:bg-dark-secondary"
-                      : "",
-                    genomeLogoUrl && !sessionPanelOpen
-                      ? "outline outline-gray-200"
-                      : "",
-                  )}
-                  onClick={() => {
-                    setGenomeSearchQuery("");
-                    setGenomePickerOpen((v) => !v);
-                  }}
-                >
-                  {currentSession.title.length > 0 && genome?.name && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span
-                        className="leading-tight text-center break-words w-full"
-                        style={{
-                          color: genomeLogoUrl ? "white" : undefined,
-                          fontSize: "16px",
-                        }}
-                      >
-                        <span
-                          className={
-                            genomeLogoUrl
-                              ? ""
-                              : "text-gray-700 dark:text-dark-primary"
-                          }
-                        >
-                          {versionToLogoUrl[genome.name]?.name ? (
-                            <>
-                              {versionToLogoUrl[genome.name].name} -{" "}
-                              <i>{genome.name}</i>
-                            </>
-                          ) : (
-                            <i>{genome.name}</i>
-                          )}
-                        </span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-                {genomePickerOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-[32rem] bg-white dark:bg-dark-background border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl z-50 overflow-hidden">
-                    <div className="p-2 border-b border-gray-200 dark:border-gray-600">
-                      <input
-                        type="text"
-                        value={genomeSearchQuery}
-                        onChange={(e) => setGenomeSearchQuery(e.target.value)}
-                        placeholder="Search genomes..."
-                        className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-dark-background text-gray-800 dark:text-dark-primary outline-none focus:border-blue-400"
-                        autoFocus
-                      />
-                    </div>
-                    <div className="max-h-80 overflow-y-auto p-2">
-                      <div className="grid grid-cols-3 gap-2">
-                        {filteredGenomes.map((g) => (
-                          <div key={g.name} className="flex flex-col gap-1">
-                            <div className="text-xs text-gray-400 dark:text-gray-500 uppercase font-semibold tracking-wide text-center pb-0.5 border-b border-gray-200 dark:border-gray-600">
-                              {g.name}
-                            </div>
-                            {g.versions.map((v) => (
-                              <button
-                                key={v}
-                                onClick={() => handlePickGenome(v)}
-                                className="text-center px-1 py-1.5 text-xs italic text-gray-700 dark:text-dark-primary bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-dark-secondary border border-gray-200 dark:border-gray-600 rounded transition-colors truncate"
-                                title={v}
-                              >
-                                {v}
-                              </button>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Genome selector moved to a tabbed panel. A compact genome Button appears in the button row below. */}
 
             <div className="flex items-center">
               {isSmallScreen ? (
@@ -475,6 +326,100 @@ export default function NavBar() {
                     //   pointerEvents: sessionPanelOpen ? "none" : "auto",
                     // }}
                     >
+
+                      {/* Compact genome button (opens TabGenomePicker) */}
+                      {genome?.name && (
+                        <Button
+                          onClick={(e) => openTab("tabgenomepicker", e)}
+                          active={currentTab === "tabgenomepicker"}
+                          style={{
+                            backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
+                            color: "#0f172a",
+                            width: "160px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "6px 8px",
+                          }}
+                        >
+
+                          <div className="relative flex-shrink-0" >
+                            <div
+                              style={{
+                                backgroundImage: `url(${genomeLogoUrl?.logo
+                                  ? genomeLogoUrl.logo.startsWith("http")
+                                    ? genomeLogoUrl.logo
+                                    : import.meta.env.BASE_URL + genomeLogoUrl.logo
+                                  : ""
+                                  })`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                backgroundRepeat: "no-repeat",
+                                opacity: genomeLogoUrl?.logo ? 0.8 : 1,
+                                width: 160
+                              }}
+                              onMouseEnter={(e) => {
+                                if (genomeLogoUrl)
+                                  (e.currentTarget as HTMLElement).style.opacity = "1";
+                              }}
+                              onMouseLeave={(e) => {
+                                if (genomeLogoUrl)
+                                  (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                              }}
+                              className={classNames(
+                                "z-10",
+                                "h-9",
+
+                                "rounded-xs",
+                                "flex-shrink-0",
+                                "transition-opacity",
+                                "relative",
+                                "overflow-hidden",
+                                "cursor-pointer",
+
+                                sessionPanelOpen
+                                  ? "bg-secondary dark:bg-dark-secondary"
+                                  : "",
+                                genomeLogoUrl && !sessionPanelOpen
+                                  ? "outline outline-gray-200"
+                                  : "",
+                              )}
+
+                            >
+                              {currentSession.title.length > 0 && genome?.name && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span
+                                    className="leading-tight text-center break-words w-full"
+                                    style={{
+                                      color: genomeLogoUrl ? "white" : undefined,
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    <span
+                                      className={
+                                        genomeLogoUrl
+                                          ? ""
+                                          : "text-gray-700 dark:text-dark-primary"
+                                      }
+                                    >
+                                      {genomeLogoUrl?.name ? (
+                                        <>
+                                          {genomeLogoUrl.name} - {" "}
+                                          <i>{genome.name}</i>
+                                        </>
+                                      ) : (
+                                        <i>{genome.name}</i>
+                                      )}
+                                    </span>
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                          </div>
+
+                        </Button>
+                      )}
 
                       {currentDisplayRegionModel && genomeConfig &&
                         <Button
@@ -771,6 +716,7 @@ export default function NavBar() {
                   onIncrement={incrementPanelCounter}
                   navigationPath={navigationPath}
                 >
+
                   {currentTab === 'regions' && currentDisplayRegionModel && genomeConfig && (
                     <RegionsPanel
                       selectedRegion={currentDisplayRegionModel}
@@ -779,6 +725,9 @@ export default function NavBar() {
                       genomeConfig={genomeConfig as any}
                       onClose={() => dispatch(setNavigationTab(null))}
                     />
+                  )}
+                  {currentTab === "tabgenomepicker" && (
+                    <TabGenomePicker onClose={() => dispatch(setNavigationTab(null))} />
                   )}
                   {currentTab === "tracks" && (
                     <TracksTab

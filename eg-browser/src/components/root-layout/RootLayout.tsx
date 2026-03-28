@@ -173,7 +173,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                  props.viewRegion === null
+                    props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -194,12 +194,12 @@ export default function RootLayout(props: GenomeHubProps) {
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
@@ -242,7 +242,7 @@ export default function RootLayout(props: GenomeHubProps) {
         )}
 
         <div className="flex flex-row flex-1 relative bg-black">
-          <div
+          {!sessionId && (<div
             className="h-full overflow-hidden absolute top-0 left-0 z-20"
             style={{
               width: "25vw",
@@ -256,7 +256,7 @@ export default function RootLayout(props: GenomeHubProps) {
             }}
           >
             <SessionPanel />
-          </div>
+          </div>)}
 
           {/* MARK: - Main Content */}
 
@@ -287,9 +287,9 @@ export default function RootLayout(props: GenomeHubProps) {
                 </div>
               )}
               {sessionId && (
-                <GenomeErrorBoundary onGoHome={handleGoHome}>
-                  <GenomeView />
-                </GenomeErrorBoundary>
+                // <GenomeErrorBoundary onGoHome={handleGoHome}>
+                <GenomeView />
+                // </GenomeErrorBoundary>
               )}
             </div>
 

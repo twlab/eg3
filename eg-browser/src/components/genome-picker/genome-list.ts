@@ -162,17 +162,15 @@ export const GENOME_LIST: Genome[] = [
   },
 ];
 
-export const versionToLogoUrl: Record<
-  string,
-  { logoUrl: string; croppedUrl: string | undefined; name: string }
-> = {};
 
-for (const genome of GENOME_LIST) {
-  for (const version of genome.versions) {
-    versionToLogoUrl[version] = {
-      logoUrl: genome.logoUrl,
-      croppedUrl: genome.croppedUrl,
-      name: genome.name,
-    };
+
+
+export function getSpeciesInfo(genomeName: string) {
+
+  for (let genome of GENOME_LIST) {
+    if (genome.versions.includes(genomeName)) {
+      return { name: genome.name, logo: genome.logoUrl };
+    }
   }
+  return { name: "", logo: "" };
 }

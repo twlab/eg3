@@ -35,7 +35,6 @@ export function TrackContainerRepresentable({
   tool,
   Toolbar = {},
   selectedRegionSet,
-  genomeName,
   setScreenshotData,
   isScreenShotOpen,
   overrideViewRegion,

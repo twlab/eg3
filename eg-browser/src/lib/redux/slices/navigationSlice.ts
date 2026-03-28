@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../createStore";
 
 
-export type NavigationRoute = 'tracks' | 'apps' | 'help' | 'share' | 'settings' | 'regions';
+export type NavigationRoute = 'tracks' | 'apps' | 'help' | 'share' | 'settings' | 'regions' | 'tabgenomepicker';
 
 export interface NavigationPathElement {
     path: NavigationRoute,

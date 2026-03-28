@@ -12,10 +12,10 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 
 import placeholder from "../../assets/placeholder.png";
-import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
+import { useAppDispatch } from "../../lib/redux/hooks";
 import NavigationStack from "../core-navigation/NavigationStack";
 import SessionList from "../sessions/SessionList";
-import Progress from "../ui/progress/Progress";
+
 import { GENOME_LIST } from "./genome-list";
 import TabView from "../ui/tab-view/TabView";
 import GenomeHubPanel from "../genome-hub/GenomeHubPanel";
@@ -32,10 +32,7 @@ const CURL_RADIUS = 15;
 
 export default function GenomePicker() {
   const dispatch = useAppDispatch();
-  const sessions = useAppSelector(selectSessions);
-
   const isSmallScreen = useSmallScreen();
-
   const [selectedPath, setSelectedPath] = useState<
     [GenomeName, AssemblyName] | null
   >(null);

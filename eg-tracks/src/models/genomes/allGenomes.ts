@@ -359,6 +359,7 @@ export function getGenomeConfig(genomeName: string): GenomeConfig | null {
 }
 
 export function getSpeciesInfo(genomeName: string) {
+
   for (const [species, details] of Object.entries(treeOfLife)) {
     if (details.assemblies.includes(genomeName)) {
       return { name: species, logo: details.logoUrl, color: details.color };
