@@ -12,6 +12,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 
 import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
 function compressString(str: string): string {
   const bytes = new TextEncoder().encode(str);
@@ -25,7 +26,7 @@ function compressString(str: string): string {
 }
 
 export default function ShareTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
-
+  // useExpandedNavigationTab()
   useMidSizeNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const currentTab = useAppSelector(selectNavigationTab);
