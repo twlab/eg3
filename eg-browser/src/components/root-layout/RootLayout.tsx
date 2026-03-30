@@ -264,7 +264,7 @@ export default function RootLayout(props: GenomeHubProps) {
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  height: "100%",
+                  height: window.innerHeight,
                   width: "35vw",
 
                   borderTopRightRadius: CURL_RADIUS,
@@ -283,6 +283,7 @@ export default function RootLayout(props: GenomeHubProps) {
                     setLeftPanelOpen(false);
                   }}
                   showImportSessionButton
+                  onRequestClose={() => setLeftPanelOpen(false)}
                 />
 
 
@@ -295,7 +296,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 initial={false}
                 animate={{ x: leftPanelOpen ? "35vw" : 0 }}
                 transition={{ type: "tween" }}
-                className="absolute top-12 left-15 p-2 rounded-full bg-white shadow"
+                className="absolute top-12 p-2 rounded-full bg-white shadow"
                 style={{ zIndex: 70 }}
                 aria-label={leftPanelOpen ? "Close panel" : "Open panel"}
               >

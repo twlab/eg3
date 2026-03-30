@@ -15,7 +15,7 @@ import {
 } from "@heroicons/react/16/solid";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Switch from "@/components/ui/switch/Switch";
 import {
   selectSessionSortPreference,
@@ -29,9 +29,11 @@ import { generateUUID } from "wuepgg3-track";
 export default function SessionList({
   onSessionClick,
   showImportSessionButton = false,
+  onRequestClose,
 }: {
   onSessionClick: (session: BrowserSession) => void;
   showImportSessionButton?: boolean;
+  onRequestClose?: () => void;
 }) {
   const dispatch = useAppDispatch();
   const sessions = useAppSelector(selectSessions);
@@ -48,15 +50,35 @@ export default function SessionList({
     });
   }, [sessions, sortPreference]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!onRequestClose) return;
+
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        onRequestClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [onRequestClose]);
+
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
 
   return (
-    <div className="flex flex-col gap-4 py-1 h-full min-h-0 overflow-y-auto pr-2">
+    <div ref={containerRef} className="flex flex-col h-full">
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between p-2">
+        <div className="flex items-center gap-1">
           <p>Sort by last updated</p>
           <Switch
             checked={sortPreference === "updatedAt"}
@@ -67,39 +89,42 @@ export default function SessionList({
             }
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <ClearAllButton onClearAll={handleClearAll} compact />
         </div>
       </div>
-      {sortedSessions.length === 0 ? (
-        <EmptyView
-          title="No Sessions Found"
-          description="Sessions are stored locally in your browser. Start a session and it will appear here."
-        />
-      ) : (
-        <AnimatePresence initial={false}>
-          {sortedSessions.map((session) => (
-            <motion.div
-              key={session.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <SessionListItem
-                session={session}
-                onClick={() => onSessionClick(session)}
-                sortPreference={sortPreference}
-                allowDelete={
-                  currentSessionId === null || session.id !== currentSessionId
-                }
-              />
-            </motion.div>
-          ))}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {sortedSessions.length === 0 ? (
+          <EmptyView
+            title="No Sessions Found"
+            description="Sessions are stored locally in your browser. Start a session and it will appear here."
+          />
+        ) : (
+          <AnimatePresence initial={false}>
+            {sortedSessions.map((session) => (
+              <motion.div
+                key={session.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.1 }}
+                className="mb-1 last:mb-0"
+              >
+                <SessionListItem
+                  session={session}
+                  onClick={() => onSessionClick(session)}
+                  sortPreference={sortPreference}
+                  allowDelete={
+                    currentSessionId === null || session.id !== currentSessionId
+                  }
+                />
+              </motion.div>
+            ))}
 
-        </AnimatePresence>
-      )}
+          </AnimatePresence>
+        )}
+      </div>
     </div>
   );
 }

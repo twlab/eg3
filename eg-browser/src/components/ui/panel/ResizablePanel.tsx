@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux/hooks";
 import {
   setWidth as setTabWidth,
@@ -498,10 +498,11 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           <button
             onClick={onClose}
             onPointerDown={(e) => e.stopPropagation()}
-            className="px-1 ml-1 rounded transition-colors  text-red-700 hover:bg-red-600 hover:text-white dark:bg-red-800/30 dark:text-red-200 dark:hover:bg-red-700 dark:hover:text-white"
+            aria-label="Close"
             title="Close"
+            className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 ml-1"
           >
-            ✕
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
       </div>
