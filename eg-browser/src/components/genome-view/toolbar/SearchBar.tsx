@@ -371,26 +371,26 @@ export default function SearchBar({
     return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
   };
 
-  const iconSizeStyle = {
-    width: `${getIconSize()}px`,
-    height: `${getIconSize()}px`,
-  };
+  // const iconSizeStyle = {
+  //   width: `${getIconSize()}px`,
+  //   height: `${getIconSize()}px`,
+  // };
 
-  const getButtonStyle = () => ({
-    padding: `${buttonPadding}px`,
-  });
+  // const getButtonStyle = () => ({
+  //   padding: `${buttonPadding}px`,
+  // });
 
-  const getRegionButtonSize = () => {
-    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
-  };
+  // const getRegionButtonSize = () => {
+  //   return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  // };
 
-  const getArrowIconSize = () => {
-    return `${Math.max(10, Math.min(14, (windowWidth || 1920) * 0.007))}px`;
-  };
+  // const getArrowIconSize = () => {
+  //   return `${Math.max(10, Math.min(14, (windowWidth || 1920) * 0.007))}px`;
+  // };
 
-  const getEmojiSize = () => {
-    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
-  };
+  // const getEmojiSize = () => {
+  //   return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  // };
 
   const parseRegion = (query: string) => {
     onNewRegionSelect(query, highlightSearch.current);
@@ -518,7 +518,7 @@ export default function SearchBar({
       suggestions.push(
         <SearchSuggestionBase
           key="region-message"
-          icon={<span style={{ fontSize: getEmojiSize() }}>🎯</span>}
+          icon={<span style={{ fontSize: "16px" }}>🎯</span>}
           text={`"${searchInput}"`}
           desc="You're entering coordinates. Press enter or click here to jump to this region."
           onClick={() => parseRegion(searchInput)}
@@ -553,12 +553,12 @@ export default function SearchBar({
             className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-dark-secondary dark:text-dark-primary cursor-pointer flex items-center gap-1.5"
             onClick={() => setActiveCommand(command)}
           >
-            <span style={{ fontSize: getEmojiSize() }}>
+            <span style={{ fontSize: "16px" }}>
               {typeToEmoji[command]}
             </span>
             <span
               className="text-gray-600 dark:text-dark-primary"
-              style={{ fontSize: fontSize }}
+              style={{ fontSize: "16px" }}
             >
               /{command}
             </span>
@@ -745,11 +745,11 @@ export default function SearchBar({
             {activeCommand ? (
               <div
                 className="flex items-center bg-secondary dark:bg-dark-secondary rounded-md mr-1.5 flex-shrink-0"
-                style={getButtonStyle()}
+                style={{ padding: 1 }}
               >
                 <span
                   className="text-tint dark:text-dark-primary leading-none"
-                  style={{ fontSize: fontSize }}
+                  style={{ fontSize: "16px" }}
                 >
                   /{activeCommand}
                 </span>
@@ -757,7 +757,7 @@ export default function SearchBar({
             ) : (
               <MagnifyingGlassIcon
                 className="text-gray-400 flex-shrink-0 mx-1"
-                style={iconSizeStyle}
+                style={{ width: "16px", height: "16px" }}
               />
             )}
             <input
@@ -769,7 +769,7 @@ export default function SearchBar({
               placeholder={
                 activeCommand
                   ? `Search ${activeCommand}s`
-                  : "Search region/gene"
+                  : "region,gene,snp..."
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
@@ -796,15 +796,15 @@ export default function SearchBar({
                 }
                 className="flex items-center justify-center rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
                 style={{
-                  width: getRegionButtonSize(),
-                  height: getRegionButtonSize(),
+                  width: "32px",
+                  height: "32px",
                 }}
               >
                 <ArrowRightIcon
                   className="text-tint"
                   style={{
-                    width: getArrowIconSize(),
-                    height: getArrowIconSize(),
+                    width: "16px",
+                    height: "16px",
                   }}
                 />
               </button>

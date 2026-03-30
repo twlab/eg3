@@ -24,8 +24,8 @@ export default function TabView<T extends string>({
   );
 
   return (
-    <div className="flex flex-col gap-1 h-full">
-      <div className="flex flex-row items-center justify-between gap-1 bg-gray-300 dark:bg-dark-surface rounded-lg p-1 relative">
+    <div className="flex flex-col gap-1 h-full min-h-0 overflow-y-hidden">
+      <div className="flex flex-row items-center justify-between bg-gray-300 dark:bg-dark-surface relative h-[30px]">
         <div
           className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
           style={{
@@ -46,18 +46,9 @@ export default function TabView<T extends string>({
           </div>
         ))}
       </div>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={selectedTabId}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="flex-1"
-        >
-          {selectedTab?.component}
-        </motion.div>
-      </AnimatePresence>
+
+      {selectedTab?.component}
+
     </div>
   );
 }

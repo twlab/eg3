@@ -275,6 +275,7 @@ class NavigationContext {
     // convert string into standard format
     // Pattern: "chr7   154900269 chr8    1379003" -> "chr7:154900269-chr8:1379003"
     // Pattern: "chr7 27103672 27424040" -> "chr7:27103672-27424040"
+
     let normalizedStr = str.trim();
 
     // check for whitespace multi-chromosome format: "chr7 154900269 chr8 1379003"

@@ -7,14 +7,16 @@ import {
 import {
   clearAllGenomes,
   refreshLocalGenomes,
+  deleteCustomGenome,
 } from "@/lib/redux/thunk/genome-hub";
 import { IGenome } from "wuepgg3-track";
 import { ChevronRightIcon } from "@heroicons/react/16/solid";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
-import { useNavigation } from "../core-navigation/NavigationStack";
+
 
 import Button from "../ui/button/Button";
 import EmptyView from "../ui/empty/EmptyView";
@@ -31,7 +33,6 @@ export default function GenomeHubPanel() {
   const customGenomes = useAppSelector(selectCustomGenomes);
   const customGenomesLoadStatus = useAppSelector(selectCustomGenomesLoadStatus);
 
-  const navigation = useNavigation();
 
   const { hasGroups, groupedGenomes } = useMemo(() => {
     const hasGroups = customGenomes.some(
@@ -70,25 +71,21 @@ export default function GenomeHubPanel() {
     }
   }, [dispatch, customGenomesLoadStatus]);
 
-  const handleClearAll = () => {
-    dispatch(clearAllGenomes());
-  };
+
 
   return (
-    <div className="flex flex-col pt-2 h-full">
-      <div className="flex flex-row gap-2 w-full justify-start items-center">
-        <Button
-          leftIcon={<PlusIcon className="w-4 h-4" />}
-          active
-          onClick={() => {
-            navigation.push({
-              path: "add-custom-genome",
-            });
-          }}
-        >
-          Add Custom Genome
-        </Button>
-      </div>
+    <div className="flex flex-col pt-2">
+      <h2 className="text-lg font-semibold">Added Custom Genomes</h2> <Button
+
+        onClick={() => {
+          dispatch(clearAllGenomes());
+        }}
+        outlined
+        disabled={false}
+        style={{ width: "210px", outline: "2px solid red" }}
+      >
+        Clear All Custom Genomes
+      </Button>
       {customGenomes.length === 0 ? (
         <EmptyView
           title="No Custom Genomes"
@@ -98,7 +95,7 @@ export default function GenomeHubPanel() {
         <div className="flex flex-col gap-6 mt-4">
           {sortedGroups.map(([groupName, genomes]) => (
             <div key={groupName} className="flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">{groupName}</h2>
+              <h2 className="text-md font-semibold">{groupName}</h2>
               {genomes.map((genome) => (
                 <GenomeHubItem key={genome.id} genome={genome} />
               ))}
@@ -128,6 +125,20 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
     }, 0);
   };
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Delete custom genome "${genome.name}"?`)) return;
+    setLoading(true);
+    try {
+
+      await dispatch(deleteCustomGenome(genome.id)).unwrap();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const shouldExpand = isHovered && !loading;
 
   return (
@@ -147,12 +158,12 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             Chromosomes:{" "}
             {genome.chromosomes.length > 0
               ? genome.chromosomes
-                  .slice(0, 3)
-                  .map((chr) => chr.name)
-                  .join(", ") +
-                (genome.chromosomes.length > 3
-                  ? ` +${genome.chromosomes.length - 3} more`
-                  : "")
+                .slice(0, 3)
+                .map((chr) => chr.name)
+                .join(", ") +
+              (genome.chromosomes.length > 3
+                ? ` +${genome.chromosomes.length - 3} more`
+                : "")
               : "None"}
           </p>
         </div>
@@ -161,12 +172,22 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             <Progress size={36} />
           </div>
         ) : (
-          <motion.div
-            animate={{ rotate: shouldExpand ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronRightIcon className="size-6" />
-          </motion.div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDelete}
+              className="p-1 rounded hover:bg-primary/10"
+              aria-label={`Delete ${genome.name}`}
+              title={`Delete ${genome.name}`}
+            >
+              <TrashIcon className="w-5 h-5 text-red-600" />
+            </button>
+            <motion.div
+              animate={{ rotate: shouldExpand ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRightIcon className="size-6" />
+            </motion.div>
+          </div>
         )}
       </div>
 
@@ -206,6 +227,7 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
           )}
           <p>Unique ID:</p>
           <p>{genome.id}</p>
+
         </div>
       </motion.div>
     </motion.div>

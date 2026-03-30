@@ -3,7 +3,7 @@ import Session from "../../root-layout/tabs/apps/destinations/Session";
 
 /**
  * A component that allows inline editing of text.
- * @author Shane Liu (original)
+ * @author Shane Liu (original), Chanrung Seng
  */
 
 interface InlineEditableProps {
@@ -88,9 +88,8 @@ function InlineEditable(props: InlineEditableProps) {
     return (
       <div
         ref={containerRef}
-        className={`h-9 relative inline-block ${
-          hovering && !editing ? "outline outline-1 outline-gray-300" : ""
-        }`}
+        className={`h-9 relative inline-block ${hovering && !editing ? "outline outline-1 outline-gray-300" : ""
+          }`}
       >
         <input
           value={value}
@@ -121,9 +120,8 @@ function InlineEditable(props: InlineEditableProps) {
       >
         <div
           onClick={handleClick}
-          className={`h-9 inline-block cursor-pointer ${
-            hovering ? "outline outline-1 outline-gray-300" : ""
-          }`}
+          className={`h-9 inline-block cursor-pointer ${hovering ? "outline outline-1 outline-gray-300" : ""
+            }`}
         >
           <span className={`${textStyle} inline-block`} style={commonStyle}>
             {props.value}

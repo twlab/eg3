@@ -148,6 +148,7 @@ export function TrackContainerRepresentable({
             );
           }
           else {
+
             return new DisplayedRegionModel(
               genomeConfig.navContext
 
@@ -155,6 +156,7 @@ export function TrackContainerRepresentable({
           }
         }
       } else {
+
         const navContext = genomeConfig.navContext as NavigationContext;
         const parsed = navContext.parse(viewRegion);
         if (parsed) {
@@ -184,38 +186,45 @@ export function TrackContainerRepresentable({
 
   const convertedUserViewRegion = useMemo(() => {
     let newViewRegion;
-    if (userViewRegion) {
-      if (selectedRegionSet) {
-        let setNavContext;
-        if (typeof selectedRegionSet === "object") {
-          const newRegionSet = RegionSet.deserialize(selectedRegionSet);
-          setNavContext = newRegionSet.makeNavContext();
+    try {
+      if (userViewRegion) {
+        if (selectedRegionSet) {
+          let setNavContext;
+          if (typeof selectedRegionSet === "object") {
+            const newRegionSet = RegionSet.deserialize(selectedRegionSet);
+            setNavContext = newRegionSet.makeNavContext();
+          } else {
+            setNavContext = selectedRegionSet.makeNavContext();
+          }
+          setNavContext._isRegionSet = true
+
+
+          const contextCoord = setNavContext.parse(userViewRegion as GenomeCoordinate);
+
+          return new DisplayedRegionModel(setNavContext, ...contextCoord);
         } else {
-          setNavContext = selectedRegionSet.makeNavContext();
+          newViewRegion = genomeConfig.navContext.parse(
+            userViewRegion as GenomeCoordinate,
+          );
         }
-        setNavContext._isRegionSet = true
-
-
-        const contextCoord = setNavContext.parse(userViewRegion as GenomeCoordinate);
-
-        return new DisplayedRegionModel(setNavContext, ...contextCoord);
-      } else {
+      } else if (overrideViewRegion) {
         newViewRegion = genomeConfig.navContext.parse(
-          userViewRegion as GenomeCoordinate,
+          overrideViewRegion as GenomeCoordinate,
+        );
+      } else {
+        newViewRegion = genomeConfig.navContext.parse(genomeConfig.defaultRegion);
+      }
+
+      if (newViewRegion) {
+        return new DisplayedRegionModel(
+          genomeConfig.navContext,
+          ...newViewRegion
         );
       }
-    } else if (overrideViewRegion) {
-      newViewRegion = genomeConfig.navContext.parse(
-        overrideViewRegion as GenomeCoordinate,
-      );
-    } else {
-      newViewRegion = genomeConfig.navContext.parse(genomeConfig.defaultRegion);
-    }
-
-    if (newViewRegion) {
+    } catch (e) {
       return new DisplayedRegionModel(
         genomeConfig.navContext,
-        ...newViewRegion,
+
       );
     }
   }, [userViewRegion, genomeConfig, overrideViewRegion, selectedRegionSet]);

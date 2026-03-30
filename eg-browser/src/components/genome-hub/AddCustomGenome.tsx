@@ -1,20 +1,23 @@
 import { useAppDispatch } from "@/lib/redux/hooks";
 import { useEffect, useState } from "react";
 import Button from "../ui/button/Button";
-import { useNavigation } from "../core-navigation/NavigationStack";
+
 import { addCustomGenome } from "@/lib/redux/thunk/genome-hub";
 import { ArrowDownTrayIcon, PlusIcon } from "@heroicons/react/24/outline";
 import FileInput from "../ui/input/FileInput";
 import { GenomeSerializer } from "wuepgg3-track";
-
+import GenomeHubPanel from "./GenomeHubPanel";
+import GenomeSchemaView from "./GenomeSchemaView";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 export default function AddCustomGenome() {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
+
   const [file, setFile] = useState<File | null>(null);
   const [validationErrors, setValidationErrors] = useState<ReturnType<
     typeof GenomeSerializer.validateGenomeObject
   > | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showSchema, setShowSchema] = useState(false);
 
   useEffect(() => {
     if (file) {
@@ -50,7 +53,6 @@ export default function AddCustomGenome() {
     if (file && validationErrors?.valid) {
 
       dispatch(addCustomGenome(file));
-      navigation.pop();
     }
   }, [file, validationErrors]);
 
@@ -93,42 +95,83 @@ export default function AddCustomGenome() {
   };
 
   return (
-    <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-row gap-2 w-full justify-start items-center">
-        <Button
-          leftIcon={<PlusIcon className="w-4 h-4" />}
-          active
-          onClick={() => {
-            navigation.push({
-              path: "genome-schema",
-            });
-          }}
+    <div className="flex flex-col gap-4 relative mb-30">
+      {/* Modal Overlay for GenomeSchemaView */}
+      {showSchema && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-20"
+          onClick={() => setShowSchema(false)}
         >
-          View Schema
-        </Button>
-        <Button
-          leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
-          onClick={() => {
-            const link = document.createElement("a");
-            link.href = import.meta.env.BASE_URL + "/example_hg19.json";
-            link.download = "example_hg19.json";
-            link.click();
-          }}
-          outlined
-        >
-          Download Example
-        </Button>
-      </div>
-      <FileInput
-        accept=".json"
-        onFileChange={setFile}
-        dragMessage="Drag and drop a .json genome file here"
-      />
-      {isLoading ? (
-        <div className="text-center py-2">Validating...</div>
-      ) : (
-        renderValidationErrors()
+          <div
+            className="relative bg-white dark:bg-dark-background rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-white"
+              onClick={() => setShowSchema(false)}
+              aria-label="Close"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+            <GenomeSchemaView />
+          </div>
+        </div>
       )}
+
+      <div className="w-full flex justify-center">
+        <div className="w-full max-w-2xl bg-white dark:bg-dark-surface rounded-lg p-6 shadow-sm">
+          <div className="flex flex-row gap-2 w-full justify-start items-center mb-4">
+            <Button
+              leftIcon={<PlusIcon className="w-4 h-4" />}
+              outlined
+              onClick={() => setShowSchema(true)}
+              style={{ width: "140px" }}
+
+            >
+              View Schema
+            </Button>
+            <Button
+              leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = import.meta.env.BASE_URL + "/example_hg19.json";
+                link.download = "example_hg19.json";
+                link.click();
+              }}
+              outlined
+              disabled={false}
+              style={{ width: "180px" }}
+            >
+              Download Example
+            </Button>
+          </div>
+
+          <div className="w-full">
+            <div className="flex justify-center">
+              <div className="w-full max-w-md mx-auto">
+                <FileInput
+                  accept=".json"
+                  onFileChange={setFile}
+                  dragMessage="Drag and drop a .json genome file here"
+                  className="mx-auto w-full"
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 flex justify-center">
+              {isLoading ? (
+                <div className="text-center text-sm text-gray-600">Validating...</div>
+              ) : (
+                <div className="w-full max-w-md mx-auto">{renderValidationErrors()}</div>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <GenomeHubPanel />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

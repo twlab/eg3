@@ -498,7 +498,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           <button
             onClick={onClose}
             onPointerDown={(e) => e.stopPropagation()}
-            className="px-1 ml-1 rounded transition-colors border border-red-600 text-red-700 hover:bg-red-600 hover:text-white dark:bg-red-800/30 dark:text-red-200 dark:hover:bg-red-700 dark:hover:text-white"
+            className="px-1 ml-1 rounded transition-colors  text-red-700 hover:bg-red-600 hover:text-white dark:bg-red-800/30 dark:text-red-200 dark:hover:bg-red-700 dark:hover:text-white"
             title="Close"
           >
             ✕
@@ -513,7 +513,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         className="rounded cursor-se-resize flex items-center justify-center mt-auto self-end"
         style={{
           touchAction: "none",
-          backgroundColor: "rgba(183, 224, 255, 1)",
+          backgroundColor: "rgb(237, 242, 246)",
           height: 30,
           width: 30,
         }}

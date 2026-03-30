@@ -198,6 +198,7 @@ export default function RootLayout(props: GenomeHubProps) {
             );
           }
         } else {
+
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
@@ -251,12 +252,12 @@ export default function RootLayout(props: GenomeHubProps) {
         )}
 
         <div className="flex flex-row flex-1 relative bg-black">
-          {/* Sliding left overlay panel (appears over main tabs, doesn't push layout) */}
-          {!isSmallScreen && !sessionId && (
+
+          {
             <>
               <motion.div
-                initial={{ x: "-30vw" }}
-                animate={{ x: leftPanelOpen ? 0 : "-30vw" }}
+                initial={{ x: "-35vw" }}
+                animate={{ x: leftPanelOpen ? 0 : "-35vw" }}
                 transition={{ type: "tween" }}
                 className="h-full overflow-hidden"
                 style={{
@@ -264,8 +265,8 @@ export default function RootLayout(props: GenomeHubProps) {
                   top: 0,
                   left: 0,
                   height: "100%",
-                  width: "30vw",
-                  minWidth: 384,
+                  width: "35vw",
+
                   borderTopRightRadius: CURL_RADIUS,
                   borderBottomRightRadius: CURL_RADIUS,
                   zIndex: 60,
@@ -274,55 +275,25 @@ export default function RootLayout(props: GenomeHubProps) {
                     "0 0 0 1px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.25)",
                 }}
               >
-                <NavigationStack
-                  destinations={[
-                    {
-                      component: AddCustomGenome,
-                      path: "add-custom-genome",
-                      options: { title: "Add Custom Genome" },
-                    },
-                    {
-                      component: GenomeSchemaView,
-                      path: "genome-schema",
-                      options: { title: "Genome Schema" },
-                    },
-                    {
-                      component: ImportSession,
-                      path: "import-session",
-                      options: { title: "Import Session" },
-                    },
-                  ]}
-                >
-                  <TabView<"sessions" | "genomes">
-                    initialTab={"sessions"}
-                    tabs={[
-                      {
-                        label: "Sessions",
-                        value: "sessions",
-                        component: (
-                          <SessionList
-                            onSessionClick={(s) => {
-                              dispatch(setCurrentSession(s.id));
-                              setLeftPanelOpen(false);
-                            }}
-                            showImportSessionButton
-                          />
-                        ),
-                      },
-                      {
-                        label: "Genomes",
-                        value: "genomes",
-                        component: <GenomeHubPanel />,
-                      },
-                    ]}
-                  />
-                </NavigationStack>
+
+
+                <SessionList
+                  onSessionClick={(s) => {
+                    dispatch(setCurrentSession(s.id));
+                    setLeftPanelOpen(false);
+                  }}
+                  showImportSessionButton
+                />
+
+
+
+
               </motion.div>
 
               <motion.button
                 onClick={() => setLeftPanelOpen((v) => !v)}
                 initial={false}
-                animate={{ x: leftPanelOpen ? "30vw" : 0 }}
+                animate={{ x: leftPanelOpen ? "35vw" : 0 }}
                 transition={{ type: "tween" }}
                 className="absolute top-12 left-15 p-2 rounded-full bg-white shadow"
                 style={{ zIndex: 70 }}
@@ -333,7 +304,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 />
               </motion.button>
             </>
-          )}
+          }
           {/* {!sessionId && (
             <div
             className="h-full overflow-hidden absolute top-0 left-0 z-20"
@@ -357,11 +328,8 @@ export default function RootLayout(props: GenomeHubProps) {
           {/* MARK: - Main Content */}
 
           <div
-            className="flex flex-1 h-full relative overflow-hidden"
-            style={{
-              borderRadius: sessionPanelOpen ? CURL_RADIUS : 0,
-              transition: "border-radius 0.3s ease",
-            }}
+            className="flex flex-1 h-full relative"
+
           // onClick={
           //   sessionPanelOpen
           //     ? () => dispatch(setSessionPanelOpen(false))
@@ -372,52 +340,42 @@ export default function RootLayout(props: GenomeHubProps) {
             <div
               className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
               style={{
-                pointerEvents: sessionPanelOpen ? "none" : "auto",
+
                 zIndex: 5,
                 paddingTop: 1,
+
               }}
             >
               {!sessionId && (
                 <div className="h-full w-full">
-                  <NavigationStack
-                    destinations={[
+
+                  <TabView<"picker" | "add" | "import">
+                    initialTab={"picker"}
+                    tabs={[
                       {
-                        component: AddCustomGenome,
-                        path: "add-custom-genome",
+                        label: "CHOOSE A GENOME",
+                        value: "picker",
+                        component: <GenomePicker />,
                       },
                       {
-                        component: ImportSession,
-                        path: "import-session",
+                        label: "ADD CUSTOM GENOME",
+                        value: "add",
+                        component: <AddCustomGenome />,
+                      },
+                      {
+                        label: "LOAD A SESSION",
+                        value: "import",
+                        component: <ImportSession />,
                       },
                     ]}
-                  >
-                    <TabView<"picker" | "add" | "import">
-                      initialTab={"picker"}
-                      tabs={[
-                        {
-                          label: "Picker",
-                          value: "picker",
-                          component: <GenomePicker />,
-                        },
-                        {
-                          label: "Add Genome",
-                          value: "add",
-                          component: <AddCustomGenome />,
-                        },
-                        {
-                          label: "Import Session",
-                          value: "import",
-                          component: <ImportSession />,
-                        },
-                      ]}
-                    />
-                  </NavigationStack>
+                  />
+
                 </div>
               )}
               {sessionId && (
-                // <GenomeErrorBoundary onGoHome={handleGoHome}>
-                <GenomeView />
-                // </GenomeErrorBoundary>
+                <GenomeErrorBoundary onGoHome={handleGoHome}>
+                  <GenomeView />
+                </GenomeErrorBoundary>
               )}
             </div>
 

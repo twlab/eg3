@@ -131,7 +131,7 @@ export default function NavigationStack({
         /> */}
         <div className="relative flex-1 overflow-hidden min-w-[5vw]" ref={ref}>
           <div
-            className="px-4 absolute overflow-y-scroll"
+            className="absolute overflow-y-scroll"
             style={{
               width,
               height,

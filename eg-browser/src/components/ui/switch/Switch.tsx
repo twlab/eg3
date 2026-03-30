@@ -16,7 +16,7 @@ export default function Switch({
   return (
     <div
       className={classNames(
-        "flex items-center gap-2 w-14 h-8 rounded-full p-1 cursor-pointer transition-all duration-300",
+        "flex items-center w-12 h-8 rounded-full cursor-pointer transition-all duration-300",
         checked
           ? "bg-secondary dark:bg-dark-secondary"
           : "bg-gray-300 dark:bg-dark-surface"
