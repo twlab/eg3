@@ -13,6 +13,7 @@ import {
   PlusIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/16/solid";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import Switch from "@/components/ui/switch/Switch";
@@ -52,18 +53,23 @@ export default function SessionList({
   };
 
   return (
-    <div className="flex flex-col gap-4 py-1 h-full">
+    <div className="flex flex-col gap-4 py-1 h-full min-h-0 overflow-y-auto pr-2">
 
       <div className="flex items-center justify-between">
-        <p>Sort by last updated</p>
-        <Switch
-          checked={sortPreference === "updatedAt"}
-          onChange={(checked) =>
-            dispatch(
-              setSessionSortPreference(checked ? "updatedAt" : "createdAt")
-            )
-          }
-        />
+        <div className="flex items-center gap-3">
+          <p>Sort by last updated</p>
+          <Switch
+            checked={sortPreference === "updatedAt"}
+            onChange={(checked) =>
+              dispatch(
+                setSessionSortPreference(checked ? "updatedAt" : "createdAt")
+              )
+            }
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <ClearAllButton onClearAll={handleClearAll} compact />
+        </div>
       </div>
       {sortedSessions.length === 0 ? (
         <EmptyView
@@ -91,7 +97,7 @@ export default function SessionList({
               />
             </motion.div>
           ))}
-          <ClearAllButton onClearAll={handleClearAll} />
+
         </AnimatePresence>
       )}
     </div>
@@ -221,12 +227,28 @@ function SessionListItem({
               : `Created: ${new Date(session.createdAt).toLocaleString()}`}
           </p>
         </div>
-        <motion.div
-          animate={{ rotate: isHovered ? 90 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronRightIcon className="size-6" />
-        </motion.div>
+        <div className="flex items-center gap-2">
+          {allowDelete && (
+            <button
+              onClick={(e) => handleDelete(e)}
+              className={`p-1 rounded-md text-red-600 transition-colors duration-150 ${isConfirmingDelete ? "bg-alert text-white" : "hover:bg-red-100 dark:hover:bg-red-700"}`}
+              onMouseDown={(e) => e.stopPropagation()}
+              title={isConfirmingDelete ? "Confirm delete" : "Delete session"}
+            >
+              {isConfirmingDelete ? (
+                <ExclamationTriangleIcon className="w-5 h-5" />
+              ) : (
+                <XMarkIcon className="w-5 h-5" />
+              )}
+            </button>
+          )}
+          <motion.div
+            animate={{ rotate: isHovered ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronRightIcon className="size-6" />
+          </motion.div>
+        </div>
       </div>
 
       <motion.div
@@ -269,20 +291,7 @@ function SessionListItem({
             </div>
           )}
           <div className="flex flex-col items-stretch gap-2">
-            {allowDelete && (
-              <Button
-                backgroundColor={isConfirmingDelete ? "alert" : "tint"}
-                onClick={handleDelete}
-                style={{ flex: 1 }}
-                leftIcon={
-                  isConfirmingDelete ? (
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                  ) : undefined
-                }
-              >
-                {isConfirmingDelete ? "Confirm Delete" : "Delete"}
-              </Button>
-            )}
+
             <Button
               backgroundColor="tint"
               onClick={handleExport}

@@ -10,15 +10,16 @@ import {
   deleteCustomGenome,
 } from "@/lib/redux/thunk/genome-hub";
 import { IGenome } from "wuepgg3-track";
-import { ChevronRightIcon } from "@heroicons/react/16/solid";
+import { ChevronRightIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 
 
 import Button from "../ui/button/Button";
+import ClearAllButton from "../sessions/ClearAllButton";
 import EmptyView from "../ui/empty/EmptyView";
 import Progress from "../ui/progress/Progress";
 
@@ -75,17 +76,10 @@ export default function GenomeHubPanel() {
 
   return (
     <div className="flex flex-col pt-2">
-      <h2 className="text-lg font-semibold">Added Custom Genomes</h2> <Button
-
-        onClick={() => {
-          dispatch(clearAllGenomes());
-        }}
-        outlined
-        disabled={false}
-        style={{ width: "210px", outline: "2px solid red" }}
-      >
-        Clear All Custom Genomes
-      </Button>
+      <h2 className="text-lg font-semibold">Added Custom Genomes</h2>
+      <div className="mt-2">
+        <ClearAllButton onClearAll={() => dispatch(clearAllGenomes())} compact />
+      </div>
       {customGenomes.length === 0 ? (
         <EmptyView
           title="No Custom Genomes"
@@ -117,6 +111,7 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
   const dispatch = useAppDispatch();
   const [isHovered, setIsHovered] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const handleClick = () => {
     setLoading(true);
     setTimeout(() => {
@@ -125,17 +120,32 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
     }, 0);
   };
 
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isConfirmingDelete) {
+      timeoutId = setTimeout(() => {
+        setIsConfirmingDelete(false);
+      }, 2000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isConfirmingDelete]);
+
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Delete custom genome "${genome.name}"?`)) return;
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      return;
+    }
     setLoading(true);
     try {
-
       await dispatch(deleteCustomGenome(genome.id)).unwrap();
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setIsConfirmingDelete(false);
     }
   };
 
@@ -175,11 +185,16 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleDelete}
-              className="p-1 rounded hover:bg-primary/10"
+              onMouseDown={(e) => e.stopPropagation()}
+              className={`p-1 rounded-md text-red-600 transition-colors duration-150 ${isConfirmingDelete ? "bg-alert text-white" : "hover:bg-red-100 dark:hover:bg-red-700"}`}
               aria-label={`Delete ${genome.name}`}
-              title={`Delete ${genome.name}`}
+              title={isConfirmingDelete ? `Confirm delete ${genome.name}` : `Delete ${genome.name}`}
             >
-              <TrashIcon className="w-5 h-5 text-red-600" />
+              {isConfirmingDelete ? (
+                <ExclamationTriangleIcon className="w-5 h-5" />
+              ) : (
+                <XMarkIcon className="w-5 h-5" />
+              )}
             </button>
             <motion.div
               animate={{ rotate: shouldExpand ? 90 : 0 }}

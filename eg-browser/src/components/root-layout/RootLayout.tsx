@@ -342,7 +342,6 @@ export default function RootLayout(props: GenomeHubProps) {
               style={{
 
                 zIndex: 5,
-                paddingTop: 1,
 
               }}
             >
