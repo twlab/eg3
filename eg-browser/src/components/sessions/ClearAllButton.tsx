@@ -1,79 +1,79 @@
-import { CheckIcon } from '@heroicons/react/24/outline'
-import { useState, useEffect } from 'react';
+import { CheckIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
 export default function ClearAllButton({
-    onClearAll,
-    compact = false,
-    title = ""
+  onClearAll,
+  compact = false,
+  title = "",
 }: {
-    onClearAll: () => void;
-    compact?: boolean;
-    title: string;
+  onClearAll: () => void;
+  compact?: boolean;
+  title: string;
 }) {
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
-    const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  useEffect(() => {
+    if (isConfirmed) {
+      const resetTimer = setTimeout(() => {
+        setIsConfirmed(false);
+      }, 3000);
 
-
-
-    useEffect(() => {
-        if (isConfirmed) {
-            const resetTimer = setTimeout(() => {
-                setIsConfirmed(false);
-            }, 3000);
-
-            return () => clearTimeout(resetTimer);
-        }
-    }, [isConfirmed]);
-
-    const handleClick = () => {
-        if (isConfirmed) {
-            onClearAll();
-            setIsConfirmed(false);
-        } else {
-            // Skip the countdown and immediately show the confirm checkmark
-
-            setIsConfirmed(true);
-        }
-    };
-
-    const getBackgroundColor = () => {
-        if (isConfirmed) return "bg-alert";
-
-        return "bg-secondary dark:bg-dark-secondary";
-    };
-
-    const getIconColor = () => {
-        if (isConfirmed) return "text-white";
-
-        return "text-primary dark:text-dark-primary";
+      return () => clearTimeout(resetTimer);
     }
+  }, [isConfirmed]);
 
-    if (compact) {
-        return (
-            <button
-                onClick={handleClick}
-                title={isConfirmed ? "Confirm clear all" : title}
-                className={`py-1 rounded-md inline-flex items-center justify-center gap-1 text-md transition-colors duration-200 min-w-0 w-[140px] ${getBackgroundColor()} ${getIconColor()} hover:bg-red-200 dark:hover:bg-red-700`}
-            >
-                {isConfirmed ? (
-                    <CheckIcon className="w-5 h-5" />
-                ) : null}
-                <span className="truncate text-center">{isConfirmed ? "Confirm" : title}</span>
-            </button>
-        );
+  const handleClick = () => {
+    if (isConfirmed) {
+      onClearAll();
+      setIsConfirmed(false);
+    } else {
+      setIsConfirmed(true);
     }
+  };
 
+  const bgClass = isConfirmed
+    ? "bg-red-600 hover:bg-red-700"
+    : "bg-red-100 hover:bg-red-200";
+  const iconTextClass = isConfirmed
+    ? "text-white"
+    : "text-red-800 dark:text-red-200";
+
+  if (compact) {
     return (
-        <div className="flex flex-col items-center justify-center p-4 gap-4">
-            <h1 className="text-lg">{title}</h1>
-            <div
-                className={`size-12 flex flex-row items-center justify-center ${getBackgroundColor()} rounded-full cursor-pointer transition-colors duration-200 ${getIconColor()} hover:bg-red-200 dark:hover:bg-red-700`}
-                onClick={handleClick}
-            >
-                {isConfirmed ? (
-                    <CheckIcon className="size-6" />
-                ) : null}
-            </div>
-        </div>
-    )
+      <motion.button
+        onClick={handleClick}
+        initial={false}
+        aria-label={isConfirmed ? "Confirm clear all" : title}
+        className={`inline-flex items-center outline-none rounded-full shadow py-1 px-2 transition-colors duration-200 cursor-pointer hover:shadow-md ${bgClass} ${iconTextClass}`}
+      >
+        {isConfirmed ? (
+          <CheckIcon className="w-4 h-4 mr-1" />
+        ) : (
+          <TrashIcon className="w-4 h-4 mr-1" />
+        )}
+        <span className="text-xs truncate max-w-[130px]">
+          {isConfirmed ? "Confirm" : title}
+        </span>
+      </motion.button>
+    );
+  }
+
+  return (
+    <motion.button
+      onClick={handleClick}
+      initial={false}
+      aria-label={isConfirmed ? "Confirm clear all" : title}
+      className={`inline-flex items-center outline-none rounded-full shadow py-1 px-2 transition-colors duration-200 cursor-pointer hover:shadow-md ${bgClass} ${iconTextClass}`}
+    >
+      {isConfirmed ? (
+        <CheckIcon className="w-4 h-4 mr-1" />
+      ) : (
+        <TrashIcon className="w-4 h-4 mr-1" />
+      )}
+      <span className="text-sm truncate">
+        {isConfirmed ? "Confirm" : title}
+      </span>
+    </motion.button>
+  );
 }

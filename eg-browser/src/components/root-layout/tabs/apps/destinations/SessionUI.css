@@ -1,24 +1,63 @@
 button.SessionUI {
-    padding: 2px;
-    margin: 0 0 2px 5px;
+  padding: 2px;
+  margin: 0 0 2px 5px;
 }
 
 .SessionUI-upload-btn-wrapper {
-    position: relative;
+  position: relative;
 }
 
 .SessionUI-upload-btn-wrapper input[type="file"] {
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
 }
 
 .SessionUI-sessionlist label {
-    margin-right: 1ch;
-    margin-left: 1ch;
+  margin-right: 1ch;
+  margin-left: 1ch;
 }
 
 .SessionUI-sessionlist input {
-    margin-right: 2px;
+  margin-right: 2px;
+}
+
+/* Modern input used when creating a new bundle */
+.SessionUI-create-input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e3e7ee;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  font-size: 14px;
+}
+
+/* small upload wrapper tweaks */
+.SessionUI-upload-btn-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.SessionUI-upload-btn-wrapper input[type="file"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* session list labels */
+.SessionUI-sessionlist label {
+  margin-right: 1ch;
+  margin-left: 1ch;
+}
+
+/* small responsive tweaks */
+@media (max-width: 520px) {
+  .SessionUI-create-input {
+    font-size: 13px;
+  }
 }

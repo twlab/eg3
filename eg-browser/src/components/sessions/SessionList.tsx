@@ -24,7 +24,10 @@ import Button from "../ui/button/Button";
 import ClearAllButton from "./ClearAllButton";
 import { generateUUID } from "wuepgg3-track";
 import Session from "../root-layout/tabs/apps/destinations/Session";
+import { fetchBundle } from "@/lib/redux/thunk/session";
 import SessionToggleButton from "./SessionToggleButton";
+import FileInput from "@/components/ui/input/FileInput";
+import useExpandedNavigationTab from "../../lib/hooks/useExpandedNavigationTab";
 
 // Session toggle button is provided by SessionToggleButton (shared component)
 
@@ -41,10 +44,12 @@ export default function SessionList({
 }) {
   const dispatch = useAppDispatch();
   const sessions = useAppSelector(selectSessions);
-  const currentSession = useAppSelector(selectCurrentSession)
+  const currentSession = useAppSelector(selectCurrentSession);
   const currentSessionId = useAppSelector(selectCurrentSessionId);
   const sortPreference = useAppSelector(selectSessionSortPreference);
-
+  const [sessionTab, setSessionTab] = useState<"edit" | "load" | "switch">(
+    "edit",
+  );
 
   const sortedSessions = useMemo(() => {
     return [...sessions].sort((a, b) => {
@@ -57,73 +62,92 @@ export default function SessionList({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-
-
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
 
   return (
     <div ref={containerRef} className="flex flex-col h-full relative">
-
-
-
-
-      <div className="flex items-center justify-between p-1">
+      <div className="flex items-center justify-between">
         <div className="flex items-center">
           {!currentSession?.genomeId && (
-            <ClearAllButton onClearAll={handleClearAll} compact title={"Clear All Sessions"} />
+            <ClearAllButton
+              onClearAll={handleClearAll}
+              compact
+              title={"Clear All Sessions"}
+            />
           )}
         </div>
-        <div className="z-50">
+        <div className="z-40">
           <SessionToggleButton
             open={open}
             onClick={() => {
               if (onRequestClose) onRequestClose();
             }}
-            className={"p-1 rounded-full bg-white shadow"}
+            className={"rounded-full bg-white shadow"}
             // count={sessions ? sessions.length : 0}
 
-            count={currentSession?.title ? null : sessions.length}
-            textContent={currentSession?.title ? `Session: ${currentSession.title}` : "Previous sessions"}
+            count={
+              sessionTab === "switch"
+                ? sessions.length
+                : currentSession?.title
+                  ? null
+                  : sessions.length
+            }
+            textContent={
+              sessionTab === "switch" ? (
+                "Previous sessions"
+              ) : currentSession?.title ? (
+                <div className="text-left">
+                  <div>{`Current Session: "${currentSession.title}"`}</div>
+                  <div>
+                    Session Bundle ID:{" "}
+                    {currentSession.bundleId ? (
+                      <span className="text-blue-600">
+                        {currentSession.bundleId}
+                      </span>
+                    ) : (
+                      <span className="text-red-600">Not saved remotely</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                "Previous sessions"
+              )
+            }
           />
         </div>
       </div>
-      {!currentSession?.genomeId ? <div className="flex items-center justify-between p-1 ">
-        <p>Sort last updated</p>
-        <Switch
-          checked={sortPreference === "updatedAt"}
-          onChange={(checked) =>
-            dispatch(
-              setSessionSortPreference(checked ? "updatedAt" : "createdAt")
-            )
-          }
-        />
-      </div> : null}
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
-
-        {currentSession?.genomeId ? <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
-          <div className="flex flex-col">
-
-            {currentSession.title.length > 0 ? (
-              <>
-                <h1 className="text-l">{`Selected: ${currentSession.title}`}</h1>
-              </>
-            ) : ""}
-            {currentSession.bundleId ? (
-              <p className="text-sm">Session Bundle ID: <span className="text-blue-600">{currentSession.bundleId}</span></p>
-            ) : (
-              <p className="text-sm">Session Bundle ID: <span className="text-red-600">Not saved remotely</span></p>
-            )}
-
-
-            <Session tab={false} />
-
+      <div className="flex-1 min-h-0 overflow-y-auto px-4">
+        {!currentSession?.genomeId ? (
+          <div className="flex items-center justify-between p-1 ">
+            <p>Sort last updated</p>
+            <Switch
+              checked={sortPreference === "updatedAt"}
+              onChange={(checked) =>
+                dispatch(
+                  setSessionSortPreference(checked ? "updatedAt" : "createdAt"),
+                )
+              }
+            />
           </div>
-
-
-        </div> : sortedSessions.length === 0 ? (
+        ) : null}
+        {currentSession?.genomeId ? (
+          <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
+            <div className="flex flex-col">
+              <SessionTabs
+                currentSession={currentSession}
+                sortedSessions={sortedSessions}
+                onSessionClick={onSessionClick}
+                sortPreference={sortPreference}
+                currentSessionId={currentSessionId}
+                tab={sessionTab}
+                setTab={setSessionTab}
+              />
+            </div>
+          </div>
+        ) : sortedSessions.length === 0 ? (
           <EmptyView
             title="No Sessions Found"
             description="Sessions are stored locally in your browser. Start a session and it will appear here."
@@ -138,10 +162,8 @@ export default function SessionList({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.1 }}
-                className="mb-1 last:mb-0"
+                className="mb-2 mr-2 last:mb-0"
               >
-
-
                 <SessionListItem
                   session={session}
                   onClick={() => onSessionClick(session)}
@@ -150,19 +172,14 @@ export default function SessionList({
                     currentSessionId === null || session.id !== currentSessionId
                   }
                 />
-
               </motion.div>
             ))}
-
           </AnimatePresence>
         )}
-
       </div>
     </div>
   );
 }
-
-
 
 function formatDate(value: string | number | Date) {
   const d = new Date(value);
@@ -188,6 +205,8 @@ function SessionListItem({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [copiedId, setCopiedId] = useState<boolean>(false);
+  const [codeHover, setCodeHover] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const { genome, error } = useGenome(session.genomeId);
 
@@ -202,6 +221,19 @@ function SessionListItem({
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [isConfirmingDelete]);
+
+  const handleCopyBundleId = async () => {
+    const id = session && session.bundleId ? session.bundleId : "";
+    if (!id) return;
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 1500);
+      console.log("Bundle ID copied to clipboard", "success", 1500);
+    } catch (e) {
+      console.error("Failed to copy bundle ID", e);
+    }
+  };
 
   const handleExport = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -254,7 +286,7 @@ function SessionListItem({
           changes: {
             title: newTitle,
           },
-        })
+        }),
       );
     }
   };
@@ -279,26 +311,47 @@ function SessionListItem({
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
-        <div className="flex flex-col">
-
+        <div className="flex flex-col gap-2">
           {session.title.length > 0 ? (
             <>
-              <h1 className="text-l">{`Selected: ${session.title}`}</h1>
+              <h1 className="text-l">{`Current Session: ${session.title}`}</h1>
             </>
-          ) : ""}
-          {session.bundleId ? (
-            <p className="text-sm">Session Bundle ID: <span className="text-blue-600">{session.bundleId}</span></p>
           ) : (
-            <p className="text-sm">Session Bundle ID: <span className="text-red-600">Not saved remotely</span></p>
+            ""
           )}
-
-          <p className="text-sm italic">
+          {session.bundleId ? (
+            <p className="text-sm">
+              Session Bundle ID:{" "}
+              <span
+                className="text-blue-600 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopyBundleId();
+                }}
+                onMouseEnter={() => setCodeHover(true)}
+                onMouseLeave={() => setCodeHover(false)}
+                title={session.bundleId ? "Click to copy bundle ID" : ""}
+                style={{ textDecoration: codeHover ? "underline" : "none" }}
+              >
+                {session.bundleId}
+              </span>
+              {copiedId && (
+                <span className="ml-2 text-xs text-green-600">Copied</span>
+              )}
+            </p>
+          ) : (
+            <p className="text-sm">
+              Session Bundle ID:{" "}
+              <span className="text-red-600">Not saved remotely</span>
+            </p>
+          )}
+          <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
+          <p className="text-sm ">
             {sortPreference === "updatedAt"
               ? `Updated: ${formatDate(session.updatedAt)}`
               : `Created: ${formatDate(session.createdAt)}`}
           </p>
         </div>
-
 
         <div className="flex items-center gap-2">
           {allowDelete && (
@@ -353,15 +406,17 @@ function SessionListItem({
             </div>
 
             <div className="flex flex-col">
-              <span className="text-xs">Genome: {genome?.name ?? "..."}</span>
               <span className="text-xs opacity-80">Active tracks</span>
-              <span className="text-sm">{session.tracks ? session.tracks.length : 0}</span>
+              <span className="text-sm">
+                {session.tracks ? session.tracks.length : 0}
+              </span>
             </div>
 
             <div className="flex flex-col">
               <span className="text-xs opacity-80">Highlights</span>
-              <span className="text-sm">{session.highlights ? session.highlights.length : 0}</span>
-
+              <span className="text-sm">
+                {session.highlights ? session.highlights.length : 0}
+              </span>
             </div>
           </div>
           {/* {session.metadataTerms.length > 0 && (
@@ -379,29 +434,27 @@ function SessionListItem({
               </div>
             </div>
           )} */}
-          <div className="flex flex-row items-center gap-2">
-
+          <div className="flex flex-row items-center gap-1">
             <Button
-
               backgroundColor="tint"
               onClick={handleExport}
-              style={{ flex: 1 }}
+              style={{ width: "175px", fontSize: "14px" }}
             >
-              Export
+              Download Current Session
             </Button>
             <Button
-
               backgroundColor="tint"
               onClick={handleDuplicate}
-              style={{ flex: 1 }}
+              // style={{ flex: 1 }}
+              style={{ fontSize: "14px" }}
             >
               Duplicate
             </Button>
             <Button
-
               backgroundColor="tint"
               onClick={handleRename}
-              style={{ flex: 1 }}
+              // style={{ flex: 1 }}
+              style={{ fontSize: "14px" }}
             >
               Rename
             </Button>
@@ -409,5 +462,178 @@ function SessionListItem({
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function SessionTabs({
+  currentSession,
+  sortedSessions,
+  onSessionClick,
+  sortPreference,
+  currentSessionId,
+  tab,
+  setTab,
+}: {
+  currentSession: BrowserSession;
+  sortedSessions: BrowserSession[];
+  onSessionClick: (s: BrowserSession) => void;
+  sortPreference: "createdAt" | "updatedAt";
+  currentSessionId: string | null;
+  tab: "edit" | "load" | "switch";
+  setTab: (t: "edit" | "load" | "switch") => void;
+}) {
+  const dispatch = useAppDispatch();
+  const [retrieveId, setRetrieveId] = useState<string>("");
+
+  const styles: { [k: string]: any } = {
+    row: { display: "flex", gap: 8, alignItems: "center" },
+    input: {
+      padding: "8px 10px",
+      borderRadius: 6,
+      border: "1px solid #ccc",
+      minWidth: 240,
+    },
+    button: {
+      backgroundColor: "#e5e7eb",
+      border: "none",
+      padding: "8px 12px",
+      borderRadius: 6,
+      cursor: "pointer",
+    },
+    buttonHover: { backgroundColor: "#d1d5db" },
+    uploadButton: {
+      backgroundColor: "#f3f4f6",
+      border: "none",
+      padding: "8px 12px",
+      borderRadius: 6,
+      cursor: "pointer",
+    },
+    uploadButtonHover: { backgroundColor: "#e5e7eb" },
+  };
+
+  const retrieveBundle = (bundleId: string) => {
+    if (!bundleId) return;
+    dispatch(fetchBundle(bundleId));
+  };
+
+  const uploadSession = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // kept for compatibility with old input-based uploads; no-op here
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as BrowserSession;
+      if (parsed && parsed.id) {
+        dispatch(upsertSession(parsed));
+      }
+    } catch (err) {
+      console.error("Failed to upload session file", err);
+    }
+  };
+
+  const handleUploadFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as BrowserSession;
+      if (parsed && parsed.id) {
+        dispatch(upsertSession(parsed));
+      }
+    } catch (err) {
+      console.error("Failed to upload session file", err);
+    }
+  };
+
+  return (
+    <div className="mt-2">
+      <div className="flex gap-2 mb-3">
+        <button
+          className={`px-3 py-1 rounded ${tab === "edit" ? "bg-primary text-white" : "bg-white"}`}
+          onClick={() => setTab("edit")}
+        >
+          Edit Session
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${tab === "load" ? "bg-primary text-white" : "bg-white"}`}
+          onClick={() => setTab("load")}
+        >
+          Load Bundle
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${tab === "switch" ? "bg-primary text-white" : "bg-white"}`}
+          onClick={() => setTab("switch")}
+        >
+          Switch Session
+        </button>
+      </div>
+
+      <div>
+        {tab === "edit" && <Session tab={false} />}
+
+        {tab === "load" && (
+          <div style={{ paddingTop: 8 }}>
+            <div style={styles.row}>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="Session Bundle ID"
+                value={retrieveId}
+                onChange={(e) => setRetrieveId(e.target.value.trim())}
+              />
+              <button
+                style={styles.button}
+                onMouseOver={(e) =>
+                  ((
+                    e.currentTarget as HTMLButtonElement
+                  ).style.backgroundColor = styles.buttonHover.backgroundColor)
+                }
+                onMouseOut={(e) =>
+                  ((
+                    e.currentTarget as HTMLButtonElement
+                  ).style.backgroundColor = styles.button.backgroundColor)
+                }
+                onClick={() => retrieveBundle(retrieveId)}
+              >
+                Retrieve
+              </button>
+            </div>
+
+            <div className="w-full max-w-md mx-auto mt-3">
+              <FileInput
+                accept=".json"
+                onFileChange={handleUploadFile}
+                dragMessage="Drag and drop a .json session file here"
+                className="mx-auto w-full"
+              />
+            </div>
+          </div>
+        )}
+
+        {tab === "switch" && (
+          <div className="flex-1 min-h-0 overflow-y-auto px-0">
+            <AnimatePresence initial={false}>
+              {sortedSessions.map((session) => (
+                <motion.div
+                  key={session.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.1 }}
+                  className="mb-2 mr-2 last:mb-0"
+                >
+                  <SessionListItem
+                    session={session}
+                    onClick={() => onSessionClick(session)}
+                    sortPreference={sortPreference}
+                    allowDelete={false}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

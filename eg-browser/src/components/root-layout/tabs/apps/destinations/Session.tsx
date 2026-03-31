@@ -23,9 +23,10 @@ import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNaviga
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import TabSessionUI from "./TabSessionUI";
+import useMidSizeNavigationTab from "../../../../../lib/hooks/useMidSizeNavigationTab";
 
 const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
-  useExpandedNavigationTab();
+  useMidSizeNavigationTab();
   const dispatch = useAppDispatch();
 
   const customTracksPool = useAppSelector(selectCustomTracksPool);
@@ -156,7 +157,6 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
       metadataTerms: sessionBundle.metadataTerms ?? [],
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
-
     };
     dispatch(updateCurrentSession(session));
   }
@@ -187,7 +187,7 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId, title }));
   }
-  return (tab ?
+  return tab ? (
     <SessionUI
       onRestoreSession={onRestoreSession}
       onRetrieveBundle={onRetrieveBundle}
@@ -196,12 +196,16 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
       curBundle={bundle}
       state={curUserState}
     />
-    : <TabSessionUI onRestoreSession={onRestoreSession}
+  ) : (
+    <TabSessionUI
+      onRestoreSession={onRestoreSession}
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
       bundleId={bundle.bundleId ? bundle.bundleId : ""}
       curBundle={bundle}
-      state={curUserState} />)
+      state={curUserState}
+    />
+  );
 };
 
 export default Session;
