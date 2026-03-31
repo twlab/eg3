@@ -55,16 +55,32 @@ export default function SessionList({
     });
   }, [sessions, sortPreference]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    if (!onRequestClose) return;
 
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        onRequestClose();
+      }
+    };
 
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [onRequestClose]);
 
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
-
+  console.log(sessions)
   return (
-    <div className="flex flex-col h-full">
+    <div ref={containerRef} className="flex flex-col h-full">
 
       <div className="flex items-center justify-between p-2">
         <div className="flex items-center gap-1">
