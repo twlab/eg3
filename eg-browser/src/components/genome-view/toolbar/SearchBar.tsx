@@ -701,7 +701,7 @@ export default function SearchBar({
       <AnimatePresence>
         {isShowingIsoforms ? (
           <motion.div
-            className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-50"
+            className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-51"
 
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
