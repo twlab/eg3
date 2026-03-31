@@ -83,6 +83,7 @@ const Session: React.FC = () => {
       tracks,
       viewRegion: userViewRegion ? userViewRegion : currentSession.viewRegion,
       viewInterval: curViewInterval,
+      title: currentSession?.title ? currentSession.title : "Untitled Session",
     };
   }
   //provide data to genomeTracks to new current bundle session
@@ -154,6 +155,7 @@ const Session: React.FC = () => {
       metadataTerms: sessionBundle.metadataTerms ?? [],
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
+
     };
     dispatch(updateCurrentSession(session));
   }

@@ -51,6 +51,7 @@ import {
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
+import ResizablePanel from "../ui/panel/ResizablePanel";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -251,61 +252,59 @@ export default function RootLayout(props: GenomeHubProps) {
           </div>
         )}
 
-        <div className="flex flex-row flex-1 relative bg-black">
+        {
+          <>
 
-          {
-            <>
-              <motion.div
-                initial={{ x: "-35vw" }}
-                animate={{ x: leftPanelOpen ? 0 : "-35vw" }}
-                transition={{ type: "tween" }}
-                className="h-full overflow-hidden"
+            <ResizablePanel
+              navigationPath={[]}
+              initialWidth={Math.round(window.innerWidth * 0.35)}
+              initialHeight={window.innerHeight}
+              onClose={() => setLeftPanelOpen(false)}
+              overlay={true}
+              panelOpen={leftPanelOpen}
+            >
+              <div
+                className="h-full overflow-auto"
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  height: window.innerHeight,
-                  width: "35vw",
-
+                  width: "100%",
+                  height: "100%",
                   borderTopRightRadius: CURL_RADIUS,
                   borderBottomRightRadius: CURL_RADIUS,
-                  zIndex: 60,
                   background: "var(--color-bg, #fff)",
                   boxShadow:
                     "0 0 0 1px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.25)",
+                  position: "relative",
                 }}
               >
+                <div style={{ height: "100%" }}>
+                  <SessionList
+                    onSessionClick={(s) => {
+                      dispatch(setCurrentSession(s.id));
+                      setLeftPanelOpen(false);
+                    }}
+                    showImportSessionButton
+                    onRequestClose={() => setLeftPanelOpen(false)}
+                  />
+                </div>
+              </div>
+            </ResizablePanel>
+            <motion.button
+              onClick={() => setLeftPanelOpen((v) => !v)}
+              initial={false}
+              animate={{ x: leftPanelOpen ? "35vw" : 0 }}
+              transition={{ type: "tween" }}
+              className="absolute top-12 p-2 rounded-full bg-white shadow"
+              style={{ zIndex: 70 }}
+              aria-label={leftPanelOpen ? "Close panel" : "Open panel"}
+            >
+              <ChevronRightIcon
+                className={`w-5 h-5 transform ${leftPanelOpen ? "rotate-180" : ""}`}
+              />
+            </motion.button>
+          </>
+        }
+        <div className="flex flex-row flex-1 relative bg-black">
 
-
-                <SessionList
-                  onSessionClick={(s) => {
-                    dispatch(setCurrentSession(s.id));
-                    setLeftPanelOpen(false);
-                  }}
-                  showImportSessionButton
-                  onRequestClose={() => setLeftPanelOpen(false)}
-                />
-
-
-
-
-              </motion.div>
-
-              <motion.button
-                onClick={() => setLeftPanelOpen((v) => !v)}
-                initial={false}
-                animate={{ x: leftPanelOpen ? "35vw" : 0 }}
-                transition={{ type: "tween" }}
-                className="absolute top-12 p-2 rounded-full bg-white shadow"
-                style={{ zIndex: 70 }}
-                aria-label={leftPanelOpen ? "Close panel" : "Open panel"}
-              >
-                <ChevronRightIcon
-                  className={`w-5 h-5 transform ${leftPanelOpen ? "rotate-180" : ""}`}
-                />
-              </motion.button>
-            </>
-          }
           {/* {!sessionId && (
             <div
             className="h-full overflow-hidden absolute top-0 left-0 z-20"

@@ -63,7 +63,49 @@ interface SessionUIProps extends HasBundleId {
   state?: BundleProps;
   curBundle: any;
 }
+export const saveSession = async () => {
+  const newSessionObj = {
+    label: newSessionLabel ? newSessionLabel : "Untitled Session",
+    date: Date.now(),
+    state: state ? state : {},
+  };
 
+  const sessionId = generateUUID();
+  let curBundleId;
+  if (!bundle || !bundle.bundleId) {
+    curBundleId = generateUUID();
+  } else {
+    curBundleId = bundle.bundleId;
+  }
+
+  if (!curBundleId || curBundleId.length === 0) {
+    console.log("Session bundle ID cannot be empty.", "error", 2000);
+    return null;
+  }
+  let newBundle = {
+    bundleId: curBundleId,
+    currentId: sessionId,
+    sessionsInBundle: {
+      ...bundle.sessionsInBundle,
+      [sessionId]: newSessionObj,
+    },
+  };
+  const db = getDatabase();
+  try {
+    await set(
+      ref(db, `sessions/${curBundleId}`),
+      JSON.parse(JSON.stringify(newBundle)),
+    );
+
+    console.log("Session saved!", "success", 2000);
+  } catch (error) {
+    console.error(error);
+    console.log("Error while saving session", "error", 2000);
+  }
+
+  setNewSessionLabel("");
+  setLastBundleId(curBundleId);
+};
 export const onRetrieveSession = async (retrieveId: string) => {
   if (!retrieveId || retrieveId.length === 0) {
     console.log("Session bundle ID cannot be empty.", "error", 2000);
@@ -154,10 +196,11 @@ const SessionUI: React.FC<SessionUIProps> = ({
   curBundle,
   bundleId,
 }) => {
+
   const [newSessionLabel, setNewSessionLabel] = useState<string>(
-    curBundle.title && curBundle.title !== "Untitled Session"
-      ? curBundle.title
-      : "",
+    state?.title && state.title !== "Untitled Session"
+      ? state.title
+      : "Untitled Session",
   );
   const [retrieveId, setRetrieveId] = useState<string>("");
   const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
@@ -853,12 +896,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                styles.buttonHover.backgroundColor)
+            ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
+              styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                styles.button.backgroundColor)
+            ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
+              styles.button.backgroundColor)
             }
             onClick={() => retrieveBundle(retrieveId)}
           >
@@ -871,12 +914,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
               overflow: "hidden",
             }}
             onMouseOver={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                styles.uploadButtonHover.backgroundColor)
+            ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
+              styles.uploadButtonHover.backgroundColor)
             }
             onMouseOut={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                styles.uploadButton.backgroundColor)
+            ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
+              styles.uploadButton.backgroundColor)
             }
           >
             Upload
@@ -959,7 +1002,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
                         paddingRight: "80px",
                         fontWeight: "normal",
                       }}
-                      placeholder="Untitled Session"
+                      // placeholder="Untitled Session"
                       onChange={(e) =>
                         setNewSessionLabel(e.target.value.trim())
                       }
@@ -1171,12 +1214,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
             rel="noopener noreferrer"
             style={styles.link}
             onMouseOver={(e) =>
-              ((e.currentTarget as HTMLAnchorElement).style.color =
-                styles.linkHover.color)
+            ((e.currentTarget as HTMLAnchorElement).style.color =
+              styles.linkHover.color)
             }
             onMouseOut={(e) =>
-              ((e.currentTarget as HTMLAnchorElement).style.color =
-                styles.link.color)
+            ((e.currentTarget as HTMLAnchorElement).style.color =
+              styles.link.color)
             }
           >
             Publish with the browser

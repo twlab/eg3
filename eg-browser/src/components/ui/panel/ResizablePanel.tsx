@@ -21,6 +21,8 @@ interface ResizablePanelProps {
   onIncrement?: () => void;
   children?: React.ReactNode;
   navigationPath: Array<any>;
+  overlay?: boolean;
+  panelOpen?: boolean;
 }
 
 export default function ResizablePanel(props: ResizablePanelProps) {
@@ -34,12 +36,16 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     maxHeight,
     onClose, navigationPath,
     children
+    ,
+    overlay = false,
   } = props;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState<number | string>(initialWidth as number);
   const [height, setHeight] = useState<number | string>(initialHeight as number);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  // keep a mutable ref for translate to avoid re-renders during drag
+  const translateRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [headerHover, setHeaderHover] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -73,6 +79,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const pendingPreviewRef = useRef<{ w?: number; h?: number } | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const rafDragRef = useRef<number | null>(null);
+  const pendingDragRef = useRef<{ x?: number; y?: number } | null>(null);
   const preExpandRef = useRef<{
     translate: { x: number; y: number };
     width: number | string;
@@ -297,20 +305,38 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
   useEffect(() => {
     const onPointerMove = (ev: PointerEvent) => {
-      if (dragState.current?.dragging) {
-        const dx = ev.clientX - dragState.current.startX;
-        const dy = ev.clientY - dragState.current.startY;
-        setTranslate({
-          x: dragState.current.origX + dx,
-          y: dragState.current.origY + dy,
-        });
-      }
+        if (dragState.current?.dragging) {
+          const dx = ev.clientX - dragState.current.startX;
+          const dy = ev.clientY - dragState.current.startY;
+          const newX = dragState.current.origX + dx;
+          const newY = dragState.current.origY + dy;
+          // update mutable ref and schedule a rAF to update DOM directly
+          translateRef.current = { x: newX, y: newY };
+          pendingDragRef.current = { x: newX, y: newY };
+          if (!rafDragRef.current) {
+            rafDragRef.current = requestAnimationFrame(() => {
+              rafDragRef.current = null;
+              const p = pendingDragRef.current;
+              if (p && panelRef.current) {
+                // apply transform directly to DOM for immediate feedback
+                const numericW = parseSizeToNumber(width, 0);
+                const externalOffsetX =
+                  typeof props.panelOpen === "boolean" && props.panelOpen === false
+                    ? -(numericW + 24)
+                    : 0;
+                panelRef.current.style.transform = `translate(${p.x + externalOffsetX}px, ${p.y}px)`;
+              }
+              pendingDragRef.current = null;
+            });
+          }
+          return;
+        }
       if (resizeState.current?.resizing) {
         const dx = ev.clientX - resizeState.current.startX;
         const dy = ev.clientY - resizeState.current.startY;
         let newW = resizeState.current.startW + dx;
         let newH = resizeState.current.startH + dy;
-        // enforce minimums only; allow unlimited maximum unless provided
+        // enforce minimums only; allow unlimited maximum unless provi ded
         newW = Math.max(minWidth, newW);
         newH = Math.max(minHeight, newH);
         // update a lightweight ghost preview instead of React state to avoid reflow churn
@@ -336,6 +362,16 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         removeGhost();
         setIsResizing(false);
         resizeState.current.resizing = false;
+      }
+      // finalize drag: apply ref value to React state so component remains in sync
+      if (translateRef.current) {
+        // restore transition for smooth settling
+        try {
+          if (panelRef.current && !isResizing) {
+            panelRef.current.style.transition = "transform 260ms cubic-bezier(.2,.9,.2,1)";
+          }
+        } catch (e) {}
+        setTranslate({ x: translateRef.current.x, y: translateRef.current.y });
       }
     };
 
@@ -375,11 +411,25 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     setIsResizing(true);
   };
 
+  // compute an external slide offset when parent wants the panel closed
+  const externalOffsetX = (() => {
+    if (typeof props.panelOpen === "boolean" && props.panelOpen === false) {
+      const numericW = parseSizeToNumber(width, 0);
+      return -(numericW + 24); // slide fully left with a small margin
+    }
+    return 0;
+  })();
+
+  const combinedTransform = `translate(${translate.x + externalOffsetX}px, ${translate.y}px)`;
+
   const panelStyle: React.CSSProperties = {
     width: typeof width === "number" ? `${width}px` : width,
     height: typeof height === "number" ? `${height}px` : height,
-    transform: `translate(${translate.x}px, ${translate.y}px)`,
-    position: "relative",
+    transform: combinedTransform,
+    transition: isResizing ? undefined : "transform 260ms cubic-bezier(.2,.9,.2,1)",
+    position: overlay ? "fixed" : "relative",
+    top: overlay ? 0 : undefined,
+    left: overlay ? 0 : undefined,
     background: isResizing ? "transparent" : "var(--bg, white)",
     color: "var(--text, #111827)",
     display: "flex",
@@ -389,8 +439,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     borderRadius: 5,
     overflow: "hidden",
     boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
-
-
   };
 
   const headerBg = headerHover
@@ -413,7 +461,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   return (
     <div
       ref={panelRef}
-      style={{ ...panelStyle, zIndex: 51 }}
+      style={{ ...panelStyle, zIndex: overlay ? 9999 : 51, pointerEvents: "auto" }}
       className="shadow-lg border dark:border-gray-700 bg-white dark:bg-dark-background"
 
     >

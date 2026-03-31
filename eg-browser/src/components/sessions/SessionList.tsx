@@ -7,6 +7,7 @@ import {
   selectSessions,
   upsertSession,
   updateSession,
+  selectCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 import {
   ChevronRightIcon,
@@ -26,6 +27,9 @@ import useGenome from "@/lib/hooks/useGenome";
 import Button from "../ui/button/Button";
 import ClearAllButton from "./ClearAllButton";
 import { generateUUID } from "wuepgg3-track";
+import Session from "../root-layout/tabs/apps/destinations/Session";
+import session from "redux-persist/es/storage/session";
+import { current } from "@reduxjs/toolkit";
 export default function SessionList({
   onSessionClick,
   showImportSessionButton = false,
@@ -37,6 +41,7 @@ export default function SessionList({
 }) {
   const dispatch = useAppDispatch();
   const sessions = useAppSelector(selectSessions);
+  const currentSession = useAppSelector(selectCurrentSession)
   const currentSessionId = useAppSelector(selectCurrentSessionId);
   const sortPreference = useAppSelector(selectSessionSortPreference);
 
@@ -50,32 +55,16 @@ export default function SessionList({
     });
   }, [sessions, sortPreference]);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!onRequestClose) return;
 
-    const handleOutside = (e: MouseEvent | TouchEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        onRequestClose();
-      }
-    };
 
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("touchstart", handleOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("touchstart", handleOutside);
-    };
-  }, [onRequestClose]);
 
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full">
+    <div className="flex flex-col h-full">
 
       <div className="flex items-center justify-between p-2">
         <div className="flex items-center gap-1">
@@ -90,11 +79,33 @@ export default function SessionList({
           />
         </div>
         <div className="flex items-center gap-1">
-          <ClearAllButton onClearAll={handleClearAll} compact />
+          <ClearAllButton onClearAll={handleClearAll} compact title={"Clear All Sessions"} />
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {sortedSessions.length === 0 ? (
+
+        {currentSession && currentSession?.id ? <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
+          <div className="flex flex-col">
+
+            {currentSession.title.length > 0 ? (
+              <>
+                <h1 className="text-l">{`Selected: ${currentSession.title}`}</h1>
+              </>
+            ) : ""}
+            {currentSession.bundleId ? (
+              <p className="text-sm">Session Bundle ID: <span className="text-blue-600">{currentSession.bundleId}</span></p>
+            ) : (
+              <p className="text-sm">Session Bundle ID: <span className="text-red-600">Not saved remotely</span></p>
+            )}
+
+            {currentSession.bundleId ? (
+              <Session />
+            ) : null}
+
+          </div>
+
+
+        </div> : sortedSessions.length === 0 ? (
           <EmptyView
             title="No Sessions Found"
             description="Sessions are stored locally in your browser. Start a session and it will appear here."
@@ -111,6 +122,8 @@ export default function SessionList({
                 transition={{ duration: 0.1 }}
                 className="mb-1 last:mb-0"
               >
+
+
                 <SessionListItem
                   session={session}
                   onClick={() => onSessionClick(session)}
@@ -119,14 +132,29 @@ export default function SessionList({
                     currentSessionId === null || session.id !== currentSessionId
                   }
                 />
+
               </motion.div>
             ))}
 
           </AnimatePresence>
         )}
+
       </div>
     </div>
   );
+}
+
+
+
+function formatDate(value: string | number | Date) {
+  const d = new Date(value);
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function SessionListItem({
@@ -233,25 +261,27 @@ function SessionListItem({
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
 
           {session.title.length > 0 ? (
             <>
-              <h1 className="text-l">{session.title}</h1>
+              <h1 className="text-l">{`Selected: ${session.title}`}</h1>
             </>
           ) : ""}
           {session.bundleId ? (
-            <p className="text-sm">{`Session Bundle ID: ${session.bundleId}`}</p>
+            <p className="text-sm">Session Bundle ID: <span className="text-blue-600">{session.bundleId}</span></p>
           ) : (
-            ""
+            <p className="text-sm">Session Bundle ID: <span className="text-red-600">Not saved remotely</span></p>
           )}
-          <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
-          <p className="text-sm">
+
+          <p className="text-sm italic">
             {sortPreference === "updatedAt"
-              ? `Updated: ${new Date(session.updatedAt).toLocaleString()}`
-              : `Created: ${new Date(session.createdAt).toLocaleString()}`}
+              ? `Updated: ${formatDate(session.updatedAt)}`
+              : `Created: ${formatDate(session.createdAt)}`}
           </p>
         </div>
+
+
         <div className="flex items-center gap-2">
           {allowDelete && (
             <button
@@ -287,20 +317,36 @@ function SessionListItem({
         className="text-sm text-primary dark:text-dark-primary"
       >
         <div className="text-primary dark:text-dark-primary flex flex-col gap-2 pt-2 border-t border-primary">
-          <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
-          <p>
-            View region:{" "}
-            {session.viewRegion && typeof session.viewRegion === "object"
-              ? session.viewRegion.coordinate
-              : session.viewRegion
-                ? session.viewRegion
-                : ""}
-          </p>
-          <p>Active tracks: {session.tracks ? session.tracks.length : 0}</p>
-          <p>
-            Highlights: {session.highlights ? session.highlights.length : 0}
-          </p>
-          {session.metadataTerms.length > 0 && (
+          <div className="grid grid-cols-4 gap-4">
+            <div className="flex flex-col">
+              <span className="text-xs opacity-80">Last updated</span>
+              <span className="text-sm">{formatDate(session.updatedAt)}</span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs opacity-80">View region</span>
+              <span className="text-sm whitespace-normal break-words">
+                {session.viewRegion && typeof session.viewRegion === "object"
+                  ? session.viewRegion.coordinate
+                  : session.viewRegion
+                    ? session.viewRegion
+                    : ""}
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs">Genome: {genome?.name ?? "..."}</span>
+              <span className="text-xs opacity-80">Active tracks</span>
+              <span className="text-sm">{session.tracks ? session.tracks.length : 0}</span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs opacity-80">Highlights</span>
+              <span className="text-sm">{session.highlights ? session.highlights.length : 0}</span>
+
+            </div>
+          </div>
+          {/* {session.metadataTerms.length > 0 && (
             <div>
               <p>Metadata terms:</p>
               <div className="flex flex-wrap gap-1 mt-1">
@@ -314,10 +360,11 @@ function SessionListItem({
                 ))}
               </div>
             </div>
-          )}
-          <div className="flex flex-col items-stretch gap-2">
+          )} */}
+          <div className="flex flex-row items-center gap-2">
 
             <Button
+
               backgroundColor="tint"
               onClick={handleExport}
               style={{ flex: 1 }}
@@ -325,6 +372,7 @@ function SessionListItem({
               Export
             </Button>
             <Button
+
               backgroundColor="tint"
               onClick={handleDuplicate}
               style={{ flex: 1 }}
@@ -332,6 +380,7 @@ function SessionListItem({
               Duplicate
             </Button>
             <Button
+
               backgroundColor="tint"
               onClick={handleRename}
               style={{ flex: 1 }}

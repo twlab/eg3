@@ -119,7 +119,9 @@ export default function AddCustomGenome() {
       )}
 
       <div className="w-full flex justify-center">
+
         <div className="w-full max-w-2xl bg-white dark:bg-dark-surface rounded-lg p-6 shadow-sm">
+          <h1 className="text-xl">Upload Custom Genome file</h1>
           <div className="flex flex-row gap-2 w-full justify-start items-center mb-4">
             <Button
               leftIcon={<PlusIcon className="w-4 h-4" />}
@@ -158,7 +160,7 @@ export default function AddCustomGenome() {
               </div>
             </div>
 
-            <div className="mt-3 flex justify-center">
+            <div className="mt-4 flex justify-center">
               {isLoading ? (
                 <div className="text-center text-sm text-gray-600">Validating...</div>
               ) : (
@@ -166,9 +168,9 @@ export default function AddCustomGenome() {
               )}
             </div>
 
-            <div className="mt-4">
-              <GenomeHubPanel />
-            </div>
+
+            <GenomeHubPanel />
+
           </div>
         </div>
       </div>
