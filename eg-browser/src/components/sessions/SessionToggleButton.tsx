@@ -8,40 +8,42 @@ export default function SessionToggleButton({
     className,
     style,
     count,
+    textContent,
 }: {
     open: boolean;
     onClick?: () => void;
     className?: string;
     style?: React.CSSProperties;
-    count?: number;
+    count?: number | null;
+    textContent?: string;
 }) {
 
-    const needsRelative = !/(?:\bfixed\b|\babsolute\b)/.test(className ?? "");
+
 
     return (
         <motion.button
             layoutId="session-toggle-button"
             onClick={onClick}
             initial={false}
-            className={`${className ?? ""}${needsRelative ? " relative" : ""}`}
+            className={`${className ?? ""}${"fixed"}`}
             style={style}
             aria-label={open ? "Close panel" : "Open panel"}
         >
-            <div className="flex items-center gap-2 px-3 py-1">
+            <div className="flex items-center  py-1">
                 {typeof count === "number" ? (
-                    <span className="inline-flex items-center justify-center w-6 h-6 text-xs rounded-full bg-blue-600 text-white">{count}</span>
+                    <span className="mr-1 inline-flex items-center justify-center w-5 h-5 text-xs rounded-full bg-blue-600 text-white">{count}</span>
                 ) : null}
-                <span className="text-sm whitespace-nowrap">
-                    Previous sessions
+                <span className="text-xs truncate max-w-[110px]">
+                    {textContent}
                 </span>
 
                 <motion.div
                     initial={false}
                     animate={{ rotate: open ? 90 : 0 }}
                     transition={{ duration: 0.18 }}
-                    className="ml-2"
+                    className="ml-1"
                 >
-                    <ChevronRightIcon className="w-5 h-5" />
+                    <ChevronRightIcon className="w-4 h-4" />
                 </motion.div>
             </div>
         </motion.button>

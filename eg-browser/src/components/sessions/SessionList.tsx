@@ -69,35 +69,41 @@ export default function SessionList({
 
 
 
-      <div className="flex items-center justify-between p-2">
-        <div className="flex items-center gap-1">
-          <p>Sort by last updated</p>
-          <Switch
-            checked={sortPreference === "updatedAt"}
-            onChange={(checked) =>
-              dispatch(
-                setSessionSortPreference(checked ? "updatedAt" : "createdAt")
-              )
-            }
-          />
+      <div className="flex items-center justify-between p-1">
+        <div className="flex items-center">
+          {!currentSession?.genomeId && (
+            <ClearAllButton onClearAll={handleClearAll} compact title={"Clear All Sessions"} />
+          )}
         </div>
-        <div className="flex items-center gap-1">
-          <ClearAllButton onClearAll={handleClearAll} compact title={"Clear All Sessions"} />
-        </div>
-        <div className="top-2 right-2 z-50">
+        <div className="z-50">
           <SessionToggleButton
             open={open}
             onClick={() => {
               if (onRequestClose) onRequestClose();
             }}
-            className={"p-2 rounded-full bg-white shadow"}
-            count={sessions ? sessions.length : 0}
+            className={"p-1 rounded-full bg-white shadow"}
+            // count={sessions ? sessions.length : 0}
+
+            count={currentSession?.title ? null : sessions.length}
+            textContent={currentSession?.title ? currentSession.title : "Previous sessions"}
           />
         </div>
       </div>
+      {!currentSession?.genomeId ? <div className="flex items-center justify-between p-1 ">
+        <p>Sort last updated</p>
+        <Switch
+          checked={sortPreference === "updatedAt"}
+          onChange={(checked) =>
+            dispatch(
+              setSessionSortPreference(checked ? "updatedAt" : "createdAt")
+            )
+          }
+        />
+      </div> : null}
+
       <div className="flex-1 min-h-0 overflow-y-auto">
 
-        {currentSession && currentSession?.id ? <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
+        {currentSession?.genomeId ? <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
           <div className="flex flex-col">
 
             {currentSession.title.length > 0 ? (
@@ -111,9 +117,8 @@ export default function SessionList({
               <p className="text-sm">Session Bundle ID: <span className="text-red-600">Not saved remotely</span></p>
             )}
 
-            {currentSession.bundleId ? (
-              <Session />
-            ) : null}
+
+            <Session tab={false} />
 
           </div>
 

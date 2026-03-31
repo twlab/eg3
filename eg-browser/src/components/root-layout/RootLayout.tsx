@@ -3,19 +3,15 @@ import {
   useAppSelector,
   useUndoRedo,
 } from "../../lib/redux/hooks";
-import {
-  selectSessionPanelOpen,
-  setSessionPanelOpen,
-} from "../../lib/redux/slices/navigationSlice";
+
 
 import GenomePicker from "../genome-picker/GenomePicker";
-import NavigationStack from "../core-navigation/NavigationStack";
+
 import TabView from "../ui/tab-view/TabView";
 import AddCustomGenome from "../genome-hub/AddCustomGenome";
 import ImportSession from "../sessions/ImportSession";
 import SessionList from "../sessions/SessionList";
-import GenomeHubPanel from "../genome-hub/GenomeHubPanel";
-import GenomeSchemaView from "../genome-hub/GenomeSchemaView";
+
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
 import {
@@ -24,13 +20,14 @@ import {
   setCurrentSession,
   updateCurrentSession,
   selectSessions,
+  selectCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import SessionPanel from "../sessions/SessionPanel";
+
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 import MouseFollowingTooltip from "../ui/tooltip/MouseFollowingTooltip";
-const CURL_RADIUS = 15;
+
 import * as firebase from "firebase/app";
 import {
   selectDarkTheme,
@@ -40,7 +37,7 @@ import {
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
 import { useEffect, useRef, useState } from "react";
-import useSmallScreen from "@/lib/hooks/useSmallScreen";
+
 import { motion, AnimatePresence } from "framer-motion";
 import SessionToggleButton from "../sessions/SessionToggleButton";
 
@@ -93,23 +90,13 @@ export default function RootLayout(props: GenomeHubProps) {
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
   const sessions = useAppSelector(selectSessions);
-  const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
+  const currentSession = useAppSelector(selectCurrentSession);
   const darkTheme = useAppSelector(selectDarkTheme);
   const initialState = useRef(true);
   const { clearHistory } = useUndoRedo();
-  const isSmallScreen = useSmallScreen();
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
-  const [panelWidth, setPanelWidth] = useState(
-    Math.round(Math.min(window.innerWidth * 0.35, 480)),
-  );
 
-  useEffect(() => {
-    const updatePanelWidth = () =>
-      setPanelWidth(Math.round(Math.min(window.innerWidth * 0.35, 480)));
 
-    window.addEventListener("resize", updatePanelWidth);
-    return () => window.removeEventListener("resize", updatePanelWidth);
-  }, []);
 
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
@@ -295,14 +282,16 @@ export default function RootLayout(props: GenomeHubProps) {
           )}
         </AnimatePresence>
 
-        <div className="flex flex-row flex-1 relative bg-black">
+        <div>
           {!leftPanelOpen && (
             <SessionToggleButton
               open={leftPanelOpen}
               onClick={() => setLeftPanelOpen((v) => !v)}
-              className="fixed p-2 rounded-full bg-white shadow"
-              style={{ zIndex: 70, left: 0, top: "77px" }}
-              count={sessions ? sessions.length : 0}
+              className="absolute
+               p-1 rounded-full bg-white shadow"
+              style={{ zIndex: 70, left: 0, top: "60px" }}
+              count={sessionId ? null : sessions.length}
+              textContent={currentSession?.title ? currentSession.title : "Previous sessions"}
             />
           )}
 

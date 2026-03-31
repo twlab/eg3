@@ -3591,6 +3591,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: width, regions
   useEffect(() => {
     if (userViewRegion && !initialLoad.current) {
+      console.log(windowWidth)
       if (trackComponents) {
         const updatedGenomeConfig = _.cloneDeep(genomeConfig);
         updatedGenomeConfig.defaultRegion = new OpenInterval(

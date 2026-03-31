@@ -677,7 +677,7 @@ export default function NavBar() {
                           setMobileMenuOpen(false);
                         }}
                         active={currentTab === "tracks"}
-                        style={{ width: "100%", justifyContent: "flex-start" }}
+                        style={{ width: "100%", justifyContent: "center" }}
                       >
                         Tracks
                       </Button>
@@ -691,7 +691,7 @@ export default function NavBar() {
                           setMobileMenuOpen(false);
                         }}
                         active={currentTab === "apps"}
-                        style={{ width: "100%", justifyContent: "flex-start" }}
+                        style={{ width: "100%", justifyContent: "center" }}
                       >
                         Apps
                       </Button>
@@ -705,7 +705,7 @@ export default function NavBar() {
                           setMobileMenuOpen(false);
                         }}
                         active={currentTab === "share"}
-                        style={{ width: "100%", justifyContent: "flex-start" }}
+                        style={{ width: "100%", justifyContent: "center" }}
                       >
                         Share
                       </Button>
@@ -719,7 +719,7 @@ export default function NavBar() {
                           setMobileMenuOpen(false);
                         }}
                         active={currentTab === "settings"}
-                        style={{ width: "100%", justifyContent: "flex-start" }}
+                        style={{ width: "100%", justifyContent: "center" }}
                       >
                         Settings
                       </Button>
@@ -733,7 +733,7 @@ export default function NavBar() {
                           setMobileMenuOpen(false);
                         }}
                         active={currentTab === "help"}
-                        style={{ width: "100%", justifyContent: "flex-start" }}
+                        style={{ width: "100%", justifyContent: "center" }}
                       >
                         Help
                       </Button>

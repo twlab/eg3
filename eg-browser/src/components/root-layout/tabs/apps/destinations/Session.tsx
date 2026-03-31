@@ -22,8 +22,9 @@ import {
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
+import TabSessionUI from "./TabSessionUI";
 
-const Session: React.FC = () => {
+const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
   useExpandedNavigationTab();
   const dispatch = useAppDispatch();
 
@@ -186,7 +187,7 @@ const Session: React.FC = () => {
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId, title }));
   }
-  return (
+  return (tab ?
     <SessionUI
       onRestoreSession={onRestoreSession}
       onRetrieveBundle={onRetrieveBundle}
@@ -195,7 +196,12 @@ const Session: React.FC = () => {
       curBundle={bundle}
       state={curUserState}
     />
-  );
+    : <TabSessionUI onRestoreSession={onRestoreSession}
+      onRetrieveBundle={onRetrieveBundle}
+      updateBundle={onUpdateBundle}
+      bundleId={bundle.bundleId ? bundle.bundleId : ""}
+      curBundle={bundle}
+      state={curUserState} />)
 };
 
 export default Session;

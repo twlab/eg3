@@ -53,7 +53,7 @@ export default function ClearAllButton({
             <button
                 onClick={handleClick}
                 title={isConfirmed ? "Confirm clear all" : title}
-                className={`px-2 py-1 rounded-md inline-flex items-center justify-center gap-1 text-sm transition-colors duration-200 min-w-0 w-[150px] ${getBackgroundColor()} ${getIconColor()} hover:bg-red-200 dark:hover:bg-red-700`}
+                className={`py-1 rounded-md inline-flex items-center justify-center gap-1 text-md transition-colors duration-200 min-w-0 w-[140px] ${getBackgroundColor()} ${getIconColor()} hover:bg-red-200 dark:hover:bg-red-700`}
             >
                 {isConfirmed ? (
                     <CheckIcon className="w-5 h-5" />
@@ -65,7 +65,7 @@ export default function ClearAllButton({
 
     return (
         <div className="flex flex-col items-center justify-center p-4 gap-4">
-            <h1 className="text-xl">{title}</h1>
+            <h1 className="text-lg">{title}</h1>
             <div
                 className={`size-12 flex flex-row items-center justify-center ${getBackgroundColor()} rounded-full cursor-pointer transition-colors duration-200 ${getIconColor()} hover:bg-red-200 dark:hover:bg-red-700`}
                 onClick={handleClick}
