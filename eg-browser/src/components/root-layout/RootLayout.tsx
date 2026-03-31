@@ -40,7 +40,7 @@ import {
 } from "@/lib/redux/slices/settingsSlice";
 import { useEffect, useRef, useState } from "react";
 import useSmallScreen from "@/lib/hooks/useSmallScreen";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 
 import {
@@ -51,6 +51,7 @@ import {
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
+import ResizablePanel from "../ui/panel/ResizablePanel";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -96,6 +97,18 @@ export default function RootLayout(props: GenomeHubProps) {
   const { clearHistory } = useUndoRedo();
   const isSmallScreen = useSmallScreen();
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(
+    Math.round(Math.min(window.innerWidth * 0.35, 480)),
+  );
+
+  useEffect(() => {
+    const updatePanelWidth = () =>
+      setPanelWidth(Math.round(Math.min(window.innerWidth * 0.35, 480)));
+
+    window.addEventListener("resize", updatePanelWidth);
+    return () => window.removeEventListener("resize", updatePanelWidth);
+  }, []);
+
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
     (props.genomeName && props.tracks && props.viewRegion) ||
@@ -250,33 +263,23 @@ export default function RootLayout(props: GenomeHubProps) {
             <NavBar />
           </div>
         )}
+        <AnimatePresence>
+          {leftPanelOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-12 left-0 h-full z-60"
+              style={{ width: "35vw", maxWidth: 480 }}
+            >
+              <ResizablePanel
+                navigationPath={[]}
+                initialWidth={Math.round(window.innerWidth * 0.35)}
+                initialHeight={window.innerHeight}
+                onClose={() => setLeftPanelOpen(false)}
 
-        <div className="flex flex-row flex-1 relative bg-black">
-
-          {
-            <>
-              <motion.div
-                initial={{ x: "-35vw" }}
-                animate={{ x: leftPanelOpen ? 0 : "-35vw" }}
-                transition={{ type: "tween" }}
-                className="h-full overflow-hidden"
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  height: window.innerHeight,
-                  width: "35vw",
-
-                  borderTopRightRadius: CURL_RADIUS,
-                  borderBottomRightRadius: CURL_RADIUS,
-                  zIndex: 60,
-                  background: "var(--color-bg, #fff)",
-                  boxShadow:
-                    "0 0 0 1px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.25)",
-                }}
               >
-
-
                 <SessionList
                   onSessionClick={(s) => {
                     dispatch(setCurrentSession(s.id));
@@ -285,27 +288,29 @@ export default function RootLayout(props: GenomeHubProps) {
                   showImportSessionButton
                   onRequestClose={() => setLeftPanelOpen(false)}
                 />
+              </ResizablePanel>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
+        <div className="flex flex-row flex-1 relative bg-black">
+          {!leftPanelOpen && (
+            <motion.button
+              onClick={() => setLeftPanelOpen((v) => !v)}
+              initial={false}
+              // position the button fixed relative to viewport so it follows the panel
+              animate={{ left: 0 }}
 
+              className="fixed p-2 rounded-full bg-white shadow"
+              style={{ zIndex: 70, left: 0, top: "77px" }}
+              aria-label={leftPanelOpen ? "Close panel" : "Open panel"}
+            >
+              <ChevronRightIcon
+                className={`w-5 h-5 transform ${leftPanelOpen ? "rotate-180" : ""}`}
+              />
+            </motion.button>
+          )}
 
-
-              </motion.div>
-
-              <motion.button
-                onClick={() => setLeftPanelOpen((v) => !v)}
-                initial={false}
-                animate={{ x: leftPanelOpen ? "35vw" : 0 }}
-                transition={{ type: "tween" }}
-                className="absolute top-12 p-2 rounded-full bg-white shadow"
-                style={{ zIndex: 70 }}
-                aria-label={leftPanelOpen ? "Close panel" : "Open panel"}
-              >
-                <ChevronRightIcon
-                  className={`w-5 h-5 transform ${leftPanelOpen ? "rotate-180" : ""}`}
-                />
-              </motion.button>
-            </>
-          }
           {/* {!sessionId && (
             <div
             className="h-full overflow-hidden absolute top-0 left-0 z-20"

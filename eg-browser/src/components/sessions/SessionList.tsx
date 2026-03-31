@@ -57,23 +57,7 @@ export default function SessionList({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!onRequestClose) return;
 
-    const handleOutside = (e: MouseEvent | TouchEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        onRequestClose();
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("touchstart", handleOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("touchstart", handleOutside);
-    };
-  }, [onRequestClose]);
 
   const handleClearAll = () => {
     dispatch(clearAllSessions());
