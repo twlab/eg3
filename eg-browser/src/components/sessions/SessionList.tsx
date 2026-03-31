@@ -9,12 +9,8 @@ import {
   updateSession,
   selectCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/16/solid";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
+import { XMarkIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef } from "react";
 import Switch from "@/components/ui/switch/Switch";
@@ -28,16 +24,20 @@ import Button from "../ui/button/Button";
 import ClearAllButton from "./ClearAllButton";
 import { generateUUID } from "wuepgg3-track";
 import Session from "../root-layout/tabs/apps/destinations/Session";
-import session from "redux-persist/es/storage/session";
-import { current } from "@reduxjs/toolkit";
+import SessionToggleButton from "./SessionToggleButton";
+
+// Session toggle button is provided by SessionToggleButton (shared component)
+
 export default function SessionList({
   onSessionClick,
-  showImportSessionButton = false,
+
   onRequestClose,
+  open = true,
 }: {
   onSessionClick: (session: BrowserSession) => void;
   showImportSessionButton?: boolean;
   onRequestClose?: () => void;
+  open?: boolean;
 }) {
   const dispatch = useAppDispatch();
   const sessions = useAppSelector(selectSessions);
@@ -64,7 +64,10 @@ export default function SessionList({
   };
   console.log(sessions)
   return (
-    <div ref={containerRef} className="flex flex-col h-full">
+    <div ref={containerRef} className="flex flex-col h-full relative">
+
+
+
 
       <div className="flex items-center justify-between p-2">
         <div className="flex items-center gap-1">
@@ -80,6 +83,16 @@ export default function SessionList({
         </div>
         <div className="flex items-center gap-1">
           <ClearAllButton onClearAll={handleClearAll} compact title={"Clear All Sessions"} />
+        </div>
+        <div className="top-2 right-2 z-50">
+          <SessionToggleButton
+            open={open}
+            onClick={() => {
+              if (onRequestClose) onRequestClose();
+            }}
+            className={"p-2 rounded-full bg-white shadow"}
+            count={sessions ? sessions.length : 0}
+          />
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">

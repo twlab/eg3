@@ -23,6 +23,7 @@ import {
   selectCurrentSessionId,
   setCurrentSession,
   updateCurrentSession,
+  selectSessions,
 } from "@/lib/redux/slices/browserSlice";
 import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
@@ -41,7 +42,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import useSmallScreen from "@/lib/hooks/useSmallScreen";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
+import SessionToggleButton from "../sessions/SessionToggleButton";
 
 import {
   getGenomeConfig,
@@ -91,6 +92,7 @@ export default function RootLayout(props: GenomeHubProps) {
 
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
+  const sessions = useAppSelector(selectSessions);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
   const initialState = useRef(true);
@@ -295,20 +297,13 @@ export default function RootLayout(props: GenomeHubProps) {
 
         <div className="flex flex-row flex-1 relative bg-black">
           {!leftPanelOpen && (
-            <motion.button
+            <SessionToggleButton
+              open={leftPanelOpen}
               onClick={() => setLeftPanelOpen((v) => !v)}
-              initial={false}
-              // position the button fixed relative to viewport so it follows the panel
-              animate={{ left: 0 }}
-
               className="fixed p-2 rounded-full bg-white shadow"
               style={{ zIndex: 70, left: 0, top: "77px" }}
-              aria-label={leftPanelOpen ? "Close panel" : "Open panel"}
-            >
-              <ChevronRightIcon
-                className={`w-5 h-5 transform ${leftPanelOpen ? "rotate-180" : ""}`}
-              />
-            </motion.button>
+              count={sessions ? sessions.length : 0}
+            />
           )}
 
           {/* {!sessionId && (
