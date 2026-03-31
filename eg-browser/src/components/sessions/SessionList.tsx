@@ -62,7 +62,7 @@ export default function SessionList({
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
-  console.log(sessions)
+
   return (
     <div ref={containerRef} className="flex flex-col h-full relative">
 
@@ -85,7 +85,7 @@ export default function SessionList({
             // count={sessions ? sessions.length : 0}
 
             count={currentSession?.title ? null : sessions.length}
-            textContent={currentSession?.title ? currentSession.title : "Previous sessions"}
+            textContent={currentSession?.title ? `Session: ${currentSession.title}` : "Previous sessions"}
           />
         </div>
       </div>

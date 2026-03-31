@@ -279,7 +279,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setShow3dGene(undefined);
     };
   }, []);
-  console.log(size.width)
+
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {!has3dTracks ? (

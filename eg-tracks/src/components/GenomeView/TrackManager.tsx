@@ -1585,7 +1585,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState: newTrackState,
       globalTrackState: globalTrackState,
     });
-    console.log(globalTrackState.current);
+
   }
 
   // MARK: onmessInfin
@@ -3591,7 +3591,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: width, regions
   useEffect(() => {
     if (userViewRegion && !initialLoad.current) {
-      console.log(windowWidth)
+
       if (trackComponents) {
         const updatedGenomeConfig = _.cloneDeep(genomeConfig);
         updatedGenomeConfig.defaultRegion = new OpenInterval(
@@ -3805,8 +3805,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             style={{
               backgroundColor: "var(--bg-color)",
               width: `${windowWidth + 120}px`,
-              marginTop: getPadding() ? getPadding() / 3 : 2,
-              marginBottom: (getPadding() ? getPadding() / 3 : 2) + 1,
+              marginTop: (getPadding() ? getPadding() / 3 : 2) + 1,
+              marginBottom: (getPadding() ? getPadding() / 3 : 2),
               display: "flex",
               flexDirection: windowWidth <= 600 ? "column" : "row",
               alignItems: windowWidth <= 600 ? "stretch" : "center",

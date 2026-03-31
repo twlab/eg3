@@ -668,11 +668,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
                 let viewInterval;
                 if (bundleSession.viewInterval) {
                     viewInterval = bundleSession.viewInterval;
-                } else {
-                    viewInterval = {
-                        start: genomeConfig.defaultRegion.start,
-                        end: genomeConfig.defaultRegion.end,
-                    };
                 }
                 if (viewInterval) {
                     bundleSession["viewRegion"] = new DisplayedRegionModel(
@@ -688,27 +683,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
         }
     };
 
-    function _restoreViewRegion(object: any, regionSetView: RegionSet) {
-        const genomeConfig = getGenomeConfig(object.genomeName);
-        if (!genomeConfig) {
-            return null;
-        }
 
-        let viewInterval;
-        if ("viewRegion" in object) {
-            viewInterval = OpenInterval.deserialize(object.viewRegion);
-        } else {
-            viewInterval = genomeConfig.navContext.parse(object.displayRegion);
-        }
-        if (regionSetView) {
-            return new DisplayedRegionModel(
-                regionSetView.makeNavContext(),
-                ...viewInterval,
-            );
-        } else {
-            return new DisplayedRegionModel(genomeConfig.navContext, ...viewInterval);
-        }
-    }
 
     const retrieveBundle = async (retrieveBundleId: string) => {
         const bundleRes = await onRetrieveSession(retrieveBundleId);

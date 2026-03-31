@@ -15,15 +15,18 @@ import OpenInterval from "../../../models/OpenInterval";
 import "./MainPane.css";
 
 const WHEEL_ZOOM_SPEED = 0.2;
-const SVG_HEIGHT = 100;
+const SVG_HEIGHT = 70;
 
-const CHROMOSOME_Y = 10;
-const SELECTED_BOX_Y = 10;
-const RULER_Y = CHROMOSOME_Y + 30;
+// const CHROMOSOME_Y = 10;
+const CHROMOSOME_Y = 0;
+// const SELECTED_BOX_Y = 10;
+const SELECTED_BOX_Y = 0;
+// const RULER_Y = CHROMOSOME_Y + 30;
+const RULER_Y = 30;
 const X_OFFSET = 20;
 
-const SELECT_BOX_Y = "5px";
-const SELECT_BOX_HEIGHT = "60px";
+const SELECT_BOX_Y = "0px";
+const SELECT_BOX_HEIGHT = "70px";
 interface GenomeViewerProps {
   containerWidth: number;
   viewRegion: DisplayedRegionModel;
@@ -158,7 +161,7 @@ class MainPane extends React.Component<GenomeViewerProps> {
             width={containerWidth}
             height={SVG_HEIGHT}
             onContextMenu={(event) => event.preventDefault()}
-            style={{ border: "1px solid black" }}
+            style={{ outline: "1px solid black" }}
             ref={this.componentRef}
           >
             <Chromosomes

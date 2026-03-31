@@ -29,11 +29,11 @@ export default function SessionToggleButton({
             style={style}
             aria-label={open ? "Close panel" : "Open panel"}
         >
-            <div className="flex items-center  py-1">
+            <div className="flex items-center outline-none  rounded-full  bg-white shadow">
                 {typeof count === "number" ? (
-                    <span className="mr-1 inline-flex items-center justify-center w-5 h-5 text-xs rounded-full bg-blue-600 text-white">{count}</span>
+                    <span className=" inline-flex items-center justify-center py-2 w-5 h-4 mr-1 text-xs rounded-full bg-blue-600 text-white">{count}</span>
                 ) : null}
-                <span className="text-xs truncate max-w-[110px]">
+                <span className="text-xs  max-w-[100px]">
                     {textContent}
                 </span>
 

@@ -57,7 +57,7 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
     const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
     const navContext = genomeConfig.navContext as NavigationContext;
 
-    const curViewInterval = userViewRegion
+    const curViewInterval: any = userViewRegion
       ? navContext.parse(userViewRegion)
       : navContext.parse(genomeConfig.defaultRegion);
 

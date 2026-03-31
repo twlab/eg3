@@ -288,10 +288,10 @@ export default function RootLayout(props: GenomeHubProps) {
               open={leftPanelOpen}
               onClick={() => setLeftPanelOpen((v) => !v)}
               className="absolute
-               p-1 rounded-full bg-white shadow"
-              style={{ zIndex: 70, left: 0, top: "60px" }}
+               rounded-full bg-white shadow"
+              style={{ zIndex: 70, left: 0, top: "116px" }}
               count={sessionId ? null : sessions.length}
-              textContent={currentSession?.title ? currentSession.title : "Previous sessions"}
+              textContent={currentSession?.title ? `Selected: ${currentSession.title}` : "Previous sessions"}
             />
           )}
 
