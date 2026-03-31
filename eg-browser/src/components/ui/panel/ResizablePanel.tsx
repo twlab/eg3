@@ -305,32 +305,32 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
   useEffect(() => {
     const onPointerMove = (ev: PointerEvent) => {
-        if (dragState.current?.dragging) {
-          const dx = ev.clientX - dragState.current.startX;
-          const dy = ev.clientY - dragState.current.startY;
-          const newX = dragState.current.origX + dx;
-          const newY = dragState.current.origY + dy;
-          // update mutable ref and schedule a rAF to update DOM directly
-          translateRef.current = { x: newX, y: newY };
-          pendingDragRef.current = { x: newX, y: newY };
-          if (!rafDragRef.current) {
-            rafDragRef.current = requestAnimationFrame(() => {
-              rafDragRef.current = null;
-              const p = pendingDragRef.current;
-              if (p && panelRef.current) {
-                // apply transform directly to DOM for immediate feedback
-                const numericW = parseSizeToNumber(width, 0);
-                const externalOffsetX =
-                  typeof props.panelOpen === "boolean" && props.panelOpen === false
-                    ? -(numericW + 24)
-                    : 0;
-                panelRef.current.style.transform = `translate(${p.x + externalOffsetX}px, ${p.y}px)`;
-              }
-              pendingDragRef.current = null;
-            });
-          }
-          return;
+      if (dragState.current?.dragging) {
+        const dx = ev.clientX - dragState.current.startX;
+        const dy = ev.clientY - dragState.current.startY;
+        const newX = dragState.current.origX + dx;
+        const newY = dragState.current.origY + dy;
+        // update mutable ref and schedule a rAF to update DOM directly
+        translateRef.current = { x: newX, y: newY };
+        pendingDragRef.current = { x: newX, y: newY };
+        if (!rafDragRef.current) {
+          rafDragRef.current = requestAnimationFrame(() => {
+            rafDragRef.current = null;
+            const p = pendingDragRef.current;
+            if (p && panelRef.current) {
+              // apply transform directly to DOM for immediate feedback
+              const numericW = parseSizeToNumber(width, 0);
+              const externalOffsetX =
+                typeof props.panelOpen === "boolean" && props.panelOpen === false
+                  ? -(numericW + 24)
+                  : 0;
+              panelRef.current.style.transform = `translate(${p.x + externalOffsetX}px, ${p.y}px)`;
+            }
+            pendingDragRef.current = null;
+          });
         }
+        return;
+      }
       if (resizeState.current?.resizing) {
         const dx = ev.clientX - resizeState.current.startX;
         const dy = ev.clientY - resizeState.current.startY;
@@ -370,7 +370,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           if (panelRef.current && !isResizing) {
             panelRef.current.style.transition = "transform 260ms cubic-bezier(.2,.9,.2,1)";
           }
-        } catch (e) {}
+        } catch (e) { }
         setTranslate({ x: translateRef.current.x, y: translateRef.current.y });
       }
     };
