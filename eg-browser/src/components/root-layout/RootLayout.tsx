@@ -35,6 +35,10 @@ import {
   setToolBarVisibility,
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
+import {
+  selectNavigationTab,
+  setNavigationTab,
+} from "@/lib/redux/slices/navigationSlice";
 import { useEffect, useRef, useState } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,6 +49,7 @@ import {
   ITrackModel,
   GenomeCoordinate,
   IGenome,
+  OutsideClickDetector,
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
@@ -94,6 +99,18 @@ export default function RootLayout(props: GenomeHubProps) {
   const initialState = useRef(true);
   const { clearHistory } = useUndoRedo();
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
+  const currentTab = useAppSelector(selectNavigationTab);
+
+  // Escape closes the session panel and/or the active nav tab
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (leftPanelOpen) setLeftPanelOpen(false);
+      if (currentTab !== null) dispatch(setNavigationTab(null));
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [leftPanelOpen, currentTab, dispatch]);
 
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
@@ -241,7 +258,7 @@ export default function RootLayout(props: GenomeHubProps) {
     >
       <GoogleAnalytics />
 
-      <div className="flex flex-col h-full text-primary dark:text-white">
+      <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
         {showNavBar === false ? (
           ""
         ) : (
@@ -251,30 +268,34 @@ export default function RootLayout(props: GenomeHubProps) {
         )}
         <AnimatePresence>
           {leftPanelOpen ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-12 left-0 h-full z-60"
-              style={{ width: "35vw" }}
+            <OutsideClickDetector
+              onOutsideClick={() => dispatch(setLeftPanelOpen(false))}
             >
-              <ResizablePanel
-                navigationPath={[]}
-                initialWidth={Math.round(window.innerWidth * 0.35)}
-                initialHeight={window.innerHeight - 50}
-                onClose={() => setLeftPanelOpen(false)}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-12 left-0 h-full z-60"
+                style={{ width: "35vw" }}
               >
-                <SessionList
-                  onSessionClick={(s) => {
-                    dispatch(setCurrentSession(s.id));
-                    setLeftPanelOpen(false);
-                  }}
-                  showImportSessionButton
-                  onRequestClose={() => setLeftPanelOpen(false)}
-                />
-              </ResizablePanel>
-            </motion.div>
+                <ResizablePanel
+                  navigationPath={[]}
+                  initialWidth={Math.round(window.innerWidth * 0.35)}
+                  initialHeight={window.innerHeight - 50}
+                  onClose={() => setLeftPanelOpen(false)}
+                >
+                  <SessionList
+                    onSessionClick={(s) => {
+                      dispatch(setCurrentSession(s.id));
+                      setLeftPanelOpen(false);
+                    }}
+                    showImportSessionButton
+                    onRequestClose={() => setLeftPanelOpen(false)}
+                  />
+                </ResizablePanel>
+              </motion.div>
+            </OutsideClickDetector>
           ) : null}
         </AnimatePresence>
 

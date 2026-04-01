@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronLeftIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronLeftIcon,
+  XMarkIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+} from "@heroicons/react/24/outline";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux/hooks";
 import {
   setWidth as setTabWidth,
@@ -7,7 +12,10 @@ import {
   selectTabPanelWidth,
   selectTabPanelHeight,
 } from "../../../lib/redux/slices/tabPanelSlice";
-import { selectExpandNavigationTab, selectMidSizeNavigationTab } from "../../../lib/redux/slices/navigationSlice";
+import {
+  selectExpandNavigationTab,
+  selectMidSizeNavigationTab,
+} from "../../../lib/redux/slices/navigationSlice";
 
 interface ResizablePanelProps {
   title?: string;
@@ -19,6 +27,7 @@ interface ResizablePanelProps {
   maxHeight?: number;
   onClose?: () => void;
   onIncrement?: () => void;
+  onPinChange?: (pinned: boolean) => void;
   children?: React.ReactNode;
   navigationPath: Array<any>;
 }
@@ -32,16 +41,29 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     maxWidth,
     minHeight = 250,
     maxHeight,
-    onClose, navigationPath,
-    children
+    onClose,
+    navigationPath,
+    children,
   } = props;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState<number | string>(initialWidth as number);
-  const [height, setHeight] = useState<number | string>(initialHeight as number);
+  const [height, setHeight] = useState<number | string>(
+    initialHeight as number,
+  );
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [headerHover, setHeaderHover] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [pinned, setPinned] = useState(false);
+
+  const togglePin = (e: React.PointerEvent | React.MouseEvent) => {
+    e.stopPropagation();
+    setPinned((prev) => {
+      const next = !prev;
+      props.onPinChange?.(next);
+      return next;
+    });
+  };
 
   const dragState = useRef<{
     dragging: boolean;
@@ -49,6 +71,10 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     startY: number;
     origX: number;
     origY: number;
+    naturalLeft: number;
+    naturalTop: number;
+    panelWidth: number;
+    panelHeight: number;
   } | null>(null);
   const resizeState = useRef<{
     resizing: boolean;
@@ -181,7 +207,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     if (ghostRef.current) {
       try {
         document.body.removeChild(ghostRef.current);
-      } catch (e) { }
+      } catch (e) {}
       ghostRef.current = null;
     }
     pendingPreviewRef.current = null;
@@ -234,13 +260,22 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         : (initialHeight as number) || 325,
     );
     if (expandNavigationTab) {
-
       // setWidth(Math.round(numericW * 4));
       // setHeight(Math.round(numericH * 2));
-      const windowSize = { width: window.innerWidth, height: window.innerHeight };
+      const windowSize = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
 
-      const newW = width !== initialWidth && width !== Math.round(windowSize.width * 0.5) ? width : Math.round(windowSize.width * 0.6);
-      const newH = height !== initialHeight && height !== Math.round(windowSize.height * 0.7) ? height : Math.round(windowSize.height * 0.8);
+      const newW =
+        width !== initialWidth && width !== Math.round(windowSize.width * 0.5)
+          ? width
+          : Math.round(windowSize.width * 0.6);
+      const newH =
+        height !== initialHeight &&
+        height !== Math.round(windowSize.height * 0.7)
+          ? height
+          : Math.round(windowSize.height * 0.8);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
@@ -249,7 +284,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       setWidth(newW);
       setHeight(newH);
 
-      // center the panel when opening for the first time  
+      // center the panel when opening for the first time
       // const rect = panelRef.current?.getBoundingClientRect();
       // if (
       //   rect &&
@@ -263,13 +298,21 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       //   const deltaY = Math.round(-rect.top); // 36 for navbar height
       //   setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
       // }
-    }
-    else if (midSizeNavTab) {
+    } else if (midSizeNavTab) {
+      const windowSize = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
 
-      const windowSize = { width: window.innerWidth, height: window.innerHeight };
-
-      const newW = width !== initialWidth && width !== Math.round(windowSize.width * 0.6) ? width : Math.round(windowSize.width * 0.5);
-      const newH = height !== initialHeight && height !== Math.round(windowSize.height * 0.8) ? height : Math.round(windowSize.height * 0.7);
+      const newW =
+        width !== initialWidth && width !== Math.round(windowSize.width * 0.6)
+          ? width
+          : Math.round(windowSize.width * 0.5);
+      const newH =
+        height !== initialHeight &&
+        height !== Math.round(windowSize.height * 0.8)
+          ? height
+          : Math.round(windowSize.height * 0.7);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
@@ -277,9 +320,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
       setWidth(newW);
       setHeight(newH);
-    }
-
-    else {
+    } else {
       // restore to initial sizes
       setWidth(Number(initialWidth));
       setHeight(Number(initialHeight));
@@ -300,9 +341,23 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       if (dragState.current?.dragging) {
         const dx = ev.clientX - dragState.current.startX;
         const dy = ev.clientY - dragState.current.startY;
+        const {
+          naturalLeft,
+          naturalTop,
+          panelWidth,
+          panelHeight,
+          origX,
+          origY,
+        } = dragState.current;
+        // Left/right: at most 80% of panel width can go off-screen
+        const minX = -naturalLeft - panelWidth * 0.8;
+        const maxX = window.innerWidth - naturalLeft - panelWidth * 0.2;
+        // Top: hard stop at window top; Bottom: at most 80% of panel height can go off-screen
+        const minY = -naturalTop;
+        const maxY = window.innerHeight - naturalTop - panelHeight * 0.2;
         setTranslate({
-          x: dragState.current.origX + dx,
-          y: dragState.current.origY + dy,
+          x: Math.max(minX, Math.min(maxX, origX + dx)),
+          y: Math.max(minY, Math.min(maxY, origY + dy)),
         });
       }
       if (resizeState.current?.resizing) {
@@ -349,12 +404,19 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
   const onHeaderPointerDown = (e: React.PointerEvent) => {
     (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    const rect = panelRef.current?.getBoundingClientRect();
+    const pw = rect ? rect.width : parseSizeToNumber(width, 300);
+    const ph = rect ? rect.height : parseSizeToNumber(height, 300);
     dragState.current = {
       dragging: true,
       startX: e.clientX,
       startY: e.clientY,
       origX: translate.x,
       origY: translate.y,
+      naturalLeft: rect ? rect.left - translate.x : 0,
+      naturalTop: rect ? rect.top - translate.y : 0,
+      panelWidth: pw,
+      panelHeight: ph,
     };
   };
 
@@ -380,7 +442,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     height: typeof height === "number" ? `${height}px` : height,
     transform: `translate(${translate.x}px, ${translate.y}px)`,
     position: "relative",
-    background: isResizing ? "transparent" : "var(--bg, white)",
+    background: isResizing ? "transparent" : undefined,
     color: "var(--text, #111827)",
     display: "flex",
     flexDirection: "column",
@@ -389,8 +451,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     borderRadius: 5,
     overflow: "hidden",
     boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
-
-
   };
 
   const headerBg = headerHover
@@ -415,7 +475,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       ref={panelRef}
       style={{ ...panelStyle, zIndex: 51 }}
       className="shadow-lg border dark:border-gray-700 bg-white dark:bg-dark-background"
-
     >
       <div
         className="flex items-center justify-between px-2 py-2 relative transition-all"
@@ -471,17 +530,23 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             ""
           )}
           <div className="flex items-center">
-            <strong className="text-md text-gray-900 dark:text-white font-semibold" >
-
+            <strong className="text-md text-gray-900 dark:text-dark-primary font-semibold">
               {title ? title.charAt(0).toUpperCase() + title.slice(1) : title}
 
-              {navigationPath.length > 0 && navigationPath[navigationPath.length - 1]?.path ? ` / ${String(navigationPath[navigationPath.length - 1].path).split("-").map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s).join(" ")}` : ""}
+              {navigationPath.length > 0 &&
+              navigationPath[navigationPath.length - 1]?.path
+                ? ` / ${String(navigationPath[navigationPath.length - 1].path)
+                    .split("-")
+                    .map((s) =>
+                      s ? s.charAt(0).toUpperCase() + s.slice(1) : s,
+                    )
+                    .join(" ")}`
+                : ""}
             </strong>
           </div>
         </div>
-        <div className="flex items-center">
-          <span className="text-sm text-gray-700 dark:text-gray-200">
-
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-gray-700 dark:text-dark-primary">
             <kbd
               className="px-1 font-mono"
               style={{
@@ -509,26 +574,72 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       <div className="flex-1 overflow-auto" style={contentStyle}>
         {children}
       </div>
-      <div
-        onPointerDown={onResizePointerDown}
-        className="rounded cursor-se-resize flex items-center justify-center mt-auto self-end"
-        style={{
-          touchAction: "none",
-          backgroundColor: "rgb(237, 242, 246)",
-          height: 30,
-          width: 30,
-        }}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 18 18"
-          aria-hidden="true"
+      <div className="flex flex-row items-center justify-between mt-auto bg-[rgb(237,242,246)] dark:bg-dark-surface">
+        {/* Pin toggle — Switch-style pill */}
+        <div
+          role="button"
+          aria-pressed={pinned}
+          title={
+            pinned
+              ? "Pinned: outside clicks won't close"
+              : "Click to pin (prevent outside-click close)"
+          }
+          onClick={togglePin}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="flex items-center cursor-pointer transition-colors duration-300 ml-2"
+          style={{
+            width: 40,
+            height: 22,
+            borderRadius: 11,
+            padding: 2,
+            backgroundColor: pinned ? "#3b82f6" : "#d1d5db",
+            flexShrink: 0,
+          }}
         >
-          <path
-            fill="#494c4e"
-            d="M14.228 16.227a1 1 0 0 1-.707-1.707l1-1a1 1 0 0 1 1.416 1.414l-1 1a1 1 0 0 1-.707.293zm-5.638 0a1 1 0 0 1-.707-1.707l6.638-6.638a1 1 0 0 1 1.416 1.414l-6.638 6.638a1 1 0 0 1-.707.293zm-5.84 0a1 1 0 0 1-.707-1.707L14.52 2.043a1 1 0 1 1 1.415 1.414L3.457 15.934a1 1 0 0 1-.707.293z"
-          />
-        </svg>
+          <div
+            className="flex items-center justify-center transition-all duration-300"
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: "50%",
+              backgroundColor: "white",
+              transform: pinned ? "translateX(18px)" : "translateX(0px)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            }}
+          >
+            {pinned ? (
+              <LockClosedIcon
+                style={{ width: 10, height: 10, color: "#3b82f6" }}
+              />
+            ) : (
+              <LockOpenIcon
+                style={{ width: 10, height: 10, color: "#9ca3af" }}
+              />
+            )}
+          </div>
+        </div>
+
+        <div
+          onPointerDown={onResizePointerDown}
+          className="rounded cursor-se-resize flex items-center justify-center"
+          style={{
+            touchAction: "none",
+            height: 30,
+            width: 30,
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 18 18"
+            aria-hidden="true"
+          >
+            <path
+              fill="currentColor"
+              className="text-gray-500 dark:text-gray-400"
+              d="M14.228 16.227a1 1 0 0 1-.707-1.707l1-1a1 1 0 0 1 1.416 1.414l-1 1a1 1 0 0 1-.707.293zm-5.638 0a1 1 0 0 1-.707-1.707l6.638-6.638a1 1 0 0 1 1.416 1.414l-6.638 6.638a1 1 0 0 1-.707.293zm-5.84 0a1 1 0 0 1-.707-1.707L14.52 2.043a1 1 0 1 1 1.415 1.414L3.457 15.934a1 1 0 0 1-.707.293z"
+            />
+          </svg>
+        </div>
       </div>
     </div>
   );

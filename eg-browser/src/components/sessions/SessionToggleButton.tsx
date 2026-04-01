@@ -26,13 +26,15 @@ export default function SessionToggleButton({
       style={style}
       aria-label={open ? "Close panel" : "Open panel"}
     >
-      <div className="flex items-center outline-none  rounded-full  bg-white shadow py-1 px-2">
+      <div className="flex items-center outline-none rounded-full bg-white dark:bg-dark-secondary shadow py-1 px-2">
         {typeof count === "number" ? (
-          <span className=" inline-flex items-center justify-center py-2 w-5 h-4 mr-1 text-xs rounded-full bg-blue-600 text-white">
+          <span className="inline-flex items-center justify-center w-5 h-5 mr-1 text-xs rounded-full bg-blue-600 text-white">
             {count}
           </span>
         ) : null}
-        <span className="text-xs  truncatemax-w-[130px]">{textContent}</span>
+        <span className="text-xs text-primary dark:text-dark-primary whitespace-nowrap">
+          {textContent}
+        </span>
 
         <motion.div
           initial={false}
@@ -40,7 +42,7 @@ export default function SessionToggleButton({
           transition={{ duration: 0.18 }}
           className="ml-1"
         >
-          <ChevronRightIcon className="w-4 h-4" />
+          <ChevronRightIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
         </motion.div>
       </div>
     </motion.button>

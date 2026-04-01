@@ -18,6 +18,7 @@ import {
   GenomeCoordinate,
   GenomeSerializer,
   getGenomeConfig,
+  RegionSet,
 } from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
@@ -26,7 +27,9 @@ import TabSessionUI from "./TabSessionUI";
 import useMidSizeNavigationTab from "../../../../../lib/hooks/useMidSizeNavigationTab";
 
 const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
-  useMidSizeNavigationTab();
+  if (tab) {
+    useMidSizeNavigationTab();
+  }
   const dispatch = useAppDispatch();
 
   const customTracksPool = useAppSelector(selectCustomTracksPool);
@@ -52,15 +55,27 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
     const isShowingNavigator = isNavigatorVisible;
     const regionSets = currentSession.regionSets;
     const tracks = currentSession.tracks;
-    const selectedRegionSet = currentSession.selectedRegionSet;
-    const userViewRegion = currentSession.userViewRegion;
+    const selectedRegionSet = currentSession?.selectedRegionSet;
+    const userViewRegion = currentSession?.userViewRegion;
 
     const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
     const navContext = genomeConfig.navContext as NavigationContext;
-
-    const curViewInterval: any = userViewRegion
-      ? navContext.parse(userViewRegion)
-      : navContext.parse(genomeConfig.defaultRegion);
+    let setNavContext;
+    if (selectedRegionSet) {
+      if (typeof selectedRegionSet === "object") {
+        const newRegionSet = RegionSet.deserialize(selectedRegionSet);
+        setNavContext = newRegionSet.makeNavContext();
+      } else {
+        setNavContext = selectedRegionSet.makeNavContext();
+      }
+    }
+    const curViewInterval: any = setNavContext
+      ? userViewRegion
+        ? setNavContext.parse(userViewRegion)
+        : setNavContext.parse(genomeConfig.defaultRegion)
+      : userViewRegion
+        ? navContext.parse(userViewRegion)
+        : navContext.parse(genomeConfig.defaultRegion);
 
     curUserState = {
       bundleId: bundle.bundleId,

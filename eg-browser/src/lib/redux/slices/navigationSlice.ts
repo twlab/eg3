@@ -1,60 +1,75 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../createStore";
 
-
-export type NavigationRoute = 'tracks' | 'apps' | 'help' | 'share' | 'settings' | 'regions' | 'tabgenomepicker';
+export type NavigationRoute =
+  | "tracks"
+  | "apps"
+  | "help"
+  | "share"
+  | "settings"
+  | "regions"
+  | "tab-genome-picker";
 
 export interface NavigationPathElement {
-    path: NavigationRoute,
-    params: Record<string, string>;
+  path: NavigationRoute;
+  params: Record<string, string>;
 }
 
 export type NavigationPath = NavigationPathElement[];
 
 export const navigationSlice = createSlice({
-    name: "navigation",
-    initialState: {
-        path: [] as NavigationPath,
-        tab: null as NavigationRoute | null,
-        sessionPanelOpen: false,
-        expandNavigationTab: false,
-        useMidSizeNavigationTab: false
+  name: "navigation",
+  initialState: {
+    path: [] as NavigationPath,
+    tab: null as NavigationRoute | null,
+    sessionPanelOpen: false,
+    expandNavigationTab: false,
+    useMidSizeNavigationTab: false,
+  },
+  reducers: {
+    setNavigationPath: (state, action: PayloadAction<NavigationPath>) => {
+      state.path = action.payload;
     },
-    reducers: {
-        setNavigationPath: (state, action: PayloadAction<NavigationPath>) => {
-            state.path = action.payload;
-        },
-        pushNavigationPath: (state, action: PayloadAction<NavigationPathElement>) => {
-            state.path.push(action.payload);
-        },
-        setNavigationTab: (state, action: PayloadAction<NavigationRoute | null>) => {
-            state.tab = action.payload;
-        },
-        setSessionPanelOpen: (state, action: PayloadAction<boolean>) => {
-            state.sessionPanelOpen = action.payload;
-        },
-        setExpandNavigationTab: (state, action: PayloadAction<boolean>) => {
-            state.expandNavigationTab = action.payload;
-        },
-        setMidSizeNavigationTab: (state, action: PayloadAction<boolean>) => {
-            state.useMidSizeNavigationTab = action.payload;
-        }
-    }
+    pushNavigationPath: (
+      state,
+      action: PayloadAction<NavigationPathElement>,
+    ) => {
+      state.path.push(action.payload);
+    },
+    setNavigationTab: (
+      state,
+      action: PayloadAction<NavigationRoute | null>,
+    ) => {
+      state.tab = action.payload;
+    },
+    setSessionPanelOpen: (state, action: PayloadAction<boolean>) => {
+      state.sessionPanelOpen = action.payload;
+    },
+    setExpandNavigationTab: (state, action: PayloadAction<boolean>) => {
+      state.expandNavigationTab = action.payload;
+    },
+    setMidSizeNavigationTab: (state, action: PayloadAction<boolean>) => {
+      state.useMidSizeNavigationTab = action.payload;
+    },
+  },
 });
 
 export const {
-    setNavigationPath,
-    pushNavigationPath,
-    setNavigationTab,
-    setSessionPanelOpen,
-    setExpandNavigationTab,
-    setMidSizeNavigationTab
+  setNavigationPath,
+  pushNavigationPath,
+  setNavigationTab,
+  setSessionPanelOpen,
+  setExpandNavigationTab,
+  setMidSizeNavigationTab,
 } = navigationSlice.actions;
 
 export const selectNavigationPath = (state: RootState) => state.navigation.path;
 export const selectNavigationTab = (state: RootState) => state.navigation.tab;
-export const selectSessionPanelOpen = (state: RootState) => state.navigation.sessionPanelOpen;
-export const selectExpandNavigationTab = (state: RootState) => state.navigation.expandNavigationTab;
-export const selectMidSizeNavigationTab = (state: RootState) => state.navigation.useMidSizeNavigationTab;
+export const selectSessionPanelOpen = (state: RootState) =>
+  state.navigation.sessionPanelOpen;
+export const selectExpandNavigationTab = (state: RootState) =>
+  state.navigation.expandNavigationTab;
+export const selectMidSizeNavigationTab = (state: RootState) =>
+  state.navigation.useMidSizeNavigationTab;
 
 export default navigationSlice.reducer;

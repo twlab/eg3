@@ -18,8 +18,13 @@ export default function ExternalLink({
   };
   if (compact) {
     return (
-      <div onClick={handleClick} className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-base">
-        <div className="text-primary dark:text-dark-primary font-medium">{title}</div>
+      <div
+        onClick={handleClick}
+        className="flex items-center justify-between px-2 py-1  hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-base"
+      >
+        <div className="text-primary dark:text-dark-primary font-medium">
+          {title}
+        </div>
         <ArrowTopRightOnSquareIcon className="h-5 w-5 text-gray-500 dark:text-gray-300" />
       </div>
     );

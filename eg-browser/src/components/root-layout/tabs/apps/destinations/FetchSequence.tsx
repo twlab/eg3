@@ -4,6 +4,8 @@ import {
   TwoBitSource,
   CopyToClip,
   GenomeSerializer,
+  RegionSet,
+  GenomeCoordinate,
 } from "wuepgg3-track";
 import "./FetchSequence.css";
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
@@ -29,19 +31,53 @@ export const FetchSequence: React.FC = () => {
   );
   // Memoize selectedRegion to avoid unnecessary recalculation
   const selectedRegion = useMemo(() => {
-    if (genomeConfig && genomeConfig.navContext && userViewRegion) {
-      const navContext = genomeConfig.navContext as NavigationContext;
-      const parsed = navContext.parse(userViewRegion);
-      const { start, end } = parsed;
+    if (currentSession && genomeConfig) {
+      let newViewRegion;
+      try {
+        const userViewRegion = currentSession?.userViewRegion;
+        const selectedRegionSet: any = currentSession?.selectedRegionSet;
+        const overrideViewRegion = currentSession?.overrideViewRegion;
+        if (userViewRegion) {
+          if (selectedRegionSet) {
+            let setNavContext;
+            if (typeof selectedRegionSet === "object") {
+              const newRegionSet = RegionSet.deserialize(selectedRegionSet);
+              setNavContext = newRegionSet.makeNavContext();
+            } else {
+              setNavContext = selectedRegionSet.makeNavContext();
+            }
+            setNavContext._isRegionSet = true;
 
-      return new DisplayedRegionModel(genomeConfig.navContext, start, end);
-    } else if (genomeConfig && genomeConfig.navContext) {
-      return new DisplayedRegionModel(
-        genomeConfig.navContext,
-        ...genomeConfig.navContext.parse(genomeConfig.defaultRegion),
-      );
+            const contextCoord = setNavContext.parse(
+              userViewRegion as GenomeCoordinate,
+            );
+
+            return new DisplayedRegionModel(setNavContext, ...contextCoord);
+          } else {
+            newViewRegion = genomeConfig.navContext.parse(
+              userViewRegion as GenomeCoordinate,
+            );
+          }
+        } else if (overrideViewRegion) {
+          newViewRegion = genomeConfig.navContext.parse(
+            overrideViewRegion as GenomeCoordinate,
+          );
+        } else {
+          newViewRegion = genomeConfig.navContext.parse(
+            genomeConfig.defaultRegion,
+          );
+        }
+
+        if (newViewRegion) {
+          return new DisplayedRegionModel(
+            genomeConfig.navContext,
+            ...newViewRegion,
+          );
+        }
+      } catch (e) {
+        return new DisplayedRegionModel(genomeConfig.navContext);
+      }
     }
-    return null;
   }, [genomeConfig, userViewRegion]);
 
   const twoBitSourceRef = useRef<TwoBitSource | null>(null);

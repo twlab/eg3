@@ -49,8 +49,6 @@ import {
   GenomeSerializer,
   DisplayedRegionModel,
   RegionSet,
-
-
 } from "wuepgg3-track";
 import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
@@ -60,7 +58,6 @@ import { getDatabase, ref, set } from "firebase/database";
 import SearchBar from "../genome-view/toolbar/SearchBar";
 import { current } from "@reduxjs/toolkit";
 
-
 export default function NavBar() {
   const bundle = useAppSelector(selectBundle);
 
@@ -69,10 +66,12 @@ export default function NavBar() {
   const [storageError, setStorageError] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement | null>(null);
   const [tabAnchorLeft, setTabAnchorLeft] = useState<number | null>(null);
+  const panelPinnedRef = useRef(false);
 
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
-  const currentSession: BrowserSession | null = useAppSelector(selectCurrentSession);
+  const currentSession: BrowserSession | null =
+    useAppSelector(selectCurrentSession);
 
   const [panelCounter, setPanelCounter] = useState(0);
   const incrementPanelCounter = useCallback(() => {
@@ -84,7 +83,6 @@ export default function NavBar() {
     setNavigationPath(p);
   }, []);
 
-
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
 
@@ -95,43 +93,57 @@ export default function NavBar() {
   }, [genome]);
 
   useEffect(() => {
-
-    setNavigationPath([])
-
+    setNavigationPath([]);
   }, [currentTab]);
 
   const currentDisplayRegionModel = useMemo(() => {
-
     if (currentSession && genomeConfig) {
+      let newViewRegion;
       try {
-        if (currentSession.userViewRegion) {
-          const parsed = genomeConfig.navContext.parse(
-            currentSession.userViewRegion as GenomeCoordinate
+        const userViewRegion = currentSession?.userViewRegion;
+        const selectedRegionSet: any = currentSession?.selectedRegionSet;
+        const overrideViewRegion = currentSession?.overrideViewRegion;
+        if (userViewRegion) {
+          if (selectedRegionSet) {
+            let setNavContext;
+            if (typeof selectedRegionSet === "object") {
+              const newRegionSet = RegionSet.deserialize(selectedRegionSet);
+              setNavContext = newRegionSet.makeNavContext();
+            } else {
+              setNavContext = selectedRegionSet.makeNavContext();
+            }
+            setNavContext._isRegionSet = true;
 
-          )
-          if (parsed)
-            return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
+            const contextCoord = setNavContext.parse(
+              userViewRegion as GenomeCoordinate,
+            );
 
-        }
-        else if (currentSession.viewRegion && typeof currentSession.viewRegion !== "object") {
-          const parsed = genomeConfig.navContext.parse(
-            currentSession.viewRegion as GenomeCoordinate
+            return new DisplayedRegionModel(setNavContext, ...contextCoord);
+          } else {
+            newViewRegion = genomeConfig.navContext.parse(
+              userViewRegion as GenomeCoordinate,
+            );
+          }
+        } else if (overrideViewRegion) {
+          newViewRegion = genomeConfig.navContext.parse(
+            overrideViewRegion as GenomeCoordinate,
           );
-          if (parsed)
-            return new DisplayedRegionModel(genomeConfig.navContext, ...parsed);
-
+        } else {
+          newViewRegion = genomeConfig.navContext.parse(
+            genomeConfig.defaultRegion,
+          );
         }
-        else {
 
-          return new DisplayedRegionModel(genomeConfig.navContext)
-
+        if (newViewRegion) {
+          return new DisplayedRegionModel(
+            genomeConfig.navContext,
+            ...newViewRegion,
+          );
         }
-      }
-      catch (e) {
-        return new DisplayedRegionModel(genomeConfig.navContext)
+      } catch (e) {
+        return new DisplayedRegionModel(genomeConfig.navContext);
       }
     }
-
   }, [currentSession?.userViewRegion, genomeConfig]);
 
   const handleNewRegionSelect = useCallback(
@@ -196,8 +208,7 @@ export default function NavBar() {
   };
 
   const genomeLogoUrl: { name: string; logo: string } | null = genome?.name
-    ? (getSpeciesInfo(genome.name))
-
+    ? getSpeciesInfo(genome.name)
     : null;
 
   // const genomeLogoUrl: string | null = null;
@@ -218,16 +229,6 @@ export default function NavBar() {
     window.addEventListener("error", handleStorageError);
     return () => window.removeEventListener("error", handleStorageError);
   }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && currentTab !== null) {
-        dispatch(setNavigationTab(null));
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentTab, dispatch]);
 
   return (
     <>
@@ -252,7 +253,9 @@ export default function NavBar() {
         </div>
       )}
       <OutsideClickDetector
-        onOutsideClick={() => dispatch(setNavigationTab(null))}
+        onOutsideClick={() => {
+          if (!panelPinnedRef.current) dispatch(setNavigationTab(null));
+        }}
       >
         <div className="flex flex-row justify-between items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1">
           <div
@@ -282,7 +285,6 @@ export default function NavBar() {
                 "overflow-hidden",
                 currentSession ? "cursor-pointer" : "cursor-default",
               )}
-
               onClick={() => {
                 dispatch(setSessionPanelOpen(false));
                 dispatch(setCurrentSession(null));
@@ -316,40 +318,44 @@ export default function NavBar() {
                 <>
                   {currentSession && genome?.name && (
                     <Button
-                      onClick={(e) => openTab("tabgenomepicker", e)}
-                      active={currentTab === "tabgenomepicker"}
+                      onClick={(e) => openTab("tab-genome-picker", e)}
+                      active={currentTab === "tab-genome-picker"}
                       style={{
-                        backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
+                        backgroundColor: sessionPanelOpen
+                          ? "#e6eef9"
+                          : "#f3f4f6",
                         color: "#0f172a",
                         width: "60px",
                         display: "flex",
                         alignItems: "center",
-
                       }}
                     >
-
-                      <div className="relative flex-shrink-0" >
+                      <div className="relative flex-shrink-0">
                         <div
                           style={{
-                            backgroundImage: `url(${genomeLogoUrl?.logo
-                              ? genomeLogoUrl.logo.startsWith("http")
-                                ? genomeLogoUrl.logo
-                                : import.meta.env.BASE_URL + genomeLogoUrl.logo
-                              : ""
-                              })`,
+                            backgroundImage: `url(${
+                              genomeLogoUrl?.logo
+                                ? genomeLogoUrl.logo.startsWith("http")
+                                  ? genomeLogoUrl.logo
+                                  : import.meta.env.BASE_URL +
+                                    genomeLogoUrl.logo
+                                : ""
+                            })`,
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             backgroundRepeat: "no-repeat",
                             opacity: genomeLogoUrl?.logo ? 0.8 : 1,
-                            width: 60
+                            width: 60,
                           }}
                           onMouseEnter={(e) => {
                             if (genomeLogoUrl)
-                              (e.currentTarget as HTMLElement).style.opacity = "1";
+                              (e.currentTarget as HTMLElement).style.opacity =
+                                "1";
                           }}
                           onMouseLeave={(e) => {
                             if (genomeLogoUrl)
-                              (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                              (e.currentTarget as HTMLElement).style.opacity =
+                                "0.8";
                           }}
                           className={classNames(
                             "z-10",
@@ -369,7 +375,6 @@ export default function NavBar() {
                               ? "outline outline-gray-200"
                               : "",
                           )}
-
                         >
                           {currentSession.title.length > 0 && genome?.name && (
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -389,8 +394,7 @@ export default function NavBar() {
                                 >
                                   {genomeLogoUrl?.name ? (
                                     <>
-                                      {genomeLogoUrl.name}/
-                                      <i>{genome.name}</i>
+                                      {genomeLogoUrl.name}/<i>{genome.name}</i>
                                     </>
                                   ) : (
                                     <i>{genome.name}</i>
@@ -400,78 +404,92 @@ export default function NavBar() {
                             </div>
                           )}
                         </div>
-
                       </div>
-
                     </Button>
                   )}
-                  {currentDisplayRegionModel && genomeConfig ?
+                  {currentDisplayRegionModel && genomeConfig ? (
                     <Button
                       onClick={(e) => openTab("regions", e)}
                       active={currentTab === "regions"}
-                      style={{ backgroundColor: "#1f2e46", color: "white", width: "100px", fontSize: "10px" }}
+                      style={{
+                        backgroundColor: "#1f2e46",
+                        color: "white",
+                        width: "100px",
+                        fontSize: "10px",
+                      }}
                     >
                       {currentDisplayRegionModel.currentRegionAsString()}
-                    </Button> : ""}
+                    </Button>
+                  ) : (
+                    ""
+                  )}
 
-                  {currentSession ? <IconButton
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    title="Menu"
-                  >
-                    {mobileMenuOpen ? (
-                      <XMarkIcon className="h-6 w-6" />
-                    ) : (
-                      <Bars3Icon className="h-6 w-6" />
-                    )}
-                  </IconButton> : ""}
+                  {currentSession ? (
+                    <IconButton
+                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                      title="Menu"
+                    >
+                      {mobileMenuOpen ? (
+                        <XMarkIcon className="h-6 w-6" />
+                      ) : (
+                        <Bars3Icon className="h-6 w-6" />
+                      )}
+                    </IconButton>
+                  ) : (
+                    ""
+                  )}
                 </>
               ) : (
                 <div>
                   {currentSession !== null ? (
                     <div
                       className="flex flex-row items-center gap-1"
-                    // style={{
-                    //   pointerEvents: sessionPanelOpen ? "none" : "auto",
-                    // }}
+                      // style={{
+                      //   pointerEvents: sessionPanelOpen ? "none" : "auto",
+                      // }}
                     >
-
-
                       {genome?.name && (
                         <Button
-                          onClick={(e) => openTab("tabgenomepicker", e)}
-                          active={currentTab === "tabgenomepicker"}
+                          onClick={(e) => openTab("tab-genome-picker", e)}
+                          active={currentTab === "tab-genome-picker"}
                           style={{
-                            backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
+                            backgroundColor: sessionPanelOpen
+                              ? "#e6eef9"
+                              : "#f3f4f6",
                             color: "#0f172a",
                             width: "100px",
                             display: "flex",
                             alignItems: "center",
-
                           }}
                         >
-
-                          <div className="relative flex-shrink-0" >
+                          <div className="relative flex-shrink-0">
                             <div
                               style={{
-                                backgroundImage: `url(${genomeLogoUrl?.logo
-                                  ? genomeLogoUrl.logo.startsWith("http")
-                                    ? genomeLogoUrl.logo
-                                    : import.meta.env.BASE_URL + genomeLogoUrl.logo
-                                  : ""
-                                  })`,
+                                backgroundImage: `url(${
+                                  genomeLogoUrl?.logo
+                                    ? genomeLogoUrl.logo.startsWith("http")
+                                      ? genomeLogoUrl.logo
+                                      : import.meta.env.BASE_URL +
+                                        genomeLogoUrl.logo
+                                    : ""
+                                })`,
                                 backgroundSize: "cover",
                                 backgroundPosition: "center",
                                 backgroundRepeat: "no-repeat",
                                 opacity: genomeLogoUrl?.logo ? 0.8 : 1,
-                                width: 100
+                                width: 100,
                               }}
                               onMouseEnter={(e) => {
                                 if (genomeLogoUrl)
-                                  (e.currentTarget as HTMLElement).style.opacity = "1";
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.opacity = "1";
                               }}
                               onMouseLeave={(e) => {
                                 if (genomeLogoUrl)
-                                  (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                                  (
+                                    e.currentTarget as HTMLElement
+                                  ).style.opacity = "0.8";
                               }}
                               className={classNames(
                                 "z-10",
@@ -491,51 +509,56 @@ export default function NavBar() {
                                   ? "outline outline-gray-200"
                                   : "",
                               )}
-
                             >
-                              {currentSession.title.length > 0 && genome?.name && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <span
-                                    className="leading-tight text-center break-words w-full"
-                                    style={{
-                                      color: genomeLogoUrl ? "white" : undefined,
-                                      fontSize: "16px",
-                                    }}
-                                  >
+                              {currentSession.title.length > 0 &&
+                                genome?.name && (
+                                  <div className="absolute inset-0 flex items-center justify-center">
                                     <span
-                                      className={
-                                        genomeLogoUrl
-                                          ? ""
-                                          : "text-gray-700 dark:text-dark-primary"
-                                      }
+                                      className="leading-tight text-center break-words w-full"
+                                      style={{
+                                        color: genomeLogoUrl
+                                          ? "white"
+                                          : undefined,
+                                        fontSize: "16px",
+                                      }}
                                     >
-                                      {genomeLogoUrl?.name ? (
-                                        <>
-                                          {genomeLogoUrl.name}/
+                                      <span
+                                        className={
+                                          genomeLogoUrl
+                                            ? ""
+                                            : "text-gray-700 dark:text-dark-primary"
+                                        }
+                                      >
+                                        {genomeLogoUrl?.name ? (
+                                          <>
+                                            {genomeLogoUrl.name}/
+                                            <i>{genome.name}</i>
+                                          </>
+                                        ) : (
                                           <i>{genome.name}</i>
-                                        </>
-                                      ) : (
-                                        <i>{genome.name}</i>
-                                      )}
+                                        )}
+                                      </span>
                                     </span>
-                                  </span>
-                                </div>
-                              )}
+                                  </div>
+                                )}
                             </div>
-
                           </div>
-
                         </Button>
                       )}
 
-                      {currentDisplayRegionModel && genomeConfig &&
+                      {currentDisplayRegionModel && genomeConfig && (
                         <Button
                           onClick={(e) => openTab("regions", e)}
                           active={currentTab === "regions"}
-                          style={{ backgroundColor: "#1f2e46", color: "white", width: "225px" }}
+                          style={{
+                            backgroundColor: "#1f2e46",
+                            color: "white",
+                            width: "225px",
+                          }}
                         >
                           {currentDisplayRegionModel.currentRegionAsString()}
-                        </Button>}
+                        </Button>
+                      )}
                       <Button
                         onClick={(e) => openTab("tracks", e)}
                         active={currentTab === "tracks"}
@@ -578,14 +601,11 @@ export default function NavBar() {
                         windowWidth={window.innerWidth}
                         fontSize={16}
                         buttonPadding={6}
-
                       />
                     </div>
                   ) : (
                     ""
                   )}
-
-
                 </div>
               )}
             </div>
@@ -593,48 +613,43 @@ export default function NavBar() {
               <div style={{ fontSize: 24 }}>
                 <span>WashU </span> Epigenome Browser
               </div>
-
-
             )}
           </div>
 
-          {!currentSession && (<div
-            className="flex flex-row items-center gap-2 z-10"
-            style={{ marginRight: 15 }}
-          >
-            <Button
-              style={{
-                backgroundColor:
-                  "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
-                padding: "4px 8px",
-                color: "black",
-                width: "145px",
-                height: "24px",
-
-              }}
-              onClick={() =>
-                window.open(
-                  "https://epigenomegateway.wustl.edu/browser2022/",
-                  "_blank",
-                )
-              }
-              active={currentTab === "tracks"}
+          {!currentSession && (
+            <div
+              className="flex flex-row items-center gap-2 z-10"
+              style={{ marginRight: 15 }}
             >
-              Previous Version
-            </Button>
-            <Switch
-              checked={darkTheme}
-              onChange={(checked) => dispatch(setDarkTheme(checked))}
-              checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-              uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-            /> </div>)}
+              <Button
+                style={{
+                  backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
+                  padding: "4px 8px",
+                  color: "black",
+                  width: "145px",
+                  height: "24px",
+                }}
+                onClick={() =>
+                  window.open(
+                    "https://epigenomegateway.wustl.edu/browser2022/",
+                    "_blank",
+                  )
+                }
+                active={currentTab === "tracks"}
+              >
+                Previous Version
+              </Button>
+              <Switch
+                checked={darkTheme}
+                onChange={(checked) => dispatch(setDarkTheme(checked))}
+                checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+              />{" "}
+            </div>
+          )}
           {!isSmallScreen &&
             (currentSession ? (
-              <div
-                className="h-9 flex flex-row items-center gap-1 z-10"
-
-              >
-
+              <div className="h-9 flex flex-row items-center gap-1 z-10">
                 <Switch
                   checked={darkTheme}
                   onChange={(checked) => dispatch(setDarkTheme(checked))}
@@ -644,15 +659,9 @@ export default function NavBar() {
               </div>
             ) : (
               ""
-            ))
-          }
-
-
-
-
+            ))}
 
           <AnimatePresence>
-
             {isSmallScreen && mobileMenuOpen && (
               <motion.div
                 className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background border-b border-gray-300 shadow-lg z-50"
@@ -661,10 +670,7 @@ export default function NavBar() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-
-
                 <div className="flex flex-col p-4 gap-2">
-
                   {currentSession !== null ? (
                     <>
                       <Button
@@ -755,8 +761,6 @@ export default function NavBar() {
                   !isSmallScreen && tabAnchorLeft != null
                     ? ({ left: `${tabAnchorLeft}px`, right: "auto" } as any)
                     : ({} as any)
-
-
                 }
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -769,20 +773,29 @@ export default function NavBar() {
                   initialHeight={300}
                   onClose={() => dispatch(setNavigationTab(null))}
                   onIncrement={incrementPanelCounter}
+                  onPinChange={(p) => {
+                    panelPinnedRef.current = p;
+                  }}
                   navigationPath={navigationPath}
                 >
-
-                  {currentTab === 'regions' && currentDisplayRegionModel && genomeConfig && (
-                    <RegionsPanel
-                      selectedRegion={currentDisplayRegionModel}
-                      onRegionSelected={handleNewRegionSelect}
-                      contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                      genomeConfig={genomeConfig as any}
+                  {currentTab === "regions" &&
+                    currentDisplayRegionModel &&
+                    genomeConfig && (
+                      <RegionsPanel
+                        selectedRegion={currentDisplayRegionModel}
+                        onRegionSelected={handleNewRegionSelect}
+                        contentColorSetup={{
+                          background: darkTheme ? "#1e2a3a" : "#F8FAFC",
+                          color: darkTheme ? "#e2e8f0" : "#222",
+                        }}
+                        genomeConfig={genomeConfig as any}
+                        onClose={() => dispatch(setNavigationTab(null))}
+                      />
+                    )}
+                  {currentTab === "tab-genome-picker" && (
+                    <TabGenomePicker
                       onClose={() => dispatch(setNavigationTab(null))}
                     />
-                  )}
-                  {currentTab === "tabgenomepicker" && (
-                    <TabGenomePicker onClose={() => dispatch(setNavigationTab(null))} />
                   )}
                   {currentTab === "tracks" && (
                     <TracksTab
@@ -819,7 +832,7 @@ export default function NavBar() {
             )}
           </AnimatePresence>
         </div>
-      </OutsideClickDetector >
+      </OutsideClickDetector>
     </>
   );
 }

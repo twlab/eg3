@@ -68,8 +68,8 @@ export default function SessionList({
 
   return (
     <div ref={containerRef} className="flex flex-col h-full relative">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
+      <div className="relative flex items-center min-h-[40px]">
+        <div className="absolute left-0 top-0 flex items-center">
           {!currentSession?.genomeId && (
             <ClearAllButton
               onClearAll={handleClearAll}
@@ -78,13 +78,13 @@ export default function SessionList({
             />
           )}
         </div>
-        <div className="z-40">
+        <div className="absolute right-0 top-0 z-40">
           <SessionToggleButton
             open={open}
             onClick={() => {
               if (onRequestClose) onRequestClose();
             }}
-            className={"rounded-full bg-white shadow"}
+            className={"rounded-full bg-white dark:bg-dark-secondary shadow"}
             // count={sessions ? sessions.length : 0}
 
             count={
@@ -119,10 +119,12 @@ export default function SessionList({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-8">
         {!currentSession?.genomeId ? (
           <div className="flex items-center justify-between p-1 ">
-            <p>Sort last updated</p>
+            <p className="text-sm text-primary dark:text-dark-primary">
+              Sort last updated
+            </p>
             <Switch
               checked={sortPreference === "updatedAt"}
               onChange={(checked) =>
@@ -134,18 +136,16 @@ export default function SessionList({
           </div>
         ) : null}
         {currentSession?.genomeId ? (
-          <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
-            <div className="flex flex-col">
-              <SessionTabs
-                currentSession={currentSession}
-                sortedSessions={sortedSessions}
-                onSessionClick={onSessionClick}
-                sortPreference={sortPreference}
-                currentSessionId={currentSessionId}
-                tab={sessionTab}
-                setTab={setSessionTab}
-              />
-            </div>
+          <div className="w-full">
+            <SessionTabs
+              currentSession={currentSession}
+              sortedSessions={sortedSessions}
+              onSessionClick={onSessionClick}
+              sortPreference={sortPreference}
+              currentSessionId={currentSessionId}
+              tab={sessionTab}
+              setTab={setSessionTab}
+            />
           </div>
         ) : sortedSessions.length === 0 ? (
           <EmptyView
@@ -345,7 +345,10 @@ function SessionListItem({
               <span className="text-red-600">Not saved remotely</span>
             </p>
           )}
-          <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
+          <p className="text-sm">
+            {session?.customGenome ? "Custom Genome: " : "Genome: "}
+            {genome?.name ?? "..."}
+          </p>
           <p className="text-sm ">
             {sortPreference === "updatedAt"
               ? `Updated: ${formatDate(session.updatedAt)}`
@@ -485,32 +488,6 @@ function SessionTabs({
   const dispatch = useAppDispatch();
   const [retrieveId, setRetrieveId] = useState<string>("");
 
-  const styles: { [k: string]: any } = {
-    row: { display: "flex", gap: 8, alignItems: "center" },
-    input: {
-      padding: "8px 10px",
-      borderRadius: 6,
-      border: "1px solid #ccc",
-      minWidth: 240,
-    },
-    button: {
-      backgroundColor: "#e5e7eb",
-      border: "none",
-      padding: "8px 12px",
-      borderRadius: 6,
-      cursor: "pointer",
-    },
-    buttonHover: { backgroundColor: "#d1d5db" },
-    uploadButton: {
-      backgroundColor: "#f3f4f6",
-      border: "none",
-      padding: "8px 12px",
-      borderRadius: 6,
-      cursor: "pointer",
-    },
-    uploadButtonHover: { backgroundColor: "#e5e7eb" },
-  };
-
   const retrieveBundle = (bundleId: string) => {
     if (!bundleId) return;
     dispatch(fetchBundle(bundleId));
@@ -544,58 +521,50 @@ function SessionTabs({
     }
   };
 
+  const tabDefs = [
+    { label: "Edit Current Session", value: "edit" as const },
+    { label: "Load Saved Bundle", value: "load" as const },
+    { label: "SwitchSessions", value: "switch" as const },
+  ];
+  const tabIdx = tabDefs.findIndex((t) => t.value === tab);
+
   return (
-    <div className="mt-2">
-      <div className="flex gap-2 mb-3">
-        <button
-          className={`px-3 py-1 rounded ${tab === "edit" ? "bg-primary text-white" : "bg-white"}`}
-          onClick={() => setTab("edit")}
-        >
-          Edit Session
-        </button>
-        <button
-          className={`px-3 py-1 rounded ${tab === "load" ? "bg-primary text-white" : "bg-white"}`}
-          onClick={() => setTab("load")}
-        >
-          Load Bundle
-        </button>
-        <button
-          className={`px-3 py-1 rounded ${tab === "switch" ? "bg-primary text-white" : "bg-white"}`}
-          onClick={() => setTab("switch")}
-        >
-          Switch Session
-        </button>
+    <div className="mt-2 w-full">
+      <div className="flex flex-row items-center bg-gray-300 dark:bg-dark-surface relative h-[30px] mb-3 rounded-lg">
+        <div
+          className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
+          style={{
+            width: `calc(${100 / tabDefs.length}% - 8px)`,
+            left: `calc(${tabIdx * 100}% / ${tabDefs.length} + 4px)`,
+          }}
+        />
+        {tabDefs.map((t) => (
+          <div
+            key={t.value}
+            className="text-primary dark:text-dark-primary relative flex-1 text-center py-1 rounded-lg cursor-pointer z-10 transition-colors text-sm"
+            onClick={() => setTab(t.value)}
+          >
+            {t.label}
+          </div>
+        ))}
       </div>
 
       <div>
         {tab === "edit" && <Session tab={false} />}
 
         {tab === "load" && (
-          <div style={{ paddingTop: 8 }}>
-            <div style={styles.row}>
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="flex items-center justify-center gap-2">
               <input
                 type="text"
-                style={styles.input}
+                className="flex-1 max-w-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary"
                 placeholder="Session Bundle ID"
                 value={retrieveId}
                 onChange={(e) => setRetrieveId(e.target.value.trim())}
               />
-              <button
-                style={styles.button}
-                onMouseOver={(e) =>
-                  ((
-                    e.currentTarget as HTMLButtonElement
-                  ).style.backgroundColor = styles.buttonHover.backgroundColor)
-                }
-                onMouseOut={(e) =>
-                  ((
-                    e.currentTarget as HTMLButtonElement
-                  ).style.backgroundColor = styles.button.backgroundColor)
-                }
-                onClick={() => retrieveBundle(retrieveId)}
-              >
+              <Button onClick={() => retrieveBundle(retrieveId)}>
                 Retrieve
-              </button>
+              </Button>
             </div>
 
             <div className="w-full max-w-md mx-auto mt-3">

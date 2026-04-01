@@ -35,9 +35,7 @@ export default function ClearAllButton({
   const bgClass = isConfirmed
     ? "bg-red-600 hover:bg-red-700"
     : "bg-red-100 hover:bg-red-200";
-  const iconTextClass = isConfirmed
-    ? "text-white"
-    : "text-red-800 dark:text-red-200";
+  const iconTextClass = isConfirmed ? "text-white" : "text-red-800";
 
   if (compact) {
     return (

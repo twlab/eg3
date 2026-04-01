@@ -16,6 +16,7 @@ import {
 
 // Local Component
 import FlankingStratConfig from "./FlankingStratConfig";
+import Button from "@/components/ui/button/Button";
 
 // Redux Imports
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
@@ -63,7 +64,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
     setRegionSet(initRegionSet);
   }, [propSet]);
   function getRegionSetFromProps(
-    props: RegionSetConfigProps
+    props: RegionSetConfigProps,
   ): RegionSet | null {
     return props.set ? props.set : null;
   }
@@ -89,7 +90,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
       console.log(
         "Input content is empty or cannot find any location on genome",
         "error",
-        2000
+        2000,
       );
       setLoadingMsg("");
       return;
@@ -100,13 +101,12 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         try {
           const locus = ChromosomeInterval.parse(symbol);
           if (locus) {
-
             const displayName = symbol.replace(/[:\-]/g, " ");
             return new Feature(displayName, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) { }
+        } catch (error) {}
         return getSymbolRegions(genome.getName(), symbol);
-      })
+      }),
     );
 
     const parsed2 = parsed.map((item, index) => {
@@ -118,11 +118,11 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                gene.name,
-                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                gene.strand
-              )
-              : null
+                  gene.name,
+                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                  gene.strand,
+                )
+              : null,
           )
           .filter((hit) => hit);
 
@@ -136,13 +136,13 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
     });
     console.log(parsed, parsed2);
     const nullList = parsed2.filter(
-      (item) => item === null || "statusCode" in item
+      (item) => item === null || "statusCode" in item,
     );
     if (nullList.length > 0) {
       console.log(
         `${nullList.length} item(s) cannot find location(s) on genome`,
         "error",
-        2000
+        2000,
       );
     } else {
       console.log(`${parsed2.length} region(s) added`, "success", 2000);
@@ -150,7 +150,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         "New set",
         parsed2.filter((item) => item !== null) as Feature[],
         genome!,
-        new FlankingStrategy()
+        new FlankingStrategy(),
       );
       setRegionSet(newSet);
     }
@@ -216,7 +216,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
   const flankedFeatures = useMemo(
     () => (regionSet ? regionSet.makeFlankedFeatures() : []),
-    [regionSet]
+    [regionSet],
   );
 
   const columns = useMemo<Column<Feature>[]>(
@@ -249,7 +249,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         Header: "Delete",
         Cell: ({ row }) => (
           <button
-            className="btn btn-sm btn-danger"
+            className="text-xs text-red-600 dark:text-red-400 hover:underline cursor-pointer"
             onClick={() => deleteRegion(row.index)}
           >
             Delete
@@ -258,7 +258,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         id: "deleteLocus",
       },
     ],
-    [flankedFeatures]
+    [flankedFeatures],
   );
 
   const tableInstance = useTable({ columns, data }, useFilters, useSortBy);
@@ -276,63 +276,58 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   const cancelPressed = () => {
     setRegionSet(getRegionSetFromProps({ set: propSet, genome }));
   };
-  const buttonStyle = {
-    padding: "8px 12px",
-    margin: "4px",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    display: "inline-block",
-    disabled: {
-      backgroundColor: "#E1EBEE", // Lightened color for disabled buttons if necessary
-    },
-  };
+
+  const inputCls =
+    "w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary";
+
   return (
-    <div style={{ marginTop: "16px" }}>
-      <h3>{propSet ? `Editing set: "${propSet.name}"` : "Create a new set"}</h3>
+    <div className="flex flex-col gap-5 px-4 py-4">
+      <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+        {propSet ? `Editing: "${propSet.name}"` : "Create a new set"}
+      </p>
 
       {!regionSet && (
-        <div>
-          <h4>Enter a list of regions</h4>
-          <p style={{ lineHeight: "1.6" }}>
-            Enter a list of gene names or coordinates to make a gene set one
-            item per line. Gene names and coordinates can be mixed for input.
-            Coordinate string must be in the form of "chr1:345-678". Fields can
-            be joined by space/tab/comma/colon/hyphen.
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            Enter a list of regions
           </p>
-          <form onSubmit={handleAddList}>
-            <label>
-              <textarea
-                value={regionList}
-                onChange={handleListChange}
-                rows={10}
-                cols={40}
-                style={{
-                  width: "100%",
-                  marginBottom: "10px",
-                  padding: "8px",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                }}
-              />
-            </label>
-            <div>
-              <input
-                style={{ ...buttonStyle, backgroundColor: "#205781" }}
-                type="submit"
-                value="Add"
-              />{" "}
-              <input
-                style={{ ...buttonStyle, backgroundColor: "#6c757d" }}
-                type="reset"
-                value="Clear"
+          <p className="text-sm text-primary/70 dark:text-dark-primary/70 leading-relaxed">
+            Enter gene names or coordinates, one per line. Coordinates must be
+            in the form{" "}
+            <code className="bg-gray-100 dark:bg-dark-surface px-1 rounded text-xs">
+              chr1:345-678
+            </code>
+            .
+          </p>
+          <form onSubmit={handleAddList} className="flex flex-col gap-3">
+            <textarea
+              value={regionList}
+              onChange={handleListChange}
+              rows={10}
+              className={`${inputCls} font-mono resize-y`}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {}}
+                style={{ backgroundColor: "#205781", color: "#fff" }}
+              >
+                <input
+                  type="submit"
+                  value="Add"
+                  className="cursor-pointer bg-transparent border-none outline-none text-inherit"
+                />
+              </Button>
+              <Button
                 onClick={resetList}
-              />{" "}
-              <span style={{ fontStyle: "italic", color: "red" }}>
-                {loadingMsg}
-              </span>
+                style={{ backgroundColor: "#6c757d", color: "#fff" }}
+              >
+                Clear
+              </Button>
+              {loadingMsg && (
+                <span className="text-sm italic text-red-500">
+                  {loadingMsg}
+                </span>
+              )}
             </div>
           </form>
         </div>
@@ -340,154 +335,125 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
       {regionSet && regionSet.features.length > 0 && (
         <React.Fragment>
-          <label style={{ marginTop: "16px", display: "block" }}>
-            1. Rename this set:{" "}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              1. Set name
+            </label>
             <input
               type="text"
               placeholder="Set name"
               value={regionSet ? regionSet.name : "New set"}
               onChange={changeSetName}
-              style={{
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
+              className={inputCls}
             />
-          </label>
+          </div>
 
-          <div style={{ marginTop: "16px" }}>
-            <h6>2. Add one region or delete region(s) from the table below</h6>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label>
-                New region name:{" "}
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              2. Add or remove regions
+            </p>
+            <div className="flex flex-col gap-2">
+              <label className="flex flex-col gap-1 text-sm text-primary dark:text-dark-primary">
+                Region name
                 <input
                   type="text"
                   value={newRegionName}
                   onChange={(event) => setNewRegionName(event.target.value)}
-                  style={{
-                    marginRight: "8px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                  }}
+                  className={inputCls}
                 />
               </label>
-              <label>
-                New region locus:{" "}
+              <label className="flex flex-col gap-1 text-sm text-primary dark:text-dark-primary">
+                Region locus
                 <input
                   type="text"
                   value={newRegionLocus}
                   onChange={(event) => setNewRegionLocus(event.target.value)}
-                  style={{
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                  }}
+                  className={inputCls}
                 />
               </label>
             </div>
-            <button
-              style={{ ...buttonStyle, backgroundColor: "#28a745" }}
-              onClick={addRegion}
-            >
-              Add new region
-            </button>
-            {newRegionError ? newRegionError.message : null}
+            <div className="flex items-center gap-2">
+              <Button onClick={addRegion}>Add region</Button>
+              {newRegionError && (
+                <span className="text-sm text-red-600 dark:text-red-400">
+                  {newRegionError.message}
+                </span>
+              )}
+            </div>
           </div>
 
-          <table
-            {...getTableProps()}
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              marginTop: "16px",
-            }}
-          >
-            <thead>
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th
-                      {...column.getHeaderProps(column.getSortByToggleProps())}
-                      style={{
-                        borderBottom: "2px solid #E1EBEE",
-                        padding: "8px",
-                        textAlign: "left",
-                        backgroundColor: "#F8FAFB",
-                      }}
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <table
+              {...getTableProps()}
+              className="w-full text-sm text-primary dark:text-dark-primary"
+            >
+              <thead className="bg-gray-50 dark:bg-dark-surface">
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <th
+                        {...column.getHeaderProps(
+                          column.getSortByToggleProps(),
+                        )}
+                        className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+                      >
+                        {column.render("Header")}
+                        <span className="ml-1">
+                          {column.isSorted
+                            ? column.isSortedDesc
+                              ? "↓"
+                              : "↑"
+                            : ""}
+                        </span>
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {rows.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <tr
+                      {...row.getRowProps()}
+                      className="border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-dark-surface/50"
                     >
-                      {column.render("Header")}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? " 🔽"
-                            : " 🔼"
-                          : ""}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {rows.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map((cell) => {
-                      return (
-                        <td
-                          {...cell.getCellProps()}
-                          style={{
-                            borderBottom: "1px solid #E1EBEE",
-                            padding: "8px",
-                          }}
-                        >
+                      {row.cells.map((cell) => (
+                        <td {...cell.getCellProps()} className="px-3 py-2">
                           {cell.render("Cell")}
                         </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           <FlankingStratConfig
             strategy={regionSet.flankingStrategy}
             onNewStrategy={changeSetStrategy}
           />
 
-          <div>
-            <label
-              htmlFor="flip"
-              style={{ display: "block", marginTop: "16px" }}
-            >
-              No flip for regions on <span className="font-weight-bold">-</span>{" "}
-              strand:
-              <input
-                type="checkbox"
-                name="flip"
-                id="flip"
-                onChange={handleFlipChange}
-                style={{ marginLeft: "8px" }}
-              />
-            </label>
-          </div>
+          <label
+            htmlFor="flip"
+            className="flex items-center gap-2 text-sm text-primary dark:text-dark-primary cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              name="flip"
+              id="flip"
+              onChange={handleFlipChange}
+              className="rounded"
+            />
+            No flip for regions on <strong>-</strong> strand
+          </label>
 
-          <div style={{ marginTop: "16px" }}>
-            <button
-              style={{ ...buttonStyle, backgroundColor: "#28a745" }}
-              onClick={() => onSetConfigured(regionSet)}
-            >
-              Add set & Save changes
-            </button>{" "}
-            <button
-              style={{ ...buttonStyle, backgroundColor: "#6c757d" }}
-              onClick={cancelPressed}
-            >
-              Cancel
-            </button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => onSetConfigured(regionSet)}>
+              Save changes
+            </Button>
+            <Button onClick={cancelPressed}>Cancel</Button>
           </div>
         </React.Fragment>
       )}

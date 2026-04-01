@@ -1,7 +1,6 @@
 import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
 import _ from "lodash";
 import {
-  getTrackConfig,
   HELP_LINKS,
   pcorr,
   ColorPicker,
@@ -14,6 +13,8 @@ import {
 
 // React-Plotly
 import Plot from "react-plotly.js";
+
+import Button from "@/components/ui/button/Button";
 
 // Local Imports
 import RegionSetSelector from "./region-set/RegionSetSelector";
@@ -30,8 +31,8 @@ import { useAppSelector } from "@/lib/redux/hooks";
 const ScatterPlot: React.FC = () => {
   useExpandedNavigationTab();
   const [setName, setSetName] = useState("");
-  const [trackNameX, setTrackNameX] = useState("");
-  const [trackNameY, setTrackNameY] = useState("");
+  const [trackIdX, setTrackIdX] = useState("");
+  const [trackIdY, setTrackIdY] = useState("");
   const [plotMsg, setPlotMsg] = useState("");
   const [data, setData] = useState<any>({});
   const [layout, setLayout] = useState<any>({});
@@ -91,15 +92,14 @@ const ScatterPlot: React.FC = () => {
       </option>
     ));
     return (
-      <label>
-        Pick your set:{" "}
-        <select value={setName} onChange={handleSetChange}>
-          <option key={0} value="">
-            --
-          </option>
-          {setList}
-        </select>
-      </label>
+      <select
+        value={setName}
+        onChange={handleSetChange}
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+      >
+        <option value="">-- Select region set --</option>
+        {setList}
+      </select>
     );
   };
 
@@ -109,7 +109,7 @@ const ScatterPlot: React.FC = () => {
         NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : ""),
       )
       .map((item, index) => (
-        <option key={index} value={item.name}>
+        <option key={item.id ?? index} value={item.id}>
           {item.label
             ? item.label
             : item.options && item.options.label
@@ -120,15 +120,14 @@ const ScatterPlot: React.FC = () => {
         </option>
       ));
     return (
-      <label>
-        Pick your track:{" "}
-        <select value={trackNameX} onChange={handleTrackXChange}>
-          <option key={0} value="">
-            --
-          </option>
-          {trackList}
-        </select>
-      </label>
+      <select
+        value={trackIdX}
+        onChange={handleTrackXChange}
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+      >
+        <option value="">-- Select track --</option>
+        {trackList}
+      </select>
     );
   };
 
@@ -138,7 +137,7 @@ const ScatterPlot: React.FC = () => {
         NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : ""),
       )
       .map((item, index) => (
-        <option key={index} value={item.name}>
+        <option key={item.id ?? index} value={item.id}>
           {item.label
             ? item.label
             : item.options && item.options.label
@@ -149,29 +148,38 @@ const ScatterPlot: React.FC = () => {
         </option>
       ));
     return (
-      <label>
-        Pick your track:{" "}
-        <select value={trackNameY} onChange={handleTrackYChange}>
-          <option key={0} value="">
-            --
-          </option>
-          {trackList}
-        </select>
-      </label>
+      <select
+        value={trackIdY}
+        onChange={handleTrackYChange}
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+      >
+        <option value="">-- Select track --</option>
+        {trackList}
+      </select>
     );
   };
 
   const getScatterPlotData = async () => {
-    if (!setName || !trackNameX || !trackNameY) {
-      setPlotMsg("Please choose both a set and 2 tracks");
+    if (!setName && !trackIdX && !trackIdY) {
+      setPlotMsg("Please select a region set and both tracks before plotting.");
+      return;
+    }
+    if (!setName) {
+      setPlotMsg("Please select a region set before plotting.");
+      return;
+    }
+    if (!trackIdX || !trackIdY) {
+      setPlotMsg("Please select both X and Y tracks before plotting.");
       return;
     }
     setPlotMsg("Loading...");
 
-    const trackX = getTrackByName(trackNameX);
-    const trackY = getTrackByName(trackNameY);
-    const trackConfigX = getTrackConfig(trackX);
-    const trackConfigY = getTrackConfig(trackY);
+    const trackX = getTrackById(trackIdX);
+    const trackY = getTrackById(trackIdY);
+    if (!trackX || !trackY) {
+      setPlotMsg("Track not found. Please re-select your tracks.");
+      return;
+    }
 
     const set = getSetByName(setName);
     const flankedFeatures = set!.features.map((feature) =>
@@ -180,7 +188,7 @@ const ScatterPlot: React.FC = () => {
 
     const rawDataX = await Promise.all(
       flankedFeatures.map((item, index) =>
-        trackFetchFunction[trackConfigX.trackModel.type]({
+        trackFetchFunction[trackX.type]({
           nav: [
             {
               chr: item.locus.chr,
@@ -188,7 +196,7 @@ const ScatterPlot: React.FC = () => {
               end: item.locus.end,
             },
           ],
-          trackModel: trackConfigX.trackModel,
+          trackModel: trackX,
         }),
       ),
     );
@@ -211,7 +219,7 @@ const ScatterPlot: React.FC = () => {
 
     const rawDataY = await Promise.all(
       flankedFeatures.map((item, index) =>
-        trackFetchFunction[trackConfigY.trackModel.type]({
+        trackFetchFunction[trackY.type]({
           nav: [
             {
               chr: item.locus.chr,
@@ -219,7 +227,7 @@ const ScatterPlot: React.FC = () => {
               end: item.locus.end,
             },
           ],
-          trackModel: trackConfigY.trackModel,
+          trackModel: trackY,
         }),
       ),
     );
@@ -243,12 +251,17 @@ const ScatterPlot: React.FC = () => {
     const featureNames = flankedFeatures.map((feature) => feature.getName());
     const pcor = pcorr(dataX, dataY);
 
+    const labelX =
+      trackX.label || trackX.options?.label || trackX.name || trackIdX;
+    const labelY =
+      trackY.label || trackY.options?.label || trackY.name || trackIdY;
+
     const newLayout = {
       width: 900,
       height: 600,
       xaxis: {
         title: {
-          text: trackNameX,
+          text: labelX,
           font: {
             family: "Helvetica, Courier New, monospace",
             size: 12,
@@ -258,11 +271,11 @@ const ScatterPlot: React.FC = () => {
       },
       yaxis: {
         title: {
-          text: trackNameY,
+          text: labelY,
           font: {
             family: "Helvetica, Courier New, monospace",
             size: 12,
-            color: trackY!.options ? trackY!.options.color : "blue",
+            color: trackY.options ? trackY.options.color : "blue",
           },
         },
       },
@@ -298,8 +311,8 @@ const ScatterPlot: React.FC = () => {
     setLayout(newLayout);
   };
 
-  const getTrackByName = (name: string) => {
-    return tracks.find((track) => track.name === name);
+  const getTrackById = (id: string) => {
+    return tracks.find((track) => track.id === id);
   };
 
   const getSetByName = (name: string) => {
@@ -313,11 +326,11 @@ const ScatterPlot: React.FC = () => {
   };
 
   const handleTrackXChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setTrackNameX(event.target.value);
+    setTrackIdX(event.target.value);
   };
 
   const handleTrackYChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setTrackNameY(event.target.value);
+    setTrackIdY(event.target.value);
   };
 
   const changeMarkerColor = (color: { hex: string }) => {
@@ -351,7 +364,7 @@ const ScatterPlot: React.FC = () => {
 
   const renderMarkerSizeInput = () => {
     return (
-      <label style={styles.inputBox}>
+      <label className="flex items-center gap-2 text-sm text-primary dark:text-dark-primary">
         Marker size:
         <input
           type="number"
@@ -361,117 +374,76 @@ const ScatterPlot: React.FC = () => {
           max="100"
           value={markerSize}
           onChange={handleMarkerChangeRequest}
-          style={styles.input}
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none w-16"
         />
       </label>
     );
   };
-  const styles = {
-    container: {
-      color: "#333",
-
-      margin: "0 auto",
-      padding: "20px",
-      backgroundColor: "#fdfdfd",
-      borderRadius: "10px",
-      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-    },
-    inputBox: {
-      display: "flex",
-      alignItems: "center",
-      margin: "10px 0",
-    },
-    input: {
-      border: "1px solid #ccc",
-      borderRadius: "4px",
-      padding: "5px",
-      width: "60px",
-    },
-    lead: {
-      fontSize: "1.25rem",
-      marginBottom: "1rem",
-    },
-    link: {
-      color: "#1a73e8",
-      textDecoration: "none",
-    },
-    configContainer: {
-      display: "flex",
-
-      alignItems: "center",
-      marginBottom: "1rem",
-    },
-    buttonContainer: {
-      display: "flex",
-      alignItems: "center",
-    },
-    button: {
-      backgroundColor: "#28a745",
-      color: "#fff",
-      padding: "1px 10px",
-      border: "none",
-      borderRadius: "5px",
-      cursor: "pointer",
-    },
-  };
-
   return (
-    <div>
+    <div className="flex flex-col">
       {currentSession && sets && sets.length === 0 ? (
-        <div>
-          <p className="alert alert-warning">
+        <>
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mx-4 mt-4 mb-2">
             There is no region set yet, please submit a region set below.
           </p>
           <RegionSetSelector />
-        </div>
+        </>
       ) : currentSession && showModal ? (
         <>
-          {/* <span
-            className="text-right"
-            style={{
-              cursor: "pointer",
-              color: "red",
-              fontSize: "2em",
-              position: "absolute",
-              top: "-5px",
-              right: "15px",
-            }}
-            onClick={handleCloseModal}
-          >
-            ×
-          </span> */}
-          <div style={styles.container}>
-            <p style={styles.lead}>1. Choose a region set</p>
-            <div>{renderRegionList()}</div>
-
-            <p style={styles.lead}>
-              2. Choose a{" "}
-              <a
-                href={HELP_LINKS.numerical}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                numerical track
-              </a>{" "}
-              for X-axis:
-            </p>
-            <div>{renderTrackXList()}</div>
-
-            <p style={styles.lead}>3. Choose a numerical track for Y-axis:</p>
-            <div>{renderTrackYList()}</div>
-
-            <p style={styles.lead}>4. Plot configuration:</p>
-            <div style={styles.configContainer}>
-              {renderMarkerColorPicker()}
-              {renderMarkerSizeInput()}
+          <div className="px-4 py-4 flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                1. Region Set
+              </p>
+              {renderRegionList()}
             </div>
 
-            <div style={styles.buttonContainer}>
-              <button onClick={getScatterPlotData} style={styles.button}>
-                Plot
-              </button>{" "}
-              <span>{plotMsg}</span>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                2.{" "}
+                <a
+                  href={HELP_LINKS.numerical}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 underline underline-offset-2 normal-case font-normal"
+                >
+                  Numerical Track
+                </a>{" "}
+                (X-axis)
+              </p>
+              {renderTrackXList()}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                3. Numerical Track (Y-axis)
+              </p>
+              {renderTrackYList()}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                4. Plot Configuration
+              </p>
+              <div className="flex items-center gap-4 flex-wrap">
+                {renderMarkerColorPicker()}
+                {renderMarkerSizeInput()}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button onClick={getScatterPlotData}>Plot</Button>
+              {plotMsg && (
+                <span
+                  className={`text-sm ${
+                    plotMsg === "Loading..."
+                      ? "text-primary dark:text-dark-primary"
+                      : "text-red-600 dark:text-red-400"
+                  }`}
+                >
+                  {plotMsg}
+                </span>
+              )}
             </div>
           </div>
           <div style={{ marginLeft: "-150px" }}>

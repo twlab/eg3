@@ -19,9 +19,10 @@ import {
 
 // Custom Hooks
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
-const RegionSetSelector: React.FC = ({ }) => {
-  useExpandedNavigationTab()
+
+import useMidSizeNavigationTab from "../../../../../../lib/hooks/useMidSizeNavigationTab";
+const RegionSetSelector: React.FC = ({}) => {
+  useMidSizeNavigationTab();
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
 
   const currentSession = useAppSelector(selectCurrentSession);
@@ -40,14 +41,14 @@ const RegionSetSelector: React.FC = ({ }) => {
   }
   const sets = currentSession?.regionSets
     ? currentSession?.regionSets.map((item) => {
-      if (typeof item === "object") {
-        const newRegionSet = RegionSet.deserialize(item);
+        if (typeof item === "object") {
+          const newRegionSet = RegionSet.deserialize(item);
 
-        return newRegionSet;
-      } else {
-        return item;
-      }
-    })
+          return newRegionSet;
+        } else {
+          return item;
+        }
+      })
     : [];
 
   const setConfigured = (newSet: RegionSet) => {

@@ -500,8 +500,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   width: "120px",
                   backgroundColor: "#E5E7EB",
                   color: "#6B7280",
+                  borderRadius: "6px",
                 }}
-                className="px-2 py-1 text-xs rounded"
               >
                 Restored
               </Button>
@@ -512,8 +512,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   width: "120px",
                   backgroundColor: "#E6F7EA",
                   color: "#1F6E3A",
+                  borderRadius: "6px",
                 }}
-                className="px-2 py-1 text-xs rounded"
               >
                 Restore
               </Button>
@@ -525,8 +525,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 width: "120px",
                 backgroundColor: "#FDE8E8",
                 color: "#8B1C1C",
+                borderRadius: "6px",
               }}
-              className="px-2 py-1 text-xs rounded"
             >
               Delete
             </Button>
@@ -826,10 +826,13 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                           </div>
                           <Button
                             onClick={saveSession}
-                            className="ml-2 px-3 py-2 bg-blue-50 text-black border border-blue-100 rounded flex items-center gap-2"
-                            style={{ width: "140px" }}
+                            style={{
+                              width: "140px",
+                              backgroundColor: "#5E7AC4",
+                              color: "white",
+                              borderRadius: "6px",
+                            }}
                           >
-                            <BookmarkIcon className="w-4 h-4" />
                             Save session
                           </Button>
                         </div>
@@ -904,7 +907,13 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                                   : "",
                               );
                             }}
-                            className="w-[300px] px-4 py-3"
+                            style={{
+                              width: "fit-content",
+                              padding: "8px",
+                              backgroundColor: "#5E7AC4",
+                              color: "white",
+                              borderRadius: "6px",
+                            }}
                           >
                             Create new bundle and save session
                           </Button>
@@ -932,7 +941,15 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                           />
                           <Button
                             onClick={handleAttemptSave}
-                            className="ml-2 px-4 py-3 min-w-[120px] h-11"
+                            style={{
+                              padding: "12px 16px",
+                              minWidth: "120px",
+                              height: "44px",
+                              background: "white",
+                              borderRadius: "6px",
+                              backgroundColor: "#5E7AC4",
+                              color: "white",
+                            }}
                           >
                             Save
                           </Button>

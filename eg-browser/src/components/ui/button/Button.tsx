@@ -11,7 +11,7 @@ export default function Button({
   style,
   outlined = false,
 }: {
-  children: string;
+  children: any;
   leftIcon?: React.ReactNode;
   onClick?: (event: React.MouseEvent) => void;
   active?: boolean;
@@ -21,7 +21,7 @@ export default function Button({
   style?: React.CSSProperties;
 }) {
   const _onClick = (event: React.MouseEvent) => {
-    console.log(event)
+    console.log(event);
     if (disabled) return;
     onClick?.(event);
   };
@@ -144,9 +144,9 @@ export default function Button({
         "transition-all duration-150 cursor-pointer",
         "hover:bg-gray-200 hover:text-gray-900 hover:shadow-sm",
         active &&
-        "bg-blue-500 text-white shadow-sm hover:bg-blue-600 hover:text-white dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600",
+          "bg-blue-500 text-white shadow-sm hover:bg-blue-600 hover:text-white dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600",
         disabled &&
-        "opacity-40 cursor-not-allowed hover:bg-transparent hover:shadow-none",
+          "opacity-40 cursor-not-allowed hover:bg-transparent hover:shadow-none",
         outlined && "border border-primary",
         backgroundColor === "tint" && "bg-tint dark:bg-dark-tint text-white",
         backgroundColor === "alert" && "bg-alert text-white",
