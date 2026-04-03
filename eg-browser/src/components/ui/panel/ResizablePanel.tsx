@@ -207,7 +207,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     if (ghostRef.current) {
       try {
         document.body.removeChild(ghostRef.current);
-      } catch (e) {}
+      } catch (e) { }
       ghostRef.current = null;
     }
     pendingPreviewRef.current = null;
@@ -268,17 +268,39 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       };
 
       const newW =
-        width !== initialWidth && width !== Math.round(windowSize.width * 0.5)
+        width !== initialWidth && width !== Math.round(windowSize.width * 0.4)
           ? width
           : Math.round(windowSize.width * 0.6);
       const newH =
         height !== initialHeight &&
-        height !== Math.round(windowSize.height * 0.7)
+          height !== Math.round(windowSize.height * 0.85)
           ? height
-          : Math.round(windowSize.height * 0.8);
+          : Math.round(windowSize.height * 0.90);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
+      }
+
+      // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
+      const rectExpand = panelRef.current?.getBoundingClientRect();
+      if (rectExpand) {
+        const numericNewW = typeof newW === "number" ? newW : parseSizeToNumber(newW as string, 0);
+        const numericNewH = typeof newH === "number" ? newH : parseSizeToNumber(newH as string, 0);
+        const projectedRight = rectExpand.left + numericNewW;
+        const projectedBottom = rectExpand.top + numericNewH;
+        let dx = 0;
+        let dy = 0;
+        if (projectedRight > windowSize.width) {
+          const overflow = projectedRight - windowSize.width;
+          dx = -Math.min(overflow, rectExpand.left); // can't move left past viewport left edge
+        }
+        if (projectedBottom > windowSize.height) {
+          const overflow = projectedBottom - windowSize.height;
+          dy = -Math.min(overflow, rectExpand.top); // can't move up past viewport top edge
+        }
+        if (dx !== 0 || dy !== 0) {
+          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+        }
       }
 
       setWidth(newW);
@@ -307,15 +329,37 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       const newW =
         width !== initialWidth && width !== Math.round(windowSize.width * 0.6)
           ? width
-          : Math.round(windowSize.width * 0.5);
+          : Math.round(windowSize.width * 0.4);
       const newH =
         height !== initialHeight &&
-        height !== Math.round(windowSize.height * 0.8)
+          height !== Math.round(windowSize.height * 0.90)
           ? height
-          : Math.round(windowSize.height * 0.7);
+          : Math.round(windowSize.height * 0.85);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
+      }
+
+      // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
+      const rectMid = panelRef.current?.getBoundingClientRect();
+      if (rectMid) {
+        const numericNewW = typeof newW === "number" ? newW : parseSizeToNumber(newW as string, 0);
+        const numericNewH = typeof newH === "number" ? newH : parseSizeToNumber(newH as string, 0);
+        const projectedRight = rectMid.left + numericNewW;
+        const projectedBottom = rectMid.top + numericNewH;
+        let dx = 0;
+        let dy = 0;
+        if (projectedRight > windowSize.width) {
+          const overflow = projectedRight - windowSize.width;
+          dx = -Math.min(overflow, rectMid.left); // can't move left past viewport left edge
+        }
+        if (projectedBottom > windowSize.height) {
+          const overflow = projectedBottom - windowSize.height;
+          dy = -Math.min(overflow, rectMid.top); // can't move up past viewport top edge
+        }
+        if (dx !== 0 || dy !== 0) {
+          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+        }
       }
 
       setWidth(newW);
@@ -442,6 +486,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     height: typeof height === "number" ? `${height}px` : height,
     transform: `translate(${translate.x}px, ${translate.y}px)`,
     position: "relative",
+    pointerEvents: "auto",
     background: isResizing ? "transparent" : undefined,
     color: "var(--text, #111827)",
     display: "flex",
@@ -509,7 +554,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             borderTopRightRadius: 5,
             background: headerHover
               ? "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0))"
-              : "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0))",
+              : "linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,255,255,0))",
           }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -534,13 +579,13 @@ export default function ResizablePanel(props: ResizablePanelProps) {
               {title ? title.charAt(0).toUpperCase() + title.slice(1) : title}
 
               {navigationPath.length > 0 &&
-              navigationPath[navigationPath.length - 1]?.path
+                navigationPath[navigationPath.length - 1]?.path
                 ? ` / ${String(navigationPath[navigationPath.length - 1].path)
-                    .split("-")
-                    .map((s) =>
-                      s ? s.charAt(0).toUpperCase() + s.slice(1) : s,
-                    )
-                    .join(" ")}`
+                  .split("-")
+                  .map((s) =>
+                    s ? s.charAt(0).toUpperCase() + s.slice(1) : s,
+                  )
+                  .join(" ")}`
                 : ""}
             </strong>
           </div>

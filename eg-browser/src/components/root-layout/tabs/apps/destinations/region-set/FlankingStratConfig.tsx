@@ -31,16 +31,16 @@ const FlankingStratConfig: React.FC<FlankingStratConfigProps> = ({
   };
 
   const inputCls =
-    "border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary w-24";
+    "border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary w-36 h-[38px]";
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+      <p className="text-base font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
         3. Set flanking region
       </p>
-      <div className="flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-2 text-sm text-primary dark:text-dark-primary">
-          Upstream bases:
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+          Upstream bases
           <input
             type="number"
             min={0}
@@ -53,8 +53,8 @@ const FlankingStratConfig: React.FC<FlankingStratConfigProps> = ({
             className={inputCls}
           />
         </label>
-        <label className="flex items-center gap-2 text-sm text-primary dark:text-dark-primary">
-          Downstream bases:
+        <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+          Downstream bases
           <input
             type="number"
             min={0}
@@ -67,19 +67,17 @@ const FlankingStratConfig: React.FC<FlankingStratConfigProps> = ({
             className={inputCls}
           />
         </label>
-        <label className="flex items-center gap-2 text-sm text-primary dark:text-dark-primary">
-          Surrounding:
+        <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+          Surrounding
           <select
             value={strategy.type}
             onChange={(event) =>
               inputChanged("type", Number.parseInt(event.target.value, 10))
             }
-            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+            className="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary w-36 h-[38px]"
           >
             <option value={FlankingStrategy.SURROUND_ALL}>Whole region</option>
-            <option value={FlankingStrategy.SURROUND_START}>
-              Region start
-            </option>
+            <option value={FlankingStrategy.SURROUND_START}>Region start</option>
             <option value={FlankingStrategy.SURROUND_END}>Region end</option>
           </select>
         </label>

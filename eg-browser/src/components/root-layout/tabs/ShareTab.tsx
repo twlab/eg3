@@ -112,7 +112,7 @@ export default function ShareTab({
   const OutdatedLinkWarning = () =>
     isLinkOutdated ? (
       <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
-        <p className="flex-1 text-sm text-amber-800 dark:text-amber-300">
+        <p className="flex-1 text-base text-amber-800 dark:text-amber-300">
           The shortened link is for an older version of this view.
         </p>
         <Button onClick={generateShortLink} disabled={isGenerating}>
@@ -122,9 +122,9 @@ export default function ShareTab({
     ) : null;
 
   const inputCls =
-    "flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-surface text-primary dark:text-dark-primary focus:outline-none font-mono";
+    "flex-1 px-3 py-1.5 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-surface text-primary dark:text-dark-primary focus:outline-none font-mono";
   const sectionHeading =
-    "text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider";
+    "text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider";
 
   const UrlTab = () => (
     <div className="flex flex-col gap-5 p-4">
@@ -161,7 +161,7 @@ export default function ShareTab({
             <span className="text-amber-500 normal-case ml-1">(outdated)</span>
           )}
         </p>
-        <p className="text-xs text-primary/60 dark:text-dark-primary/60">
+        <p className="text-sm text-primary/60 dark:text-dark-primary/60">
           Use this if the shortened link doesn't work
         </p>
         <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ export default function ShareTab({
       {/* Email */}
       <div className="flex flex-col gap-1">
         <p className={sectionHeading}>Email link</p>
-        <p className="text-sm text-primary dark:text-dark-primary">
+        <p className="text-base text-primary dark:text-dark-primary">
           <a
             href={emailLink}
             target="_blank"
@@ -203,7 +203,7 @@ export default function ShareTab({
       <div className="flex flex-col gap-2">
         <p className={sectionHeading}>Embed code</p>
         <textarea
-          className="w-full h-32 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-surface text-primary dark:text-dark-primary font-mono focus:outline-none resize-none"
+          className="w-full h-32 px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-surface text-primary dark:text-dark-primary font-mono focus:outline-none resize-none"
           value={iframeContent}
           readOnly
         />
@@ -224,7 +224,7 @@ export default function ShareTab({
       <div className="p-4 bg-white dark:bg-white rounded-xl shadow-sm border border-gray-200">
         <QRCodeSVG value={shortLink} size={220} />
       </div>
-      <p className="text-xs text-primary/60 dark:text-dark-primary/60">
+      <p className="text-sm text-primary/60 dark:text-dark-primary/60">
         Scan to open the current view
       </p>
     </div>

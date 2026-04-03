@@ -199,7 +199,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                  props.viewRegion === null
+                    props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -220,12 +220,12 @@ export default function RootLayout(props: GenomeHubProps) {
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
@@ -276,7 +276,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-12 left-0 h-full z-60"
+                className="absolute left-0 h-full z-60"
                 style={{ width: "35vw" }}
               >
                 <ResizablePanel
@@ -341,11 +341,11 @@ export default function RootLayout(props: GenomeHubProps) {
           <div
             className="flex flex-1 h-full relative"
 
-            // onClick={
-            //   sessionPanelOpen
-            //     ? () => dispatch(setSessionPanelOpen(false))
-            //     : undefined
-            // }
+          // onClick={
+          //   sessionPanelOpen
+          //     ? () => dispatch(setSessionPanelOpen(false))
+          //     : undefined
+          // }
           >
             {/* MARK: - Genome View */}
             <div

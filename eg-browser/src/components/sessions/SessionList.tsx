@@ -446,7 +446,7 @@ function SessionListItem({
               Download Current Session
             </Button>
             <Button
-              backgroundColor="tint"
+              outlined
               onClick={handleDuplicate}
               // style={{ flex: 1 }}
               style={{ fontSize: "14px" }}
@@ -454,7 +454,7 @@ function SessionListItem({
               Duplicate
             </Button>
             <Button
-              backgroundColor="tint"
+              outlined
               onClick={handleRename}
               // style={{ flex: 1 }}
               style={{ fontSize: "14px" }}

@@ -24,17 +24,16 @@ export default function TabView<T extends string>({
   );
 
   return (
-    <div className="flex flex-col gap-1 h-full min-h-0 overflow-y-hidden ">
+    <div className="flex flex-col gap-1 min-h-0">
       <div className="flex flex-row items-center justify-between bg-gray-300 dark:bg-dark-surface relative h-[30px]">
         <div
           className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
           style={{
             width: `calc(${100 / tabs.length}% - 8px)`,
-            left: `calc(${
-              (selectedTab
-                ? tabs.findIndex((t) => t.value === selectedTab.value)
-                : 0) * 100
-            }% / ${tabs.length} + 4px)`,
+            left: `calc(${(selectedTab
+              ? tabs.findIndex((t) => t.value === selectedTab.value)
+              : 0) * 100
+              }% / ${tabs.length} + 4px)`,
           }}
         />
         {tabs.map((tab) => (

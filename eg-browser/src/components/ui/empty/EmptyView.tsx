@@ -8,9 +8,9 @@ export default function EmptyView({
   description: string;
 }) {
   return (
-    <div className="flex flex-col gap-4 flex-1  items-center text-primary dark:text-dark-primary">
-      <img src={Logo} alt="logo" className="size-16" />
-      <h1 className="text-xl">{title}</h1>
+    <div className="flex flex-col flex-1  items-center text-primary dark:text-dark-primary">
+      <img src={Logo} alt="logo" className="size-12" />
+      <p className="text-lg">{title}</p>
       <p className="text-center">{description}</p>
     </div>
   );

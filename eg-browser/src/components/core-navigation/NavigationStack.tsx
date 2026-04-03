@@ -152,7 +152,7 @@ export default function NavigationStack({
             return (
               <div
                 key={element.path}
-                className="px-4  absolute overflow-y-scroll bg-white dark:bg-dark-background"
+                className="absolute overflow-y-scroll bg-white dark:bg-dark-background"
                 style={{
                   width,
                   height,

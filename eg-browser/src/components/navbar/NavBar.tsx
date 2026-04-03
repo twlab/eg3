@@ -257,7 +257,7 @@ export default function NavBar() {
           if (!panelPinnedRef.current) dispatch(setNavigationTab(null));
         }}
       >
-        <div className="flex flex-row justify-between items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1">
+        <div className="flex flex-row justify-between items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1 pr-6">
           <div
             ref={navRef}
             className="flex flex-row items-center  relative gap-1"
@@ -333,14 +333,13 @@ export default function NavBar() {
                       <div className="relative flex-shrink-0">
                         <div
                           style={{
-                            backgroundImage: `url(${
-                              genomeLogoUrl?.logo
-                                ? genomeLogoUrl.logo.startsWith("http")
-                                  ? genomeLogoUrl.logo
-                                  : import.meta.env.BASE_URL +
-                                    genomeLogoUrl.logo
-                                : ""
-                            })`,
+                            backgroundImage: `url(${genomeLogoUrl?.logo
+                              ? genomeLogoUrl.logo.startsWith("http")
+                                ? genomeLogoUrl.logo
+                                : import.meta.env.BASE_URL +
+                                genomeLogoUrl.logo
+                              : ""
+                              })`,
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             backgroundRepeat: "no-repeat",
@@ -443,10 +442,10 @@ export default function NavBar() {
                 <div>
                   {currentSession !== null ? (
                     <div
-                      className="flex flex-row items-center gap-1"
-                      // style={{
-                      //   pointerEvents: sessionPanelOpen ? "none" : "auto",
-                      // }}
+                      className="flex flex-row flex-wrap items-center gap-1"
+                    // style={{
+                    //   pointerEvents: sessionPanelOpen ? "none" : "auto",
+                    // }}
                     >
                       {genome?.name && (
                         <Button
@@ -465,14 +464,13 @@ export default function NavBar() {
                           <div className="relative flex-shrink-0">
                             <div
                               style={{
-                                backgroundImage: `url(${
-                                  genomeLogoUrl?.logo
-                                    ? genomeLogoUrl.logo.startsWith("http")
-                                      ? genomeLogoUrl.logo
-                                      : import.meta.env.BASE_URL +
-                                        genomeLogoUrl.logo
-                                    : ""
-                                })`,
+                                backgroundImage: `url(${genomeLogoUrl?.logo
+                                  ? genomeLogoUrl.logo.startsWith("http")
+                                    ? genomeLogoUrl.logo
+                                    : import.meta.env.BASE_URL +
+                                    genomeLogoUrl.logo
+                                  : ""
+                                  })`,
                                 backgroundSize: "cover",
                                 backgroundPosition: "center",
                                 backgroundRepeat: "no-repeat",
@@ -664,7 +662,7 @@ export default function NavBar() {
           <AnimatePresence>
             {isSmallScreen && mobileMenuOpen && (
               <motion.div
-                className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background border-b border-gray-300 shadow-lg z-50"
+                className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background border-b border-gray-300 shadow-lg  z-50"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -759,13 +757,13 @@ export default function NavBar() {
                 className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : ""} bg-transparent z-50`}
                 style={
                   !isSmallScreen && tabAnchorLeft != null
-                    ? ({ left: `${tabAnchorLeft}px`, right: "auto" } as any)
-                    : ({} as any)
+                    ? ({ left: `${tabAnchorLeft}px`, right: "auto", pointerEvents: "none" } as any)
+                    : ({ pointerEvents: "none" } as any)
                 }
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.1 }}
               >
                 <ResizablePanel
                   title={currentTab || undefined}

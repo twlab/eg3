@@ -908,11 +908,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                               );
                             }}
                             style={{
-                              width: "fit-content",
-                              padding: "8px",
+
+
                               backgroundColor: "#5E7AC4",
                               color: "white",
-                              borderRadius: "6px",
+                              width: "fit-content", padding: "8px 16px"
                             }}
                           >
                             Create new bundle and save session

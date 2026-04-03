@@ -133,6 +133,7 @@ export default function AddCustomGenome() {
               View Schema
             </Button>
             <Button
+
               leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
               onClick={() => {
                 const link = document.createElement("a");
@@ -142,6 +143,7 @@ export default function AddCustomGenome() {
               }}
               outlined
               disabled={false}
+              backgroundColor="tint"
               style={{ width: "180px" }}
             >
               Download Example

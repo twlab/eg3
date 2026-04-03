@@ -1,5 +1,4 @@
 import Button from "@/components/ui/button/Button";
-import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import TabView from "@/components/ui/tab-view/TabView";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
@@ -31,13 +30,6 @@ export default function LocalTracks() {
 }
 
 // MARK: - Add Local Tracks
-
-enum AddLocalTracksStep {
-  TRACK_TYPE = "select-track-type",
-  TRACK_FILE = "track-file",
-  TRACK_ASSEMBLY = "track-assembly",
-  CONFIGURE_TRACK = "configure-track",
-}
 
 interface TrackOptions {
   [key: string]: unknown;
@@ -75,27 +67,19 @@ function AddLocalTracks() {
     msg: "",
   });
 
-  const [selectedStep, setSelectedStep] =
-    React.useState<AddLocalTracksStep | null>(AddLocalTracksStep.TRACK_TYPE);
-
-  const handleStepChange = (step: AddLocalTracksStep | null) => {
-    setSelectedStep(step ?? AddLocalTracksStep.TRACK_TYPE);
-  };
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
 
   const handleTypeChange = (type: string) => {
     const indexSuffix = type.toLowerCase() === "bam" ? ".bai" : ".tbi";
     setTrackState((prev) => ({ ...prev, type, indexSuffix }));
-    setSelectedStep(AddLocalTracksStep.TRACK_FILE);
   };
 
   const handleAssemblyChange = (assembly: string) => {
     setTrackState((prev) => ({ ...prev, assembly }));
-    setSelectedStep(AddLocalTracksStep.CONFIGURE_TRACK);
   };
 
   const handleFileChange = (files: FileList | null) => {
     setTrackState((prev) => ({ ...prev, files }));
-    setSelectedStep(AddLocalTracksStep.TRACK_ASSEMBLY);
   };
 
   const handleOptionsChange = (value: string) => {
@@ -109,6 +93,7 @@ function AddLocalTracks() {
   };
 
   const handleSubmit = () => {
+    setSubmitAttempted(true);
     const { type, files, assembly, options } = trackState;
     let tracks: TrackModel[] = [];
     if (!files) {
@@ -212,67 +197,90 @@ function AddLocalTracks() {
     setTrackState((prev) => ({ ...prev, msg: "Track added successfully" }));
   };
 
+  const filesComplete = !!trackState.files;
+  const assemblyComplete = !!trackState.assembly;
+  const canSubmit = filesComplete && assemblyComplete;
+
   return (
-    <div className="flex flex-col py-4">
-      <StepAccordion<AddLocalTracksStep>
-        selectedItem={selectedStep}
-        onSelectedItemChange={handleStepChange}
-        items={[
-          {
-            label: "Track Type",
-            value: AddLocalTracksStep.TRACK_TYPE,
-            valuePreview: trackState.type ? `${trackState.type}` : undefined,
-            component: (
-              <SelectTrackType
-                selectedType={trackState.type}
-                onTypeChange={handleTypeChange}
-              />
-            ),
-          },
-          {
-            label: "Track File",
-            value: AddLocalTracksStep.TRACK_FILE,
-            valuePreview: trackState.files
-              ? `${trackState.files.length} file(s)`
-              : undefined,
-            component: (
-              <TrackFileUpload
-                type={trackState.type}
-                onFileChange={handleFileChange}
-              />
-            ),
-          },
-          {
-            label: "Assembly",
-            value: AddLocalTracksStep.TRACK_ASSEMBLY,
-            valuePreview: trackState.assembly
-              ? `${trackState.assembly}`
-              : undefined,
-            component: (
-              <TrackAssembly
-                assembly={trackState.assembly}
-                onAssemblyChange={handleAssemblyChange}
-              />
-            ),
-          },
-          {
-            label: "Configure Track",
-            value: AddLocalTracksStep.CONFIGURE_TRACK,
-            valuePreview: trackState.options ? "Configured" : undefined,
-            component: <ConfigureTrack onOptionsChange={handleOptionsChange} />,
-          },
-        ]}
-      />
-      <div className="text-red-500 italic">{trackState.msg}</div>
+    <div className="px-4 py-3 flex flex-col gap-4">
+      {/* 1. Track Type */}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+          Track Type
+        </p>
+        <SelectTrackType
+          selectedType={trackState.type}
+          onTypeChange={handleTypeChange}
+        />
+      </div>
+
+      {/* 2. Track File */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            Track File{" "}
+            <span className="text-red-400 normal-case font-normal tracking-normal">*</span>
+          </p>
+          {submitAttempted && !filesComplete && (
+            <span className="text-sm text-red-500">Required</span>
+          )}
+        </div>
+        <TrackFileUpload
+          onFileChange={handleFileChange}
+          hasError={submitAttempted && !filesComplete}
+        />
+      </div>
+
+      {/* 3. Assembly */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            Assembly{" "}
+            <span className="text-red-400 normal-case font-normal tracking-normal">*</span>
+          </p>
+          {submitAttempted && !assemblyComplete && (
+            <span className="text-sm text-red-500">Required</span>
+          )}
+        </div>
+        <input
+          type="text"
+          className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${submitAttempted && !assemblyComplete
+            ? "border-red-400 focus:ring-red-400"
+            : "border-gray-300 dark:border-gray-600"
+            }`}
+          value={trackState.assembly}
+          onChange={(e) => handleAssemblyChange(e.target.value)}
+        />
+      </div>
+
+      {/* 4. Options */}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+          Options{" "}
+          <span className="normal-case font-normal tracking-normal opacity-50 text-sm">
+            optional · JSON
+          </span>
+        </p>
+        <ConfigureTrack onOptionsChange={handleOptionsChange} />
+      </div>
+
+      {trackState.msg && (
+        <p
+          className={`text-sm italic ${trackState.msg.toLowerCase().includes("success")
+            ? "text-green-600"
+            : "text-red-500"
+            }`}
+        >
+          {trackState.msg}
+        </p>
+      )}
+
       <Button
-        active
-        style={{
-          width: "100%",
-          marginTop: "10px",
-        }}
+        active={canSubmit}
         onClick={handleSubmit}
+        style={{ fontSize: "14px" }}
       >
-        Submit
+        Add Track
       </Button>
     </div>
   );
@@ -285,84 +293,65 @@ interface SelectTrackTypeProps {
 
 function SelectTrackType({ selectedType, onTypeChange }: SelectTrackTypeProps) {
   return (
-    <div className="space-y-4 py-4">
-      <select
-        className="w-full p-2 border rounded"
-        value={selectedType}
-        onChange={(e) => onTypeChange(e.target.value)}
-      >
-        <optgroup label="select only the track file (can select many of same type)">
-          <option value="bigWig">bigWig - {TYPES_DESC.bigWig}</option>
-          <option value="bigBed">bigBed - {TYPES_DESC.bigBed}</option>
-          <option value="rgbpeak">RgbPeak - {TYPES_DESC.rgbpeak}</option>
-          <option value="hic">HiC - {TYPES_DESC.hic}</option>
-          <option value="bigInteract">
-            bigInteract - {TYPES_DESC.bigInteract}
-          </option>
-          <option value="dynseq">dynseq - {TYPES_DESC.dynseq}</option>
-          <option value="g3d">G3D - {TYPES_DESC.g3d}</option>
-        </optgroup>
-        <optgroup label="select both the track file and index file (only select 1 pair)">
-          <option value="bedGraph">bedGraph - {TYPES_DESC.bedGraph}</option>
-          <option value="methylC">methylC - {TYPES_DESC.methylC}</option>
-          <option value="modbed">modbed - {TYPES_DESC.modbed}</option>
-          <option value="categorical">
-            categorical - {TYPES_DESC.categorical}
-          </option>
-          <option value="bed">bed - {TYPES_DESC.bed}</option>
-          <option value="vcf">vcf - {TYPES_DESC.vcf}</option>
-          <option value="refBed">refBed - {TYPES_DESC.refBed}</option>
-          <option value="longrange">longrange - {TYPES_DESC.longrange}</option>
-          <option value="longrangecolor">
-            longrange - {TYPES_DESC.longrangecolor}
-          </option>
-          <option value="qbed">qBED - {TYPES_DESC.qBED}</option>
-          <option value="bam">BAM - {TYPES_DESC.bam}</option>
-        </optgroup>
-      </select>
-    </div>
+    <select
+      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
+      value={selectedType}
+      onChange={(e) => onTypeChange(e.target.value)}
+    >
+      <optgroup label="Select only the track file (can select many)">
+        <option value="bigWig">bigWig — {TYPES_DESC.bigWig}</option>
+        <option value="bigBed">bigBed — {TYPES_DESC.bigBed}</option>
+        <option value="rgbpeak">RgbPeak — {TYPES_DESC.rgbpeak}</option>
+        <option value="hic">HiC — {TYPES_DESC.hic}</option>
+        <option value="bigInteract">bigInteract — {TYPES_DESC.bigInteract}</option>
+        <option value="dynseq">dynseq — {TYPES_DESC.dynseq}</option>
+        <option value="g3d">G3D — {TYPES_DESC.g3d}</option>
+      </optgroup>
+      <optgroup label="Select track + index file (1 pair at a time)">
+        <option value="bedGraph">bedGraph — {TYPES_DESC.bedGraph}</option>
+        <option value="methylC">methylC — {TYPES_DESC.methylC}</option>
+        <option value="modbed">modbed — {TYPES_DESC.modbed}</option>
+        <option value="categorical">categorical — {TYPES_DESC.categorical}</option>
+        <option value="bed">bed — {TYPES_DESC.bed}</option>
+        <option value="vcf">vcf — {TYPES_DESC.vcf}</option>
+        <option value="refBed">refBed — {TYPES_DESC.refBed}</option>
+        <option value="longrange">longrange — {TYPES_DESC.longrange}</option>
+        <option value="longrangecolor">longrangecolor — {TYPES_DESC.longrangecolor}</option>
+        <option value="qbed">qBED — {TYPES_DESC.qBED}</option>
+        <option value="bam">BAM — {TYPES_DESC.bam}</option>
+      </optgroup>
+    </select>
   );
 }
 
 interface TrackFileUploadProps {
-  type: string;
   onFileChange: (files: FileList | null) => void;
+  hasError?: boolean;
 }
 
-function TrackFileUpload({ type, onFileChange }: TrackFileUploadProps) {
+function TrackFileUpload({ onFileChange, hasError }: TrackFileUploadProps) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
   return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Select Track File(s)</label>
-        <input
-          type="file"
-          className="w-full p-2 border rounded"
-          multiple={true}
-          onChange={(e) => onFileChange(e.target.files)}
-        />
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => onFileChange(e.target.files)}
+      />
+      <div
+        className={`max-w-md mx-auto w-full border-dashed border-2 rounded-md h-32 flex flex-col items-center justify-center cursor-pointer text-center px-4 ${hasError ? "border-red-400" : "border-gray-400 dark:border-gray-600"
+          }`}
+        onClick={() => inputRef.current?.click()}
+        onDrop={(e) => { e.preventDefault(); onFileChange(e.dataTransfer.files); }}
+        onDragOver={(e) => e.preventDefault()}
+      >
+        <p className="text-sm text-primary dark:text-dark-primary">Drag and drop track files here</p>
+        <p className="text-sm text-primary/50 dark:text-dark-primary/50">— or —</p>
+        <p className="text-sm text-primary dark:text-dark-primary">Click to select files</p>
       </div>
-    </div>
-  );
-}
-
-interface TrackAssemblyProps {
-  assembly: string;
-  onAssemblyChange: (assembly: string) => void;
-}
-
-function TrackAssembly({ assembly, onAssemblyChange }: TrackAssemblyProps) {
-  return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Assembly</label>
-        <input
-          type="text"
-          className="w-full p-2 border rounded"
-          value={assembly}
-          onChange={(e) => onAssemblyChange(e.target.value)}
-        />
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -372,24 +361,23 @@ interface ConfigureTrackProps {
 
 function ConfigureTrack({ onOptionsChange }: ConfigureTrackProps) {
   return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Track Options (JSON)</label>
-        <textarea
-          className="w-full p-2 border rounded"
-          rows={5}
-          onChange={(e) => onOptionsChange(e.target.value)}
-        />
-      </div>
-    </div>
+    <textarea
+      rows={3}
+      placeholder='{ "color": "blue", "height": 40 }'
+      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary font-mono resize-none"
+      onChange={(e) => onOptionsChange(e.target.value)}
+    />
   );
 }
 
 // MARK: - Add Local Hub
 
 function AddLocalHub() {
+  useExpandedNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
+  const folderInputRef = React.useRef<HTMLInputElement>(null);
+  const multiInputRef = React.useRef<HTMLInputElement>(null);
   const handleFileChange = async (files: FileList | null | Array<any>) => {
     if (!files) {
       return null;
@@ -490,30 +478,57 @@ function AddLocalHub() {
   };
 
   return (
-    <div className="space-y-8 py-4">
-      <div>
-        <h3 className="text-lg font-semibold mb-4">
-          Choose a folder containing hub.config.json:
-        </h3>
-
+    <div className="px-4 py-3 flex flex-col gap-6">
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+          Choose Folder
+        </p>
+        <p className="text-sm text-primary/60 dark:text-dark-primary/60">
+          Select a folder containing hub.config.json
+        </p>
         <input
+          ref={folderInputRef}
           type="file"
-          className="w-full p-2 border rounded"
+          className="hidden"
           // @ts-ignore webkitdirectory is a valid attribute but not in TypeScript's types
           webkitdirectory="true"
           onChange={(e) => handleFileChange(e.target.files)}
         />
+        <div
+          className="max-w-md mx-auto w-full border-dashed border-2 border-gray-400 dark:border-gray-600 rounded-md h-32 flex flex-col items-center justify-center cursor-pointer text-center px-4"
+          onClick={() => folderInputRef.current?.click()}
+          onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          <p className="text-sm text-primary dark:text-dark-primary">Drag and drop folder here</p>
+          <p className="text-sm text-primary/50 dark:text-dark-primary/50">— or —</p>
+          <p className="text-sm text-primary dark:text-dark-primary">Click to select a folder</p>
+        </div>
       </div>
-      <div>
-        <h3 className="text-lg font-semibold mb-4">
-          Or choose multiple files (including hub.config.json):
-        </h3>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+          Choose Multiple Files
+        </p>
+        <p className="text-sm text-primary/60 dark:text-dark-primary/60">
+          Select multiple files including hub.config.json
+        </p>
         <input
+          ref={multiInputRef}
           type="file"
-          className="w-full p-2 border rounded"
+          className="hidden"
           multiple
           onChange={(e) => handleFileChange(e.target.files)}
         />
+        <div
+          className="max-w-md mx-auto w-full border-dashed border-2 border-gray-400 dark:border-gray-600 rounded-md h-32 flex flex-col items-center justify-center cursor-pointer text-center px-4"
+          onClick={() => multiInputRef.current?.click()}
+          onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          <p className="text-sm text-primary dark:text-dark-primary">Drag and drop files here</p>
+          <p className="text-sm text-primary/50 dark:text-dark-primary/50">— or —</p>
+          <p className="text-sm text-primary dark:text-dark-primary">Click to select files</p>
+        </div>
       </div>
     </div>
   );

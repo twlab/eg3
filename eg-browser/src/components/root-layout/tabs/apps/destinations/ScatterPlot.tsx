@@ -95,7 +95,7 @@ const ScatterPlot: React.FC = () => {
       <select
         value={setName}
         onChange={handleSetChange}
-        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
       >
         <option value="">-- Select region set --</option>
         {setList}
@@ -123,7 +123,7 @@ const ScatterPlot: React.FC = () => {
       <select
         value={trackIdX}
         onChange={handleTrackXChange}
-        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
       >
         <option value="">-- Select track --</option>
         {trackList}
@@ -151,7 +151,7 @@ const ScatterPlot: React.FC = () => {
       <select
         value={trackIdY}
         onChange={handleTrackYChange}
-        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
       >
         <option value="">-- Select track --</option>
         {trackList}
@@ -364,7 +364,7 @@ const ScatterPlot: React.FC = () => {
 
   const renderMarkerSizeInput = () => {
     return (
-      <label className="flex items-center gap-2 text-sm text-primary dark:text-dark-primary">
+      <label className="flex items-center gap-2 text-base text-primary dark:text-dark-primary">
         Marker size:
         <input
           type="number"
@@ -374,7 +374,7 @@ const ScatterPlot: React.FC = () => {
           max="100"
           value={markerSize}
           onChange={handleMarkerChangeRequest}
-          className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm focus:outline-none w-16"
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none w-16"
         />
       </label>
     );
@@ -383,7 +383,7 @@ const ScatterPlot: React.FC = () => {
     <div className="flex flex-col">
       {currentSession && sets && sets.length === 0 ? (
         <>
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mx-4 mt-4 mb-2">
+          <p className="text-base text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mx-4 mt-4 mb-2">
             There is no region set yet, please submit a region set below.
           </p>
           <RegionSetSelector />
@@ -392,14 +392,14 @@ const ScatterPlot: React.FC = () => {
         <>
           <div className="px-4 py-4 flex flex-col gap-5">
             <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
                 1. Region Set
               </p>
               {renderRegionList()}
             </div>
 
             <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
                 2.{" "}
                 <a
                   href={HELP_LINKS.numerical}
@@ -415,14 +415,14 @@ const ScatterPlot: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
                 3. Numerical Track (Y-axis)
               </p>
               {renderTrackYList()}
             </div>
 
             <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
                 4. Plot Configuration
               </p>
               <div className="flex items-center gap-4 flex-wrap">
@@ -435,11 +435,10 @@ const ScatterPlot: React.FC = () => {
               <Button onClick={getScatterPlotData}>Plot</Button>
               {plotMsg && (
                 <span
-                  className={`text-sm ${
-                    plotMsg === "Loading..."
+                  className={`text-base ${plotMsg === "Loading..."
                       ? "text-primary dark:text-dark-primary"
                       : "text-red-600 dark:text-red-400"
-                  }`}
+                    }`}
                 >
                   {plotMsg}
                 </span>

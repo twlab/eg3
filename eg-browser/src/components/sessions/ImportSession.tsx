@@ -93,7 +93,8 @@ export default function ImportSession() {
               link.download = "example_session.json";
               link.click();
             }}
-            outlined
+
+            backgroundColor="tint"
             style={{ width: "180px" }}
           >
             Download Example
