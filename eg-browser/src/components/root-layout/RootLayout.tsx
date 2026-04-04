@@ -125,15 +125,15 @@ export default function RootLayout(props: GenomeHubProps) {
     dispatch(setCurrentSession(null));
   };
 
+  const isNavBarVisible = useAppSelector(selectIsNavBarVisible);
+
   // Reset state when session is cleared
   useEffect(() => {
     setLeftPanelOpen(false);
     dispatch(resetState());
     clearHistory();
   }, [sessionId]);
-  const showNavBar = isPackageMode
-    ? useAppSelector(selectIsNavBarVisible)
-    : true;
+  const showNavBar = isPackageMode ? isNavBarVisible : true;
   function getConfig() {
     if (props.customGenome) {
       try {

@@ -510,7 +510,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
             >
               <thead>
                 {headerGroups.map((headerGroup) => (
-                  <tr {...headerGroup.getHeaderGroupProps()}>
+                  <tr key={headerGroup.getHeaderGroupProps().key} {...headerGroup.getHeaderGroupProps()}>
                     {headerGroup.headers.map((column) => (
                       <th
                         {...column.getHeaderProps(

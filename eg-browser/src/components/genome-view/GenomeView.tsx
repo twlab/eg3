@@ -2,6 +2,7 @@ import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { useEffect } from "react";
 import {
   selectDarkTheme,
   selectIsNavigatorVisible,
@@ -42,9 +43,11 @@ export default function GenomeView() {
   const bundleId =
     currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
-  if (bundleId) {
-    dispatch(fetchBundle(bundleId));
-  }
+  useEffect(() => {
+    if (bundleId) {
+      dispatch(fetchBundle(bundleId));
+    }
+  }, [bundleId, dispatch]);
 
   // const bundleId = currentSession.bundleId;
 
