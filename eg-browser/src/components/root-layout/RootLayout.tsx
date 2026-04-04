@@ -38,6 +38,8 @@ import {
 import {
   selectNavigationTab,
   setNavigationTab,
+  selectNavSearchOpen,
+  setNavSearchOpen,
 } from "@/lib/redux/slices/navigationSlice";
 import { useEffect, useRef, useState } from "react";
 
@@ -100,17 +102,19 @@ export default function RootLayout(props: GenomeHubProps) {
   const { clearHistory } = useUndoRedo();
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const currentTab = useAppSelector(selectNavigationTab);
+  const navSearchOpen = useAppSelector(selectNavSearchOpen);
 
-  // Escape closes the session panel and/or the active nav tab
+  // Escape closes the session panel and/or the active nav tab, and the search bar
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (leftPanelOpen) setLeftPanelOpen(false);
       if (currentTab !== null) dispatch(setNavigationTab(null));
+      if (navSearchOpen) dispatch(setNavSearchOpen(false));
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [leftPanelOpen, currentTab, dispatch]);
+  }, [leftPanelOpen, currentTab, navSearchOpen, dispatch]);
 
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =

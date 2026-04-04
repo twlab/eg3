@@ -644,7 +644,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl bg-white dark:bg-dark-surface rounded-lg p-6 shadow-sm">
+    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-dark-surface rounded-lg p-6 shadow-sm">
       <div className={classes.inputContainer}>
         {!withGenomePicker && (
           <>
@@ -915,7 +915,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                               width: "fit-content", padding: "8px 16px"
                             }}
                           >
-                            Create new bundle and save session
+                            Create remote bundle and save session
                           </Button>
                         </motion.div>
                       ) : (

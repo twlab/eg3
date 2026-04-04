@@ -471,10 +471,11 @@ export default function SearchBar({
     }
   };
 
-  const debouncedSearch = debounce(handleSearch, 300);
+  const debouncedSearch = debounce(handleSearch, 500);
 
   const handleSearchChange = (e: any) => {
     const value = e.target.value;
+    if (!isSearchFocused) onSearchFocusChange(true);
     latestUserInput.current = value; // Update the ref with the latest input
     setSearchInput(value);
 

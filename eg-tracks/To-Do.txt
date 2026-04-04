@@ -1,3 +1,13 @@
+4/02/2026
+fix error when remote local add track and wrong file for type
+fix size 
+check track errors
+fix toolbar select drag null issue
+
+
+
+
+
 To-Do, 6/15/2025
 1. remove extra setState for creating workers in the package version
 2. showGenome on 3d

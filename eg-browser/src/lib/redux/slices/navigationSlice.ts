@@ -25,6 +25,7 @@ export const navigationSlice = createSlice({
     sessionPanelOpen: false,
     expandNavigationTab: false,
     useMidSizeNavigationTab: false,
+    navSearchOpen: false,
   },
   reducers: {
     setNavigationPath: (state, action: PayloadAction<NavigationPath>) => {
@@ -51,6 +52,9 @@ export const navigationSlice = createSlice({
     setMidSizeNavigationTab: (state, action: PayloadAction<boolean>) => {
       state.useMidSizeNavigationTab = action.payload;
     },
+    setNavSearchOpen: (state, action: PayloadAction<boolean>) => {
+      state.navSearchOpen = action.payload;
+    },
   },
 });
 
@@ -61,6 +65,7 @@ export const {
   setSessionPanelOpen,
   setExpandNavigationTab,
   setMidSizeNavigationTab,
+  setNavSearchOpen,
 } = navigationSlice.actions;
 
 export const selectNavigationPath = (state: RootState) => state.navigation.path;
@@ -71,5 +76,7 @@ export const selectExpandNavigationTab = (state: RootState) =>
   state.navigation.expandNavigationTab;
 export const selectMidSizeNavigationTab = (state: RootState) =>
   state.navigation.useMidSizeNavigationTab;
+export const selectNavSearchOpen = (state: RootState) =>
+  state.navigation.navSearchOpen;
 
 export default navigationSlice.reducer;

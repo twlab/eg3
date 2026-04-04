@@ -202,7 +202,7 @@ export default function PublicDataHubs() {
   const renderSearchBar = () => (
     <div
       ref={searchBarGeometry.ref}
-      className="sticky top-0 z-20 bg-white dark:bg-dark-background"
+      className="sticky top-0 z-20 bg-white dark:bg-dark-background pb-1"
 
     >
       <input
@@ -210,10 +210,10 @@ export default function PublicDataHubs() {
         placeholder="Search hubs..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full px-4 py-1 mt-3 outline outline-blue-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+        className="w-full px-4 mt-1 outline outline-blue-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
       />
       {publicTracksPool.length > 0 && showPoolNotice ? (
-        <div className="px-4 mt-1 flex justify-center">
+        <div className="px-4  flex justify-center">
           <div
             role="button"
             tabIndex={0}
@@ -240,7 +240,7 @@ export default function PublicDataHubs() {
                 setShowPoolNotice(false);
               }}
               aria-label="Dismiss"
-              className="ml-2 p-1"
+              className="ml-2 "
             >
               <XMarkIcon className="size-4 text-gray-600 dark:text-gray-200" />
             </button>
@@ -253,7 +253,7 @@ export default function PublicDataHubs() {
   const renderHubGroup = (collection: string, hubs: any[]) => (
     <div key={collection} className="mb-2 relative">
       <h2
-        className="text-base font-medium mt-1 sticky z-10  bg-white dark:bg-dark-background"
+        className="text-base font-medium  sticky z-10  bg-white dark:bg-dark-background"
         style={{
           top: `${searchBarGeometry.height}px`,
         }}
@@ -354,7 +354,7 @@ export default function PublicDataHubs() {
   }
 
   return (
-    <div ref={rootRef}>
+    <div ref={rootRef} className="px-2 pt-1" >
       {currentSession && publicTracksPool.length > 0 ? (
         <div>
 
@@ -375,15 +375,17 @@ export default function PublicDataHubs() {
         ""
       )}
 
-      {!isModalOpen ? <>
-        {renderSearchBar()}
-        <div>
-          {Object.entries(groupedHubs).map(([collection, hubs]) =>
-            renderHubGroup(collection, hubs),
-          )}
-        </div>
-        {renderInfoModal()}  </> : ''}
+      {
+        !isModalOpen ? <>
+          {renderSearchBar()}
+          <div>
+            {Object.entries(groupedHubs).map(([collection, hubs]) =>
+              renderHubGroup(collection, hubs),
+            )}
+          </div>
+          {renderInfoModal()}  </> : ''
+      }
 
-    </div>
+    </div >
   );
 }

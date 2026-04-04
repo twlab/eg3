@@ -292,7 +292,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         let dy = 0;
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
-          dx = -Math.min(overflow, rectExpand.left); // can't move left past viewport left edge
+          dx = -Math.min(overflow, rectExpand.left) - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
@@ -351,7 +351,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         let dy = 0;
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
-          dx = -Math.min(overflow, rectMid.left); // can't move left past viewport left edge
+          dx = -Math.min(overflow, rectMid.left) - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
@@ -502,9 +502,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     ? "linear-gradient(180deg, rgba(60,140,200,0.72), rgba(60,140,200,0.22))"
     : "linear-gradient(180deg, rgba(31, 169, 255, 0.56), rgba(135,206,250,0.14))";
 
-  const headerBorder = headerHover
-    ? "1px solid rgba(255,255,255,0.28)"
-    : "1px solid rgba(255,255,255,0.36)";
 
   const contentStyle: React.CSSProperties = {
     // padding: 12,
@@ -519,18 +516,18 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     <div
       ref={panelRef}
       style={{ ...panelStyle, zIndex: 51 }}
-      className="shadow-lg border dark:border-gray-700 bg-white dark:bg-dark-background"
+      className="shadow-lg bg-white dark:bg-dark-background"
     >
       <div
-        className="flex items-center justify-between px-2 py-2 relative transition-all"
+        className="flex items-center justify-between px-2 relative transition-all"
         style={{
-          paddingTop: 2,
-          paddingBottom: 2,
+          // paddingTop: 1,
+          // paddingBottom: 1,
           cursor: "move",
           userSelect: "none",
           touchAction: "none",
           background: headerBg,
-          borderBottom: headerBorder,
+
           backdropFilter: headerHover
             ? "blur(10px) saturate(150%)"
             : "blur(8px) saturate(130%)",
@@ -548,7 +545,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             left: 0,
             right: 0,
             top: 0,
-            height: 12,
+            height: 8,
             pointerEvents: "none",
             borderTopLeftRadius: 5,
             borderTopRightRadius: 5,
@@ -602,7 +599,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             >
               Esc
             </kbd>{" "}
-            to close or
+            to close
           </span>
 
           <button
@@ -610,7 +607,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             onPointerDown={(e) => e.stopPropagation()}
             aria-label="Close"
             title="Close"
-            className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 ml-1"
+            className="rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -639,6 +636,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             padding: 2,
             backgroundColor: pinned ? "#3b82f6" : "#d1d5db",
             flexShrink: 0,
+
           }}
         >
           <div
@@ -669,8 +667,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           className="rounded cursor-se-resize flex items-center justify-center"
           style={{
             touchAction: "none",
-            height: 30,
-            width: 30,
+            height: 22,
+            width: 27,
           }}
         >
           <svg

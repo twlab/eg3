@@ -119,7 +119,7 @@ export default function SessionList({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-8">
+      <div className="flex-1 min-h-0 overflow-y-auto ">
         {!currentSession?.genomeId ? (
           <div className="flex items-center justify-between p-1 ">
             <p className="text-sm text-primary dark:text-dark-primary">
@@ -530,7 +530,7 @@ function SessionTabs({
 
   return (
     <div className="mt-2 w-full">
-      <div className="flex flex-row items-center bg-gray-300 dark:bg-dark-surface relative h-[30px] mb-3 rounded-lg">
+      <div className="flex flex-row items-center bg-gray-300 dark:bg-dark-surface relative h-[30px] mb-3 ">
         <div
           className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
           style={{
@@ -553,7 +553,7 @@ function SessionTabs({
         {tab === "edit" && <Session tab={false} />}
 
         {tab === "load" && (
-          <div className="flex flex-col gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2 px-4">
             <div className="flex items-center justify-center gap-2">
               <input
                 type="text"

@@ -11,6 +11,7 @@ import {
   BackspaceIcon,
   Bars3Icon,
   XMarkIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,13 +26,14 @@ import {
   selectSessionPanelOpen,
   setNavigationTab,
   setSessionPanelOpen,
+  selectNavSearchOpen,
+  setNavSearchOpen,
 } from "../../lib/redux/slices/navigationSlice";
 import { getSpeciesInfo } from "../genome-picker/genome-list";
 import TabGenomePicker from "./TabGenomePicker";
 import Button from "../ui/button/Button";
 import ResizablePanel from "../ui/panel/ResizablePanel";
 import IconButton from "../ui/button/IconButton";
-import InlineEditable from "../ui/input/InlineEditable";
 import Switch from "../ui/switch/Switch";
 import {
   selectDarkTheme,
@@ -53,13 +55,11 @@ import {
 import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
 
-import { selectBundle, updateBundle } from "@/lib/redux/slices/hubSlice";
-import { getDatabase, ref, set } from "firebase/database";
 import SearchBar from "../genome-view/toolbar/SearchBar";
-import { current } from "@reduxjs/toolkit";
+
 
 export default function NavBar() {
-  const bundle = useAppSelector(selectBundle);
+
 
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -87,11 +87,21 @@ export default function NavBar() {
   const darkTheme = useAppSelector(selectDarkTheme);
 
   const genome = useCurrentGenome();
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const isSearchFocused = useAppSelector(selectNavSearchOpen);
+  const setIsSearchFocused = useCallback((v: boolean) => dispatch(setNavSearchOpen(v)), [dispatch]);
+
+  // Reset search when switching to mobile so the expanded bar doesn't bleed over
+  useEffect(() => { if (isSmallScreen) dispatch(setNavSearchOpen(false)); }, [isSmallScreen, dispatch]);
   const genomeConfig = useMemo(() => {
     return genome ? GenomeSerializer.deserialize(genome) : null;
   }, [genome]);
+  useEffect(() => {
 
+    if (!currentSession) {
+      dispatch(setNavigationTab(null))
+
+    }
+  }, [currentSession]);
   useEffect(() => {
     setNavigationPath([]);
   }, [currentTab]);
@@ -203,6 +213,7 @@ export default function NavBar() {
       setTabAnchorLeft(null);
       dispatch(setNavigationTab(null));
     } else {
+      dispatch(setNavSearchOpen(false));
       dispatch(setNavigationTab(tab as NavigationRoute));
     }
   };
@@ -257,73 +268,78 @@ export default function NavBar() {
           if (!panelPinnedRef.current) dispatch(setNavigationTab(null));
         }}
       >
-        <div className="flex flex-row justify-between items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1 pr-6">
-          <div
-            ref={navRef}
-            className="flex flex-row items-center  relative gap-1"
-          >
-            {currentSession ? (
-              <BackspaceIcon
-                className="size-5 text-gray-600 dark:text-dark-primary cursor-pointer"
-                onClick={() => {
-                  dispatch(setSessionPanelOpen(false));
-                  dispatch(setCurrentSession(null));
-                }}
-              />
-            ) : (
-              <div className="size-5 flex-shrink-0" />
-            )}
-
-            <div
-              className={classNames(
-                "z-10",
-                "h-9",
-                "w-12",
-                "rounded-sm",
-
-                "relative",
-                "overflow-hidden",
-                currentSession ? "cursor-pointer" : "cursor-default",
-              )}
+        {/* Single full-width navbar row */}
+        <div
+          ref={navRef}
+          className="flex flex-row items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1 px-2 gap-1"
+        >
+          {/* Back button */}
+          {currentSession ? (
+            <BackspaceIcon
+              className="size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary cursor-pointer"
               onClick={() => {
                 dispatch(setSessionPanelOpen(false));
                 dispatch(setCurrentSession(null));
               }}
-            >
-              <img
-                src={Logo}
-                alt=""
-                className="absolute inset-0 w-full h-full object-contain"
-              />
-              {currentSession &&
-                currentSession.title.length > 0 &&
-                genome?.name && (
-                  <>
-                    <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
-                      <span
-                        className="text-red-500 blue-100 font-mono leading-none"
-                        style={{ fontSize: "10px" }}
-                      >
-                        {" "}
-                        v{version}
-                      </span>
-                    </div>
-                  </>
-                )}
-            </div>
-            {/* Genome selector moved to a tabbed panel. A compact genome Button appears in the button row below. */}
+            />
+          ) : (
+            <div className="size-5 flex-shrink-0" />
+          )}
 
-            <div className="flex items-center">
-              {isSmallScreen ? (
-                <>
+          {/* Logo */}
+          <div
+            className={classNames(
+              "z-10",
+              "h-9",
+              "w-12",
+              "flex-shrink-0",
+              "rounded-sm",
+              "relative",
+              "overflow-hidden",
+              currentSession ? "cursor-pointer" : "cursor-default",
+            )}
+            onClick={() => {
+              dispatch(setSessionPanelOpen(false));
+              dispatch(setCurrentSession(null));
+            }}
+          >
+            <img
+              src={Logo}
+              alt=""
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+            {currentSession &&
+              currentSession.title.length > 0 &&
+              genome?.name && (
+                <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
+                  <span
+                    className="text-red-500 font-mono leading-none"
+                    style={{ fontSize: "10px" }}
+                  >
+                    v{version}
+                  </span>
+                </div>
+              )}
+          </div>
+
+          {/* Tab buttons / mobile controls — takes remaining space */}
+          <div className="flex-1 flex items-center min-w-0">
+            {isSmallScreen ? (
+              <>
+                <div
+                  className="flex flex-row flex-wrap items-center gap-1"
+                  style={{
+                    opacity: isSearchFocused ? 0 : 1,
+                    pointerEvents: isSearchFocused ? "none" : "auto",
+                    transition: "opacity 0.15s ease",
+                  }}
+                >
                   {currentSession && genome?.name && (
                     <Button
                       onClick={(e) => openTab("tab-genome-picker", e)}
                       active={currentTab === "tab-genome-picker"}
                       style={{
-                        backgroundColor: sessionPanelOpen
-                          ? "#e6eef9"
-                          : "#f3f4f6",
+                        backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
                         color: "#0f172a",
                         width: "60px",
                         display: "flex",
@@ -336,8 +352,7 @@ export default function NavBar() {
                             backgroundImage: `url(${genomeLogoUrl?.logo
                               ? genomeLogoUrl.logo.startsWith("http")
                                 ? genomeLogoUrl.logo
-                                : import.meta.env.BASE_URL +
-                                genomeLogoUrl.logo
+                                : import.meta.env.BASE_URL + genomeLogoUrl.logo
                               : ""
                               })`,
                             backgroundSize: "cover",
@@ -348,53 +363,28 @@ export default function NavBar() {
                           }}
                           onMouseEnter={(e) => {
                             if (genomeLogoUrl)
-                              (e.currentTarget as HTMLElement).style.opacity =
-                                "1";
+                              (e.currentTarget as HTMLElement).style.opacity = "1";
                           }}
                           onMouseLeave={(e) => {
                             if (genomeLogoUrl)
-                              (e.currentTarget as HTMLElement).style.opacity =
-                                "0.8";
+                              (e.currentTarget as HTMLElement).style.opacity = "0.8";
                           }}
                           className={classNames(
-                            "z-10",
-                            "h-9",
-
-                            "rounded-xs",
-                            "flex-shrink-0",
-                            "transition-opacity",
-                            "relative",
-                            "overflow-hidden",
-                            "cursor-pointer",
-
-                            sessionPanelOpen
-                              ? "bg-secondary dark:bg-dark-secondary"
-                              : "",
-                            genomeLogoUrl && !sessionPanelOpen
-                              ? "outline outline-gray-200"
-                              : "",
+                            "z-10", "h-9", "rounded-xs", "flex-shrink-0",
+                            "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
+                            sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
+                            genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
                           )}
                         >
                           {currentSession.title.length > 0 && genome?.name && (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <span
                                 className="leading-tight text-center break-words w-full"
-                                style={{
-                                  color: genomeLogoUrl ? "white" : undefined,
-                                  fontSize: "10px",
-                                }}
+                                style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "10px" }}
                               >
-                                <span
-                                  className={
-                                    genomeLogoUrl
-                                      ? ""
-                                      : "text-gray-700 dark:text-dark-primary"
-                                  }
-                                >
+                                <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
                                   {genomeLogoUrl?.name ? (
-                                    <>
-                                      {genomeLogoUrl.name}/<i>{genome.name}</i>
-                                    </>
+                                    <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
                                   ) : (
                                     <i>{genome.name}</i>
                                   )}
@@ -410,51 +400,105 @@ export default function NavBar() {
                     <Button
                       onClick={(e) => openTab("regions", e)}
                       active={currentTab === "regions"}
-                      style={{
-                        backgroundColor: "#1f2e46",
-                        color: "white",
-                        width: "100px",
-                        fontSize: "10px",
-                      }}
+                      style={{ backgroundColor: "#1f2e46", color: "white", width: "100px", fontSize: "10px" }}
                     >
                       {currentDisplayRegionModel.currentRegionAsString()}
                     </Button>
-                  ) : (
-                    ""
-                  )}
-
+                  ) : ""}
                   {currentSession ? (
-                    <IconButton
-                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                      title="Menu"
+                    <><IconButton onClick={() => { setMobileMenuOpen(!mobileMenuOpen); dispatch(setNavigationTab(null)); }} title="Menu">
+                      {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+                    </IconButton><>
+
+
+                        <div className="relative group flex-shrink-0 ml-1">
+                          <button
+                            onClick={() => {
+                              dispatch(setNavigationTab(null));
+                              dispatch(setNavSearchOpen(true));
+                            }}
+                            aria-label="Open search"
+                            className="group flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            <MagnifyingGlassIcon className="w-5 h-5 text-gray-500 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110" />
+                          </button>
+                          {/* Hover tooltip */}
+                          <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
+                            {/* Arrow pointing up toward button */}
+                            <div className="flex justify-center">
+                              <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
+                            </div>
+                            <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
+                              <p className="font-semibold mb-1 text-blue-300">Search for</p>
+                              <ul className="space-y-0.5 text-gray-200">
+                                <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
+                                <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
+                                <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+
+                      </>
+
+                    </>
+                  ) : ""}
+                </div>          {isSearchFocused ? (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "20%",
+                      width: "calc(60%)",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      zIndex: 100,
+                      minWidth: 150,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <SearchBar
+                        isSearchFocused={isSearchFocused}
+                        onSearchFocusChange={setIsSearchFocused}
+                        onNewRegionSelect={handleNewRegionSelect}
+                        windowWidth={window.innerWidth}
+                        fontSize={16}
+                        buttonPadding={6} />
+                    </div>
+                    <button
+                      onClick={() => dispatch(setNavSearchOpen(false))}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      aria-label="Close search"
+                      title="Close search"
+                      className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 flex-shrink-0"
                     >
-                      {mobileMenuOpen ? (
-                        <XMarkIcon className="h-6 w-6" />
-                      ) : (
-                        <Bars3Icon className="h-6 w-6" />
-                      )}
-                    </IconButton>
-                  ) : (
-                    ""
-                  )}
-                </>
-              ) : (
-                <div>
-                  {currentSession !== null ? (
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : ""}
+              </>
+            ) : (
+              <>
+                {currentSession !== null ? (
+                  <div className="flex flex-row flex-wrap items-center gap-1 flex-1 min-w-0">
+                    {/* Fading tab buttons */}
                     <div
                       className="flex flex-row flex-wrap items-center gap-1"
-                    // style={{
-                    //   pointerEvents: sessionPanelOpen ? "none" : "auto",
-                    // }}
+                      style={{
+                        opacity: isSearchFocused ? 0 : 1,
+                        pointerEvents: isSearchFocused ? "none" : "auto",
+                        transition: "opacity 0.15s ease",
+                      }}
                     >
                       {genome?.name && (
                         <Button
                           onClick={(e) => openTab("tab-genome-picker", e)}
                           active={currentTab === "tab-genome-picker"}
                           style={{
-                            backgroundColor: sessionPanelOpen
-                              ? "#e6eef9"
-                              : "#f3f4f6",
+                            backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
                             color: "#0f172a",
                             width: "100px",
                             display: "flex",
@@ -467,8 +511,7 @@ export default function NavBar() {
                                 backgroundImage: `url(${genomeLogoUrl?.logo
                                   ? genomeLogoUrl.logo.startsWith("http")
                                     ? genomeLogoUrl.logo
-                                    : import.meta.env.BASE_URL +
-                                    genomeLogoUrl.logo
+                                    : import.meta.env.BASE_URL + genomeLogoUrl.logo
                                   : ""
                                   })`,
                                 backgroundSize: "cover",
@@ -479,80 +522,44 @@ export default function NavBar() {
                               }}
                               onMouseEnter={(e) => {
                                 if (genomeLogoUrl)
-                                  (
-                                    e.currentTarget as HTMLElement
-                                  ).style.opacity = "1";
+                                  (e.currentTarget as HTMLElement).style.opacity = "1";
                               }}
                               onMouseLeave={(e) => {
                                 if (genomeLogoUrl)
-                                  (
-                                    e.currentTarget as HTMLElement
-                                  ).style.opacity = "0.8";
+                                  (e.currentTarget as HTMLElement).style.opacity = "0.8";
                               }}
                               className={classNames(
-                                "z-10",
-                                "h-9",
-
-                                "rounded-xs",
-                                "flex-shrink-0",
-                                "transition-opacity",
-                                "relative",
-                                "overflow-hidden",
-                                "cursor-pointer",
-
-                                sessionPanelOpen
-                                  ? "bg-secondary dark:bg-dark-secondary"
-                                  : "",
-                                genomeLogoUrl && !sessionPanelOpen
-                                  ? "outline outline-gray-200"
-                                  : "",
+                                "z-10", "h-9", "rounded-xs", "flex-shrink-0",
+                                "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
+                                sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
+                                genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
                               )}
                             >
-                              {currentSession.title.length > 0 &&
-                                genome?.name && (
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <span
-                                      className="leading-tight text-center break-words w-full"
-                                      style={{
-                                        color: genomeLogoUrl
-                                          ? "white"
-                                          : undefined,
-                                        fontSize: "16px",
-                                      }}
-                                    >
-                                      <span
-                                        className={
-                                          genomeLogoUrl
-                                            ? ""
-                                            : "text-gray-700 dark:text-dark-primary"
-                                        }
-                                      >
-                                        {genomeLogoUrl?.name ? (
-                                          <>
-                                            {genomeLogoUrl.name}/
-                                            <i>{genome.name}</i>
-                                          </>
-                                        ) : (
-                                          <i>{genome.name}</i>
-                                        )}
-                                      </span>
+                              {currentSession.title.length > 0 && genome?.name && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span
+                                    className="leading-tight text-center break-words w-full"
+                                    style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px" }}
+                                  >
+                                    <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
+                                      {genomeLogoUrl?.name ? (
+                                        <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
+                                      ) : (
+                                        <i>{genome.name}</i>
+                                      )}
                                     </span>
-                                  </div>
-                                )}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </Button>
                       )}
-
                       {currentDisplayRegionModel && genomeConfig && (
                         <Button
                           onClick={(e) => openTab("regions", e)}
                           active={currentTab === "regions"}
-                          style={{
-                            backgroundColor: "#1f2e46",
-                            color: "white",
-                            width: "225px",
-                          }}
+                          style={{ backgroundColor: "#1f2e46", color: "white", width: "fit-content", padding: "4px 6px" }}
                         >
                           {currentDisplayRegionModel.currentRegionAsString()}
                         </Button>
@@ -560,94 +567,138 @@ export default function NavBar() {
                       <Button
                         onClick={(e) => openTab("tracks", e)}
                         active={currentTab === "tracks"}
-                        style={{ backgroundColor: "#bec6fb", color: "black" }}
+                        style={{ backgroundColor: "#bec6fb", color: "black", width: "fit-content", padding: "4px 6px" }}
                       >
                         Tracks
                       </Button>
                       <Button
                         onClick={(e) => openTab("apps", e)}
                         active={currentTab === "apps"}
-                        style={{ backgroundColor: "#95E1D3", color: "#0f172a" }}
+                        style={{ backgroundColor: "#95E1D3", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
                       >
                         Apps
                       </Button>
                       <Button
                         onClick={(e) => openTab("share", e)}
                         active={currentTab === "share"}
-                        style={{ backgroundColor: "#EAFFD0", color: "#0f172a" }}
+                        style={{ backgroundColor: "#EAFFD0", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
                       >
                         Share
                       </Button>
                       <Button
                         onClick={(e) => openTab("settings", e)}
                         active={currentTab === "settings"}
-                        style={{ backgroundColor: "#ffbebe", color: "black" }}
+                        style={{ backgroundColor: "#ffbebe", color: "black", width: "fit-content", padding: "4px 6px" }}
                       >
                         Settings
                       </Button>
                       <Button
                         onClick={(e) => openTab("help", e)}
                         active={currentTab === "help"}
-                        style={{ backgroundColor: "#FCE38A", color: "#0f172a" }}
+                        style={{ backgroundColor: "#FCE38A", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
                       >
                         Help
                       </Button>
-                      <SearchBar
-                        isSearchFocused={isSearchFocused}
-                        onSearchFocusChange={setIsSearchFocused}
-                        onNewRegionSelect={handleNewRegionSelect}
-                        windowWidth={window.innerWidth}
-                        fontSize={16}
-                        buttonPadding={6}
-                      />
+                      <div className="h-9 flex flex-row items-center flex-shrink-0">
+                        <Switch
+                          checked={darkTheme}
+                          onChange={(checked) => dispatch(setDarkTheme(checked))}
+                          checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                          uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+                        />
+                      </div>
+                      {/* SearchBar: pill button when closed, absolute+expanded when open */}
+
+                      <div className="relative group flex-shrink-0 ml-4">
+                        <button
+                          onClick={() => {
+                            dispatch(setNavigationTab(null));
+                            dispatch(setNavSearchOpen(true));
+                          }}
+                          aria-label="Open search"
+                          className="group flex items-center justify-center w-9 h-9 rounded-full bg-[#44ACFF] hover:bg-[#1a96ff] dark:bg-[#44ACFF] dark:hover:bg-[#1a96ff] shadow-md hover:shadow-lg transition-all duration-200"
+                        >
+                          <MagnifyingGlassIcon className="w-5 h-5 text-white transition-all duration-200 group-hover:scale-110" />
+                        </button>
+                        {/* Hover tooltip */}
+                        <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
+                          {/* Arrow pointing up toward button */}
+                          <div className="flex justify-center">
+                            <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
+                          </div>
+                          <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
+                            <p className="font-semibold mb-1 text-blue-300">Search for</p>
+                            <ul className="space-y-0.5 text-gray-200">
+                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
+                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
+                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+
+
+
                     </div>
-                  ) : (
-                    ""
-                  )}
-                </div>
-              )}
-            </div>
-            {!currentSession && (
-              <div style={{ fontSize: 24 }}>
-                <span>WashU </span> Epigenome Browser
-              </div>
+
+                    {isSearchFocused ? <div
+                      style={{
+                        position: "absolute",
+                        left: "20%",
+                        width: "calc(60%)",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        zIndex: 100,
+                        minWidth: 150,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <SearchBar
+                          isSearchFocused={isSearchFocused}
+                          onSearchFocusChange={setIsSearchFocused}
+                          onNewRegionSelect={handleNewRegionSelect}
+                          windowWidth={window.innerWidth}
+                          fontSize={16}
+                          buttonPadding={6}
+                        />
+                      </div>
+                      <button
+                        onClick={() => dispatch(setNavSearchOpen(false))}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        aria-label="Close search"
+                        title="Close search"
+                        className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 flex-shrink-0"
+                      >
+                        <XMarkIcon className="w-5 h-5" />
+                      </button>
+                    </div> : ""}
+
+
+
+                  </div>
+                ) : (
+                  <>
+                    {!currentSession && (
+                      <div style={{ fontSize: 24 }}>
+                        <span>WashU </span> Epigenome Browser
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </div>
 
+
+          {/* Right side: dark mode + previous version (no session) */}
           {!currentSession && (
-            <div
-              className="flex flex-row items-center gap-2 z-10"
-              style={{ marginRight: 15 }}
-            >
-              <Button
-                style={{
-                  backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
-                  padding: "4px 8px",
-                  color: "black",
-                  width: "145px",
-                  height: "24px",
-                }}
-                onClick={() =>
-                  window.open(
-                    "https://epigenomegateway.wustl.edu/browser2022/",
-                    "_blank",
-                  )
-                }
-                active={currentTab === "tracks"}
-              >
-                Previous Version
-              </Button>
-              <Switch
-                checked={darkTheme}
-                onChange={(checked) => dispatch(setDarkTheme(checked))}
-                checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-              />{" "}
-            </div>
-          )}
-          {!isSmallScreen &&
-            (currentSession ? (
-              <div className="h-9 flex flex-row items-center gap-1 z-10">
+            <div className="flex flex-row items-center gap-2 ml-auto flex-shrink-0">
+
+              <div className="h-9 flex flex-row items-center flex-shrink-0">
                 <Switch
                   checked={darkTheme}
                   onChange={(checked) => dispatch(setDarkTheme(checked))}
@@ -655,9 +706,27 @@ export default function NavBar() {
                   uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
                 />
               </div>
-            ) : (
-              ""
-            ))}
+              <Button
+                style={{
+                  backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
+                  padding: "4px 8px",
+                  color: "black",
+                  width: "145px",
+                  height: "32px",
+                  borderRadius: "15px",
+                }}
+
+                onClick={() =>
+                  window.open("https://epigenomegateway.wustl.edu/browser2022/", "_blank")
+                }
+
+              >
+                Previous Version
+              </Button>
+
+            </div>
+          )}
+
 
           <AnimatePresence>
             {isSmallScreen && mobileMenuOpen && (
@@ -741,7 +810,16 @@ export default function NavBar() {
                       >
                         Help
                       </Button>
+                      <div className="h-9 flex flex-row justify-center flex-shrink-0">
+                        <Switch
+                          checked={darkTheme}
+                          onChange={(checked) => dispatch(setDarkTheme(checked))}
+                          checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                          uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+                        />
+                      </div>
                     </>
+
                   ) : (
                     ""
                   )}
