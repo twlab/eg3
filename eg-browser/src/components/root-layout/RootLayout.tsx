@@ -281,11 +281,11 @@ export default function RootLayout(props: GenomeHubProps) {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 className="absolute left-0 h-full z-60"
-                style={{ width: "35vw" }}
+
               >
                 <ResizablePanel
                   navigationPath={[]}
-                  initialWidth={Math.round(window.innerWidth * 0.35)}
+                  initialWidth={window.innerWidth * 0.4}
                   initialHeight={window.innerHeight - 50}
                   onClose={() => setLeftPanelOpen(false)}
                 >
@@ -356,31 +356,31 @@ export default function RootLayout(props: GenomeHubProps) {
               className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
               style={{
                 zIndex: 5,
+
               }}
             >
               {!sessionId && (
-                <div className="h-full w-full">
-                  <TabView<"picker" | "add" | "import">
-                    initialTab={"picker"}
-                    tabs={[
-                      {
-                        label: "CHOOSE A GENOME",
-                        value: "picker",
-                        component: <GenomePicker />,
-                      },
-                      {
-                        label: "ADD CUSTOM GENOME",
-                        value: "add",
-                        component: <AddCustomGenome />,
-                      },
-                      {
-                        label: "LOAD A SESSION",
-                        value: "import",
-                        component: <ImportSession />,
-                      },
-                    ]}
-                  />
-                </div>
+                <TabView<"picker" | "add" | "import">
+                  centerTabs
+                  initialTab={"picker"}
+                  tabs={[
+                    {
+                      label: "CHOOSE A GENOME",
+                      value: "picker",
+                      component: <GenomePicker />,
+                    },
+                    {
+                      label: "ADD CUSTOM GENOME",
+                      value: "add",
+                      component: <AddCustomGenome />,
+                    },
+                    {
+                      label: "LOAD A SESSION",
+                      value: "import",
+                      component: <ImportSession />,
+                    },
+                  ]}
+                />
               )}
               {sessionId && (
                 <GenomeErrorBoundary onGoHome={handleGoHome}>

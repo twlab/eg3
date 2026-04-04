@@ -24,6 +24,8 @@ import {
 // Using shared Tailwind classes instead of a separate CSS file
 import { getFunName } from "./SessionUI";
 import Button from "../../../../ui/button/Button";
+import FileInput from "@/components/ui/input/FileInput";
+import { BrowserSession, upsertSession } from "@/lib/redux/slices/browserSlice";
 
 export interface BundleProps {
   bundleId: string | null;
@@ -486,10 +488,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
           a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
         );
       }
-      const buttons = sessions.map(([id, session]: any) => (
+      const buttons = sessions.map(([id, session]: any, index: number) => (
         <li key={id} className={classes.sessionItem}>
-          <span>
-            <strong>{session.label}</strong> -{" "}
+          <span className="text-sm font-medium text-black mr-1 ml-6 shrink-0">{index + 1}.</span>
+          <span className="flex-1 text-sm">
+            <>{session.label}</> -{" "}
             {new Date(session.date).toLocaleString()}
           </span>
           <div className="flex gap-2">
@@ -497,7 +500,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               <Button
                 disabled
                 style={{
-                  width: "120px",
+                  width: "fit-content",
+                  padding: "8px 16px",
                   backgroundColor: "#E5E7EB",
                   color: "#6B7280",
                   borderRadius: "6px",
@@ -509,7 +513,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               <Button
                 onClick={() => restoreSession(id)}
                 style={{
-                  width: "120px",
+                  width: "fit-content",
+                  padding: "8px 16px",
                   backgroundColor: "#E6F7EA",
                   color: "#1F6E3A",
                   borderRadius: "6px",
@@ -522,7 +527,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
             <Button
               onClick={() => deleteSession(id)}
               style={{
-                width: "120px",
+                width: "fit-content",
+                padding: "8px 16px",
                 backgroundColor: "#FDE8E8",
                 color: "#8B1C1C",
                 borderRadius: "6px",
@@ -536,11 +542,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       return (
         <div>
           {/* Table Header */}
-          <div className="grid grid-cols-[1fr_auto_auto] gap-3">
-            <h1 className="text-xl">Saved Sessions ({sessions.length}):</h1>
+          <div className="grid grid-cols-[1fr_auto_auto] gap-3 mt-3">
+            <h1 className="text-md">Sessions In Bundle ({sessions.length}) </h1>
 
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium">Sort by:</span>
+              <span className="text-md">Sort by:</span>
               <label className="flex items-center gap-1 cursor-pointer text-sm">
                 <input
                   type="radio"
@@ -573,15 +579,9 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
           </div>
 
           {/* Table Body */}
-          <div
-            style={{
-              marginTop: "4px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+          <ol className=" flex flex-col">
             {buttons}
-          </div>
+          </ol>
         </div>
       );
     }
@@ -616,7 +616,18 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       }
     }
   };
-
+  const handleUploadFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as BrowserSession;
+      if (parsed && parsed.id) {
+        dispatch(upsertSession(parsed));
+      }
+    } catch (err) {
+      console.error("Failed to upload session file", err);
+    }
+  };
   const retrieveBundle = async (retrieveBundleId: string) => {
     const bundleRes = await onRetrieveSession(retrieveBundleId);
 
@@ -628,26 +639,55 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
     }
   };
   const classes: any = {
-    inputContainer: "mb-7",
+
     emptyState:
       "border-2 border-dashed rounded-lg p-8 text-center bg-white text-gray-600 mt-2",
     sessionItem:
-      "border border-gray-100 rounded-md p-1 text-sm flex justify-between items-center  mb-1 bg-white",
+      "outline outline-gray-100 rounded-md text-xs flex justify-between items-center bg-white",
     bundleCode:
-      "flex-1 text-sm text-gray-900 font-mono overflow-hidden truncate",
+      "flex-1 text-xs text-gray-900 font-mono overflow-hidden truncate",
     label: "block mb-2",
-    row: "flex items-center gap-2",
-    additionalActions: "flex flex-wrap gap-2 mt-4",
-    disclaimer: "mt-4 p-3 bg-gray-50 rounded",
+    row: "flex flex-wrap items-center gap-2",
+    additionalActions: "flex flex-wrap gap-2 mt-2",
+    disclaimer: "p-3 bg-gray-50 rounded",
     emphasis: "font-semibold",
     link: "text-blue-600 hover:text-blue-800",
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-dark-surface rounded-lg p-6 shadow-sm">
+    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-dark-surface rounded-lg p-3 shadow-sm">
       <div className={classes.inputContainer}>
         {!withGenomePicker && (
           <>
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <input
+                type="text"
+
+                className="w-70 h-9 px-2  outline outline-gray-300 rounded-md bg-white text-sm truncate"
+                placeholder="Session Bundle ID"
+                value={retrieveId}
+                onChange={(e) => setRetrieveId(e.target.value.trim())}
+              />
+              <Button style={{
+                width: "fit-content",
+                padding: "8px 16px",
+                backgroundColor: "#5E7AC4",
+                color: "white",
+                borderRadius: "6px",
+              }} onClick={() => retrieveBundle(retrieveId)}>
+                Retrieve
+              </Button>
+              <FileInput
+                accept=".json"
+                onFileChange={handleUploadFile}
+                dragMessage="Drop / Click file to upload session"
+                clickMessage=""
+                orMessage=""
+                containerClassName=""
+                className="!h-9 px-3 border border-gray-300 rounded-lg text-sm whitespace-nowrap w-auto"
+              />
+            </div>
+            <div className="w-full dark:bg-white bg-black" style={{ height: "1px" }} />
             <AnimatePresence initial={false}>
               {showFullUI ? (
                 <motion.div
@@ -658,33 +698,31 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   transition={{ duration: 0.22 }}
                 >
                   <>
-                    {/* Create New Session */}
                     <div className={classes.inputContainer}>
                       <div className={classes.label}>
                         <div
                           style={{
                             display: "flex",
+                            flexWrap: "wrap",
                             alignItems: "center",
                             justifyContent: "flex-start",
-                            gap: "12px",
+                            columnGap: "12px",
+                            rowGap: "0px",
                             width: "100%",
+                            marginTop: "10px"
                           }}
                         >
-                          <h1 className="text-xl">
-                            {" "}
-                            Add New Session To Bundle
-                          </h1>
+                          <h1 className="text-mdshrink-0">Add New Session To Bundle</h1>
 
                           <div
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              gap: "8px",
+
                               padding: "2px",
                               backgroundColor: "#f8f9fa",
                               borderRadius: "4px",
-                              border: "1px solid #e9ecef",
-                              maxWidth: "60%",
+
                             }}
                           >
                             <code
@@ -727,13 +765,13 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                             style={{
                               position: "relative",
                               flex: "1",
-                              marginTop: "4px",
+                              // marginTop: "4px",
                             }}
                           >
                             <input
                               type="text"
                               value={newSessionLabel}
-                              className="w-full pr-20 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                              className="w-full pr-20 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm h-9"
                               placeholder="Enter new session name (optional)"
                               onChange={(e) =>
                                 setNewSessionLabel(e.target.value.trim())
@@ -827,7 +865,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                           <Button
                             onClick={saveSession}
                             style={{
-                              width: "140px",
+                              width: "fit-content",
+                              padding: "8px 16px",
                               backgroundColor: "#5E7AC4",
                               color: "white",
                               borderRadius: "6px",
@@ -876,15 +915,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.22 }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "12px",
-                      alignItems: "center",
-                      marginTop: "16px",
-                    }}
-                  >
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <AnimatePresence initial={false} mode="wait">
                       {!showCreateInput ? (
                         <motion.div
@@ -937,14 +968,14 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                               }
                             }}
                             placeholder="Enter new session name (optional)"
-                            className="flex-1 h-11 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                            className="flex-1 h-9 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
                           />
                           <Button
                             onClick={handleAttemptSave}
                             style={{
                               padding: "12px 16px",
-                              minWidth: "120px",
-                              height: "44px",
+                              width: "fit-content",
+
                               background: "white",
                               borderRadius: "6px",
                               backgroundColor: "#5E7AC4",
@@ -991,11 +1022,14 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                               }}
                               outlined={true}
                               style={{
+
                                 padding: "12px 16px",
-                                minWidth: "120px",
-                                height: "44px",
+                                width: "fit-content",
+
                                 background: "white",
                                 borderRadius: "6px",
+
+
                               }}
                             >
                               Cancel
@@ -1033,3 +1067,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
 };
 
 export default TabSessionUI;
+function dispatch(arg0: any) {
+  throw new Error("Function not implemented.");
+}
+

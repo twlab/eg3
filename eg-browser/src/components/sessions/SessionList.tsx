@@ -27,9 +27,7 @@ import Session from "../root-layout/tabs/apps/destinations/Session";
 import { fetchBundle } from "@/lib/redux/thunk/session";
 import SessionToggleButton from "./SessionToggleButton";
 import FileInput from "@/components/ui/input/FileInput";
-import useExpandedNavigationTab from "../../lib/hooks/useExpandedNavigationTab";
-
-// Session toggle button is provided by SessionToggleButton (shared component)
+import TabView from "@/components/ui/tab-view/TabView";
 
 export default function SessionList({
   onSessionClick,
@@ -521,88 +519,48 @@ function SessionTabs({
     }
   };
 
-  const tabDefs = [
-    { label: "Edit Current Session", value: "edit" as const },
-    { label: "Load Saved Bundle", value: "load" as const },
-    { label: "SwitchSessions", value: "switch" as const },
-  ];
-  const tabIdx = tabDefs.findIndex((t) => t.value === tab);
-
   return (
-    <div className="mt-2 w-full">
-      <div className="flex flex-row items-center bg-gray-300 dark:bg-dark-surface relative h-[30px] mb-3 ">
-        <div
-          className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
-          style={{
-            width: `calc(${100 / tabDefs.length}% - 8px)`,
-            left: `calc(${tabIdx * 100}% / ${tabDefs.length} + 4px)`,
-          }}
-        />
-        {tabDefs.map((t) => (
-          <div
-            key={t.value}
-            className="text-primary dark:text-dark-primary relative flex-1 text-center py-1 rounded-lg cursor-pointer z-10 transition-colors text-sm"
-            onClick={() => setTab(t.value)}
-          >
-            {t.label}
-          </div>
-        ))}
-      </div>
+    <div className="w-full">
+      <TabView
+        selectedTab={tab}
+        onTabChange={setTab}
+        tabs={[
+          {
+            label: "Edit Session",
+            value: "edit" as const,
+            component: <Session tab={false} />,
+          },
 
-      <div>
-        {tab === "edit" && <Session tab={false} />}
-
-        {tab === "load" && (
-          <div className="flex flex-col gap-3 pt-2 px-4">
-            <div className="flex items-center justify-center gap-2">
-              <input
-                type="text"
-                className="flex-1 max-w-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary"
-                placeholder="Session Bundle ID"
-                value={retrieveId}
-                onChange={(e) => setRetrieveId(e.target.value.trim())}
-              />
-              <Button onClick={() => retrieveBundle(retrieveId)}>
-                Retrieve
-              </Button>
-            </div>
-
-            <div className="w-full max-w-md mx-auto mt-3">
-              <FileInput
-                accept=".json"
-                onFileChange={handleUploadFile}
-                dragMessage="Drag and drop a .json session file here"
-                className="mx-auto w-full"
-              />
-            </div>
-          </div>
-        )}
-
-        {tab === "switch" && (
-          <div className="flex-1 min-h-0 overflow-y-auto px-0">
-            <AnimatePresence initial={false}>
-              {sortedSessions.map((session) => (
-                <motion.div
-                  key={session.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.1 }}
-                  className="mb-2 mr-2 last:mb-0"
-                >
-                  <SessionListItem
-                    session={session}
-                    onClick={() => onSessionClick(session)}
-                    sortPreference={sortPreference}
-                    allowDelete={false}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+          {
+            label: "Switch Session",
+            value: "switch" as const,
+            component: (
+              <div className="flex-1 min-h-0 overflow-y-auto px-0">
+                <AnimatePresence initial={false}>
+                  {sortedSessions.map((session) => (
+                    <motion.div
+                      key={session.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.1 }}
+                      className="mb-2 mr-2 last:mb-0"
+                    >
+                      <SessionListItem
+                        session={session}
+                        onClick={() => onSessionClick(session)}
+                        sortPreference={sortPreference}
+                        allowDelete={false}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
