@@ -43,11 +43,11 @@ export default function GenomeView() {
   const bundleId =
     currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
-  useEffect(() => {
-    if (bundleId) {
-      dispatch(fetchBundle(bundleId));
-    }
-  }, [bundleId, dispatch]);
+  // useEffect(() => {
+  //   if (bundleId) {
+  //     dispatch(fetchBundle(bundleId));
+  //   }
+  // }, [bundleId, dispatch]);
 
   // const bundleId = currentSession.bundleId;
 
