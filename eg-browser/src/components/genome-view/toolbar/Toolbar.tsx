@@ -1,5 +1,10 @@
 import { useAppSelector, useAppDispatch, useUndoRedo } from "@/lib/redux/hooks";
-import { selectTool, setTool } from "@/lib/redux/slices/utilitySlice";
+import {
+  selectToolState,
+  toggleDrag,
+  setToggleTool,
+  dispatchAction,
+} from "@/lib/redux/slices/utilitySlice";
 import {
   selectNavigationTab,
   selectSessionPanelOpen,
@@ -20,13 +25,13 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
 } from "@heroicons/react/24/outline";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "../../ui/button/Button";
 import IconButton from "../../ui/button/IconButton";
 import History from "../../navbar/History";
 import SearchBar from "./SearchBar";
-import { GenomeSerializer, Tool } from "wuepgg3-track";
+import { GenomeSerializer, Tool, TOGGLE_TOOLS, ACTION_TOOLS } from "wuepgg3-track";
 import HighlightMenu from "./HighlightMenu";
 import useCurrentGenome from "../../../lib/hooks/useCurrentGenome";
 import ReorderMany from "./ReorderMany";
@@ -50,7 +55,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   fontSize = 16,
   buttonPadding = 6,
 }) => {
-  const tool = useAppSelector(selectTool);
+  const toolState = useAppSelector(selectToolState);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
 
@@ -70,43 +75,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
   }, [_genomeConfig]);
 
-  // Keyboard shortcuts handler
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.altKey) {
-        switch (event.key.toLowerCase()) {
-          case "h":
-          case "d":
-            event.preventDefault();
-            handleToolClick(Tool.Drag);
-            break;
-          case "r":
-          case "s":
-            event.preventDefault();
-            handleToolClick(Tool.Reorder);
-            break;
-          case "m":
-            event.preventDefault();
-            handleToolClick(Tool.Zoom);
-            break;
-          case "n":
-            event.preventDefault();
-            handleToolClick(Tool.Highlight);
-            break;
-        }
-      }
-      else if (event.key === "Escape") {
-        event.preventDefault();
-        if (tool !== null) {
-          dispatch(setTool(null));
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [tool, dispatch]);
-
   // Helper functions for responsive sizing
   const getIconSize = () => {
     return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
@@ -117,17 +85,27 @@ const Toolbar: React.FC<ToolbarProps> = ({
     height: `${getIconSize()}px`,
   };
 
-  const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${tool === buttonTool ? "bg-gray-300 dark:bg-dark-secondary" : ""
+  const getButtonClass = (buttonTool: string) => {
+    let isActive: boolean;
+    if (buttonTool === Tool.Drag) {
+      isActive = toolState.dragTool;
+    } else if (TOGGLE_TOOLS.has(buttonTool)) {
+      isActive = toolState.tool === buttonTool;
+    } else {
+      // Action tools are never shown as "active"
+      isActive = false;
+    }
+    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${isActive ? "bg-gray-300 dark:bg-dark-secondary" : ""
       }`;
   };
 
-  const handleToolClick = (selectedTool: Tool | null): any => {
-    console.log(tool, selectedTool);
-    if (tool === selectedTool) {
-      dispatch(setTool(null));
-    } else {
-      dispatch(setTool(selectedTool));
+  const handleToolClick = (clickedTool: string): void => {
+    if (clickedTool === Tool.Drag) {
+      dispatch(toggleDrag());
+    } else if (TOGGLE_TOOLS.has(clickedTool)) {
+      dispatch(setToggleTool(clickedTool));
+    } else if (ACTION_TOOLS.has(clickedTool)) {
+      dispatch(dispatchAction(clickedTool));
     }
   };
 
@@ -411,9 +389,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </IconButton>
           </motion.div>
 
-          {tool === Tool.highlightMenu ? (
+          {toolState.tool === Tool.highlightMenu ? (
             <HighlightMenu
-              selectedTool={tool}
+              selectedTool={toolState.tool}
               onNewRegion={onNewRegionSelect}
               handleToolClick={handleToolClick}
               genomeConfig={genomeConfig}
@@ -421,7 +399,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             />
           ) : null}
 
-          {tool === Tool.ReorderMany ? (
+          {toolState.tool === Tool.ReorderMany ? (
             <ReorderMany
               tracks={currentSession ? currentSession.tracks : []}
               handleToolClick={handleToolClick}

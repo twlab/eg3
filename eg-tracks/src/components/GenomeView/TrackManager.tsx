@@ -33,7 +33,7 @@ import {
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
-import { ITrackModel, Tool } from "../../types";
+import { ITrackModel, Tool, ToolState } from "../../types";
 import {
   GroupedTrackManager,
   numericalTracks,
@@ -84,12 +84,12 @@ export const convertTrackModelToITrackModel = (
 const groupManager = new GroupedTrackManager();
 
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
-  "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
-  "7": { factor: 2, text: "1×", title: "Zoom out 1-fold (Alt+O)" },
-  "8": { factor: 5, text: "5×", title: "Zoom out 5-fold" },
-  "9": { factor: 2 / 3, text: "⅓×", title: "Zoom in 1/3-fold" },
-  "10": { factor: 0.5, text: "1×", title: "Zoom in 1-fold (Alt+I)" },
-  "11": { factor: 0.2, text: "5×", title: "Zoom in 5-fold" },
+  "ZoomOutOneThirdFold": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
+  "ZoomOutOneFold": { factor: 2, text: "1×", title: "Zoom out 1-fold" },
+  "ZoomOutFiveFold": { factor: 5, text: "5×", title: "Zoom out 5-fold" },
+  "ZoomInOneThirdFold": { factor: 2 / 3, text: "⅓×", title: "Zoom in 1/3-fold" },
+  "ZoomInOneFold": { factor: 0.5, text: "1×", title: "Zoom in 1-fold" },
+  "ZoomInFiveFold": { factor: 0.2, text: "5×", title: "Zoom in 5-fold" },
 };
 
 function sumArray(numbers: Array<any>) {
@@ -555,20 +555,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
 
   // MARK: mouseAction
-  const handleKeyDown = useCallback((event: { key: string }) => {
-    if (event.key === "Escape") {
-      // let newSelectedTool: { [key: string]: any } = {};
-      // newSelectedTool["tool"] = "none";
-      // newSelectedTool["isSelected"] = false;
-      // setSelectedTool(newSelectedTool);
-      if (Object.keys(selectedTracks.current).length !== 0) {
-        onTrackUnSelect();
-        onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
-        onConfigMenuClose();
-      }
-    }
-  }, []); // onTrackUnSelect and onConfigMenuClose defined below with useCallback
-
   const handleMouseEnter = useCallback(() => {
     isMouseInsideRef.current = true;
     // Cache the bounding rect when mouse enters
@@ -2250,25 +2236,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       endbase += amountToExpand;
     }
 
-    // drag select zoom in or zoom factor options or regionController/highlight jump
-    if (
-      String(toolTitle) in zoomFactors ||
-      String(toolTitle) in
-      {
-        "3": "",
-        "4": "",
-        "5": "",
-        "12": "",
-      } ||
-      toolTitle === "isJump"
-    ) {
+    const VIEW_REGION_TOOL_SET = new Set([
+      Tool.Reorder,
+      Tool.Zoom,
+      Tool.PanLeft,
+      Tool.PanRight,
+      Tool.highlightMenu,
+      Tool.ZoomOutOneThirdFold,
+      Tool.ZoomOutOneFold,
+      Tool.ZoomOutFiveFold,
+      Tool.ZoomInOneThirdFold,
+      Tool.ZoomInOneFold,
+      Tool.ZoomInFiveFold,
+      "isJump",
+    ]);
+
+    if (VIEW_REGION_TOOL_SET.has(String(toolTitle))) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
-      // onNewRegionSelect(startbase, endbase, highlightSearch);
       throttleOnNewRegionSelect.current(startbase, endbase, highlightSearch);
-    }
-    // adding new highlight region
-    else if (toolTitle === 2) {
+    } else if (toolTitle === Tool.Highlight) {
       let newHightlight = {
         start: startbase,
         end: endbase,
@@ -2314,48 +2301,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return resHighlights;
   }
 
-  function toolSelect(toolTitle: string | number) {
-    const newSelectedTool: { [key: string]: any } = {};
-    newSelectedTool["isSelected"] = false;
+  /**
+   * Compute the selectedTool state object from the current ToolState.
+   * Also updates dragOn.current to match toolState.dragTool.
+   * Does NOT process action tools (those are handled in a separate effect).
+   */
+  function toolSelect(toolState: ToolState) {
+    const newSelectedTool: { [key: string]: any } = { isSelected: false };
 
-    if (toolTitle === 0) {
-      dragOn.current = !dragOn.current;
-    } else if (toolTitle === 4) {
-      onRegionSelected(
-        Math.round(bpX.current - bpRegionSize.current),
-        Math.round(bpX.current),
-        toolTitle,
-      );
-    } else if (toolTitle === 5) {
-      onRegionSelected(
-        Math.round(bpX.current + bpRegionSize.current),
-        Math.round(bpX.current + bpRegionSize.current * 2),
-        toolTitle,
-      );
-    } else if (String(toolTitle) in zoomFactors) {
-      let useDisplayFunction = new DisplayedRegionModel(
-        genomeConfig.navContext,
-        bpX.current,
-        bpX.current + bpRegionSize.current,
-      );
-      let res = useDisplayFunction.zoom(zoomFactors[`${toolTitle}`].factor);
-      onRegionSelected(
-        res._startBase as number,
-        res._endBase as number,
-        toolTitle,
-      );
-    } else {
-      if (tool && tool !== 0 && tool !== 12 && tool !== 13) {
-        newSelectedTool.isSelected = true;
-      }
+    dragOn.current = toolState.dragTool;
+
+    const toggleTool = toolState.tool;
+    // Reorder, Highlight, and Zoom require an interactive drag-select area
+    if (
+      toggleTool === Tool.Reorder ||
+      toggleTool === Tool.Highlight ||
+      toggleTool === Tool.Zoom
+    ) {
+      newSelectedTool.isSelected = true;
     }
 
-    if (!tool) {
-      newSelectedTool["title"] = 0;
-    } else {
-      newSelectedTool["title"] = toolTitle;
-    }
-
+    newSelectedTool.title = toggleTool || Tool.Drag;
     isToolSelected.current = newSelectedTool.isSelected;
 
     return newSelectedTool;
@@ -2553,17 +2519,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         preloadedTracks.current = {};
         preload.current = false;
         initialLoad.current = false;
-        setSelectedTool((prevState) => {
-          if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
-            const newSelectedTool = toolSelect(tool);
-            return newSelectedTool;
-          } else {
-            return {
-              isSelected: false,
-              title: 0,
-            };
-          }
-        });
+        setSelectedTool(toolSelect(tool));
         // When a track refreshes or a new genome is initialize, we
         // select the region that was selected before the refresh after the track is
         // created
@@ -2833,7 +2789,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("keydown", handleKeyDown);
 
     // Add click event listener to the track container
     const trackContainer = block.current;
@@ -2852,7 +2807,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
@@ -2892,24 +2846,45 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, []);
 
+  // Update selectedTool state when toggle tool or drag state changes
   useEffect(() => {
     if (!initialLoad.current) {
-      let tempTool;
+      lastSelectedTool.current = tool;
+      setSelectedTool(toolSelect(tool));
+    }
+  }, [tool.tool, tool.dragTool]);
 
-      if (tool !== null) {
-        tempTool = tool;
-        lastSelectedTool.current = tool;
-
-        setSelectedTool(toolSelect(tempTool));
-      } else {
-        tempTool = lastSelectedTool.current;
-
-        // if (tempTool === 0 || (tempTool >= 3 && tempTool <= 11)) {
-        setSelectedTool(toolSelect(tempTool));
-        // }
+  // Process action tools (pan/zoom buttons). Fires each time actionCount increments.
+  useEffect(() => {
+    if (!initialLoad.current && tool.actionTool) {
+      const actionName = tool.actionTool;
+      if (actionName === Tool.PanLeft) {
+        onRegionSelected(
+          Math.round(bpX.current - bpRegionSize.current),
+          Math.round(bpX.current),
+          actionName,
+        );
+      } else if (actionName === Tool.PanRight) {
+        onRegionSelected(
+          Math.round(bpX.current + bpRegionSize.current),
+          Math.round(bpX.current + bpRegionSize.current * 2),
+          actionName,
+        );
+      } else if (actionName in zoomFactors) {
+        const useDisplayFunction = new DisplayedRegionModel(
+          genomeConfig.navContext,
+          bpX.current,
+          bpX.current + bpRegionSize.current,
+        );
+        const res = useDisplayFunction.zoom(zoomFactors[actionName].factor);
+        onRegionSelected(
+          res._startBase as number,
+          res._endBase as number,
+          actionName,
+        );
       }
     }
-  }, [tool]);
+  }, [tool.actionCount]);
 
   function getDeviceType(): "mobile" | "tablet" | "desktop" {
     const userAgent = navigator.userAgent;
@@ -4089,7 +4064,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               >
                 {selectedTool &&
                   selectedTool.isSelected &&
-                  (selectedTool.title === 2 || selectedTool.title === 3) ? (
+                  (selectedTool.title === Tool.Highlight || selectedTool.title === Tool.Zoom) ? (
                   <SelectableGenomeArea
                     selectableRegion={userViewRegion}
                     dragLimits={

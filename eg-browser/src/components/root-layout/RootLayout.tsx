@@ -41,6 +41,11 @@ import {
   selectNavSearchOpen,
   setNavSearchOpen,
 } from "@/lib/redux/slices/navigationSlice";
+import {
+  toggleDrag,
+  setToggleTool,
+  escapeTools,
+} from "@/lib/redux/slices/utilitySlice";
 import { useEffect, useRef, useState } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -104,13 +109,39 @@ export default function RootLayout(props: GenomeHubProps) {
   const currentTab = useAppSelector(selectNavigationTab);
   const navSearchOpen = useAppSelector(selectNavSearchOpen);
 
-  // Escape closes the session panel and/or the active nav tab, and the search bar
+  // Escape closes the session panel and/or the active nav tab, the search bar,
+  // and unselects all toggle tools (drag is unaffected).
+  // Alt+key shortcuts dispatch the corresponding toggle tools.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey) {
+        switch (event.key.toLowerCase()) {
+          case "h":
+          case "d":
+            event.preventDefault();
+            dispatch(toggleDrag());
+            break;
+          case "r":
+          case "s":
+            event.preventDefault();
+            dispatch(setToggleTool("Reorder"));
+            break;
+          case "m":
+            event.preventDefault();
+            dispatch(setToggleTool("Zoom"));
+            break;
+          case "n":
+            event.preventDefault();
+            dispatch(setToggleTool("Highlight"));
+            break;
+        }
+        return;
+      }
       if (event.key !== "Escape") return;
       if (leftPanelOpen) setLeftPanelOpen(false);
       if (currentTab !== null) dispatch(setNavigationTab(null));
       if (navSearchOpen) dispatch(setNavSearchOpen(false));
+      dispatch(escapeTools());
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);

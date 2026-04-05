@@ -21,7 +21,7 @@ export interface ITrackContainerState {
   ) => void;
   viewRegion: DisplayedRegionModel | undefined | null;
   userViewRegion: DisplayedRegionModel | undefined | null;
-  tool: Tool | null | string;
+  tool: ToolState;
   Toolbar: { [key: string]: any };
   selectedRegionSet: any;
   setScreenshotData: any;
@@ -52,7 +52,7 @@ export interface ITrackContainerRepresentableProps {
   ) => void | null | undefined;
   viewRegion: GenomeCoordinate | null;
   userViewRegion: GenomeCoordinate | null;
-  tool: Tool | null;
+  tool: ToolState;
   Toolbar?: any;
   selectedRegionSet: any;
   setScreenshotData: any;
@@ -114,19 +114,51 @@ export interface IHighlightInterval {
 
 // MARK: Utility
 
-export enum Tool {
-  Drag,
-  Reorder,
-  Highlight,
-  Zoom,
-  PanLeft,
-  PanRight,
-  ZoomOutOneThirdFold,
-  ZoomOutOneFold,
-  ZoomOutFiveFold,
-  ZoomInOneThirdFold,
-  ZoomInOneFold,
-  ZoomInFiveFold,
-  highlightMenu,
-  ReorderMany,
+export const Tool = {
+  Drag: "Drag",
+  Reorder: "Reorder",
+  Highlight: "Highlight",
+  Zoom: "Zoom",
+  PanLeft: "PanLeft",
+  PanRight: "PanRight",
+  ZoomOutOneThirdFold: "ZoomOutOneThirdFold",
+  ZoomOutOneFold: "ZoomOutOneFold",
+  ZoomOutFiveFold: "ZoomOutFiveFold",
+  ZoomInOneThirdFold: "ZoomInOneThirdFold",
+  ZoomInOneFold: "ZoomInOneFold",
+  ZoomInFiveFold: "ZoomInFiveFold",
+  highlightMenu: "highlightMenu",
+  ReorderMany: "ReorderMany",
+} as const;
+
+export type Tool = (typeof Tool)[keyof typeof Tool];
+
+export const TOGGLE_TOOLS: ReadonlySet<string> = new Set([
+  Tool.Reorder,
+  Tool.Highlight,
+  Tool.Zoom,
+  Tool.highlightMenu,
+  Tool.ReorderMany,
+]);
+
+export const ACTION_TOOLS: ReadonlySet<string> = new Set([
+  Tool.PanLeft,
+  Tool.PanRight,
+  Tool.ZoomOutOneThirdFold,
+  Tool.ZoomOutOneFold,
+  Tool.ZoomOutFiveFold,
+  Tool.ZoomInOneThirdFold,
+  Tool.ZoomInOneFold,
+  Tool.ZoomInFiveFold,
+]);
+
+export interface ToolState {
+  /** Currently selected toggle tool, or null if none */
+  tool: string | null;
+  /** Whether the drag tool is active */
+  dragTool: boolean;
+  /** The most recently dispatched action tool, or null */
+  actionTool: string | null;
+  /** Increments each time an action tool is dispatched, for force-triggering */
+  actionCount: number;
 }

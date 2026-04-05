@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
-import { selectTool, setTool } from "@/lib/redux/slices/utilitySlice";
+import { selectToolState } from "@/lib/redux/slices/utilitySlice";
 import { Tool } from "wuepgg3-track";
 import {
   selectCurrentSession,
@@ -22,47 +22,31 @@ const MouseFollowingTooltip: React.FC = () => {
 
   const currentSession = useAppSelector(selectCurrentSession);
   const sessionId = useAppSelector(selectCurrentSessionId);
-  const selectedTool = useAppSelector(selectTool);
+  const toolState = useAppSelector(selectToolState);
   const dispatch = useAppDispatch();
 
   // Check if any tracks are selected
   const hasSelectedTracks =
     currentSession?.tracks?.some((track) => track.isSelected) || false;
 
-  // Get tool name for display
-  const getToolName = (tool: Tool | null): string | null => {
-    switch (tool) {
-      case Tool.Drag:
-        return "Drag Tool";
+  // Get display name for the active tool
+  const getToolName = (): string | null => {
+    // Check toggle tool first
+    switch (toolState.tool) {
       case Tool.Zoom:
         return "Zoom Tool";
       case Tool.Reorder:
         return "Reorder Tool";
       case Tool.ReorderMany:
         return "Reorder Many Tool";
-      case Tool.PanLeft:
-        return "Pan Left";
-      case Tool.PanRight:
-        return "Pan Right";
-      case Tool.ZoomOutFiveFold:
-        return "Zoom Out 5x";
-      case Tool.ZoomOutOneFold:
-        return "Zoom Out 1x";
-      case Tool.ZoomOutOneThirdFold:
-        return "Zoom Out ⅓";
-      case Tool.ZoomInOneThirdFold:
-        return "Zoom In ⅓";
-      case Tool.ZoomInOneFold:
-        return "Zoom In 1x";
-      case Tool.ZoomInFiveFold:
-        return "Zoom In 5x";
       case Tool.Highlight:
         return "Highlight Tool";
       case Tool.highlightMenu:
         return "Highlight Menu";
       default:
-        return null;
+        break;
     }
+    return null;
   };
 
   // Track mouse movement
@@ -75,39 +59,20 @@ const MouseFollowingTooltip: React.FC = () => {
     return () => document.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // Handle escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedTool, dispatch]);
   useEffect(() => {
     if (!sessionId) {
-      dispatch(setTool(null));
+      // Tool state is managed in Redux; nothing to do here
     }
   }, [sessionId]);
-  const toolName = getToolName(selectedTool);
+
+  const toolName = getToolName();
 
   // Count selected tracks
   const selectedTracksCount =
     currentSession?.tracks?.filter((track) => track.isSelected).length || 0;
 
-  // Only show tooltip when a tool is selected (excluding certain tools that shouldn't show tooltips)
-  const shouldShow =
-    selectedTool !== null &&
-    selectedTool !== Tool.Drag &&
-    selectedTool !== Tool.PanLeft &&
-    selectedTool !== Tool.PanRight &&
-    selectedTool !== Tool.ZoomOutFiveFold &&
-    selectedTool !== Tool.ZoomOutOneFold &&
-    selectedTool !== Tool.ZoomOutOneThirdFold &&
-    selectedTool !== Tool.ZoomInOneThirdFold &&
-    selectedTool !== Tool.ZoomInOneFold &&
-    selectedTool !== Tool.ZoomInFiveFold &&
-    toolName;
+  // Show tooltip only for toggle tools that have a cursor interaction role
+  const shouldShow = toolName !== null;
 
   return (
     <AnimatePresence>

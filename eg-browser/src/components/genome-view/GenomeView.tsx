@@ -8,7 +8,7 @@ import {
   selectIsNavigatorVisible,
   selectIsToolBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import { selectToolState } from "@/lib/redux/slices/utilitySlice";
 import {
   selectScreenShotOpen,
   updateScreenShotData,
@@ -33,7 +33,7 @@ export default function GenomeView() {
 
   const dispatch = useAppDispatch();
 
-  const tool = useAppSelector(selectTool);
+  const toolState = useAppSelector(selectToolState);
 
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
@@ -113,7 +113,7 @@ export default function GenomeView() {
       onSetSelected={handleSetSelected}
       viewRegion={currentSession?.viewRegion}
       userViewRegion={currentSession.userViewRegion}
-      tool={tool}
+      tool={toolState}
       Toolbar={{ toolbar: Toolbar, skeleton: TrackPlaceHolder }}
       selectedRegionSet={currentSession?.selectedRegionSet}
       setScreenshotData={setScreenshotData}
