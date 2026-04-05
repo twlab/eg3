@@ -44,6 +44,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     onClose,
     navigationPath,
     children,
+    header
   } = props;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -587,7 +588,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             </strong>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        {header ? <div className="flex items-center gap-1">
           <span className="text-sm text-gray-700 dark:text-dark-primary">
             <kbd
               className="px-1 font-mono"
@@ -611,7 +612,11 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
-        </div>
+        </div> : <div style={{
+          height: 8,
+
+        }}></div>}
+
       </div>
       <div className="flex-1 overflow-auto" style={contentStyle}>
         {children}

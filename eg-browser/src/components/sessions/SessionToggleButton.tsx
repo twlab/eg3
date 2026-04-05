@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import React from "react";
-
+import { XMarkIcon } from "@heroicons/react/24/outline";
 export default function SessionToggleButton({
   open,
   onClick,
@@ -19,14 +19,14 @@ export default function SessionToggleButton({
 }) {
   return (
     <motion.button
-      layoutId="session-toggle-button"
+
       onClick={onClick}
       initial={false}
       className={`${className ?? ""}${"fixed"}`}
       style={style}
       aria-label={open ? "Close panel" : "Open panel"}
     >
-      <div className="flex items-center outline-none rounded-full bg-white dark:bg-dark-secondary shadow py-1 px-2">
+      <div className="flex items-center outline-none rounded-full bg-white dark:bg-dark-secondary shadow px-1">
         {typeof count === "number" ? (
           <span className="inline-flex items-center justify-center w-5 h-5 mr-1 text-xs rounded-full bg-blue-600 text-white">
             {count}
@@ -36,14 +36,15 @@ export default function SessionToggleButton({
           {textContent}
         </span>
 
-        <motion.div
-          initial={false}
-          animate={{ rotate: open ? 90 : 0 }}
-          transition={{ duration: 0.18 }}
-          className="ml-1"
+        {open ? <div
+
+          className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
         >
-          <ChevronRightIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
-        </motion.div>
+          <XMarkIcon className="w-5 h-5" />
+        </div> : <ChevronRightIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
+
+        }
+
       </div>
     </motion.button>
   );

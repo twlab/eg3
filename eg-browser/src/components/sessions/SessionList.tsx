@@ -26,7 +26,7 @@ import { generateUUID } from "wuepgg3-track";
 import Session from "../root-layout/tabs/apps/destinations/Session";
 import { fetchBundle } from "@/lib/redux/thunk/session";
 import SessionToggleButton from "./SessionToggleButton";
-import FileInput from "@/components/ui/input/FileInput";
+
 import TabView from "@/components/ui/tab-view/TabView";
 
 export default function SessionList({
@@ -309,7 +309,7 @@ function SessionListItem({
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           {session.title.length > 0 ? (
             <>
               <h1 className="text-l">{`Current Session: ${session.title}`}</h1>

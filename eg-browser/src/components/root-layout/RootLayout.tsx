@@ -129,6 +129,7 @@ export default function RootLayout(props: GenomeHubProps) {
 
   // Reset state when session is cleared
   useEffect(() => {
+    console.log(sessionId)
     setLeftPanelOpen(false);
     dispatch(resetState());
     clearHistory();
@@ -288,6 +289,7 @@ export default function RootLayout(props: GenomeHubProps) {
                   initialWidth={window.innerWidth * 0.4}
                   initialHeight={window.innerHeight - 50}
                   onClose={() => setLeftPanelOpen(false)}
+                  header={false}
                 >
                   <SessionList
                     onSessionClick={(s) => {

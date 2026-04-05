@@ -290,7 +290,7 @@ export default function NavBar() {
           <div
             className={classNames(
               "z-10",
-              "h-9",
+              "h-8",
               "w-12",
               "flex-shrink-0",
               "rounded-sm",
@@ -370,7 +370,7 @@ export default function NavBar() {
                               (e.currentTarget as HTMLElement).style.opacity = "0.8";
                           }}
                           className={classNames(
-                            "z-10", "h-9", "rounded-xs", "flex-shrink-0",
+                            "z-10", "h-8", "rounded-xs", "flex-shrink-0",
                             "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
                             sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
                             genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
@@ -418,7 +418,7 @@ export default function NavBar() {
                               dispatch(setNavSearchOpen(true));
                             }}
                             aria-label="Open search"
-                            className="group flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200"
+                            className="group flex items-center justify-center w-9 h-8 rounded-full bg-gray-100 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200"
                           >
                             <MagnifyingGlassIcon className="w-5 h-5 text-gray-500 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110" />
                           </button>
@@ -529,7 +529,7 @@ export default function NavBar() {
                                   (e.currentTarget as HTMLElement).style.opacity = "0.8";
                               }}
                               className={classNames(
-                                "z-10", "h-9", "rounded-xs", "flex-shrink-0",
+                                "z-10", "h-8", "rounded-xs", "flex-shrink-0",
                                 "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
                                 sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
                                 genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
@@ -599,7 +599,7 @@ export default function NavBar() {
                       >
                         Help
                       </Button>
-                      <div className="h-9 flex flex-row items-center flex-shrink-0">
+                      <div className="h-8 flex flex-row items-center flex-shrink-0">
                         <Switch
                           checked={darkTheme}
                           onChange={(checked) => dispatch(setDarkTheme(checked))}
@@ -616,7 +616,7 @@ export default function NavBar() {
                             dispatch(setNavSearchOpen(true));
                           }}
                           aria-label="Open search"
-                          className="group flex items-center justify-center w-9 h-9 rounded-full bg-[#44ACFF] hover:bg-[#1a96ff] dark:bg-[#44ACFF] dark:hover:bg-[#1a96ff] shadow-md hover:shadow-lg transition-all duration-200"
+                          className="group flex items-center justify-center w-9 h-8 rounded-full bg-[#44ACFF] hover:bg-[#1a96ff] dark:bg-[#44ACFF] dark:hover:bg-[#1a96ff] shadow-md hover:shadow-lg transition-all duration-200"
                         >
                           <MagnifyingGlassIcon className="w-5 h-5 text-white transition-all duration-200 group-hover:scale-110" />
                         </button>
@@ -698,7 +698,7 @@ export default function NavBar() {
           {!currentSession && (
             <div className="flex flex-row items-center gap-2 ml-auto flex-shrink-0">
 
-              <div className="h-9 flex flex-row items-center flex-shrink-0">
+              <div className="h-8 flex flex-row items-center flex-shrink-0">
                 <Switch
                   checked={darkTheme}
                   onChange={(checked) => dispatch(setDarkTheme(checked))}
@@ -810,7 +810,7 @@ export default function NavBar() {
                       >
                         Help
                       </Button>
-                      <div className="h-9 flex flex-row justify-center flex-shrink-0">
+                      <div className="h-8 flex flex-row justify-center flex-shrink-0">
                         <Switch
                           checked={darkTheme}
                           onChange={(checked) => dispatch(setDarkTheme(checked))}
@@ -853,6 +853,7 @@ export default function NavBar() {
                     panelPinnedRef.current = p;
                   }}
                   navigationPath={navigationPath}
+                  header={true}
                 >
                   {currentTab === "regions" &&
                     currentDisplayRegionModel &&

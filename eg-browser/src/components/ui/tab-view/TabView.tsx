@@ -48,7 +48,7 @@ export default function TabView<T extends string>({
               key={tab.value}
               onClick={() => setSelectedTabId(tab.value)}
               className={[
-                "py-1.5 text-sm font-bold cursor-pointer outline-none transition-all rounded-t-md border border-b-0",
+                "py-1 text-sm font-bold cursor-pointer outline-none transition-all rounded-t-md border border-b-0",
                 "relative",
                 centerTabs ? "flex-1 text-center px-2" : "px-4",
                 isActive

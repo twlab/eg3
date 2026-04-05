@@ -88,7 +88,7 @@ function InlineEditable(props: InlineEditableProps) {
     return (
       <div
         ref={containerRef}
-        className={`h-9 relative inline-block ${hovering && !editing ? "outline outline-1 outline-gray-300" : ""
+        className={`h-8 relative inline-block ${hovering && !editing ? "outline outline-1 outline-gray-300" : ""
           }`}
       >
         <input
@@ -116,11 +116,11 @@ function InlineEditable(props: InlineEditableProps) {
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="inline-block h-9"
+        className="inline-block h-8"
       >
         <div
           onClick={handleClick}
-          className={`h-9 inline-block cursor-pointer ${hovering ? "outline outline-1 outline-gray-300" : ""
+          className={`h-8 inline-block cursor-pointer ${hovering ? "outline outline-1 outline-gray-300" : ""
             }`}
         >
           <span className={`${textStyle} inline-block`} style={commonStyle}>

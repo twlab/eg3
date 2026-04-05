@@ -24,12 +24,12 @@ import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNaviga
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import TabSessionUI from "./TabSessionUI";
-import useMidSizeNavigationTab from "../../../../../lib/hooks/useMidSizeNavigationTab";
+
 
 const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
-  if (tab) {
-    useMidSizeNavigationTab();
-  }
+
+
+  useExpandedNavigationTab();
   const dispatch = useAppDispatch();
 
   const customTracksPool = useAppSelector(selectCustomTracksPool);

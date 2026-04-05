@@ -138,15 +138,15 @@ export default function Button({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       className={classNames(
-        "w-19 h-9 rounded-xs flex items-center justify-center",
+        "w-19 h-7 rounded-xs flex items-center justify-center",
         "text-sm font-medium select-none",
         "text-gray-700 dark:text-gray-300 bg-gray-100/70 dark:bg-gray-800/50",
         "transition-all duration-150 cursor-pointer",
         "hover:bg-gray-200 hover:text-gray-900 hover:shadow-sm",
         active &&
-          "bg-blue-500 text-white shadow-sm hover:bg-blue-600 hover:text-white dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600",
+        "bg-blue-500 text-white shadow-sm hover:bg-blue-600 hover:text-white dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600",
         disabled &&
-          "opacity-40 cursor-not-allowed hover:bg-transparent hover:shadow-none",
+        "opacity-40 cursor-not-allowed hover:bg-transparent hover:shadow-none",
         outlined && "border border-primary",
         backgroundColor === "tint" && "bg-tint dark:bg-dark-tint text-white",
         backgroundColor === "alert" && "bg-alert text-white",

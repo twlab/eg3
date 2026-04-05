@@ -762,7 +762,7 @@ export default function SearchBar({
               />
             )}
             <input
-              className="h-9 flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
+              className="h-8 flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
               style={{
                 minWidth: fontSize,
                 fontSize: fontSize,

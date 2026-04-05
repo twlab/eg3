@@ -41,7 +41,7 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   return (
     <div
       className={classNames(
-        "w-55 h-9 rounded-xs flex items-center justify-center",
+        "w-55 h-8 rounded-xs flex items-center justify-center",
         "text-sm font-medium select-none",
         "text-gray-700 dark:text-gray-300 bg-gray-100/70 dark:bg-gray-800/50",
         "transition-all duration-150 cursor-pointer",

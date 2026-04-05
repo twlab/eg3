@@ -94,9 +94,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
             handleToolClick(Tool.Highlight);
             break;
         }
-      } else if (event.key === "Escape") {
+      }
+      else if (event.key === "Escape") {
         event.preventDefault();
-        handleToolClick(null);
+        if (tool !== null) {
+          dispatch(setTool(null));
+        }
       }
     };
 
@@ -115,9 +118,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${
-      tool === buttonTool ? "bg-gray-300 dark:bg-dark-secondary" : ""
-    }`;
+    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${tool === buttonTool ? "bg-gray-300 dark:bg-dark-secondary" : ""
+      }`;
   };
 
   const handleToolClick = (selectedTool: Tool | null): any => {
@@ -157,11 +159,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-          // animate={{
-          //   opacity: isSearchFocused ? 0.5 : 1,
-          //   scale: isSearchFocused ? 0.95 : 1,
-          // }}
-          // transition={{ duration: 0.2 }}
+        // animate={{
+        //   opacity: isSearchFocused ? 0.5 : 1,
+        //   scale: isSearchFocused ? 0.95 : 1,
+        // }}
+        // transition={{ duration: 0.2 }}
         >
           <motion.div
             className="flex flex-row items-center"
