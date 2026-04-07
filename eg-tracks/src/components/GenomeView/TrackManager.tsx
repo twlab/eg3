@@ -204,23 +204,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   currentState,
   darkTheme,
 }) {
-  const getPadding = () => {
-    const basePadding = 8;
-    const maxPadding = 16;
-    return Math.max(basePadding, Math.min(maxPadding, windowWidth * 0.008));
-  };
-
-  const getFontSize = () => {
-    const baseFontSize = 12;
-    const maxFontSize = 18;
-    return Math.max(baseFontSize, Math.min(maxFontSize, windowWidth * 0.009));
-  };
-  const getGapSize = () => {
-    return `${Math.max(
-      0.15,
-      Math.min(0.35, (windowWidth || 1920) * 0.0001),
-    )}rem`;
-  };
   //useRef to store data between states without re render the component
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
     key: -0,
@@ -2886,69 +2869,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [tool.actionCount]);
 
-  function getDeviceType(): "mobile" | "tablet" | "desktop" {
-    const userAgent = navigator.userAgent;
-    const isTouchDevice =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    const screenWidth = window.innerWidth;
 
-    // Check for mobile
-    if (
-      /android|webos|iphone|ipod|blackberry|iemobile|opera mini/i.test(
-        userAgent,
-      )
-    ) {
-      return "mobile";
-    }
-
-    // Check for tablet
-    if (
-      /ipad|tablet|playbook|silk/i.test(userAgent) ||
-      (isTouchDevice && screenWidth >= 768 && screenWidth <= 1024)
-    ) {
-      return "tablet";
-    }
-
-    // Check by screen size and touch capability
-    if (isTouchDevice && screenWidth < 768) {
-      return "mobile";
-    }
-
-    return "desktop";
-  }
-
-  // Calculate responsive widths based on screen size
-  function getResponsiveWidths() {
-    const baseWidth1080 = 1080; // Reference width for 85%/15%
-    const baseWidth1920 = 2560; // Reference width for 88%/12%
-
-    // At 1080px: 85% / 15%
-    if (windowWidth <= baseWidth1080) {
-      return {
-        mainWidth: "85%",
-        metaWidth: "15%",
-      };
-    }
-
-    // Between 1080px and 1920px: interpolate from 85%/15% to 88%/12%
-    if (windowWidth <= baseWidth1920) {
-      const progress =
-        (windowWidth - baseWidth1080) / (baseWidth1920 - baseWidth1080);
-      const mainWidth = 85 + (75 - 85) * progress; // 85% to 88%
-      const metaWidth = 15 + (25 - 15) * progress; // 15% to 12%
-
-      return {
-        mainWidth: `${mainWidth}%`,
-        metaWidth: `${metaWidth}%`,
-      };
-    }
-
-    // Above 1920px: keep normal 88%/12% split
-    return {
-      mainWidth: "60%",
-      metaWidth: "40%",
-    };
-  }
   // MARK: trackSizeCha
   function deleteCache() {
     for (const key in trackFetchedDataCache.current) {
@@ -3763,7 +3684,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       style={{
         backgroundColor: "var(--bg-color)",
         paddingLeft: "15px",
-        marginBottom: "50px",
+        marginBottom: "150px",
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
@@ -3780,8 +3701,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             style={{
               backgroundColor: "var(--bg-color)",
               width: `${windowWidth + 120}px`,
-              marginTop: (getPadding() ? getPadding() / 3 : 2) + 1 + 21,
-              marginBottom: getPadding() ? getPadding() / 3 : 2,
+              marginTop: 8,
+              marginBottom: 4,
               display: "flex",
               flexDirection: windowWidth <= 600 ? "column" : "row",
               alignItems: windowWidth <= 600 ? "stretch" : "center",
@@ -3812,9 +3733,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         !onNewRegionSelect ? () => { } : onNewRegionSelect
                       }
                       windowWidth={windowWidth}
-                      buttonPadding={getPadding() ? getPadding() / 2 : 3}
-                      gapSize={getGapSize()}
-                      fontSize={Math.max(16, getFontSize())}
+                      buttonPadding={6}
+                      gapSize="0.25rem"
+                      fontSize={16}
                     />
                   ) : (
                     ""
@@ -3835,8 +3756,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     className="bg tool-element"
                     style={{
                       display: "flex",
-                      paddingLeft: getPadding() ? getPadding() : 5,
-                      paddingRight: getPadding() ? getPadding() : 5,
+                      paddingLeft: 8,
+                      paddingRight: 8,
                       alignItems: "center",
                       flexShrink: 0,
                       fontStyle: "italic",
@@ -3846,7 +3767,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       style={{
                         backgroundColor: "var(cd --bg-color)",
                         color: "var(--font-color)",
-                        fontSize: `${Math.max(16, getFontSize())}px`,
+                        fontSize: "1rem",
                         margin: 0,
                         whiteSpace: "nowrap",
                       }}
@@ -3864,7 +3785,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div
                   className="MetadataHeader-button"
-                  style={{ paddingLeft: getPadding() ?? (getPadding() || 5) }}
+                  style={{ paddingLeft: 8 }}
                 >
                   <button
                     onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
@@ -3907,12 +3828,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 justifyContent: "flex-end",
 
-                marginTop:
-                  windowWidth <= 1080
-                    ? getPadding()
-                      ? getPadding() / 2
-                      : 3
-                    : 0,
+                marginTop: windowWidth <= 1080 ? 4 : 0,
               }}
             >
               <MetadataHeader
@@ -3921,8 +3837,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 suggestedMetaSets={metaSets.suggestedMetaSets}
                 onRemoveTerm={onRemoveTerm}
                 windowWidth={windowWidth}
-                fontSize={Math.max(16, getFontSize())}
-                padding={getPadding()}
+                fontSize={16}
+                padding={8}
               />
             </div>
           </div>

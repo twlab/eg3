@@ -129,6 +129,7 @@ export const Tool = {
   ZoomInFiveFold: "ZoomInFiveFold",
   highlightMenu: "highlightMenu",
   ReorderMany: "ReorderMany",
+  History: "History",
 } as const;
 
 export type Tool = (typeof Tool)[keyof typeof Tool];
@@ -139,6 +140,7 @@ export const TOGGLE_TOOLS: ReadonlySet<string> = new Set([
   Tool.Zoom,
   Tool.highlightMenu,
   Tool.ReorderMany,
+  Tool.History,
 ]);
 
 export const ACTION_TOOLS: ReadonlySet<string> = new Set([

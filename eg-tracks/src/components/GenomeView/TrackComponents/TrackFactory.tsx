@@ -100,6 +100,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     cacheDataIdx,
     xvalues = null,
   ) {
+    console.log(genesArr)
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
     const res = getDisplayModeFunction({

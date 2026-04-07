@@ -30,6 +30,7 @@ interface ResizablePanelProps {
   onPinChange?: (pinned: boolean) => void;
   children?: React.ReactNode;
   navigationPath: Array<any>;
+  header?: boolean;
 }
 
 export default function ResizablePanel(props: ResizablePanelProps) {

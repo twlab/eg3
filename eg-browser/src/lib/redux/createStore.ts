@@ -181,7 +181,7 @@ export function createAppStore(config: StoreConfig = {}) {
         serializableCheck: false,
       }).concat((store) => (next) => (action) => {
         console.log('Dispatching action:', action.type, action);
-        if (action.type === 'browser/updateCurrentSession') {
+        if (action.type === 'browser/updateCurrentSession' || action.type === 'navigation/setNavigationTab') {
           console.trace('Call stack for updateCurrentSession:');
         }
         const result = next(action);

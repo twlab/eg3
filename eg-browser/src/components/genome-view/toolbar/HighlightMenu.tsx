@@ -1,6 +1,7 @@
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import "./HighlightMenu.css";
+import ResizablePanel from "../../ui/panel/ResizablePanel";
 import {
   selectCurrentSession,
   updateCurrentSession,
@@ -35,13 +36,14 @@ interface HighlightMenuProps {
   onNewRegion: (start: number, end: number) => void;
   handleToolClick: (tool: any) => void;
   windowWidth: number;
+  anchorEl?: React.RefObject<HTMLElement | null>;
 }
 
 const HighlightMenu: React.FC<HighlightMenuProps> = ({
   onNewRegion,
   handleToolClick,
   genomeConfig,
-  windowWidth,
+  anchorEl,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -80,6 +82,10 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   const handleCloseModal = () => {
     handleToolClick(null);
   };
+
+  const anchorRect = anchorEl?.current?.getBoundingClientRect();
+  const panelTop = anchorRect ? Math.round(anchorRect.bottom) + 8 : 90;
+  const panelLeft = anchorRect ? Math.round(anchorRect.left) : 100;
 
   const highlightElements = currentSession?.highlights?.length ? (
     <ol style={{ display: "flex", flexDirection: "column", gap: "0.2em" }}>
@@ -130,53 +136,35 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
     </div>
   );
 
-  return (
-    <div className="relative">
-      <AnimatePresence>
-        <motion.div
-          className="absolute top-full left-0 mt-4 bg-white border border-gray-300 rounded-lg shadow-lg z-50 overflow-y-auto"
-          style={{
-            left: `-${windowWidth / 3.2}px`,
-            // width: `${windowWidth / 2}px`,
-            maxHeight: "500px",
-            maxWidth: `${windowWidth}px`,
-          }} // Adjusted left alignment
-          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="p-4">
-            <div
-              className="flex items-center justify-between mb-3"
-              style={{ width: `${windowWidth / 2}px`, fontSize: "16px" }}
-            >
-              <h5 className="font-semibold text-gray-800">Highlights</h5>
-              <div className="flex gap-2">
-                {(currentSession?.highlights?.length ?? 0) > 0 && (
-                  <button
-                    onClick={() =>
-                      dispatch(updateCurrentSession({ highlights: [] }))
-                    }
-                    className="px-3 py-1 text-sm border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
-                  >
-                    Remove all
-                  </button>
-                )}
-                <button
-                  onClick={handleCloseModal}
-                  className="px-3 py-1 text-sm border-1 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-
-            <div>{highlightElements}</div>
+  return createPortal(
+    <div style={{ position: "fixed", top: panelTop, left: panelLeft, zIndex: 1000 }}>
+      <ResizablePanel
+        title="Highlights"
+        initialWidth={500}
+        initialHeight={420}
+        onClose={handleCloseModal}
+        navigationPath={[]}
+        header
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-end mb-3" style={{ fontSize: "16px" }}>
+            {(currentSession?.highlights?.length ?? 0) > 0 && (
+              <button
+                onClick={() =>
+                  dispatch(updateCurrentSession({ highlights: [] }))
+                }
+                className="px-3 py-1 text-sm border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
+              >
+                Remove all
+              </button>
+            )}
           </div>
-        </motion.div>
-      </AnimatePresence>
-    </div>
+
+          <div>{highlightElements}</div>
+        </div>
+      </ResizablePanel>
+    </div>,
+    document.body
   );
 };
 

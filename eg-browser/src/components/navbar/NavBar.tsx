@@ -265,7 +265,7 @@ export default function NavBar() {
       )}
       <OutsideClickDetector
         onOutsideClick={() => {
-          if (!panelPinnedRef.current) dispatch(setNavigationTab(null));
+          if (!panelPinnedRef.current && currentTab !== null) dispatch(setNavigationTab(null));
         }}
       >
         {/* Single full-width navbar row */}

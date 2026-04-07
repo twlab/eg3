@@ -25,7 +25,7 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
 } from "@heroicons/react/24/outline";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "../../ui/button/Button";
 import IconButton from "../../ui/button/IconButton";
@@ -58,6 +58,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const toolState = useAppSelector(selectToolState);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
+  const reorderManyBtnRef = useRef<HTMLButtonElement>(null);
+  const highlightMenuBtnRef = useRef<HTMLSpanElement>(null);
+  const historyBtnRef = useRef<HTMLButtonElement>(null);
 
   const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
@@ -99,8 +102,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
       }`;
   };
 
-  const handleToolClick = (clickedTool: string): void => {
-    if (clickedTool === Tool.Drag) {
+  const handleToolClick = (clickedTool: string | null): void => {
+    if (clickedTool === null) {
+      dispatch(setToggleTool(null));
+    } else if (clickedTool === Tool.Drag) {
       dispatch(toggleDrag());
     } else if (TOGGLE_TOOLS.has(clickedTool)) {
       dispatch(setToggleTool(clickedTool));
@@ -211,6 +216,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </button>
 
             <button
+              ref={reorderManyBtnRef}
               onClick={() => handleToolClick(Tool.ReorderMany)}
               className={getButtonClass(Tool.ReorderMany)}
               style={{ padding: "7px 8px" }}
@@ -363,30 +369,37 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     ⟳
                   </span>
                 </IconButton>
-                <History
-                  state={{
-                    past: currentState ? currentState.past : [],
-                    future: currentState ? currentState.future : [],
-                  }}
-                  jumpToPast={jumpToPast}
-                  jumpToFuture={jumpToFuture}
-                  clearHistory={clearHistory}
-                />
+                <button
+                  ref={historyBtnRef}
+                  onClick={() => handleToolClick(Tool.History)}
+                  className={getButtonClass(Tool.History)}
+                  style={{ padding: "7px 8px" }}
+                  title="Operation history"
+                >
+                  <span
+                    className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                    style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                  >
+                    📗
+                  </span>
+                </button>
               </>
             )}
 
-            <IconButton
-              onClick={() => handleToolClick(Tool.highlightMenu)}
-              title="Highlight list"
-              className={`${getButtonClass(Tool.highlightMenu)} !rounded-md`}
-            >
-              <span
-                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
-                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+            <span ref={highlightMenuBtnRef} style={{ display: "inline-flex" }}>
+              <IconButton
+                onClick={() => handleToolClick(Tool.highlightMenu)}
+                title="Highlight list"
+                className={`${getButtonClass(Tool.highlightMenu)} !rounded-md`}
               >
-                ⚡
-              </span>
-            </IconButton>
+                <span
+                  className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                  style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+                >
+                  ⚡
+                </span>
+              </IconButton>
+            </span>
           </motion.div>
 
           {toolState.tool === Tool.highlightMenu ? (
@@ -396,6 +409,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               handleToolClick={handleToolClick}
               genomeConfig={genomeConfig}
               windowWidth={windowWidth ? windowWidth : 400}
+              anchorEl={highlightMenuBtnRef}
             />
           ) : null}
 
@@ -404,10 +418,25 @@ const Toolbar: React.FC<ToolbarProps> = ({
               tracks={currentSession ? currentSession.tracks : []}
               handleToolClick={handleToolClick}
               windowWidth={windowWidth ? windowWidth : 400}
+              anchorEl={reorderManyBtnRef}
             />
           ) : (
             ""
           )}
+
+          {toolState.tool === Tool.History ? (
+            <History
+              state={{
+                past: currentState ? currentState.past : [],
+                future: currentState ? currentState.future : [],
+              }}
+              jumpToPast={jumpToPast}
+              jumpToFuture={jumpToFuture}
+              clearHistory={clearHistory}
+              handleToolClick={handleToolClick}
+              anchorEl={historyBtnRef}
+            />
+          ) : null}
         </motion.div>
       </motion.div>
     </div>

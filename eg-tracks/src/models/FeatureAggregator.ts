@@ -157,9 +157,16 @@ export class FeatureAggregator {
       mode: PlacementMode.NUMERICAL,
     });
 
-    for (let i = 0; i < result.placementsForward.length; i++) {
-      sortXSpan(result.placementsForward[i], xToFeaturesForward);
-      if (result.placementsReverse[i]) {
+    const resultLength = Math.max(
+      result.placementsForward ? result.placementsForward.length : 0,
+      result.placementsReverse ? result.placementsReverse.length : 0
+    );
+    console.log(resultLength)
+    for (let i = 0; i < resultLength; i++) {
+      if (i < result.placementsForward.length) {
+        sortXSpan(result.placementsForward[i], xToFeaturesForward);
+      }
+      if (i < result.placementsReverse.length) {
         sortXSpan(result.placementsReverse[i], xToFeaturesReverse);
       }
     }

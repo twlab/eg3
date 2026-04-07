@@ -81,7 +81,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     initialLoad,
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
-
+  console.log(data)
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
   let xvalues =
@@ -95,13 +95,13 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
       const { yScale, yMin, yMax } = options;
       if (yMin >= yMax) {
-        console.log("Y-axis min must less than max", "error", 2000);
-      }
 
-      let gscale: any = {},
+      }
+      const { trackModel, groupScale } = props;
+      let gscale = {},
         min,
         max,
-        xValues2: Array<any> = [];
+        xValues2 = [];
       if (groupScale) {
         if (trackModel.options.hasOwnProperty("group")) {
           gscale = groupScale[trackModel.options.group];
@@ -111,95 +111,61 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         max = _.max(Object.values(gscale.max));
         min = _.min(Object.values(gscale.min));
       } else {
-        const visibleValues = xToValue.slice(
-          props.viewWindow.start,
-          props.viewWindow.end,
-        );
-
-        max = _.max(visibleValues) || 1;
-
+        const visibleValues = xToValue.slice(props.viewWindow.start, props.viewWindow.end);
+        max = _.max(visibleValues) || 1; // in case undefined returned here, cause maxboth be undefined too
         xValues2 = xToValue2.filter((x) => x);
         min =
           (xValues2.length
-            ? _.min(
-              xToValue2.slice(props.viewWindow.start, props.viewWindow.end),
-            )
+            ? _.min(xToValue2.slice(props.viewWindow.start, props.viewWindow.end))
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
         min = xValues2.length ? -maxBoth : 0;
         if (yScale === ScaleChoices.FIXED) {
-          max = yMax ? yMax : max;
+          max = yMax !== undefined ? yMax : max;
           min = yMin !== undefined ? yMin : min;
+          // if (xValues2.length && yMin > 0) {
+          //     notify.show("Please set Y-axis min <=0 when there are negative values", "warning", 5000);
+          //     min = 0;
+          // }
         }
       }
       if (min > max) {
-        console.log("Y-axis min should less than Y-axis max", "warning", 5000);
+
         min = 0;
       }
 
-      const zeroLine =
-        min < 0 && hasForward
-          ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : hasForward
-            ? height
-            : 0;
-      if (!hasForward && hasReverse) {
-        max = 0;
-      }
+      // determines the distance of y=0 from the top, also the height of positive part
+      const zeroLine = min < 0 ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min) : height;
 
-      if (
-        xValues2.length &&
-        (yScale === ScaleChoices.AUTO ||
-          (yScale === ScaleChoices.FIXED && yMin < 0))
-      ) {
+      if (xValues2.length && (yScale === ScaleChoices.AUTO || (yScale === ScaleChoices.FIXED && yMin < 0))) {
         return {
           axisScale: scaleLinear()
             .domain([max, min])
             .range([TOP_PADDING, height - TOP_PADDING])
             .clamp(true),
-          valueToY: scaleLinear()
-            .domain([max, 0])
-            .range([TOP_PADDING, zeroLine])
-            .clamp(true),
+          valueToY: scaleLinear().domain([max, 0]).range([TOP_PADDING, zeroLine]).clamp(true),
           valueToYReverse: scaleLinear()
             .domain([0, min])
             .range([0, height - zeroLine - TOP_PADDING])
             .clamp(true),
-          valueToOpacity: scaleLinear()
-            .domain([0, max])
-            .range([0, 1])
-            .clamp(true),
-          valueToOpacityReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, 1])
-            .clamp(true),
+          valueToOpacity: scaleLinear().domain([0, max]).range([0, 1]).clamp(true),
+          valueToOpacityReverse: scaleLinear().domain([0, min]).range([0, 1]).clamp(true),
           min,
           max,
           zeroLine,
         };
       } else {
         return {
-          axisScale: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height])
-            .clamp(true),
-          valueToY: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height])
-            .clamp(true),
-          valueToOpacity: scaleLinear()
-            .domain([min, max])
-            .range([0, 1])
-            .clamp(true),
+          axisScale: scaleLinear().domain([max, min]).range([TOP_PADDING, height]).clamp(true),
+          valueToY: scaleLinear().domain([max, min]).range([TOP_PADDING, height]).clamp(true),
+          valueToOpacity: scaleLinear().domain([min, max]).range([0, 1]).clamp(true),
+          // for group feature when there is only nagetiva data, to be fixed
           valueToYReverse: scaleLinear()
             .domain([0, min])
             .range([0, height - zeroLine - TOP_PADDING])
             .clamp(true),
-          valueToOpacityReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, 1])
-            .clamp(true),
+          valueToOpacityReverse: scaleLinear().domain([0, min]).range([0, 1]).clamp(true),
           min,
           max,
           zeroLine,
@@ -209,7 +175,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   }, [options, props]);
 
   const scales = computeScales(xToValue, xToValue2, height);
-
+  console.log(scales)
   const getEffectiveDisplayMode = () => {
     const { displayMode, height } = options;
     if (
@@ -260,7 +226,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
 
   let visualizer;
-
+  console.log(hasReverse)
   if (
     initialLoad ||
     options.forceSvg ||
@@ -316,7 +282,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
                 <ValuePlot
                   xToValue={xToValue}
                   scales={scales}
-                  height={scales.zeroLine}
+                  height={scales.zeroLine ? scales.zeroLine : height}
                   color={color}
                   colorOut={colorAboveMax}
                   isDrawingBars={isDrawingBars}
@@ -382,7 +348,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             <ValuePlot
               xToValue={xToValue}
               scales={scales}
-              height={scales.zeroLine}
+              height={scales.zeroLine ? scales.zeroLine : height}
               color={color}
               colorOut={colorAboveMax}
               isDrawingBars={isDrawingBars}

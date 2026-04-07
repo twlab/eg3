@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
+import ResizablePanel from "../../ui/panel/ResizablePanel";
 import {
   DndContext,
   closestCenter,
@@ -25,6 +26,7 @@ interface ReorderManyProps {
   tracks: ITrackModel[];
   windowWidth: number;
   handleToolClick: (tool: any) => void;
+  anchorEl?: React.RefObject<HTMLElement | null>;
 }
 
 // Sortable Item Component using @dnd-kit
@@ -169,6 +171,7 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
   tracks,
   handleToolClick,
   windowWidth,
+  anchorEl,
 }) => {
   const dispatch = useAppDispatch();
   const [items, setItems] = useState<ITrackModel[]>([]);
@@ -187,6 +190,10 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
   const handleCloseModal = () => {
     handleToolClick(null);
   };
+
+  const anchorRect = anchorEl?.current?.getBoundingClientRect();
+  const panelTop = anchorRect ? Math.round(anchorRect.bottom) + 8 : 90;
+  const panelLeft = anchorRect ? Math.round(anchorRect.left) : 100;
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -206,73 +213,60 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
     setColumnCount(value);
   };
 
-  return (
-    <div className="relative">
-      <AnimatePresence>
-        <motion.div
-          className="absolute top-full left-0 mt-4 bg-white border border-gray-300 rounded-lg shadow-lg z-50 overflow-y-auto"
-          style={{
-            left: `-${windowWidth / 3.2}px`,
-            // width: `${windowWidth / 2}px`,
-            maxHeight: "500px",
-            maxWidth: `${windowWidth}px`,
-          }} // Adjusted left alignment
-          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="p-4">
-            <div
-              className="flex items-center justify-between mb-3"
-              style={{ width: `${windowWidth / 2}px`, fontSize: "16px" }}
-            >
-              <h5 className="font-semibold text-gray-800">
-                Please drag and drop to re-order your tracks. Press the apply
-                button after you are done.
-              </h5>
-              <div className="flex gap-4">
-                <button
-                  onClick={() =>
-                    dispatch(updateCurrentSession({ tracks: items }))
-                  }
-                  className="px-3 py-1 text-sm border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
-                >
-                  Apply
-                </button>
-                <button
-                  onClick={handleCloseModal}
-                  className="px-3 py-1 text-sm border-1 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-
-            <CustomSlider
-              value={columnCount}
-              onChange={handleColumnChange}
-              min={1}
-              max={20}
-              windowWidth={windowWidth}
-            />
-
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={items.map((_, index) => `item-${index}`)}
-                strategy={rectSortingStrategy}
+  return createPortal(
+    <div style={{ position: "fixed", top: panelTop, left: panelLeft, zIndex: 1000 }}>
+      <ResizablePanel
+        title="Reorder Tracks"
+        initialWidth={600}
+        initialHeight={500}
+        onClose={handleCloseModal}
+        navigationPath={[]}
+        header
+      >
+        <div className="p-4">
+          <div
+            className="flex items-center justify-between mb-3"
+            style={{ fontSize: "16px" }}
+          >
+            <h5 className="font-semibold text-gray-800">
+              Drag and drop to re-order tracks, then press Apply.
+            </h5>
+            <div className="flex gap-4">
+              <button
+                onClick={() =>
+                  dispatch(updateCurrentSession({ tracks: items }))
+                }
+                className="px-3 py-1 text-sm border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
               >
-                <Grid items={items} colNum={columnCount} />
-              </SortableContext>
-            </DndContext>
+                Apply
+              </button>
+            </div>
           </div>
-        </motion.div>
-      </AnimatePresence>
-    </div>
+
+          <CustomSlider
+            value={columnCount}
+            onChange={handleColumnChange}
+            min={1}
+            max={20}
+            windowWidth={windowWidth}
+          />
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={items.map((_, index) => `item-${index}`)}
+              strategy={rectSortingStrategy}
+            >
+              <Grid items={items} colNum={columnCount} />
+            </SortableContext>
+          </DndContext>
+        </div>
+      </ResizablePanel>
+    </div>,
+    document.body
   );
 };
 
