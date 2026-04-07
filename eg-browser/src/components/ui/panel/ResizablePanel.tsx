@@ -31,6 +31,7 @@ interface ResizablePanelProps {
   children?: React.ReactNode;
   navigationPath: Array<any>;
   header?: boolean;
+  excludeRefs?: React.RefObject<HTMLElement | null>[];
 }
 
 export default function ResizablePanel(props: ResizablePanelProps) {
@@ -45,7 +46,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     onClose,
     navigationPath,
     children,
-    header
+    header,
+    excludeRefs,
   } = props;
 
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -161,6 +163,20 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  // Close on outside click when not pinned
+  useEffect(() => {
+    if (!onClose) return;
+    const handleOutsideClick = (e: PointerEvent) => {
+      if (pinned) return;
+      if (excludeRefs?.some((r) => r.current?.contains(e.target as Node))) return;
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("pointerdown", handleOutsideClick);
+    return () => document.removeEventListener("pointerdown", handleOutsideClick);
+  }, [pinned, onClose, excludeRefs]);
 
   // Ghost overlay helpers: lightweight DOM element updated via rAF
   const createGhost = (left: number, top: number, w: number, h: number) => {

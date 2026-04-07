@@ -56,7 +56,6 @@ import {
   ITrackModel,
   GenomeCoordinate,
   IGenome,
-  OutsideClickDetector,
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
@@ -304,35 +303,31 @@ export default function RootLayout(props: GenomeHubProps) {
         )}
         <AnimatePresence>
           {leftPanelOpen ? (
-            <OutsideClickDetector
-              onOutsideClick={() => dispatch(setLeftPanelOpen(false))}
-            >
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="absolute left-0 h-full z-60"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute left-0 h-full z-60"
 
+            >
+              <ResizablePanel
+                navigationPath={[]}
+                initialWidth={window.innerWidth * 0.4}
+                initialHeight={window.innerHeight - 50}
+                onClose={() => setLeftPanelOpen(false)}
+                header={false}
               >
-                <ResizablePanel
-                  navigationPath={[]}
-                  initialWidth={window.innerWidth * 0.4}
-                  initialHeight={window.innerHeight - 50}
-                  onClose={() => setLeftPanelOpen(false)}
-                  header={false}
-                >
-                  <SessionList
-                    onSessionClick={(s) => {
-                      dispatch(setCurrentSession(s.id));
-                      setLeftPanelOpen(false);
-                    }}
-                    showImportSessionButton
-                    onRequestClose={() => setLeftPanelOpen(false)}
-                  />
-                </ResizablePanel>
-              </motion.div>
-            </OutsideClickDetector>
+                <SessionList
+                  onSessionClick={(s) => {
+                    dispatch(setCurrentSession(s.id));
+                    setLeftPanelOpen(false);
+                  }}
+                  showImportSessionButton
+                  onRequestClose={() => setLeftPanelOpen(false)}
+                />
+              </ResizablePanel>
+            </motion.div>
           ) : null}
         </AnimatePresence>
 

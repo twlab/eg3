@@ -47,7 +47,6 @@ import ShareTab from "../root-layout/tabs/ShareTab";
 import SettingsTab from "../root-layout/tabs/SettingsTab";
 import type { NavigationPath } from "../core-navigation/NavigationStack";
 import {
-  OutsideClickDetector,
   GenomeSerializer,
   DisplayedRegionModel,
   RegionSet,
@@ -65,8 +64,8 @@ export default function NavBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement | null>(null);
+  const tabButtonsRef = useRef<HTMLDivElement | null>(null);
   const [tabAnchorLeft, setTabAnchorLeft] = useState<number | null>(null);
-  const panelPinnedRef = useRef(false);
 
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
@@ -263,189 +262,382 @@ export default function NavBar() {
           </button>
         </div>
       )}
-      <OutsideClickDetector
-        onOutsideClick={() => {
-          if (!panelPinnedRef.current && currentTab !== null) dispatch(setNavigationTab(null));
-        }}
+      {/* Single full-width navbar row */}
+      <div
+        ref={navRef}
+        className="flex flex-row items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1 px-2 gap-1"
       >
-        {/* Single full-width navbar row */}
-        <div
-          ref={navRef}
-          className="flex flex-row items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1 px-2 gap-1"
-        >
-          {/* Back button */}
-          {currentSession ? (
-            <BackspaceIcon
-              className="size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary cursor-pointer"
-              onClick={() => {
-                dispatch(setSessionPanelOpen(false));
-                dispatch(setCurrentSession(null));
-              }}
-            />
-          ) : (
-            <div className="size-5 flex-shrink-0" />
-          )}
-
-          {/* Logo */}
-          <div
-            className={classNames(
-              "z-10",
-              "h-8",
-              "w-12",
-              "flex-shrink-0",
-              "rounded-sm",
-              "relative",
-              "overflow-hidden",
-              currentSession ? "cursor-pointer" : "cursor-default",
-            )}
+        {/* Back button */}
+        {currentSession ? (
+          <BackspaceIcon
+            className="size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary cursor-pointer"
             onClick={() => {
               dispatch(setSessionPanelOpen(false));
               dispatch(setCurrentSession(null));
             }}
-          >
-            <img
-              src={Logo}
-              alt=""
-              className="absolute inset-0 w-full h-full object-contain"
-            />
-            {currentSession &&
-              currentSession.title.length > 0 &&
-              genome?.name && (
-                <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
-                  <span
-                    className="text-red-500 font-mono leading-none"
-                    style={{ fontSize: "10px" }}
-                  >
-                    v{version}
-                  </span>
-                </div>
-              )}
-          </div>
+          />
+        ) : (
+          <div className="size-5 flex-shrink-0" />
+        )}
 
-          {/* Tab buttons / mobile controls — takes remaining space */}
-          <div className="flex-1 flex items-center min-w-0">
-            {isSmallScreen ? (
-              <>
-                <div
-                  className="flex flex-row flex-wrap items-center gap-1"
-                  style={{
-                    opacity: isSearchFocused ? 0 : 1,
-                    pointerEvents: isSearchFocused ? "none" : "auto",
-                    transition: "opacity 0.15s ease",
-                  }}
+        {/* Logo */}
+        <div
+          className={classNames(
+            "z-10",
+            "h-8",
+            "w-12",
+            "flex-shrink-0",
+            "rounded-sm",
+            "relative",
+            "overflow-hidden",
+            currentSession ? "cursor-pointer" : "cursor-default",
+          )}
+          onClick={() => {
+            dispatch(setSessionPanelOpen(false));
+            dispatch(setCurrentSession(null));
+          }}
+        >
+          <img
+            src={Logo}
+            alt=""
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+          {currentSession &&
+            currentSession.title.length > 0 &&
+            genome?.name && (
+              <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
+                <span
+                  className="text-red-500 font-mono leading-none"
+                  style={{ fontSize: "10px" }}
                 >
-                  {currentSession && genome?.name && (
-                    <Button
-                      onClick={(e) => openTab("tab-genome-picker", e)}
-                      active={currentTab === "tab-genome-picker"}
-                      style={{
-                        backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
-                        color: "#0f172a",
-                        width: "60px",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div className="relative flex-shrink-0">
-                        <div
-                          style={{
-                            backgroundImage: `url(${genomeLogoUrl?.logo
-                              ? genomeLogoUrl.logo.startsWith("http")
-                                ? genomeLogoUrl.logo
-                                : import.meta.env.BASE_URL + genomeLogoUrl.logo
-                              : ""
-                              })`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                            backgroundRepeat: "no-repeat",
-                            opacity: genomeLogoUrl?.logo ? 0.8 : 1,
-                            width: 60,
-                          }}
-                          onMouseEnter={(e) => {
-                            if (genomeLogoUrl)
-                              (e.currentTarget as HTMLElement).style.opacity = "1";
-                          }}
-                          onMouseLeave={(e) => {
-                            if (genomeLogoUrl)
-                              (e.currentTarget as HTMLElement).style.opacity = "0.8";
-                          }}
-                          className={classNames(
-                            "z-10", "h-8", "rounded-xs", "flex-shrink-0",
-                            "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
-                            sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                            genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
-                          )}
-                        >
-                          {currentSession.title.length > 0 && genome?.name && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span
-                                className="leading-tight text-center break-words w-full"
-                                style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "10px" }}
-                              >
-                                <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
-                                  {genomeLogoUrl?.name ? (
-                                    <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
-                                  ) : (
-                                    <i>{genome.name}</i>
-                                  )}
-                                </span>
+                  v{version}
+                </span>
+              </div>
+            )}
+        </div>
+
+        {/* Tab buttons / mobile controls — takes remaining space */}
+        <div className="flex-1 flex items-center min-w-0">
+          {isSmallScreen ? (
+            <>
+              <div
+                className="flex flex-row flex-wrap items-center gap-1"
+                style={{
+                  opacity: isSearchFocused ? 0 : 1,
+                  pointerEvents: isSearchFocused ? "none" : "auto",
+                  transition: "opacity 0.15s ease",
+                }}
+              >
+                {currentSession && genome?.name && (
+                  <Button
+                    onClick={(e) => openTab("tab-genome-picker", e)}
+                    active={currentTab === "tab-genome-picker"}
+                    style={{
+                      backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
+                      color: "#0f172a",
+                      width: "60px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div className="relative flex-shrink-0">
+                      <div
+                        style={{
+                          backgroundImage: `url(${genomeLogoUrl?.logo
+                            ? genomeLogoUrl.logo.startsWith("http")
+                              ? genomeLogoUrl.logo
+                              : import.meta.env.BASE_URL + genomeLogoUrl.logo
+                            : ""
+                            })`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
+                          opacity: genomeLogoUrl?.logo ? 0.8 : 1,
+                          width: 60,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (genomeLogoUrl)
+                            (e.currentTarget as HTMLElement).style.opacity = "1";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (genomeLogoUrl)
+                            (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                        }}
+                        className={classNames(
+                          "z-10", "h-8", "rounded-xs", "flex-shrink-0",
+                          "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
+                          sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
+                          genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
+                        )}
+                      >
+                        {currentSession.title.length > 0 && genome?.name && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span
+                              className="leading-tight text-center break-words w-full"
+                              style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "10px" }}
+                            >
+                              <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
+                                {genomeLogoUrl?.name ? (
+                                  <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
+                                ) : (
+                                  <i>{genome.name}</i>
+                                )}
                               </span>
-                            </div>
-                          )}
-                        </div>
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    </Button>
-                  )}
-                  {currentDisplayRegionModel && genomeConfig ? (
-                    <Button
-                      onClick={(e) => openTab("regions", e)}
-                      active={currentTab === "regions"}
-                      style={{ backgroundColor: "#1f2e46", color: "white", width: "100px", fontSize: "10px" }}
-                    >
-                      {currentDisplayRegionModel.currentRegionAsString()}
-                    </Button>
-                  ) : ""}
-                  {currentSession ? (
-                    <><IconButton onClick={() => { setMobileMenuOpen(!mobileMenuOpen); dispatch(setNavigationTab(null)); }} title="Menu">
-                      {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
-                    </IconButton><>
+                    </div>
+                  </Button>
+                )}
+                {currentDisplayRegionModel && genomeConfig ? (
+                  <Button
+                    onClick={(e) => openTab("regions", e)}
+                    active={currentTab === "regions"}
+                    style={{ backgroundColor: "#1f2e46", color: "white", width: "100px", fontSize: "10px" }}
+                  >
+                    {currentDisplayRegionModel.currentRegionAsString()}
+                  </Button>
+                ) : ""}
+                {currentSession ? (
+                  <><IconButton onClick={() => { setMobileMenuOpen(!mobileMenuOpen); dispatch(setNavigationTab(null)); }} title="Menu">
+                    {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+                  </IconButton><>
 
 
-                        <div className="relative group flex-shrink-0 ml-1">
-                          <button
-                            onClick={() => {
-                              dispatch(setNavigationTab(null));
-                              dispatch(setNavSearchOpen(true));
-                            }}
-                            aria-label="Open search"
-                            className="group flex items-center justify-center w-9 h-8 rounded-full bg-gray-100 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200"
-                          >
-                            <MagnifyingGlassIcon className="w-5 h-5 text-gray-500 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110" />
-                          </button>
-                          {/* Hover tooltip */}
-                          <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
-                            {/* Arrow pointing up toward button */}
-                            <div className="flex justify-center">
-                              <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
-                            </div>
-                            <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
-                              <p className="font-semibold mb-1 text-blue-300">Search for</p>
-                              <ul className="space-y-0.5 text-gray-200">
-                                <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
-                                <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
-                                <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
-                              </ul>
-                            </div>
+                      <div className="relative group flex-shrink-0 ml-1">
+                        <button
+                          onClick={() => {
+                            dispatch(setNavigationTab(null));
+                            dispatch(setNavSearchOpen(true));
+                          }}
+                          aria-label="Open search"
+                          className="group flex items-center justify-center w-9 h-8 rounded-full bg-gray-100 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200"
+                        >
+                          <MagnifyingGlassIcon className="w-5 h-5 text-gray-500 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110" />
+                        </button>
+                        {/* Hover tooltip */}
+                        <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
+                          {/* Arrow pointing up toward button */}
+                          <div className="flex justify-center">
+                            <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
+                          </div>
+                          <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
+                            <p className="font-semibold mb-1 text-blue-300">Search for</p>
+                            <ul className="space-y-0.5 text-gray-200">
+                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
+                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
+                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
+                            </ul>
                           </div>
                         </div>
+                      </div>
 
-
-                      </>
 
                     </>
-                  ) : ""}
-                </div>          {isSearchFocused ? (
+
+                  </>
+                ) : ""}
+              </div>          {isSearchFocused ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "20%",
+                    width: "calc(60%)",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 100,
+                    minWidth: 150,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <SearchBar
+                      isSearchFocused={isSearchFocused}
+                      onSearchFocusChange={setIsSearchFocused}
+                      onNewRegionSelect={handleNewRegionSelect}
+                      windowWidth={window.innerWidth}
+                      fontSize={16}
+                      buttonPadding={6} />
+                  </div>
+                  <button
+                    onClick={() => dispatch(setNavSearchOpen(false))}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    aria-label="Close search"
+                    title="Close search"
+                    className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 flex-shrink-0"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : ""}
+            </>
+          ) : (
+            <>
+              {currentSession !== null ? (
+                <div className="flex flex-row flex-wrap items-center gap-1 flex-1 min-w-0">
+                  {/* Fading tab buttons */}
                   <div
+                    ref={tabButtonsRef}
+                    className="flex flex-row flex-wrap items-center gap-1"
+                    style={{
+                      opacity: isSearchFocused ? 0 : 1,
+                      pointerEvents: isSearchFocused ? "none" : "auto",
+                      transition: "opacity 0.15s ease",
+                    }}
+                  >
+                    {genome?.name && (
+                      <Button
+                        onClick={(e) => openTab("tab-genome-picker", e)}
+                        active={currentTab === "tab-genome-picker"}
+                        style={{
+                          backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
+                          color: "#0f172a",
+                          width: "100px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <div className="relative flex-shrink-0">
+                          <div
+                            style={{
+                              backgroundImage: `url(${genomeLogoUrl?.logo
+                                ? genomeLogoUrl.logo.startsWith("http")
+                                  ? genomeLogoUrl.logo
+                                  : import.meta.env.BASE_URL + genomeLogoUrl.logo
+                                : ""
+                                })`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                              backgroundRepeat: "no-repeat",
+                              opacity: genomeLogoUrl?.logo ? 0.8 : 1,
+                              width: 100,
+                            }}
+                            onMouseEnter={(e) => {
+                              if (genomeLogoUrl)
+                                (e.currentTarget as HTMLElement).style.opacity = "1";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (genomeLogoUrl)
+                                (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                            }}
+                            className={classNames(
+                              "z-10", "h-8", "rounded-xs", "flex-shrink-0",
+                              "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
+                              sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
+                              genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
+                            )}
+                          >
+                            {currentSession.title.length > 0 && genome?.name && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span
+                                  className="leading-tight text-center break-words w-full"
+                                  style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px" }}
+                                >
+                                  <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
+                                    {genomeLogoUrl?.name ? (
+                                      <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
+                                    ) : (
+                                      <i>{genome.name}</i>
+                                    )}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Button>
+                    )}
+                    {currentDisplayRegionModel && genomeConfig && (
+                      <Button
+                        onClick={(e) => openTab("regions", e)}
+                        active={currentTab === "regions"}
+                        style={{ backgroundColor: "#1f2e46", color: "white", width: "fit-content", padding: "4px 6px" }}
+                      >
+                        {currentDisplayRegionModel.currentRegionAsString()}
+                      </Button>
+                    )}
+                    <Button
+                      onClick={(e) => openTab("tracks", e)}
+                      active={currentTab === "tracks"}
+                      style={{ backgroundColor: "#bec6fb", color: "black", width: "fit-content", padding: "4px 6px" }}
+                    >
+                      Tracks
+                    </Button>
+                    <Button
+                      onClick={(e) => openTab("apps", e)}
+                      active={currentTab === "apps"}
+                      style={{ backgroundColor: "#95E1D3", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
+                    >
+                      Apps
+                    </Button>
+                    <Button
+                      onClick={(e) => openTab("share", e)}
+                      active={currentTab === "share"}
+                      style={{ backgroundColor: "#EAFFD0", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
+                    >
+                      Share
+                    </Button>
+                    <Button
+                      onClick={(e) => openTab("settings", e)}
+                      active={currentTab === "settings"}
+                      style={{ backgroundColor: "#ffbebe", color: "black", width: "fit-content", padding: "4px 6px" }}
+                    >
+                      Settings
+                    </Button>
+                    <Button
+                      onClick={(e) => openTab("help", e)}
+                      active={currentTab === "help"}
+                      style={{ backgroundColor: "#FCE38A", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
+                    >
+                      Help
+                    </Button>
+                    <div className="h-8 flex flex-row items-center flex-shrink-0">
+                      <Switch
+                        checked={darkTheme}
+                        onChange={(checked) => dispatch(setDarkTheme(checked))}
+                        checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                        uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+                      />
+                    </div>
+                    {/* SearchBar: pill button when closed, absolute+expanded when open */}
+
+                    <div className="relative group flex-shrink-0 ml-4">
+                      <button
+                        onClick={() => {
+                          dispatch(setNavigationTab(null));
+                          dispatch(setNavSearchOpen(true));
+                        }}
+                        aria-label="Open search"
+                        className="group flex items-center justify-center w-9 h-8 rounded-full bg-[#44ACFF] hover:bg-[#1a96ff] dark:bg-[#44ACFF] dark:hover:bg-[#1a96ff] shadow-md hover:shadow-lg transition-all duration-200"
+                      >
+                        <MagnifyingGlassIcon className="w-5 h-5 text-white transition-all duration-200 group-hover:scale-110" />
+                      </button>
+                      {/* Hover tooltip */}
+                      <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
+                        {/* Arrow pointing up toward button */}
+                        <div className="flex justify-center">
+                          <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
+                        </div>
+                        <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
+                          <p className="font-semibold mb-1 text-blue-300">Search for</p>
+                          <ul className="space-y-0.5 text-gray-200">
+                            <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
+                            <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
+                            <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+
+
+
+                  </div>
+
+                  {isSearchFocused ? <div
                     style={{
                       position: "absolute",
                       left: "20%",
@@ -466,7 +658,8 @@ export default function NavBar() {
                         onNewRegionSelect={handleNewRegionSelect}
                         windowWidth={window.innerWidth}
                         fontSize={16}
-                        buttonPadding={6} />
+                        buttonPadding={6}
+                      />
                     </div>
                     <button
                       onClick={() => dispatch(setNavSearchOpen(false))}
@@ -477,439 +670,238 @@ export default function NavBar() {
                     >
                       <XMarkIcon className="w-5 h-5" />
                     </button>
-                  </div>
-                ) : ""}
-              </>
-            ) : (
-              <>
-                {currentSession !== null ? (
-                  <div className="flex flex-row flex-wrap items-center gap-1 flex-1 min-w-0">
-                    {/* Fading tab buttons */}
-                    <div
-                      className="flex flex-row flex-wrap items-center gap-1"
-                      style={{
-                        opacity: isSearchFocused ? 0 : 1,
-                        pointerEvents: isSearchFocused ? "none" : "auto",
-                        transition: "opacity 0.15s ease",
-                      }}
-                    >
-                      {genome?.name && (
-                        <Button
-                          onClick={(e) => openTab("tab-genome-picker", e)}
-                          active={currentTab === "tab-genome-picker"}
-                          style={{
-                            backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
-                            color: "#0f172a",
-                            width: "100px",
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <div className="relative flex-shrink-0">
-                            <div
-                              style={{
-                                backgroundImage: `url(${genomeLogoUrl?.logo
-                                  ? genomeLogoUrl.logo.startsWith("http")
-                                    ? genomeLogoUrl.logo
-                                    : import.meta.env.BASE_URL + genomeLogoUrl.logo
-                                  : ""
-                                  })`,
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                                backgroundRepeat: "no-repeat",
-                                opacity: genomeLogoUrl?.logo ? 0.8 : 1,
-                                width: 100,
-                              }}
-                              onMouseEnter={(e) => {
-                                if (genomeLogoUrl)
-                                  (e.currentTarget as HTMLElement).style.opacity = "1";
-                              }}
-                              onMouseLeave={(e) => {
-                                if (genomeLogoUrl)
-                                  (e.currentTarget as HTMLElement).style.opacity = "0.8";
-                              }}
-                              className={classNames(
-                                "z-10", "h-8", "rounded-xs", "flex-shrink-0",
-                                "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
-                                sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                                genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
-                              )}
-                            >
-                              {currentSession.title.length > 0 && genome?.name && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <span
-                                    className="leading-tight text-center break-words w-full"
-                                    style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px" }}
-                                  >
-                                    <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
-                                      {genomeLogoUrl?.name ? (
-                                        <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
-                                      ) : (
-                                        <i>{genome.name}</i>
-                                      )}
-                                    </span>
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Button>
-                      )}
-                      {currentDisplayRegionModel && genomeConfig && (
-                        <Button
-                          onClick={(e) => openTab("regions", e)}
-                          active={currentTab === "regions"}
-                          style={{ backgroundColor: "#1f2e46", color: "white", width: "fit-content", padding: "4px 6px" }}
-                        >
-                          {currentDisplayRegionModel.currentRegionAsString()}
-                        </Button>
-                      )}
-                      <Button
-                        onClick={(e) => openTab("tracks", e)}
-                        active={currentTab === "tracks"}
-                        style={{ backgroundColor: "#bec6fb", color: "black", width: "fit-content", padding: "4px 6px" }}
-                      >
-                        Tracks
-                      </Button>
-                      <Button
-                        onClick={(e) => openTab("apps", e)}
-                        active={currentTab === "apps"}
-                        style={{ backgroundColor: "#95E1D3", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
-                      >
-                        Apps
-                      </Button>
-                      <Button
-                        onClick={(e) => openTab("share", e)}
-                        active={currentTab === "share"}
-                        style={{ backgroundColor: "#EAFFD0", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
-                      >
-                        Share
-                      </Button>
-                      <Button
-                        onClick={(e) => openTab("settings", e)}
-                        active={currentTab === "settings"}
-                        style={{ backgroundColor: "#ffbebe", color: "black", width: "fit-content", padding: "4px 6px" }}
-                      >
-                        Settings
-                      </Button>
-                      <Button
-                        onClick={(e) => openTab("help", e)}
-                        active={currentTab === "help"}
-                        style={{ backgroundColor: "#FCE38A", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
-                      >
-                        Help
-                      </Button>
-                      <div className="h-8 flex flex-row items-center flex-shrink-0">
-                        <Switch
-                          checked={darkTheme}
-                          onChange={(checked) => dispatch(setDarkTheme(checked))}
-                          checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                          uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-                        />
-                      </div>
-                      {/* SearchBar: pill button when closed, absolute+expanded when open */}
-
-                      <div className="relative group flex-shrink-0 ml-4">
-                        <button
-                          onClick={() => {
-                            dispatch(setNavigationTab(null));
-                            dispatch(setNavSearchOpen(true));
-                          }}
-                          aria-label="Open search"
-                          className="group flex items-center justify-center w-9 h-8 rounded-full bg-[#44ACFF] hover:bg-[#1a96ff] dark:bg-[#44ACFF] dark:hover:bg-[#1a96ff] shadow-md hover:shadow-lg transition-all duration-200"
-                        >
-                          <MagnifyingGlassIcon className="w-5 h-5 text-white transition-all duration-200 group-hover:scale-110" />
-                        </button>
-                        {/* Hover tooltip */}
-                        <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
-                          {/* Arrow pointing up toward button */}
-                          <div className="flex justify-center">
-                            <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
-                          </div>
-                          <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
-                            <p className="font-semibold mb-1 text-blue-300">Search for</p>
-                            <ul className="space-y-0.5 text-gray-200">
-                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
-                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
-                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
+                  </div> : ""}
 
 
 
-
-                    </div>
-
-                    {isSearchFocused ? <div
-                      style={{
-                        position: "absolute",
-                        left: "20%",
-                        width: "calc(60%)",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        zIndex: 100,
-                        minWidth: 150,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <SearchBar
-                          isSearchFocused={isSearchFocused}
-                          onSearchFocusChange={setIsSearchFocused}
-                          onNewRegionSelect={handleNewRegionSelect}
-                          windowWidth={window.innerWidth}
-                          fontSize={16}
-                          buttonPadding={6}
-                        />
-                      </div>
-                      <button
-                        onClick={() => dispatch(setNavSearchOpen(false))}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        aria-label="Close search"
-                        title="Close search"
-                        className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 flex-shrink-0"
-                      >
-                        <XMarkIcon className="w-5 h-5" />
-                      </button>
-                    </div> : ""}
-
-
-
-                  </div>
-                ) : (
-                  <>
-                    {!currentSession && (
-                      <div style={{ fontSize: 24 }}>
-                        <span>WashU </span> Epigenome Browser
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-
-
-          {/* Right side: dark mode + previous version (no session) */}
-          {!currentSession && (
-            <div className="flex flex-row items-center gap-2 ml-auto flex-shrink-0">
-
-              <div className="h-8 flex flex-row items-center flex-shrink-0">
-                <Switch
-                  checked={darkTheme}
-                  onChange={(checked) => dispatch(setDarkTheme(checked))}
-                  checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                  uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-                />
-              </div>
-              <Button
-                style={{
-                  backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
-                  padding: "4px 8px",
-                  color: "black",
-                  width: "145px",
-                  height: "32px",
-                  borderRadius: "15px",
-                }}
-
-                onClick={() =>
-                  window.open("https://epigenomegateway.wustl.edu/browser2022/", "_blank")
-                }
-
-              >
-                Previous Version
-              </Button>
-
-            </div>
-          )}
-
-
-          <AnimatePresence>
-            {isSmallScreen && mobileMenuOpen && (
-              <motion.div
-                className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background border-b border-gray-300 shadow-lg  z-50"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="flex flex-col p-4 gap-2">
-                  {currentSession !== null ? (
-                    <>
-                      <Button
-                        onClick={() => {
-                          dispatch(
-                            setNavigationTab(
-                              currentTab === "tracks" ? null : "tracks",
-                            ),
-                          );
-                          setMobileMenuOpen(false);
-                        }}
-                        active={currentTab === "tracks"}
-                        style={{ width: "100%", justifyContent: "center" }}
-                      >
-                        Tracks
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          dispatch(
-                            setNavigationTab(
-                              currentTab === "apps" ? null : "apps",
-                            ),
-                          );
-                          setMobileMenuOpen(false);
-                        }}
-                        active={currentTab === "apps"}
-                        style={{ width: "100%", justifyContent: "center" }}
-                      >
-                        Apps
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          dispatch(
-                            setNavigationTab(
-                              currentTab === "share" ? null : "share",
-                            ),
-                          );
-                          setMobileMenuOpen(false);
-                        }}
-                        active={currentTab === "share"}
-                        style={{ width: "100%", justifyContent: "center" }}
-                      >
-                        Share
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          dispatch(
-                            setNavigationTab(
-                              currentTab === "settings" ? null : "settings",
-                            ),
-                          );
-                          setMobileMenuOpen(false);
-                        }}
-                        active={currentTab === "settings"}
-                        style={{ width: "100%", justifyContent: "center" }}
-                      >
-                        Settings
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          dispatch(
-                            setNavigationTab(
-                              currentTab === "help" ? null : "help",
-                            ),
-                          );
-                          setMobileMenuOpen(false);
-                        }}
-                        active={currentTab === "help"}
-                        style={{ width: "100%", justifyContent: "center" }}
-                      >
-                        Help
-                      </Button>
-                      <div className="h-8 flex flex-row justify-center flex-shrink-0">
-                        <Switch
-                          checked={darkTheme}
-                          onChange={(checked) => dispatch(setDarkTheme(checked))}
-                          checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                          uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-                        />
-                      </div>
-                    </>
-
-                  ) : (
-                    ""
-                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              ) : (
+                <>
+                  {!currentSession && (
+                    <div style={{ fontSize: 24 }}>
+                      <span>WashU </span> Epigenome Browser
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
 
-          {/* Tab content dropdown */}
-          <AnimatePresence>
-            {currentTab !== null && currentSession !== null && (
-              <motion.div
-                className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : ""} bg-transparent z-50`}
-                style={
-                  !isSmallScreen && tabAnchorLeft != null
-                    ? ({ left: `${tabAnchorLeft}px`, right: "auto", pointerEvents: "none" } as any)
-                    : ({ pointerEvents: "none" } as any)
-                }
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.1 }}
-              >
-                <ResizablePanel
-                  title={currentTab || undefined}
-                  initialWidth={250}
-                  initialHeight={300}
-                  onClose={() => dispatch(setNavigationTab(null))}
-                  onIncrement={incrementPanelCounter}
-                  onPinChange={(p) => {
-                    panelPinnedRef.current = p;
-                  }}
-                  navigationPath={navigationPath}
-                  header={true}
-                >
-                  {currentTab === "regions" &&
-                    currentDisplayRegionModel &&
-                    genomeConfig && (
-                      <RegionsPanel
-                        selectedRegion={currentDisplayRegionModel}
-                        onRegionSelected={handleNewRegionSelect}
-                        contentColorSetup={{
-                          background: darkTheme ? "#1e2a3a" : "#F8FAFC",
-                          color: darkTheme ? "#e2e8f0" : "#222",
-                        }}
-                        genomeConfig={genomeConfig as any}
-                        onClose={() => dispatch(setNavigationTab(null))}
+
+        {/* Right side: dark mode + previous version (no session) */}
+        {!currentSession && (
+          <div className="flex flex-row items-center gap-2 ml-auto flex-shrink-0">
+
+            <div className="h-8 flex flex-row items-center flex-shrink-0">
+              <Switch
+                checked={darkTheme}
+                onChange={(checked) => dispatch(setDarkTheme(checked))}
+                checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+              />
+            </div>
+            <Button
+              style={{
+                backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
+                padding: "4px 8px",
+                color: "black",
+                width: "145px",
+                height: "32px",
+                borderRadius: "15px",
+              }}
+
+              onClick={() =>
+                window.open("https://epigenomegateway.wustl.edu/browser2022/", "_blank")
+              }
+
+            >
+              Previous Version
+            </Button>
+
+          </div>
+        )}
+
+
+        <AnimatePresence>
+          {isSmallScreen && mobileMenuOpen && (
+            <motion.div
+              className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background border-b border-gray-300 shadow-lg  z-50"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex flex-col p-4 gap-2">
+                {currentSession !== null ? (
+                  <>
+                    <Button
+                      onClick={() => {
+                        dispatch(
+                          setNavigationTab(
+                            currentTab === "tracks" ? null : "tracks",
+                          ),
+                        );
+                        setMobileMenuOpen(false);
+                      }}
+                      active={currentTab === "tracks"}
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      Tracks
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        dispatch(
+                          setNavigationTab(
+                            currentTab === "apps" ? null : "apps",
+                          ),
+                        );
+                        setMobileMenuOpen(false);
+                      }}
+                      active={currentTab === "apps"}
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      Apps
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        dispatch(
+                          setNavigationTab(
+                            currentTab === "share" ? null : "share",
+                          ),
+                        );
+                        setMobileMenuOpen(false);
+                      }}
+                      active={currentTab === "share"}
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      Share
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        dispatch(
+                          setNavigationTab(
+                            currentTab === "settings" ? null : "settings",
+                          ),
+                        );
+                        setMobileMenuOpen(false);
+                      }}
+                      active={currentTab === "settings"}
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      Settings
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        dispatch(
+                          setNavigationTab(
+                            currentTab === "help" ? null : "help",
+                          ),
+                        );
+                        setMobileMenuOpen(false);
+                      }}
+                      active={currentTab === "help"}
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      Help
+                    </Button>
+                    <div className="h-8 flex flex-row justify-center flex-shrink-0">
+                      <Switch
+                        checked={darkTheme}
+                        onChange={(checked) => dispatch(setDarkTheme(checked))}
+                        checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                        uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
                       />
-                    )}
-                  {currentTab === "tab-genome-picker" && (
-                    <TabGenomePicker
+                    </div>
+                  </>
+
+                ) : (
+                  ""
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tab content dropdown */}
+        <AnimatePresence>
+          {currentTab !== null && currentSession !== null && (
+            <motion.div
+              className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : ""} bg-transparent z-50`}
+              style={
+                !isSmallScreen && tabAnchorLeft != null
+                  ? ({ left: `${tabAnchorLeft}px`, right: "auto", pointerEvents: "none" } as any)
+                  : ({ pointerEvents: "none" } as any)
+              }
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.1 }}
+            >
+              <ResizablePanel
+                title={currentTab || undefined}
+                initialWidth={250}
+                initialHeight={300}
+                onClose={() => dispatch(setNavigationTab(null))}
+                onIncrement={incrementPanelCounter}
+                navigationPath={navigationPath}
+                header={true}
+                excludeRefs={tabButtonsRef.current ? [tabButtonsRef] : []}
+              >
+                {currentTab === "regions" &&
+                  currentDisplayRegionModel &&
+                  genomeConfig && (
+                    <RegionsPanel
+                      selectedRegion={currentDisplayRegionModel}
+                      onRegionSelected={handleNewRegionSelect}
+                      contentColorSetup={{
+                        background: darkTheme ? "#1e2a3a" : "#F8FAFC",
+                        color: darkTheme ? "#e2e8f0" : "#222",
+                      }}
+                      genomeConfig={genomeConfig as any}
                       onClose={() => dispatch(setNavigationTab(null))}
                     />
                   )}
-                  {currentTab === "tracks" && (
-                    <TracksTab
-                      panelCounter={panelCounter}
-                      onNavigationPathChange={handleNavigationPathChange}
-                    />
-                  )}
-                  {currentTab === "apps" && (
-                    <AppsTab
-                      panelCounter={panelCounter}
-                      onNavigationPathChange={handleNavigationPathChange}
-                    />
-                  )}
-                  {currentTab === "help" && (
-                    <HelpTab
-                      panelCounter={panelCounter}
-                      onNavigationPathChange={handleNavigationPathChange}
-                    />
-                  )}
-                  {currentTab === "share" && (
-                    <ShareTab
-                      panelCounter={panelCounter}
-                      onNavigationPathChange={handleNavigationPathChange}
-                    />
-                  )}
-                  {currentTab === "settings" && (
-                    <SettingsTab
-                      panelCounter={panelCounter}
-                      onNavigationPathChange={handleNavigationPathChange}
-                    />
-                  )}
-                </ResizablePanel>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </OutsideClickDetector>
+                {currentTab === "tab-genome-picker" && (
+                  <TabGenomePicker
+                    onClose={() => dispatch(setNavigationTab(null))}
+                  />
+                )}
+                {currentTab === "tracks" && (
+                  <TracksTab
+                    panelCounter={panelCounter}
+                    onNavigationPathChange={handleNavigationPathChange}
+                  />
+                )}
+                {currentTab === "apps" && (
+                  <AppsTab
+                    panelCounter={panelCounter}
+                    onNavigationPathChange={handleNavigationPathChange}
+                  />
+                )}
+                {currentTab === "help" && (
+                  <HelpTab
+                    panelCounter={panelCounter}
+                    onNavigationPathChange={handleNavigationPathChange}
+                  />
+                )}
+                {currentTab === "share" && (
+                  <ShareTab
+                    panelCounter={panelCounter}
+                    onNavigationPathChange={handleNavigationPathChange}
+                  />
+                )}
+                {currentTab === "settings" && (
+                  <SettingsTab
+                    panelCounter={panelCounter}
+                    onNavigationPathChange={handleNavigationPathChange}
+                  />
+                )}
+              </ResizablePanel>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </>
   );
 }

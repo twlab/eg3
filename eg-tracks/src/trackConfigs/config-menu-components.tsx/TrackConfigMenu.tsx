@@ -99,6 +99,7 @@ function ConfigMenuComponent(props: any) {
       <div
         className="TrackContextMenu-body"
         style={{ backgroundColor: darkTheme ? "black" : "white" }}
+        onContextMenu={(e) => e.preventDefault()}
       >
         <MenuTitle
           title={

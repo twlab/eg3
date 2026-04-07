@@ -1,8 +1,13 @@
 4/02/2026
-fix error when remote local add track and wrong file for type
-fix size 
-check track errors
-fix toolbar select drag null issue
+(check more) fix error when remote local add track and wrong file for type
+(fnish) fix size
+(add a try to trackfactry) add another check when all data are null check track errors
+(finish) fix toolbar select drag null issue
+check sessions, custom genome, region sets
+check when loading a lot tracks
+check negative bigwig more. 
+
+
 
 
 

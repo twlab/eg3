@@ -3912,8 +3912,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           style={{
                             width: `${windowWidth + 120}px`,
                             position: "relative",
-                            marginTop: "1px",
-                            marginBottom: "1px",
+
+
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 

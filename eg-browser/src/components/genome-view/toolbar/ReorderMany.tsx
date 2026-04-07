@@ -222,6 +222,7 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
         onClose={handleCloseModal}
         navigationPath={[]}
         header
+        excludeRefs={anchorEl ? [anchorEl] : []}
       >
         <div className="p-4">
           <div
