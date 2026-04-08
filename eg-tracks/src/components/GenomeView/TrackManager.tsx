@@ -255,7 +255,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const verticalLineRef = useRef<any>(0);
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
   const fetchInstances = useRef<{ [key: string]: any }>({});
-  const trackWorkerMap = useRef(new Map<string, number>());
   const isMouseInsideRef = useRef(false);
   const parentRectCache = useRef<DOMRect | null>(null);
   const rafId = useRef<number | null>(null);
@@ -452,6 +451,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const message = messageQueue.current.pop();
 
+    // split an array into N contiguous chunks
+    function splitArrayIntoChunks(arr, numChunks) {
+      const chunkSize = Math.ceil(arr.length / numChunks);
+      const chunks: Array<any> = [];
+      for (let i = 0; i < numChunks; i++) {
+        const start = i * chunkSize;
+        const end = start + chunkSize;
+        chunks.push(arr.slice(start, end));
+      }
+      return chunks;
+    }
+
     // Send messages to worker workers
     if (
       infiniteScrollWorkers.current &&
@@ -459,66 +470,60 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       const numWorkers = infiniteScrollWorkers.current.worker.length;
 
-      // Build per-worker message lists using stable track→worker assignment
-      const workerMessages: Array<Array<any>> = Array.from(
-        { length: numWorkers },
-        () => [],
-      );
-
-      for (const msgObj of message) {
-        if (
-          !Array.isArray(msgObj.trackModelArr) ||
-          msgObj.trackModelArr.length === 0
-        )
-          continue;
-
-        for (const track of msgObj.trackModelArr) {
-          if (!trackWorkerMap.current.has(track.id)) {
-            // Assign new track to the least-loaded worker
-            const loads = Array(numWorkers).fill(0);
-            for (const wi of trackWorkerMap.current.values()) {
-              if (wi < numWorkers) loads[wi]++;
-            }
-            const assigned = loads.indexOf(Math.min(...loads));
-            trackWorkerMap.current.set(track.id, assigned);
-          }
-          const wi = trackWorkerMap.current.get(track.id)!;
-          // Merge this track into the existing msgObj for this worker/dataIdx pair
-          let existing = workerMessages[wi].find(
-            (m) => m.trackDataIdx === msgObj.trackDataIdx,
-          );
-          if (!existing) {
-            existing = { ...msgObj, trackModelArr: [] };
-            workerMessages[wi].push(existing);
-          }
-          existing.trackModelArr.push(track);
-        }
-      }
-
       for (let i = 0; i < numWorkers; i++) {
-        if (workerMessages[i].length === 0) continue;
-        if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
-          infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-            createInfiniteOnMessage;
-          infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
+        const messagesForWorker: Array<any> = [];
+        for (const msgObj of message) {
+          if (
+            Array.isArray(msgObj.trackModelArr) &&
+            msgObj.trackModelArr.length > 0
+          ) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers,
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
         }
-        infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-          workerMessages[i],
-        );
+
+        if (messagesForWorker.length > 0) {
+          if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
+            infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
+              createInfiniteOnMessage;
+            infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
+          }
+          infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+            messagesForWorker,
+          );
+        }
       }
     } else {
-      // No workers — fire each track fetch independently so fast tracks don't
-      // wait for slow ones
-      for (const msgObj of message) {
-        if (
-          !Array.isArray(msgObj.trackModelArr) ||
-          msgObj.trackModelArr.length === 0
-        )
-          continue;
+      // Send messages to fetch functions (non-worker version)
+      const numWorkers = tracks.length;
 
-        for (const track of msgObj.trackModelArr) {
-          fetchGenomicData([{ ...msgObj, trackModelArr: [track] }])
+      for (let i = 0; i < numWorkers; i++) {
+        const messagesForWorker: Array<any> = [];
+        for (const msgObj of message) {
+          if (
+            Array.isArray(msgObj.trackModelArr) &&
+            msgObj.trackModelArr.length > 0
+          ) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers,
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
+        }
+
+        if (messagesForWorker.length > 0) {
+          // Launch async operation without awaiting - process results independently
+          fetchGenomicData(messagesForWorker)
             .then((results) => {
+              // Call createInfiniteOnMessage once with the entire results array
               createInfiniteOnMessage({ data: results });
             })
             .catch(() => {});
