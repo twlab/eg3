@@ -1,4 +1,6 @@
-import React, { useMemo, useRef, useEffect, useState } from "react";
+import React, { useMemo, useRef, useEffect, useState, useContext } from "react";
+import ReactDOM from "react-dom";
+import PortalContext from "../../lib/PortalContext";
 import {
   MenuTitle,
   RemoveOption,
@@ -13,11 +15,11 @@ function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
   const menuRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ left: 0, top: 0 });
+  const [position, setPosition] = useState({ left: -9999, top: -9999 });
+  const portalTarget = useContext(PortalContext);
 
-  // Use mouse coordinates for positioning
-  const mouseX = menuData.pageX || 0;
-  const mouseY = menuData.pageY || 0;
+  const viewportX = menuData.viewportX || 0;
+  const viewportY = menuData.viewportY || 0;
 
   // Memoize menu items to avoid unnecessary re-renders
   const menuItems = useMemo(
@@ -45,46 +47,33 @@ function ConfigMenuComponent(props: any) {
   useEffect(() => {
     if (menuRef.current) {
       const menuRect = menuRef.current.getBoundingClientRect();
-      const topFromPage = menuRect.top + window.scrollY;
-      const leftFromPage = menuRect.left + window.scrollX;
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // Calculate position relative to the positioned container
-      let left = mouseX - leftFromPage;
-      let top = mouseY - topFromPage;
+      // When rendered inside a container, offset by the container's bounding rect
+      const containerRect = portalTarget
+        ? portalTarget.getBoundingClientRect()
+        : { left: 0, top: 0 };
 
-      // // Convert to viewport coordinates to check overflow
-      // const viewportX = mouseX - window.scrollX;
-      // const viewportY = mouseY - window.scrollY;
+      let left = viewportX - containerRect.left;
+      let top = viewportY - containerRect.top;
 
-      // Check if menu would overflow right edge of viewport
-      if (left + menuRect.width > viewportWidth) {
-        left = (left - menuRect.width);
+      // Prevent right edge overflow
+      if (viewportX + menuRect.width > viewportWidth) {
+        left = viewportX - menuRect.width - containerRect.left;
       }
 
-      // Check if menu would overflow bottom edge of viewport
-      if (menuData.viewportY + menuRect.height > viewportHeight) {
-        const diff = (menuData.viewportY + menuRect.height) - viewportHeight
-
-        top = (top - diff);
+      // Prevent bottom edge overflow
+      if (viewportY + menuRect.height > viewportHeight) {
+        top = viewportY - menuRect.height - containerRect.top;
+        if (top < 0) top = 0;
       }
-
-      // // Ensure menu doesn't go off left edge
-      // if (left - window.scrollX < 0) {
-      //   left = window.scrollX + 10;
-      // }
-
-      // // Ensure menu doesn't go off top edge
-      // if (top - window.scrollY < 0) {
-      //   top = window.scrollY + 10;
-      // }
 
       setPosition({ left, top });
     }
-  }, [mouseX, mouseY]);
+  }, [viewportX, viewportY, portalTarget]);
 
-  return (
+  return ReactDOM.createPortal(
     <div
       ref={menuRef}
       style={{
@@ -92,9 +81,11 @@ function ConfigMenuComponent(props: any) {
         left: position.left,
         top: position.top,
         color: darkTheme ? "white" : "black",
-        zIndex: 1000,
+        zIndex: 9999,
         pointerEvents: "auto",
       }}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
     >
       <div
         className="TrackContextMenu-body"
@@ -136,7 +127,8 @@ function ConfigMenuComponent(props: any) {
           ""
         )}
       </div>
-    </div>
+    </div>,
+    portalTarget ?? document.body
   );
 }
 

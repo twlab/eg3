@@ -7,9 +7,40 @@ import { BlobFile } from "generic-filehandle2";
  *
  * @author Daofeng Li
  */
+
+const ensembl: Array<string> = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "X",
+  "Y",
+  "M",
+];
 class LocalBigSourceGmod {
   blob: any;
   bw: BigWig;
+  private chromNamingCache: boolean | null = null;
+
+  useEnsemblStyle: null | boolean;
   /**
    *
    * @param {string} url - the URL from which to fetch data
@@ -20,8 +51,30 @@ class LocalBigSourceGmod {
     this.bw = new BigWig({
       filehandle: new BlobFile(blob),
     });
+    this.chromNamingCache = null;
+    this.useEnsemblStyle = null;
   }
+  async detectChromosomeNaming() {
+    try {
+      const header = await this.bw.getHeader();
 
+      const firstChrom = Object.keys(header.refsByName || {})[0];
+
+      if (!firstChrom) {
+        this.chromNamingCache = false; // Default to UCSC naming if no chromosomes found
+        return false;
+      }
+
+      // Check if the first chromosome name is in the Ensembl array
+      this.chromNamingCache = ensembl.includes(firstChrom);
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error(
+        "Error detecting chromosome naming. Check URL and file format.",
+      );
+      return null;
+    }
+  }
   /**
    * Gets BigWig or BigBed features inside the requested locations.
    *
@@ -31,9 +84,17 @@ class LocalBigSourceGmod {
    * @override
    */
   async getData(loci, options) {
+
     try {
+      if (
+        this.useEnsemblStyle === null &&
+        options.trackType !== "rmskv2" &&
+        options.trackType !== "repeatmasker"
+      ) {
+        this.useEnsemblStyle = await this.detectChromosomeNaming();
+      }
       const promises = loci.map((locus) => {
-        let chrom = options.ensemblStyle
+        let chrom = this.useEnsemblStyle
           ? locus.chr.replace("chr", "")
           : locus.chr;
         if (chrom === "M") {

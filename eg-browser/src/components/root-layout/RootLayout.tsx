@@ -60,6 +60,7 @@ import {
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
 import ResizablePanel from "../ui/panel/ResizablePanel";
+import { PortalContext, EscapeHandlerContext } from "wuepgg3-track";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -96,7 +97,9 @@ export interface GenomeHubProps {
 
 export default function RootLayout(props: GenomeHubProps) {
   useBrowserInitialization();
-
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null);
+  const escapeHandlerRef = useRef<(() => void) | null>(null);
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
   const sessions = useAppSelector(selectSessions);
@@ -105,8 +108,19 @@ export default function RootLayout(props: GenomeHubProps) {
   const initialState = useRef(true);
   const { clearHistory } = useUndoRedo();
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
+  const navBarRef = useRef<HTMLDivElement>(null);
+  const [navBarHeight, setNavBarHeight] = useState(48);
   const currentTab = useAppSelector(selectNavigationTab);
   const navSearchOpen = useAppSelector(selectNavSearchOpen);
+
+  useEffect(() => {
+    const el = navBarRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setNavBarHeight(el.offsetHeight));
+    observer.observe(el);
+    setNavBarHeight(el.offsetHeight);
+    return () => observer.disconnect();
+  }, []);
 
   // Escape closes the session panel and/or the active nav tab, the search bar,
   // and unselects all toggle tools (drag is unaffected).
@@ -137,6 +151,7 @@ export default function RootLayout(props: GenomeHubProps) {
         return;
       }
       if (event.key !== "Escape") return;
+      escapeHandlerRef.current?.();
       if (leftPanelOpen) setLeftPanelOpen(false);
       if (currentTab !== null) dispatch(setNavigationTab(null));
       if (navSearchOpen) dispatch(setNavSearchOpen(false));
@@ -159,7 +174,7 @@ export default function RootLayout(props: GenomeHubProps) {
 
   // Reset state when session is cleared
   useEffect(() => {
-    console.log(sessionId)
+
     setLeftPanelOpen(false);
     dispatch(resetState());
     clearHistory();
@@ -287,68 +302,72 @@ export default function RootLayout(props: GenomeHubProps) {
   ]);
 
   return (
-    <div
-      className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
-      data-theme={darkTheme ? "dark" : "light"}
-    >
-      <GoogleAnalytics />
+    <EscapeHandlerContext.Provider value={escapeHandlerRef}>
+      <PortalContext.Provider value={portalContainer}>
+        <div
+          ref={rootRef}
+          className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+          data-theme={darkTheme ? "dark" : "light"}
+          style={{ position: "relative", overflowX: "hidden" }}
+        >
+          <GoogleAnalytics />
 
-      <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
-        {showNavBar === false ? (
-          ""
-        ) : (
-          <div>
-            <NavBar />
-          </div>
-        )}
-        <AnimatePresence>
-          {leftPanelOpen ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute left-0 h-full z-60"
+          <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
+            {showNavBar === false ? (
+              ""
+            ) : (
+              <div ref={navBarRef}>
+                <NavBar />
+              </div>
+            )}
+            <AnimatePresence>
+              {leftPanelOpen ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-0 h-full z-60"
+                  style={{ top: navBarHeight }}
+                >
+                  <ResizablePanel
+                    navigationPath={[]}
+                    initialWidth={window.innerWidth * 0.4}
+                    initialHeight={window.innerHeight - 50}
+                    onClose={() => setLeftPanelOpen(false)}
+                    header={false}
+                  >
+                    <SessionList
+                      onSessionClick={(s) => {
+                        dispatch(setCurrentSession(s.id));
+                        setLeftPanelOpen(false);
+                      }}
+                      showImportSessionButton
+                      onRequestClose={() => setLeftPanelOpen(false)}
+                    />
+                  </ResizablePanel>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
 
-            >
-              <ResizablePanel
-                navigationPath={[]}
-                initialWidth={window.innerWidth * 0.4}
-                initialHeight={window.innerHeight - 50}
-                onClose={() => setLeftPanelOpen(false)}
-                header={false}
-              >
-                <SessionList
-                  onSessionClick={(s) => {
-                    dispatch(setCurrentSession(s.id));
-                    setLeftPanelOpen(false);
-                  }}
-                  showImportSessionButton
-                  onRequestClose={() => setLeftPanelOpen(false)}
-                />
-              </ResizablePanel>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        <div>
-          {!leftPanelOpen && (
-            <SessionToggleButton
-              open={leftPanelOpen}
-              onClick={() => setLeftPanelOpen((v) => !v)}
-              className="absolute
+            <div>
+              {!leftPanelOpen && (
+                <SessionToggleButton
+                  open={leftPanelOpen}
+                  onClick={() => setLeftPanelOpen((v) => !v)}
+                  className="absolute
                rounded-full bg-white shadow"
-              style={{ zIndex: 40, left: 0, top: "115px" }}
-              count={sessionId ? null : sessions.length}
-              textContent={
-                currentSession?.title
-                  ? `Current Session: "${currentSession.title}"`
-                  : "Previous sessions"
-              }
-            />
-          )}
+                  style={{ zIndex: 40, left: 0, top: navBarHeight + 72 }}
+                  count={sessionId ? null : sessions.length}
+                  textContent={
+                    currentSession?.title
+                      ? `Current Session: "${currentSession.title}"`
+                      : "Previous sessions"
+                  }
+                />
+              )}
 
-          {/* {!sessionId && (
+              {/* {!sessionId && (
             <div
             className="h-full overflow-hidden absolute top-0 left-0 z-20"
             style={{
@@ -368,56 +387,56 @@ export default function RootLayout(props: GenomeHubProps) {
 
           } */}
 
-          {/* MARK: - Main Content */}
+              {/* MARK: - Main Content */}
 
-          <div
-            className="flex flex-1 h-full relative"
+              <div
+                className="flex flex-1 h-full relative"
 
-          // onClick={
-          //   sessionPanelOpen
-          //     ? () => dispatch(setSessionPanelOpen(false))
-          //     : undefined
-          // }
-          >
-            {/* MARK: - Genome View */}
-            <div
-              className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
-              style={{
-                zIndex: 5,
+              // onClick={
+              //   sessionPanelOpen
+              //     ? () => dispatch(setSessionPanelOpen(false))
+              //     : undefined
+              // }
+              >
+                {/* MARK: - Genome View */}
+                <div
+                  className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
+                  style={{
+                    zIndex: 5,
 
-              }}
-            >
-              {!sessionId && (
-                <TabView<"picker" | "add" | "import">
-                  centerTabs
-                  initialTab={"picker"}
-                  tabs={[
-                    {
-                      label: "CHOOSE A GENOME",
-                      value: "picker",
-                      component: <GenomePicker />,
-                    },
-                    {
-                      label: "ADD CUSTOM GENOME",
-                      value: "add",
-                      component: <AddCustomGenome />,
-                    },
-                    {
-                      label: "LOAD A SESSION",
-                      value: "import",
-                      component: <ImportSession />,
-                    },
-                  ]}
-                />
-              )}
-              {sessionId && (
-                <GenomeErrorBoundary onGoHome={handleGoHome}>
-                  <GenomeView />
-                </GenomeErrorBoundary>
-              )}
-            </div>
+                  }}
+                >
+                  {!sessionId && (
+                    <TabView<"picker" | "add" | "import">
+                      centerTabs
+                      initialTab={"picker"}
+                      tabs={[
+                        {
+                          label: "CHOOSE A GENOME",
+                          value: "picker",
+                          component: <GenomePicker />,
+                        },
+                        {
+                          label: "ADD CUSTOM GENOME",
+                          value: "add",
+                          component: <AddCustomGenome />,
+                        },
+                        {
+                          label: "LOAD A SESSION",
+                          value: "import",
+                          component: <ImportSession />,
+                        },
+                      ]}
+                    />
+                  )}
+                  {sessionId && (
+                    <GenomeErrorBoundary onGoHome={handleGoHome}>
+                      <GenomeView />
+                    </GenomeErrorBoundary>
+                  )}
+                </div>
 
-            {/* <div
+                {/* <div
               style={{
                 position: "absolute",
                 inset: 0,
@@ -429,11 +448,17 @@ export default function RootLayout(props: GenomeHubProps) {
               }}
               onClick={() => dispatch(setSessionPanelOpen(false))}
             /> */}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <MouseFollowingTooltip />
-    </div>
+          <MouseFollowingTooltip />
+          <div
+            ref={(el) => setPortalContainer(el as HTMLDivElement)}
+            style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 9000 }}
+          />
+        </div>
+      </PortalContext.Provider>
+    </EscapeHandlerContext.Provider>
   );
 }

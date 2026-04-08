@@ -157,7 +157,7 @@ const HubTrackTable: React.FC<Props> = ({
 
     return baseColumns;
   }, [filteredTracks, getAddTrackCell, rowHeader, columnHeader]);
-  console.log(filteredTracks)
+
   const {
     getTableProps,
     getTableBodyProps,

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, memo } from "react";
+import { useEffect, useRef, useState, memo, useContext } from "react";
+import PortalContext from "../../../../../lib/PortalContext";
 import "./Tooltip.css";
 import AlignmentSequence from "../../GenomeAlignComponents/AlignmentCoordinate";
 import HorizontalFragment from "../../GenomeAlignComponents/HorizontalFragment";
@@ -482,7 +483,9 @@ export const getHoverTooltip = {
     }
   },
   interactionHeatmap: function getToolTip(dataObj) {
+
     const polygon = findPolygon(dataObj.relativeX, dataObj.relativeY);
+
     function renderTooltip() {
       if (polygon) {
         let { xSpan1, xSpan2 } = polygon;
@@ -551,8 +554,8 @@ export const getHoverTooltip = {
         beams: beamElements,
         toolTip: (
           <div>
-            <div>Locus1: {polygon.interaction.locus1.toString()}</div>
-            <div>Locus2: {polygon.interaction.locus2.toString()}</div>
+            <div>Locus1: {polygon.interaction.locus1.chr + ":" + polygon.interaction.locus1.start + "-" + polygon.interaction.locus1.end}</div>
+            <div>Locus2: {polygon.interaction.locus2.chr + ":" + polygon.interaction.locus2.start + "-" + polygon.interaction.locus2.end}</div>
             <div>Score: {polygon.interaction.score}</div>
           </div>
         ),
@@ -789,6 +792,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   xAlias,
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
+  const portalTarget = useContext(PortalContext);
   const [isVisible, setIsVisible] = useState(false);
   const [rectPosition, setPosition] = useState({
     mouseYPos: 0,
@@ -832,8 +836,8 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     if (trackHoverTooltip) {
       setPosition({
         ...rectPosition,
-        mouseYPos: trackType === "genomealignRough" ? rect.top : e.pageY + 10,
-        mouseXPos: e.pageX + 10,
+        mouseYPos: trackType === "genomealignRough" ? rect.top : e.clientY + 10,
+        mouseXPos: e.clientX + 10,
         toolTip: trackHoverTooltip.toolTip,
         beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
       });
@@ -872,6 +876,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         height: height,
         position: "relative",
         zIndex: -1,
+
       }}
     >
       {isVisible ? (
@@ -886,20 +891,19 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
           {ReactDOM.createPortal(
             <div
               style={{
-                position: "absolute",
+                position: "fixed",
                 top: rectPosition.mouseYPos,
                 left: rectPosition.mouseXPos,
                 borderRadius: 4,
                 backgroundColor: trackType === "genomealignRough" ? "transparent" : "lightblue",
                 fontSize: 14,
-                zIndex: 1000,
-                // prevent the tooltip from getting clipped off the edge of the screen viewport
+                zIndex: 9999,
               }}
             >
               {/* {rectPosition.dataIdxX} */}
               {rectPosition.toolTip}
             </div>,
-            document.body
+            portalTarget ?? document.body
           )}
         </>
       ) : (

@@ -2,6 +2,7 @@ import {
   createRef,
   memo,
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -25,6 +26,7 @@ import TrackFactory from "./TrackComponents/TrackFactory";
 import BamSource from "../../getRemoteData/BamSource";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
+import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import {
   groupTracksArrMatPlot,
@@ -204,6 +206,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   currentState,
   darkTheme,
 }) {
+  const escapeHandlerRef = useContext(EscapeHandlerContext);
+
   //useRef to store data between states without re render the component
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
     key: -0,
@@ -3557,6 +3561,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (toolbarContainer) {
       toolbarContainer.style.visibility = configMenu ? "hidden" : "visible";
     }
+
+
+    escapeHandlerRef.current = configMenu ? checkOutsideClick : null;
   }, [configMenu]);
 
   // MARK: viewWIndow useeffect
@@ -3683,8 +3690,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     <div
       style={{
         backgroundColor: "var(--bg-color)",
-        paddingLeft: "15px",
-        marginBottom: "150px",
+        marginLeft: 15,
+        marginBottom: 60,
+        marginRight: 30,
+
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
@@ -3716,6 +3725,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 alignItems: "center",
                 justifyContent: "start",
                 flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
+                marginTop: "15px"
               }}
             >
               <div
@@ -3782,16 +3792,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 </div>
               )}
               <div className="h-5 border-r border-gray-400" />
-              <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", marginTop: 1, marginBottom: 1 }}>
                 <div
                   className="MetadataHeader-button"
                   style={{ paddingLeft: 8 }}
                 >
                   <button
                     onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
-                    className="flex items-center gap-2 rounded-sm px-2"
+                    className="flex items-center rounded-sm px-1"
                     style={{
-                      border: isShowingEditMenu
+                      outline: isShowingEditMenu
                         ? "1px solid #1e40af"
                         : "1px solid #1d4ed8",
                       backgroundColor: "#eff6ff",
@@ -3800,7 +3810,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     }}
                     title="Metadata options"
                   >
-                    <span className="text-base font-medium">Metadata</span>
+                    <span className="text-xs font-medium">Metadata</span>
                     <motion.div
                       animate={{ rotate: isShowingEditMenu ? 90 : 0 }}
                       transition={{ duration: 0.2 }}

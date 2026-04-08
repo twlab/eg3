@@ -12,3 +12,5 @@ export {
   generateUUID
 } from "./util";
 export { getSpeciesInfo } from "./models/genomes/allGenomes";
+export { default as PortalContext } from "./lib/PortalContext";
+export { default as EscapeHandlerContext } from "./lib/EscapeHandlerContext";

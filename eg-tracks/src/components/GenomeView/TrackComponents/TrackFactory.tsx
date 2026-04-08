@@ -65,7 +65,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
-  const fetchError = useRef<boolean>(false);
+  const fetchError = useRef<{ [key: string]: string } | null>(null);
 
   const xPos = useRef(0);
 
@@ -103,7 +103,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
-    const res = getDisplayModeFunction({
+    const displayArgs: any = {
       basesByPixel: basePerPixel,
       genesArr,
       genomeConfig,
@@ -129,7 +129,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       errorInfo: fetchError.current,
       handleRetryFetchTrack: handleRetryFetchTrack,
       initialLoad: initialLoad.current,
-    });
+    };
+    let res;
+    try {
+      res = getDisplayModeFunction(displayArgs);
+    } catch (e) {
+      fetchError.current = { Error: "Error when creating drawData" };
+      displayArgs.errorInfo = fetchError.current;
+      res = getDisplayModeFunction(displayArgs);
+    }
 
     if (cacheDataIdx === dataIdx) {
       signalTrackLoadComplete(id);

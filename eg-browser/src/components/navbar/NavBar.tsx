@@ -265,7 +265,7 @@ export default function NavBar() {
       {/* Single full-width navbar row */}
       <div
         ref={navRef}
-        className="flex flex-row items-center outline outline-gray-300 bg-white dark:bg-dark-background relative pb-1 pt-1 px-2 gap-1"
+        className="flex flex-row items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600  relative  px-2 gap-1"
       >
         {/* Back button */}
         {currentSession ? (

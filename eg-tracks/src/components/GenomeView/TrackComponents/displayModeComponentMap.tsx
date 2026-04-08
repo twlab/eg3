@@ -1518,7 +1518,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     ...createCommonParams(extraParams),
   });
 
-  // Error handling
+  // when theres an error
   if (drawData.errorInfo) {
     return displayModeComponentMap.error(
       createCommonParams({
@@ -1528,7 +1528,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     );
   }
 
-  // Special cases with unique parameter patterns
+  //  unique parameter patterns
   if (trackType === "ruler") {
     return displayModeComponentMap.ruler(
       createCommonParams({

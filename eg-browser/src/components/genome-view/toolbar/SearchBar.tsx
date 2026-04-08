@@ -770,7 +770,7 @@ export default function SearchBar({
               placeholder={
                 activeCommand
                   ? `Search ${activeCommand}s`
-                  : "region,gene,snp..."
+                  : "Search for regions, genes, snps..."
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
