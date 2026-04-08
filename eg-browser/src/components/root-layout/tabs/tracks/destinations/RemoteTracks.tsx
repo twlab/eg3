@@ -20,7 +20,6 @@ import {
 
 // Custom Hooks
 
-
 // External Libraries
 import JSON5 from "json5";
 
@@ -72,7 +71,7 @@ interface TrackState {
 }
 
 function AddTracks() {
-  useMidSizeNavigationTab()
+  useMidSizeNavigationTab();
   const currentSession = useAppSelector(selectCurrentSession);
   const customTracksPool = useAppSelector(selectCustomTracksPool);
   const [submitted, setSubmitted] = React.useState(false);
@@ -115,9 +114,7 @@ function AddTracks() {
 
   const needsIndex = TYPES_NEED_INDEX.includes(trackState.type.toLowerCase());
   const typeComplete = !!trackState.type;
-  const urlComplete =
-    !!trackState.url &&
-    (!needsIndex || !!(trackState.indexUrl ?? ""));
+  const urlComplete = !!trackState.url;
   const genomeComplete = !!trackState.metadata.genome;
   const canSubmit = typeComplete && urlComplete && genomeComplete;
 
@@ -159,11 +156,20 @@ function AddTracks() {
     setSubmitAttempted(true);
     if (!canSubmit) {
       if (!typeComplete) {
-        typeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        typeSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       } else if (!urlComplete) {
-        urlSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        urlSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       } else if (!genomeComplete) {
-        genomeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        genomeSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       }
       return;
     }
@@ -188,7 +194,7 @@ function AddTracks() {
       if (track.type === "genomealign" || track.type === "bigchain") {
         track.querygenome = trackState.queryGenome || currentSession.genomeId;
       }
-      console.log(track)
+      console.log(track);
       dispatch(addCustomTracksPool([...customTracksPool, track]));
       dispatch(addTracks(track));
       setSubmitted(true);
@@ -212,14 +218,14 @@ function AddTracks() {
     dispatch(
       updateCurrentSession({
         tracks: [...currentSession!.tracks, ...tracks],
-      })
+      }),
     );
   }
 
   const addedTrackUrls = useMemo(() => {
     if (currentSession) {
       return new Set(
-        currentSession!.tracks.map((track) => track.url || track.name)
+        currentSession!.tracks.map((track) => track.url || track.name),
       );
     } else {
       return new Set();
@@ -239,19 +245,20 @@ function AddTracks() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
       )}
       <div className="px-4 py-2 flex flex-col gap-4">
-
         {/* 1. Track Type */}
         <div ref={typeSectionRef} className="flex flex-col ">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
               Track Type{" "}
-              <span className="text-red-400 normal-case font-normal tracking-normal">*</span>
+              <span className="text-red-400 normal-case font-normal tracking-normal">
+                *
+              </span>
             </p>
             {submitAttempted && !typeComplete && (
               <span className="text-sm text-red-500">Required</span>
@@ -269,7 +276,9 @@ function AddTracks() {
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
               File URL{" "}
-              <span className="text-red-400 normal-case font-normal tracking-normal">*</span>
+              <span className="text-red-400 normal-case font-normal tracking-normal">
+                *
+              </span>
             </p>
             {submitAttempted && !urlComplete && (
               <span className="text-sm text-red-500">Required</span>
@@ -297,7 +306,9 @@ function AddTracks() {
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
               Assembly{" "}
-              <span className="text-red-400 normal-case font-normal tracking-normal">*</span>
+              <span className="text-red-400 normal-case font-normal tracking-normal">
+                *
+              </span>
             </p>
             {submitAttempted && !genomeComplete && (
               <span className="text-sm text-red-500">Required</span>
@@ -307,10 +318,11 @@ function AddTracks() {
             <select
               value={trackState.metadata.genome || genomesInSession[0]}
               onChange={(e) => handleTrackGenomeChange(e.target.value)}
-              className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${submitAttempted && !genomeComplete
-                ? "border-red-400 focus:ring-red-400"
-                : "border-gray-300 dark:border-gray-600"
-                }`}
+              className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${
+                submitAttempted && !genomeComplete
+                  ? "border-red-400 focus:ring-red-400"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
             >
               {genomesInSession.map((genome) => (
                 <option key={genome} value={genome}>
@@ -359,11 +371,10 @@ function AddTracks() {
             onClick={handleSubmit}
             outlined
             style={{
-
-
               // backgroundColor: "black",
               // color: "white",
-              width: "fit-content", padding: "8px 16px"
+              width: "fit-content",
+              padding: "8px 16px",
             }}
           >
             Add Track
@@ -421,13 +432,18 @@ interface SelectTrackTypeProps {
   hasError?: boolean;
 }
 
-function SelectTrackType({ selectedType, onTypeChange, hasError }: SelectTrackTypeProps) {
+function SelectTrackType({
+  selectedType,
+  onTypeChange,
+  hasError,
+}: SelectTrackTypeProps) {
   return (
     <select
-      className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${hasError
-        ? "border-red-400 focus:ring-red-400"
-        : "border-gray-300 dark:border-gray-600"
-        }`}
+      className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${
+        hasError
+          ? "border-red-400 focus:ring-red-400"
+          : "border-gray-300 dark:border-gray-600"
+      }`}
       value={selectedType}
       onChange={(e) => onTypeChange(e.target.value)}
     >
@@ -474,10 +490,11 @@ function TrackFileUrl({
       <input
         type="text"
         placeholder="https://example.com/track.bigWig"
-        className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${hasError
-          ? "border-red-400 focus:ring-red-400"
-          : "border-gray-300 dark:border-gray-600"
-          }`}
+        className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${
+          hasError
+            ? "border-red-400 focus:ring-red-400"
+            : "border-gray-300 dark:border-gray-600"
+        }`}
         value={url}
         onChange={(e) => onUrlChange(e.target.value)}
       />
@@ -486,7 +503,9 @@ function TrackFileUrl({
         <div className="flex flex-col gap-1">
           <label className="text-sm text-primary/60 dark:text-dark-primary/60">
             Index URL{" "}
-            <span className="opacity-70">— only if not co-located with data file</span>
+            <span className="opacity-70">
+              — only if not co-located with data file
+            </span>
           </label>
           <input
             type="text"
@@ -499,7 +518,9 @@ function TrackFileUrl({
       )}
       {showQueryGenome && (
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-primary/60 dark:text-dark-primary/60">Query Genome</label>
+          <label className="text-sm text-primary/60 dark:text-dark-primary/60">
+            Query Genome
+          </label>
           <input
             type="text"
             className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
@@ -576,7 +597,9 @@ function AddDataHubs() {
       }
     } catch (err: any) {
       setIsLoading(false);
-      const status = err?.status ? ` (${err.status} ${err.statusText ?? ""})`.trimEnd() : "";
+      const status = err?.status
+        ? ` (${err.status} ${err.statusText ?? ""})`.trimEnd()
+        : "";
       setError(`Cannot load the hub${status}. Check the URL and try again.`);
       return;
     }
@@ -590,7 +613,7 @@ function AddDataHubs() {
       "",
       false,
       0,
-      hubBase
+      hubBase,
     );
 
     if (tracks) {
@@ -599,7 +622,7 @@ function AddDataHubs() {
         dispatch(
           updateCurrentSession({
             tracks: [...session!.tracks, ...tracksToShow],
-          })
+          }),
         );
       }
       setIsLoading(false);
@@ -624,7 +647,7 @@ function AddDataHubs() {
           dispatch(
             updateCurrentSession({
               tracks: [...session!.tracks, ...tracks],
-            })
+            }),
           );
         }
       }
@@ -636,7 +659,7 @@ function AddDataHubs() {
   const addedTrackUrls = useMemo(() => {
     if (currentSession) {
       return new Set(
-        currentSession!.tracks.map((track) => track.url || track.name)
+        currentSession!.tracks.map((track) => track.url || track.name),
       );
     } else {
       return new Set();
@@ -646,7 +669,7 @@ function AddDataHubs() {
     dispatch(
       updateCurrentSession({
         tracks: [...currentSession!.tracks, ...tracks],
-      })
+      }),
     );
   }
   return (
@@ -662,7 +685,7 @@ function AddDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -689,14 +712,16 @@ function AddDataHubs() {
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
           />
-          <Button active={!!inputUrl && !isLoading} onClick={loadHub}
+          <Button
+            active={!!inputUrl && !isLoading}
+            onClick={loadHub}
             style={{
-
-
               // backgroundColor: "black",
               // color: "white",
-              width: "fit-content", padding: "8px 16px"
-            }}>
+              width: "fit-content",
+              padding: "8px 16px",
+            }}
+          >
             {isLoading ? "Loading…" : "Load Hub"}
           </Button>
           {error && <p className="text-sm text-red-500">{error}</p>}
@@ -704,7 +729,9 @@ function AddDataHubs() {
 
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-          <span className="text-sm text-primary/50 dark:text-dark-primary/50">or</span>
+          <span className="text-sm text-primary/50 dark:text-dark-primary/50">
+            or
+          </span>
           <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
         </div>
 

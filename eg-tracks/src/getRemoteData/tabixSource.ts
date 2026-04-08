@@ -64,12 +64,16 @@ class TabixSource {
   }
 
   /**
-   * Recreates the Tabix instance to clear any cached data
+   * Recreates the Tabix instance, optionally with a cache-busting fetch to bypass stale HTTP cache
    */
-  private recreateTabixInstance() {
+  private recreateTabixInstance(bustCache = false) {
+    const fetchFn = bustCache
+      ? (url: string, opts?: RequestInit) =>
+          fetch(url, { ...opts, cache: "no-store" })
+      : undefined;
     this.tabix = new TabixIndexedFile({
-      filehandle: new RemoteFile(this.url),
-      tbiFilehandle: new RemoteFile(this.indexUrl),
+      filehandle: new RemoteFile(this.url, { fetch: fetchFn }),
+      tbiFilehandle: new RemoteFile(this.indexUrl, { fetch: fetchFn }),
     });
   }
 
@@ -104,11 +108,8 @@ class TabixSource {
       this.chromNamingCache = ensembl.includes(firstChrom);
       return this.chromNamingCache;
     } catch (error) {
-      console.error(
-        "Error detecting chromosome naming. Check URL and file format.",
-        error,
-      );
-      return null;
+      console.error("Check URL and file format.", error);
+      throw error;
     }
   }
 
@@ -145,27 +146,20 @@ class TabixSource {
    * @return {Promise<BedRecord[]>} Promise for the data
    */
   getData = async (loci, basesPerPixel, options) => {
-    if (this.useEnsemblStyle === null && options.trackType !== "longrange") {
-      this.useEnsemblStyle = await this.detectChromosomeNaming();
-    }
-
     try {
+      if (this.useEnsemblStyle === null && options?.trackType !== "longrange") {
+        this.useEnsemblStyle = await this.detectChromosomeNaming();
+      }
+
       return await this.fetchSource(loci, options);
     } catch (error) {
-      throw error;
-      // try {
-      //   if (typeof window !== "undefined" && "caches" in window) {
-      //     const cacheNames = await caches.keys();
-      //     await Promise.all(
-      //       cacheNames.map((cacheName) => caches.delete(cacheName))
-      //     );
-      //   }
-      //   // recreate the fetch instance and retry once, because it might be a disk cache issue
-      //   this.recreateTabixInstance();
-      //   return await this.fetchSource(loci, options);
-      // } catch (error) {
-      //   throw error;
-      // }
+      try {
+        // Recreate with cache-busting fetch to bypass stale HTTP cache on retry
+        this.recreateTabixInstance(true);
+        return await this.fetchSource(loci, options);
+      } catch (error) {
+        throw error instanceof Error ? error : new Error(String(error));
+      }
     }
   };
 
@@ -196,7 +190,7 @@ class TabixSource {
   _parseLine = (line) => {
     const columns = line.split("\t");
     if (columns.length < 3) {
-      return;
+      return null;
     }
     let feature = {
       chr: columns[0],

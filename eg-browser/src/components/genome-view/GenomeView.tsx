@@ -23,7 +23,6 @@ import {
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 
-import { fetchBundle } from "../../lib/redux/thunk/session";
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { selectCurrentState } from "../../lib/redux/selectors";
 

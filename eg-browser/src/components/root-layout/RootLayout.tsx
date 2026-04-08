@@ -98,7 +98,9 @@ export interface GenomeHubProps {
 export default function RootLayout(props: GenomeHubProps) {
   useBrowserInitialization();
   const rootRef = useRef<HTMLDivElement>(null);
-  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
   const escapeHandlerRef = useRef<(() => void) | null>(null);
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
@@ -174,7 +176,6 @@ export default function RootLayout(props: GenomeHubProps) {
 
   // Reset state when session is cleared
   useEffect(() => {
-
     setLeftPanelOpen(false);
     dispatch(resetState());
     clearHistory();
@@ -249,7 +250,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                    props.viewRegion === null
+                  props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -270,12 +271,12 @@ export default function RootLayout(props: GenomeHubProps) {
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
@@ -357,27 +358,29 @@ export default function RootLayout(props: GenomeHubProps) {
                   onClick={() => setLeftPanelOpen((v) => !v)}
                   className="absolute
                rounded-full bg-white shadow"
-                  style={{ zIndex: 40, left: 0, top: navBarHeight + 66 }}
+                  style={{ zIndex: 40, left: 0, top: navBarHeight + 67 }}
                   count={sessionId ? null : sessions.length}
                   textContent={
-                    currentSession?.title
-                      ? (
-                        <div className="flex flex-row">
-                          <div>{`Current Session: "${currentSession.title}"`}</div>
-                          <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />
-                          <div className="flex items-center gap-1">
-                            <span>Session Bundle ID:</span>{" "}
-                            {currentSession.bundleId ? (
-                              <span className="text-blue-600">
-                                {currentSession.bundleId}
-                              </span>
-                            ) : (
-                              <span className="text-red-600">Not saved remotely</span>
-                            )}
-                          </div>
+                    currentSession?.title ? (
+                      <div className="flex flex-row">
+                        <div>{`Current Session: "${currentSession.title}"`}</div>
+                        <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />
+                        <div className="flex items-center gap-1">
+                          <span>Session Bundle ID:</span>{" "}
+                          {currentSession.bundleId ? (
+                            <span className="text-blue-600">
+                              {currentSession.bundleId}
+                            </span>
+                          ) : (
+                            <span className="text-red-600">
+                              Not saved remotely
+                            </span>
+                          )}
                         </div>
-                      )
-                      : "Previous sessions"
+                      </div>
+                    ) : (
+                      "Previous sessions"
+                    )
                   }
                 />
               )}
@@ -407,18 +410,17 @@ export default function RootLayout(props: GenomeHubProps) {
               <div
                 className="flex flex-1 h-full relative"
 
-              // onClick={
-              //   sessionPanelOpen
-              //     ? () => dispatch(setSessionPanelOpen(false))
-              //     : undefined
-              // }
+                // onClick={
+                //   sessionPanelOpen
+                //     ? () => dispatch(setSessionPanelOpen(false))
+                //     : undefined
+                // }
               >
                 {/* MARK: - Genome View */}
                 <div
                   className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
                   style={{
                     zIndex: 5,
-
                   }}
                 >
                   {!sessionId && (
@@ -470,7 +472,12 @@ export default function RootLayout(props: GenomeHubProps) {
           <MouseFollowingTooltip />
           <div
             ref={(el) => setPortalContainer(el as HTMLDivElement)}
-            style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 9000 }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 9000,
+            }}
           />
         </div>
       </PortalContext.Provider>

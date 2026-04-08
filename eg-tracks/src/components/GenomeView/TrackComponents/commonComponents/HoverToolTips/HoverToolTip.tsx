@@ -63,7 +63,7 @@ export const getHoverTooltip = {
 
     return {
       toolTip: (
-        <div >
+        <div>
           <div>
             <span className="Tooltip-major-text" style={{ marginRight: 3 }}>
               {dataObj.hasReverse && "Forward: "} {stringValue}
@@ -131,12 +131,12 @@ export const getHoverTooltip = {
       quanta: any[],
       relativeX: number,
       relativeY: number,
-      radius: number
+      radius: number,
     ) {
       const distances = quanta.map(
         (quantum) =>
           Math.pow(relativeX - (quantum.relativeX || 0), 2) +
-          Math.pow(relativeY - (quantum.relativeY || 0), 2)
+          Math.pow(relativeY - (quantum.relativeY || 0), 2),
       );
 
       const mindist = Math.min(...distances);
@@ -405,7 +405,7 @@ export const getHoverTooltip = {
         <div>
           {renderTooltipContentsForStrand(
             strandsAtPixel,
-            options.isCombineStrands ? "combined" : "forward"
+            options.isCombineStrands ? "combined" : "forward",
           )}
           {!options.isCombineStrands &&
             renderTooltipContentsForStrand(strandsAtPixel, "reverse")}
@@ -462,7 +462,7 @@ export const getHoverTooltip = {
             </div>,
             <div key={contextName + "value"}>
               {contextData.value.toFixed(2)}
-            </div>
+            </div>,
           );
         }
         details = (
@@ -483,7 +483,6 @@ export const getHoverTooltip = {
     }
   },
   interactionHeatmap: function getToolTip(dataObj) {
-
     const polygon = findPolygon(dataObj.relativeX, dataObj.relativeY);
 
     function renderTooltip() {
@@ -551,15 +550,29 @@ export const getHoverTooltip = {
 
     return beamElements
       ? {
-        beams: beamElements,
-        toolTip: (
-          <div>
-            <div>Locus1: {polygon.interaction.locus1.chr + ":" + polygon.interaction.locus1.start + "-" + polygon.interaction.locus1.end}</div>
-            <div>Locus2: {polygon.interaction.locus2.chr + ":" + polygon.interaction.locus2.start + "-" + polygon.interaction.locus2.end}</div>
-            <div>Score: {polygon.interaction.score}</div>
-          </div>
-        ),
-      }
+          beams: beamElements,
+          toolTip: (
+            <div>
+              <div>
+                Locus1:{" "}
+                {polygon.interaction.locus1.chr +
+                  ":" +
+                  polygon.interaction.locus1.start +
+                  "-" +
+                  polygon.interaction.locus1.end}
+              </div>
+              <div>
+                Locus2:{" "}
+                {polygon.interaction.locus2.chr +
+                  ":" +
+                  polygon.interaction.locus2.start +
+                  "-" +
+                  polygon.interaction.locus2.end}
+              </div>
+              <div>Score: {polygon.interaction.score}</div>
+            </div>
+          ),
+        }
       : "";
   },
   interactionArc: function getToolTip(dataObj: { [key: string]: any }) {
@@ -585,11 +598,11 @@ export const getHoverTooltip = {
               if (
                 sameLoci(
                   sortedArcs[j][4].locus1,
-                  tops[tops.length - 1][4].locus2
+                  tops[tops.length - 1][4].locus2,
                 ) &&
                 sameLoci(
                   sortedArcs[j][4].locus2,
-                  tops[tops.length - 1][4].locus1
+                  tops[tops.length - 1][4].locus1,
                 )
               ) {
                 continue;
@@ -638,7 +651,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-            item[2]
+              item[2],
           ) <=
           0.5 * item[3]
         ) {
@@ -654,7 +667,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-            item[2]
+              item[2],
           ) <=
           0.5 * item[3]
         ) {
@@ -696,14 +709,14 @@ export const getHoverTooltip = {
 
     return polygon
       ? {
-        toolTip: (
-          <div>
-            <div>Locus1: {interaction.locus1.toString()}</div>
-            <div>Locus2: {interaction.locus2.toString()}</div>
-            <div>Score: {interaction.score}</div>
-          </div>
-        ),
-      }
+          toolTip: (
+            <div>
+              <div>Locus1: {interaction.locus1.toString()}</div>
+              <div>Locus2: {interaction.locus2.toString()}</div>
+              <div>Score: {interaction.score}</div>
+            </div>
+          ),
+        }
       : "";
   },
   genomealignFine: function genomeAlignFetch(dataObj: { [key: string]: any }) {
@@ -714,10 +727,10 @@ export const getHoverTooltip = {
     const indexOfCusorSegment = drawData.reduce(
       (iCusor, x, i) =>
         x.targetXSpan.start < dataObj.relativeX &&
-          x.targetXSpan.end >= dataObj.relativeX
+        x.targetXSpan.end >= dataObj.relativeX
           ? i
           : iCusor,
-      NaN
+      NaN,
     );
     const cusorSegment = drawData[indexOfCusorSegment];
 
@@ -807,31 +820,40 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
     // windowwidth going over by 1 pixel because each region pixel array starts at 0
 
-    let trackHoverTooltip = getHoverTooltip[trackType]({
-      data:
-        isArrayNotEmpty(data) || (isObjectNotEmpty(data) && isDataValid(data))
-          ? data
-          : [],
-      trackModel,
-      data2:
-        isArrayNotEmpty(data2) ||
+    let trackHoverTooltip;
+    try {
+      trackHoverTooltip = getHoverTooltip[trackType]({
+        data:
+          isArrayNotEmpty(data) || (isObjectNotEmpty(data) && isDataValid(data))
+            ? data
+            : [],
+        trackModel,
+        data2:
+          isArrayNotEmpty(data2) ||
           (isObjectNotEmpty(data2) && isDataValid(data2))
-          ? data2
-          : [],
-      viewRegion,
-      width: windowWidth,
-      unit,
-      relativeX: dataIdxX,
-      relativeY: dataIdxY,
-      windowScrollY: window.scrollY,
-      hasReverse,
-      options,
-      viewWindow,
-      legendWidth,
-      targetRef,
-      scale,
-      xAlias,
-    });
+            ? data2
+            : [],
+        viewRegion,
+        width: windowWidth,
+        unit,
+        relativeX: dataIdxX,
+        relativeY: dataIdxY,
+        windowScrollY: window.scrollY,
+        hasReverse,
+        options,
+        viewWindow,
+        legendWidth,
+        targetRef,
+        scale,
+        xAlias,
+      });
+    } catch (err) {
+      trackHoverTooltip = {
+        toolTip: (
+          <div style={{ color: "red" }}>Tooltip error: {String(err)}</div>
+        ),
+      };
+    }
 
     if (trackHoverTooltip) {
       setPosition({
@@ -876,16 +898,15 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         height: height,
         position: "relative",
         zIndex: -1,
-
       }}
     >
       {isVisible ? (
         <>
           {options && options.trackManagerRef
             ? ReactDOM.createPortal(
-              rectPosition.beams,
-              options.trackManagerRef.current
-            )
+                rectPosition.beams,
+                options.trackManagerRef.current,
+              )
             : ""}
 
           {ReactDOM.createPortal(
@@ -895,7 +916,10 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
                 top: rectPosition.mouseYPos,
                 left: rectPosition.mouseXPos,
                 borderRadius: 4,
-                backgroundColor: trackType === "genomealignRough" ? "transparent" : "lightblue",
+                backgroundColor:
+                  trackType === "genomealignRough"
+                    ? "transparent"
+                    : "lightblue",
                 fontSize: 14,
                 zIndex: 9999,
               }}
@@ -903,7 +927,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
               {/* {rectPosition.dataIdxX} */}
               {rectPosition.toolTip}
             </div>,
-            portalTarget ?? document.body
+            portalTarget ?? document.body,
           )}
         </>
       ) : (

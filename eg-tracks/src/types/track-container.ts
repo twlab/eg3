@@ -17,7 +17,7 @@ export interface ITrackContainerState {
   onNewRegionSelect: (
     startbase: number,
     endbase: number,
-    highlightSearch?: boolean
+    highlightSearch?: boolean,
   ) => void;
   viewRegion: DisplayedRegionModel | undefined | null;
   userViewRegion: DisplayedRegionModel | undefined | null;
@@ -28,8 +28,8 @@ export interface ITrackContainerState {
   isScreenShotOpen: boolean;
   currentState: any;
   darkTheme: boolean;
-  width?: number;
-  height?: number;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -45,10 +45,10 @@ export interface ITrackContainerRepresentableProps {
   onTracksChange: (trackSelected: ITrackModel[]) => void | null | undefined;
   onSetSelected: (
     set: any,
-    genomeCoordinate: GenomeCoordinate | null
+    genomeCoordinate: GenomeCoordinate | null,
   ) => void | null | undefined;
   onNewRegionSelect: (
-    genomeCoordinate: GenomeCoordinate
+    genomeCoordinate: GenomeCoordinate,
   ) => void | null | undefined;
   viewRegion: GenomeCoordinate | null;
   userViewRegion: GenomeCoordinate | null;
@@ -60,8 +60,8 @@ export interface ITrackContainerRepresentableProps {
   overrideViewRegion: GenomeCoordinate | null;
   currentState: any;
   darkTheme: boolean;
-  height?: number;
-  width?: number;
+  height?: number | null;
+  width?: number | null;
 }
 
 // MARK: Track Model
