@@ -357,11 +357,26 @@ export default function RootLayout(props: GenomeHubProps) {
                   onClick={() => setLeftPanelOpen((v) => !v)}
                   className="absolute
                rounded-full bg-white shadow"
-                  style={{ zIndex: 40, left: 0, top: navBarHeight + 72 }}
+                  style={{ zIndex: 40, left: 0, top: navBarHeight + 66 }}
                   count={sessionId ? null : sessions.length}
                   textContent={
                     currentSession?.title
-                      ? `Current Session: "${currentSession.title}"`
+                      ? (
+                        <div className="flex flex-row">
+                          <div>{`Current Session: "${currentSession.title}"`}</div>
+                          <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />
+                          <div className="flex items-center gap-1">
+                            <span>Session Bundle ID:</span>{" "}
+                            {currentSession.bundleId ? (
+                              <span className="text-blue-600">
+                                {currentSession.bundleId}
+                              </span>
+                            ) : (
+                              <span className="text-red-600">Not saved remotely</span>
+                            )}
+                          </div>
+                        </div>
+                      )
                       : "Previous sessions"
                   }
                 />

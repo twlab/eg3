@@ -1469,11 +1469,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
           }}
         >
           <span>
-            {Array.isArray(errorInfo)
-              ? errorInfo.filter((gene) => typeof gene === "string")[0] ||
-              "Something went wrong"
-              : typeof errorInfo === "object" && errorInfo["error"]
-                ? errorInfo["error"]
+            {typeof errorInfo === "object" && errorInfo["Error"]
+              ? errorInfo["Error"] : Array.isArray(errorInfo)
+                ? errorInfo.filter((gene) => typeof gene === "string")[0] ||
+                "Something went wrong"
+
                 : "Something went wrong"}{" "}
           </span>
           <span>! Refresh page or click track to try again.</span>

@@ -59,9 +59,9 @@ export default function FileInput({
         >
           {children || (
             <>
-              <h2>{dragMessage}</h2>
-              <p>{orMessage}</p>
-              <h2>{clickMessage}</h2>
+              <h2 className="text-primary dark:text-dark-primary">{dragMessage}</h2>
+              <p className="text-primary/60 dark:text-dark-primary/60">{orMessage}</p>
+              <h2 className="text-primary dark:text-dark-primary">{clickMessage}</h2>
             </>
           )}
         </div>

@@ -19,18 +19,16 @@ interface MetadataHeaderProps {
 
 const MetadataHeader: React.FC<MetadataHeaderProps> = ({
   terms = [],
-  onNewTerms = () => undefined,
-  suggestedMetaSets,
-  onRemoveTerm,
+
   windowWidth = 800,
   padding,
 }) => {
 
   const termWidth = 15;
-  const buttonWidth = 120; // Approximate width for the Metadata button
+  const buttonWidth = 120;
   const totalContentWidth = Math.max(
     buttonWidth + terms.length * termWidth + (padding ? padding * 2 : 10),
-    windowWidth * 0.2 // Minimum width
+    windowWidth * 0.2
   );
 
   return (

@@ -2,7 +2,6 @@ import {
   createRef,
   memo,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -26,7 +25,6 @@ import TrackFactory from "./TrackComponents/TrackFactory";
 import BamSource from "../../getRemoteData/BamSource";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
-import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import {
   groupTracksArrMatPlot,
@@ -35,7 +33,7 @@ import {
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
-import { ITrackModel, Tool, ToolState } from "../../types";
+import { ITrackModel, Tool } from "../../types";
 import {
   GroupedTrackManager,
   numericalTracks,
@@ -86,12 +84,12 @@ export const convertTrackModelToITrackModel = (
 const groupManager = new GroupedTrackManager();
 
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
-  "ZoomOutOneThirdFold": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
-  "ZoomOutOneFold": { factor: 2, text: "1×", title: "Zoom out 1-fold" },
-  "ZoomOutFiveFold": { factor: 5, text: "5×", title: "Zoom out 5-fold" },
-  "ZoomInOneThirdFold": { factor: 2 / 3, text: "⅓×", title: "Zoom in 1/3-fold" },
-  "ZoomInOneFold": { factor: 0.5, text: "1×", title: "Zoom in 1-fold" },
-  "ZoomInFiveFold": { factor: 0.2, text: "5×", title: "Zoom in 5-fold" },
+  [Tool.ZoomOutOneThirdFold]: { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
+  [Tool.ZoomOutOneFold]: { factor: 2, text: "1×", title: "Zoom out 1-fold (Alt+O)" },
+  [Tool.ZoomOutFiveFold]: { factor: 5, text: "5×", title: "Zoom out 5-fold" },
+  [Tool.ZoomInOneThirdFold]: { factor: 2 / 3, text: "⅓×", title: "Zoom in 1/3-fold" },
+  [Tool.ZoomInOneFold]: { factor: 0.5, text: "1×", title: "Zoom in 1-fold (Alt+I)" },
+  [Tool.ZoomInFiveFold]: { factor: 0.2, text: "5×", title: "Zoom in 5-fold" },
 };
 
 function sumArray(numbers: Array<any>) {
@@ -206,7 +204,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   currentState,
   darkTheme,
 }) {
-  const escapeHandlerRef = useContext(EscapeHandlerContext);
+  const padding = Math.max(8, Math.min(12, windowWidth * 0.008));
+  const fontSize = Math.max(12, Math.min(12, windowWidth * 0.009));
 
   //useRef to store data between states without re render the component
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
@@ -218,7 +217,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const initialLoad = useRef(true);
 
   const useFineModeNav = useRef(false);
-  const lastSelectedTool = useRef(tool);
+  const lastSelectedTool = useRef<string | null>(null);
   const dragOn = useRef(true);
   const prevWindowWidth = useRef<number>(0);
   const trackManagerId = useRef("");
@@ -542,6 +541,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
 
   // MARK: mouseAction
+  const handleKeyDown = useCallback((event: { key: string }) => {
+    if (event.key === "Escape") {
+      // let newSelectedTool: { [key: string]: any } = {};
+      // newSelectedTool["tool"] = "none";
+      // newSelectedTool["isSelected"] = false;
+      // setSelectedTool(newSelectedTool);
+      onTrackUnSelect();
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+      onConfigMenuClose();
+    }
+  }, []); // onTrackUnSelect and onConfigMenuClose defined below with useCallback
+
   const handleMouseEnter = useCallback(() => {
     isMouseInsideRef.current = true;
     // Cache the bounding rect when mouse enters
@@ -2223,26 +2234,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       endbase += amountToExpand;
     }
 
-    const VIEW_REGION_TOOL_SET = new Set([
-      Tool.Reorder,
-      Tool.Zoom,
-      Tool.PanLeft,
-      Tool.PanRight,
-      Tool.highlightMenu,
-      Tool.ZoomOutOneThirdFold,
-      Tool.ZoomOutOneFold,
-      Tool.ZoomOutFiveFold,
-      Tool.ZoomInOneThirdFold,
-      Tool.ZoomInOneFold,
-      Tool.ZoomInFiveFold,
-      "isJump",
-    ]);
-
-    if (VIEW_REGION_TOOL_SET.has(String(toolTitle))) {
+    // drag select zoom in or zoom factor options or regionController/highlight jump
+    if (
+      String(toolTitle) in zoomFactors ||
+      toolTitle === Tool.Zoom ||
+      toolTitle === Tool.PanLeft ||
+      toolTitle === Tool.PanRight ||
+      toolTitle === "isJump"
+    ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
+      // onNewRegionSelect(startbase, endbase, highlightSearch);
       throttleOnNewRegionSelect.current(startbase, endbase, highlightSearch);
-    } else if (toolTitle === Tool.Highlight) {
+    }
+    // adding new highlight region
+    else if (toolTitle === Tool.Highlight) {
       let newHightlight = {
         start: startbase,
         end: endbase,
@@ -2288,27 +2294,51 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return resHighlights;
   }
 
-  /**
-   * Compute the selectedTool state object from the current ToolState.
-   * Also updates dragOn.current to match toolState.dragTool.
-   * Does NOT process action tools (those are handled in a separate effect).
-   */
-  function toolSelect(toolState: ToolState) {
-    const newSelectedTool: { [key: string]: any } = { isSelected: false };
+  function toolSelect(toolTitle: string) {
+    const newSelectedTool: { [key: string]: any } = {};
+    newSelectedTool["isSelected"] = false;
 
-    dragOn.current = toolState.dragTool;
-
-    const toggleTool = toolState.tool;
-    // Reorder, Highlight, and Zoom require an interactive drag-select area
-    if (
-      toggleTool === Tool.Reorder ||
-      toggleTool === Tool.Highlight ||
-      toggleTool === Tool.Zoom
-    ) {
-      newSelectedTool.isSelected = true;
+    if (toolTitle === Tool.PanLeft) {
+      onRegionSelected(
+        Math.round(bpX.current - bpRegionSize.current),
+        Math.round(bpX.current),
+        toolTitle,
+      );
+    } else if (toolTitle === Tool.PanRight) {
+      onRegionSelected(
+        Math.round(bpX.current + bpRegionSize.current),
+        Math.round(bpX.current + bpRegionSize.current * 2),
+        toolTitle,
+      );
+    } else if (String(toolTitle) in zoomFactors) {
+      let useDisplayFunction = new DisplayedRegionModel(
+        genomeConfig.navContext,
+        bpX.current,
+        bpX.current + bpRegionSize.current,
+      );
+      let res = useDisplayFunction.zoom(zoomFactors[`${toolTitle}`].factor);
+      onRegionSelected(
+        res._startBase as number,
+        res._endBase as number,
+        toolTitle,
+      );
+    } else {
+      if (
+        tool.tool &&
+        tool.tool !== Tool.highlightMenu &&
+        tool.tool !== Tool.ReorderMany &&
+        tool.tool !== Tool.History
+      ) {
+        newSelectedTool.isSelected = true;
+      }
     }
 
-    newSelectedTool.title = toggleTool || Tool.Drag;
+    if (!tool.tool) {
+      newSelectedTool["title"] = Tool.Drag;
+    } else {
+      newSelectedTool["title"] = toolTitle;
+    }
+
     isToolSelected.current = newSelectedTool.isSelected;
 
     return newSelectedTool;
@@ -2506,7 +2536,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         preloadedTracks.current = {};
         preload.current = false;
         initialLoad.current = false;
-        setSelectedTool(toolSelect(tool));
+        setSelectedTool((prevState) => {
+          if (
+            tool.tool &&
+            (tool.tool === Tool.Reorder ||
+              tool.tool === Tool.Highlight ||
+              tool.tool === Tool.Zoom)
+          ) {
+            const newSelectedTool = toolSelect(tool.tool);
+            return newSelectedTool;
+          } else {
+            return {
+              isSelected: false,
+              title: Tool.Drag,
+            };
+          }
+        });
         // When a track refreshes or a new genome is initialize, we
         // select the region that was selected before the refresh after the track is
         // created
@@ -2776,6 +2821,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("keydown", handleKeyDown);
 
     // Add click event listener to the track container
     const trackContainer = block.current;
@@ -2794,6 +2840,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     return () => {
+      document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
@@ -2833,47 +2880,88 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, []);
 
-  // Update selectedTool state when toggle tool or drag state changes
   useEffect(() => {
     if (!initialLoad.current) {
-      lastSelectedTool.current = tool;
-      setSelectedTool(toolSelect(tool));
+      dragOn.current = tool.dragTool;
+      const toggleTool = tool.tool;
+      if (toggleTool !== null) {
+        lastSelectedTool.current = toggleTool;
+        setSelectedTool(toolSelect(toggleTool));
+      } else {
+        setSelectedTool(toolSelect(lastSelectedTool.current ?? Tool.Drag));
+      }
     }
   }, [tool.tool, tool.dragTool]);
 
-  // Process action tools (pan/zoom buttons). Fires each time actionCount increments.
   useEffect(() => {
     if (!initialLoad.current && tool.actionTool) {
-      const actionName = tool.actionTool;
-      if (actionName === Tool.PanLeft) {
-        onRegionSelected(
-          Math.round(bpX.current - bpRegionSize.current),
-          Math.round(bpX.current),
-          actionName,
-        );
-      } else if (actionName === Tool.PanRight) {
-        onRegionSelected(
-          Math.round(bpX.current + bpRegionSize.current),
-          Math.round(bpX.current + bpRegionSize.current * 2),
-          actionName,
-        );
-      } else if (actionName in zoomFactors) {
-        const useDisplayFunction = new DisplayedRegionModel(
-          genomeConfig.navContext,
-          bpX.current,
-          bpX.current + bpRegionSize.current,
-        );
-        const res = useDisplayFunction.zoom(zoomFactors[actionName].factor);
-        onRegionSelected(
-          res._startBase as number,
-          res._endBase as number,
-          actionName,
-        );
-      }
+      toolSelect(tool.actionTool);
     }
   }, [tool.actionCount]);
 
+  function getDeviceType(): "mobile" | "tablet" | "desktop" {
+    const userAgent = navigator.userAgent;
+    const isTouchDevice =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const screenWidth = window.innerWidth;
 
+    // Check for mobile
+    if (
+      /android|webos|iphone|ipod|blackberry|iemobile|opera mini/i.test(
+        userAgent,
+      )
+    ) {
+      return "mobile";
+    }
+
+    // Check for tablet
+    if (
+      /ipad|tablet|playbook|silk/i.test(userAgent) ||
+      (isTouchDevice && screenWidth >= 768 && screenWidth <= 1024)
+    ) {
+      return "tablet";
+    }
+
+    // Check by screen size and touch capability
+    if (isTouchDevice && screenWidth < 768) {
+      return "mobile";
+    }
+
+    return "desktop";
+  }
+
+  // Calculate responsive widths based on screen size
+  function getResponsiveWidths() {
+    const baseWidth1080 = 1080; // Reference width for 85%/15%
+    const baseWidth1920 = 2560; // Reference width for 88%/12%
+
+    // At 1080px: 85% / 15%
+    if (windowWidth <= baseWidth1080) {
+      return {
+        mainWidth: "85%",
+        metaWidth: "15%",
+      };
+    }
+
+    // Between 1080px and 1920px: interpolate from 85%/15% to 88%/12%
+    if (windowWidth <= baseWidth1920) {
+      const progress =
+        (windowWidth - baseWidth1080) / (baseWidth1920 - baseWidth1080);
+      const mainWidth = 85 + (75 - 85) * progress; // 85% to 88%
+      const metaWidth = 15 + (25 - 15) * progress; // 15% to 12%
+
+      return {
+        mainWidth: `${mainWidth}%`,
+        metaWidth: `${metaWidth}%`,
+      };
+    }
+
+    // Above 1920px: keep normal 88%/12% split
+    return {
+      mainWidth: "60%",
+      metaWidth: "40%",
+    };
+  }
   // MARK: trackSizeCha
   function deleteCache() {
     for (const key in trackFetchedDataCache.current) {
@@ -3561,9 +3649,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (toolbarContainer) {
       toolbarContainer.style.visibility = configMenu ? "hidden" : "visible";
     }
-
-
-    escapeHandlerRef.current = configMenu ? checkOutsideClick : null;
   }, [configMenu]);
 
   // MARK: viewWIndow useeffect
@@ -3690,10 +3775,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     <div
       style={{
         backgroundColor: "var(--bg-color)",
-        marginLeft: 15,
-        marginBottom: 60,
-        marginRight: 30,
-
+        paddingLeft: "15px",
+        marginBottom: "50px",
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
@@ -3710,8 +3793,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             style={{
               backgroundColor: "var(--bg-color)",
               width: `${windowWidth + 120}px`,
-              marginTop: 8,
-              marginBottom: 4,
+              marginTop: padding / 3 + 1 + 17,
+              marginBottom: padding / 3,
               display: "flex",
               flexDirection: windowWidth <= 600 ? "column" : "row",
               alignItems: windowWidth <= 600 ? "stretch" : "center",
@@ -3725,7 +3808,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 alignItems: "center",
                 justifyContent: "start",
                 flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
-                marginTop: "15px"
               }}
             >
               <div
@@ -3743,16 +3825,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         !onNewRegionSelect ? () => { } : onNewRegionSelect
                       }
                       windowWidth={windowWidth}
-                      buttonPadding={6}
-                      gapSize="0.25rem"
-                      fontSize={16}
+                      buttonPadding={padding / 2}
                     />
                   ) : (
                     ""
                   )}
                 </div>
               </div>
-              <div className="h-5 border-r border-gray-400" />
+              <span style={{ width: "1px" }} className="self-stretch bg-gray-300 dark:bg-gray-600" />
               {userViewRegion && (
                 <div
                   style={{
@@ -3766,8 +3846,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     className="bg tool-element"
                     style={{
                       display: "flex",
-                      paddingLeft: 8,
-                      paddingRight: 8,
+                      paddingLeft: padding - 2,
+                      paddingRight: 6,
                       alignItems: "center",
                       flexShrink: 0,
                       fontStyle: "italic",
@@ -3777,7 +3857,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       style={{
                         backgroundColor: "var(cd --bg-color)",
                         color: "var(--font-color)",
-                        fontSize: "1rem",
+                        fontSize: `${Math.max(13, fontSize)}px`,
                         margin: 0,
                         whiteSpace: "nowrap",
                       }}
@@ -3791,17 +3871,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   </div>
                 </div>
               )}
-              <div className="h-5 border-r border-gray-400" />
-              <div style={{ display: "flex", alignItems: "center", marginTop: 1, marginBottom: 1 }}>
+
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <div
                   className="MetadataHeader-button"
-                  style={{ paddingLeft: 8 }}
+                  style={{
+
+
+                  }}
                 >
                   <button
                     onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
-                    className="flex items-center rounded-sm px-1"
+                    className="flex items-center rounded-xs px-1"
                     style={{
-                      outline: isShowingEditMenu
+                      border: isShowingEditMenu
                         ? "1px solid #1e40af"
                         : "1px solid #1d4ed8",
                       backgroundColor: "#eff6ff",
@@ -3810,12 +3893,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     }}
                     title="Metadata options"
                   >
-                    <span className="text-xs font-medium">Metadata</span>
+                    <span className="text-xs">Metadata</span>
                     <motion.div
                       animate={{ rotate: isShowingEditMenu ? 90 : 0 }}
                       transition={{ duration: 0.2 }}
+
                     >
-                      <ChevronRightIcon className="w-4 h-4" />
+                      <ChevronRightIcon />
                     </motion.div>
                   </button>
                   <div>
@@ -3838,7 +3922,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 justifyContent: "flex-end",
 
-                marginTop: windowWidth <= 1080 ? 4 : 0,
+                marginTop:
+                  windowWidth <= 1080
+                    ? padding / 2
+                    : 0,
               }}
             >
               <MetadataHeader
@@ -3847,8 +3934,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 suggestedMetaSets={metaSets.suggestedMetaSets}
                 onRemoveTerm={onRemoveTerm}
                 windowWidth={windowWidth}
-                fontSize={16}
-                padding={8}
+                fontSize={Math.max(14, fontSize)}
+                padding={padding}
               />
             </div>
           </div>
@@ -3922,8 +4009,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           style={{
                             width: `${windowWidth + 120}px`,
                             position: "relative",
-
-
+                            marginTop: "1px",
+                            marginBottom: "1px",
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 

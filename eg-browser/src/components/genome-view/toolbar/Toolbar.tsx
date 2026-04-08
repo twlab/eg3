@@ -43,17 +43,11 @@ interface ToolbarProps {
     highlightSearch?: boolean,
   ) => void;
   windowWidth?: number;
-  buttonPadding?: number;
-  gapSize?: number;
-  fontSize?: number;
   viewRegion?: any;
 }
 const Toolbar: React.FC<ToolbarProps> = ({
   onNewRegionSelect,
   windowWidth,
-  gapSize = 8,
-  fontSize = 16,
-  buttonPadding = 6,
 }) => {
   const toolState = useAppSelector(selectToolState);
   const dispatch = useAppDispatch();
@@ -63,7 +57,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const historyBtnRef = useRef<HTMLButtonElement>(null);
 
   const currentState = useAppSelector(selectCurrentState);
-  const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
+
   const {
     undo,
     redo,
@@ -79,6 +73,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   }, [_genomeConfig]);
 
   // Helper functions for responsive sizing
+  const fontSize = Math.max(14, Math.min(18, (windowWidth || 1920) * 0.0083));
+
+
   const getIconSize = () => {
     return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
   };
@@ -150,7 +147,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         >
           <motion.div
             className="flex flex-row items-center"
-            style={{ gap: gapSize }}
+            style={{ gap: 1 }}
           >
             <button
               onClick={() => handleToolClick(Tool.Drag)}

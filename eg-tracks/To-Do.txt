@@ -1,3 +1,15 @@
+
+
+4/07/2026
+check when loading a lot tracks
+check negative bigwig more. 
+check sessions, custom genome, region sets
+test error, by giving false geneArr/ (Error caught, maybe add error check for hover and )
+allow to choose sessions in home when loading
+add ensembl to the locals 
+test remote fetch more add back checks 
+
+
 4/02/2026
 (check more) fix error when remote local add track and wrong file for type
 (fnish) fix size

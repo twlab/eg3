@@ -15,7 +15,7 @@ import OpenInterval from "../../../models/OpenInterval";
 import "./MainPane.css";
 
 const WHEEL_ZOOM_SPEED = 0.2;
-const SVG_HEIGHT = 70;
+const SVG_HEIGHT = 66;
 
 // const CHROMOSOME_Y = 10;
 const CHROMOSOME_Y = 0;

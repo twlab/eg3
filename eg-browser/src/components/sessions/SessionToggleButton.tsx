@@ -15,7 +15,7 @@ export default function SessionToggleButton({
   className?: string;
   style?: React.CSSProperties;
   count?: number | null;
-  textContent?: string;
+  textContent?: React.ReactNode;
 }) {
   return (
     <motion.button
@@ -26,13 +26,13 @@ export default function SessionToggleButton({
       style={style}
       aria-label={open ? "Close panel" : "Open panel"}
     >
-      <div className="flex items-center outline-none rounded-full bg-white dark:bg-dark-secondary shadow px-1">
+      <div className="flex items-center outline-none rounded-full bg-white dark:bg-dark-secondary shadow p-0.5 px-2">
         {typeof count === "number" ? (
           <span className="inline-flex items-center justify-center w-5 h-5 mr-1 text-xs rounded-full bg-blue-600 text-white">
             {count}
           </span>
         ) : null}
-        <span className="text-xs text-primary dark:text-dark-primary whitespace-nowrap">
+        <span className="text-xs text-primary dark:text-dark-primary">
           {textContent}
         </span>
 

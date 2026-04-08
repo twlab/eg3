@@ -9,6 +9,7 @@ import JSON5 from "json5";
 
 import { readFileAsText, TrackModel } from "wuepgg3-track";
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
+import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
 
 export default function LocalTracks() {
   return (
@@ -55,7 +56,7 @@ const ONE_TRACK_FILE_LIST = [
 ]; // all lower case
 
 function AddLocalTracks() {
-  useExpandedNavigationTab();
+  useMidSizeNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
   const [trackState, setTrackState] = React.useState<LocalTrackState>({
@@ -68,6 +69,7 @@ function AddLocalTracks() {
   });
 
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
+  const trackFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleTypeChange = (type: string) => {
     const indexSuffix = type.toLowerCase() === "bam" ? ".bai" : ".tbi";
@@ -225,10 +227,26 @@ function AddLocalTracks() {
             <span className="text-sm text-red-500">Required</span>
           )}
         </div>
-        <TrackFileUpload
-          onFileChange={handleFileChange}
-          hasError={submitAttempted && !filesComplete}
+        <input
+          ref={trackFileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => handleFileChange(e.target.files)}
         />
+        <div className="max-w-md mx-auto w-full">
+          <div
+            className={`w-full border-dashed border-1 rounded-md h-40 flex flex-col items-center justify-center cursor-pointer ${submitAttempted && !filesComplete ? "border-red-400" : "border-gray-400"
+              }`}
+            onClick={() => trackFileInputRef.current?.click()}
+            onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <h2>Drag and drop track files here</h2>
+            <p>- or -</p>
+            <h2>Click to select files</h2>
+          </div>
+        </div>
       </div>
 
       {/* 3. Assembly */}
@@ -324,37 +342,6 @@ function SelectTrackType({ selectedType, onTypeChange }: SelectTrackTypeProps) {
   );
 }
 
-interface TrackFileUploadProps {
-  onFileChange: (files: FileList | null) => void;
-  hasError?: boolean;
-}
-
-function TrackFileUpload({ onFileChange, hasError }: TrackFileUploadProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  return (
-    <>
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(e) => onFileChange(e.target.files)}
-      />
-      <div
-        className={`max-w-md mx-auto w-full border-dashed border-2 rounded-md h-32 flex flex-col items-center justify-center cursor-pointer text-center px-4 ${hasError ? "border-red-400" : "border-gray-400 dark:border-gray-600"
-          }`}
-        onClick={() => inputRef.current?.click()}
-        onDrop={(e) => { e.preventDefault(); onFileChange(e.dataTransfer.files); }}
-        onDragOver={(e) => e.preventDefault()}
-      >
-        <p className="text-sm text-primary dark:text-dark-primary">Drag and drop track files here</p>
-        <p className="text-sm text-primary/50 dark:text-dark-primary/50">— or —</p>
-        <p className="text-sm text-primary dark:text-dark-primary">Click to select files</p>
-      </div>
-    </>
-  );
-}
-
 interface ConfigureTrackProps {
   onOptionsChange: (value: string) => void;
 }
@@ -373,7 +360,7 @@ function ConfigureTrack({ onOptionsChange }: ConfigureTrackProps) {
 // MARK: - Add Local Hub
 
 function AddLocalHub() {
-  useExpandedNavigationTab();
+  useMidSizeNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
   const folderInputRef = React.useRef<HTMLInputElement>(null);
@@ -494,15 +481,17 @@ function AddLocalHub() {
           webkitdirectory="true"
           onChange={(e) => handleFileChange(e.target.files)}
         />
-        <div
-          className="max-w-md mx-auto w-full border-dashed border-2 border-gray-400 dark:border-gray-600 rounded-md h-32 flex flex-col items-center justify-center cursor-pointer text-center px-4"
-          onClick={() => folderInputRef.current?.click()}
-          onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
-          onDragOver={(e) => e.preventDefault()}
-        >
-          <p className="text-sm text-primary dark:text-dark-primary">Drag and drop folder here</p>
-          <p className="text-sm text-primary/50 dark:text-dark-primary/50">— or —</p>
-          <p className="text-sm text-primary dark:text-dark-primary">Click to select a folder</p>
+        <div className="max-w-md mx-auto w-full">
+          <div
+            className="w-full border-dashed border-1 border-gray-400 rounded-md h-40 flex flex-col items-center justify-center cursor-pointer"
+            onClick={() => folderInputRef.current?.click()}
+            onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <h2>Drag and drop folder here</h2>
+            <p>- or -</p>
+            <h2>Click to select a folder</h2>
+          </div>
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
@@ -519,15 +508,17 @@ function AddLocalHub() {
           multiple
           onChange={(e) => handleFileChange(e.target.files)}
         />
-        <div
-          className="max-w-md mx-auto w-full border-dashed border-2 border-gray-400 dark:border-gray-600 rounded-md h-32 flex flex-col items-center justify-center cursor-pointer text-center px-4"
-          onClick={() => multiInputRef.current?.click()}
-          onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
-          onDragOver={(e) => e.preventDefault()}
-        >
-          <p className="text-sm text-primary dark:text-dark-primary">Drag and drop files here</p>
-          <p className="text-sm text-primary/50 dark:text-dark-primary/50">— or —</p>
-          <p className="text-sm text-primary dark:text-dark-primary">Click to select files</p>
+        <div className="max-w-md mx-auto w-full">
+          <div
+            className="w-full border-dashed border-1 border-gray-400 rounded-md h-40 flex flex-col items-center justify-center cursor-pointer"
+            onClick={() => multiInputRef.current?.click()}
+            onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <h2>Drag and drop files here</h2>
+            <p>- or -</p>
+            <h2>Click to select files</h2>
+          </div>
         </div>
       </div>
     </div>

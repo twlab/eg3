@@ -265,12 +265,12 @@ export default function NavBar() {
       {/* Single full-width navbar row */}
       <div
         ref={navRef}
-        className="flex flex-row items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600  relative  px-2 gap-1"
+        className="flex flex-row pt-1 pb-1 items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600  relative  px-2 gap-1"
       >
         {/* Back button */}
         {currentSession ? (
           <BackspaceIcon
-            className="size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary cursor-pointer"
+            className="size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary cursor-pointer transition-colors duration-150 hover:text-red-500 dark:hover:text-red-400"
             onClick={() => {
               dispatch(setSessionPanelOpen(false));
               dispatch(setCurrentSession(null));
@@ -562,35 +562,35 @@ export default function NavBar() {
                     <Button
                       onClick={(e) => openTab("tracks", e)}
                       active={currentTab === "tracks"}
-                      style={{ backgroundColor: "#bec6fb", color: "black", width: "fit-content", padding: "4px 6px" }}
+                      style={{ backgroundColor: "#dbe0ff", color: "#1e1b4b", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
                     >
                       Tracks
                     </Button>
                     <Button
                       onClick={(e) => openTab("apps", e)}
                       active={currentTab === "apps"}
-                      style={{ backgroundColor: "#95E1D3", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
+                      style={{ backgroundColor: "#dafdf7", color: "#064e3b", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
                     >
                       Apps
                     </Button>
                     <Button
                       onClick={(e) => openTab("share", e)}
                       active={currentTab === "share"}
-                      style={{ backgroundColor: "#EAFFD0", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
+                      style={{ backgroundColor: "#e6f9d2", color: "#14532d", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
                     >
                       Share
                     </Button>
                     <Button
                       onClick={(e) => openTab("settings", e)}
                       active={currentTab === "settings"}
-                      style={{ backgroundColor: "#ffbebe", color: "black", width: "fit-content", padding: "4px 6px" }}
+                      style={{ backgroundColor: "#ffc4c4", color: "#7f1d1d", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
                     >
                       Settings
                     </Button>
                     <Button
                       onClick={(e) => openTab("help", e)}
                       active={currentTab === "help"}
-                      style={{ backgroundColor: "#FCE38A", color: "#0f172a", width: "fit-content", padding: "4px 6px" }}
+                      style={{ backgroundColor: "#fff1be", color: "#713f12", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
                     >
                       Help
                     </Button>

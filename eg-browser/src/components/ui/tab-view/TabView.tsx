@@ -52,7 +52,7 @@ export default function TabView<T extends string>({
                 "relative",
                 centerTabs ? "flex-1 text-center px-2" : "px-4",
                 isActive
-                  ? "bg-white dark:bg-dark-background border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 -mb-px z-10 shadow-sm"
+                  ? "bg-white dark:bg-dark-background border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 z-10 shadow-sm"
                   : "bg-transparent border-transparent text-primary dark:text-dark-primary hover:text-blue-500 dark:hover:text-blue-300",
               ].join(" ")}
             >

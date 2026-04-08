@@ -127,6 +127,7 @@ function AddTracks() {
 
   const handleUrlChange = (url: string) => {
     setTrackState((prev) => ({ ...prev, url, urlError: "" }));
+    setSubmitted(false);
   };
 
   const handleIndexUrlChange = (indexUrl: string) => {

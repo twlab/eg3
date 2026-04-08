@@ -449,14 +449,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
         return (
           <div className={classes.emptyState}>
             {/* <div style={{ fontSize: "48px", marginBottom: "12px" }}>📝</div> */}
-            <h3
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: "18px",
-                color: "#333",
-                fontWeight: "600",
-              }}
-            >
+            <h3 className="text-gray-800 dark:text-dark-primary font-semibold text-lg mb-2">
               No Sessions Saved
             </h3>
             <p
@@ -490,8 +483,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       }
       const buttons = sessions.map(([id, session]: any, index: number) => (
         <li key={id} className={classes.sessionItem}>
-          <span className="text-sm font-medium text-black ml-4 shrink-0">{index + 1}.</span>
-          <span className="flex-1 text-sm">
+          <span className="text-sm font-medium text-primary dark:text-dark-primary ml-4 shrink-0">{index + 1}.</span>
+          <span className="flex-1 text-sm text-primary dark:text-dark-primary">
             <>{session.label}</> -{" "}
             {new Date(session.date).toLocaleString()}
           </span>
@@ -544,10 +537,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
         <div>
           {/* Table Header */}
           <div className="grid grid-cols-[1fr_auto_auto] gap-3 mt-3">
-            <h1 className="text-md">Sessions In Bundle ({sessions.length}) </h1>
+            <h1 className="text-md text-primary dark:text-dark-primary">Sessions In Bundle ({sessions.length}) </h1>
 
             <div className="flex items-center gap-3">
-              <span className="text-sm">Sort by:</span>
+              <span className="text-sm text-primary dark:text-dark-primary">Sort by:</span>
               <label className="flex items-center gap-1 cursor-pointer text-sm">
                 <input
                   type="radio"
@@ -642,21 +635,21 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
   const classes: any = {
 
     emptyState:
-      "border-2 border-dashed rounded-lg p-8 text-center bg-white text-gray-600 mt-2",
+      "border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary mt-2",
     sessionItem:
-      "outline outline-gray-100 rounded-md text-xs flex justify-between items-center bg-white",
+      "outline outline-gray-100 dark:outline-gray-700 rounded-md text-xs flex justify-between items-center bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary",
     bundleCode:
-      "flex-1 text-xs text-gray-900 font-mono overflow-hidden truncate",
+      "flex-1 text-xs text-gray-900 dark:text-gray-100 font-mono overflow-hidden truncate",
     label: "block mb-2",
     row: "flex flex-wrap items-center gap-2",
     additionalActions: "flex flex-wrap gap-2 mt-2",
-    disclaimer: "pt-4  italic",
+    disclaimer: "pt-4 italic text-primary dark:text-dark-primary",
     emphasis: "font-semibold",
-    link: "text-blue-600 hover:text-blue-800",
+    link: "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300",
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-dark-surface rounded-lg p-3 shadow-sm">
+    <div className="w-full max-w-2xl mx-auto bg-secondary dark:bg-dark-secondary rounded-lg p-3 shadow-sm">
       <div className={classes.inputContainer}>
         {!withGenomePicker && (
           <>
@@ -664,7 +657,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               <input
                 type="text"
 
-                className="w-70 h-7 px-2  outline outline-gray-300 rounded-md bg-white text-sm truncate"
+                className="w-70 h-7 px-2 outline outline-gray-300 dark:outline-gray-600 rounded-md bg-secondary dark:bg-dark-secondary dark:text-dark-primary text-primary text-sm truncate"
                 placeholder="Session Bundle ID"
                 value={retrieveId}
                 onChange={(e) => setRetrieveId(e.target.value.trim())}
@@ -715,19 +708,9 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                             marginTop: "10px"
                           }}
                         >
-                          <h1 className="text-mdshrink-0">Add New Session To Bundle</h1>
+                          <h1 className="text-md shrink-0 text-primary dark:text-dark-primary">Add New Session To Bundle</h1>
 
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-
-                              padding: "2px",
-                              backgroundColor: "#f8f9fa",
-                              borderRadius: "4px",
-
-                            }}
-                          >
+                          <div className="flex items-center p-0.5 bg-[#f8f9fa] dark:bg-dark-secondary rounded">
                             <code
                               onClick={handleCopyBundleId}
                               onMouseEnter={() => setCodeHover(true)}
@@ -757,7 +740,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                                 : "ID will generate after saving a session"}
                             </code>
                             {copiedId && (
-                              <span style={{ fontSize: 12, color: "#2b8a3e" }}>
+                              <span className="text-xs text-green-600 dark:text-green-400 ml-1">
                                 Copied
                               </span>
                             )}
@@ -774,7 +757,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                             <input
                               type="text"
                               value={newSessionLabel}
-                              className="w-full pr-20 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm h-7"
+                              className="w-full pr-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm h-7"
                               placeholder="Enter new session name (optional)"
                               onChange={(e) =>
                                 setNewSessionLabel(e.target.value.trim())
@@ -787,6 +770,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                             />
                             <button
                               type="button"
+                              className="text-primary dark:text-dark-primary hover:opacity-60"
                               style={{
                                 position: "absolute",
                                 right: "48px",
@@ -795,18 +779,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                                 background: "none",
                                 border: "none",
                                 cursor: "pointer",
-                                color: "black",
                                 padding: "4px",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                               }}
-                              onMouseOver={(e) =>
-                                (e.currentTarget.style.color = "grey")
-                              }
-                              onMouseOut={(e) =>
-                                (e.currentTarget.style.color = "black")
-                              }
                               onClick={saveSession}
                               title="Save session (Enter)"
                             >
@@ -972,7 +949,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                               }
                             }}
                             placeholder="Enter new session name (optional)"
-                            className="flex-1 h-7 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                            className="flex-1 h-7 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm"
                           />
                           <Button
                             onClick={handleAttemptSave}
