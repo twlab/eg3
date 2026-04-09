@@ -35,7 +35,7 @@ const navContext = genome.makeNavContext();
 // text track longrange chr6:521000000-53000000
 // dbedgraph : "chr6:52424900-52425400"
 
-const defaultRegion = navContext.parse("chr6:52150941-52162744");
+const defaultRegion = "chr6:52150941-52162744";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

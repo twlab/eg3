@@ -9,7 +9,7 @@ const allSize = chromSize.map(genom => new Chromosome(genom.chr, genom.size));
 const genome = new Genome("aplCal3", allSize);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("NW_004797271.1:1373953-1413093");
+const defaultRegion = "NW_004797271.1:1373953-1413093";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

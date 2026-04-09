@@ -31,7 +31,7 @@ const genome = new Genome("calJac3", [
     new Chromosome("chrY", 2853901)
 ]);
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:52425276-52425961");
+const defaultRegion = "chr6:52425276-52425961";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

@@ -2,13 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 import NotFound from "./NotFound";
 import NavigationToolbar from "./NavigationToolbar";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
-import { motion, AnimatePresence } from "framer-motion";
+// animations removed: no framer-motion
 
 export interface NavigationPathElement {
   path: string;
@@ -35,10 +36,11 @@ export interface NavigationDestinationOptions {
 interface NavigationStackContext {
   path: NavigationPath;
   setPath: (path: NavigationPath) => void;
+  panelCounter?: number;
 }
 
 const NavigationStackContext = createContext<NavigationStackContext | null>(
-  null
+  null,
 );
 
 export function useNavigation() {
@@ -52,7 +54,7 @@ export function useNavigation() {
     (path: NavigationPathElement) => {
       context?.setPath([...context.path, path]);
     },
-    [context]
+    [context],
   );
 
   const pop = useCallback(() => {
@@ -76,72 +78,92 @@ export default function NavigationStack({
   children,
   destinations = [],
   rootOptions,
+  panelCounter,
+  onPathChange,
 }: {
   children: React.ReactNode;
   destinations?: NavigationDestination[];
   rootOptions?: NavigationDestinationOptions;
+  panelCounter?: number;
+  onPathChange?: (path: NavigationPath) => void;
 }) {
   const { ref, width, height } = useElementGeometry();
+  useEffect(() => {
+    if (panelCounter) { if (path.length > 0) setPath(path.slice(0, -1)); }
 
-  const [path, setPath] = useState<NavigationPath>([]);
+  }, [panelCounter]);
+  const [path, setPathState] = useState<NavigationPath>([]);
+  const setPath = (p: NavigationPath) => {
+    setPathState(p);
+    onPathChange?.(p);
+  };
 
   const destinationMap: Record<string, NavigationDestination> = useMemo(
     () =>
-      destinations.reduce((acc, destination) => {
-        acc[destination.path] = destination;
-        return acc;
-      }, {} as Record<string, NavigationDestination>),
-    [destinations]
+      destinations.reduce(
+        (acc, destination) => {
+          acc[destination.path] = destination;
+          return acc;
+        },
+        {} as Record<string, NavigationDestination>,
+      ),
+    [destinations],
   );
 
   const currentDestination = useMemo(
     () =>
       path.length > 0 ? destinationMap[path[path.length - 1]?.path] : null,
-    [destinationMap, path]
+    [destinationMap, path],
   );
 
   const currentOptions = useMemo(
     () => (path.length > 0 ? currentDestination?.options : rootOptions),
-    [path.length, currentDestination?.options, rootOptions]
+    [path.length, currentDestination?.options, rootOptions],
   );
 
   return (
-    <NavigationStackContext.Provider value={{ path, setPath }}>
+    <NavigationStackContext.Provider value={{ path, setPath, panelCounter }}>
       <div className="flex flex-col h-full bg-white dark:bg-dark-background">
-        <NavigationToolbar options={currentOptions} />
-        <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
-          <motion.div
-            className="px-4 pb-4 absolute overflow-y-scroll"
-            animate={{
-              x: path.length > 0 ? "-33%" : 0,
-              opacity: path.length > 0 ? 0.3 : 1,
+        {/* <NavigationToolbar
+          options={currentOptions}
+          canGoBack={path.length > 0}
+          pop={() => setPath(path.slice(0, -1))}
+        /> */}
+        <div className="relative flex-1 overflow-hidden min-w-[5vw]" ref={ref}>
+          <div
+            className="absolute overflow-y-scroll"
+            style={{
+              width,
+              height,
+              // transform: path.length > 0 ? "translateX(-33%)" : "translateX(0)",
+              // opacity: path.length > 0 ? 0.3 : 1,
+              // transition: "transform 220ms ease, opacity 220ms ease",
             }}
-            style={{ width, height }}
           >
             {children}
-          </motion.div>
-          <AnimatePresence mode="popLayout">
-            {path.map((element, idx) => {
-              const destination =
-                destinationMap[element.path] ?? notFoundDestination;
+          </div>
 
-              return (
-                <motion.div
-                  key={element.path}
-                  className="px-4 pb-4 absolute overflow-y-scroll bg-white dark:bg-dark-background"
-                  initial={{ x: "100%" }}
-                  animate={{ x: idx === path.length - 1 ? 0 : "-33%" }}
-                  exit={{ x: "100%" }}
-                  style={{
-                    width,
-                    height,
-                  }}
-                >
-                  <destination.component params={element.params} />
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+          {path.map((element, idx) => {
+            const destination =
+              destinationMap[element.path] ?? notFoundDestination;
+            // const transform =
+            //   idx === path.length - 1 ? "translateX(0)" : "translateX(-33%)";
+
+            return (
+              <div
+                key={element.path}
+                className="absolute overflow-y-scroll bg-white dark:bg-dark-background"
+                style={{
+                  width,
+                  height,
+                  // transform,
+                  // transition: "transform 220ms ease",
+                }}
+              >
+                <destination.component params={element.params} />
+              </div>
+            );
+          })}
         </div>
       </div>
     </NavigationStackContext.Provider>

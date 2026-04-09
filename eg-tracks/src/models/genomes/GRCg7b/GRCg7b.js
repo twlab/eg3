@@ -50,7 +50,7 @@ const genome = new Genome("GRCg7b", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("2:35209534-36156443");
+const defaultRegion = "2:35209534-36156443";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

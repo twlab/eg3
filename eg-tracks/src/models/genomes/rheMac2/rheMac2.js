@@ -6,7 +6,7 @@ import chromSize from "./chromSize.json";
 const allSize = chromSize.map(genom => new Chromosome(genom.chr, genom.size));
 const genome = new Genome("rheMac2", allSize);
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr1:4702809-4709639");
+const defaultRegion = "chr1:4702809-4709639";
 
 const defaultTracks = [
   new TrackModel({

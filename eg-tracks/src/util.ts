@@ -112,6 +112,7 @@ export async function fetchDataHubTracks(hub: any) {
 }
 
 export function getGenomeConfig(genome: string) {
+
   return getGenomeConfigFromAllGenomes(genome);
 }
 

@@ -57,6 +57,7 @@ import GRCg7b from "./GRCg7b/GRCg7b";
 import GRCg7w from "./GRCg7w/GRCg7w";
 import phaw5 from "./phaw5/phaw5";
 import mCalJa1_2_pat_X from "./mCalJa1.2.pat.X/mCalJa1.2.pat.X";
+import mT2T_Y_v1 from "./mT2T-Y_v1.0/mT2T-Y_v1.0";
 
 /**
  * All available genomes.
@@ -121,6 +122,7 @@ export const allGenomes = [
   GRCg7w,
   phaw5,
   mCalJa1_2_pat_X,
+  mT2T_Y_v1,
 ];
 
 export const genomeNameToConfig = {};
@@ -143,7 +145,7 @@ interface SpeciesConfig {
 
 export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
   human: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Human.png",
+    logoUrl: "",
     assemblies: [
       HG19.genome.getName(),
       HG38.genome.getName(),
@@ -153,7 +155,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   chimp: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Chimp.png",
+    logoUrl: "",
     assemblies: [
       PANTRO6.genome.getName(),
       PANTRO5.genome.getName(),
@@ -166,6 +168,12 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     assemblies: [gorGor4.genome.getName(), gorGor3.genome.getName()],
     color: "yellow",
   },
+  mT2T_Y_v1: {
+    logoUrl: "",
+    assemblies: [mT2T_Y_v1.genome.getName()],
+    color: "yellow",
+  },
+
   gibbon: {
     logoUrl: "https://vizhub.wustl.edu/public/nomLeu3/Gibbon.png",
     assemblies: [nomLeu3.genome.getName()],
@@ -217,7 +225,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "yellow",
   },
   mouse: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Mouse.png",
+    logoUrl: "",
     assemblies: [
       MM39.genome.getName(),
       MM10.genome.getName(),
@@ -226,7 +234,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "yellow",
   },
   rat: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Rat.png",
+    logoUrl: "",
     assemblies: [
       RN7.genome.getName(),
       RN6.genome.getName(),
@@ -240,7 +248,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   chicken: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Chicken.png",
+    logoUrl: "",
     assemblies: [
       GRCg7w.genome.getName(),
       GRCg7b.genome.getName(),
@@ -255,7 +263,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   zebrafish: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Zebrafish.png",
+    logoUrl: "",
     assemblies: [
       DAN_RER11.genome.getName(),
       DAN_RER10.genome.getName(),
@@ -274,18 +282,18 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   "fruit fly": {
-    logoUrl: "https://epigenomegateway.wustl.edu/legacy/images/Fruit%20fly.png",
+    logoUrl: "",
     assemblies: [DM6.genome.getName()],
     color: "white",
   },
   "c.elegans": {
-    logoUrl: "https://epigenomegateway.wustl.edu/legacy/images/C.elegans.png",
+    logoUrl: "",
     assemblies: [CE11.genome.getName()],
     color: "black",
   },
   arabidopsis: {
     logoUrl:
-      "https://epigenomegateway.wustl.edu/browser/images/Arabidopsis.png",
+      "",
     assemblies: [AraTha1.genome.getName()],
     color: "yellow",
   },
@@ -300,13 +308,13 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "white",
   },
   yeast: {
-    logoUrl: "https://epigenomegateway.wustl.edu/browser/images/Yeast.png",
+    logoUrl: "",
     assemblies: [SACCER3.genome.getName()],
     color: "black",
   },
   "P. falciparum": {
     logoUrl:
-      "https://epigenomegateway.wustl.edu/browser/images/Pfalciparum.png",
+      "",
     assemblies: [Pfal3D7.genome.getName()],
     color: "black",
   },
@@ -351,6 +359,7 @@ export function getGenomeConfig(genomeName: string): GenomeConfig | null {
 }
 
 export function getSpeciesInfo(genomeName: string) {
+
   for (const [species, details] of Object.entries(treeOfLife)) {
     if (details.assemblies.includes(genomeName)) {
       return { name: species, logo: details.logoUrl, color: details.color };

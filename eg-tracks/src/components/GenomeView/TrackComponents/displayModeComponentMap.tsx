@@ -95,7 +95,6 @@ export const trackUsingExpandedLoci = {
   hic: "",
   longrange: "",
   genomealign: "",
-
 };
 
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
@@ -157,7 +156,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         let curEleStyle: any = configOptions.forceSvg
           ? {
             position: "relative",
-            transform: `translateX(${-trackState.viewWindow.start}px)`,
+            transform: `translateX(${-trackState.visData.viewWindow.start}px)`,
           }
           : {};
 
@@ -174,12 +173,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                   ...curEleStyle,
                 }}
               >
-                <svg
-                  key={svgKey}
-                  width={width}
-                  height={height}
-                  display={"block"}
-                >
+                <svg key={svgKey} width={trackState.visWidth} height={height}>
                   {placements.map(renderAnnotation)}
                 </svg>
               </div>
@@ -189,24 +183,24 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       return (
-        <svg key={svgKey} width={width} height={height}>
+        <svg key={svgKey} width={trackState.visWidth} height={height}>
           {placements.map(renderAnnotation)}
-          {/* <line
-            x1={width / 3}
+          <line
+            x1={trackState.visData.viewWindow.start}
             y1={0}
-            x2={width / 3}
+            x2={trackState.visData.viewWindow.start}
             y2={height}
             stroke="black"
             strokeWidth={1}
           />
           <line
-            x1={(2 * width) / 3}
+            x1={trackState.visData.viewWindow.end}
             y1={0}
-            x2={(2 * width) / 3}
+            x2={trackState.visData.viewWindow.end}
             y2={height}
             stroke="black"
             strokeWidth={1}
-          /> */}
+          />
         </svg>
       );
     }
@@ -1164,8 +1158,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
   }) {
     const canvasElements = (
       <RulerComponent
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
-        width={trackState.visWidth}
+        viewRegion={objToInstanceAlign(trackState.visData.visRegion)}
+        width={trackState.visData.visWidth}
         trackModel={trackModel}
         selectedRegion={
           trackState.genomicFetchCoord
@@ -1176,9 +1170,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
             : trackState.visRegion
         }
         viewWindow={
-          trackState.viewWindow
-            ? trackState.viewWindow
-            : new OpenInterval(0, trackState.visWidth)
+          trackState?.visData?.viewWindow
+            ? trackState?.visData?.viewWindow
+            : new OpenInterval(0, trackState.visData.visWidth)
         }
         updatedLegend={updatedLegend}
         genomeConfig={genomeConfig}
@@ -1248,7 +1242,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 key={generateUUID()}
                 width={drawData.trackState.visWidth}
                 height={drawData.configOptions.height}
-                display={"block"}
               >
                 {svgElements}
               </svg>
@@ -1285,7 +1278,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
               key={generateUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
-              display={"block"}
             >
               {svgElements}
             </svg>
@@ -1364,7 +1356,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 <svg
                   width={drawData.trackState.visWidth}
                   height={drawData.configOptions.height}
-                  display={"block"}
                 >
                   {svgElements}
                 </svg>
@@ -1397,7 +1388,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
             <svg
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
-              display={"block"}
             >
               {svgElements}
             </svg>
@@ -1473,14 +1463,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             gap: "2px",
           }}
         >
-          <span>
-            {Array.isArray(errorInfo)
-              ? errorInfo.filter((gene) => typeof gene === "string")[0] ||
-              "Something went wrong"
-              : typeof errorInfo === "object" && errorInfo["error"]
-                ? errorInfo["error"]
-                : "Something went wrong"}{" "}
-          </span>
+          <span>{errorInfo ? errorInfo : "Something went wrong"}</span>
           <span>! Refresh page or click track to try again.</span>
           <span
             style={{
@@ -1523,7 +1506,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     ...createCommonParams(extraParams),
   });
 
-  // Error handling
+  // when theres an error
   if (drawData.errorInfo) {
     return displayModeComponentMap.error(
       createCommonParams({
@@ -1533,7 +1516,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     );
   }
 
-  // Special cases with unique parameter patterns
+  //  unique parameter patterns
   if (trackType === "ruler") {
     return displayModeComponentMap.ruler(
       createCommonParams({
@@ -1717,42 +1700,7 @@ function formatRepeatMasker(
     const regionGroups: any[][] = regionLoci.map(() => []);
 
     for (const record of genesArr) {
-      const [
-        label,
-        scoreStr,
-        orientation,
-        swScore,
-        milliDiv,
-        milliDel,
-        milliIns,
-        genoLeft,
-        repClass,
-        repFamily,
-        repStart,
-        repEnd,
-        repLeft,
-      ] = record.rest.split("\t");
-
-      const feature = new RepeatMaskerFeature({
-        genoLeft,
-        label,
-        max: record.end,
-        milliDel,
-        milliDiv,
-        milliIns,
-        min: record.start,
-        orientation,
-        repClass,
-        repEnd,
-        repFamily,
-        repLeft,
-        repStart,
-        score: Number(scoreStr),
-        segment: record.chr,
-        swScore,
-        type: "bigbed",
-        _chromId: record.chromId,
-      });
+      const feature = new RepeatMaskerFeature(record);
 
       for (let i = 0; i < regionLoci.length; i++) {
         if (
@@ -1770,44 +1718,7 @@ function formatRepeatMasker(
     return regionGroups;
   }
 
-  return genesArr.map((record) => {
-    const [
-      label,
-      scoreStr,
-      orientation,
-      swScore,
-      milliDiv,
-      milliDel,
-      milliIns,
-      genoLeft,
-      repClass,
-      repFamily,
-      repStart,
-      repEnd,
-      repLeft,
-    ] = record.rest.split("\t");
-
-    return new RepeatMaskerFeature({
-      genoLeft,
-      label,
-      max: record.end,
-      milliDel,
-      milliDiv,
-      milliIns,
-      min: record.start,
-      orientation,
-      repClass,
-      repEnd,
-      repFamily,
-      repLeft,
-      repStart,
-      score: Number(scoreStr),
-      segment: record.chr,
-      swScore,
-      type: "bigbed",
-      _chromId: record.chromId,
-    });
-  });
+  return genesArr.map((feature) => new RepeatMaskerFeature(feature));
 }
 function formatRmskv2Masker(
   genesArr: any[],
@@ -2304,7 +2215,6 @@ function formatMatplotData(
   regionLoci?: Array<any>,
 ) {
   if (initialLoad && regionLoci?.length) {
-
     const groupResult: any = regionLoci.map(() => []);
 
     genesArr.forEach((geneArr: any[]) => {
@@ -2608,7 +2518,6 @@ function formatVcf(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 
@@ -2733,8 +2642,8 @@ const formatFunctions: {
 export function formatDataByType(
   genesArr: any[],
   type: string,
-  initialLoad: boolean,
-  regionLoci: Array<any>,
+  initialLoad: boolean = false,
+  regionLoci?: Array<any>,
 ) {
   if (!genesArr) {
     return { error: "No data available" };

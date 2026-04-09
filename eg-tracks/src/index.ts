@@ -3,6 +3,7 @@ export * from "./genome-hub";
 export * from "./types";
 export * from "./models";
 export { default as GenomeViewer } from "./components/index";
+export { default as TrackRegionController } from "./components/GenomeView/genomeNavigator/TrackRegionController";
 export {
   getGenomeDefaultState,
   getGenomeConfig,
@@ -10,3 +11,6 @@ export {
   fetchDataHubTracks,
   generateUUID
 } from "./util";
+export { getSpeciesInfo } from "./models/genomes/allGenomes";
+export { default as PortalContext } from "./lib/PortalContext";
+export { default as EscapeHandlerContext } from "./lib/EscapeHandlerContext";

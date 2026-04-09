@@ -133,7 +133,7 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: function getGenePadding(
       feature: Feature,
-      xSpan: OpenInterval
+      xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
       const estimatedLabelWidth = feature.getName().length * 9;
@@ -159,7 +159,7 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: function getGenePadding(
       feature: Feature,
-      xSpan: OpenInterval
+      xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
       const estimatedLabelWidth = feature.getName().length * 9;
@@ -230,12 +230,12 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultAnnotationTrack,
       ...defaultNumericalTrack,
       ...defaultFiberTrack,
-      displayMode: NumericalDisplayModes.AUTO,
+      displayMode: "auto",
       aggregateMethod: DefaultAggregators.types.COUNT,
     },
     getGenePadding: function getGenePadding(
       feature: Fiber,
-      xSpan: OpenInterval
+      xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
       const estimatedLabelWidth = feature.getName().length * 9;
@@ -263,7 +263,7 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: function getGenePadding(
       feature: Feature,
-      xSpan: OpenInterval
+      xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
       const estimatedLabelWidth = feature.getName().length * 9;
@@ -285,7 +285,7 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: function getGenePadding(
       feature: JasparFeature,
-      xSpan: OpenInterval
+      xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
       const estimatedLabelWidth = feature.getName().length * 9;

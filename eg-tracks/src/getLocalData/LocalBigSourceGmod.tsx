@@ -7,21 +7,69 @@ import { BlobFile } from "generic-filehandle2";
  *
  * @author Daofeng Li
  */
+
+const ensembl: Array<string> = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "X",
+  "Y",
+  "M",
+];
 class LocalBigSourceGmod {
   blob: any;
   bw: BigWig;
+  private chromNamingCache: boolean | null = null;
+
   /**
    *
    * @param {string} url - the URL from which to fetch data
    */
   constructor(blob) {
     this.blob = blob;
-    // console.log(this.blob);
     this.bw = new BigWig({
       filehandle: new BlobFile(blob),
     });
+    this.chromNamingCache = null;
   }
 
+  async detectChromosomeNaming(): Promise<boolean | null> {
+    if (this.chromNamingCache !== null) {
+      return this.chromNamingCache;
+    }
+    try {
+      const header = await this.bw.getHeader();
+      const firstChrom = Object.keys(header.refsByName || {})[0];
+      if (!firstChrom) {
+        this.chromNamingCache = false;
+        return false;
+      }
+      this.chromNamingCache = ensembl.includes(firstChrom);
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error("Error detecting chromosome naming. Check URL and file format.");
+      return null;
+    }
+  }
   /**
    * Gets BigWig or BigBed features inside the requested locations.
    *
@@ -32,10 +80,9 @@ class LocalBigSourceGmod {
    */
   async getData(loci, options) {
     try {
+      const isEnsembl = options.ensemblStyle ?? (await this.detectChromosomeNaming());
       const promises = loci.map((locus) => {
-        let chrom = options.ensemblStyle
-          ? locus.chr.replace("chr", "")
-          : locus.chr;
+        let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
         if (chrom === "M") {
           chrom = "MT";
         }

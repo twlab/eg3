@@ -4,7 +4,6 @@ import {
   updateCurrentSession,
 } from "../../../../../lib/redux/slices/browserSlice";
 import {
-  resetState,
   selectBundle,
   selectCustomTracksPool,
   updateBundle,
@@ -19,12 +18,18 @@ import {
   GenomeCoordinate,
   GenomeSerializer,
   getGenomeConfig,
+  RegionSet,
 } from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
+import TabSessionUI from "./TabSessionUI";
+import { GenomeHubManager } from "wuepgg3-track";
 
-const Session: React.FC = () => {
+
+const Session: React.FC<{ tab?: boolean }> = () => {
+
+
   useExpandedNavigationTab();
   const dispatch = useAppDispatch();
 
@@ -45,29 +50,35 @@ const Session: React.FC = () => {
     currentSession &&
     _genomeConfig &&
     bundle &&
-    currentSession.genomeId === _genomeConfig.name
+    (currentSession.genomeId === _genomeConfig.id || currentSession.genomeId === _genomeConfig.name)
+
   ) {
     const highlights = currentSession.highlights;
     const isShowingNavigator = isNavigatorVisible;
     const regionSets = currentSession.regionSets;
     const tracks = currentSession.tracks;
-    const selectedRegionSet = currentSession.selectedRegionSet;
-    const userViewRegion = currentSession.userViewRegion;
+    const selectedRegionSet = currentSession?.selectedRegionSet;
+    const userViewRegion = currentSession?.userViewRegion;
 
-    let curViewInterval;
     const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
-    if (userViewRegion) {
-      const navContext = genomeConfig.navContext as NavigationContext;
-      const parsed = navContext.parse(userViewRegion);
-      const { start, end } = parsed;
-
-      curViewInterval = {
-        start,
-        end,
-      };
-    } else {
-      curViewInterval = genomeConfig.defaultRegion;
+    const navContext = genomeConfig.navContext as NavigationContext;
+    let setNavContext;
+    if (selectedRegionSet) {
+      if (typeof selectedRegionSet === "object") {
+        const newRegionSet = RegionSet.deserialize(selectedRegionSet);
+        setNavContext = newRegionSet.makeNavContext();
+      } else {
+        setNavContext = selectedRegionSet.makeNavContext();
+      }
     }
+
+    const curViewInterval: any = setNavContext
+      ? userViewRegion
+        ? setNavContext.parse(userViewRegion)
+        : setNavContext.parse(genomeConfig.defaultRegion)
+      : userViewRegion
+        ? navContext.parse(userViewRegion)
+        : navContext.parse(genomeConfig.defaultRegion);
 
     curUserState = {
       bundleId: bundle.bundleId,
@@ -90,9 +101,11 @@ const Session: React.FC = () => {
       regionSets,
       trackLegendWidth: 120,
       tracks,
-      viewRegion: userViewRegion,
+      viewRegion: userViewRegion ? userViewRegion : currentSession.viewRegion,
       viewInterval: curViewInterval,
+      title: currentSession?.title ? currentSession.title : "Untitled Session",
     };
+
   }
   //provide data to genomeTracks to new current bundle session
   function onRestoreSession(sessionBundle: any) {
@@ -112,15 +125,21 @@ const Session: React.FC = () => {
 
       dispatch(addCustomGenomeRemote(_newGenomeConfig));
       newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
-    } else if (getGenomeConfig(sessionBundle.genomeId)) {
+    }
+    else if (getGenomeConfig(sessionBundle.genomeId)) {
       newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
-    } else if (
-      sessionBundle.viewRegion &&
-      typeof sessionBundle.viewRegion === "object"
-    ) {
-      newGenomeConfig = getGenomeConfig(
-        sessionBundle.viewRegion._navContext._name
-      );
+    } else {
+      const cachedGenome = GenomeHubManager.getInstance().getGenomeFromCache(sessionBundle.genomeId);
+      if (cachedGenome) {
+        newGenomeConfig = GenomeSerializer.deserialize(cachedGenome);
+      } else if (
+        sessionBundle.viewRegion &&
+        typeof sessionBundle.viewRegion === "object"
+      ) {
+        newGenomeConfig = getGenomeConfig(
+          sessionBundle.viewRegion._navContext._name,
+        );
+      }
     }
     if (
       newGenomeConfig &&
@@ -130,7 +149,7 @@ const Session: React.FC = () => {
       coordinate = new DisplayedRegionModel(
         newGenomeConfig?.navContext,
         sessionBundle.viewRegion._startBase,
-        sessionBundle.viewRegion._endBase
+        sessionBundle.viewRegion._endBase,
       ).currentRegionAsString() as GenomeCoordinate | null;
     } else if (newGenomeConfig && sessionBundle.viewRegion !== undefined) {
       coordinate = sessionBundle.viewRegion;
@@ -138,7 +157,7 @@ const Session: React.FC = () => {
       coordinate = new DisplayedRegionModel(
         newGenomeConfig?.navContext,
         sessionBundle.viewInterval.start,
-        sessionBundle.viewInterval.end
+        sessionBundle.viewInterval.end,
       ).currentRegionAsString() as GenomeCoordinate | null;
     }
 
@@ -164,6 +183,7 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
+
     dispatch(updateCurrentSession(session));
   }
 
@@ -175,7 +195,7 @@ const Session: React.FC = () => {
         dispatch(
           updateCurrentSession({
             bundleId: newBundle.bundleId,
-          })
+          }),
         );
       }
     }
@@ -184,23 +204,36 @@ const Session: React.FC = () => {
   //add or delete session from bundle
   function onUpdateBundle(bundle: any) {
     let title = "Untitled Session";
-    if (bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
-      title = bundle.sessionsInBundle[`${bundle.currentId}`].label
+    if (
+      bundle.sessionsInBundle &&
+      bundle.sessionsInBundle[`${bundle.currentId}`]
+    ) {
+      title = bundle.sessionsInBundle[`${bundle.currentId}`].label;
     }
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId, title }));
   }
-  return (
-    <SessionUI
-      onRestoreSession={onRestoreSession}
+  return <TabSessionUI
+    onRestoreSession={onRestoreSession}
+    onRetrieveBundle={onRetrieveBundle}
+    updateBundle={onUpdateBundle}
+    bundleId={bundle.bundleId ? bundle.bundleId : ""}
+    curBundle={bundle}
+    state={curUserState}
+  />
 
-      onRetrieveBundle={onRetrieveBundle}
-      updateBundle={onUpdateBundle}
-      bundleId={bundle.bundleId ? bundle.bundleId : ""}
-      curBundle={bundle}
-      state={curUserState}
-    />
-  );
+  // tab ? (
+  //   <SessionUI
+  //     onRestoreSession={onRestoreSession}
+  //     onRetrieveBundle={onRetrieveBundle}
+  //     updateBundle={onUpdateBundle}
+  //     bundleId={bundle.bundleId ? bundle.bundleId : ""}
+  //     curBundle={bundle}
+  //     state={curUserState}
+  //   />
+  // ) : (
+
+  // );
 };
 
 export default Session;

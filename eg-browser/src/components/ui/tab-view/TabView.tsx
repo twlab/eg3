@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 interface ITabViewItem<T extends string> {
   label: string;
@@ -10,54 +9,62 @@ interface ITabViewItem<T extends string> {
 export default function TabView<T extends string>({
   tabs,
   initialTab,
+  selectedTab: controlledTab,
+  onTabChange,
+  className,
+  centerTabs,
 }: {
   tabs: ITabViewItem<T>[];
   initialTab?: T;
+  selectedTab?: T;
+  onTabChange?: (value: T) => void;
+  className?: string;
+  centerTabs?: boolean;
 }) {
-  const [selectedTabId, setSelectedTabId] = useState<T>(
-    initialTab ?? tabs[0].value
+  const [internalTabId, setInternalTabId] = useState<T>(
+    initialTab ?? tabs[0].value,
   );
+
+  const isControlled = controlledTab !== undefined;
+  const selectedTabId = isControlled ? controlledTab : internalTabId;
+
+  const setSelectedTabId = (value: T) => {
+    if (!isControlled) setInternalTabId(value);
+    onTabChange?.(value);
+  };
 
   const selectedTab = useMemo(
     () => tabs.find((t) => t.value === selectedTabId),
-    [tabs, selectedTabId]
+    [tabs, selectedTabId],
   );
 
   return (
-    <div className="flex flex-col gap-1 h-full">
-      <div className="flex flex-row items-center justify-between gap-1 bg-gray-300 dark:bg-dark-surface rounded-lg p-1 relative">
-        <div
-          className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
-          style={{
-            width: `calc(${100 / tabs.length}% - 8px)`,
-            left: `calc(${(selectedTab
-              ? tabs.findIndex((t) => t.value === selectedTab.value)
-              : 0) * 100
-              }% / ${tabs.length} + 4px)`,
-          }}
-        />
-        {tabs.map((tab) => (
-          <div
-            key={tab.value}
-            className="text-primary dark:text-dark-primary relative flex-1 text-center py-1 rounded-lg cursor-pointer z-10 transition-colors"
-            onClick={() => setSelectedTabId(tab.value)}
-          >
-            {tab.label}
-          </div>
-        ))}
+    <div className={`flex flex-col min-h-0 ${centerTabs ? "w-full" : ""} ${className ?? ""}`}>
+      <div className={`flex flex-row items-end border-b border-gray-300 dark:border-gray-600 ${centerTabs ? "w-full" : ""}`}>
+        {tabs.map((tab) => {
+          const isActive = tab.value === selectedTabId;
+          return (
+            <button
+              key={tab.value}
+              onClick={() => setSelectedTabId(tab.value)}
+              className={[
+                "py-1 text-sm font-bold cursor-pointer outline-none transition-all rounded-t-md border border-b-0",
+                "relative",
+                centerTabs ? "flex-1 text-center px-2" : "px-4",
+                isActive
+                  ? "bg-white dark:bg-dark-background border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 z-10 shadow-sm"
+                  : "bg-transparent border-transparent text-primary dark:text-dark-primary hover:text-blue-500 dark:hover:text-blue-300",
+              ].join(" ")}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={selectedTabId}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="flex-1"
-        >
-          {selectedTab?.component}
-        </motion.div>
-      </AnimatePresence>
+
+      <div className="flex-1 min-h-0">
+        {selectedTab?.component}
+      </div>
     </div>
   );
 }

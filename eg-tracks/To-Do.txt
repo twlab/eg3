@@ -1,3 +1,38 @@
+4/09/26
+finish ADD ERROR CHECK TO FORMAT
+finsh LOAD FILE SESSION WITHOUT NEEDED BVUNDLE ID
+finsh check when loading a lot tracks
+finsh  check negative bigwig more. 
+finish remote hub add shwoOnLoad
+
+save remotely, working in new and old browser
+save local session file, upload working from native file and old browser session
+save session failing condition  to save 
+test error, by giving false geneArr/ (Error caught, maybe add error check for hover and )
+allow to choose sessions in home when loading
+custom genome working remotely 
+____________________________________________
+repeatmasker 2 fix
+custom genome, region sets
+add ensembl to the locals 
+test remote fetch more add back checks 
+
+
+4/02/2026
+(check more) fix error when remote local add track and wrong file for type
+(fnish) fix size
+(add a try to trackfactry) add another check when all data are null check track errors
+(finish) fix toolbar select drag null issue
+check sessions, custom genome, region sets
+check when loading a lot tracks
+check negative bigwig more. 
+
+
+
+
+
+
+
 To-Do, 6/15/2025
 1. remove extra setState for creating workers in the package version
 2. showGenome on 3d
@@ -272,3 +307,12 @@ trackResize
  2. add height and width props to package
  3. fix config menu position in package
  4. 
+
+
+
+
+
+
+ 3/17 
+
+ fix serilize and deserilize for defaultRegion double check it in sessions, customGenome, genomePicker, useCurrentGenome

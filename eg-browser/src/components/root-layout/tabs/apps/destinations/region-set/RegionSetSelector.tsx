@@ -1,7 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  PlusIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  XMarkIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/outline";
 
 // Local Component
 import RegionSetConfig from "./RegionSetConfig";
+import Button from "@/components/ui/button/Button";
+import EmptyView from "@/components/ui/empty/EmptyView";
 import { generateUUID, GenomeCoordinate } from "wuepgg3-track";
 // wuepgg3-track Imports
 import {
@@ -19,48 +29,59 @@ import {
 
 // Custom Hooks
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-const RegionSetSelector: React.FC = ({ }) => {
-  const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
+
+
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
+const RegionSetSelector: React.FC = () => {
+  useExpandedNavigationTab();
+  const [showCreate, setShowCreate] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const createSectionRef = useRef<HTMLDivElement>(null);
+
   const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
   const _genomeConfig = useCurrentGenome();
-  const selectedRegionSet = currentSession?.selectedRegionSet;
+
   if (!currentSession || !_genomeConfig) {
-    return "";
+    return null;
   }
-  const genomeConfig = _genomeConfig
-    ? GenomeSerializer.deserialize(_genomeConfig)
-    : null;
+  const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
   const genome = genomeConfig?.genome || null;
   if (!genome) {
-    return "";
+    return null;
   }
-  const sets = currentSession?.regionSets
-    ? currentSession?.regionSets.map((item) => {
-      if (typeof item === "object") {
-        const newRegionSet = RegionSet.deserialize(item);
 
-        return newRegionSet;
-      } else {
-        return item;
+  // Deserialize sets and restore custom `id` that doesn't survive RegionSet.deserialize
+  const sets: RegionSet[] = currentSession?.regionSets
+    ? currentSession.regionSets.map((item: any) => {
+      if (typeof item === "object") {
+        const rs = RegionSet.deserialize(item);
+        if (item.id) (rs as any).id = item.id;
+        return rs;
       }
+      return item;
     })
     : [];
 
+  // Use the raw stored id for comparison to avoid object-reference issues
+  const selectedId = (currentSession?.selectedRegionSet as any)?.id ?? null;
+
   const setConfigured = (newSet: RegionSet) => {
-    if (indexBeingConfigured < 0 || indexBeingConfigured >= sets.length) {
-      addSet(newSet);
+    if (editingIndex !== null && editingIndex >= 0 && editingIndex < sets.length) {
+      replaceSet(editingIndex, newSet);
+      setEditingIndex(null);
     } else {
-      replaceSet(indexBeingConfigured, newSet);
+      addSet(newSet);
+      setShowCreate(false);
     }
   };
 
   const addSet = (newSet: RegionSet) => {
-    newSet["id"] = generateUUID();
+    (newSet as any).id = generateUUID();
     dispatch(
       updateCurrentSession({
-        regionSets: [...currentSession?.regionSets, newSet],
-      })
+        regionSets: [...(currentSession?.regionSets ?? []), newSet],
+      }),
     );
   };
   function onSetSelected(set: RegionSet | null) {
@@ -69,29 +90,23 @@ const RegionSetSelector: React.FC = ({ }) => {
       const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
       coordinate =
         newVisData.currentRegionAsString() as GenomeCoordinate | null;
-
     } else {
       if (genomeConfig) {
-        const navContext = genomeConfig.navContext;
-        coordinate = new DisplayedRegionModel(
-          navContext,
-          genomeConfig.defaultRegion.start,
-          genomeConfig.defaultRegion.end
-        ).currentRegionAsString() as GenomeCoordinate | null;
+        coordinate = genomeConfig.defaultRegion;
       }
     }
     dispatch(
       updateCurrentSession({
         selectedRegionSet: set,
         userViewRegion: coordinate,
-      })
+      }),
     );
   }
   function onSetsChanged(newSets: Array<RegionSet>) {
     dispatch(
       updateCurrentSession({
         regionSets: newSets,
-      })
+      }),
     );
   }
   const replaceSet = (index: number, replacement: RegionSet) => {
@@ -106,169 +121,227 @@ const RegionSetSelector: React.FC = ({ }) => {
     if (nextSets.length !== sets.length) {
       onSetsChanged(nextSets);
       handleSetChangeSideEffects(index, null);
+      setConfirmDeleteIndex(null);
+      if (editingIndex === index) setEditingIndex(null);
     }
   };
 
   const handleSetChangeSideEffects = (
     changedIndex: number,
-    newSet: RegionSet | null
+    newSet: RegionSet | null,
   ) => {
     const oldSet = sets[changedIndex];
-    if (selectedRegionSet) {
-      if (oldSet.id === selectedRegionSet.id) {
-        onSetSelected(newSet);
-      }
+    if (selectedId && (oldSet as any).id === selectedId) {
+      onSetSelected(newSet);
     }
   };
-  const buttonStyle = {
-    padding: "8px 12px",
-    margin: "4px",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    display: "inline-block",
-    disabled: {
-      backgroundColor: "#E1EBEE", // Lightened color for disabled buttons if necessary
-    },
-  };
-  const renderItemForSet = (set, index) => {
-    let isBackingView = false;
-    if (selectedRegionSet) {
-      isBackingView = set.id === selectedRegionSet.id;
-    }
 
-    const numRegions = set.features.length;
-    const name = set.name || `Unnamed set of ${numRegions} region(s)`;
-    const text = `${name} (${numRegions} regions)`;
-
-    let useSetButton;
-    if (isBackingView) {
-      useSetButton = (
-        <button
-          style={{
-            ...smallerButtonStyle,
-            backgroundColor: "#17a2b8",
-            cursor: "not-allowed",
-          }}
-          disabled={true}
-        >
-          Is current view
-        </button>
-      );
-    } else {
-      useSetButton = (
-        <button
-          style={{ ...smallerButtonStyle, backgroundColor: "#28a745" }}
-          onClick={() => onSetSelected(set)}
-          disabled={numRegions <= 0}
-        >
-          Enter view
-        </button>
-      );
-    }
-
-    const deleteButton = (
-      <button
-        style={{ ...smallerButtonStyle, backgroundColor: "#dc3545" }}
-        onClick={() => deleteSet(index)}
-      >
-        Delete
-      </button>
-    );
-
-    return (
-      <div
-        key={index}
-        style={{
-          backgroundColor: isBackingView ? "#d4edda" : "#fff",
-          border: "1px solid #ccc",
-          padding: "16px",
-          borderRadius: "8px",
-          marginBottom: "16px",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <button
-            title="Click to edit"
-            style={{
-              background: "none",
-              border: "none",
-              color: "#007bff",
-              cursor: "pointer",
-              textAlign: "left",
-              paddingLeft: "0",
-              textDecoration: "underline",
-              marginBottom: "8px",
-            }}
-            onClick={() => setIndexBeingConfigured(index)}
-          >
-            {text}
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {useSetButton}
-            {deleteButton}
-          </div>
-        </div>
-      </div>
-    );
+  const handleAddNewSet = () => {
+    setEditingIndex(null);
+    setShowCreate(true);
+    setTimeout(() => {
+      createSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
   };
 
-  const smallerButtonStyle = {
-    padding: "6px 8px",
-    fontSize: "12px",
-    margin: "4px",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
+  const handleEditToggle = (index: number) => {
+    setShowCreate(false);
+    setEditingIndex(editingIndex === index ? null : index);
   };
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        fontFamily: "Arial, sans-serif",
-        margin: "16px",
-      }}
-    >
-      <h3>Select a gene/region set</h3>
-      {selectedRegionSet ? (
+    <div className="flex flex-col gap-3 p-4">
+
+      <p className="text-base font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+        Gene / Region Sets
+      </p>
+
+      {selectedId && (
         <button
-          style={{ ...buttonStyle, backgroundColor: "#FFC107" }}
           onClick={() => onSetSelected(null)}
+          className="w-full text-base py-2 px-3 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
         >
           Exit region set view
         </button>
-      ) : (
-        ""
       )}
 
-      {sets.length > 0
-        ? sets.map((set, index) => renderItemForSet(set, index))
-        : ""}
-      <button
-        style={{ ...buttonStyle, backgroundColor: "#205781" }}
-        onClick={() => setIndexBeingConfigured(sets.length)}
-      >
-        Add new set
-      </button>
-      <div style={{ display: "flex", alignItems: "center", margin: "20px 0" }}>
-        <div
-          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
-        ></div>
 
-        <div
-          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
-        ></div>
-      </div>
-      <RegionSetConfig
-        set={sets[indexBeingConfigured]}
-        onSetConfigured={setConfigured}
-        genome={genome}
-      />
+      {sets.length === 0 && !showCreate && (
+
+        <EmptyView
+          title="No Region Sets"
+          description="Create a new set to apply a gene or region set view."
+        />
+
+      )}
+
+      {/* region sets  */}
+      <AnimatePresence initial={false}>
+        {sets.map((set, index) => {
+          const isCurrentView = !!selectedId && (set as any).id === selectedId;
+          const isEditing = editingIndex === index;
+          const numRegions = set.features.length;
+          const name = set.name || `Unnamed set of ${numRegions} region(s)`;
+
+          return (
+            <motion.div
+              key={(set as any).id ?? index}
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.15 }}
+              className={`bg-white dark:bg-dark-surface border ring-1 rounded-xl overflow-hidden ${isCurrentView
+                ? "border-green-500 dark:border-green-400 ring-2 ring-green-500 dark:ring-green-400"
+                : isEditing
+                  ? "border-blue-400 dark:border-blue-500 ring-2 ring-blue-400 dark:ring-blue-500"
+                  : "border-gray-200 dark:border-gray-700"
+                }`}
+            >
+
+              <div className="flex items-center justify-between py-2 px-8">
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <p className="text-primary dark:text-dark-primary font-medium text-base truncate">
+                    {name}
+                  </p>
+                  <p className="text-primary/60 dark:text-dark-primary/60 text-base">
+                    {numRegions} region{numRegions !== 1 ? "s" : ""}
+                  </p>
+                  {isCurrentView && (
+                    <span className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400 font-medium mt-0.5">
+                      <CheckCircleIcon className="w-3.5 h-3.5" />
+                      Active view
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+
+                  {isCurrentView ? (
+                    <span className="text-base px-2 py-3 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">
+                      Current view
+                    </span>
+                  ) : (
+                    <Button
+                      backgroundColor="tint"
+                      onClick={() => onSetSelected(set)}
+                      disabled={numRegions <= 0}
+                      style={{ fontSize: "16px", width: "fit-content", padding: "6px 12px" }}
+                    >
+                      Enter View
+                    </Button>
+                  )}
+
+                  <button
+                    onClick={() => handleEditToggle(index)}
+                    className={`p-1.5 rounded-md transition-colors ${isEditing
+                      ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                      : "text-primary/60 dark:text-dark-primary/60 hover:bg-gray-100 dark:hover:bg-dark-surface"
+                      }`}
+                    title={isEditing ? "Close edit" : "Edit set"}
+                  >
+                    <PencilSquareIcon className="w-4 h-4" />
+                  </button>
+
+
+                  <button
+                    onClick={() => deleteSet(index)}
+                    className="p-1.5 rounded-md transition-colors text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30"
+                    title="Delete set"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+
+              <AnimatePresence initial={false}>
+                {isEditing && (
+                  <motion.div
+                    key="edit-panel"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <p className="text-base font-semibold uppercase tracking-wider">
+                          <span className="text-blue-500 dark:text-blue-400">Editing</span>
+                          <span className="text-primary dark:text-dark-primary"> &ldquo;{name}&rdquo;</span>
+                        </p>
+                        <button
+                          onClick={() => setEditingIndex(null)}
+                          className="p-1 rounded-md text-primary/60 dark:text-dark-primary/60 hover:bg-gray-100 dark:hover:bg-dark-surface transition-colors"
+                          aria-label="Close"
+                        >
+                          <XMarkIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <RegionSetConfig
+                        set={set}
+                        onSetConfigured={setConfigured}
+                        onClose={() => setEditingIndex(null)}
+                        genome={genome}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+
+      {/* ADD NEW SETS BUTTON*/}
+
+      <Button
+        onClick={handleAddNewSet}
+        leftIcon={<PlusIcon className="w-4 h-4" />}
+        style={{ backgroundColor: "#5E7AC4", color: "#fff", width: "fit-content", padding: "8px 16px" }}
+      >
+        Add New Set
+      </Button>
+
+      <AnimatePresence initial={false}>
+        {showCreate && (
+          <motion.div
+            ref={createSectionRef}
+            key="create-panel"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden"
+          >
+
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <p className="text-base font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                Create New Set
+              </p>
+              <button
+                onClick={() => setShowCreate(false)}
+                className="p-1 rounded-md text-primary/60 dark:text-dark-primary/60 hover:bg-gray-100 dark:hover:bg-dark-surface transition-colors"
+                aria-label="Close"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <RegionSetConfig
+              onSetConfigured={setConfigured}
+              onClose={() => setShowCreate(false)}
+              genome={genome}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

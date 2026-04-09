@@ -1,7 +1,10 @@
 import { MotionConfig } from "framer-motion";
 import RootLayout from "./components/root-layout/RootLayout";
 import AppProvider, { AppProviderProps } from "./lib/redux/AppProvider";
+
+
 import "./index.css";
+
 
 export interface AppProps {
   storeConfig?: AppProviderProps["storeConfig"];
@@ -11,7 +14,10 @@ export interface AppProps {
 /**
  * app component can be exported and used as a package.
  * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
+ * app component can be exported and used as a package.
+ * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
  *
+ * @param props configuration and layout props
  * @param props configuration and layout props
  */
 
@@ -22,7 +28,7 @@ export interface AppProps {
 // showGenomeNavigator={showGenomeNavigator}
 // showNavBar={showNavBar}
 // showToolBar={showToolBar}
-export default function App({ storeConfig, ...rootLayoutProps }: AppProps) {
+export default function App({ storeConfig, onSessionUpdate, ...rootLayoutProps }: AppProps) {
   return (
     <MotionConfig transition={snappyTransition}>
       <AppProvider storeConfig={storeConfig}>

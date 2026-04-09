@@ -1,4 +1,6 @@
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 import React, { useMemo } from "react";
+import { XMarkIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useTable, Column, useFilters } from "react-table";
 import { ITrackModel } from "wuepgg3-track";
 
@@ -19,6 +21,7 @@ const TrackList: React.FC<TrackListProps> = ({
   addTracktoAvailable,
   removeTrackFromAvailable,
 }) => {
+  useExpandedNavigationTab();
   const removeTrack = (index: number) => {
     const track = addedTracks[index];
     onTrackRemoved(track.id);
@@ -45,15 +48,13 @@ const TrackList: React.FC<TrackListProps> = ({
         id: "remove",
         Cell: ({ row }) => (
           <button
-            className="size-6 rounded-md flex items-center justify-center"
             onClick={() => removeTrack(row.index)}
-            style={{
-              cursor: "pointer",
-              border: "1px solid red",
-              color: "red",
-            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            aria-label={`Remove ${row.original.options.label}`}
+            title={`Remove ${row.original.options.label}`}
+            className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
           >
-            x
+            <XMarkIcon className="w-5 h-5" />
           </button>
         ),
         width: 50,
@@ -78,15 +79,13 @@ const TrackList: React.FC<TrackListProps> = ({
         id: "add",
         Cell: ({ row }) => (
           <button
-            className="size-6 rounded-md flex items-center justify-center"
             onClick={() => addTrack(row.original)}
-            style={{
-              cursor: "pointer",
-              border: "1px solid blue",
-              color: "blue",
-            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            aria-label={`Add ${row.original.options.label}`}
+            title={`Add ${row.original.options.label}`}
+            className="p-1 rounded-md text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-700 transition-colors duration-150"
           >
-            +
+            <PlusIcon className="w-5 h-5" />
           </button>
         ),
         width: 50,
@@ -178,8 +177,8 @@ const TrackList: React.FC<TrackListProps> = ({
                 {...restRowProps}
                 style={trStyle}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    trHoverStyle.backgroundColor)
+                (e.currentTarget.style.backgroundColor =
+                  trHoverStyle.backgroundColor)
                 }
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "")}
               >
@@ -199,7 +198,7 @@ const TrackList: React.FC<TrackListProps> = ({
       </table>
       {savedDeleteTrackList.length > 0 && (
         <React.Fragment>
-          <h3 style={{ marginTop: "10px" }}>Available tracks</h3>
+
           <table {...getTablePropsAdd()} style={tableStyle}>
             <thead>
               {headerGroupsAdd.map((headerGroup) => {
@@ -240,8 +239,8 @@ const TrackList: React.FC<TrackListProps> = ({
                     {...restRowProps}
                     style={trStyle}
                     onMouseOver={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        trHoverStyle.backgroundColor)
+                    (e.currentTarget.style.backgroundColor =
+                      trHoverStyle.backgroundColor)
                     }
                     onMouseOut={(e) =>
                       (e.currentTarget.style.backgroundColor = "")

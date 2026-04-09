@@ -47,23 +47,23 @@ export function trackGlobalState({
     // };
 
     globalTrackState.current.trackStates[globalTrackState.current["leftIdx"]] =
-      {
-        trackState: trackState0,
-      };
+    {
+      trackState: trackState0,
+    };
 
     globalTrackState.current["leftIdx"]++;
 
     globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
-      {
-        trackState: trackState1,
-      };
+    {
+      trackState: trackState1,
+    };
 
     globalTrackState.current["rightIdx"]--;
 
     globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
-      {
-        trackState: trackState2,
-      };
+    {
+      trackState: trackState2,
+    };
 
     globalTrackState.current["rightIdx"]--;
     // globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =

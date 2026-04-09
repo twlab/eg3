@@ -13,6 +13,8 @@ interface Props {
   addedTrackSets: Set<string>;
   rowHeader?: string;
   columnHeader?: string;
+  width?: number;
+  height?: number;
 }
 
 const HubTrackTable: React.FC<Props> = ({
@@ -21,6 +23,7 @@ const HubTrackTable: React.FC<Props> = ({
   addedTrackSets,
   rowHeader = UNUSED_META_KEY,
   columnHeader = UNUSED_META_KEY,
+
 }) => {
   const [filteredTracks, setFilteredTracks] = useState(tracks);
   const [searchText, setSearchText] = useState("");
@@ -56,11 +59,11 @@ const HubTrackTable: React.FC<Props> = ({
         setFilteredTracks(tracks);
       }
     }, 250),
-    [fuse, tracks]
+    [fuse, tracks],
   );
 
   const handleSearchChangeRequest = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const search = event.target.value.trim();
     setSearchText(search);
@@ -86,7 +89,7 @@ const HubTrackTable: React.FC<Props> = ({
         </button>
       );
     },
-    [addedTrackSets, onTracksAdded]
+    [addedTrackSets, onTracksAdded, filteredTracks],
   );
 
   const handleAddAll = (page) => {
@@ -96,12 +99,13 @@ const HubTrackTable: React.FC<Props> = ({
     }
     const availableTracks = pageTracks.filter(
       (track: TrackModel) =>
-        !(addedTrackSets.has(track.url) || addedTrackSets.has(track.name))
+        !(addedTrackSets.has(track.url) || addedTrackSets.has(track.name)),
     );
     onTracksAdded(availableTracks);
   };
 
   const columns: Column<TrackModel>[] = useMemo(() => {
+
     const baseColumns: Column<TrackModel>[] = [
       {
         Header: "Genome",
@@ -176,7 +180,37 @@ const HubTrackTable: React.FC<Props> = ({
       initialState: { pageSize: 10 },
     },
     useFilters,
-    usePagination
+    usePagination,
+  );
+
+  // Memoized row to avoid re-rendering entire table when unrelated props change
+  const MemoRow = React.memo(
+    ({ row, prepareRow }: any) => {
+      prepareRow(row);
+      return (
+        <tr {...row.getRowProps()} key={row.id}>
+          {row.cells.map((cell: any) => (
+            <td
+              {...cell.getCellProps()}
+              key={cell.column.id}
+              style={{ borderBottom: "1px solid #ddd", padding: "8px" }}
+            >
+              {cell.render("Cell")}
+            </td>
+          ))}
+        </tr>
+      );
+    },
+    (prev: any, next: any) => {
+      if (prev.row.id !== next.row.id) return false;
+      const prevVals = prev.row.cells.map((c: any) => c.value);
+      const nextVals = next.row.cells.map((c: any) => c.value);
+      if (prevVals.length !== nextVals.length) return false;
+      for (let i = 0; i < prevVals.length; i++) {
+        if (prevVals[i] !== nextVals[i]) return false;
+      }
+      return true;
+    },
   );
 
   const buttonStyle: React.CSSProperties = {
@@ -203,30 +237,31 @@ const HubTrackTable: React.FC<Props> = ({
     borderColor: "#e0e0e0",
   };
 
+  const containerStyle: React.CSSProperties = {
+
+  };
+
   return (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          fontFamily: "Arial, sans-serif",
-          height: "100%",
-
-        }}
-      >
-        <h1 style={{ margin: 0, paddingBottom: "5vpx", textAlign: "center" }}>Track Table</h1>
+      <div style={containerStyle}>
+        <h1 style={{ margin: 0, paddingBottom: "5vpx", textAlign: "center" }}>
+          Track Table
+        </h1>
         <div style={{ flex: "1", overflow: "auto" }}>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-
-
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "8px",
+            }}
+          >
             <input
               type="text"
               id="searchTrack"
               style={{
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
+                padding: "4px",
+
                 width: "300px",
               }}
               placeholder="H1 or H3K4me3, etc..."
@@ -257,16 +292,19 @@ const HubTrackTable: React.FC<Props> = ({
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              marginBottom: "16px",
+              marginBottom: "8px",
             }}
           >
             <thead>
               {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()} key={crypto.randomUUID()}>
+                <tr
+                  {...headerGroup.getHeaderGroupProps()}
+                  key={headerGroup.id || headerGroup.getHeaderGroupProps().key}
+                >
                   {headerGroup.headers.map((column) => (
                     <th
                       {...column.getHeaderProps()}
-                      key={crypto.randomUUID()}
+                      key={column.id}
                       style={{
                         borderBottom: "2px solid #ddd",
                         padding: "8px",
@@ -280,37 +318,21 @@ const HubTrackTable: React.FC<Props> = ({
               ))}
             </thead>
             <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()} key={row.id}>
-                    {row.cells.map((cell) => (
-                      <td
-                        {...cell.getCellProps()}
-                        key={cell.column.id}
-                        style={{
-                          borderBottom: "1px solid #ddd",
-                          padding: "8px",
-                        }}
-                      >
-                        {cell.render("Cell")}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
+              {page.map((row) => (
+                <MemoRow row={row} prepareRow={prepareRow} key={row.id} />
+              ))}
             </tbody>
           </table>
         </div>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-
-          borderTop: "1px solid #e0e0e0",
-          flexShrink: 0
-        }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "4px",
+            flexShrink: 0,
+          }}
+        >
           <button
             onClick={() => gotoPage(0)}
             disabled={!canPreviousPage}
@@ -318,8 +340,17 @@ const HubTrackTable: React.FC<Props> = ({
               ...buttonStyle,
               ...(!canPreviousPage && buttonDisabledStyle),
             }}
-            onMouseEnter={(e) => canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             First
           </button>
@@ -331,17 +362,29 @@ const HubTrackTable: React.FC<Props> = ({
               ...(!canPreviousPage && buttonDisabledStyle),
               fontSize: "18px",
             }}
-            onMouseEnter={(e) => canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canPreviousPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             ‹
           </button>
-          <span style={{
-            margin: "0 12px",
-            color: "#666",
-            fontSize: "14px"
-          }}>
-            Page <strong style={{ color: "#333" }}>{pageIndex + 1}</strong> of <strong style={{ color: "#333" }}>{pageOptions.length}</strong>
+          <span
+            style={{
+              margin: "0 12px",
+              color: "#666",
+              fontSize: "14px",
+            }}
+          >
+            Page <strong style={{ color: "#333" }}>{pageIndex + 1}</strong> of{" "}
+            <strong style={{ color: "#333" }}>{pageOptions.length}</strong>
           </span>
           <button
             onClick={() => nextPage()}
@@ -351,8 +394,17 @@ const HubTrackTable: React.FC<Props> = ({
               ...(!canNextPage && buttonDisabledStyle),
               fontSize: "18px",
             }}
-            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             ›
           </button>
@@ -363,17 +415,28 @@ const HubTrackTable: React.FC<Props> = ({
               ...buttonStyle,
               ...(!canNextPage && buttonDisabledStyle),
             }}
-            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "#fff", borderColor: "#ddd" })}
+            onMouseEnter={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canNextPage &&
+              Object.assign(e.currentTarget.style, {
+                backgroundColor: "#fff",
+                borderColor: "#ddd",
+              })
+            }
           >
             Last
           </button>
-          <div style={{
-            width: "1px",
-            height: "24px",
-            backgroundColor: "#ddd",
-            margin: "0 8px"
-          }}></div>
+          <div
+            style={{
+              width: "1px",
+              height: "24px",
+              backgroundColor: "#ddd",
+              margin: "0 8px",
+            }}
+          ></div>
           <input
             type="number"
             defaultValue={pageIndex + 1}

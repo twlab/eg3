@@ -136,7 +136,7 @@ export class FeatureAggregator {
     features: Feature[],
     viewRegion: DisplayedRegionModel,
     width: number,
-    useCenter: boolean = false
+    useCenter: boolean = false,
   ): { [key: string]: Feature[] } {
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
 
@@ -157,9 +157,16 @@ export class FeatureAggregator {
       mode: PlacementMode.NUMERICAL,
     });
 
-    for (let i = 0; i < result.placementsForward.length; i++) {
-      sortXSpan(result.placementsForward[i], xToFeaturesForward);
-      if (result.placementsReverse[i]) {
+    const resultLength = Math.max(
+      result.placementsForward ? result.placementsForward.length : 0,
+      result.placementsReverse ? result.placementsReverse.length : 0,
+    );
+
+    for (let i = 0; i < resultLength; i++) {
+      if (i < result.placementsForward.length) {
+        sortXSpan(result.placementsForward[i], xToFeaturesForward);
+      }
+      if (i < result.placementsReverse.length) {
         sortXSpan(result.placementsReverse[i], xToFeaturesReverse);
       }
     }
@@ -180,7 +187,7 @@ export class FeatureAggregator {
     viewRegion: DisplayedRegionModel,
     width: number,
     useCenter: boolean = false,
-    windowSize: number
+    windowSize: number,
   ): { [x: number]: Feature[] } {
     const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int

@@ -32,6 +32,7 @@ export interface TrackProps {
   isThereG3dTrack: boolean;
   signalTrackLoadComplete?: any;
   legendRef: any;
+  staticRef: any;
   posRef: any;
   updateGlobalTrackConfig: any;
   sentScreenshotData: any;
@@ -44,4 +45,5 @@ export interface TrackProps {
   Toolbar: { [key: string]: any };
   handleRetryFetchTrack: (trackIdx: number) => void;
   initialLoad: any;
+  selectedRegionSet: any
 }

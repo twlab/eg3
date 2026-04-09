@@ -4,7 +4,6 @@ import Plot from "react-plotly.js";
 
 import {
   ColorPicker,
-  getTrackConfig,
   COLORS,
   HELP_LINKS,
   trackFetchFunction,
@@ -14,6 +13,7 @@ import {
   GenomeSerializer,
 } from "wuepgg3-track";
 
+import Button from "@/components/ui/button/Button";
 import RegionSetSelector from "./region-set/RegionSetSelector";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
@@ -39,7 +39,7 @@ const PLOT_TYPE_DESC = {
 const Geneplot: React.FC<GeneplotProps> = () => {
   useExpandedNavigationTab();
   const [setName, setSetName] = useState("");
-  const [trackName, setTrackName] = useState("");
+  const [trackId, setTrackId] = useState("");
   const [plotType, setPlotType] = useState("box");
   const [plotMsg, setPlotMsg] = useState("");
   const [dataPoints, setDataPoints] = useState(50);
@@ -90,53 +90,55 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       </option>
     ));
     return (
-      <label>
-        Pick your set:{" "}
-        <select value={setName} onChange={handleSetChange}>
-          <option key={0} value="">
-            --
-          </option>
-          {setList}
-        </select>
-      </label>
+      <select
+        value={setName}
+        onChange={handleSetChange}
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
+      >
+        <option value="">-- Select region set --</option>
+        {setList}
+      </select>
     );
   };
 
   const renderTrackList = () => {
     const trackList = tracks
       .filter((item) =>
-        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : "")
+        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : ""),
       )
       .map((item, index) => (
-        <option key={index} value={item.name}>
+        <option key={item.id ?? index} value={item.id}>
           {item.label
             ? item.label
             : item.options && item.options.label
-            ? item.options.label
-            : item.name
-            ? item.name
-            : "track position " + index}
+              ? item.options.label
+              : item.name
+                ? item.name
+                : "track position " + index}
         </option>
       ));
 
     return (
-      <label>
-        Pick your track:{" "}
-        <select value={trackName} onChange={handleTrackChange}>
-          <option key={0} value="">
-            --
-          </option>
-          {trackList}
-        </select>
-      </label>
+      <select
+        value={trackId}
+        onChange={handleTrackChange}
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
+      >
+        <option value="">-- Select track --</option>
+        {trackList}
+      </select>
     );
   };
 
   const renderPlotTypes = () => {
     return (
-      <label>
-        Pick your plot type:{" "}
-        <select value={plotType} onChange={handlePlotTypeChange}>
+      <label className="flex items-center gap-2 text-base text-primary dark:text-dark-primary">
+        Plot type:
+        <select
+          value={plotType}
+          onChange={handlePlotTypeChange}
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none"
+        >
           <option value="box">box</option>
           <option value="line">line</option>
           <option value="heatmap">heatmap</option>
@@ -147,9 +149,13 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const renderDataPoints = () => {
     return (
-      <label>
-        data points:{" "}
-        <select value={dataPoints} onChange={handleDataPointsChange}>
+      <label className="flex items-center gap-2 text-base text-primary dark:text-dark-primary">
+        Data points:
+        <select
+          value={dataPoints}
+          onChange={handleDataPointsChange}
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none"
+        >
           <option value="50">50</option>
           <option value="60">60</option>
           <option value="70">70</option>
@@ -162,20 +168,36 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
 
   const getPlotData = async () => {
+    if (!setName && !trackId) {
+      setPlotMsg("Please select a region set and a track before plotting.");
+      return;
+    }
+    if (!setName) {
+      setPlotMsg("Please select a region set before plotting.");
+      return;
+    }
+    if (!trackId) {
+      setPlotMsg("Please select a track before plotting.");
+      return;
+    }
     setPlotMsg("Loading...");
-    const track = getTrackByName(trackName);
 
-    const trackConfig = getTrackConfig(track);
+    const trackModel = getTrackById(trackId);
+    if (!trackModel) {
+      setPlotMsg("Track not found.");
+      return;
+    }
+    // const trackConfig = getTrackConfig(trackModel);
 
     const set = getSetByName(setName);
 
     const flankedFeatures = set.features.map((feature) =>
-      set.flankingStrategy.makeFlankedFeature(feature, set.genome)
+      set.flankingStrategy.makeFlankedFeature(feature, set.genome),
     );
 
     const rawData = await Promise.all(
       flankedFeatures.map((item, index) =>
-        trackFetchFunction[trackConfig.trackModel.type]({
+        trackFetchFunction[trackModel.type]({
           nav: [
             {
               chr: item.locus.chr,
@@ -183,9 +205,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
               end: item.locus.end,
             },
           ],
-          trackModel: track,
-        })
-      )
+          trackModel,
+        }),
+      ),
     );
 
     let data = rawData.map((item, index) => {
@@ -193,10 +215,10 @@ const Geneplot: React.FC<GeneplotProps> = () => {
         let newChrInt = new ChromosomeInterval(
           record.chr,
           record.start,
-          record.end
+          record.end,
         );
         return new NumericalFeature("", newChrInt).withValue(
-          record.score ? record.score : record["3"]
+          record.score ? record.score : record["3"],
         );
       });
     });
@@ -204,12 +226,12 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     // const data = rawData.map((raw) => trackConfig.formatData(raw));
     const binned = flankedFeatures.map((feature, idx) => {
       const step = Math.round(
-        (feature.locus.end - feature.locus.start) / dataPoints
+        (feature.locus.end - feature.locus.start) / dataPoints,
       );
       const lefts = _.range(
         feature.locus.start,
         feature.locus.end - step / 2,
-        step
+        step,
       );
       const rights = [
         ...lefts.slice(0, -1).map((x) => x + step),
@@ -222,7 +244,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     });
 
     const adjusted = binned.map((d, i) =>
-      flankedFeatures[i].getIsForwardStrand() ? d.slice() : _.reverse(d.slice())
+      flankedFeatures[i].getIsForwardStrand()
+        ? d.slice()
+        : _.reverse(d.slice()),
     );
     const featureNames = flankedFeatures.map((feature) => feature.getName());
     const plotData = _.zip(...adjusted);
@@ -266,18 +290,18 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const groupDataToBins = (data, bins, rights) => {
     const indexes = data.map((d) =>
-      Math.min(_.sortedIndex(rights, d.locus.end), bins.length - 1)
+      Math.min(_.sortedIndex(rights, d.locus.end), bins.length - 1),
     );
     let results = Array.from({ length: bins.length }, () => 0);
 
     data.forEach(
-      (d, i) => (results[indexes[i]] += d.locus.getLength() * d.value)
+      (d, i) => (results[indexes[i]] += d.locus.getLength() * d.value),
     );
     return results.map((d, i) => d / (bins[i][1] - bins[i][0]));
   };
 
-  const getTrackByName = (name) => {
-    return tracks.find((track) => track.name === name);
+  const getTrackById = (id: string) => {
+    return tracks.find((track) => track.id === id);
   };
 
   const getSetByName = (name) => {
@@ -291,18 +315,18 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
 
   const handleTrackChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setTrackName(event.target.value);
+    setTrackId(event.target.value);
   };
 
   const handlePlotTypeChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setPlotType(event.target.value);
     setShowLegend(event.target.value === "line");
   };
 
   const handleDataPointsChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setDataPoints(Number.parseInt(event.target.value));
   };
@@ -346,115 +370,77 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     responsive: true,
     modeBarButtonsToRemove: ["select2d", "lasso2d", "toggleSpikelines"],
   };
-  const styles = {
-    container: {
-      color: "#333",
-
-      margin: "0 auto",
-      padding: "20px",
-      backgroundColor: "#fdfdfd",
-      borderRadius: "10px",
-      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-    },
-    lead: {
-      fontSize: "1.25rem",
-      marginBottom: "1rem",
-    },
-    link: {
-      color: "#1a73e8",
-      textDecoration: "none",
-    },
-    configContainer: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "1rem",
-    },
-    buttonContainer: {
-      display: "flex",
-      alignItems: "center",
-    },
-    button: {
-      backgroundColor: "#28a745",
-      color: "#fff",
-      padding: "2px 20px",
-      border: "none",
-      borderRadius: "5px",
-      cursor: "pointer",
-    },
-  };
   return (
-    <div>
+    <div className="flex flex-col">
       {currentSession && sets && sets.length === 0 ? (
-        <div>
-          <p className="alert alert-warning">
+        <>
+          <p className="text-base text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mx-4 mt-4 mb-2">
             There is no region set yet, please submit a region set below.
           </p>
           <RegionSetSelector />
-        </div>
+        </>
       ) : currentSession ? (
         <>
-          <div>
-            <div>
-              <div style={styles.container}>
-                <p style={styles.lead}>1. Choose a region set</p>
-                <div>{renderRegionList()}</div>
+          <div className="px-4 py-4 flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                1. Region Set
+              </p>
+              {renderRegionList()}
+            </div>
 
-                <div style={{ marginBottom: "20px" }}>
-                  <p style={styles.lead}>
-                    2. Choose a
-                    <a
-                      href={HELP_LINKS.numerical}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        textDecoration: "underline",
-                        color: "#007bff",
-                      }}
-                    >
-                      {" "}
-                      numerical track
-                    </a>
-                    :
-                  </p>
-                  <div>{renderTrackList()}</div>
-                </div>
-
-                <div style={{ marginBottom: "20px" }}>
-                  <p style={styles.lead}>3. Choose a plot type:</p>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {renderPlotTypes()}
-                    {renderDataPoints()}
-                    {plotType === "box" &&
-                      Object.keys(data).length > 0 &&
-                      renderBoxColorPicker()}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    fontStyle: "italic",
-                    marginTop: "10px",
-                  }}
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                2.{" "}
+                <a
+                  href={HELP_LINKS.numerical}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 underline underline-offset-2 normal-case font-normal"
                 >
-                  {PLOT_TYPE_DESC[plotType]}
-                </div>
+                  Numerical Track
+                </a>
+              </p>
+              {renderTrackList()}
+            </div>
 
-                <div style={styles.buttonContainer}>
-                  <button style={styles.button} onClick={getPlotData}>
-                    Plot
-                  </button>
-                  <div style={{ marginLeft: "10px" }}>{plotMsg}</div>
-                </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+                3. Plot Options
+              </p>
+              <div className="flex flex-col gap-2">
+                {renderPlotTypes()}
+                {renderDataPoints()}
+                {plotType === "box" &&
+                  Object.keys(data).length > 0 &&
+                  renderBoxColorPicker()}
               </div>
             </div>
-            <div style={{ marginLeft: "-150px" }}>
-              <Plot data={data[plotType]} layout={layout} config={config} />
+
+            <p className="text-sm italic text-primary/60 dark:text-dark-primary/60 leading-relaxed">
+              {PLOT_TYPE_DESC[plotType]}
+            </p>
+
+            <div className="flex items-center gap-3">
+              <Button onClick={getPlotData}>Plot</Button>
+              {plotMsg && (
+                <span
+                  className={`text-base ${plotMsg === "Loading..."
+                      ? "text-primary dark:text-dark-primary"
+                      : "text-red-600 dark:text-red-400"
+                    }`}
+                >
+                  {plotMsg}
+                </span>
+              )}
             </div>
+          </div>
+          <div style={{ marginLeft: "-150px" }}>
+            <Plot data={data[plotType]} layout={layout} config={config} />
           </div>
         </>
       ) : (
-        <div></div>
+        <div />
       )}
     </div>
   );

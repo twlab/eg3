@@ -7,16 +7,19 @@ import {
 import {
   clearAllGenomes,
   refreshLocalGenomes,
+  deleteCustomGenome,
 } from "@/lib/redux/thunk/genome-hub";
 import { IGenome } from "wuepgg3-track";
-import { ChevronRightIcon } from "@heroicons/react/16/solid";
+import { ChevronRightIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
-import { useNavigation } from "../core-navigation/NavigationStack";
+
 
 import Button from "../ui/button/Button";
+import ClearAllButton from "../sessions/ClearAllButton";
 import EmptyView from "../ui/empty/EmptyView";
 import Progress from "../ui/progress/Progress";
 
@@ -31,7 +34,6 @@ export default function GenomeHubPanel() {
   const customGenomes = useAppSelector(selectCustomGenomes);
   const customGenomesLoadStatus = useAppSelector(selectCustomGenomesLoadStatus);
 
-  const navigation = useNavigation();
 
   const { hasGroups, groupedGenomes } = useMemo(() => {
     const hasGroups = customGenomes.some(
@@ -70,24 +72,15 @@ export default function GenomeHubPanel() {
     }
   }, [dispatch, customGenomesLoadStatus]);
 
-  const handleClearAll = () => {
-    dispatch(clearAllGenomes());
-  };
+
 
   return (
-    <div className="flex flex-col pt-2 h-full">
-      <div className="flex flex-row gap-2 w-full justify-start items-center">
-        <Button
-          leftIcon={<PlusIcon className="w-4 h-4" />}
-          active
-          onClick={() => {
-            navigation.push({
-              path: "add-custom-genome",
-            });
-          }}
-        >
-          Add Custom Genome
-        </Button>
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl">Custom Genomes available</h1>
+        <div>
+          <ClearAllButton onClearAll={() => dispatch(clearAllGenomes())} compact title={"Clear All Custom Genomes"} />
+        </div>
       </div>
       {customGenomes.length === 0 ? (
         <EmptyView
@@ -98,7 +91,7 @@ export default function GenomeHubPanel() {
         <div className="flex flex-col gap-6 mt-4">
           {sortedGroups.map(([groupName, genomes]) => (
             <div key={groupName} className="flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">{groupName}</h2>
+              <h2 className="text-md font-semibold">{groupName}</h2>
               {genomes.map((genome) => (
                 <GenomeHubItem key={genome.id} genome={genome} />
               ))}
@@ -120,12 +113,42 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
   const dispatch = useAppDispatch();
   const [isHovered, setIsHovered] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const handleClick = () => {
     setLoading(true);
     setTimeout(() => {
       // TODO: preload the genome
       dispatch(createSession({ genome }));
     }, 0);
+  };
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isConfirmingDelete) {
+      timeoutId = setTimeout(() => {
+        setIsConfirmingDelete(false);
+      }, 2000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isConfirmingDelete]);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      return;
+    }
+    setLoading(true);
+    try {
+      await dispatch(deleteCustomGenome(genome.id)).unwrap();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setIsConfirmingDelete(false);
+    }
   };
 
   const shouldExpand = isHovered && !loading;
@@ -147,12 +170,12 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             Chromosomes:{" "}
             {genome.chromosomes.length > 0
               ? genome.chromosomes
-                  .slice(0, 3)
-                  .map((chr) => chr.name)
-                  .join(", ") +
-                (genome.chromosomes.length > 3
-                  ? ` +${genome.chromosomes.length - 3} more`
-                  : "")
+                .slice(0, 3)
+                .map((chr) => chr.name)
+                .join(", ") +
+              (genome.chromosomes.length > 3
+                ? ` +${genome.chromosomes.length - 3} more`
+                : "")
               : "None"}
           </p>
         </div>
@@ -161,12 +184,27 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             <Progress size={36} />
           </div>
         ) : (
-          <motion.div
-            animate={{ rotate: shouldExpand ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronRightIcon className="size-6" />
-          </motion.div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDelete}
+              onMouseDown={(e) => e.stopPropagation()}
+              className={`p-1 rounded-md text-red-600 transition-colors duration-150 ${isConfirmingDelete ? "bg-alert text-white" : "hover:bg-red-100 dark:hover:bg-red-700"}`}
+              aria-label={`Delete ${genome.name}`}
+              title={isConfirmingDelete ? `Confirm delete ${genome.name}` : `Delete ${genome.name}`}
+            >
+              {isConfirmingDelete ? (
+                <ExclamationTriangleIcon className="w-5 h-5" />
+              ) : (
+                <XMarkIcon className="w-5 h-5" />
+              )}
+            </button>
+            <motion.div
+              animate={{ rotate: shouldExpand ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRightIcon className="size-6" />
+            </motion.div>
+          </div>
         )}
       </div>
 
@@ -206,6 +244,7 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
           )}
           <p>Unique ID:</p>
           <p>{genome.id}</p>
+
         </div>
       </motion.div>
     </motion.div>

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-
-import { ClockIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { motion, AnimatePresence } from "framer-motion";
-import { OutsideClickDetector } from "wuepgg3-track";
+import { createPortal } from "react-dom";
+import ResizablePanel from "../ui/panel/ResizablePanel";
 /**
  * A component to show users' history of operations
  * @param props The component props
@@ -17,31 +15,23 @@ type Props = {
   jumpToPast: (index: number) => void;
   clearHistory: () => void;
   jumpToFuture: (index: number) => void;
+  handleToolClick: (tool: string | null) => void;
+  anchorEl?: React.RefObject<HTMLElement | null>;
 };
 const History: React.FC<Props> = ({
   state,
   jumpToPast,
   jumpToFuture,
   clearHistory,
+  handleToolClick,
+  anchorEl,
 }) => {
-  const [showModal, setShowModal] = useState(false);
   const [checkStateEmpty, setCheckStateEmpty] = useState(false);
-  const handleOpenModal = () => {
-    setShowModal(true);
-  };
 
   const handleCloseModal = () => {
-    setShowModal(false);
+    handleToolClick(null);
   };
 
-  const handleToggleModal = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (showModal) {
-      handleCloseModal();
-    } else {
-      handleOpenModal();
-    }
-  };
   function handleClear() {
     setCheckStateEmpty(true);
     renderHistory();
@@ -58,7 +48,7 @@ const History: React.FC<Props> = ({
     const futureItems = makeItemList(
       future,
       (index) => jumpToFuture(index),
-      "future"
+      "future",
     );
 
     return (
@@ -75,7 +65,7 @@ const History: React.FC<Props> = ({
   const makeItemList = (
     stateList: any[],
     callback: (index: number) => void,
-    _type: string
+    _type: string,
   ) => {
     const items = stateList.map((value, index) => {
       const currentSessionKey = value.currentSession;
@@ -148,61 +138,43 @@ const History: React.FC<Props> = ({
     setCheckStateEmpty(false);
   }, [state]);
   return (
-    <div className="relative">
-      <OutsideClickDetector onOutsideClick={handleCloseModal}>
-        <button
-          onClick={handleToggleModal}
-          title="Operation history"
-          className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1 mx-2 hover:bg-gray-50 transition-colors"
-        >
-          <ClockIcon className="w-4 h-4" />
-          <span className="text-base font-medium">History</span>
-          <motion.div
-            animate={{ rotate: showModal ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronRightIcon className="w-4 h-4" />
-          </motion.div>
-        </button>
-
-        <AnimatePresence>
-          {showModal && (
-            <motion.div
-              className="absolute top-full right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[400px]"
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h5 className="text-xl font-semibold text-gray-800">
-                    Operation history
-                  </h5>
-                  <div className="flex gap-2">
+    <>
+      {createPortal(
+        (() => {
+          const rect = anchorEl?.current?.getBoundingClientRect();
+          const top = rect ? Math.round(rect.bottom) + 8 : 90;
+          const left = rect ? Math.round(rect.left) : 100;
+          return (
+            <div style={{ position: "fixed", top, left, zIndex: 1000 }}>
+              <ResizablePanel
+                title="Operation History"
+                initialWidth={450}
+                initialHeight={360}
+                onClose={handleCloseModal}
+                navigationPath={[]}
+                header
+                excludeRefs={anchorEl ? [anchorEl] : []}
+              >
+                <div className="p-4">
+                  <div className="flex items-center justify-end mb-3">
                     <button
                       onClick={() => handleClear()}
                       className="px-2 py-0.5 text-base border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
                     >
                       Clear History
                     </button>
-                    <button
-                      onClick={handleCloseModal}
-                      className="px-2 py-0.5 text-base border-1 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
-                    >
-                      Close
-                    </button>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {renderHistory()}
                   </div>
                 </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {renderHistory()}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </OutsideClickDetector>
-    </div>
+              </ResizablePanel>
+            </div>
+          );
+        })(),
+        document.body
+      )}
+    </>
   );
 };
 

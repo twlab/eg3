@@ -12,7 +12,7 @@ import DynamicRecord from "./destinations/DynamicRecord";
 import FetchSequence from "./destinations/FetchSequence";
 import RegionSetSelector from "./destinations/region-set/RegionSetSelector";
 
-export default function AppsTab() {
+export default function AppsTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
   const destinations: NavigationDestination[] = useMemo(
     () => [
       {
@@ -76,50 +76,15 @@ export default function AppsTab() {
   );
 
   return (
-    <NavigationStack destinations={destinations}>
-      <div className="flex flex-col gap-4">
-        <DescriptiveNavigationLink
-          path="region-set-view"
-          title="Region Set View"
-          description="View and analyze sets of genomic regions"
-        />
-        <DescriptiveNavigationLink
-          path="gene-plot"
-          title="Gene Plot"
-          description="Create and customize gene-centric visualizations"
-        />
-        <DescriptiveNavigationLink
-          path="scatter-plot"
-          title="Scatter Plot"
-          description="Generate scatter plots for genomic data analysis"
-        />
-        <DescriptiveNavigationLink
-          path="session"
-          title="Session"
-          description="Manage and share your browser sessions"
-          // onClick={() => dispatch(setSessionPanelOpen(true))}
-        />
-        {/* <DescriptiveNavigationLink
-          path="go-live"
-          title="Go Live"
-          description="Share your browser view in real-time with others"
-        /> */}
-        <DescriptiveNavigationLink
-          path="screenshot"
-          title="Screenshot"
-          description="Capture and export browser views as images"
-        />
-
-        <DescriptiveNavigationLink
-          path="fetch-sequence"
-          title="Fetch Sequence"
-          description="Retrieve and analyze genomic sequences"
-        />
-        {/* <DescriptiveNavigationLink
-          path="session"
-          title="Session"
-          description="Manage and share your browser sessions"
-        /> */}
+    <NavigationStack destinations={destinations} panelCounter={panelCounter} onPathChange={onNavigationPathChange}>
+      <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
+        <DescriptiveNavigationLink compact path="region-set-view" title="Region Set View" description="View and analyze sets of genomic regions" />
+        <DescriptiveNavigationLink compact path="gene-plot" title="Gene Plot" description="Create and customize gene-centric visualizations" />
+        <DescriptiveNavigationLink compact path="scatter-plot" title="Scatter Plot" description="Generate scatter plots for genomic data analysis" />
+        <DescriptiveNavigationLink compact path="session" title="Session" description="Manage and share your browser sessions" />
+        {/* <DescriptiveNavigationLink compact path="go-live" title="Go Live" description="Share your browser view in real-time with others" /> */}
+        <DescriptiveNavigationLink compact path="screenshot" title="Screenshot" description="Capture and export browser views as images" />
+        <DescriptiveNavigationLink compact path="fetch-sequence" title="Fetch Sequence" description="Retrieve and analyze genomic sequences" />
       </div>
     </NavigationStack>
   );

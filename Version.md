@@ -1,4 +1,17 @@
 # Version history
+## 59.4.1
+- when zoomed in, while in modbed summary mode, rect now has same width as base instead of one pixel line
+
+## 59.4.0
+- fixed bug where you can't add tracks when there are no tracks
+- added genome
+
+## 59.3.1
+- Added summary and detail displayMode to modbed
+
+## 59.3.0
+- Allow consuming app, to obtain session data when used as a package
+
 ## 59.2.5
 - improved initial load 
 - fixed bug causing slow down when viewing vcf tracks

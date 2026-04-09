@@ -16,7 +16,7 @@ const genome = new Genome("dm6", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr2L:826001-851000");
+const defaultRegion = "chr2L:826001-851000";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

@@ -1,7 +1,5 @@
 import { BigWig } from "@gmod/bbi";
 
-import { RemoteFile } from "generic-filehandle2";
-
 export class BigwigSource {
   url: any;
   bw: BigWig;
@@ -11,9 +9,12 @@ export class BigwigSource {
    */
   constructor(url) {
     this.url = url;
-    this.bw = new BigWig({
-      filehandle: new RemoteFile(this.url),
-    });
+    // const headers = this.url.includes("4dnucleome")
+    //     ? {
+    //           Authorization: process.env.REACT_APP_4DN_KEY,
+    //       }
+    //     : {};
+    this.bw = new BigWig({ url });
   }
 
   /**
@@ -25,6 +26,7 @@ export class BigwigSource {
    * @override
    */
   async getData(loci, options) {
+
     const promises = loci.map((locus) => {
       let chrom = options.ensemblStyle
         ? locus.chr.replace("chr", "")

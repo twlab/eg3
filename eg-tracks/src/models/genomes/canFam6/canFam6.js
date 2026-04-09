@@ -46,7 +46,7 @@ const genome = new Genome("canFam6", [
     new Chromosome("chrX", 108808365),
 ]);
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr1:34702809-34709639");
+const defaultRegion = "chr1:34702809-34709639";
 
 const defaultTracks = [
     new TrackModel({

@@ -11,7 +11,7 @@ import LocalTracks from "./destinations/LocalTracks";
 import LocalTextTracks from "./destinations/LocalTextTracks";
 import TrackListUi from "./destinations/TrackListUi";
 
-export default function TracksTab() {
+export default function TracksTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
   const destinations: NavigationDestination[] = useMemo(
     () => [
       {
@@ -68,43 +68,15 @@ export default function TracksTab() {
   );
 
   return (
-    <NavigationStack destinations={destinations}>
-      <div className="flex flex-col gap-4">
-        <DescriptiveNavigationLink
-          path="annotation"
-          title="Annotation Tracks"
-          description="View and manage genomic annotation tracks like genes, transcripts, and regulatory elements"
-        />
-        <DescriptiveNavigationLink
-          path="public-data-hubs"
-          title="Public Data Hubs"
-          description="Connect to public genomic data repositories and track collections"
-        />
-        <DescriptiveNavigationLink
-          path="track-facet-table"
-          title="Track Facet Table"
-          description="Organize and filter tracks using customizable categories and metadata"
-        />
-        <DescriptiveNavigationLink
-          path="remote-tracks"
-          title="Remote Tracks"
-          description="Access and manage tracks from remote servers and databases"
-        />
-        <DescriptiveNavigationLink
-          path="local-tracks"
-          title="Local Tracks"
-          description="Manage tracks loaded from your local files"
-        />
-        <DescriptiveNavigationLink
-          path="local-text-tracks"
-          title="Local Text Tracks"
-          description="Create and edit simple text-based genomic tracks"
-        />
-        <DescriptiveNavigationLink
-          path="track-list"
-          title="Track List"
-          description="View all available tracks in a comprehensive list format"
-        />
+    <NavigationStack destinations={destinations} panelCounter={panelCounter} onPathChange={onNavigationPathChange}>
+      <div className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
+        <DescriptiveNavigationLink compact path="annotation" title="Annotation Tracks" description="View and manage genomic annotation tracks like genes, transcripts, and regulatory elements" />
+        <DescriptiveNavigationLink compact path="public-data-hubs" title="Public Data Hubs" description="Connect to public genomic data repositories and track collections" />
+        <DescriptiveNavigationLink compact path="track-facet-table" title="Track Facet Table" description="Organize and filter tracks using customizable categories and metadata" />
+        <DescriptiveNavigationLink compact path="remote-tracks" title="Remote Tracks" description="Access and manage tracks from remote servers and databases" />
+        <DescriptiveNavigationLink compact path="local-tracks" title="Local Tracks" description="Manage tracks loaded from your local files" />
+        <DescriptiveNavigationLink compact path="local-text-tracks" title="Local Text Tracks" description="Create and edit simple text-based genomic tracks" />
+        <DescriptiveNavigationLink compact path="track-list" title="Track List" description="View all available tracks in a comprehensive list format" />
       </div>
     </NavigationStack>
   );

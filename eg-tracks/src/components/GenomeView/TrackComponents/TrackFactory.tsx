@@ -20,6 +20,9 @@ import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
 import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import VerticalDivider from "./commonComponents/VerticalDivider";
+import TrackLegend from "./commonComponents/TrackLegend";
+
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -42,7 +45,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackFetchedDataCache,
   globalTrackState,
   isScreenShotOpen,
-  posRef,
+  legendRef,
   highlightElements,
   viewWindowConfigData,
   metaSets,
@@ -51,6 +54,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   Toolbar,
   handleRetryFetchTrack,
   initialLoad,
+  selectedRegionSet,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -58,10 +62,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : { ...trackOptionMap["error"].defaultOptions },
   );
   const initTrackStart = useRef(true);
-  const svgHeight = useRef(0);
+  const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
-  const fetchError = useRef<boolean>(false);
+  const fetchError = useRef<string | null>(null);
 
   const xPos = useRef(0);
 
@@ -98,7 +102,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   ) {
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
-    const res = getDisplayModeFunction({
+    const displayArgs: any = {
       basesByPixel: basePerPixel,
       genesArr,
       genomeConfig,
@@ -124,7 +128,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       errorInfo: fetchError.current,
       handleRetryFetchTrack: handleRetryFetchTrack,
       initialLoad: initialLoad.current,
-    });
+    };
+    let res;
+    try {
+      res = getDisplayModeFunction(displayArgs);
+    } catch (e) {
+      fetchError.current = "error when creating drawData";
+      displayArgs.errorInfo = fetchError.current;
+      res = getDisplayModeFunction(displayArgs);
+    }
 
     if (cacheDataIdx === dataIdx) {
       signalTrackLoadComplete(id);
@@ -146,6 +158,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         component: result,
         dataIdx: cacheDataIdx,
         numHidden: numHidden,
+        visData: trackState.visData,
       });
 
       xPos.current = curXPos;
@@ -156,20 +169,44 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
   // MARK: clickTool
   function renderTooltip(event, gene) {
-    const currtooltip = geneClickToolTipMap[`${trackModel.type}`]({
-      gene,
-      feature: gene,
-      snp: gene,
-      vcf: gene,
-      trackModel,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      name: genomeConfig.genome._name,
-      onClose: onClose,
-      isThereG3dTrack: isThereG3dTrack,
-      setShow3dGene: setShow3dGene,
-      configOptions: configOptions.current,
-    });
+    let currtooltip;
+    try {
+      const trackType = trackModel.type === "rmskv2" ? "repeatmasker" : trackModel.type;
+      currtooltip = geneClickToolTipMap[`${trackType}`]({
+        gene,
+        feature: gene,
+        snp: gene,
+        vcf: gene,
+        trackModel,
+        pageX: event.pageX,
+        pageY: event.pageY,
+        name: genomeConfig.genome._name,
+        onClose: onClose,
+        isThereG3dTrack: isThereG3dTrack,
+        setShow3dGene: setShow3dGene,
+        configOptions: configOptions.current,
+      });
+    } catch (err) {
+      currtooltip = (
+        <div
+          style={{
+            position: "absolute",
+            left: event.pageX,
+            top: event.pageY,
+            background: "#fff0f0",
+            border: "1px solid red",
+            padding: "8px",
+            zIndex: 1001,
+            borderRadius: 4,
+          }}
+        >
+          <span style={{ color: "red" }}>Tooltip error: {String(err)}</span>
+          <button style={{ marginLeft: 8 }} onClick={onClose}>
+            ✕
+          </button>
+        </div>
+      );
+    }
     setToolTipVisible(true);
     setToolTip(ReactDOM.createPortal(currtooltip, document.body));
   }
@@ -184,24 +221,47 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     total = "",
   ) {
     let currtooltip;
-    if (type === "norm") {
-      currtooltip = geneClickToolTipMap["normModbed"]({
-        bs,
-        pageX: event.pageX,
-        pageY: event.pageY,
-        feature,
-        onClose,
-      });
-    } else {
-      currtooltip = geneClickToolTipMap["barModbed"]({
-        feature,
-        pageX: event.pageX,
-        pageY: event.pageY,
-        onCount,
-        onPct,
-        total,
-        onClose,
-      });
+    try {
+      if (type === "norm") {
+        currtooltip = geneClickToolTipMap["normModbed"]({
+          bs,
+          pageX: event.pageX,
+          pageY: event.pageY,
+          feature,
+          onClose,
+        });
+      } else {
+        currtooltip = geneClickToolTipMap["barModbed"]({
+          feature,
+          pageX: event.pageX,
+          pageY: event.pageY,
+          onCount,
+          onPct,
+          total,
+          onClose,
+        });
+      }
+    } catch (err) {
+      currtooltip = ReactDOM.createPortal(
+        <div
+          style={{
+            position: "absolute",
+            left: event.pageX,
+            top: event.pageY,
+            background: "#fff0f0",
+            border: "1px solid red",
+            padding: "8px",
+            zIndex: 1001,
+            borderRadius: 4,
+          }}
+        >
+          <span style={{ color: "red" }}>Tooltip error: {String(err)}</span>
+          <button style={{ marginLeft: 8 }} onClick={onClose}>
+            ✕
+          </button>
+        </div>,
+        document.body,
+      );
     }
     setToolTipVisible(true);
     setToolTip(currtooltip);
@@ -225,8 +285,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     matplotCheck,
     skipNoData,
   }) {
-    const primaryVisData =
-      trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
+    const primaryVisData = trackState.genomicFetchCoord
+      ? trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData
+      : trackState.visData;
     if (cacheTrackData.trackType !== "genomealign") {
       let visRegion =
         !cacheTrackData.usePrimaryNav &&
@@ -260,20 +321,21 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
     configOptions.current["usePrimaryNav"] = cacheTrackData.usePrimaryNav;
 
-    fetchError.current = cacheTrackData["Error"]
-      ? cacheTrackData["Error"]
+    fetchError.current = cacheTrackData["error"]
+      ? cacheTrackData["error"]
       : null;
 
-    if (cacheTrackData["Error"]) {
-
+    if (cacheTrackData["error"]) {
       createSVGOrCanvas(
         trackState,
         fetchError.current,
         dataIdx,
         xvalues ? xvalues : null,
       );
-    }
-    else if (!cacheTrackData.useExpandedLoci && cacheTrackData.usePrimaryNav) {
+    } else if (
+      !cacheTrackData.useExpandedLoci &&
+      cacheTrackData.usePrimaryNav
+    ) {
       let combinedData: Array<any> = [];
       let currIdx = dataIdx + 1;
       let noData = false;
@@ -338,6 +400,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       } else {
         return;
       }
+
       if (
         !trackFetchedDataCache.current[`${id}`] ||
         !globalTrackState.current.trackStates[dataIdx] ||
@@ -346,10 +409,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) {
         return;
       }
+
       const cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
+
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -561,134 +626,209 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   return (
     <div
       style={{
+
         display: "flex",
         position: "relative",
+
       }}
     >
       <div
+        ref={legendRef}
         style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+
+          willChange: "transform",
           zIndex: 2,
-          width: 120,
-          backgroundColor: trackModel.isSelected ? "yellow" : "var(--bg-color)",
-          color: trackModel.options?.legendFontColor
-            ? trackModel.options.legendFontColor
-            : trackModel.isSelected
-              ? "black"
-              : "var(--font-color)",
-          marginBottom: "1px", // we need 1 px margin here for tracklegend axis, since it uses the full height and we are using outline
+          pointerEvents: "none",
         }}
       >
-        {legend}
-      </div>
+        <div
+          style={{
+            width: 120,
+            backgroundColor: trackModel.isSelected
+              ? "yellow"
+              : "var(--bg-color)",
+            color: trackModel.options?.legendFontColor
+              ? trackModel.options.legendFontColor
+              : trackModel.isSelected
+                ? "black"
+                : "var(--font-color)",
 
-      {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
-      <Loading
-        buttonLabel={
-          (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
-            ? "Loading View"
-            : "Getting Data"
-        }
-        height={
-          !viewComponent
-            ? 40
-            : configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-                ? configOptions.current.height
-                : 40
-        }
-        color={trackModel.isSelected ? "black" : "var(--font-color)"}
-        // Control visibility - show when loading
-        isVisible={
-          trackModel.id in messageData ||
-          !viewComponent ||
-          (viewComponent && dataIdx !== viewComponent.dataIdx)
-        }
-      // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-      // xOffset={0}
-      >
-        <div>
-          {trackModel.id in messageData
-            ? messageData[`${trackModel.id}`].map((item, index) => {
-              return (
-                <div key={`${trackModel.index}loading-` + `${index}`}>
-                  {item.genomicLoci
-                    ? item.genomicLoci.map((item) => item.toString())
-                    : ""}{" "}
-                </div>
-              );
-            })
-            : ""}
+            pointerEvents: "auto",
+
+
+          }}
+        >
+          {legend ?? (
+            <TrackLegend
+              trackModel={trackModel}
+              height={40}
+              label={
+                trackModel.options?.label
+                  ? trackModel.options.label
+                  : trackModel.label
+                    ? trackModel.label
+                    : ""
+              }
+              forceSvg={false}
+            />
+          )}
         </div>
-      </Loading>
-
-      <HiddenIndicator
-        numHidden={
-          viewComponent && viewComponent.numHidden
-            ? viewComponent.numHidden
-            : ""
-        }
-        color={trackModel.isSelected ? "black" : "var(--font-color)"}
-        height={
-          configOptions.current.displayMode === "full"
-            ? !fetchError.current
-              ? svgHeight.current
-              : 40
-            : !fetchError.current
-              ? configOptions.current.height
-              : 40
-        }
-        xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
-        // Control visibility - show when data is loaded and items are hidden, but not when loading
-        isVisible={
-          viewComponent &&
-          viewComponent.numHidden &&
-          !(
+        {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
+        <Loading
+          buttonLabel={
+            (viewComponent && dataIdx !== viewComponent.dataIdx) ||
+              !viewComponent
+              ? "Loading View"
+              : "Getting Data"
+          }
+          height={
+            !viewComponent
+              ? 40
+              : configOptions.current.displayMode === "full"
+                ? !fetchError.current
+                  ? svgHeight.current
+                  : 40
+                : !fetchError.current
+                  ? configOptions.current.height
+                  : 40
+          }
+          color={trackModel.isSelected ? "black" : "var(--font-color)"}
+          // Control visibility - show when loading
+          isVisible={
             trackModel.id in messageData ||
             !viewComponent ||
             (viewComponent && dataIdx !== viewComponent.dataIdx)
-          )
-        }
-      />
-      {Toolbar.skeleton && !viewComponent ? (
-        <div style={{}}>
-          <Toolbar.skeleton width={windowWidth} height={40} />
-        </div>
-      ) : (
-        ""
-      )}
+          }
+        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+        // xOffset={0}
+        >
+          <div>
+            {trackModel.id in messageData
+              ? messageData[`${trackModel.id}`].map((item, index) => {
+                return (
+                  <div key={`${trackModel.index}loading-` + `${index}`}>
+                    {item.genomicLoci
+                      ? item.genomicLoci.map((item) => item.toString())
+                      : ""}{" "}
+                  </div>
+                );
+              })
+              : ""}
+          </div>
+        </Loading>
 
-      <div
-        ref={posRef}
-        style={{
-          display: "flex",
-          height:
+        <HiddenIndicator
+          numHidden={
+            viewComponent && viewComponent.numHidden
+              ? viewComponent.numHidden
+              : ""
+          }
+          color={trackModel.isSelected ? "black" : "var(--font-color)"}
+          height={
             configOptions.current.displayMode === "full"
               ? !fetchError.current
                 ? svgHeight.current
                 : 40
               : !fetchError.current
                 ? configOptions.current.height
-                : 40,
+                : 40
+          }
+          xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
+          // Control visibility - show when data is loaded and items are hidden, but not when loading
+          isVisible={
+            viewComponent &&
+            viewComponent.numHidden &&
+            !(
+              trackModel.id in messageData ||
+              !viewComponent ||
+              (viewComponent && dataIdx !== viewComponent.dataIdx)
+            )
+          }
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            zIndex: 3,
+            pointerEvents: "auto",
+            height: fetchError.current
+              ? 40
+              : configOptions.current.displayMode === "full"
+                ? svgHeight.current
+                : !configOptions.current.isCombineStrands &&
+                  trackModel.type === "methylc"
+                  ? configOptions.current.height * 2
+                  : configOptions.current.height,
+            left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
+          }}
+        >
+          <MetadataIndicator
+            track={trackModel}
+            terms={metaSets.terms}
+            onClick={onColorBoxClick}
+            height={
+              fetchError.current
+                ? 40
+                : configOptions.current.displayMode === "full"
+                  ? svgHeight.current
+                  : !configOptions.current.isCombineStrands &&
+                    trackModel.type === "methylc"
+                    ? configOptions.current.height * 2
+                    : configOptions.current.height
+            }
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          height: fetchError.current
+            ? 40
+            : configOptions.current.displayMode === "full"
+              ? svgHeight.current
+              : !configOptions.current.isCombineStrands &&
+                trackModel.type === "methylc"
+                ? configOptions.current.height * 2
+                : configOptions.current.height,
+
           position: "relative",
-          WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-          WebkitPerspective: `${windowWidth + 120}px`,
-          backfaceVisibility: "hidden",
-          perspective: `${windowWidth + 120}px`,
+          willChange: "transform",
+          left: 120,
         }}
       >
+        {Toolbar.skeleton && !viewComponent ? (
+          <div style={{}}>
+            <Toolbar.skeleton width={windowWidth} height={40} />
+          </div>
+        ) : (
+          ""
+        )}
         <div
           style={{
             position: "absolute",
             lineHeight: 0,
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+
+            transform: `translateX(${xPos.current}px)`,
             backgroundColor: configOptions.current.backgroundColor,
           }}
         >
-          {viewComponent ? viewComponent.component : ""}
+          {viewComponent ? (
+            <div style={{ position: "relative", overflow: "hidden" }}>
+              {viewComponent.component}
+              {selectedRegionSet ? (
+                <VerticalDivider visData={viewComponent.visData} />
+              ) : (
+                ""
+              )}
+            </div>
+          ) : (
+            ""
+          )}
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
@@ -727,37 +867,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             })
             : ""
         }
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          zIndex: 3,
-          height:
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-                ? configOptions.current.height
-                : 40,
-          left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
-        }}
-      >
-        <MetadataIndicator
-          track={trackModel}
-          terms={metaSets.terms}
-          onClick={onColorBoxClick}
-          height={
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-                ? configOptions.current.height
-                : 40
-          }
-        />
       </div>
     </div>
   );

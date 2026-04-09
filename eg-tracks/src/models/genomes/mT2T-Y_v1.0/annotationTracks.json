@@ -1,0 +1,22 @@
+{
+    "Ruler": [
+        {
+            "type": "ruler",
+            "label": "Ruler",
+            "name": "Ruler"
+        }
+    ],
+    "Genes": [],
+    "RepeatMasker": {
+        "All Repeats": [
+            {
+                "name": "mT2T-Y.repeats",
+                "label": "mT2T-Y.repeats",
+                "filetype": "bigbed",
+                "url": "https://vizhub.wustl.edu/public/mT2T-Y_v1.0/mT2T-Y.repeats.bb",
+                "height": 30
+            }
+        ]
+    },
+    "Genome Comparison": []
+}

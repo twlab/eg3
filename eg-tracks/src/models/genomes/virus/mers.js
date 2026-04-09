@@ -5,7 +5,7 @@ import TrackModel from "../../TrackModel";
 const genome = new Genome("MERS", [new Chromosome("NC_019843.3", 30119)]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("NC_019843.3:0-30119");
+const defaultRegion = "NC_019843.3:0-30119";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import memoizeOne from "memoize-one";
-import _ from "lodash";
+import _, { min } from "lodash";
 
 import { Sequence } from "../TrackComponents/GenomeAlignComponents/Sequence";
 
@@ -21,7 +21,7 @@ import { FeaturePlacementResult } from "../../../models/FeatureArranger";
 
 const HEIGHT = 15;
 const TOP_PADDING = 5;
-const DEFAULT_LABEL_OFFSET = 70;
+const DEFAULT_LABEL_OFFSET = 65;
 const FEATURE_LABEL_SIZES = [16, 12, 8];
 
 const CYTOBAND_COLORS = {
@@ -299,6 +299,7 @@ class Chromosomes extends React.PureComponent<
       hideCytoband,
       minXwidthPerBase,
     } = this.props;
+
     const result: FeaturePlacementResult = this.featurePlacer.placeFeatures({
       features: this.state.sequenceData,
       viewRegion,
@@ -308,6 +309,7 @@ class Chromosomes extends React.PureComponent<
     return result.placements.map((placement, i) => {
       const { feature, visiblePart, xSpan, isReverse } = placement as any;
       const { relativeStart, relativeEnd } = visiblePart;
+
       if (hideCytoband) {
         return (
           <Sequence
@@ -325,6 +327,7 @@ class Chromosomes extends React.PureComponent<
           />
         );
       } else {
+
         return (
           <Sequence
             key={i}
@@ -392,7 +395,7 @@ class Chromosomes extends React.PureComponent<
           if (
             chromosomeNames.length > 0 &&
             segment.getName() ===
-              chromosomeNames[chromosomeNames.length - 1].name
+            chromosomeNames[chromosomeNames.length - 1].name
           ) {
             chromosomeNames[chromosomeNames.length - 1].end = x + drawWidth;
           } else {
@@ -436,8 +439,8 @@ class Chromosomes extends React.PureComponent<
     const cytobands = hideCytoband
       ? null
       : viewRegion
-          .getGenomeIntervals()
-          .map((locus) => this.renderCytobandsInLocus(locus, drawModel));
+        .getGenomeIntervals()
+        .map((locus) => this.renderCytobandsInLocus(locus, drawModel));
 
     return (
       <TranslatableG x={this.props.x} y={this.props.y}>

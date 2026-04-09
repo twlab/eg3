@@ -31,7 +31,7 @@ interface Context {
 const SortableItemContext = createContext<Context>({
   attributes: {},
   listeners: undefined,
-  ref() {},
+  ref() { },
 });
 
 export function SortableItem({
@@ -78,7 +78,7 @@ export function SortableItem({
     }
   };
   useEffect(() => {
-    if (!(selectedTool.title === 1 && selectedTool.isSelected)) {
+    if (!(selectedTool.title === "Reorder" && selectedTool.isSelected)) {
       setDisableDnD(true);
     } else {
       setDisableDnD(false);

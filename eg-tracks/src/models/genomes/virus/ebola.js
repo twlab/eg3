@@ -5,7 +5,7 @@ import TrackModel from "../../TrackModel";
 const genome = new Genome("Ebola", [new Chromosome("KM034562.1", 18957)]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("KM034562.1:0-18957");
+const defaultRegion = "KM034562.1:0-18957";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

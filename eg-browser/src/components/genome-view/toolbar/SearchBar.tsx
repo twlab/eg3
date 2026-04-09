@@ -30,6 +30,7 @@ import {
   GenomeSerializer,
   OutsideClickDetector,
   IsoformSelection,
+  GenomeCoordinate,
 } from "wuepgg3-track";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
@@ -42,9 +43,8 @@ interface SearchBarProps {
   isSearchFocused: boolean;
   onSearchFocusChange: (focused: boolean) => void;
   onNewRegionSelect: (
-    start: number,
-    end: number,
-    highlightSearch?: boolean
+    query: string | GenomeCoordinate,
+    highlightSearch?: boolean,
   ) => void;
   windowWidth?: number;
   fontSize?: number;
@@ -91,7 +91,7 @@ let currentSnpSearchController: AbortController | null = null;
 
 const geneSearch = async (
   query: string,
-  genomeName: string
+  genomeName: string,
 ): Promise<GeneResult[]> => {
   if (query.trim().length < MIN_CHARS_FOR_SUGGESTIONS) return [];
 
@@ -118,7 +118,7 @@ const geneSearch = async (
     };
     const url = new URL(`${AWS_API}/${genomeName}/genes/queryName`);
     Object.keys(params).forEach((key) =>
-      url.searchParams.append(key, params[key])
+      url.searchParams.append(key, params[key]),
     );
 
     const response = await fetch(url.toString(), {
@@ -168,7 +168,7 @@ const geneSearch = async (
 
 const snpSearch = async (
   query: string,
-  genomeName: string
+  genomeName: string,
 ): Promise<SnpResult[]> => {
   if (!query || query.trim().length < 1) return [];
 
@@ -361,93 +361,58 @@ export default function SearchBar({
   const genome = useCurrentGenome();
   const [isShowingIsoforms, setIsShowingIsoforms] = useState(false);
   const [isShowingSNPforms, setIsShowingSNPforms] = useState(false);
-
-  // Helper functions for responsive sizing (matching Toolbar.tsx)
-  const getIconSize = () => {
-    return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
-  };
-
-  const iconSizeStyle = {
-    width: `${getIconSize()}px`,
-    height: `${getIconSize()}px`,
-  };
-
-  const getButtonStyle = () => ({
-    padding: `${buttonPadding}px`,
-  });
-
-  const getRegionButtonSize = () => {
-    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
-  };
-
-  const getArrowIconSize = () => {
-    return `${Math.max(10, Math.min(14, (windowWidth || 1920) * 0.007))}px`;
-  };
-
-  const getEmojiSize = () => {
-    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
-  };
-
   const genomeConfig = useMemo(() => {
     if (genome) {
       return GenomeSerializer.deserialize(genome!);
     }
   }, [genome]);
+  // Helper functions for responsive sizing (matching Toolbar.tsx)
+  const getIconSize = () => {
+    return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
+  };
+
+  // const iconSizeStyle = {
+  //   width: `${getIconSize()}px`,
+  //   height: `${getIconSize()}px`,
+  // };
+
+  // const getButtonStyle = () => ({
+  //   padding: `${buttonPadding}px`,
+  // });
+
+  // const getRegionButtonSize = () => {
+  //   return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  // };
+
+  // const getArrowIconSize = () => {
+  //   return `${Math.max(10, Math.min(14, (windowWidth || 1920) * 0.007))}px`;
+  // };
+
+  // const getEmojiSize = () => {
+  //   return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  // };
 
   const parseRegion = (query: string) => {
-    const navContext = genomeConfig?.navContext;
-    let parsedRegion;
-
-    try {
-      parsedRegion = navContext!.parse(query || "");
-    } catch (error) {
-      if (error instanceof RangeError) {
-        setBadInputMessage(error.message);
-        return;
-      } else {
-        throw error;
-      }
-    }
-
-    // Parsing successful
-    if (badInputMessage) {
-      setBadInputMessage("");
-    }
-
-    onNewRegionSelect(
-      parsedRegion.start,
-      parsedRegion.end,
-      highlightSearch.current
-    );
+    onNewRegionSelect(query, highlightSearch.current);
   };
   function onGeneSelected(gene: Gene) {
-    const navContext = genomeConfig?.navContext;
-
-    const contextInterval = navContext!.convertGenomeIntervalToBases(
-      gene.locus
-    );
-
-    const baseStart = contextInterval[0].start;
-    const baseEnd = contextInterval[contextInterval.length - 1].end;
-    onNewRegionSelect(baseStart, baseEnd, highlightSearch.current);
+    onNewRegionSelect(gene.locus.toString(), highlightSearch.current);
   }
 
   function onSnpSelected(mapping: SnpMapping) {
-    const navContext = genomeConfig?.navContext;
     const chrInterval = new ChromosomeInterval(
       `chr${mapping.seq_region_name}`,
       mapping.start - 1,
-      mapping.end
+      mapping.end,
     );
-    const interval = navContext!.convertGenomeIntervalToBases(chrInterval)[0];
 
-    if (interval) {
-      onNewRegionSelect(interval.start, interval.end, highlightSearch.current);
+    if (chrInterval) {
+      onNewRegionSelect(chrInterval.toString(), highlightSearch.current);
     } else {
       console.log(
         "SNP not available in current region set view",
         "error",
-        2000
+        2000,
       );
     }
   }
@@ -506,10 +471,11 @@ export default function SearchBar({
     }
   };
 
-  const debouncedSearch = debounce(handleSearch, 300);
+  const debouncedSearch = debounce(handleSearch, 500);
 
   const handleSearchChange = (e: any) => {
     const value = e.target.value;
+    if (!isSearchFocused) onSearchFocusChange(true);
     latestUserInput.current = value; // Update the ref with the latest input
     setSearchInput(value);
 
@@ -553,11 +519,11 @@ export default function SearchBar({
       suggestions.push(
         <SearchSuggestionBase
           key="region-message"
-          icon={<span style={{ fontSize: getEmojiSize() }}>🎯</span>}
+          icon={<span style={{ fontSize: "16px" }}>🎯</span>}
           text={`"${searchInput}"`}
           desc="You're entering coordinates. Press enter or click here to jump to this region."
           onClick={() => parseRegion(searchInput)}
-        />
+        />,
       );
       return suggestions;
     }
@@ -567,7 +533,7 @@ export default function SearchBar({
       suggestions.push(
         <div key="loading" className="px-3 py-2 text-gray-500 text-center">
           <span style={{ fontSize: fontSize }}>Searching...</span>
-        </div>
+        </div>,
       );
       return suggestions;
     }
@@ -579,7 +545,7 @@ export default function SearchBar({
           text="Filters"
           highlightSearch={highlightSearch}
           fontSize={fontSize}
-        />
+        />,
       );
       SLASH_COMMANDS.forEach((command) => {
         suggestions.push(
@@ -588,26 +554,26 @@ export default function SearchBar({
             className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-dark-secondary dark:text-dark-primary cursor-pointer flex items-center gap-1.5"
             onClick={() => setActiveCommand(command)}
           >
-            <span style={{ fontSize: getEmojiSize() }}>
+            <span style={{ fontSize: "16px" }}>
               {typeToEmoji[command]}
             </span>
             <span
               className="text-gray-600 dark:text-dark-primary"
-              style={{ fontSize: fontSize }}
+              style={{ fontSize: "16px" }}
             >
               /{command}
             </span>
-          </motion.div>
+          </motion.div>,
         );
       });
     }
 
     if (searchResults.length > 0) {
       const geneResults = searchResults.filter(
-        (r): r is GeneResult => r.type === "gene"
+        (r): r is GeneResult => r.type === "gene",
       );
       const snpResults = searchResults.filter(
-        (r): r is SnpResult => r.type === "snp"
+        (r): r is SnpResult => r.type === "snp",
       );
 
       if (geneResults.length > 0) {
@@ -616,7 +582,7 @@ export default function SearchBar({
             key="genes"
             text="Genes"
             fontSize={fontSize}
-          />
+          />,
         );
         geneResults.forEach((result) => {
           suggestions.push(
@@ -634,7 +600,7 @@ export default function SearchBar({
                   {result.description}
                 </span>
               </div>
-            </motion.div>
+            </motion.div>,
           );
         });
       }
@@ -645,7 +611,7 @@ export default function SearchBar({
             key="snps"
             text="Variants"
             fontSize={fontSize}
-          />
+          />,
         );
         snpResults.forEach((result) => {
           suggestions.push(
@@ -658,7 +624,7 @@ export default function SearchBar({
                 snp={result.snpData}
                 onSnpSelected={onSnpSelected}
               />
-            </motion.div>
+            </motion.div>,
           );
         });
       }
@@ -731,14 +697,13 @@ export default function SearchBar({
         setSelectedInput("");
         setSearchResults([]);
       }}
+
     >
       <AnimatePresence>
         {isShowingIsoforms ? (
           <motion.div
-            className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-50"
-            initial={{ opacity: 0, y: -10, maxHeight: 0 }}
-            animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
-            exit={{ opacity: 0, y: -10, maxHeight: 0 }}
+            className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-51"
+
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <IsoformSelection
@@ -756,17 +721,15 @@ export default function SearchBar({
       </AnimatePresence>
       <motion.div
         ref={searchContainerRef}
-        className="flex flex-col relative border-1 outline-gray-400 rounded-sm"
+        className="flex flex-col relative outline-1 outline-gray-400 rounded-sm"
         transition={{ duration: 0.2 }}
       >
         <AnimatePresence>
           {isSearchFocused &&
-          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
-              initial={{ opacity: 0, y: -10, maxHeight: 0 }}
-              animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
-              exit={{ opacity: 0, y: -10, maxHeight: 0 }}
+
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {renderSearchSuggestions()}
@@ -777,17 +740,17 @@ export default function SearchBar({
         </AnimatePresence>
 
         {/* Outer row for search input + dynamic buttons; increased flex growth & min width */}
-        <div className="flex flex-row items-center w-full h-full flex-grow ">
+        <div className="flex flex-row items-center w-full h-full flex-grow">
           {/* Inner container: give it stronger flex and a minimum width so it claims more horizontal space */}
           <div className="flex flex-row items-center w-full flex-[2]">
             {activeCommand ? (
               <div
                 className="flex items-center bg-secondary dark:bg-dark-secondary rounded-md mr-1.5 flex-shrink-0"
-                style={getButtonStyle()}
+                style={{ padding: 1 }}
               >
                 <span
                   className="text-tint dark:text-dark-primary leading-none"
-                  style={{ fontSize: fontSize }}
+                  style={{ fontSize: "16px" }}
                 >
                   /{activeCommand}
                 </span>
@@ -795,11 +758,11 @@ export default function SearchBar({
             ) : (
               <MagnifyingGlassIcon
                 className="text-gray-400 flex-shrink-0 mx-1"
-                style={iconSizeStyle}
+                style={{ width: "16px", height: "16px" }}
               />
             )}
             <input
-              className="flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
+              className="h-8 flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
               style={{
                 minWidth: fontSize,
                 fontSize: fontSize,
@@ -807,7 +770,7 @@ export default function SearchBar({
               placeholder={
                 activeCommand
                   ? `Search ${activeCommand}s`
-                  : "Search region/gene"
+                  : "Search for regions, genes, snps..."
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
@@ -834,15 +797,15 @@ export default function SearchBar({
                 }
                 className="flex items-center justify-center rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
                 style={{
-                  width: getRegionButtonSize(),
-                  height: getRegionButtonSize(),
+                  width: "32px",
+                  height: "32px",
                 }}
               >
                 <ArrowRightIcon
                   className="text-tint"
                   style={{
-                    width: getArrowIconSize(),
-                    height: getArrowIconSize(),
+                    width: "16px",
+                    height: "16px",
                   }}
                 />
               </button>
