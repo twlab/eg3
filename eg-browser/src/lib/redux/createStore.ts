@@ -93,7 +93,7 @@ const undoableConfig = {
   limit: 20,
   filter: excludeAction([setCurrentSession.type]),
 
-  debug: true, // Set to true to enable detailed logging of undoable actions and state changes
+  // debug: true, // Set to true to enable detailed logging of undoable actions and state changes
 };
 
 export interface StoreConfig {
@@ -143,10 +143,10 @@ export function createAppStore(config: StoreConfig = {}) {
         getDefaultMiddleware({
           serializableCheck: false,
         }).concat((store) => (next) => (action) => {
-          console.log("Dispatching action:", action.type, action);
-          if (action.type === "browser/updateCurrentSession") {
-            console.trace("Call stack for updateCurrentSession:");
-          }
+          // console.log("Dispatching action:", action.type, action);
+          // if (action.type === "browser/updateCurrentSession") {
+          //   console.trace("Call stack for updateCurrentSession:");
+          // }
           const result = next(action);
           // console.log('Next state:', store.getState());
           return result;
@@ -180,10 +180,10 @@ export function createAppStore(config: StoreConfig = {}) {
       getDefaultMiddleware({
         serializableCheck: false,
       }).concat((store) => (next) => (action) => {
-        console.log('Dispatching action:', action.type, action);
-        if (action.type === 'browser/updateCurrentSession' || action.type === 'navigation/setNavigationTab') {
-          console.trace('Call stack for updateCurrentSession:');
-        }
+        // console.log('Dispatching action:', action.type, action);
+        // if (action.type === 'browser/updateCurrentSession' || action.type === 'navigation/setNavigationTab') {
+        //   console.trace('Call stack for updateCurrentSession:');
+        // }
         const result = next(action);
         // console.log('Next state:', store.getState());
         return result;

@@ -376,6 +376,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               nav: curFetchNav,
               trackModel,
             });
+          console.log(responses)
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({

@@ -260,7 +260,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         regionData.trackModel.url
       );
     } else if (trackType === "repeat") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
         regionData.trackModel.url
       );
     } else if (trackType === "jaspar") {
@@ -339,6 +339,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             return data;
           })
           .catch((error) => {
+
             cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });

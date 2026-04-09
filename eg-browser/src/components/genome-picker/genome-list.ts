@@ -9,13 +9,13 @@ export const GENOME_LIST: Genome[] = [
   {
     name: "Human",
     logoUrl: "default/human.png",
-    croppedUrl: "cropped/human.png",
+    croppedUrl: "default/human.png",
     versions: ["hg38", "hg19", "t2t-chm13-v2.0", "t2t-chm13-v1.1"],
   },
   {
     name: "Chimp",
     logoUrl: "default/chimp.png",
-    croppedUrl: "cropped/chimp.png",
+    croppedUrl: "default/chimp.png",
     versions: ["panTro6", "panTro5", "panTro4"],
   },
   {
@@ -71,13 +71,13 @@ export const GENOME_LIST: Genome[] = [
   {
     name: "Mouse",
     logoUrl: "default/mouse.png",
-    croppedUrl: "cropped/mouse.png",
+    croppedUrl: "default/mouse.png",
     versions: ["mm39", "mm10", "mm9", "mT2T-Y_v1.0"],
   },
   {
     name: "Rat",
     logoUrl: "default/rat.png",
-    croppedUrl: "cropped/rat.png",
+    croppedUrl: "default/rat.png",
     versions: ["rn7", "rn6", "rn4"],
   },
   {
@@ -88,7 +88,7 @@ export const GENOME_LIST: Genome[] = [
   {
     name: "Chicken",
     logoUrl: "default/chicken.png",
-    croppedUrl: "cropped/chicken.png",
+    croppedUrl: "default/chicken.png",
     versions: ["GRCg7w", "GRCg7b", "galGal6", "galGal5"],
   },
   {
@@ -99,7 +99,7 @@ export const GENOME_LIST: Genome[] = [
   {
     name: "Zebrafish",
     logoUrl: "default/zebrafish.png",
-    croppedUrl: "cropped/zebrafish.png",
+    croppedUrl: "default/zebrafish.png",
     versions: ["danRer11", "danRer10", "danRer7"],
   },
   {
@@ -120,7 +120,7 @@ export const GENOME_LIST: Genome[] = [
   {
     name: "Arabidopsis",
     logoUrl: "default/arabidopsis.png",
-    croppedUrl: "cropped/arabidopsis.png",
+    croppedUrl: "default/arabidopsis.png",
     versions: ["araTha1"],
   },
   {
@@ -141,7 +141,7 @@ export const GENOME_LIST: Genome[] = [
   {
     name: "P. falciparum",
     logoUrl: "default/pfalciparum.png",
-    croppedUrl: "cropped/pfalciparum.png",
+    croppedUrl: "default/pfalciparum.png",
     versions: ["Pfal3D7"],
   },
   {

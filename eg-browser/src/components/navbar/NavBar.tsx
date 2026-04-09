@@ -13,7 +13,7 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import classNames from "classnames";
+import classNames from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 

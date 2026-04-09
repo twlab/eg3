@@ -13,10 +13,6 @@ import SessionList from "../sessions/SessionList";
 
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
-// @ts-ignore
-import FetchDataWorker from "wuepgg3-track/src/getRemoteData/fetchDataWorker.ts?worker&inline";
-// @ts-ignore
-import FetchGenomeAlignWorker from "wuepgg3-track/src/getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
 import {
   createSession,
   selectCurrentSessionId,
@@ -105,32 +101,6 @@ export default function RootLayout(props: GenomeHubProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
     null,
   );
-
-  // Create workers eagerly so they are ready before a genome session is picked.
-  // Always 2 normal fetch workers + 1 genome-align worker, no type checking needed.
-  const infiniteScrollWorkers = useRef<{
-    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
-  } | null>(null);
-  if (!infiniteScrollWorkers.current) {
-    infiniteScrollWorkers.current = {
-      worker: [
-        { fetchWorker: new FetchDataWorker(), hasOnMessage: false },
-        { fetchWorker: new FetchDataWorker(), hasOnMessage: false },
-        { fetchWorker: new FetchDataWorker(), hasOnMessage: false },
-
-      ],
-    };
-  }
-  const fetchGenomeAlignWorker = useRef<{
-    fetchWorker: Worker;
-    hasOnMessage: boolean;
-  } | null>(null);
-  if (!fetchGenomeAlignWorker.current) {
-    fetchGenomeAlignWorker.current = {
-      fetchWorker: new FetchGenomeAlignWorker(),
-      hasOnMessage: false,
-    };
-  }
   const escapeHandlerRef = useRef<(() => void) | null>(null);
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
@@ -478,10 +448,7 @@ export default function RootLayout(props: GenomeHubProps) {
                   )}
                   {sessionId && (
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
-                      <GenomeView
-                        infiniteScrollWorkers={infiniteScrollWorkers}
-                        fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-                      />
+                      <GenomeView />
                     </GenomeErrorBoundary>
                   )}
                 </div>

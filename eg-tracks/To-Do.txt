@@ -1,5 +1,5 @@
-
-
+ADD ERROR CHECK TO FORMAT
+LOAD FILE SESSION WITHOUT NEEDED BVUNDLE ID
 4/07/2026
 check when loading a lot tracks
 check negative bigwig more. 

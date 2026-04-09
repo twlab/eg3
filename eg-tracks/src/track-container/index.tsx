@@ -42,8 +42,6 @@ export function TrackContainerRepresentable({
   darkTheme,
   height,
   width,
-  infiniteScrollWorkers,
-  fetchGenomeAlignWorker,
 }: ITrackContainerRepresentableProps) {
   // const [forceViewRegionUpdate, setForceViewRegionUpdate] = useState(0);
 
@@ -374,8 +372,6 @@ export function TrackContainerRepresentable({
       darkTheme={darkTheme}
       width={width}
       height={height}
-      infiniteScrollWorkers={infiniteScrollWorkers}
-      fetchGenomeAlignWorker={fetchGenomeAlignWorker}
     />
   );
 }

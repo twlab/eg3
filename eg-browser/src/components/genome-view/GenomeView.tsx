@@ -2,7 +2,7 @@ import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import {
   selectDarkTheme,
   selectIsNavigatorVisible,
@@ -26,20 +26,7 @@ import Toolbar from "./toolbar/Toolbar";
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { selectCurrentState } from "../../lib/redux/selectors";
 
-interface GenomeViewProps {
-  infiniteScrollWorkers?: React.MutableRefObject<{
-    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
-  } | null>;
-  fetchGenomeAlignWorker?: React.MutableRefObject<{
-    fetchWorker: Worker;
-    hasOnMessage: boolean;
-  } | null>;
-}
-
-export default function GenomeView({
-  infiniteScrollWorkers: externalInfiniteScrollWorkers,
-  fetchGenomeAlignWorker: externalFetchGenomeAlignWorker,
-}: GenomeViewProps = {}) {
+export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
   const currentState = useAppSelector(selectCurrentState);
 
@@ -135,8 +122,6 @@ export default function GenomeView({
       darkTheme={darkTheme}
       width={currentSession.width}
       height={currentSession.height}
-      infiniteScrollWorkers={externalInfiniteScrollWorkers}
-      fetchGenomeAlignWorker={externalFetchGenomeAlignWorker}
     />
   ) : null;
 }

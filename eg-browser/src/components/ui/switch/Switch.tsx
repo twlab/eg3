@@ -1,4 +1,4 @@
-import classNames from "classnames";
+import classNames from "clsx";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { type ReactNode } from "react";
 

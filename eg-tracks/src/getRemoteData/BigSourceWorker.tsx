@@ -1,4 +1,4 @@
-import _ from "lodash";
+
 import { BigWigZoomLevels } from "../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { makeBwg } from "./vendor/bbi-js/main/bigwig";
 import { URLFetchable } from "./vendor/bbi-js/utils/bin";
@@ -61,7 +61,7 @@ class BigSourceWorker {
     );
     const dataForEachLocus = await Promise.all(promises);
 
-    const combinedData = _.flatten(dataForEachLocus);
+    const combinedData = dataForEachLocus.flat();
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
     }

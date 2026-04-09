@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
@@ -466,7 +467,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       infiniteScrollWorkers.current.worker.length > 0
     ) {
       const numWorkers = infiniteScrollWorkers.current.worker.length;
-      console.log(numWorkers)
 
       for (let i = 0; i < numWorkers; i++) {
         const messagesForWorker: Array<any> = [];
@@ -1568,7 +1568,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           primaryGenName: genomeConfig.genome.getName(),
         };
 
-        await dataItem.fetchResults.map(
+        await Promise.all(dataItem.fetchResults.map(
           async (item: {
             id: any;
             name: string;
@@ -1598,7 +1598,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               errorType: item.errorType,
             });
           },
-        );
+        ));
 
         const currentDataIdx = dataIdx.current;
         const idxArr = [currentDataIdx - 1, currentDataIdx, currentDataIdx + 1];
@@ -1972,7 +1972,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           fetchNewRegion: true,
         });
       } else {
-        console.log("wat")
         enqueueMessage(dataToFetchArr);
       }
     }
@@ -2140,10 +2139,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      setDraw({
-        trackToDrawId: { ...completedFetchedRegion.current.done },
-        viewWindow: curViewWindow,
-        completedFetchedRegion,
+      flushSync(() => {
+        setDraw({
+          trackToDrawId: { ...completedFetchedRegion.current.done },
+          viewWindow: curViewWindow,
+          completedFetchedRegion,
+        });
       });
     }
   }
@@ -2660,6 +2661,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const allKeys = tracks.map((track) => Object.keys(track.metadata));
     const metaKeys = _.union(...allKeys);
     const toBeAdded = metaKeys.filter((key) => !metaSets.terms.includes(key));
+
+    if (toBeAdded.length === 0) return;
 
     const newSuggestedMetaSets = new Set([
       ...metaSets.suggestedMetaSets,
@@ -3512,7 +3515,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         trackManagerState.current.tracks = filteredTracks;
 
-        addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
         onTracksChange(filteredTracks);
