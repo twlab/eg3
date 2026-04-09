@@ -9,7 +9,7 @@ import {
 import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
-import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/SessionUI";
+import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
 import { updateBundle } from "../slices/hubSlice";
 import { generateUUID } from "wuepgg3-track";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";

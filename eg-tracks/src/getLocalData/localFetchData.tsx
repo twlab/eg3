@@ -116,10 +116,7 @@ async function getLocalData(regionData: any, trackType: string) {
       regionData.trackModel.options
     );
   }
-  console.log(fetchInstance.getData(
-    regionData.nav,
-    regionData.trackModel.options
-  ))
+
   return await fetchInstance.getData(
     regionData.nav,
     regionData.trackModel.options

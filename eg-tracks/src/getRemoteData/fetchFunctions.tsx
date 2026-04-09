@@ -376,7 +376,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               nav: curFetchNav,
               trackModel,
             });
-          console.log(responses)
+
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -561,7 +561,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     );
 
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
-    console.log(fetchResults);
+
     const successFetch = Object.values(fetchResults).filter(
       (result: any) => !result.errorType,
     );

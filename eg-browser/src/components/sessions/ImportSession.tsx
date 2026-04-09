@@ -11,7 +11,7 @@ import {
   convertSession,
 } from "@/lib/redux/thunk/session";
 import { importOneSession } from "@/lib/redux/thunk/session";
-import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/SessionUI";
+import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
 import { getDatabase, ref, remove } from "firebase/database";
 import { generateUUID } from "wuepgg3-track";
 export default function ImportSession() {

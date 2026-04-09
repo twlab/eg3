@@ -105,12 +105,12 @@ const defaultTracks = [
   //   genome: "hg38",
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
   // }),
-  new TrackModel({
-    type: "bigwig",
-    name: "bigwig yeschr",
-    genome: "hg38",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig yeschr",
+  //   genome: "hg38",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
+  // }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig yeschr",
@@ -396,20 +396,20 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
   //   name: "CH12 H3K36me3",
   // }),
-  new TrackModel({
-    type: "methylc",
-    name: "H1",
-    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-    options: {
-      label: "Methylation",
-      colorsForContext: {
-        CG: { color: "#648bd8", background: "#d9d9d9" },
-        CHG: { color: "#ff944d", background: "#ffe0cc" },
-        CHH: { color: "#ff00ff", background: "#ffe5ff" },
-      },
-      depthColor: "#01E9FE",
-    },
-  }),
+  // new TrackModel({
+  //   type: "methylc",
+  //   name: "H1",
+  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+  //   options: {
+  //     label: "Methylation",
+  //     colorsForContext: {
+  //       CG: { color: "#648bd8", background: "#d9d9d9" },
+  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
+  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
+  //     },
+  //     depthColor: "#01E9FE",
+  //   },
+  // }),
 
   // new TrackModel({
   //   type: "methylc",

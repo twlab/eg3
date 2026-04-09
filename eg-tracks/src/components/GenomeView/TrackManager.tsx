@@ -1676,7 +1676,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
     const fetchNewRegion = event.data.navData.fetchNewRegion;
     const fetchedDragX = event.data.navData.dragX;
-
+    console.log(event.data)
     // Process all fetch results with promises
     await Promise.all(
       Object.values(event.data.fetchResults).map((item: any) =>

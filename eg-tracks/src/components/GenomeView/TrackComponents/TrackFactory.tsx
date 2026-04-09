@@ -171,7 +171,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   function renderTooltip(event, gene) {
     let currtooltip;
     try {
-      currtooltip = geneClickToolTipMap[`${trackModel.type}`]({
+      const trackType = trackModel.type === "rmskv2" ? "repeatmasker" : trackModel.type;
+      currtooltip = geneClickToolTipMap[`${trackType}`]({
         gene,
         feature: gene,
         snp: gene,

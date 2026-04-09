@@ -3,12 +3,19 @@ import { BlobFile, RemoteFile } from "generic-filehandle";
 import { TabixIndexedFile } from "@gmod/tabix";
 import VCF from "@gmod/vcf";
 
+const ensembl: Array<string> = [
+  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+  "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+  "21", "22", "X", "Y", "M",
+];
+
 class VcfSource {
   header: any;
   vcf: TabixIndexedFile;
   parser: any;
   url: any;
   indexUrl: any;
+  private chromNamingCache: boolean | null = null;
   constructor(url, indexUrl = null) {
     this.url = url;
     this.indexUrl = indexUrl;
@@ -28,6 +35,25 @@ class VcfSource {
     this.parser = null;
   }
 
+  private async detectChromosomeNaming(): Promise<boolean | null> {
+    if (this.chromNamingCache !== null) {
+      return this.chromNamingCache;
+    }
+    try {
+      const names = await this.vcf.getReferenceSequenceNames();
+      const firstChrom = names[0];
+      if (!firstChrom) {
+        this.chromNamingCache = false;
+        return false;
+      }
+      this.chromNamingCache = ensembl.includes(firstChrom);
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error("Error detecting chromosome naming. Check URL and file format.");
+      return null;
+    }
+  }
+
   /**
    * Fetches data from VCF file for the given regions
    * @param {ChromosomeInterval[]} region - locations for which to fetch data
@@ -41,8 +67,9 @@ class VcfSource {
     if (!this.parser) {
       this.parser = new VCF({ header: this.header });
     }
+    const isEnsembl = options?.ensemblStyle ?? (await this.detectChromosomeNaming());
     const promises = region.map((locus) =>
-      this._getDataInLocus(locus, options),
+      this._getDataInLocus(locus, isEnsembl),
     );
     const dataForEachSegment = await Promise.all(promises);
     const flattened = dataForEachSegment.flat();
@@ -75,12 +102,9 @@ class VcfSource {
     }
   }
 
-  async _getDataInLocus(locus, options) {
+  async _getDataInLocus(locus, isEnsembl) {
     const variants: any = [];
-    let chrom =
-      options && options.ensemblStyle
-        ? locus.chr.replace("chr", "")
-        : locus.chr;
+    let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
     if (chrom === "M") {
       chrom = "MT";
     }
@@ -88,12 +112,9 @@ class VcfSource {
     // -1 compensation happened in Vcf feature constructor
     await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) => {
       const variant = this.parser.parseLine(line);
-
-      // Set CHROM immediately if ensemblStyle
-      if (options && options.ensemblStyle) {
+      if (isEnsembl) {
         variant.CHROM = locus.chr;
       }
-
       variants.push(variant);
     });
     return variants;

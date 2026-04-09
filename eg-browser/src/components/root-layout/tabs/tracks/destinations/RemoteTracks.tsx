@@ -194,7 +194,7 @@ function AddTracks() {
       if (track.type === "genomealign" || track.type === "bigchain") {
         track.querygenome = trackState.queryGenome || currentSession.genomeId;
       }
-      console.log(track);
+
       dispatch(addCustomTracksPool([...customTracksPool, track]));
       dispatch(addTracks(track));
       setSubmitted(true);

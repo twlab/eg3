@@ -1,4 +1,4 @@
-const MAX_BASES_PER_PIXEL = 1000; // Example value, replace with actual import if needed
+const MAX_BASES_PER_PIXEL = 1000;
 import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
 
 class Rmskv2Source {

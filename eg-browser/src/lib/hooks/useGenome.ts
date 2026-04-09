@@ -35,7 +35,7 @@ export default function useGenome(genomeId: string) {
       GenomeHubManager.getInstance()
         .getGenomeById(genomeId)
         .then((genome) => {
-          console.log(genome);
+
           setGenome(genome);
         })
         .catch((error) => {

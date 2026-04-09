@@ -40,38 +40,33 @@ class LocalBigSourceGmod {
   bw: BigWig;
   private chromNamingCache: boolean | null = null;
 
-  useEnsemblStyle: null | boolean;
   /**
    *
    * @param {string} url - the URL from which to fetch data
    */
   constructor(blob) {
     this.blob = blob;
-    // console.log(this.blob);
     this.bw = new BigWig({
       filehandle: new BlobFile(blob),
     });
     this.chromNamingCache = null;
-    this.useEnsemblStyle = null;
   }
-  async detectChromosomeNaming() {
+
+  async detectChromosomeNaming(): Promise<boolean | null> {
+    if (this.chromNamingCache !== null) {
+      return this.chromNamingCache;
+    }
     try {
       const header = await this.bw.getHeader();
-
       const firstChrom = Object.keys(header.refsByName || {})[0];
-
       if (!firstChrom) {
-        this.chromNamingCache = false; // Default to UCSC naming if no chromosomes found
+        this.chromNamingCache = false;
         return false;
       }
-
-      // Check if the first chromosome name is in the Ensembl array
       this.chromNamingCache = ensembl.includes(firstChrom);
       return this.chromNamingCache;
     } catch (error) {
-      console.error(
-        "Error detecting chromosome naming. Check URL and file format.",
-      );
+      console.error("Error detecting chromosome naming. Check URL and file format.");
       return null;
     }
   }
@@ -84,19 +79,10 @@ class LocalBigSourceGmod {
    * @override
    */
   async getData(loci, options) {
-
     try {
-      if (
-        this.useEnsemblStyle === null &&
-        options.trackType !== "rmskv2" &&
-        options.trackType !== "repeatmasker"
-      ) {
-        this.useEnsemblStyle = await this.detectChromosomeNaming();
-      }
+      const isEnsembl = options.ensemblStyle ?? (await this.detectChromosomeNaming());
       const promises = loci.map((locus) => {
-        let chrom = this.useEnsemblStyle
-          ? locus.chr.replace("chr", "")
-          : locus.chr;
+        let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
         if (chrom === "M") {
           chrom = "MT";
         }
