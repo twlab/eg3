@@ -27,9 +27,7 @@ export class AppStateSaver {
    * @return {Object} plain object representing app state
    */
   toObject(appState: any): object {
-    const regionSetViewIndex = appState.regionSets.findIndex(
-      (set) => set === appState.regionSetView,
-    );
+
 
     const object = {
       genomeName: appState.genomeName,
@@ -39,8 +37,8 @@ export class AppStateSaver {
         .filter((track) => !track.fileObj)
         .map((track: TrackModel) => track),
       metadataTerms: appState.metadataTerms,
-      regionSets: appState.regionSets.map((set) => set),
-      regionSetViewIndex,
+      regionSets: appState.regionSets,
+      regionSetView: appState.regionSetView,
       trackLegendWidth: appState.trackLegendWidth,
       bundleId: appState.bundleId,
       isShowingNavigator: appState.isShowingNavigator,
@@ -48,6 +46,8 @@ export class AppStateSaver {
       layout: appState.layout,
       highlights: appState.highlights,
       darkTheme: appState.darkTheme,
+      chromosomes: appState.chromosomes,
+      customGenome: appState.customGenome,
       // threedTracks: appState.threedTracks.filter((track) => !track.fileObj).map((track) => track.serialize()),
     };
     return object;

@@ -95,7 +95,7 @@ export default function SessionList({
             textContent={
               sessionTab === "switch" ? (
                 "Previous sessions"
-              ) : currentSession?.title ? (
+              ) : currentSession ? (
                 <div className="text-left">
                   <div>{`Current Session: "${currentSession.title}"`}</div>
                   <div>

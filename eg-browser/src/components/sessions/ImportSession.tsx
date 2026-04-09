@@ -186,6 +186,7 @@ export default function ImportSession() {
                             // restore this session into the browser
                             try {
                               const sess = session.state;
+
                               await dispatch(importOneSession({ session: sess, navigatingToSession: true }) as any).unwrap();
                               // optionally update lastBundleId
                               setLastBundleId(bundle.bundleId);
@@ -213,7 +214,7 @@ export default function ImportSession() {
                               await remove(ref(db, `sessions/${bundle.bundleId}/sessionsInBundle/${id}`));
                               const newBundle = { ...bundle };
                               delete newBundle.sessionsInBundle[id];
-                              setBundle(newBundle);
+
                               console.log("Session deleted.");
                             } catch (e) {
                               console.error(e);

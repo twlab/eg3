@@ -2185,6 +2185,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } catch (e) {
         formattedData = [];
         // eslint-disable-next-line no-console
+        trackFetchedDataCache.current[`${fetchRes.id}`]["error"] =
+          "data format error";
         console.error("formatDataByType failed for track", fetchRes.id, e);
       }
 

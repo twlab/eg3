@@ -70,10 +70,10 @@ export const onRetrieveSession = async (retrieveId: string) => {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
 
-          const regionSets = object.regionSets
-            ? object.regionSets.map(RegionSet.deserialize)
+          const regionSets = object?.regionSets
+            ? object?.regionSets.map(RegionSet.deserialize)
             : [];
-          const regionSetView = regionSets[object.regionSetViewIndex] || null;
+          const regionSetView = regionSets[object?.regionSetViewIndex] || null;
 
           // Create the newBundle object based on the existing object.
 

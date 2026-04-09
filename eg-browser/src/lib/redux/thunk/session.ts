@@ -4,6 +4,7 @@ import {
   DisplayedRegionModel,
   GenomeSerializer,
   getGenomeConfig,
+  GenomeHubManager,
 } from "wuepgg3-track";
 import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
@@ -32,7 +33,7 @@ export function convertSession(session: any, dispatch: any) {
     : session.defaultTracks
       ? session.defaultTracks
       : [];
-  if (session.chromosomes && session.chromosomes.length > 0) {
+  if (session.chromosomes && session.chromosomes.length > 0 && !getGenomeConfig(curGenomeName) && !GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)) {
     const _newGenomeConfig = {
       id: curGenomeName,
       name: curGenomeName,
@@ -45,7 +46,13 @@ export function convertSession(session: any, dispatch: any) {
 
     dispatch(addCustomGenomeRemote(_newGenomeConfig));
     newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
-  } else if (getGenomeConfig(curGenomeName)) {
+  }
+  else if (GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)) {
+    const _newGenomeConfig = GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName);
+    if (_newGenomeConfig)
+      newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
+  }
+  else if (getGenomeConfig(curGenomeName)) {
     newGenomeConfig = getGenomeConfig(curGenomeName);
   } else if (session.viewRegion && typeof session.viewRegion === "object") {
     newGenomeConfig = getGenomeConfig(session.viewRegion._navContext._name);
@@ -61,9 +68,9 @@ export function convertSession(session: any, dispatch: any) {
       session.viewRegion._startBase,
       session.viewRegion._endBase,
     ).currentRegionAsString() as GenomeCoordinate | null;
-  } else if (newGenomeConfig && session.viewRegion !== undefined) {
+  } else if (newGenomeConfig && session?.viewRegion) {
     coordinate = session.viewRegion;
-  } else if (newGenomeConfig && session.viewInterval) {
+  } else if (newGenomeConfig && session?.viewInterval) {
     coordinate = new DisplayedRegionModel(
       newGenomeConfig?.navContext,
       session.viewInterval.start,
@@ -72,6 +79,7 @@ export function convertSession(session: any, dispatch: any) {
   } else if (newGenomeConfig && newGenomeConfig.defaultRegion) {
     coordinate = newGenomeConfig.defaultRegion;
   }
+
   if (!newGenomeConfig) {
     throw new Error("Invalid session file format, could not parse view region");
   }
@@ -102,11 +110,12 @@ export function convertSession(session: any, dispatch: any) {
     highlights: session.highlights ?? [],
     metadataTerms: session.metadataTerms ?? [],
     bundleId: session.bundleId ? session.bundleId : null,
-    regionSets: [],
-    selectedRegionSet: session.regionSetView ?? null,
+    regionSets: session?.regionSets ? session.regionSets : null,
+    selectedRegionSet: session?.regionSetView ? session.regionSetView : null,
     overrideViewRegion: null,
+    chromosomes: session.chromosomes ?? null,
   } satisfies BrowserSession;
-  console.log(session)
+
   return session;
 }
 

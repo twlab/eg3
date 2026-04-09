@@ -361,7 +361,7 @@ export default function RootLayout(props: GenomeHubProps) {
                   style={{ zIndex: 40, left: 0, top: navBarHeight + 67 }}
                   count={sessionId ? null : sessions.length}
                   textContent={
-                    currentSession?.title ? (
+                    currentSession ? (
                       <div className="flex flex-row">
                         <div>{`Current Session: "${currentSession.title}"`}</div>
                         <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />

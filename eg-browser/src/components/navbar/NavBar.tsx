@@ -226,19 +226,19 @@ export default function NavBar() {
   // Genome picker is now a tabbed panel component (TabGenomePicker).
 
   // Monitor localStorage quota errors
-  useEffect(() => {
-    const handleStorageError = (e: ErrorEvent) => {
-      if (e.error?.name === "QuotaExceededError") {
-        console.error("Error storing data", e.error);
-        setStorageError(
-          "Storage limit reached. Some changes may not be saved.",
-        );
-      }
-    };
+  // useEffect(() => {
+  //   const handleStorageError = (e: ErrorEvent) => {
+  //     if (e.error?.name === "QuotaExceededError") {
+  //       console.error("Error storing data", e.error);
+  //       setStorageError(
+  //         "Storage limit reached. Some changes may not be saved.",
+  //       );
+  //     }
+  //   };
 
-    window.addEventListener("error", handleStorageError);
-    return () => window.removeEventListener("error", handleStorageError);
-  }, []);
+  //   window.addEventListener("error", handleStorageError);
+  //   return () => window.removeEventListener("error", handleStorageError);
+  // }, []);
 
   return (
     <>

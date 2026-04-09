@@ -7,20 +7,13 @@ finish remote hub add shwoOnLoad
 
 save remotely, working in new and old browser
 save local session file, upload working from native file and old browser session
-
-____________________________________________
 save session failing condition  to save 
-
-custom genome, region sets
-
-4/07/2026
-
-
-check sessions, custom genome, region sets
-
-
 test error, by giving false geneArr/ (Error caught, maybe add error check for hover and )
 allow to choose sessions in home when loading
+custom genome working remotely 
+____________________________________________
+repeatmasker 2 fix
+custom genome, region sets
 add ensembl to the locals 
 test remote fetch more add back checks 
 

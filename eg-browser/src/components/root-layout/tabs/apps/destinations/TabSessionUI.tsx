@@ -1,22 +1,19 @@
-import React, { useState, ChangeEvent } from "react";
+import React, { useState } from "react";
 import {
-  BookmarkIcon,
+
   ArrowPathIcon,
   ArrowTurnDownLeftIcon,
 } from "@heroicons/react/24/outline";
 
 import JSZip from "jszip";
-import _, { random } from "lodash";
+import _ from "lodash";
 import { motion, AnimatePresence } from "framer-motion";
-import { generateUUID, Genome, GenomeCoordinate } from "wuepgg3-track";
+import { generateUUID, GenomeCoordinate } from "wuepgg3-track";
 import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import {
   AppStateSaver,
   ITrackModel,
-  DisplayedRegionModel,
-  OpenInterval,
-  getGenomeConfig,
-  readFileAsText,
+
   HELP_LINKS,
   TrackModel,
   RegionSet,
@@ -25,7 +22,7 @@ import {
 import { getFunName } from "./SessionUI";
 import Button from "../../../../ui/button/Button";
 import FileInput from "@/components/ui/input/FileInput";
-import { BrowserSession, upsertSession } from "@/lib/redux/slices/browserSlice";
+
 
 export interface BundleProps {
   bundleId: string | null;
@@ -87,7 +84,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
           const regionSets = object.regionSets
             ? object.regionSets.map(RegionSet.deserialize)
             : [];
-          const regionSetView = regionSets[object.regionSetViewIndex] || null;
+          const regionSetView = object?.regionSetView ? object?.regionSetView : object?.regionSets.length > 0 ? regionSets[0] : null;
 
           // Create the newBundle object based on the existing object.
 
@@ -175,6 +172,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
   const [copiedId, setCopiedId] = useState<boolean>(false);
   const [codeHover, setCodeHover] = useState<boolean>(false);
   const [saveCurveActive, setSaveCurveActive] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
   const handleCopyBundleId = async () => {
     const id = bundle && bundle.bundleId ? bundle.bundleId : "";
@@ -216,10 +215,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       },
     };
 
-    setBundle(newBundle);
-    updateBundle(newBundle);
-    const db = getDatabase();
+
+
     try {
+      const db = getDatabase();
       // Get all existing sessions before setting the new one
       // for checking most recent session update for those
       // that didn't save their id
@@ -290,12 +289,16 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       // }
 
       // Now set the new bundle
+
       await set(
         ref(db, `sessions/${curBundleId}`),
         JSON.parse(JSON.stringify(newBundle)),
       );
+      setBundle(newBundle);
+      updateBundle(newBundle);
       setNewSessionLabel("");
       setLastBundleId(curBundleId);
+
       console.log("Session saved!", "success", 2000);
       return true;
     } catch (error) {
@@ -315,6 +318,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       setTimeout(() => setSaveCurveActive(false), 800);
     } else {
       console.log("Failed to save session", "error", 2000);
+      setSaveError("Failed to save session. Please check your connection and try again.");
+      setTimeout(() => setSaveError(null), 4000);
     }
   };
 
@@ -323,6 +328,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       state["bundleId"] = bundle.bundleId;
 
       const sessionInJSON = new AppStateSaver().toObject(state);
+
       const content = asHub ? (sessionInJSON as any).tracks : sessionInJSON;
       const descriptor = asHub ? "hub" : "session";
       const sessionString =
@@ -392,12 +398,13 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
 
       onRestoreSession(sessionBundle);
       onRetrieveBundle(newBundle);
-      const db = getDatabase();
-      if (!bundle.bundleId || bundle.bundleId.length === 0) {
+
+      if (!bundle?.bundleId || bundle?.bundleId.length === 0) {
         console.log("Session bundle ID cannot be empty.", "error", 2000);
         return null;
       }
       try {
+        const db = getDatabase();
         await set(
           ref(db, `sessions/${bundle.bundleId}`),
           JSON.parse(JSON.stringify(newBundle)),
@@ -409,6 +416,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       } catch (error) {
         console.error(error);
         console.log("Error while restoring session", "error", 2000);
+        setRestoreError("Failed to restore session. Please check your connection and try again.");
+        setTimeout(() => setRestoreError(null), 4000);
       }
     }
   };
@@ -580,44 +589,75 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       );
     }
   };
-  // fix because when download as current session we get back bundleSession which as viewinterval instead of viewregion
-  const uploadSession = async (event: ChangeEvent<HTMLInputElement>) => {
-    const contents: any = (await readFileAsText(event.target.files![0])) as {
-      [key: string]: any;
-    };
-    const bundleSession = JSON.parse(contents as string);
-    const bundleRes = await onRetrieveSession(bundleSession.bundleId);
 
-    if (bundleRes) {
-      onRetrieveBundle(bundleRes);
-      setBundle(bundleRes);
-      const genomeConfig = getGenomeConfig(bundleSession.genomeName);
-      if (genomeConfig) {
-        let viewInterval;
-        if (bundleSession.viewInterval) {
-          viewInterval = bundleSession.viewInterval;
-        }
-        if (viewInterval) {
-          bundleSession["viewRegion"] = new DisplayedRegionModel(
-            genomeConfig.navContext,
-            viewInterval.start,
-            viewInterval.end,
-          );
-        }
-        onRestoreSession(bundleSession);
-      } else {
-        console.log("Genome not found in session upload");
-      }
-    }
-  };
   const handleUploadFile = async (file: File | null) => {
+
     if (!file) return;
     try {
       const text = await file.text();
-      const parsed = JSON.parse(text) as BrowserSession;
-      if (parsed && parsed.id) {
-        dispatch(upsertSession(parsed));
+      const bundleSession = JSON.parse(text);
+
+
+      if (bundleSession.bundleId) {
+
+        try {
+          const bundleRes = await onRetrieveSession(bundleSession.bundleId);
+
+          if (bundleRes) {
+            bundleRes["currentId"] = null;
+            setLastBundleId(bundleRes.bundleId);
+            setBundle(bundleRes);
+            onRetrieveBundle(bundleRes);
+            setShowFullUI(true);
+          }
+        } catch (error) {
+          // ignore retrieval errors
+        }
       }
+      else {
+
+        const object = bundleSession;
+
+        let viewInterval;
+        if (object.viewInterval) {
+          viewInterval = object.viewInterval;
+        } else {
+          viewInterval = { start: 0, end: 1 };
+        }
+
+        const newBundle = {
+          genomeId: object.genomeId
+            ? object.genomeId
+            : object.genomeName
+              ? object.genomeName
+              : object.name
+                ? object.name
+                : object.id
+                  ? object.id
+                  : null,
+          viewInterval,
+          chromosomes: object.chromosomes || null,
+          tracks: object.tracks,
+          metadataTerms: object.metadataTerms || [],
+          regionSets: object.regionSets,
+          regionSetView: object.regionSetView,
+          trackLegendWidth: object.trackLegendWidth || 120,
+          bundleId: object.bundleId,
+          isShowingNavigator: object.isShowingNavigator,
+          isShowingVR: object.isShowingVR,
+          layout: object.layout || {},
+          highlights: object.highlights || [],
+          darkTheme: object.darkTheme || false,
+          viewRegion: object.viewRegion,
+          title: object.title ? object.title : "Untitled Session",
+
+        };
+
+        onRestoreSession(newBundle);
+      }
+
+
+
     } catch (err) {
       console.error("Failed to upload session file", err);
     }
@@ -630,6 +670,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       setLastBundleId(bundleRes.bundleId);
       setBundle(bundleRes);
       onRetrieveBundle(bundleRes);
+      setShowFullUI(true);
     }
   };
   const classes: any = {
@@ -650,6 +691,50 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-secondary dark:bg-dark-secondary rounded-lg p-3 shadow-sm">
+      <AnimatePresence>
+        {restoreError && (
+          <motion.div
+            key="restore-error-toast"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22 }}
+            className="flex items-center justify-between gap-2 mb-3 px-3 py-2 rounded-md text-sm"
+            style={{ backgroundColor: "#FDE8E8", color: "#8B1C1C" }}
+          >
+            <span>{restoreError}</span>
+            <button
+              type="button"
+              onClick={() => setRestoreError(null)}
+              className="shrink-0 font-bold hover:opacity-60"
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#8B1C1C" }}
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+        {saveError && (
+          <motion.div
+            key="save-error-toast"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22 }}
+            className="flex items-center justify-between gap-2 mb-3 px-3 py-2 rounded-md text-sm"
+            style={{ backgroundColor: "#FDE8E8", color: "#8B1C1C" }}
+          >
+            <span>{saveError}</span>
+            <button
+              type="button"
+              onClick={() => setSaveError(null)}
+              className="shrink-0 font-bold hover:opacity-60"
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#8B1C1C" }}
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className={classes.inputContainer}>
         {!withGenomePicker && (
           <>
@@ -1021,7 +1106,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                         </motion.div>
                       )}
                     </AnimatePresence>
-                    <div className={classes.additionalActions}>
+                    <div className={classes.additionalActions} style={{ marginTop: "12px" }}>
                       <Button
                         onClick={downloadAsSession}
                         backgroundColor="tint"
@@ -1069,7 +1154,4 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
 };
 
 export default TabSessionUI;
-function dispatch(arg0: any) {
-  throw new Error("Function not implemented.");
-}
 
