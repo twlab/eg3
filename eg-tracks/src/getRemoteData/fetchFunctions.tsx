@@ -165,6 +165,7 @@ function isFetchError(r: unknown): r is { error: string } {
 
 // Main processing function that can be used both as worker and regular function
 export async function fetchGenomicData(data: any[]): Promise<any> {
+  console.log(data, "fetching...")
   if (!Array.isArray(data)) {
     throw new Error(
       `fetchGenomicData expects an array, but received: ${typeof data}`,

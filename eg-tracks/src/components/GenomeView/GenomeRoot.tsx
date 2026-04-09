@@ -16,11 +16,8 @@ import TrackManager from "./TrackManager";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
-import FetchDataWorker from "../../getRemoteData/fetchDataWorker.ts?worker&inline";
-import BigDataWorker from "../../getRemoteData/bigDataWorker.ts?worker&inline";
-import TabixDataWorker from "../../getRemoteData/tabixDataWorker.ts?worker&inline";
-// @ts-ignore
-import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
+// Workers are created via new URL() so the browser can cache them as separate files
+// instead of re-parsing inlined base64 on every instantiation.
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
@@ -109,19 +106,28 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
     if (!typedWorkers.current.big) {
       typedWorkers.current.big = {
-        fetchWorker: new BigDataWorker(),
+        fetchWorker: new Worker(
+          new URL("../../getRemoteData/bigDataWorker.ts", import.meta.url),
+          { type: "module" },
+        ),
         hasOnMessage: false,
       };
     }
     if (!typedWorkers.current.tabix) {
       typedWorkers.current.tabix = {
-        fetchWorker: new TabixDataWorker(),
+        fetchWorker: new Worker(
+          new URL("../../getRemoteData/tabixDataWorker.ts", import.meta.url),
+          { type: "module" },
+        ),
         hasOnMessage: false,
       };
     }
     if (!typedWorkers.current.special) {
       typedWorkers.current.special = {
-        fetchWorker: new FetchDataWorker(),
+        fetchWorker: new Worker(
+          new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+          { type: "module" },
+        ),
         hasOnMessage: false,
       };
     }
@@ -132,7 +138,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       !fetchGenomeAlignWorker.current
     ) {
       fetchGenomeAlignWorker.current = {
-        fetchWorker: new FetchGenomeAlignWorker(),
+        fetchWorker: new Worker(
+          new URL(
+            "../../getRemoteData/fetchGenomeAlignWorker.ts",
+            import.meta.url,
+          ),
+          { type: "module" },
+        ),
         hasOnMessage: false,
       };
     }

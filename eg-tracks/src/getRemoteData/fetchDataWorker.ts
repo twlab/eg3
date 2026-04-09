@@ -11,6 +11,7 @@ if (
 ) {
   self.onmessage = async (event: MessageEvent) => {
     try {
+      console.log(event.data)
       let results = await fetchGenomicData(event.data);
       if (results) {
         postMessage(results);
