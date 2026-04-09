@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
+
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
@@ -2139,13 +2139,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      flushSync(() => {
-        setDraw({
-          trackToDrawId: { ...completedFetchedRegion.current.done },
-          viewWindow: curViewWindow,
-          completedFetchedRegion,
-        });
+
+      setDraw({
+        trackToDrawId: { ...completedFetchedRegion.current.done },
+        viewWindow: curViewWindow,
+        completedFetchedRegion,
       });
+
     }
   }
 
@@ -2167,19 +2167,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         : dataIdx.current;
       const initialIdx = [currDataIdx + 1, currDataIdx, currDataIdx - 1];
 
-      let formattedData = formatDataByType(
-        result,
-        fetchRes.trackType,
-        fetchRes.trackModel.shouldPlaceRegion,
-        [
-          globalTrackState.current.trackStates[currDataIdx + 1].trackState
-            .regionLoci,
-          globalTrackState.current.trackStates[currDataIdx].trackState
-            .regionLoci,
-          globalTrackState.current.trackStates[currDataIdx - 1].trackState
-            .regionLoci,
-        ],
-      );
+      let formattedData;
+      try {
+        formattedData = formatDataByType(
+          result,
+          fetchRes.trackType,
+          fetchRes.trackModel.shouldPlaceRegion,
+          [
+            globalTrackState.current.trackStates[currDataIdx + 1].trackState
+              .regionLoci,
+            globalTrackState.current.trackStates[currDataIdx].trackState
+              .regionLoci,
+            globalTrackState.current.trackStates[currDataIdx - 1].trackState
+              .regionLoci,
+          ],
+        );
+      } catch (e) {
+        formattedData = [];
+        // eslint-disable-next-line no-console
+        console.error("formatDataByType failed for track", fetchRes.id, e);
+      }
 
       if (fetchRes?.errorType) {
         trackFetchedDataCache.current[`${fetchRes.id}`]["error"] =
@@ -3989,8 +3996,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           style={{
                             width: `${windowWidth + 120}px`,
                             position: "relative",
-                            marginTop: "1px",
-                            marginBottom: "1px",
+                            paddingTop: "1px",
+                            paddingBottom: "1px",
+
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 

@@ -25,6 +25,7 @@ import Toolbar from "./toolbar/Toolbar";
 
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { selectCurrentState } from "../../lib/redux/selectors";
+import { fetchBundle } from "@/lib/redux/thunk/session";
 
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
@@ -42,11 +43,11 @@ export default function GenomeView() {
   const bundleId =
     currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
-  // useEffect(() => {
-  //   if (bundleId) {
-  //     dispatch(fetchBundle(bundleId));
-  //   }
-  // }, [bundleId, dispatch]);
+  useEffect(() => {
+    if (bundleId) {
+      dispatch(fetchBundle(bundleId));
+    }
+  }, [bundleId, dispatch]);
 
   // const bundleId = currentSession.bundleId;
 

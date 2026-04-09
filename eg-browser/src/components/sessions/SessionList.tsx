@@ -467,11 +467,10 @@ function SessionListItem({
 }
 
 function SessionTabs({
-  currentSession,
+
   sortedSessions,
   onSessionClick,
   sortPreference,
-  currentSessionId,
   tab,
   setTab,
 }: {
@@ -483,41 +482,6 @@ function SessionTabs({
   tab: "edit" | "load" | "switch";
   setTab: (t: "edit" | "load" | "switch") => void;
 }) {
-  const dispatch = useAppDispatch();
-  const [retrieveId, setRetrieveId] = useState<string>("");
-
-  const retrieveBundle = (bundleId: string) => {
-    if (!bundleId) return;
-    dispatch(fetchBundle(bundleId));
-  };
-
-  const uploadSession = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // kept for compatibility with old input-based uploads; no-op here
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as BrowserSession;
-      if (parsed && parsed.id) {
-        dispatch(upsertSession(parsed));
-      }
-    } catch (err) {
-      console.error("Failed to upload session file", err);
-    }
-  };
-
-  const handleUploadFile = async (file: File | null) => {
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as BrowserSession;
-      if (parsed && parsed.id) {
-        dispatch(upsertSession(parsed));
-      }
-    } catch (err) {
-      console.error("Failed to upload session file", err);
-    }
-  };
 
   return (
     <div className="w-full">

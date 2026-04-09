@@ -929,6 +929,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                           >
                             Create remote bundle and save session
                           </Button>
+
+
                         </motion.div>
                       ) : (
                         <motion.div
@@ -1019,6 +1021,25 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    <div className={classes.additionalActions}>
+                      <Button
+                        onClick={downloadAsSession}
+                        backgroundColor="tint"
+                        style={{ width: "fit-content", padding: "4px 8px", fontSize: "14px" }}
+                      >
+                        Download current session
+                      </Button>
+
+                      <Button
+                        onClick={downloadAsHub}
+                        backgroundColor="tint"
+                        style={{ width: "fit-content", padding: "4px 8px", fontSize: "14px" }}
+                      >
+                        Download as datahub
+                      </Button>
+
+
+                    </div>
                   </div>
                 </motion.div>
               )}

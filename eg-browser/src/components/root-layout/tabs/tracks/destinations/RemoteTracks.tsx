@@ -245,7 +245,7 @@ function AddTracks() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -318,11 +318,10 @@ function AddTracks() {
             <select
               value={trackState.metadata.genome || genomesInSession[0]}
               onChange={(e) => handleTrackGenomeChange(e.target.value)}
-              className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${
-                submitAttempted && !genomeComplete
-                  ? "border-red-400 focus:ring-red-400"
-                  : "border-gray-300 dark:border-gray-600"
-              }`}
+              className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${submitAttempted && !genomeComplete
+                ? "border-red-400 focus:ring-red-400"
+                : "border-gray-300 dark:border-gray-600"
+                }`}
             >
               {genomesInSession.map((genome) => (
                 <option key={genome} value={genome}>
@@ -439,11 +438,10 @@ function SelectTrackType({
 }: SelectTrackTypeProps) {
   return (
     <select
-      className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${
-        hasError
-          ? "border-red-400 focus:ring-red-400"
-          : "border-gray-300 dark:border-gray-600"
-      }`}
+      className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${hasError
+        ? "border-red-400 focus:ring-red-400"
+        : "border-gray-300 dark:border-gray-600"
+        }`}
       value={selectedType}
       onChange={(e) => onTypeChange(e.target.value)}
     >
@@ -490,11 +488,10 @@ function TrackFileUrl({
       <input
         type="text"
         placeholder="https://example.com/track.bigWig"
-        className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${
-          hasError
-            ? "border-red-400 focus:ring-red-400"
-            : "border-gray-300 dark:border-gray-600"
-        }`}
+        className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${hasError
+          ? "border-red-400 focus:ring-red-400"
+          : "border-gray-300 dark:border-gray-600"
+          }`}
         value={url}
         onChange={(e) => onUrlChange(e.target.value)}
       />
@@ -625,6 +622,7 @@ function AddDataHubs() {
           }),
         );
       }
+
       setIsLoading(false);
       setError(""); // onHubUpdated([], [...tracks], "custom");
     }
@@ -641,15 +639,13 @@ function AddDataHubs() {
       const parser = new DataHubParser();
 
       const tracks = parser.getTracksInHub(json, "Custom hub");
-
-      if (tracks) {
-        if (tracks.length > 0) {
-          dispatch(
-            updateCurrentSession({
-              tracks: [...session!.tracks, ...tracks],
-            }),
-          );
-        }
+      const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
+      if (tracksToShow.length > 0) {
+        dispatch(
+          updateCurrentSession({
+            tracks: [...session!.tracks, ...tracksToShow],
+          }),
+        );
       }
       dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));
     } catch (error) {
@@ -685,7 +681,7 @@ function AddDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>

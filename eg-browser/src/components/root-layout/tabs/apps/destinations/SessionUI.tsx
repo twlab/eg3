@@ -474,29 +474,69 @@ const SessionUI: React.FC<SessionUIProps> = ({
       [key: string]: any;
     };
     const bundleSession = JSON.parse(contents as string);
-    const bundleRes = await onRetrieveSession(bundleSession.bundleId);
+    let bundleRes: any = null;
+    if (bundleSession.bundleId) {
+      try {
+        bundleRes = await onRetrieveSession(bundleSession.bundleId);
+      } catch (error) {
+
+      }
+    }
 
     if (bundleRes) {
       onRetrieveBundle(bundleRes);
       setBundle(bundleRes);
-      const genomeConfig = getGenomeConfig(bundleSession.genomeName);
-      if (genomeConfig) {
-        let viewInterval;
-        if (bundleSession.viewInterval) {
-          viewInterval = bundleSession.viewInterval;
-        }
-        if (viewInterval) {
-          bundleSession["viewRegion"] = new DisplayedRegionModel(
-            genomeConfig.navContext,
-            viewInterval.start,
-            viewInterval.end,
-          );
-        }
-        onRestoreSession(bundleSession);
-      } else {
-        console.log("Genome not found in session upload");
-      }
     }
+    let object = bundleSession;
+
+    const regionSets = object.regionSets
+      ? object.regionSets.map(RegionSet.deserialize)
+      : [];
+    const regionSetView = regionSets[object.regionSetViewIndex] || null;
+
+    // Create the newBundle object based on the existing object.
+
+    let viewInterval;
+    if (object.viewInterval) {
+      viewInterval = object.viewInterval;
+    } else {
+      viewInterval = {
+        start: 0,
+        end: 1,
+      };
+    }
+
+    let newBundle = {
+      genomeId: object.genomeId
+        ? object.genomeId
+        : object.genomeName
+          ? object.genomeName
+          : object.name
+            ? object.name
+            : object.id
+              ? object.id
+              : null,
+      viewInterval,
+      chromosomes: object.chromosomes || null,
+      tracks: object.tracks,
+      metadataTerms: object.metadataTerms || [],
+      regionSets,
+      regionSetView,
+      trackLegendWidth: object.trackLegendWidth || 120,
+      bundleId: object.bundleId,
+      isShowingNavigator: object.isShowingNavigator,
+      isShowingVR: object.isShowingVR,
+      layout: object.layout || {},
+      highlights: object.highlights || [],
+      darkTheme: object.darkTheme || false,
+      viewRegion: object.viewRegion,
+      title: object.title ? object.title : "Untitled Session",
+    };
+
+    onRestoreSession(newBundle);
+
+
+
   };
 
   // function _restoreViewRegion(object: any, regionSetView: RegionSet) {

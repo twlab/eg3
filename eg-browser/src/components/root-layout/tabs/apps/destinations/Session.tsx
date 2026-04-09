@@ -173,6 +173,7 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab = true }) => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
+
     dispatch(updateCurrentSession(session));
   }
 

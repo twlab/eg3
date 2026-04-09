@@ -1,9 +1,24 @@
-ADD ERROR CHECK TO FORMAT
-LOAD FILE SESSION WITHOUT NEEDED BVUNDLE ID
+4/09/26
+finish ADD ERROR CHECK TO FORMAT
+finsh LOAD FILE SESSION WITHOUT NEEDED BVUNDLE ID
+finsh check when loading a lot tracks
+finsh  check negative bigwig more. 
+finish remote hub add shwoOnLoad
+
+save remotely, working in new and old browser
+save local session file, upload working from native file and old browser session
+
+____________________________________________
+save session failing condition  to save 
+
+custom genome, region sets
+
 4/07/2026
-check when loading a lot tracks
-check negative bigwig more. 
+
+
 check sessions, custom genome, region sets
+
+
 test error, by giving false geneArr/ (Error caught, maybe add error check for hover and )
 allow to choose sessions in home when loading
 add ensembl to the locals 

@@ -21,7 +21,7 @@ export default function Button({
   style?: React.CSSProperties;
 }) {
   const _onClick = (event: React.MouseEvent) => {
-    console.log(event);
+
     if (disabled) return;
     onClick?.(event);
   };

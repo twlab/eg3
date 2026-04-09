@@ -625,8 +625,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   return (
     <div
       style={{
+
         display: "flex",
         position: "relative",
+
       }}
     >
       <div
@@ -654,6 +656,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : "var(--font-color)",
 
             pointerEvents: "auto",
+
+
           }}
         >
           {legend ?? (
@@ -754,7 +758,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               ? 40
               : configOptions.current.displayMode === "full"
                 ? svgHeight.current
-                : !configOptions.current.isCombinedStrand &&
+                : !configOptions.current.isCombineStrands &&
                   trackModel.type === "methylc"
                   ? configOptions.current.height * 2
                   : configOptions.current.height,
@@ -770,7 +774,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? 40
                 : configOptions.current.displayMode === "full"
                   ? svgHeight.current
-                  : !configOptions.current.isCombinedStrand &&
+                  : !configOptions.current.isCombineStrands &&
                     trackModel.type === "methylc"
                     ? configOptions.current.height * 2
                     : configOptions.current.height
@@ -782,15 +786,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       <div
         style={{
           display: "flex",
-          height:
-            configOptions.current.displayMode === "full"
+          height: fetchError.current
+            ? 40
+            : configOptions.current.displayMode === "full"
               ? svgHeight.current
-              : !configOptions.current.isCombinedStrand &&
+              : !configOptions.current.isCombineStrands &&
                 trackModel.type === "methylc"
                 ? configOptions.current.height * 2
-                : configOptions.current.height
-                  ? configOptions.current.height
-                  : 40,
+                : configOptions.current.height,
 
           position: "relative",
           willChange: "transform",

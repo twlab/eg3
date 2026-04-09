@@ -106,6 +106,7 @@ export function convertSession(session: any, dispatch: any) {
     selectedRegionSet: session.regionSetView ?? null,
     overrideViewRegion: null,
   } satisfies BrowserSession;
+  console.log(session)
   return session;
 }
 
@@ -145,7 +146,7 @@ export const addSessionsFromBundleId = createAsyncThunk(
   "session/addSessionsFromBundleId",
   async (sessionId: string, thunkApi) => {
     const response = await onRetrieveSession(sessionId);
-    console.log(response);
+
     let sessionInView: any = null;
     if (response && response.currentId) {
       sessionInView = response.sessionsInBundle[response.currentId].state;
@@ -158,7 +159,7 @@ export const addSessionsFromBundleId = createAsyncThunk(
         sessionInView["title"] = response.sessionsInBundle[keys[0]].label;
       }
     }
-    console.log(sessionInView);
+
     // const sessions = Object.values(response.sessionsInBundle).map(
     //   (session) => session.state
     // );
@@ -170,8 +171,10 @@ export const addSessionsFromBundleId = createAsyncThunk(
     if (sessionInView) {
       thunkApi.dispatch(importOneSession({ session: sessionInView }));
     }
+    else {
+      thunkApi.dispatch(setCurrentSession(null));
+    }
 
-    thunkApi.dispatch(setCurrentSession(null));
   },
 );
 
