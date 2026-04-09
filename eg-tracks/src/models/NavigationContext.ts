@@ -329,7 +329,7 @@ class NavigationContext {
       if (!endFeature) {
         endFeature = this._features.find((f) => f.getName() === endChr);
       }
-      console.log(startFeature, endFeature, this._features);
+
       if (!startFeature || !endFeature) {
         throw new RangeError(
           "One or more features unavailable in this context",

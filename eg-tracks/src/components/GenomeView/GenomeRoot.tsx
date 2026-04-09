@@ -13,11 +13,12 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 5;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
 import FetchDataWorker from "../../getRemoteData/fetchDataWorker.ts?worker&inline";
+import BigDataWorker from "../../getRemoteData/bigDataWorker.ts?worker&inline";
+import TabixDataWorker from "../../getRemoteData/tabixDataWorker.ts?worker&inline";
 // @ts-ignore
 import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
 // import GenomeViewerTest from "../testComp";
@@ -49,10 +50,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 }) {
   const [resizeRef, size] = useResizeObserver();
 
-  const infiniteScrollWorkers = useRef<{
-    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
+  const typedWorkers = useRef<{
+    big: { fetchWorker: Worker; hasOnMessage: boolean } | null;
+    tabix: { fetchWorker: Worker; hasOnMessage: boolean } | null;
+    special: { fetchWorker: Worker; hasOnMessage: boolean } | null;
   }>({
-    worker: [],
+    big: null,
+    tabix: null,
+    special: null,
   });
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
@@ -102,14 +107,23 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     }
 
-    const normalCount = Math.min(tracks.length, MAX_WORKERS);
-
-    const existingNormalWorkers = infiniteScrollWorkers.current.worker.length;
-    for (let i = existingNormalWorkers; i < normalCount; i++) {
-      infiniteScrollWorkers.current.worker.push({
+    if (!typedWorkers.current.big) {
+      typedWorkers.current.big = {
+        fetchWorker: new BigDataWorker(),
+        hasOnMessage: false,
+      };
+    }
+    if (!typedWorkers.current.tabix) {
+      typedWorkers.current.tabix = {
+        fetchWorker: new TabixDataWorker(),
+        hasOnMessage: false,
+      };
+    }
+    if (!typedWorkers.current.special) {
+      typedWorkers.current.special = {
         fetchWorker: new FetchDataWorker(),
         hasOnMessage: false,
-      });
+      };
     }
 
     // Create genome align worker if needed (only once)
@@ -195,7 +209,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             isScreenShotOpen={isScreenShotOpen}
             selectedRegionSet={selectedRegionSet}
             setShow3dGene={setShow3dGene}
-            infiniteScrollWorkers={infiniteScrollWorkers}
+            typedWorkers={typedWorkers}
             fetchGenomeAlignWorker={fetchGenomeAlignWorker}
             currentState={currentState}
             darkTheme={darkTheme}
@@ -252,15 +266,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     return () => {
       // Terminate all infinite scroll workers
 
-      if (infiniteScrollWorkers.current) {
-        infiniteScrollWorkers.current.worker.forEach((workerObj) => {
-          workerObj.fetchWorker.terminate();
-        });
-
-        infiniteScrollWorkers.current = {
-          worker: [],
-        };
+      if (typedWorkers.current.big) {
+        typedWorkers.current.big.fetchWorker.terminate();
       }
+      if (typedWorkers.current.tabix) {
+        typedWorkers.current.tabix.fetchWorker.terminate();
+      }
+      if (typedWorkers.current.special) {
+        typedWorkers.current.special.fetchWorker.terminate();
+      }
+      typedWorkers.current = { big: null, tabix: null, special: null };
 
       // Terminate genome align worker
       if (fetchGenomeAlignWorker.current) {
@@ -307,7 +322,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             isScreenShotOpen={isScreenShotOpen}
             selectedRegionSet={selectedRegionSet}
             setShow3dGene={setShow3dGene}
-            infiniteScrollWorkers={infiniteScrollWorkers}
+            typedWorkers={typedWorkers}
             fetchGenomeAlignWorker={fetchGenomeAlignWorker}
             currentState={currentState}
             darkTheme={darkTheme}

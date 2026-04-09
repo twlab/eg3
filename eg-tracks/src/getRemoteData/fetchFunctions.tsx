@@ -268,14 +268,18 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         ) {
           let responses: Array<any> | { [key: string]: any } = [];
           let error = null;
-          for (const trackItem of item.tracks) {
-            trackItem["shouldPlaceRegion"] = item.shouldPlaceRegion;
-            const response: any = await fetchData(trackItem);
-
+          // Fetch all sub-tracks in parallel instead of sequentially
+          const subTrackResults = await Promise.all(
+            item.tracks.map((trackItem: any) => {
+              trackItem["shouldPlaceRegion"] = item.shouldPlaceRegion;
+              return fetchData(trackItem);
+            })
+          );
+          for (const response of subTrackResults) {
             if (isFetchError(response)) {
               error = response.error;
               responses = [];
-              break; // Stop processing remaining tracks
+              break;
             }
             responses.push(response);
           }
@@ -304,8 +308,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             result: result,
             fileInfos:
               typeof responses === "object" &&
-              !Array.isArray(responses) &&
-              "fileInfos" in responses
+                !Array.isArray(responses) &&
+                "fileInfos" in responses
                 ? responses.fileInfos
                 : null,
             id: id,
@@ -363,15 +367,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+            });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({
@@ -660,7 +664,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       missingIdx,
       regionSetStartBp:
         visData?.visRegion?._endBase - visData?.visRegion?._startBase ===
-        data.bpRegionSize
+          data.bpRegionSize
           ? 0
           : null,
       fetchNewRegion: data.fetchNewRegion,

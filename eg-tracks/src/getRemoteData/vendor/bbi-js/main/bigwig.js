@@ -50,7 +50,7 @@ function bwg_readOffset(ba, o) {
   return offset;
 }
 
-function BigWig() {}
+function BigWig() { }
 
 BigWig.prototype.readChromTree = function (callback) {
   var thisB = this;
