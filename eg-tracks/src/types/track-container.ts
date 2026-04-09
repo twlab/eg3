@@ -1,6 +1,15 @@
+import React from "react";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import TrackModel from "../models/TrackModel";
 import { IGenome } from "./genome-hub";
+
+export type WorkerEntry = { fetchWorker: Worker; hasOnMessage: boolean };
+
+export type InfiniteScrollWorkersRef = React.MutableRefObject<{
+  worker: WorkerEntry[];
+} | null>;
+
+export type GenomeAlignWorkerRef = React.MutableRefObject<WorkerEntry | null>;
 
 // add the same props that were being passed into TrackContainer.tsx
 export interface ITrackContainerState {
@@ -30,6 +39,8 @@ export interface ITrackContainerState {
   darkTheme: boolean;
   width?: number | null;
   height?: number | null;
+  infiniteScrollWorkers?: InfiniteScrollWorkersRef;
+  fetchGenomeAlignWorker?: GenomeAlignWorkerRef;
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -62,6 +73,8 @@ export interface ITrackContainerRepresentableProps {
   darkTheme: boolean;
   height?: number | null;
   width?: number | null;
+  infiniteScrollWorkers?: InfiniteScrollWorkersRef;
+  fetchGenomeAlignWorker?: GenomeAlignWorkerRef;
 }
 
 // MARK: Track Model
