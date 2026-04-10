@@ -171,7 +171,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   function renderTooltip(event, gene) {
     let currtooltip;
     try {
-      const trackType = trackModel.type === "rmskv2" ? "repeatmasker" : trackModel.type;
+      const trackType =
+        trackModel.type === "rmskv2" ? "repeatmasker" : trackModel.type;
       currtooltip = geneClickToolTipMap[`${trackType}`]({
         gene,
         feature: gene,
@@ -291,7 +292,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (cacheTrackData.trackType !== "genomealign") {
       let visRegion =
         !cacheTrackData.usePrimaryNav &&
-          trackState.genomicFetchCoord[cacheTrackData.queryGenome]?.queryRegion
+        trackState.genomicFetchCoord[cacheTrackData.queryGenome]?.queryRegion
           ? trackState.genomicFetchCoord[cacheTrackData.queryGenome].queryRegion
           : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
@@ -414,14 +415,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
+      console.log("Got to draw");
       handleTrackDraw({
         cacheTrackData,
         trackState,
         viewWindow: newDrawData.viewWindow,
         groupScale:
           globalTrackState.current.trackStates[dataIdx].trackState[
-          "groupScale"
+            "groupScale"
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         isInit: true,
@@ -463,7 +464,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             viewWindow: viewWindowConfigData.current?.viewWindow,
             groupScale:
               globalTrackState.current.trackStates[dataIdx].trackState[
-              "groupScale"
+                "groupScale"
               ],
             xvalues: cacheTrackData[dataIdx]?.xvalues,
             isInit: false,
@@ -495,7 +496,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         viewWindow: viewWindowConfigChange.viewWindow,
         groupScale:
           globalTrackState.current.trackStates[dataIdx].trackState[
-          "groupScale"
+            "groupScale"
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         isInit: false,
@@ -539,7 +540,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             }
             trackState["groupScale"] =
               globalTrackState.current.trackStates[dataIdx].trackState[
-              "groupScale"
+                "groupScale"
               ];
           }
         } else {
@@ -558,8 +559,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-            trackFetchedDataCache.current[`${id}`].queryGenome
-          ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
           : primaryVisData.visRegion;
         // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
         trackState["visRegion"] = visRegion;
@@ -571,15 +572,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         const expandedViewWindow =
           updateSide.current === "right"
             ? new OpenInterval(
-              -(dragX! + (xPos.current + windowWidth)),
-              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
-            )
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
+              )
             : new OpenInterval(
-              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-              windowWidth * 3 -
-              (dragX! - (xPos.current + windowWidth)) +
-              windowWidth,
-            );
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth,
+              );
         let start = expandedViewWindow.start + width / 3;
 
         let end = expandedViewWindow.end - width / 3;
@@ -589,7 +590,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
           globalTrackState.current.trackStates[dataIdx].trackState[
-          "groupScale"
+            "groupScale"
           ];
 
         if (combinedData) {
@@ -626,10 +627,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   return (
     <div
       style={{
-
         display: "flex",
         position: "relative",
-
       }}
     >
       <div
@@ -657,8 +656,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : "var(--font-color)",
 
             pointerEvents: "auto",
-
-
           }}
         >
           {legend ?? (
@@ -680,7 +677,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         <Loading
           buttonLabel={
             (viewComponent && dataIdx !== viewComponent.dataIdx) ||
-              !viewComponent
+            !viewComponent
               ? "Loading View"
               : "Getting Data"
           }
@@ -702,20 +699,20 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             !viewComponent ||
             (viewComponent && dataIdx !== viewComponent.dataIdx)
           }
-        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-        // xOffset={0}
+          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+          // xOffset={0}
         >
           <div>
             {trackModel.id in messageData
               ? messageData[`${trackModel.id}`].map((item, index) => {
-                return (
-                  <div key={`${trackModel.index}loading-` + `${index}`}>
-                    {item.genomicLoci
-                      ? item.genomicLoci.map((item) => item.toString())
-                      : ""}{" "}
-                  </div>
-                );
-              })
+                  return (
+                    <div key={`${trackModel.index}loading-` + `${index}`}>
+                      {item.genomicLoci
+                        ? item.genomicLoci.map((item) => item.toString())
+                        : ""}{" "}
+                    </div>
+                  );
+                })
               : ""}
           </div>
         </Loading>
@@ -760,7 +757,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : configOptions.current.displayMode === "full"
                 ? svgHeight.current
                 : !configOptions.current.isCombineStrands &&
-                  trackModel.type === "methylc"
+                    trackModel.type === "methylc"
                   ? configOptions.current.height * 2
                   : configOptions.current.height,
             left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
@@ -776,7 +773,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : configOptions.current.displayMode === "full"
                   ? svgHeight.current
                   : !configOptions.current.isCombineStrands &&
-                    trackModel.type === "methylc"
+                      trackModel.type === "methylc"
                     ? configOptions.current.height * 2
                     : configOptions.current.height
             }
@@ -792,7 +789,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : configOptions.current.displayMode === "full"
               ? svgHeight.current
               : !configOptions.current.isCombineStrands &&
-                trackModel.type === "methylc"
+                  trackModel.type === "methylc"
                 ? configOptions.current.height * 2
                 : configOptions.current.height,
 
@@ -838,33 +835,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           // track
           highlightElements.length > 0
             ? highlightElements.map((item, index) => {
-              if (item.display) {
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      display: "flex",
-                      position: "relative",
-                      height: "100%",
-                    }}
-                  >
+                if (item.display) {
+                  return (
                     <div
                       key={index}
                       style={{
-                        position: "absolute",
-                        backgroundColor: item.color,
-                        top: "0",
+                        display: "flex",
+                        position: "relative",
                         height: "100%",
-                        left: item.side === "right" ? `${item.xPos}px` : "",
-                        right: item.side === "left" ? `${item.xPos}px` : "",
-                        width: item.width,
-                        pointerEvents: "none", // This makes the highlighted area non-interactive
                       }}
-                    ></div>
-                  </div>
-                );
-              }
-            })
+                    >
+                      <div
+                        key={index}
+                        style={{
+                          position: "absolute",
+                          backgroundColor: item.color,
+                          top: "0",
+                          height: "100%",
+                          left: item.side === "right" ? `${item.xPos}px` : "",
+                          right: item.side === "left" ? `${item.xPos}px` : "",
+                          width: item.width,
+                          pointerEvents: "none", // This makes the highlighted area non-interactive
+                        }}
+                      ></div>
+                    </div>
+                  );
+                }
+              })
             : ""
         }
       </div>
