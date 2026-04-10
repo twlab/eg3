@@ -1,6 +1,7 @@
 import {
   createRef,
   memo,
+  startTransition,
   useCallback,
   useEffect,
   useRef,
@@ -2139,10 +2140,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      setDraw({
-        trackToDrawId: { ...completedFetchedRegion.current.done },
-        viewWindow: curViewWindow,
-        completedFetchedRegion,
+      startTransition(() => {
+        setDraw({
+          trackToDrawId: { ...completedFetchedRegion.current.done },
+          viewWindow: curViewWindow,
+          completedFetchedRegion,
+        });
       });
     }
   }
