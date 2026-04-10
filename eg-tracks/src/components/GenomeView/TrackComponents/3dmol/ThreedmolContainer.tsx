@@ -429,7 +429,7 @@ class ThreedmolContainer extends React.Component<
       envelopOpacity: "0.3",
       spinning: false,
       spinDirection: "y",
-      spinSpeed: 0.2,
+      spinSpeed: 1,
       spinReverse: false,
     };
     this.paintWithBigwig = _.debounce(this.paintWithBigwig, 150);
@@ -717,48 +717,48 @@ class ThreedmolContainer extends React.Component<
     ) {
       this.setState({ paintRegion: "new" });
     }
-    if (layout !== prevState.layout) {
-      if (layout === "side" && thumbStyle !== "hide") {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: halftWidth,
-          thumbBoxHeight: height,
-          thumbBoxWidth: halftWidth,
-        });
-      } else {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: width,
-          thumbBoxHeight: 240,
-          thumbBoxWidth: 300,
-        });
-      }
-    }
-    if (width !== prevProps.width || height !== prevProps.height) {
-      // this.setState({ mainBoxHeight: height, mainBoxWidth: width });
-      if (layout === "side" && thumbStyle !== "hide") {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: halftWidth,
-          thumbBoxHeight: height,
-          thumbBoxWidth: halftWidth,
-        });
-      } else {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: width,
-          thumbBoxHeight: 240,
-          thumbBoxWidth: 300,
-        });
-      }
-    }
-    if (
-      mainBoxHeight !== prevState.mainBoxHeight ||
-      mainBoxWidth !== prevState.mainBoxWidth
-    ) {
-      this.viewer.render();
-      this.viewer2.render();
-    }
+    // if (layout !== prevState.layout) {
+    //   if (layout === "side" && thumbStyle !== "hide") {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: halftWidth,
+    //       thumbBoxHeight: height,
+    //       thumbBoxWidth: halftWidth,
+    //     });
+    //   } else {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: width,
+    //       thumbBoxHeight: 240,
+    //       thumbBoxWidth: 300,
+    //     });
+    //   }
+    // }
+    // if (width !== prevProps.width || height !== prevProps.height) {
+    //   // this.setState({ mainBoxHeight: height, mainBoxWidth: width });
+    //   if (layout === "side" && thumbStyle !== "hide") {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: halftWidth,
+    //       thumbBoxHeight: height,
+    //       thumbBoxWidth: halftWidth,
+    //     });
+    //   } else {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: width,
+    //       thumbBoxHeight: 240,
+    //       thumbBoxWidth: 300,
+    //     });
+    //   }
+    // }
+    // if (
+    //   mainBoxHeight !== prevState.mainBoxHeight ||
+    //   mainBoxWidth !== prevState.mainBoxWidth
+    // ) {
+    //   this.viewer.render();
+    //   this.viewer2.render();
+    // }
     if (highlightingColor !== prevState.highlightingColor) {
       this.setState({ highlightingColorChanged: true });
     }
@@ -814,6 +814,12 @@ class ThreedmolContainer extends React.Component<
   }
 
   componentWillUnmount() {
+    // Stop the spin rAF loop before clearing. Without this, the internal
+    // requestAnimationFrame loop keeps firing even after the canvas is removed
+    // from the DOM, accumulating orphaned render loops on each remount.
+    if (this.viewer) {
+      this.viewer.spin(false);
+    }
     this.clearScene();
     this.bwData = {}; //clean
     this.compData = {};
