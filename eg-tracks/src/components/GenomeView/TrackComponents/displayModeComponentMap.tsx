@@ -150,7 +150,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               position: "relative",
 
               overflow: "hidden",
-              width: width / 3,
+              width: windowWidth,
             }
           : {};
         let curEleStyle: any = configOptions.forceSvg
