@@ -119,6 +119,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     onClose,
     scales,
   }) {
+    console.log(formattedData)
     function createFullVisualizer(
       placements,
       width,
@@ -681,50 +682,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
 
-    function getHeight(numRows: number): number {
-      let rowHeight = ROW_HEIGHT;
-      let options = configOptions;
 
-      let rowsToDraw = Math.min(numRows, options.maxRows);
-      if (options.hideMinimalItems) {
-        rowsToDraw -= 1;
-      }
-      if (rowsToDraw < 1) {
-        rowsToDraw = 1;
-      }
-
-      return trackModel.type === "modbed"
-        ? (rowsToDraw + 1) * rowHeight + 2
-        : rowsToDraw * rowHeight + TOP_PADDING;
-    }
-
-    let featureArrange = new FeatureArranger();
-    let sortType = SortItemsOptions.NOSORT;
-
-    const placeFeatureData = featureArrange.arrange(
-      formattedData,
-      objToInstanceAlign(trackState.visRegion),
-      trackState.visWidth,
-      getGenePadding,
-      configOptions.hiddenPixels,
-      sortType,
-      trackState.viewWindow,
-    );
-
-    let height;
-    height =
-      trackModel.type === "repeatmasker" ||
-        trackModel.type === "rmskv2" ||
-        trackModel.type === "categorical" ||
-        trackModel.type === "modbed"
-        ? configOptions.height
-        : placeFeatureData.numRowsAssigned
-          ? getHeight(placeFeatureData.numRowsAssigned)
-          : 40;
 
     const legend = (
       <TrackLegend
-        height={height}
+        height={formattedData.height}
         trackModel={trackModel}
         label={
           configOptions.label
@@ -739,20 +701,18 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (updatedLegend) {
       updatedLegend.current = legend;
     }
-
+    console.log(formattedData.placements.placements)
     const svgDATA = createFullVisualizer(
-      placeFeatureData.placements,
+      formattedData.placements.placements,
       trackState.visWidth,
-      height,
+      formattedData.height,
       ROW_HEIGHT,
       configOptions.maxRows,
       legend,
     );
-    if (svgHeight) {
-      svgHeight.current = height;
-    }
 
-    return { component: svgDATA, numHidden: placeFeatureData.numHidden, placements: placeFeatureData.placements };
+
+    return { component: svgDATA, numHidden: formattedData.numHidden };
   },
 
   density: function getDensity({
@@ -2675,3 +2635,5 @@ export function formatDataByType(
     return initialLoad ? [[], [], []] : genesArr; //fallback if no formatter is found
   }
 }
+
+

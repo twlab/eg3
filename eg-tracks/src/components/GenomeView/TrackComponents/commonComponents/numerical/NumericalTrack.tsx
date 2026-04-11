@@ -74,6 +74,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     options,
     forceSvg,
     updatedLegend,
+    groupScale,
     xvaluesData,
     viewWindow,
     dataIdx,

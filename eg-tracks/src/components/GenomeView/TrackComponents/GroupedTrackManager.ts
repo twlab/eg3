@@ -5,10 +5,15 @@ import TrackModel from "../../../models/TrackModel";
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
 import {
-
+  DefaultAggregators,
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
+import FeatureArranger from "../../../models/FeatureArranger";
+import { SortItemsOptions } from "../../../models/SortItemsOptions";
+import { objToInstanceAlign } from "../TrackManager";
+import { trackOptionMap } from "./defaultOptionsMap";
+const TOP_PADDING = 2;
 export const numericalTracks = {
   bigwig: "",
   bedgraph: "",
@@ -34,6 +39,21 @@ export const possibleNumericalTracks = {
   snp: "",
 };
 export const numericalTracksGroup = { bigwig: "", bedgraph: "" };
+function getHeight(numRows: number, trackModel, configOptions): number {
+  let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
+  let options = configOptions;
+  let rowsToDraw = Math.min(numRows, options.maxRows);
+  if (options.hideMinimalItems) {
+    rowsToDraw -= 1;
+  }
+  if (rowsToDraw < 1) {
+    rowsToDraw = 1;
+  }
+
+  return trackModel.type === "modbed"
+    ? (rowsToDraw + 1) * rowHeight + 2
+    : rowsToDraw * rowHeight + TOP_PADDING;
+}
 export class GroupedTrackManager {
   /**
    * @returns list of groups found in the track list, their data, and their original indicies
@@ -131,7 +151,7 @@ export class GroupedTrackManager {
               grouping[g].max[tid] = max;
             }
           }
-        } else {
+        } else if (tracks[i].type in numericalTracks) {
           const tid = tracks[i].id;
 
           if (trackData[tid]) {
@@ -180,6 +200,59 @@ export class GroupedTrackManager {
               }
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
             }
+          }
+        }
+
+        else {
+
+          let featureArrange = new FeatureArranger();
+          let sortType = SortItemsOptions.NOSORT;
+          const tid = tracks[i].id;
+          if (
+            trackFetchedDataCache.current[tid][dataIdx]["xvalues"] &&
+            trackData[tid].usePrimaryNav
+          ) {
+            continue;
+          }
+          const curTrackModel = tracks[i];
+          const configOptions = trackOptionMap[curTrackModel.type]
+            ? { ...trackOptionMap[`${curTrackModel.type}`].defaultOptions, ...curTrackModel.options }
+            : { ...trackOptionMap["error"].defaultOptions }
+          console.log(trackData)
+          if (trackData[tid]) {
+            const data = trackData[tid].data;
+            console.log(data, trackOptionMap[`${curTrackModel.type}`]
+              ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
+              : trackOptionMap["error"].getGenePadding, curTrackModel, configOptions, viewWindow, objToInstanceAlign(trackData[tid].visRegion), width)
+            const placeFeatureData = featureArrange.arrange(
+              data,
+              trackData[tid].visRegion,
+              width,
+              trackOptionMap[`${curTrackModel.type}`]
+                ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
+                : trackOptionMap["error"].getGenePadding,
+              configOptions.hiddenPixels,
+              sortType,
+              viewWindow,
+            );
+
+            let height;
+            height =
+              curTrackModel.type === "repeatmasker" ||
+                curTrackModel.type === "rmskv2" ||
+                curTrackModel.type === "categorical" ||
+                curTrackModel.type === "modbed"
+                ? configOptions?.height
+                : placeFeatureData.numRowsAssigned
+                  ? getHeight(placeFeatureData.numRowsAssigned, curTrackModel, configOptions)
+                  : 40;
+
+            if (!trackFetchedDataCache.current[tid][dataIdx]) {
+              console.log("wut", dataIdx, trackFetchedDataCache.current)
+              trackFetchedDataCache.current[tid][dataIdx] = {};
+            }
+
+            trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = { placements: placeFeatureData, height, numHidden: placeFeatureData.numHidden };
           }
         }
         // }

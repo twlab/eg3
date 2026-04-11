@@ -104,7 +104,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
     const displayArgs: any = {
       basesByPixel: basePerPixel,
-      genesArr,
+      genesArr: xvalues,
       genomeConfig,
       genomeName: genomeConfig.genome.getName(),
       trackState,
@@ -338,14 +338,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         xvalues ? xvalues : null,
       );
     }
-    else if (trackState.recreate) {
-      createSVGOrCanvas(
-        trackState,
-        cacheTrackData.dataCache,
-        dataIdx,
-        viewComponent && viewComponent.dataIdx === dataIdx ? viewComponent.genesArr : null,
-      );
-    }
+    // else if (trackState.recreate) {
+    //   createSVGOrCanvas(
+    //     trackState,
+    //     cacheTrackData.dataCache,
+    //     dataIdx,
+    //     viewComponent && viewComponent.dataIdx === dataIdx ? viewComponent.genesArr : null,
+    //   );
+    // }
     else if (
       !cacheTrackData.useExpandedLoci &&
       cacheTrackData.usePrimaryNav
@@ -353,15 +353,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let combinedData: Array<any> = [];
       let currIdx = dataIdx + 1;
       let noData = false;
-      for (let i = 0; i < 3; i++) {
-        if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
-          noData = true;
-          continue;
-        }
-        combinedData.push(cacheTrackData[currIdx]);
-        currIdx--;
+      if (cacheTrackData[`${dataIdx}`]["xvalues"]) {
+        combinedData = [];
       }
-      if (matplotCheck && dynamicMatplotTracks.has(trackModel.type)) {
+      else if (matplotCheck && dynamicMatplotTracks.has(trackModel.type)) {
         if (
           cacheTrackData[`${dataIdx}`] &&
           cacheTrackData[`${dataIdx}`]["xvalues"]

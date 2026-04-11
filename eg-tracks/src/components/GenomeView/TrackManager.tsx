@@ -290,8 +290,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       tracks && tracks.length >= 0
         ? tracks.filter((trackModel) => trackModel.type !== "g3d")
         : genomeConfig.defaultTracks.filter(
-            (trackModel) => trackModel.type !== "g3d",
-          ),
+          (trackModel) => trackModel.type !== "g3d",
+        ),
   });
 
   const configMenuPos = useRef<{ [key: string]: any }>({});
@@ -690,13 +690,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let curViewWindow =
       side.current === "right"
         ? new OpenInterval(
-            -((dragX.current % windowWidth) + -windowWidth),
-            -((dragX.current % windowWidth) + -windowWidth) + windowWidth,
-          )
+          -((dragX.current % windowWidth) + -windowWidth),
+          -((dragX.current % windowWidth) + -windowWidth) + windowWidth,
+        )
         : new OpenInterval(
-            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
-            windowWidth * 3 - (dragX.current % windowWidth),
-          );
+          windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
+          windowWidth * 3 - (dragX.current % windowWidth),
+        );
 
     const genomeName = genomeConfig.genome.getName();
     if (
@@ -873,7 +873,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (trackModel) {
         trackModel.options =
           globalTrackConfig.current[`${config}`] !== undefined &&
-          globalTrackConfig.current[`${config}`].configOptions !== undefined
+            globalTrackConfig.current[`${config}`].configOptions !== undefined
             ? _.cloneDeep(globalTrackConfig.current[`${config}`].configOptions)
             : {};
 
@@ -1289,18 +1289,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       newVisData = {
         visWidth:
           selectedRegionSet &&
-          bpRegionSize.current === genomeConfig.navContext._totalBases
+            bpRegionSize.current === genomeConfig.navContext._totalBases
             ? expandedWidth - rightExtraPixels
             : expandedWidth,
         visRegion: curVisRegion,
         viewWindow:
           selectedRegionSet &&
-          bpRegionSize.current === genomeConfig.navContext._totalBases
+            bpRegionSize.current === genomeConfig.navContext._totalBases
             ? new OpenInterval(0, expandedWidth - rightExtraPixels)
             : new OpenInterval(
-                leftExtraPixels,
-                expandedWidth - rightExtraPixels,
-              ),
+              leftExtraPixels,
+              expandedWidth - rightExtraPixels,
+            ),
         viewWindowRegion: curFetchRegionNav,
       };
 
@@ -1370,18 +1370,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newVisData = {
           visWidth:
             selectedRegionSet &&
-            bpRegionSize.current === genomeConfig.navContext._totalBases
+              bpRegionSize.current === genomeConfig.navContext._totalBases
               ? rightExtraPixels
               : expandedWidth,
           visRegion: curVisRegion,
           viewWindow:
             selectedRegionSet &&
-            bpRegionSize.current === genomeConfig.navContext._totalBases
+              bpRegionSize.current === genomeConfig.navContext._totalBases
               ? new OpenInterval(0, rightExtraPixels)
               : new OpenInterval(
-                  leftExtraPixels,
-                  expandedWidth - rightExtraPixels,
-                ),
+                leftExtraPixels,
+                expandedWidth - rightExtraPixels,
+              ),
           viewWindowRegion: regionNav,
         };
 
@@ -1449,18 +1449,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newVisData = {
           visWidth:
             selectedRegionSet &&
-            bpRegionSize.current === genomeConfig.navContext._totalBases
+              bpRegionSize.current === genomeConfig.navContext._totalBases
               ? rightExtraPixels
               : expandedWidth,
           visRegion: curVisRegion,
           viewWindow:
             selectedRegionSet &&
-            bpRegionSize.current === genomeConfig.navContext._totalBases
+              bpRegionSize.current === genomeConfig.navContext._totalBases
               ? new OpenInterval(0, rightExtraPixels)
               : new OpenInterval(
-                  leftExtraPixels,
-                  expandedWidth - rightExtraPixels,
-                ),
+                leftExtraPixels,
+                expandedWidth - rightExtraPixels,
+              ),
           viewWindowRegion: regionNav,
         };
 
@@ -1500,46 +1500,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       viewWindow: viewWindow,
       initVisData: initial
         ? initExpandBpLoci.map((item, index) => {
-            const regionNav = new DisplayedRegionModel(
-              genomeConfig.navContext,
-              initBpLoci[index].start,
-              initBpLoci[index].end,
-            );
-            const curVisRegion = new DisplayedRegionModel(
-              genomeConfig.navContext,
-              item.start,
-              item.end,
-            );
+          const regionNav = new DisplayedRegionModel(
+            genomeConfig.navContext,
+            initBpLoci[index].start,
+            initBpLoci[index].end,
+          );
+          const curVisRegion = new DisplayedRegionModel(
+            genomeConfig.navContext,
+            item.start,
+            item.end,
+          );
 
-            const pixelsPerBase = windowWidth / regionNav.getWidth();
-            const expandedWidth = curVisRegion.getWidth() * pixelsPerBase;
+          const pixelsPerBase = windowWidth / regionNav.getWidth();
+          const expandedWidth = curVisRegion.getWidth() * pixelsPerBase;
 
-            const originalContextInterval = regionNav.getContextCoordinates();
-            const expandedContextInterval =
-              curVisRegion.getContextCoordinates();
+          const originalContextInterval = regionNav.getContextCoordinates();
+          const expandedContextInterval =
+            curVisRegion.getContextCoordinates();
 
-            const leftBaseDiff =
-              originalContextInterval.start - expandedContextInterval.start;
-            const rightBaseDiff =
-              expandedContextInterval.end - originalContextInterval.end;
+          const leftBaseDiff =
+            originalContextInterval.start - expandedContextInterval.start;
+          const rightBaseDiff =
+            expandedContextInterval.end - originalContextInterval.end;
 
-            const leftExtraPixels = leftBaseDiff * pixelsPerBase;
-            const rightExtraPixels = rightBaseDiff * pixelsPerBase;
+          const leftExtraPixels = leftBaseDiff * pixelsPerBase;
+          const rightExtraPixels = rightBaseDiff * pixelsPerBase;
 
-            return {
-              visWidth:
-                selectedRegionSet &&
+          return {
+            visWidth:
+              selectedRegionSet &&
                 bpRegionSize.current === genomeConfig.navContext._totalBases
-                  ? expandedWidth - rightExtraPixels
-                  : expandedWidth,
-              visRegion: curVisRegion,
-              viewWindow: new OpenInterval(
-                leftExtraPixels,
-                expandedWidth - rightExtraPixels,
-              ),
-              viewWindowRegion: regionNav,
-            };
-          })
+                ? expandedWidth - rightExtraPixels
+                : expandedWidth,
+            visRegion: curVisRegion,
+            viewWindow: new OpenInterval(
+              leftExtraPixels,
+              expandedWidth - rightExtraPixels,
+            ),
+            viewWindowRegion: regionNav,
+          };
+        })
         : "",
     };
 
@@ -1705,7 +1705,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       ].trackState["startWindow"] =
         event.data.navData.regionSetStartBp !== 0
           ? curTrackState.genomicFetchCoord[genomeConfig.genome.getName()]
-              .primaryVisData.viewWindow.start
+            .primaryVisData.viewWindow.start
           : 0;
 
       globalTrackState.current.trackStates[
@@ -1920,7 +1920,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               ? trackState.visRegion
               : trackState.genomicFetchCoord
                 ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-                    .visRegion
+                  .visRegion
                 : "",
             regionExpandLoci: trackState.regionExpandLoci,
             useFineModeNav: useFineModeNav.current,
@@ -2086,7 +2086,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             curTrackModel &&
             trackOptionMap[
-              `${trackFetchedDataCache.current[trackId].trackType}`
+            `${trackFetchedDataCache.current[trackId].trackType}`
             ]
           ) {
             configOptions = {
@@ -2102,7 +2102,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           configOptions &&
           configOptions.group &&
           trackFetchedDataCache.current[trackId].trackType in
-            numericalTracksGroup
+          numericalTracksGroup
         ) {
           const groupId = configOptions.group;
 
@@ -2645,12 +2645,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let curViewWindow = globalTrackState.current.viewWindow
         ? globalTrackState.current.viewWindow
         : viewWindowConfigData.current &&
-            viewWindowConfigData.current.dataIdx === dataIdx.current
+          viewWindowConfigData.current.dataIdx === dataIdx.current
           ? viewWindowConfigData.current.viewWindow
           : hasGenomeAlign.current
             ? globalTrackState.current.trackStates[dataIdx.current].trackState
-                .genomicFetchCoord[genomeConfig.genome.getName()].primaryVisData
-                .viewWindow
+              .genomicFetchCoord[genomeConfig.genome.getName()].primaryVisData
+              .viewWindow
             : draw.viewWindow;
 
       setScreenshotData({
@@ -2726,8 +2726,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       const metaStringValue = Array.isArray(track.metadata[`${metaDataKey}`])
         ? track.metadata[`${metaDataKey}`][
-            track.metadata[`${metaDataKey}`].length - 1
-          ]
+        track.metadata[`${metaDataKey}`].length - 1
+        ]
         : track.metadata[`${metaDataKey}`];
       if (track.metadata[`${metaDataKey}`] && metaStringValue === stringValue) {
         newSelectedTracks[`${track.id}`] = "";
@@ -3070,18 +3070,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const newVisData = {
           visWidth:
             selectedRegionSet &&
-            bpRegionSize.current === genomeConfig.navContext._totalBases
+              bpRegionSize.current === genomeConfig.navContext._totalBases
               ? expandedWidth - rightExtraPixels
               : expandedWidth,
           visRegion: curVisRegion,
           viewWindow:
             selectedRegionSet &&
-            bpRegionSize.current === genomeConfig.navContext._totalBases
+              bpRegionSize.current === genomeConfig.navContext._totalBases
               ? new OpenInterval(0, expandedWidth - rightExtraPixels)
               : new OpenInterval(
-                  leftExtraPixels,
-                  expandedWidth - rightExtraPixels,
-                ),
+                leftExtraPixels,
+                expandedWidth - rightExtraPixels,
+              ),
           viewWindowRegion: curFetchRegionNav,
         };
 
@@ -3115,13 +3115,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const newViewWindow =
         side.current === "right"
           ? new OpenInterval(
-              -((dragX.current % windowWidth) + -windowWidth),
-              -((dragX.current % windowWidth) + -windowWidth) + windowWidth,
-            )
+            -((dragX.current % windowWidth) + -windowWidth),
+            -((dragX.current % windowWidth) + -windowWidth) + windowWidth,
+          )
           : new OpenInterval(
-              windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
-              windowWidth * 3 - (dragX.current % windowWidth),
-            );
+            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
+            windowWidth * 3 - (dragX.current % windowWidth),
+          );
 
       globalTrackState.current.viewWindow = newViewWindow;
       if (hasGenomeAlign.current) {
@@ -3209,9 +3209,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (
-          !configOptions ||
-          (!(cacheTrackData.trackType in numericalTracks) &&
-            configOptions.displayMode !== "density")
+          !configOptions
         ) {
           continue;
         }
@@ -3225,18 +3223,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           let currIdx = dataIdx + 1;
 
           for (let i = 0; i < 3; i++) {
-            if (
-              !cacheTrackData[currIdx] ||
-              !cacheTrackData[currIdx].dataCache
-            ) {
+            console.log(cacheTrackData[currIdx])
+            if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
               noData = true;
-              break;
-            } else {
-              combinedData.push(cacheTrackData[currIdx]);
+              continue;
             }
+            combinedData.push(cacheTrackData[currIdx]);
             currIdx--;
           }
-
+          console.log(combinedData)
           if (!noData) {
             if (
               cacheTrackData.trackType in
@@ -3273,8 +3268,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 .primaryVisData;
             visRegion = !cacheTrackData.usePrimaryNav
               ? trackState.genomicFetchCoord[
-                  trackFetchedDataCache.current[key].queryGenome
-                ].queryRegion
+                trackFetchedDataCache.current[key].queryGenome
+              ].queryRegion
               : primaryVisData.visRegion;
 
             if (typeof visRegion === "object") {
@@ -3335,7 +3330,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return {};
     }
   }
-
+  console.log(trackFetchedDataCache.current)
   // MARK: useeffects_____________________________________________________________
 
   useEffect(() => {
@@ -3411,7 +3406,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   const newGenomicFetchCoord = {
                     [genomeConfig.genome.getName()]: _.cloneDeep(
                       trackState.genomicFetchCoord[
-                        `${genomeConfig.genome.getName()}`
+                      `${genomeConfig.genome.getName()}`
                       ],
                     ),
                   };
@@ -3554,9 +3549,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (trackComponent.trackModel.id === curTrackModel.id) {
               if (
                 trackComponent.trackModel.isSelected !==
-                  curTrackModel.isSelected ||
+                curTrackModel.isSelected ||
                 trackComponent.trackModel?.options?.legendFontColor !==
-                  curTrackModel.options?.legendFontColor ||
+                curTrackModel.options?.legendFontColor ||
                 i !== j
               ) {
                 trackComponent.trackModel = curTrackModel;
@@ -3658,116 +3653,116 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [configMenu]);
 
   // MARK: viewWIndow useeffect
-  useEffect(() => {
-    if (viewWindowConfigData.current) {
-      if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
-        if (hasGenomeAlign.current && !useFineModeNav.current) {
-          const trackToFetch: Array<TrackModel> = [];
-          const dataToFetchArr: any = [];
-          const genomeAlignTracks: Array<TrackModel> = [];
-          const trackState =
-            viewWindowConfigData.current.dataIdx in
-            globalTrackState.current.trackStates
-              ? globalTrackState.current.trackStates[
-                  viewWindowConfigData.current.dataIdx
-                ].trackState
-              : "";
+  // useEffect(() => {
+  //   if (viewWindowConfigData.current) {
+  //     if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
+  //       if (hasGenomeAlign.current && !useFineModeNav.current) {
+  //         const trackToFetch: Array<TrackModel> = [];
+  //         const dataToFetchArr: any = [];
+  //         const genomeAlignTracks: Array<TrackModel> = [];
+  //         const trackState =
+  //           viewWindowConfigData.current.dataIdx in
+  //             globalTrackState.current.trackStates
+  //             ? globalTrackState.current.trackStates[
+  //               viewWindowConfigData.current.dataIdx
+  //             ].trackState
+  //             : "";
 
-          for (const key in trackFetchedDataCache.current) {
-            const trackCache = trackFetchedDataCache.current[key];
-            if (trackCache.trackType === "genomealign") {
-              genomeAlignTracks.push(trackCache.trackModel);
-            } else if (!trackCache.usePrimaryNav) {
-              if (
-                trackFetchedDataCache.current[key][
-                  viewWindowConfigData.current.dataIdx
-                ]?.dataCache
-              ) {
-                delete trackFetchedDataCache.current[key][
-                  viewWindowConfigData.current.dataIdx
-                ].dataCache;
-              }
-              trackToFetch.push(trackCache.trackModel);
-            }
-          }
+  //         for (const key in trackFetchedDataCache.current) {
+  //           const trackCache = trackFetchedDataCache.current[key];
+  //           if (trackCache.trackType === "genomealign") {
+  //             genomeAlignTracks.push(trackCache.trackModel);
+  //           } else if (!trackCache.usePrimaryNav) {
+  //             if (
+  //               trackFetchedDataCache.current[key][
+  //                 viewWindowConfigData.current.dataIdx
+  //               ]?.dataCache
+  //             ) {
+  //               delete trackFetchedDataCache.current[key][
+  //                 viewWindowConfigData.current.dataIdx
+  //               ].dataCache;
+  //             }
+  //             trackToFetch.push(trackCache.trackModel);
+  //           }
+  //         }
 
-          let genomeFeatureSegment: Array<FeatureSegment> =
-            genomeConfig.navContext.getFeaturesInInterval(
-              viewWindowConfigData.current.contextNavCoord.start,
-              viewWindowConfigData.current.contextNavCoord.end,
-            );
+  //         let genomeFeatureSegment: Array<FeatureSegment> =
+  //           genomeConfig.navContext.getFeaturesInInterval(
+  //             viewWindowConfigData.current.contextNavCoord.start,
+  //             viewWindowConfigData.current.contextNavCoord.end,
+  //           );
 
-          const regionLoci = genomeFeatureSegment.map((item, _index) =>
-            item.getLocus(),
-          );
+  //         const regionLoci = genomeFeatureSegment.map((item, _index) =>
+  //           item.getLocus(),
+  //         );
 
-          const genName = genomeConfig.genome.getName();
-          dataToFetchArr.push({
-            primaryGenName: genName,
-            trackModelArr: trackToFetch,
-            visData: trackState.visData
-              ? trackState.visData
-              : trackState.genomicFetchCoord
-                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-                : "",
-            genomicLoci: regionLoci,
-            visRegion: trackState.visRegion
-              ? trackState.visRegion
-              : trackState.genomicFetchCoord
-                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-                    .visRegion
-                : "",
-            regionExpandLoci: trackState.regionExpandLoci,
-            useFineModeNav: useFineModeNav.current,
-            windowWidth,
-            bpRegionSize: bpRegionSize.current,
-            trackDataIdx: viewWindowConfigData.current.dataIdx,
-            missingIdx: viewWindowConfigData.current.dataIdx,
-          });
-          // console.log("same Region fetch with genomealign", dataToFetchArr);
-          enqueueGenomeAlignMessage({
-            trackToFetch: genomeAlignTracks,
-            visData: trackState.visData
-              ? trackState.visData
-              : trackState.genomicFetchCoord
-                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-                : "",
-            genomicLoci: trackState.regionLoci,
-            viewWindowGenomicLoci: regionLoci,
-            primaryGenName: genName,
-            trackModelArr: genomeAlignTracks,
-            regionExpandLoci: trackState.regionExpandLoci,
-            useFineModeNav: useFineModeNav.current,
-            windowWidth,
-            bpRegionSize: bpRegionSize.current,
-            fetchAfterGenAlignTracks: dataToFetchArr,
-            trackDataIdx: viewWindowConfigData.current.dataIdx,
-            missingIdx: viewWindowConfigData.current.dataIdx,
-            dragX: dragX.current,
-            fetchNewRegion: false,
-          });
-        }
-        //__________________________________________________________
-        const curTrackToDrawId = getWindowViewConfig(
-          viewWindowConfigData.current.viewWindow,
-          viewWindowConfigData.current.dataIdx,
-        );
+  //         const genName = genomeConfig.genome.getName();
+  //         dataToFetchArr.push({
+  //           primaryGenName: genName,
+  //           trackModelArr: trackToFetch,
+  //           visData: trackState.visData
+  //             ? trackState.visData
+  //             : trackState.genomicFetchCoord
+  //               ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+  //               : "",
+  //           genomicLoci: regionLoci,
+  //           visRegion: trackState.visRegion
+  //             ? trackState.visRegion
+  //             : trackState.genomicFetchCoord
+  //               ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+  //                 .visRegion
+  //               : "",
+  //           regionExpandLoci: trackState.regionExpandLoci,
+  //           useFineModeNav: useFineModeNav.current,
+  //           windowWidth,
+  //           bpRegionSize: bpRegionSize.current,
+  //           trackDataIdx: viewWindowConfigData.current.dataIdx,
+  //           missingIdx: viewWindowConfigData.current.dataIdx,
+  //         });
+  //         // console.log("same Region fetch with genomealign", dataToFetchArr);
+  //         enqueueGenomeAlignMessage({
+  //           trackToFetch: genomeAlignTracks,
+  //           visData: trackState.visData
+  //             ? trackState.visData
+  //             : trackState.genomicFetchCoord
+  //               ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+  //               : "",
+  //           genomicLoci: trackState.regionLoci,
+  //           viewWindowGenomicLoci: regionLoci,
+  //           primaryGenName: genName,
+  //           trackModelArr: genomeAlignTracks,
+  //           regionExpandLoci: trackState.regionExpandLoci,
+  //           useFineModeNav: useFineModeNav.current,
+  //           windowWidth,
+  //           bpRegionSize: bpRegionSize.current,
+  //           fetchAfterGenAlignTracks: dataToFetchArr,
+  //           trackDataIdx: viewWindowConfigData.current.dataIdx,
+  //           missingIdx: viewWindowConfigData.current.dataIdx,
+  //           dragX: dragX.current,
+  //           fetchNewRegion: false,
+  //         });
+  //       }
+  //       //__________________________________________________________
+  //       const curTrackToDrawId = getWindowViewConfig(
+  //         viewWindowConfigData.current.viewWindow,
+  //         viewWindowConfigData.current.dataIdx,
+  //       );
 
-        if (Object.keys(curTrackToDrawId).length > 0) {
-          // console.log("same region draw cachhe data", curTrackToDrawId);
-          setViewWindowConfigChange({
-            dataIdx: dataIdx.current,
-            viewWindow: viewWindowConfigData.current.viewWindow,
-            groupScale:
-              globalTrackState.current.trackStates[dataIdx.current].trackState[
-                "groupScale"
-              ],
-            trackToDrawId: curTrackToDrawId,
-          });
-        }
-      }
-    }
-  }, [viewWindowConfigData.current]);
+  //       if (Object.keys(curTrackToDrawId).length > 0) {
+  //         // console.log("same region draw cachhe data", curTrackToDrawId);
+  //         setViewWindowConfigChange({
+  //           dataIdx: dataIdx.current,
+  //           viewWindow: viewWindowConfigData.current.viewWindow,
+  //           groupScale:
+  //             globalTrackState.current.trackStates[dataIdx.current].trackState[
+  //             "groupScale"
+  //             ],
+  //           trackToDrawId: curTrackToDrawId,
+  //         });
+  //       }
+  //     }
+  //   }
+  // }, [viewWindowConfigData.current]);
   function checkOutsideClick() {
     if (Object.keys(selectedTracks.current).length > 0) {
       onTrackUnSelect();
@@ -3828,7 +3823,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     <Toolbar.toolbar
                       highlights={highlights}
                       onNewRegionSelect={
-                        !onNewRegionSelect ? () => {} : onNewRegionSelect
+                        !onNewRegionSelect ? () => { } : onNewRegionSelect
                       }
                       windowWidth={windowWidth}
                       buttonPadding={padding / 2}
@@ -4075,9 +4070,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }}
               >
                 {selectedTool &&
-                selectedTool.isSelected &&
-                (selectedTool.title === Tool.Highlight ||
-                  selectedTool.title === Tool.Zoom) ? (
+                  selectedTool.isSelected &&
+                  (selectedTool.title === Tool.Highlight ||
+                    selectedTool.title === Tool.Zoom) ? (
                   <SelectableGenomeArea
                     selectableRegion={userViewRegion}
                     dragLimits={
