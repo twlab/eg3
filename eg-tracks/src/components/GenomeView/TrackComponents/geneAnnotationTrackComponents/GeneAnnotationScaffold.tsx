@@ -1,4 +1,4 @@
-import React, { Children } from "react";
+import React, { Children, useMemo } from "react";
 import OpenInterval from "../../../../models/OpenInterval";
 import Gene from "../../../../models/Gene";
 import GeneAnnotation, {
@@ -42,17 +42,32 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
     options
   );
 
-  const coveringRect = (
-    <rect
-      // Box that covers the whole annotation to increase the click area
-      x={xStart}
-      y={0}
-      width={xSpan.getLength()}
-      height={HEIGHT}
-      fill={isMinimal ? color : backgroundColor}
-      opacity={isMinimal ? 1 : 0}
-    />
-  );
+  // Memoized body elements — only recompute when gene/position/style changes, NOT on viewWindow pan
+  const { coveringRect, centerLine } = useMemo(() => {
+    const coveringRect = (
+      <rect
+        x={xStart}
+        y={0}
+        width={xSpan.getLength()}
+        height={HEIGHT}
+        fill={isMinimal ? color : backgroundColor}
+        opacity={isMinimal ? 1 : 0}
+      />
+    );
+    const centerY = HEIGHT / 2;
+    const centerLine = (
+      <line
+        x1={xStart}
+        y1={centerY}
+        x2={xEnd}
+        y2={centerY}
+        stroke={color}
+        strokeWidth={1}
+        strokeDasharray={4}
+      />
+    );
+    return { coveringRect, centerLine };
+  }, [xStart, xEnd, color, backgroundColor, isMinimal]);
 
   if (isMinimal) {
     // Just render a box if minimal.
@@ -62,19 +77,7 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
     return <TranslatableG y={y}>{coveringRect}</TranslatableG>;
   }
 
-  const centerY = HEIGHT / 2;
-  const centerLine = (
-    <line
-      x1={xStart}
-      y1={centerY}
-      x2={xEnd}
-      y2={centerY}
-      stroke={color}
-      strokeWidth={1}
-      strokeDasharray={4}
-    />
-  );
-
+  // Label always recomputes — depends on viewWindow (panning changes label position)
   let labelX, textAnchor;
   let labelHasBackground = false;
 

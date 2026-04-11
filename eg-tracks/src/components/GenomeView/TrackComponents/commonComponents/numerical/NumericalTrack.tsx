@@ -74,7 +74,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     options,
     forceSvg,
     updatedLegend,
-    groupScale,
     xvaluesData,
     viewWindow,
     dataIdx,
@@ -119,8 +118,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end),
-              )
+              xToValue2.slice(props.viewWindow.start, props.viewWindow.end),
+            )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -245,11 +244,11 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   }
   let curParentStyle: any = forceSvg
     ? {
-        position: "relative",
+      position: "relative",
 
-        overflow: "hidden",
-        width: width / 3,
-      }
+      overflow: "hidden",
+      width: width / 3,
+    }
     : {};
   let curEleStyle: any = forceSvg
     ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
