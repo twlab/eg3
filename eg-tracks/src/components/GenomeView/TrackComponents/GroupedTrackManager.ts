@@ -234,8 +234,7 @@ export class GroupedTrackManager {
               viewWindow,
             );
 
-            let height;
-            height =
+            const height =
               curTrackModel.type === "repeatmasker" ||
                 curTrackModel.type === "rmskv2" ||
                 curTrackModel.type === "categorical" ||
@@ -246,7 +245,7 @@ export class GroupedTrackManager {
                   : 40;
 
             if (!trackFetchedDataCache.current[tid][dataIdx]) {
-              console.log("wut", dataIdx, trackFetchedDataCache.current)
+
               trackFetchedDataCache.current[tid][dataIdx] = {};
             }
 

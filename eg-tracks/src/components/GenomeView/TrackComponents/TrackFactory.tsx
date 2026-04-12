@@ -338,14 +338,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         xvalues ? xvalues : null,
       );
     }
-    // else if (trackState.recreate) {
-    //   createSVGOrCanvas(
-    //     trackState,
-    //     cacheTrackData.dataCache,
-    //     dataIdx,
-    //     viewComponent && viewComponent.dataIdx === dataIdx ? viewComponent.genesArr : null,
-    //   );
-    // }
 
     else if (
       !cacheTrackData.useExpandedLoci &&
@@ -354,10 +346,20 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let combinedData: Array<any> = [];
       let currIdx = dataIdx + 1;
       let noData = false;
-      if (cacheTrackData[`${dataIdx}`]["xvalues"]) {
-        combinedData = [];
+      if (xvalues) {
+        combinedData = []
       }
-      else if (matplotCheck && dynamicMatplotTracks.has(trackModel.type)) {
+      else {
+        for (let i = 0; i < 3; i++) {
+          if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
+            noData = true;
+            continue;
+          }
+          combinedData.push(cacheTrackData[currIdx]);
+          currIdx--;
+        }
+      }
+      if (matplotCheck && dynamicMatplotTracks.has(trackModel.type)) {
         if (
           cacheTrackData[`${dataIdx}`] &&
           cacheTrackData[`${dataIdx}`]["xvalues"]
@@ -465,7 +467,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           let trackState = _.cloneDeep(
             globalTrackState.current.trackStates[cacheDataIdx].trackState,
           );
-          trackState["recreate"] = true;
+
 
           handleTrackDraw({
             cacheTrackData,
@@ -498,7 +500,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-      trackState["recreate"] = true;
+
       handleTrackDraw({
         cacheTrackData,
         trackState,

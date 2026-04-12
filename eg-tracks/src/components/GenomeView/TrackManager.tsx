@@ -1729,18 +1729,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             trackToDrawId[track.id] = false;
           }
         }
-
+        for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
+          dataForFetch["genomicFetchCoord"] = curTrackState.genomicFetchCoord;
+        }
+        if (
+          completedFetchedRegion.current.key !== curTrackState.trackDataIdx
+        ) {
+          completedFetchedRegion.current.key = curTrackState.trackDataIdx;
+          completedFetchedRegion.current.done = {};
+          completedFetchedRegion.current.groups = {};
+        }
         if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
-          for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
-            dataForFetch["genomicFetchCoord"] = curTrackState.genomicFetchCoord;
-          }
-          if (
-            completedFetchedRegion.current.key !== curTrackState.trackDataIdx
-          ) {
-            completedFetchedRegion.current.key = curTrackState.trackDataIdx;
-            completedFetchedRegion.current.done = {};
-            completedFetchedRegion.current.groups = {};
-          }
+
           if (fetchNewRegion || fetchedDragX === dragX.current) {
             checkDrawData({
               curDataIdx: curTrackState.trackDataIdx,
@@ -3454,15 +3454,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
           // if not in view this means that this iAs the new track that was added.
           if (!foundComp) {
-            if (curTrackModel.type === "g3d") {
-              newG3dComponents.push({
-                id: curTrackModel.id,
-                component: ThreedmolContainer,
 
-                trackModel: curTrackModel,
-              });
-              continue;
-            }
             newAddedTrackModel.push(curTrackModel);
             if (curTrackModel.type === "genomealign") {
               checkHasGenAlign = true;
@@ -3531,7 +3523,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
-        onTracksChange(filteredTracks);
+
       } else {
         // for options that don't need to redraw tracks, select, legend font color, reorder
         const newTrackComponents: Array<any> = [];
