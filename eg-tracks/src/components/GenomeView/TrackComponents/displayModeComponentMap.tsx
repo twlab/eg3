@@ -150,7 +150,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               position: "relative",
 
               overflow: "hidden",
-              width: width / 3,
+              width: windowWidth,
             }
           : {};
         let curEleStyle: any = configOptions.forceSvg
@@ -641,6 +641,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         return { trackHeight, numHidden: totalImgCount - imgCount };
       };
       let heightObj = calcTrackHeight();
+
       if (svgHeight) {
         svgHeight.current = heightObj.trackHeight;
       }
@@ -714,7 +715,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     height =
       trackModel.type === "repeatmasker" ||
       trackModel.type === "rmskv2" ||
-      trackModel.type === "categorical"
+      trackModel.type === "categorical" ||
+      trackModel.type === "modbed"
         ? configOptions.height
         : placeFeatureData.numRowsAssigned
           ? getHeight(placeFeatureData.numRowsAssigned)

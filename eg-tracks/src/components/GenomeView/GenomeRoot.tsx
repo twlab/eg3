@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 6;
+const MAX_WORKERS = 4;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -252,7 +252,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     genomeConfig.defaultTracks = tracks;
 
-
     return () => {
       // Terminate all infinite scroll workers
 
@@ -281,45 +280,47 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
       setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
       setShow3dGene(undefined);
-
     };
   }, []);
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks ? <div style={{ ...(height && { height }) }}>
-        <TrackManager
-          tracks={tracks}
-          legendWidth={legendWidth}
-          windowWidth={size.width - legendWidth - 45}
-          // subtract legend width so it matches the width with eg2,
-          // 15 + 15 paddig left right, to match old browser, and + 15 for scroll bar
-          userViewRegion={userViewRegion}
-          highlights={highlights}
-          genomeConfig={genomeConfig}
-          onNewRegion={onNewRegion}
-          onNewRegionSelect={onNewRegionSelect}
-          onNewHighlight={onNewHighlight}
-          onTracksChange={completeTracksChange}
-          tool={tool}
-          Toolbar={Toolbar}
-          viewRegion={viewRegion}
-          showGenomeNav={showGenomeNav}
-          showToolBar={showToolBar}
-          isThereG3dTrack={false}
-          setScreenshotData={setScreenshotData}
-          isScreenShotOpen={isScreenShotOpen}
-          selectedRegionSet={selectedRegionSet}
-          setShow3dGene={setShow3dGene}
-          infiniteScrollWorkers={infiniteScrollWorkers}
-          fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-          currentState={currentState}
-          darkTheme={darkTheme}
-        />
-      </div> : <div style={{ width: size.width, height: 900 }}>
-        <FlexLayout.Layout model={model} factory={factory} />
-      </div>}
-
+      {!has3dTracks ? (
+        <div style={{ ...(height && { height }) }}>
+          <TrackManager
+            tracks={tracks}
+            legendWidth={legendWidth}
+            windowWidth={size.width - legendWidth - 45}
+            // subtract legend width so it matches the width with eg2,
+            // 15 + 15 paddig left right, to match old browser, and + 15 for scroll bar
+            userViewRegion={userViewRegion}
+            highlights={highlights}
+            genomeConfig={genomeConfig}
+            onNewRegion={onNewRegion}
+            onNewRegionSelect={onNewRegionSelect}
+            onNewHighlight={onNewHighlight}
+            onTracksChange={completeTracksChange}
+            tool={tool}
+            Toolbar={Toolbar}
+            viewRegion={viewRegion}
+            showGenomeNav={showGenomeNav}
+            showToolBar={showToolBar}
+            isThereG3dTrack={false}
+            setScreenshotData={setScreenshotData}
+            isScreenShotOpen={isScreenShotOpen}
+            selectedRegionSet={selectedRegionSet}
+            setShow3dGene={setShow3dGene}
+            infiniteScrollWorkers={infiniteScrollWorkers}
+            fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+            currentState={currentState}
+            darkTheme={darkTheme}
+          />
+        </div>
+      ) : (
+        <div style={{ width: size.width, height: 900 }}>
+          <FlexLayout.Layout model={model} factory={factory} />
+        </div>
+      )}
     </div>
   );
 });

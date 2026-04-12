@@ -1,6 +1,7 @@
 import {
   createRef,
   memo,
+  startTransition,
   useCallback,
   useEffect,
   useRef,
@@ -497,7 +498,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
     }
-
   };
 
   const processGenomeAlignQueue = () => {
@@ -514,7 +514,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       fetchGenomeAlignWorker.current!.fetchWorker.postMessage(message);
     }
-
   };
 
   // MARK: mouseAction
@@ -1568,37 +1567,39 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           primaryGenName: genomeConfig.genome.getName(),
         };
 
-        await Promise.all(dataItem.fetchResults.map(
-          async (item: {
-            id: any;
-            name: string;
-            result: any;
-            metadata: any;
-            trackModel: any;
-            curFetchNav: any;
-            fileInfos: any;
-            errorType: any;
-          }) => {
-            trackToDrawId[`${item.id}`] = "";
-            await createCache({
-              trackState: curTrackState,
-              result: item.result,
-              id: item.id,
-              trackType: item.trackModel.type
-                ? item.trackModel.type
-                : item.name
-                  ? item.name
-                  : "",
-              metadata: item.metadata,
-              trackModel: item.trackModel,
-              curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-              missingIdx: dataItem.missingIdx,
-              trackDataIdx: dataItem.trackDataIdx,
-              fileInfos: item.fileInfos,
-              errorType: item.errorType,
-            });
-          },
-        ));
+        await Promise.all(
+          dataItem.fetchResults.map(
+            async (item: {
+              id: any;
+              name: string;
+              result: any;
+              metadata: any;
+              trackModel: any;
+              curFetchNav: any;
+              fileInfos: any;
+              errorType: any;
+            }) => {
+              trackToDrawId[`${item.id}`] = "";
+              await createCache({
+                trackState: curTrackState,
+                result: item.result,
+                id: item.id,
+                trackType: item.trackModel.type
+                  ? item.trackModel.type
+                  : item.name
+                    ? item.name
+                    : "",
+                metadata: item.metadata,
+                trackModel: item.trackModel,
+                curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+                missingIdx: dataItem.missingIdx,
+                trackDataIdx: dataItem.trackDataIdx,
+                fileInfos: item.fileInfos,
+                errorType: item.errorType,
+              });
+            },
+          ),
+        );
 
         const currentDataIdx = dataIdx.current;
         const idxArr = [currentDataIdx - 1, currentDataIdx, currentDataIdx + 1];
@@ -1641,6 +1642,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         // if we have valid cached data
+
         if (Object.keys(cacheKeysWithData).length > 0) {
           if (completedFetchedRegion.current.key !== currentDataIdx) {
             completedFetchedRegion.current.key = currentDataIdx;
@@ -1676,7 +1678,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
     const fetchNewRegion = event.data.navData.fetchNewRegion;
     const fetchedDragX = event.data.navData.dragX;
-    console.log(event.data)
     // Process all fetch results with promises
     await Promise.all(
       Object.values(event.data.fetchResults).map((item: any) =>
@@ -2139,13 +2140,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-
-      setDraw({
-        trackToDrawId: { ...completedFetchedRegion.current.done },
-        viewWindow: curViewWindow,
-        completedFetchedRegion,
+      startTransition(() => {
+        setDraw({
+          trackToDrawId: { ...completedFetchedRegion.current.done },
+          viewWindow: curViewWindow,
+          completedFetchedRegion,
+        });
       });
-
     }
   }
 
@@ -2779,6 +2780,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return () => {
       // Clear ref data and remove event listeners to prevent memory leaks after component unmounts
       refreshState();
+      // Reset hasOnMessage so the next TrackManager instance re-binds its own closures
+      if (infiniteScrollWorkers.current) {
+        infiniteScrollWorkers.current.worker.forEach((workerObj) => {
+          workerObj.hasOnMessage = false;
+        });
+      }
+      if (fetchGenomeAlignWorker.current) {
+        fetchGenomeAlignWorker.current.hasOnMessage = false;
+      }
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
@@ -3449,15 +3459,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
           // if not in view this means that this iAs the new track that was added.
           if (!foundComp) {
-            if (curTrackModel.type === "g3d") {
-              newG3dComponents.push({
-                id: curTrackModel.id,
-                component: ThreedmolContainer,
-
-                trackModel: curTrackModel,
-              });
-              continue;
-            }
             newAddedTrackModel.push(curTrackModel);
             if (curTrackModel.type === "genomealign") {
               checkHasGenAlign = true;
@@ -3466,30 +3467,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }
               hasGenomeAlign.current = true;
             }
-            // for tracks like hic and bam where we create an  instance obj
-            // that we reuse to fetch data
-            else if (curTrackModel.type === "hic") {
-              if (!fetchInstances.current[`${curTrackModel.id}`]) {
-                fetchInstances.current[`${curTrackModel.id}`] = new HicSource(
-                  curTrackModel.url,
-                );
-              }
-            } else if (curTrackModel.type === "dynamichic") {
-              curTrackModel.tracks?.map((_item, index) => {
-                fetchInstances.current[
-                  `${curTrackModel.id}` + "subtrack" + `${index}`
-                ] = new HicSource(curTrackModel.tracks![index].url);
-              });
-            } else if (
+            if (
               curTrackModel.type in
-              { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+              {
+                matplot: "",
+                dynamic: "",
+                dynamicbed: "",
+                dynamiclongrange: "",
+                dynamichic: "",
+              }
             ) {
-              curTrackModel.tracks?.map((trackModel, index) => {
-                trackModel.id = `${curTrackModel.id}` + "subtrack" + `${index}`;
-              });
-            } else if (curTrackModel.type === "bam") {
-              fetchInstances.current[`${curTrackModel.id}`] = new BamSource(
-                curTrackModel.url,
+              curTrackModel.tracks?.map(
+                (trackModel: TrackModel, index: any) => {
+                  trackModel.id =
+                    `${curTrackModel.id}` +
+                    "subtrack" +
+                    `${index}`;
+                },
               );
             }
 
@@ -4000,7 +3994,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             position: "relative",
                             paddingTop: "1px",
                             paddingBottom: "1px",
-
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 

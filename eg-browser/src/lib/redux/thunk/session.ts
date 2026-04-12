@@ -6,7 +6,11 @@ import {
   getGenomeConfig,
   GenomeHubManager,
 } from "wuepgg3-track";
-import { setCurrentSession, upsertSession } from "../slices/browserSlice";
+import {
+  setCurrentSession,
+  updateCurrentSession,
+  upsertSession,
+} from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
@@ -33,7 +37,12 @@ export function convertSession(session: any, dispatch: any) {
     : session.defaultTracks
       ? session.defaultTracks
       : [];
-  if (session.chromosomes && session.chromosomes.length > 0 && !getGenomeConfig(curGenomeName) && !GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)) {
+  if (
+    session.chromosomes &&
+    session.chromosomes.length > 0 &&
+    !getGenomeConfig(curGenomeName) &&
+    !GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)
+  ) {
     const _newGenomeConfig = {
       id: curGenomeName,
       name: curGenomeName,
@@ -46,13 +55,12 @@ export function convertSession(session: any, dispatch: any) {
 
     dispatch(addCustomGenomeRemote(_newGenomeConfig));
     newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
-  }
-  else if (GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)) {
-    const _newGenomeConfig = GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName);
+  } else if (GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)) {
+    const _newGenomeConfig =
+      GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName);
     if (_newGenomeConfig)
       newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
-  }
-  else if (getGenomeConfig(curGenomeName)) {
+  } else if (getGenomeConfig(curGenomeName)) {
     newGenomeConfig = getGenomeConfig(curGenomeName);
   } else if (session.viewRegion && typeof session.viewRegion === "object") {
     newGenomeConfig = getGenomeConfig(session.viewRegion._navContext._name);
@@ -179,11 +187,9 @@ export const addSessionsFromBundleId = createAsyncThunk(
 
     if (sessionInView) {
       thunkApi.dispatch(importOneSession({ session: sessionInView }));
-    }
-    else {
+    } else {
       thunkApi.dispatch(setCurrentSession(null));
     }
-
   },
 );
 
@@ -197,6 +203,8 @@ export const fetchBundle = createAsyncThunk(
 
         if (resBundle) {
           thunkApi.dispatch(updateBundle(resBundle));
+        } else {
+          thunkApi.dispatch(updateCurrentSession({ bundleId: null }));
         }
       } catch (e) {
         // console.error(e);
@@ -204,43 +212,3 @@ export const fetchBundle = createAsyncThunk(
     }
   },
 );
-interface Isession {
-  bundleId: string;
-  currentId: string;
-  sessionsInBundle: {
-    [key: string]: {
-      date: number;
-      label: string;
-      state: {
-        bundleId: string;
-        darkTheme: boolean;
-        genomeName: string;
-        isShowingNavigator: boolean;
-        isShowingVR: boolean;
-        regionSetViewIndex: number;
-        trackLegendWidth: number;
-        tracks: Array<{
-          fileObj: string;
-          isSelected: boolean;
-          isText: boolean;
-          label: string;
-          metadata: {
-            "Track type": string;
-          };
-          name: string;
-          options: {
-            label: string;
-            maxRows?: number;
-          };
-          type: string;
-          url: string;
-          genome?: string;
-        }>;
-        viewInterval: {
-          start: number;
-          end: number;
-        };
-      };
-    };
-  };
-}

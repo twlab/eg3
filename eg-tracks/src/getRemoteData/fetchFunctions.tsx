@@ -365,6 +365,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       const isLocalFetch = trackModel.fileObj instanceof File;
       try {
         if (isLocalFetch && trackModel.url === "") {
+
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
               basesPerPixel: bpRegionSize / windowWidth,
@@ -375,8 +376,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               basesPerPixel: bpRegionSize / windowWidth,
               nav: curFetchNav,
               trackModel,
+              visRegion: visRegion,
             });
-
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
             responses = await trackFetchFunction[trackModel.type]({

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
@@ -154,14 +154,16 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         result = res;
       }
 
-      setViewComponent({
-        component: result,
-        dataIdx: cacheDataIdx,
-        numHidden: numHidden,
-        visData: trackState.visData,
-      });
-
       xPos.current = curXPos;
+      startTransition(() => {
+        setViewComponent({
+          component: result,
+          dataIdx: cacheDataIdx,
+          numHidden: numHidden,
+          visData: trackState.visData,
+          xPos: curXPos,
+        });
+      });
     }
   }
   function onClose() {
@@ -171,7 +173,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   function renderTooltip(event, gene) {
     let currtooltip;
     try {
-      const trackType = trackModel.type === "rmskv2" ? "repeatmasker" : trackModel.type;
+      const trackType =
+        trackModel.type === "rmskv2" ? "repeatmasker" : trackModel.type;
       currtooltip = geneClickToolTipMap[`${trackType}`]({
         gene,
         feature: gene,
@@ -626,10 +629,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   return (
     <div
       style={{
-
         display: "flex",
         position: "relative",
-
       }}
     >
       <div
@@ -657,8 +658,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : "var(--font-color)",
 
             pointerEvents: "auto",
-
-
           }}
         >
           {legend ?? (
@@ -813,7 +812,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             position: "absolute",
             lineHeight: 0,
 
-            transform: `translateX(${xPos.current}px)`,
+            transform: `translateX(${viewComponent ? viewComponent.xPos : 0}px)`,
             backgroundColor: configOptions.current.backgroundColor,
           }}
         >

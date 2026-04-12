@@ -37,7 +37,7 @@ interface ArcDisplayProps {
   legend?: any;
 }
 
-// const ITEM_LIMIT = 1000;
+const ITEM_LIMIT = 3000;
 
 export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
   // static getHeight(props: ArcDisplayProps) {
@@ -127,7 +127,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
         className="ArcDisplay-emphasize-on-hover"
         stroke={score >= 0 ? color : color2}
         strokeWidth={lineWidth}
-        // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
+      // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
       />
     );
   };
@@ -207,7 +207,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       if (
         Math.abs(
           Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-            item[2]
+          item[2]
         ) <=
         0.5 * item[3]
       ) {
@@ -223,7 +223,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       if (
         Math.abs(
           Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-            item[2]
+          item[2]
         ) <=
         0.5 * item[3]
       ) {
@@ -281,9 +281,8 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       .range([0, 1])
       .clamp(false);
 
-    // const sortedInteractions = placedInteractions.slice().sort((a, b)
-    //        => b.interaction.score - a.interaction.score);
-    // const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
+    const sortedInteractions = placedInteractions.slice().sort((a, b) => b.interaction.score - a.interaction.score);
+    const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
     return (
       <>
         <div
@@ -318,7 +317,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
             width={width}
             height={height}
           >
-            {placedInteractions.map(this.renderArc)}
+            {slicedInteractions.map(this.renderArc)}
           </DesignRenderer>
         )}
       </>

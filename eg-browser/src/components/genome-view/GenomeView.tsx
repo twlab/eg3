@@ -45,7 +45,6 @@ export default function GenomeView() {
 
   useEffect(() => {
     if (bundleId) {
-      console.log("Fetching bundle with ID:", bundleId);
       dispatch(fetchBundle(bundleId));
     }
   }, [bundleId, dispatch]);
