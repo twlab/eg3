@@ -218,12 +218,10 @@ export class GroupedTrackManager {
           const configOptions = trackOptionMap[curTrackModel.type]
             ? { ...trackOptionMap[`${curTrackModel.type}`].defaultOptions, ...curTrackModel.options }
             : { ...trackOptionMap["error"].defaultOptions }
-          console.log(trackData)
+
           if (trackData[tid]) {
             const data = trackData[tid].data;
-            console.log(data, trackOptionMap[`${curTrackModel.type}`]
-              ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
-              : trackOptionMap["error"].getGenePadding, curTrackModel, configOptions, viewWindow, objToInstanceAlign(trackData[tid].visRegion), width)
+
             const placeFeatureData = featureArrange.arrange(
               data,
               trackData[tid].visRegion,

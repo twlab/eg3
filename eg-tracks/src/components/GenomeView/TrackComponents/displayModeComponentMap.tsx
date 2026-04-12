@@ -118,8 +118,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     ROW_HEIGHT,
     onClose,
     scales,
+    xvaluesData,
   }) {
-    console.log(formattedData)
+
     function createFullVisualizer(
       placements,
       width,
@@ -682,11 +683,60 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
 
+    let placeFeatureData;
+    let numHidden = 0;
+    let height = 0;
+    if (!xvaluesData) {
 
+      function getHeight(numRows: number): number {
+        let rowHeight = ROW_HEIGHT;
+        let options = configOptions;
 
+        let rowsToDraw = Math.min(numRows, options.maxRows);
+        if (options.hideMinimalItems) {
+          rowsToDraw -= 1;
+        }
+        if (rowsToDraw < 1) {
+          rowsToDraw = 1;
+        }
+
+        return trackModel.type === "modbed"
+          ? (rowsToDraw + 1) * rowHeight + 2
+          : rowsToDraw * rowHeight + TOP_PADDING;
+      }
+
+      let featureArrange = new FeatureArranger();
+      let sortType = SortItemsOptions.NOSORT;
+
+      placeFeatureData = featureArrange.arrange(
+        formattedData,
+        objToInstanceAlign(trackState.visRegion),
+        trackState.visWidth,
+        getGenePadding,
+        configOptions.hiddenPixels,
+        sortType,
+        trackState.viewWindow,
+      );
+
+      numHidden = placeFeatureData.numHidden;
+      height =
+        trackModel.type === "repeatmasker" ||
+          trackModel.type === "rmskv2" ||
+          trackModel.type === "categorical" ||
+          trackModel.type === "modbed"
+          ? configOptions.height
+          : placeFeatureData.numRowsAssigned
+            ? getHeight(placeFeatureData.numRowsAssigned)
+            : 40;
+    }
+    else {
+      placeFeatureData = xvaluesData.placements;
+      height = xvaluesData.height;
+      numHidden = xvaluesData.numHidden;
+    }
     const legend = (
       <TrackLegend
-        height={formattedData.height}
+        height={height}
         trackModel={trackModel}
         label={
           configOptions.label
@@ -701,18 +751,18 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (updatedLegend) {
       updatedLegend.current = legend;
     }
-    console.log(formattedData.placements.placements)
+
     const svgDATA = createFullVisualizer(
-      formattedData.placements.placements,
+      placeFeatureData.placements,
       trackState.visWidth,
-      formattedData.height,
+      height,
       ROW_HEIGHT,
       configOptions.maxRows,
       legend,
     );
 
 
-    return { component: svgDATA, numHidden: formattedData.numHidden };
+    return { component: svgDATA, numHidden: numHidden };
   },
 
   density: function getDensity({

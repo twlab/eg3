@@ -81,7 +81,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     initialLoad,
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
-
+  console.log(data, xvaluesData, "numerical track data and xvaluesData");
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
   let xvalues =

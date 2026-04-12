@@ -104,7 +104,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
     const displayArgs: any = {
       basesByPixel: basePerPixel,
-      genesArr: xvalues,
+      genesArr,
       genomeConfig,
       genomeName: genomeConfig.genome.getName(),
       trackState,
@@ -346,6 +346,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     //     viewComponent && viewComponent.dataIdx === dataIdx ? viewComponent.genesArr : null,
     //   );
     // }
+
     else if (
       !cacheTrackData.useExpandedLoci &&
       cacheTrackData.usePrimaryNav
