@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 6;
+const MAX_WORKERS = 4;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
