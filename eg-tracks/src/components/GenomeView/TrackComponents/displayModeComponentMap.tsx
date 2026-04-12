@@ -751,7 +751,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (updatedLegend) {
       updatedLegend.current = legend;
     }
-
+    if (svgHeight) {
+      svgHeight.current = height;
+    }
     const svgDATA = createFullVisualizer(
       placeFeatureData.placements,
       trackState.visWidth,

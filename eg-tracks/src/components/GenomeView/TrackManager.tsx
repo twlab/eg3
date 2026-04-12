@@ -3223,7 +3223,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           let currIdx = dataIdx + 1;
 
           for (let i = 0; i < 3; i++) {
-            console.log(cacheTrackData[currIdx])
+
             if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
               noData = true;
               continue;
@@ -3231,7 +3231,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             combinedData.push(cacheTrackData[currIdx]);
             currIdx--;
           }
-          console.log(combinedData)
+
           if (!noData) {
             if (
               cacheTrackData.trackType in
@@ -3645,116 +3645,116 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [configMenu]);
 
   // MARK: viewWIndow useeffect
-  // useEffect(() => {
-  //   if (viewWindowConfigData.current) {
-  //     if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
-  //       if (hasGenomeAlign.current && !useFineModeNav.current) {
-  //         const trackToFetch: Array<TrackModel> = [];
-  //         const dataToFetchArr: any = [];
-  //         const genomeAlignTracks: Array<TrackModel> = [];
-  //         const trackState =
-  //           viewWindowConfigData.current.dataIdx in
-  //             globalTrackState.current.trackStates
-  //             ? globalTrackState.current.trackStates[
-  //               viewWindowConfigData.current.dataIdx
-  //             ].trackState
-  //             : "";
+  useEffect(() => {
+    if (viewWindowConfigData.current) {
+      if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
+        if (hasGenomeAlign.current && !useFineModeNav.current) {
+          const trackToFetch: Array<TrackModel> = [];
+          const dataToFetchArr: any = [];
+          const genomeAlignTracks: Array<TrackModel> = [];
+          const trackState =
+            viewWindowConfigData.current.dataIdx in
+              globalTrackState.current.trackStates
+              ? globalTrackState.current.trackStates[
+                viewWindowConfigData.current.dataIdx
+              ].trackState
+              : "";
 
-  //         for (const key in trackFetchedDataCache.current) {
-  //           const trackCache = trackFetchedDataCache.current[key];
-  //           if (trackCache.trackType === "genomealign") {
-  //             genomeAlignTracks.push(trackCache.trackModel);
-  //           } else if (!trackCache.usePrimaryNav) {
-  //             if (
-  //               trackFetchedDataCache.current[key][
-  //                 viewWindowConfigData.current.dataIdx
-  //               ]?.dataCache
-  //             ) {
-  //               delete trackFetchedDataCache.current[key][
-  //                 viewWindowConfigData.current.dataIdx
-  //               ].dataCache;
-  //             }
-  //             trackToFetch.push(trackCache.trackModel);
-  //           }
-  //         }
+          for (const key in trackFetchedDataCache.current) {
+            const trackCache = trackFetchedDataCache.current[key];
+            if (trackCache.trackType === "genomealign") {
+              genomeAlignTracks.push(trackCache.trackModel);
+            } else if (!trackCache.usePrimaryNav) {
+              if (
+                trackFetchedDataCache.current[key][
+                  viewWindowConfigData.current.dataIdx
+                ]?.dataCache
+              ) {
+                delete trackFetchedDataCache.current[key][
+                  viewWindowConfigData.current.dataIdx
+                ].dataCache;
+              }
+              trackToFetch.push(trackCache.trackModel);
+            }
+          }
 
-  //         let genomeFeatureSegment: Array<FeatureSegment> =
-  //           genomeConfig.navContext.getFeaturesInInterval(
-  //             viewWindowConfigData.current.contextNavCoord.start,
-  //             viewWindowConfigData.current.contextNavCoord.end,
-  //           );
+          let genomeFeatureSegment: Array<FeatureSegment> =
+            genomeConfig.navContext.getFeaturesInInterval(
+              viewWindowConfigData.current.contextNavCoord.start,
+              viewWindowConfigData.current.contextNavCoord.end,
+            );
 
-  //         const regionLoci = genomeFeatureSegment.map((item, _index) =>
-  //           item.getLocus(),
-  //         );
+          const regionLoci = genomeFeatureSegment.map((item, _index) =>
+            item.getLocus(),
+          );
 
-  //         const genName = genomeConfig.genome.getName();
-  //         dataToFetchArr.push({
-  //           primaryGenName: genName,
-  //           trackModelArr: trackToFetch,
-  //           visData: trackState.visData
-  //             ? trackState.visData
-  //             : trackState.genomicFetchCoord
-  //               ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-  //               : "",
-  //           genomicLoci: regionLoci,
-  //           visRegion: trackState.visRegion
-  //             ? trackState.visRegion
-  //             : trackState.genomicFetchCoord
-  //               ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-  //                 .visRegion
-  //               : "",
-  //           regionExpandLoci: trackState.regionExpandLoci,
-  //           useFineModeNav: useFineModeNav.current,
-  //           windowWidth,
-  //           bpRegionSize: bpRegionSize.current,
-  //           trackDataIdx: viewWindowConfigData.current.dataIdx,
-  //           missingIdx: viewWindowConfigData.current.dataIdx,
-  //         });
-  //         // console.log("same Region fetch with genomealign", dataToFetchArr);
-  //         enqueueGenomeAlignMessage({
-  //           trackToFetch: genomeAlignTracks,
-  //           visData: trackState.visData
-  //             ? trackState.visData
-  //             : trackState.genomicFetchCoord
-  //               ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-  //               : "",
-  //           genomicLoci: trackState.regionLoci,
-  //           viewWindowGenomicLoci: regionLoci,
-  //           primaryGenName: genName,
-  //           trackModelArr: genomeAlignTracks,
-  //           regionExpandLoci: trackState.regionExpandLoci,
-  //           useFineModeNav: useFineModeNav.current,
-  //           windowWidth,
-  //           bpRegionSize: bpRegionSize.current,
-  //           fetchAfterGenAlignTracks: dataToFetchArr,
-  //           trackDataIdx: viewWindowConfigData.current.dataIdx,
-  //           missingIdx: viewWindowConfigData.current.dataIdx,
-  //           dragX: dragX.current,
-  //           fetchNewRegion: false,
-  //         });
-  //       }
-  //       //__________________________________________________________
-  //       const curTrackToDrawId = getWindowViewConfig(
-  //         viewWindowConfigData.current.viewWindow,
-  //         viewWindowConfigData.current.dataIdx,
-  //       );
+          const genName = genomeConfig.genome.getName();
+          dataToFetchArr.push({
+            primaryGenName: genName,
+            trackModelArr: trackToFetch,
+            visData: trackState.visData
+              ? trackState.visData
+              : trackState.genomicFetchCoord
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                : "",
+            genomicLoci: regionLoci,
+            visRegion: trackState.visRegion
+              ? trackState.visRegion
+              : trackState.genomicFetchCoord
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                  .visRegion
+                : "",
+            regionExpandLoci: trackState.regionExpandLoci,
+            useFineModeNav: useFineModeNav.current,
+            windowWidth,
+            bpRegionSize: bpRegionSize.current,
+            trackDataIdx: viewWindowConfigData.current.dataIdx,
+            missingIdx: viewWindowConfigData.current.dataIdx,
+          });
+          // console.log("same Region fetch with genomealign", dataToFetchArr);
+          enqueueGenomeAlignMessage({
+            trackToFetch: genomeAlignTracks,
+            visData: trackState.visData
+              ? trackState.visData
+              : trackState.genomicFetchCoord
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                : "",
+            genomicLoci: trackState.regionLoci,
+            viewWindowGenomicLoci: regionLoci,
+            primaryGenName: genName,
+            trackModelArr: genomeAlignTracks,
+            regionExpandLoci: trackState.regionExpandLoci,
+            useFineModeNav: useFineModeNav.current,
+            windowWidth,
+            bpRegionSize: bpRegionSize.current,
+            fetchAfterGenAlignTracks: dataToFetchArr,
+            trackDataIdx: viewWindowConfigData.current.dataIdx,
+            missingIdx: viewWindowConfigData.current.dataIdx,
+            dragX: dragX.current,
+            fetchNewRegion: false,
+          });
+        }
+        //__________________________________________________________
+        const curTrackToDrawId = getWindowViewConfig(
+          viewWindowConfigData.current.viewWindow,
+          viewWindowConfigData.current.dataIdx,
+        );
 
-  //       if (Object.keys(curTrackToDrawId).length > 0) {
-  //         // console.log("same region draw cachhe data", curTrackToDrawId);
-  //         setViewWindowConfigChange({
-  //           dataIdx: dataIdx.current,
-  //           viewWindow: viewWindowConfigData.current.viewWindow,
-  //           groupScale:
-  //             globalTrackState.current.trackStates[dataIdx.current].trackState[
-  //             "groupScale"
-  //             ],
-  //           trackToDrawId: curTrackToDrawId,
-  //         });
-  //       }
-  //     }
-  //   }
-  // }, [viewWindowConfigData.current]);
+        if (Object.keys(curTrackToDrawId).length > 0) {
+          // console.log("same region draw cachhe data", curTrackToDrawId);
+          setViewWindowConfigChange({
+            dataIdx: dataIdx.current,
+            viewWindow: viewWindowConfigData.current.viewWindow,
+            groupScale:
+              globalTrackState.current.trackStates[dataIdx.current].trackState[
+              "groupScale"
+              ],
+            trackToDrawId: curTrackToDrawId,
+          });
+        }
+      }
+    }
+  }, [viewWindowConfigData.current]);
   function checkOutsideClick() {
     if (Object.keys(selectedTracks.current).length > 0) {
       onTrackUnSelect();
