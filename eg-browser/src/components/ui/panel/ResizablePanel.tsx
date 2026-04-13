@@ -178,11 +178,11 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     return () => document.removeEventListener("pointerdown", handleOutsideClick);
   }, [pinned, onClose, excludeRefs]);
 
-  // Ghost overlay helpers: lightweight DOM element updated via rAF
+  // overlay helpers: lightweight DOM element updated via rAF
   const createGhost = (left: number, top: number, w: number, h: number) => {
     if (ghostRef.current) return;
     const el = document.createElement("div");
-    // Use fixed positioning so the ghost doesn't change document flow/height
+    // we use ghost so that it doesn't re-render on every drag resize only when user let go
     el.style.position = "fixed";
     const rect = panelRef.current?.getBoundingClientRect();
     if (rect) {
@@ -265,21 +265,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
   // when navigation tab expands, need bigger panel for content
   useEffect(() => {
-    const numericW = parseSizeToNumber(
-      width,
-      typeof width === "number"
-        ? (width as number)
-        : (initialWidth as number) || 300,
-    );
-    const numericH = parseSizeToNumber(
-      height,
-      typeof height === "number"
-        ? (height as number)
-        : (initialHeight as number) || 325,
-    );
     if (expandNavigationTab) {
-      // setWidth(Math.round(numericW * 4));
-      // setHeight(Math.round(numericH * 2));
+
       const windowSize = {
         width: window.innerWidth,
         height: window.innerHeight,
@@ -425,6 +412,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       if (resizeState.current?.resizing) {
         const dx = ev.clientX - resizeState.current.startX;
         const dy = ev.clientY - resizeState.current.startY;
+
         let newW = resizeState.current.startW + dx;
         let newH = resizeState.current.startH + dy;
         // enforce minimums only; allow unlimited maximum unless provided
