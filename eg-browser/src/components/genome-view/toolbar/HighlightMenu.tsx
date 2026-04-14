@@ -123,7 +123,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
           marginRight: "clamp(15px, 1.5vw, 25px)",
         }}
       />
-      <h4 style={{ fontSize: "clamp(14px, 1.2vw, 20px)" }}>No highlights</h4>
+      <h4 style={{ fontSize: "clamp(16px, 1.2vw, 20px)" }}>No highlights</h4>
       <h5
         style={{
           width: "clamp(300px, 40vw, 500px)",
@@ -197,7 +197,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
         border: `2px solid ${interval.color}`,
         borderRadius: "clamp(4px, 0.5vw, 8px)",
         padding: "clamp(0.5em, 1vw, 1.5em)",
-        fontSize: "clamp(10px, 0.9vw, 14px)",
+        fontSize: "clamp(10px, 0.9vw, 16px)",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -224,7 +224,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
         />
         <button
           onClick={() => onHandleHighlightIntervalUpdate(true, index)}
-          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 16px)" }}
         >
           Delete
         </button>
@@ -239,13 +239,13 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}
-          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 16px)" }}
         >
           {interval.display ? "Hide" : "Show"}
         </button>
         <button
           onClick={() => onHandleViewRegionJump(interval)}
-          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 16px)" }}
         >
           Jump
         </button>

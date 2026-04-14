@@ -22,6 +22,7 @@ interface SnpSearchBoxProps {
   doHighlight: boolean;
   color?: string;
   background?: string;
+  customButton?: React.ElementType;
 }
 
 interface SnpMapping {
@@ -50,6 +51,7 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
   doHighlight,
   color,
   background,
+  customButton,
 }) => {
   const [inputValue, setInputValue] = useState<string>("");
   const [result, setResult] = useState<SnpResult | null>(null);
@@ -179,25 +181,46 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
 
   return (
     <div>
-      <div>
+      <div className="flex items-center">
         <input
           type="text"
-          size={20}
           placeholder="SNP id"
           onChange={handleInputChange}
+
+          className="w-full"
           style={{
-            padding: "6px 8px",
+            padding: "4px 6px",
             border: "1px solid #e2e8f0",
             borderRadius: "4px",
+            marginRight: "10px",
           }}
         />
-        <button
+
+        {customButton ? (
+          (() => {
+            const CustomButton = customButton as React.ElementType;
+            return (
+              <CustomButton
+                onClick={searchSnp}
+                active={false}
+                style={{
+                  width: "fit-content",
+                  padding: "4px 6px",
+                }}
+                outlined
+              >
+                Go
+              </CustomButton>
+            );
+          })()
+        ) : <button
           className="btn btn-secondary btn-sm"
-          style={{ marginLeft: "2px" }}
+
           onClick={searchSnp}
         >
           Go
-        </button>{" "}
+        </button>}
+
         <span className="text-info font-italic">{loadingMsg}</span>
       </div>
       <div

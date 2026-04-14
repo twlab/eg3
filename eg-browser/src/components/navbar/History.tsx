@@ -85,7 +85,7 @@ const History: React.FC<Props> = ({
             border: "1px solid #ccc",
             borderRadius: "4px",
             padding: "clamp(0.4em, 0.5vw, 0.4em)",
-            fontSize: "clamp(10px, 0.9vw, 14px)",
+            fontSize: "clamp(10px, 0.9vw, 16px)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -105,7 +105,7 @@ const History: React.FC<Props> = ({
           </span>
           <button
             style={{
-              fontSize: "clamp(10px, 0.8vw, 14px)",
+              fontSize: "clamp(10px, 0.8vw, 16px)",
               marginRight: "4px",
               fontStyle: "italic",
               textDecoration: "underline",

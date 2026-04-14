@@ -221,7 +221,7 @@ const HubTrackTable: React.FC<Props> = ({
     border: "1px solid #ddd",
     borderRadius: "4px",
     cursor: "pointer",
-    fontSize: "14px",
+    fontSize: "16px",
     transition: "all 0.2s ease",
   };
 
@@ -380,7 +380,7 @@ const HubTrackTable: React.FC<Props> = ({
             style={{
               margin: "0 12px",
               color: "#666",
-              fontSize: "14px",
+              fontSize: "16px",
             }}
           >
             Page <strong style={{ color: "#333" }}>{pageIndex + 1}</strong> of{" "}
@@ -449,7 +449,7 @@ const HubTrackTable: React.FC<Props> = ({
               padding: "6px 8px",
               border: "1px solid #ddd",
               borderRadius: "4px",
-              fontSize: "14px",
+              fontSize: "16px",
               textAlign: "center",
             }}
             placeholder="Page"
@@ -461,7 +461,7 @@ const HubTrackTable: React.FC<Props> = ({
               padding: "6px 8px",
               border: "1px solid #ddd",
               borderRadius: "4px",
-              fontSize: "14px",
+              fontSize: "16px",
               backgroundColor: "#fff",
               cursor: "pointer",
             }}

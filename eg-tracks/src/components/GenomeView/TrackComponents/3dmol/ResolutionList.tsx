@@ -25,7 +25,7 @@ export const ResolutionList = (props) => {
           padding: "2px 0px",
           borderRadius: "2px",
           border: "1px solid #ccc",
-          fontSize: "14px",
+          fontSize: "16px",
           lineHeight: "1.4",
           margin: "0",
           verticalAlign: "middle",
@@ -42,7 +42,7 @@ export const ResolutionList = (props) => {
         className="btn btn-primary btn-sm"
         onClick={() => onUpdateResolution(Number.parseInt(reso, 10))}
         style={{
-          fontSize: "14px",
+          fontSize: "16px",
           lineHeight: "1.4",
           margin: "0",
           verticalAlign: "middle",
@@ -57,5 +57,5 @@ export const ResolutionList = (props) => {
 ResolutionList.defaultProps = {
   resolutions: [],
   resolution: 0,
-  onUpdateResolution: () => {},
+  onUpdateResolution: () => { },
 };

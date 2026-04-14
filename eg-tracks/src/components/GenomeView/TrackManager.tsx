@@ -3,6 +3,7 @@ import {
   memo,
   startTransition,
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -16,15 +17,12 @@ import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
-import { HicSource } from "../../getRemoteData/hicSource";
 import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
-import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import _, { throttle } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 // import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
-import BamSource from "../../getRemoteData/BamSource";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
@@ -55,6 +53,7 @@ import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClic
 import { motion } from "framer-motion";
 import MetadataSelectionMenu from "./ToolComponents/MetadataSelectionMenu";
 import { ChevronRightIcon } from "@primer/octicons-react";
+import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
 
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
@@ -221,7 +220,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 }) {
   const padding = Math.max(8, Math.min(12, windowWidth * 0.008));
   const fontSize = Math.max(12, Math.min(12, windowWidth * 0.009));
-
+  const escapeRef = useContext(EscapeHandlerContext);
   //useRef to store data between states without re render the component
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
     key: -0,
@@ -248,12 +247,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const mousePositionRef = useRef({ x: 0, y: 0 });
   // const mouseGenomicPositionRef = useRef({ basePair: 0, chromosome: "" });
   const mouseRelativePositionRef = useRef({ x: 0, y: 0 });
-  const lastClickTimeRef = useRef(0);
-  const doubleClickThreshold = 300; // milliseconds
+
   const horizontalLineRef = useRef<any>(0);
   const verticalLineRef = useRef<any>(0);
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
-  const fetchInstances = useRef<{ [key: string]: any }>({});
   const isMouseInsideRef = useRef(false);
   const parentRectCache = useRef<DOMRect | null>(null);
   const rafId = useRef<number | null>(null);
@@ -517,17 +514,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
 
   // MARK: mouseAction
-  const handleKeyDown = useCallback((event: { key: string }) => {
-    if (event.key === "Escape") {
-      // let newSelectedTool: { [key: string]: any } = {};
-      // newSelectedTool["tool"] = "none";
-      // newSelectedTool["isSelected"] = false;
-      // setSelectedTool(newSelectedTool);
-      onTrackUnSelect();
-      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
-      onConfigMenuClose();
-    }
-  }, []); // onTrackUnSelect and onConfigMenuClose defined below with useCallback
+
 
   const handleMouseEnter = useCallback(() => {
     isMouseInsideRef.current = true;
@@ -633,10 +620,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       });
     });
-  }
-
-  function handleGenomeClick(e: MouseEvent, trackModel?: any) {
-    e.preventDefault();
   }
 
   function handleMouseDown(e: any) {
@@ -747,73 +730,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         queueRegionToFetch(curDataIdx);
       }
     }
-  }
-
-  // MARK: TOUCH EVENTS
-  // Touch event handlers that mirror mouse functionality
-  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-    if (e.touches.length !== 1) {
-      return; // Only handle single touch
-    }
-
-    const touch = e.touches[0];
-    isDragging.current = true;
-    lastX.current = touch.pageX;
-
-    e.preventDefault();
-  }
-
-  function handleTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-    if (e.touches.length !== 1) {
-      return; // Only handle single touch
-    }
-
-    const touch = e.touches[0];
-
-    // Mirror the handleMove functionality
-    handleMove({
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-      pageX: touch.pageX,
-    });
-  }
-
-  function handleTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
-    // Mirror handleMouseUp functionality
-    handleMouseUp();
-  }
-
-  // DOM touch event handlers for addEventListener
-  function handleDOMTouchStart(e: TouchEvent) {
-    if (e.touches.length !== 1) {
-      return; // Only handle single touch
-    }
-
-    const touch = e.touches[0];
-    isDragging.current = true;
-    lastX.current = touch.pageX;
-
-    e.preventDefault();
-  }
-
-  function handleDOMTouchMove(e: TouchEvent) {
-    if (e.touches.length !== 1) {
-      return; // Only handle single touch
-    }
-
-    const touch = e.touches[0];
-
-    // Mirror the handleMove functionality
-    handleMove({
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-      pageX: touch.pageX,
-    });
-  }
-
-  function handleDOMTouchEnd(e: TouchEvent) {
-    // Mirror handleMouseUp functionality
-    handleMouseUp();
   }
 
   // MARK: GloCONFIG
@@ -2776,6 +2692,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       initializeTracks();
       preload.current = true;
+
+      escapeRef.current = () => {
+        if (Object.keys(selectedTracks.current).length > 0) {
+          onTrackUnSelect();
+          onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
+          onConfigMenuClose();
+        }
+
+      };
     }
     return () => {
       // Clear ref data and remove event listeners to prevent memory leaks after component unmounts
@@ -2794,8 +2719,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
       }
 
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("pointermove", handleMove);
+      document.removeEventListener("pointerup", handleMouseUp);
 
       // console.log("trackmanager terminate");
     };
@@ -2826,66 +2751,41 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     });
 
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointermove", handleMove);
+    document.addEventListener("pointerup", handleMouseUp);
 
-    // Add click event listener to the track container
-    const trackContainer = block.current;
-    if (trackContainer) {
-      // trackContainer.addEventListener("click", handleClick);
-      trackContainer.addEventListener("contextmenu", handleGenomeClick);
-
-      // Add touch event listeners
-      trackContainer.addEventListener("touchstart", handleDOMTouchStart, {
-        passive: false,
-      });
-      trackContainer.addEventListener("touchmove", handleDOMTouchMove, {
-        passive: false,
-      });
-      trackContainer.addEventListener("touchend", handleDOMTouchEnd);
-    }
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleMouseUp);
 
-      // Remove click event listeners
-      if (trackContainer) {
-        // trackContainer.removeEventListener("click", handleClick);
-        trackContainer.removeEventListener("contextmenu", handleGenomeClick);
+      document.removeEventListener("pointermove", handleMove);
+      document.removeEventListener("pointerup", handleMouseUp);
 
-        // Remove touch event listeners
-        trackContainer.removeEventListener("touchstart", handleDOMTouchStart);
-        trackContainer.removeEventListener("touchmove", handleDOMTouchMove);
-        trackContainer.removeEventListener("touchend", handleDOMTouchEnd);
-      }
+
     };
   }, [trackComponents, windowWidth]);
 
-  // Update cached rect when window size changes or scrolls
-  useEffect(() => {
-    const updateCachedRect = () => {
-      if (block.current && isMouseInsideRef.current) {
-        parentRectCache.current = block.current.getBoundingClientRect();
-      }
-    };
+  // // Update cached rect when window size changes or scrolls
+  // useEffect(() => {
+  //   const updateCachedRect = () => {
+  //     if (block.current && isMouseInsideRef.current) {
+  //       parentRectCache.current = block.current.getBoundingClientRect();
+  //     }
+  //   };
 
-    const clearCachedRect = () => {
-      // Clear cache on scroll to force recalculation on next mouse move
-      // This ensures accurate positioning after scroll
-      parentRectCache.current = null;
-    };
+  //   const clearCachedRect = () => {
+  //     // Clear cache on scroll to force recalculation on next mouse move
+  //     // This ensures accurate positioning after scroll
+  //     parentRectCache.current = null;
+  //   };
 
-    window.addEventListener("resize", updateCachedRect);
-    window.addEventListener("scroll", clearCachedRect, true);
+  //   window.addEventListener("resize", updateCachedRect);
+  //   window.addEventListener("scroll", clearCachedRect, true);
 
-    return () => {
-      window.removeEventListener("resize", updateCachedRect);
-      window.removeEventListener("scroll", clearCachedRect, true);
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener("resize", updateCachedRect);
+  //     window.removeEventListener("scroll", clearCachedRect, true);
+  //   };
+  // }, []);
 
   useEffect(() => {
     if (!initialLoad.current) {
@@ -2906,69 +2806,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [tool.actionCount]);
 
-  function getDeviceType(): "mobile" | "tablet" | "desktop" {
-    const userAgent = navigator.userAgent;
-    const isTouchDevice =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    const screenWidth = window.innerWidth;
 
-    // Check for mobile
-    if (
-      /android|webos|iphone|ipod|blackberry|iemobile|opera mini/i.test(
-        userAgent,
-      )
-    ) {
-      return "mobile";
-    }
-
-    // Check for tablet
-    if (
-      /ipad|tablet|playbook|silk/i.test(userAgent) ||
-      (isTouchDevice && screenWidth >= 768 && screenWidth <= 1024)
-    ) {
-      return "tablet";
-    }
-
-    // Check by screen size and touch capability
-    if (isTouchDevice && screenWidth < 768) {
-      return "mobile";
-    }
-
-    return "desktop";
-  }
-
-  // Calculate responsive widths based on screen size
-  function getResponsiveWidths() {
-    const baseWidth1080 = 1080; // Reference width for 85%/15%
-    const baseWidth1920 = 2560; // Reference width for 88%/12%
-
-    // At 1080px: 85% / 15%
-    if (windowWidth <= baseWidth1080) {
-      return {
-        mainWidth: "85%",
-        metaWidth: "15%",
-      };
-    }
-
-    // Between 1080px and 1920px: interpolate from 85%/15% to 88%/12%
-    if (windowWidth <= baseWidth1920) {
-      const progress =
-        (windowWidth - baseWidth1080) / (baseWidth1920 - baseWidth1080);
-      const mainWidth = 85 + (75 - 85) * progress; // 85% to 88%
-      const metaWidth = 15 + (25 - 15) * progress; // 15% to 12%
-
-      return {
-        mainWidth: `${mainWidth}%`,
-        metaWidth: `${metaWidth}%`,
-      };
-    }
-
-    // Above 1920px: keep normal 88%/12% split
-    return {
-      mainWidth: "60%",
-      metaWidth: "40%",
-    };
-  }
   // MARK: trackSizeCha
   function deleteCache() {
     for (const key in trackFetchedDataCache.current) {
@@ -3783,7 +3621,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             style={{
               backgroundColor: "var(--bg-color)",
               width: `${windowWidth + 120}px`,
-              marginTop: padding / 3 + 1 + 17,
+              marginTop: padding / 3,
               marginBottom: padding / 3,
               display: "flex",
               flexDirection: windowWidth <= 600 ? "column" : "row",
@@ -3938,8 +3776,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }}
         >
           <div
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleTouchStart}
+            onPointerDown={handleMouseDown}
+
             ref={block}
             style={{
               display: "flex",
@@ -3981,7 +3819,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     renderItem={(item) => (
                       <SortableList.Item
                         id={item.id}
-                        onMouseDown={(event) =>
+                        onPointerDown={(event) =>
                           handleShiftSelect(event, item.id)
                         }
                         onContextMenu={(event) => handleRightClick(event, item)}

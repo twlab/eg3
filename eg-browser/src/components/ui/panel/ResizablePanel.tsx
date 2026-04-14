@@ -178,11 +178,11 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     return () => document.removeEventListener("pointerdown", handleOutsideClick);
   }, [pinned, onClose, excludeRefs]);
 
-  // Ghost overlay helpers: lightweight DOM element updated via rAF
+  // overlay helpers: lightweight DOM element updated via rAF
   const createGhost = (left: number, top: number, w: number, h: number) => {
     if (ghostRef.current) return;
     const el = document.createElement("div");
-    // Use fixed positioning so the ghost doesn't change document flow/height
+    // we use ghost so that it doesn't re-render on every drag resize only when user let go
     el.style.position = "fixed";
     const rect = panelRef.current?.getBoundingClientRect();
     if (rect) {
@@ -265,35 +265,26 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
   // when navigation tab expands, need bigger panel for content
   useEffect(() => {
-    const numericW = parseSizeToNumber(
-      width,
-      typeof width === "number"
-        ? (width as number)
-        : (initialWidth as number) || 300,
-    );
-    const numericH = parseSizeToNumber(
-      height,
-      typeof height === "number"
-        ? (height as number)
-        : (initialHeight as number) || 325,
-    );
     if (expandNavigationTab) {
-      // setWidth(Math.round(numericW * 4));
-      // setHeight(Math.round(numericH * 2));
+
       const windowSize = {
         width: window.innerWidth,
         height: window.innerHeight,
       };
 
-      const newW =
-        width !== initialWidth && width !== Math.round(windowSize.width * 0.4)
-          ? width
-          : Math.round(windowSize.width * 0.6);
-      const newH =
-        height !== initialHeight &&
-          height !== Math.round(windowSize.height * 0.85)
-          ? height
-          : Math.round(windowSize.height * 0.90);
+      const numericInitialW = typeof initialWidth === "number" ? initialWidth : parseSizeToNumber(initialWidth as string, 0);
+      const numericInitialH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
+      const numericWidth = parseSizeToNumber(width, 0);
+      const numericHeight = parseSizeToNumber(height, 0);
+      const defaultW = Math.round(windowSize.width * 0.6);
+      const defaultH = Math.round(windowSize.height * 0.9);
+      const altW = Math.round(windowSize.width * 0.4);
+      const altH = Math.round(windowSize.height * 0.75);
+
+      let newW = numericWidth !== numericInitialW && numericWidth !== altW ? numericWidth : defaultW;
+      let newH = numericHeight !== numericInitialH && numericHeight !== altH ? numericHeight : defaultH;
+      newW = Math.max(numericInitialW, newW);
+      newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
@@ -310,7 +301,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         let dy = 0;
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
-          dx = -Math.min(overflow, rectExpand.left) - 20; // can't move left past viewport left edge
+          dx = -Math.min(overflow, rectExpand.left)
+          // - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
@@ -344,15 +336,19 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         height: window.innerHeight,
       };
 
-      const newW =
-        width !== initialWidth && width !== Math.round(windowSize.width * 0.6)
-          ? width
-          : Math.round(windowSize.width * 0.4);
-      const newH =
-        height !== initialHeight &&
-          height !== Math.round(windowSize.height * 0.90)
-          ? height
-          : Math.round(windowSize.height * 0.85);
+      const numericInitialW = typeof initialWidth === "number" ? initialWidth : parseSizeToNumber(initialWidth as string, 0);
+      const numericInitialH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
+      const numericWidth = parseSizeToNumber(width, 0);
+      const numericHeight = parseSizeToNumber(height, 0);
+      const defaultW = Math.round(windowSize.width * 0.4);
+      const defaultH = Math.round(windowSize.height * 0.75);
+      const altW = Math.round(windowSize.width * 0.6);
+      const altH = Math.round(windowSize.height * 0.9);
+
+      let newW = numericWidth !== numericInitialW && numericWidth !== altW ? numericWidth : defaultW;
+      let newH = numericHeight !== numericInitialH && numericHeight !== altH ? numericHeight : defaultH;
+      newW = Math.max(numericInitialW, newW);
+      newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
       if (!preExpandRef.current) {
         preExpandRef.current = { translate: { ...translate }, width, height };
@@ -369,7 +365,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         let dy = 0;
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
-          dx = -Math.min(overflow, rectMid.left) - 20; // can't move left past viewport left edge
+          dx = -Math.min(overflow, rectMid.left)
+          // - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
@@ -383,7 +380,32 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       setWidth(newW);
       setHeight(newH);
     } else {
-      // restore to initial sizes
+      // restore to initial sizes\
+      const windowSize = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+      const rectMid = panelRef.current?.getBoundingClientRect();
+      if (rectMid) {
+        const numericNewW = typeof initialWidth === "number" ? initialWidth : parseSizeToNumber(initialWidth as string, 0);
+        const numericNewH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
+        const projectedRight = rectMid.left + numericNewW;
+        const projectedBottom = rectMid.top + numericNewH;
+        let dx = 0;
+        let dy = 0;
+        if (projectedRight > windowSize.width) {
+          const overflow = projectedRight - windowSize.width;
+          dx = -Math.min(overflow, rectMid.left)
+          // - 20; // can't move left past viewport left edge
+        }
+        if (projectedBottom > windowSize.height) {
+          const overflow = projectedBottom - windowSize.height;
+          dy = -Math.min(overflow, rectMid.top); // can't move up past viewport top edge
+        }
+        if (dx !== 0 || dy !== 0) {
+          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+        }
+      }
       setWidth(Number(initialWidth));
       setHeight(Number(initialHeight));
       // reset tab selection to navbar when using back button
@@ -425,6 +447,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       if (resizeState.current?.resizing) {
         const dx = ev.clientX - resizeState.current.startX;
         const dy = ev.clientY - resizeState.current.startY;
+
         let newW = resizeState.current.startW + dx;
         let newH = resizeState.current.startH + dy;
         // enforce minimums only; allow unlimited maximum unless provided

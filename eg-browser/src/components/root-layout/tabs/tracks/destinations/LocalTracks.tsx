@@ -8,7 +8,7 @@ import React from "react";
 import JSON5 from "json5";
 
 import { readFileAsText, TrackModel } from "wuepgg3-track";
-import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
+
 import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
 
 export default function LocalTracks() {
@@ -204,7 +204,7 @@ function AddLocalTracks() {
   const canSubmit = filesComplete && assemblyComplete;
 
   return (
-    <div className="px-4 py-3 flex flex-col gap-4">
+    <div className="px-4 py-3 flex flex-col gap-3">
       {/* 1. Track Type */}
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
@@ -236,7 +236,7 @@ function AddLocalTracks() {
         />
         <div className="max-w-md mx-auto w-full">
           <div
-            className={`w-full border-dashed border-1 rounded-md h-40 flex flex-col items-center justify-center cursor-pointer ${submitAttempted && !filesComplete ? "border-red-400" : "border-gray-400"
+            className={`w-full border-dashed border-1 rounded-md h-25 flex flex-col items-center justify-center cursor-pointer ${submitAttempted && !filesComplete ? "border-red-400" : "border-gray-400"
               }`}
             onClick={() => trackFileInputRef.current?.click()}
             onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
@@ -272,7 +272,7 @@ function AddLocalTracks() {
       </div>
 
       {/* 4. Options */}
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col ">
         <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
           Options{" "}
           <span className="normal-case font-normal tracking-normal opacity-50 text-sm">
@@ -296,7 +296,13 @@ function AddLocalTracks() {
       <Button
         active={canSubmit}
         onClick={handleSubmit}
-        style={{ fontSize: "14px" }}
+        outlined
+        style={{
+          // backgroundColor: "black",
+          // color: "white",
+          width: "fit-content",
+          padding: "4px 6px",
+        }}
       >
         Add Track
       </Button>
@@ -349,9 +355,9 @@ interface ConfigureTrackProps {
 function ConfigureTrack({ onOptionsChange }: ConfigureTrackProps) {
   return (
     <textarea
-      rows={3}
-      placeholder='{ "color": "blue", "height": 40 }'
-      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary font-mono resize-none"
+      rows={2}
+      placeholder='{ "color": "blue", "height": 20 }'
+      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3  bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary font-mono resize-none"
       onChange={(e) => onOptionsChange(e.target.value)}
     />
   );
@@ -483,7 +489,7 @@ function AddLocalHub() {
         />
         <div className="max-w-md mx-auto w-full">
           <div
-            className="w-full border-dashed border-1 border-gray-400 rounded-md h-40 flex flex-col items-center justify-center cursor-pointer"
+            className="w-full border-dashed border-1 border-gray-400 rounded-md h-25 flex flex-col items-center justify-center cursor-pointer"
             onClick={() => folderInputRef.current?.click()}
             onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
             onDragOver={(e) => e.preventDefault()}
@@ -510,7 +516,7 @@ function AddLocalHub() {
         />
         <div className="max-w-md mx-auto w-full">
           <div
-            className="w-full border-dashed border-1 border-gray-400 rounded-md h-40 flex flex-col items-center justify-center cursor-pointer"
+            className="w-full border-dashed border-1 border-gray-400 rounded-md h-25 flex flex-col items-center justify-center cursor-pointer"
             onClick={() => multiInputRef.current?.click()}
             onDrop={(e) => { e.preventDefault(); handleFileChange(e.dataTransfer.files); }}
             onDragOver={(e) => e.preventDefault()}

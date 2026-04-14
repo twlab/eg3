@@ -228,7 +228,7 @@ export const FetchSequence: React.FC = () => {
       margin: "0 auto",
       padding: "20px",
       background: "#fff",
-      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
       borderRadius: "8px",
     },
     inputContainer: {

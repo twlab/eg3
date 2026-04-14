@@ -272,6 +272,7 @@ class NavigationContext {
    * @throws {RangeError} when parsing an interval outside of the context or something otherwise nonsensical
    */
   parse(str: string): OpenInterval | undefined {
+
     // convert string into standard format
     // Pattern: "chr7   154900269 chr8    1379003" -> "chr7:154900269-chr8:1379003"
     // Pattern: "chr7 27103672 27424040" -> "chr7:27103672-27424040"
@@ -336,32 +337,31 @@ class NavigationContext {
         );
       }
 
-      // get chromosome or gene names eg, chr1, CYP1A2
-      const isStandardChromosome =
-        startChr.startsWith("chr") && endChr.startsWith("chr");
 
       let startContextCoord;
       let endContextCoord;
-      if (startFeature.strand === "+") {
-        startContextCoord =
-          Number(startPosStr) -
-          startFeature.locus.start +
-          this._minCoordinateForFeature.get(startFeature);
-      } else {
+      if (startFeature.strand === "-") {
+
         startContextCoord =
           startFeature.locus.end -
           Number(startPosStr) +
           this._minCoordinateForFeature.get(startFeature);
-      }
-      if (endFeature.strand === "+") {
-        endContextCoord =
-          Number(endPosStr) -
-          endFeature.locus.start +
-          this._minCoordinateForFeature.get(endFeature);
       } else {
+        startContextCoord =
+          Number(startPosStr) -
+          startFeature.locus.start +
+          this._minCoordinateForFeature.get(startFeature);
+      }
+      if (endFeature.strand === "-") {
         endContextCoord =
           endFeature.locus.end -
           Number(endPosStr) +
+          this._minCoordinateForFeature.get(endFeature);
+
+      } else {
+        endContextCoord =
+          Number(endPosStr) -
+          endFeature.locus.start +
           this._minCoordinateForFeature.get(endFeature);
       }
 

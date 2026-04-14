@@ -304,7 +304,7 @@ const RegionSetSelector: React.FC = () => {
       <Button
         onClick={handleAddNewSet}
         leftIcon={<PlusIcon className="w-4 h-4" />}
-        style={{ backgroundColor: "#5E7AC4", color: "#fff", width: "fit-content", padding: "8px 16px" }}
+        style={{ backgroundColor: "#5E7AC4", color: "#fff", width: "fit-content", padding: "4px 6px" }}
       >
         Add New Set
       </Button>

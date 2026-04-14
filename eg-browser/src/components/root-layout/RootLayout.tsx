@@ -49,7 +49,6 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
-import SessionToggleButton from "../sessions/SessionToggleButton";
 
 import {
   getGenomeConfig,
@@ -318,7 +317,14 @@ export default function RootLayout(props: GenomeHubProps) {
               ""
             ) : (
               <div ref={navBarRef}>
-                <NavBar />
+                <NavBar
+                  leftPanelOpen={leftPanelOpen}
+                  setLeftPanelOpen={setLeftPanelOpen}
+
+                  sessionId={sessionId}
+                  sessions={sessions}
+                  currentSession={currentSession}
+                />
               </div>
             )}
             <AnimatePresence>
@@ -327,7 +333,7 @@ export default function RootLayout(props: GenomeHubProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+
                   className="absolute left-0 h-full z-60"
                   style={{ top: navBarHeight }}
                 >
@@ -352,69 +358,12 @@ export default function RootLayout(props: GenomeHubProps) {
             </AnimatePresence>
 
             <div>
-              {!leftPanelOpen && (
-                <SessionToggleButton
-                  open={leftPanelOpen}
-                  onClick={() => setLeftPanelOpen((v) => !v)}
-                  className="absolute
-               rounded-full bg-white shadow"
-                  style={{ zIndex: 40, left: 0, top: navBarHeight + 67 }}
-                  count={sessionId ? null : sessions.length}
-                  textContent={
-                    currentSession ? (
-                      <div className="flex flex-row">
-                        <div>{`Current Session: "${currentSession.title}"`}</div>
-                        <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />
-                        <div className="flex items-center gap-1">
-                          <span>Session Bundle ID:</span>{" "}
-                          {currentSession.bundleId ? (
-                            <span className="text-blue-600">
-                              {currentSession.bundleId}
-                            </span>
-                          ) : (
-                            <span className="text-red-600">
-                              Not saved remotely
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      "Previous sessions"
-                    )
-                  }
-                />
-              )}
 
-              {/* {!sessionId && (
-            <div
-            className="h-full overflow-hidden absolute top-0 left-0 z-20"
-            style={{
-              width: "25vw",
-              borderTopRightRadius: CURL_RADIUS,
-              borderBottomRightRadius: CURL_RADIUS,
-              transform: sessionPanelOpen
-                ? "translateX(0)"
-                : "translateX(-100%)",
-              transition: "transform 0.3s ease",
-              willChange: "transform",
-            }}
-          >
-            <SessionPanel />
-          </div>
-          )
-
-          } */}
 
               {/* MARK: - Main Content */}
 
               <div
                 className="flex flex-1 h-full relative"
-
-              // onClick={
-              //   sessionPanelOpen
-              //     ? () => dispatch(setSessionPanelOpen(false))
-              //     : undefined
-              // }
               >
                 {/* MARK: - Genome View */}
                 <div

@@ -21,7 +21,7 @@ import { FeaturePlacementResult } from "../../../models/FeatureArranger";
 
 const HEIGHT = 15;
 const TOP_PADDING = 5;
-const DEFAULT_LABEL_OFFSET = 65;
+const DEFAULT_LABEL_OFFSET = 62;
 const FEATURE_LABEL_SIZES = [16, 12, 8];
 
 const CYTOBAND_COLORS = {

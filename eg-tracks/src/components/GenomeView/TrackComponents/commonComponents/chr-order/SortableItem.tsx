@@ -17,7 +17,7 @@ import "./SortableItem.css";
 
 interface Props {
   id: UniqueIdentifier;
-  onMouseDown?: React.MouseEventHandler<HTMLDivElement>;
+  onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
   onContextMenu?: React.MouseEventHandler<HTMLDivElement>;
   selectedTool: any;
 }
@@ -37,7 +37,7 @@ const SortableItemContext = createContext<Context>({
 export function SortableItem({
   children,
   id,
-  onMouseDown,
+  onPointerDown,
   onContextMenu,
   selectedTool,
 }: PropsWithChildren<Props>) {
@@ -65,9 +65,9 @@ export function SortableItem({
     transition,
   };
 
-  const handleMouseDown = (event) => {
-    if (onMouseDown) {
-      onMouseDown(event);
+  const handlePointerDown = (event) => {
+    if (onPointerDown) {
+      onPointerDown(event);
     }
   };
 
@@ -92,7 +92,7 @@ export function SortableItem({
         style={style}
         {...attributes}
         {...listeners}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
         onContextMenu={handleContextMenu}
       >
         {children}
