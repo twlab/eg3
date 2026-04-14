@@ -19,20 +19,20 @@ export default function SessionToggleButton({
 }) {
   return (
     <motion.button
-
       onClick={onClick}
       initial={false}
-      className={`${className ?? ""}${"fixed"}`}
+      type="button"
+
       style={style}
       aria-label={open ? "Close panel" : "Open panel"}
     >
-      <div className="flex items-center outline-none rounded-full bg-white dark:bg-dark-secondary shadow p-0.5 px-2">
+      <div className="flex items-center outline-none rounded-full bg-white dark:bg-dark-secondary shadow p-1 ">
         {typeof count === "number" ? (
-          <span className="inline-flex items-center justify-center w-5 h-5 mr-1 text-xs rounded-full bg-blue-600 text-white">
+          <span className=" mr-1 text-sm rounded-full bg-blue-600 text-white px-1 py-0.5">
             {count}
           </span>
         ) : null}
-        <span className="text-xs text-primary dark:text-dark-primary">
+        <span className="text-sm text-primary dark:text-dark-primary">
           {textContent}
         </span>
 
@@ -41,7 +41,7 @@ export default function SessionToggleButton({
           className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
         >
           <XMarkIcon className="w-5 h-5" />
-        </div> : <ChevronRightIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
+        </div> : <ChevronRightIcon className="w-5 h-5 text-primary dark:text-dark-primary" />
 
         }
 

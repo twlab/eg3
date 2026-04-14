@@ -1,8 +1,8 @@
-import React, { useRef, useState, KeyboardEvent, useEffect } from "react";
+import React, { useRef, useState, KeyboardEvent } from "react";
 import GeneSearchBox from "../../../../eg-tracks/src/components/GenomeView/genomeNavigator/GeneSearchBox";
 import SnpSearchBox from "../../../../eg-tracks/src/components/GenomeView/genomeNavigator/SnpSearchBox";
-import { CopyToClip } from "wuepgg3-track";
 import type { GenomeCoordinate } from "wuepgg3-track";
+import Button from "@/components/ui/button/Button";
 
 import { DisplayedRegionModel, Genome } from "wuepgg3-track";
 import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
@@ -30,7 +30,19 @@ const RegionsPanel: React.FC<RegionsPanelProps> = ({
   useMidSizeNavigationTab();
   const [badInputMessage, setBadInputMessage] = useState("");
   const [doHighlight, setDoHighlight] = useState(false);
+  const [copiedCoords, setCopiedCoords] = useState(false);
+  const [coordsHover, setCoordsHover] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleCopyCoordinates = async () => {
+    try {
+      await navigator.clipboard.writeText(coordinates);
+      setCopiedCoords(true);
+      setTimeout(() => setCopiedCoords(false), 1500);
+    } catch (e) {
+      console.error("Failed to copy coordinates", e);
+    }
+  };
 
   const handleHighlightToggle = () => setDoHighlight((prev) => !prev);
 
@@ -50,27 +62,24 @@ const RegionsPanel: React.FC<RegionsPanelProps> = ({
   const coordinates = selectedRegion.currentRegionAsString();
 
   return (
-    <div
-      onClick={onClose}
-      role="dialog"
-      aria-label="Gene & Region search"
-      style={{ padding: "4px" }}
-    >
-      <div style={{ color }} onClick={(e) => e.stopPropagation()}>
-        <div>
-          <span className="text-sm">
-            Highlight search{" "}
-            <input
-              type="checkbox"
-              name="do-highlight"
-              checked={doHighlight}
-              onChange={handleHighlightToggle}
-            />
-          </span>
-        </div>
-        <h6 className="text-sm font-semibold mt-3 mb-1" style={{ color }}>
+    <div className="px-4 py-2 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+      {/* Highlight toggle */}
+      <label className="flex items-center gap-2 text-md text-primary dark:text-dark-primary cursor-pointer select-none">
+        <input
+          type="checkbox"
+          name="do-highlight"
+          checked={doHighlight}
+          onChange={handleHighlightToggle}
+          className="accent-secondary"
+        />
+        Highlight search
+      </label>
+
+      {/* Gene search */}
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
           Gene search
-        </h6>
+        </p>
         <GeneSearchBox
           navContext={selectedRegion.getNavigationContext()}
           onRegionSelected={onRegionSelected}
@@ -80,46 +89,88 @@ const RegionsPanel: React.FC<RegionsPanelProps> = ({
           background={background}
           genomeConfig={genomeConfig}
         />
-        {!virusBrowserMode && (
-          <>
-            <h6 className="text-sm font-semibold mt-3 mb-1" style={{ color }}>
-              SNP search
-            </h6>
-            <SnpSearchBox
-              navContext={selectedRegion.getNavigationContext()}
-              onRegionSelected={onRegionSelected}
-              handleCloseModal={onClose}
-              color={color}
-              background={background}
-              doHighlight={doHighlight}
-              genomeConfig={genomeConfig}
-            />
-          </>
-        )}
-        <h6 className="text-sm font-semibold mt-3 mb-1" style={{ color }}>
-          Region search (current: {coordinates}{" "}
-          <CopyToClip value={coordinates} />)
-        </h6>
-        <div className="flex items-center gap-1">
+      </div>
+
+      {/* SNP search */}
+      {!virusBrowserMode && (
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            SNP search
+          </p>
+          <SnpSearchBox
+            navContext={selectedRegion.getNavigationContext()}
+            onRegionSelected={onRegionSelected}
+            handleCloseModal={onClose}
+            color={color}
+            background={background}
+            doHighlight={doHighlight}
+            genomeConfig={genomeConfig}
+            customButton={Button}
+          />
+        </div>
+      )}
+
+      {/* Region search */}
+      <div className="flex flex-col gap-1">
+        <div
+          className="flex flex-wrap items-center justify-start"
+          style={{ columnGap: "12px", rowGap: "0px" }}
+        >
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider shrink-0">
+            Region search
+          </p>
+          <div className="flex items-center p-0.5 bg-[#f8f9fa] dark:bg-dark-secondary rounded">
+            <code
+              onClick={handleCopyCoordinates}
+              onMouseEnter={() => setCoordsHover(true)}
+              onMouseLeave={() => setCoordsHover(false)}
+              title="Click to copy coordinates"
+              className="text-md font-mono overflow-hidden truncate"
+              style={{
+                color: "#0b5cff",
+                textDecoration: coordsHover ? "underline" : "none",
+                cursor: "pointer",
+              }}
+            >
+              {coordinates}
+            </code>
+            {copiedCoords && (
+              <span className="text-md text-green-600 dark:text-green-400 ml-1">
+                Copied
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center ">
           <input
             ref={inputRef}
             type="text"
-            size={30}
-            placeholder="Coordinate"
+            placeholder="e.g. chr1:1000-2000"
             onKeyDown={keyPress}
-            className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary focus:outline-none focus:ring-1 focus:ring-secondary"
+            className="w-full"
+            style={{
+              padding: "4px 6px",
+              border: "1px solid #e2e8f0",
+              borderRadius: "4px",
+              marginRight: "10px",
+            }}
           />
-          <button
-            className="px-3 py-1 text-sm rounded bg-secondary text-white hover:opacity-80 cursor-pointer"
+
+
+          <Button
             onClick={parseRegion}
+            active={false}
+            style={{
+              width: "fit-content",
+              padding: "4px 6px",
+            }}
+            outlined
           >
             Go
-          </button>
+          </Button>
         </div>
         {badInputMessage && (
-          <span className="text-xs text-red-500 mt-1 block">
-            {badInputMessage}
-          </span>
+          <span className="text-sm text-red-500">{badInputMessage}</span>
         )}
       </div>
     </div>

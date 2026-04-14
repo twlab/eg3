@@ -42,13 +42,13 @@ const defaultTracks = [
         "name": "mhaESC",
         "label": "mhaESC",
         "type": "refbed",
-        "url": "https://vizhub.wustl.edu/public/mT2T-Y_v1.0/mhaESC.annotation.v1.1.1.20250623.refbed.gz",
+        "url": "https://wangcluster.wustl.edu/~juanfmacias/mT2T-Y_v1.0/mhaESC.annotation.v1.1.1.20250623_nameCorrected.refbed.gz",
 
     }),
     new TrackModel({
-        type: "bigbed",
+        type: "RepeatMasker",
         name: "mT2T-Y.repeats",
-        url: "https://vizhub.wustl.edu/public/mT2T-Y_v1.0/mT2T-Y.repeats.bb",
+        url: "https://wangcluster.wustl.edu/~juanfmacias/mT2T-Y_v1.0/mT2T-Y.rmsk16.bb",
 
     })
 ];

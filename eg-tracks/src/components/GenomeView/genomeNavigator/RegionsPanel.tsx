@@ -1,11 +1,10 @@
 import React, { useRef, useState, KeyboardEvent } from "react";
-import ReactDOM from "react-dom";
 import GeneSearchBox from "./GeneSearchBox";
 import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
-import { GenomeCoordinate } from "@/types/track-container";
 import Genome from "../../../models/Genome";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+import { GenomeCoordinate } from "../../../types/track-container";
 
 const MODAL_STYLE = {
     content: {
@@ -81,89 +80,88 @@ const RegionsPanel: React.FC<RegionsPanelProps> = ({
     const { color, background } = contentColorSetup;
     const coordinates = selectedRegion.currentRegionAsString();
 
-    return ReactDOM.createPortal(
+    return <div
+        style={MODAL_STYLE.overlay}
+        onClick={onClose}
+        role="dialog"
+        aria-label="Gene & Region search"
+    >
         <div
-            style={MODAL_STYLE.overlay}
-            onClick={onClose}
-            role="dialog"
-            aria-label="Gene & Region search"
+            style={{ ...MODAL_STYLE.content, color, background }}
+            onClick={(e) => e.stopPropagation()}
         >
-            <div
-                style={{ ...MODAL_STYLE.content, color, background }}
-                onClick={(e) => e.stopPropagation()}
+            <span
+                className="text-right"
+                style={X_BUTTON_STYLE}
+                onClick={onClose}
             >
-                <span
-                    className="text-right"
-                    style={X_BUTTON_STYLE}
-                    onClick={onClose}
-                >
-                    ×
+                ×
+            </span>
+            <div>
+                <span>
+                    Highlight search {" "}
+                    <input
+                        type="checkbox"
+                        name="do-highlight"
+                        checked={doHighlight}
+                        onChange={handleHighlightToggle}
+                    />
                 </span>
-                <div>
-                    <span>
-                        Highlight search {" "}
-                        <input
-                            type="checkbox"
-                            name="do-highlight"
-                            checked={doHighlight}
-                            onChange={handleHighlightToggle}
-                        />
-                    </span>
-                </div>
-                <h6>Gene search</h6>
-                <GeneSearchBox
-                    navContext={selectedRegion.getNavigationContext()}
-                    onRegionSelected={onRegionSelected}
-                    doHighlight={doHighlight}
-                    handleCloseModal={onClose}
-                    color={color}
-                    background={background}
-                    genomeConfig={genomeConfig}
-                />
-                {!virusBrowserMode && (
-                    <>
-                        <h6 style={{ marginTop: "5px" }}>SNP search</h6>
-                        <SnpSearchBox
-                            navContext={selectedRegion.getNavigationContext()}
-                            onRegionSelected={onRegionSelected}
-                            handleCloseModal={onClose}
-                            color={color}
-                            background={background}
-                            doHighlight={doHighlight}
-                            genomeConfig={genomeConfig}
-                        />
-                    </>
-                )}
-                <h6>
-                    Region search (current region is {coordinates} {" "}
-                    <CopyToClip value={coordinates} />)
-                </h6>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    size={30}
-                    placeholder="Coordinate"
-                    onKeyDown={keyPress}
-                    style={{
-                        padding: "6px 8px",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "4px",
-                    }}
-                />
-                <button
-                    className="btn btn-secondary btn-sm"
-                    style={{ marginLeft: "2px" }}
-                    onClick={parseRegion}
-                >
-                    Go
-                </button>
-                {badInputMessage && (
-                    <span className="alert-danger">{badInputMessage}</span>
-                )}
             </div>
-        </div>,
-        document.body,
-    );
+            <h6>Gene search</h6>
+            <GeneSearchBox
+                navContext={selectedRegion.getNavigationContext()}
+                onRegionSelected={onRegionSelected}
+                doHighlight={doHighlight}
+                handleCloseModal={onClose}
+                color={color}
+                background={background}
+                genomeConfig={genomeConfig}
+            />
+            {!virusBrowserMode && (
+                <>
+                    <h6 style={{ marginTop: "5px" }}>SNP search</h6>
+                    <SnpSearchBox
+                        navContext={selectedRegion.getNavigationContext()}
+                        onRegionSelected={onRegionSelected}
+                        handleCloseModal={onClose}
+                        color={color}
+                        background={background}
+                        doHighlight={doHighlight}
+                        genomeConfig={genomeConfig}
+                    />
+                </>
+            )}
+            <h6>
+                Region search (current region is {coordinates} {" "}
+                <CopyToClip value={coordinates} />)
+            </h6>
+            <input
+                ref={inputRef}
+                type="text"
+                size={30}
+                placeholder="Coordinate"
+                onKeyDown={keyPress}
+                style={{
+                    padding: "6px 8px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "4px",
+                }}
+            />
+            <button
+                className="btn btn-secondary btn-sm"
+                style={{ marginLeft: "2px" }}
+                onClick={parseRegion}
+            >
+                Go
+            </button>
+            {badInputMessage && (
+                <span className="alert-danger">{badInputMessage}</span>
+            )}
+        </div>
+    </div>
+
+        ;
 };
 
 export default RegionsPanel;

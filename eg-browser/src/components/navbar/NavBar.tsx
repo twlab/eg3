@@ -53,11 +53,12 @@ import {
 } from "wuepgg3-track";
 import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
+import SessionToggleButton from "../sessions/SessionToggleButton";
 
-import SearchBar from "../genome-view/toolbar/SearchBar";
 
 
-export default function NavBar() {
+
+export default function NavBar(props) {
 
 
   const isSmallScreen = useSmallScreen();
@@ -66,6 +67,7 @@ export default function NavBar() {
   const navRef = useRef<HTMLDivElement | null>(null);
   const tabButtonsRef = useRef<HTMLDivElement | null>(null);
   const [tabAnchorLeft, setTabAnchorLeft] = useState<number | null>(null);
+  const [tabAnchorTop, setTabAnchorTop] = useState<number | null>(null);
 
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
@@ -86,8 +88,7 @@ export default function NavBar() {
   const darkTheme = useAppSelector(selectDarkTheme);
 
   const genome = useCurrentGenome();
-  const isSearchFocused = useAppSelector(selectNavSearchOpen);
-  const setIsSearchFocused = useCallback((v: boolean) => dispatch(setNavSearchOpen(v)), [dispatch]);
+
 
   // Reset search when switching to mobile so the expanded bar doesn't bleed over
   useEffect(() => { if (isSmallScreen) dispatch(setNavSearchOpen(false)); }, [isSmallScreen, dispatch]);
@@ -103,6 +104,13 @@ export default function NavBar() {
   }, [currentSession]);
   useEffect(() => {
     setNavigationPath([]);
+  }, [currentTab]);
+
+  useEffect(() => {
+    if (currentTab === null) {
+      setTabAnchorLeft(null);
+      setTabAnchorTop(null);
+    }
   }, [currentTab]);
 
   const currentDisplayRegionModel = useMemo(() => {
@@ -206,10 +214,12 @@ export default function NavBar() {
       const btnRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const navRect = navRef.current.getBoundingClientRect();
       setTabAnchorLeft(btnRect.left - navRect.left);
+      setTabAnchorTop(btnRect.bottom - navRect.top);
     }
 
     if (currentTab === tab) {
       setTabAnchorLeft(null);
+      setTabAnchorTop(null);
       dispatch(setNavigationTab(null));
     } else {
       dispatch(setNavSearchOpen(false));
@@ -265,7 +275,7 @@ export default function NavBar() {
       {/* Single full-width navbar row */}
       <div
         ref={navRef}
-        className="flex flex-row pt-1 pb-1 items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600  relative  px-2 gap-1"
+        className="flex flex-row pt-1 pb-1 items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600  relative  px-2 gap-2"
       >
         {/* Back button */}
         {currentSession ? (
@@ -317,74 +327,73 @@ export default function NavBar() {
         </div>
 
         {/* Tab buttons / mobile controls — takes remaining space */}
-        <div className="flex-1 flex items-center min-w-0">
+        <div className="flex-1 flex items-center">
           {isSmallScreen ? (
             <>
               <div
-                className="flex flex-row flex-wrap items-center gap-1"
+                className="flex flex-row flex-wrap items-center"
                 style={{
-                  opacity: isSearchFocused ? 0 : 1,
-                  pointerEvents: isSearchFocused ? "none" : "auto",
+
                   transition: "opacity 0.15s ease",
                 }}
               >
-                {currentSession && genome?.name && (
+                {genome?.name && (
                   <Button
                     onClick={(e) => openTab("tab-genome-picker", e)}
                     active={currentTab === "tab-genome-picker"}
                     style={{
                       backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
                       color: "#0f172a",
-                      width: "60px",
+
+
                       display: "flex",
                       alignItems: "center",
+                      width: "fit-content", fontSize: "16px"
                     }}
                   >
                     <div className="relative flex-shrink-0">
                       <div
-                        style={{
-                          backgroundImage: `url(${genomeLogoUrl?.logo
-                            ? genomeLogoUrl.logo.startsWith("http")
-                              ? genomeLogoUrl.logo
-                              : import.meta.env.BASE_URL + genomeLogoUrl.logo
-                            : ""
-                            })`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          backgroundRepeat: "no-repeat",
-                          opacity: genomeLogoUrl?.logo ? 0.8 : 1,
-                          width: 60,
-                        }}
+                        className={classNames(
+                          "relative h-8 flex items-center rounded-xs",
+                          sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
+                          genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
+                        )}
+                        style={{ opacity: genomeLogoUrl?.logo ? 0.9 : 1 }}
                         onMouseEnter={(e) => {
                           if (genomeLogoUrl)
                             (e.currentTarget as HTMLElement).style.opacity = "1";
                         }}
                         onMouseLeave={(e) => {
                           if (genomeLogoUrl)
-                            (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                            (e.currentTarget as HTMLElement).style.opacity = "0.9";
                         }}
-                        className={classNames(
-                          "z-10", "h-8", "rounded-xs", "flex-shrink-0",
-                          "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
-                          sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                          genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
-                        )}
                       >
-                        {currentSession.title.length > 0 && genome?.name && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span
-                              className="leading-tight text-center break-words w-full"
-                              style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "10px" }}
-                            >
-                              <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
-                                {genomeLogoUrl?.name ? (
-                                  <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
-                                ) : (
-                                  <i>{genome.name}</i>
-                                )}
-                              </span>
+                        {genomeLogoUrl?.logo && (
+                          <div
+                            className="absolute inset-0 rounded-xs overflow-hidden"
+                            style={{
+                              backgroundImage: `url(${genomeLogoUrl.logo.startsWith("http") ? genomeLogoUrl.logo : import.meta.env.BASE_URL + genomeLogoUrl.logo})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                              backgroundRepeat: "no-repeat",
+                            }}
+                          />
+                        )}
+
+
+                        {(currentSession && currentSession.title.length > 0 && genome?.name) && (
+                          <span
+                            className="relative whitespace-nowrap leading-tight text-center break-words w-full "
+                            style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px", padding: "4px 6px" }}
+                          >
+                            <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
+                              {genomeLogoUrl?.name ? (
+                                <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
+                              ) : (
+                                <i>{genome.name}</i>
+                              )}
                             </span>
-                          </div>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -406,16 +415,7 @@ export default function NavBar() {
 
 
                       <div className="relative group flex-shrink-0 ml-1">
-                        <button
-                          onClick={() => {
-                            dispatch(setNavigationTab(null));
-                            dispatch(setNavSearchOpen(true));
-                          }}
-                          aria-label="Open search"
-                          className="group flex items-center justify-center w-9 h-8 rounded-full bg-gray-100 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-blue-900 shadow-sm hover:shadow-md transition-all duration-200"
-                        >
-                          <MagnifyingGlassIcon className="w-5 h-5 text-gray-500 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110" />
-                        </button>
+
                         {/* Hover tooltip */}
                         <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
                           {/* Arrow pointing up toward button */}
@@ -438,53 +438,37 @@ export default function NavBar() {
 
                   </>
                 ) : ""}
-              </div>          {isSearchFocused ? (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: "20%",
-                    width: "calc(60%)",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    zIndex: 100,
-                    minWidth: 150,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <SearchBar
-                      isSearchFocused={isSearchFocused}
-                      onSearchFocusChange={setIsSearchFocused}
-                      onNewRegionSelect={handleNewRegionSelect}
-                      windowWidth={window.innerWidth}
-                      fontSize={16}
-                      buttonPadding={6} />
-                  </div>
-                  <button
-                    onClick={() => dispatch(setNavSearchOpen(false))}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    aria-label="Close search"
-                    title="Close search"
-                    className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 flex-shrink-0"
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              ) : ""}
+              </div>
+
+              <div
+                style={{
+                  position: "absolute",
+                  left: "20%",
+                  width: "calc(60%)",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  zIndex: 100,
+                  minWidth: 150,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+
+
+              </div>
+
             </>
           ) : (
             <>
               {currentSession !== null ? (
-                <div className="flex flex-row flex-wrap items-center gap-1 flex-1 min-w-0">
+                <div className="flex flex-row flex-wrap items-center flex-1 min-w-0">
                   {/* Fading tab buttons */}
                   <div
                     ref={tabButtonsRef}
-                    className="flex flex-row flex-wrap items-center gap-1"
+                    className="flex flex-row flex-wrap items-center gap-1.5"
                     style={{
-                      opacity: isSearchFocused ? 0 : 1,
-                      pointerEvents: isSearchFocused ? "none" : "auto",
+
                       transition: "opacity 0.15s ease",
                     }}
                   >
@@ -495,56 +479,56 @@ export default function NavBar() {
                         style={{
                           backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
                           color: "#0f172a",
-                          width: "100px",
+
+
                           display: "flex",
                           alignItems: "center",
+                          width: "fit-content", fontSize: "16px"
                         }}
                       >
                         <div className="relative flex-shrink-0">
                           <div
-                            style={{
-                              backgroundImage: `url(${genomeLogoUrl?.logo
-                                ? genomeLogoUrl.logo.startsWith("http")
-                                  ? genomeLogoUrl.logo
-                                  : import.meta.env.BASE_URL + genomeLogoUrl.logo
-                                : ""
-                                })`,
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                              backgroundRepeat: "no-repeat",
-                              opacity: genomeLogoUrl?.logo ? 0.8 : 1,
-                              width: 100,
-                            }}
+                            className={classNames(
+                              "relative h-8 flex items-center rounded-xs",
+                              sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
+                              genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
+                            )}
+                            style={{ opacity: genomeLogoUrl?.logo ? 0.9 : 1 }}
                             onMouseEnter={(e) => {
                               if (genomeLogoUrl)
                                 (e.currentTarget as HTMLElement).style.opacity = "1";
                             }}
                             onMouseLeave={(e) => {
                               if (genomeLogoUrl)
-                                (e.currentTarget as HTMLElement).style.opacity = "0.8";
+                                (e.currentTarget as HTMLElement).style.opacity = "0.9";
                             }}
-                            className={classNames(
-                              "z-10", "h-8", "rounded-xs", "flex-shrink-0",
-                              "transition-opacity", "relative", "overflow-hidden", "cursor-pointer",
-                              sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                              genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
-                            )}
                           >
+                            {genomeLogoUrl?.logo && (
+                              <div
+                                className="absolute inset-0 rounded-xs overflow-hidden"
+                                style={{
+                                  backgroundImage: `url(${genomeLogoUrl.logo.startsWith("http") ? genomeLogoUrl.logo : import.meta.env.BASE_URL + genomeLogoUrl.logo})`,
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                  backgroundRepeat: "no-repeat",
+                                }}
+                              />
+                            )}
+
+
                             {currentSession.title.length > 0 && genome?.name && (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <span
-                                  className="leading-tight text-center break-words w-full"
-                                  style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px" }}
-                                >
-                                  <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
-                                    {genomeLogoUrl?.name ? (
-                                      <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
-                                    ) : (
-                                      <i>{genome.name}</i>
-                                    )}
-                                  </span>
+                              <span
+                                className="relative whitespace-nowrap leading-tight text-center break-words w-full "
+                                style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px", padding: "4px 6px" }}
+                              >
+                                <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
+                                  {genomeLogoUrl?.name ? (
+                                    <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
+                                  ) : (
+                                    <i>{genome.name}</i>
+                                  )}
                                 </span>
-                              </div>
+                              </span>
                             )}
                           </div>
                         </div>
@@ -602,75 +586,53 @@ export default function NavBar() {
                         uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
                       />
                     </div>
-                    {/* SearchBar: pill button when closed, absolute+expanded when open */}
 
-                    <div className="relative group flex-shrink-0 ml-4">
-                      <button
-                        onClick={() => {
-                          dispatch(setNavigationTab(null));
-                          dispatch(setNavSearchOpen(true));
-                        }}
-                        aria-label="Open search"
-                        className="group flex items-center justify-center w-9 h-8 rounded-full bg-[#44ACFF] hover:bg-[#1a96ff] dark:bg-[#44ACFF] dark:hover:bg-[#1a96ff] shadow-md hover:shadow-lg transition-all duration-200"
-                      >
-                        <MagnifyingGlassIcon className="w-5 h-5 text-white transition-all duration-200 group-hover:scale-110" />
-                      </button>
-                      {/* Hover tooltip */}
-                      <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
-                        {/* Arrow pointing up toward button */}
-                        <div className="flex justify-center">
-                          <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
+
+                    {props && !props.leftPanelOpen && (
+                      <SessionToggleButton
+                        open={props.leftPanelOpen}
+                        onClick={() => props.setLeftPanelOpen((v) => !v)}
+                        count={null}
+                        textContent={<div className="flex ">
+                          <div>{`"${props.currentSession.title}"`}</div>
+                          <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />
+                          <div className="flex items-center">
+
+
+                            {props.currentSession.bundleId ? (
+                              <div className="flex items-center gap-1">
+
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-green-600" role="img">
+                                  <title>Saved remotely</title>
+                                  <path d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z" fill="currentColor" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="relative inline-block">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-red-600" role="img">
+                                  <title>Not saved remotely</title>
+                                  <path d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z" fill="currentColor" />
+                                </svg>
+                                <span className="absolute -bottom-1 -right-0.5 text-red-600 font-semibold text-[13px] leading-none">×</span>
+                              </div>
+
+
+
+
+                            )}
+                          </div>
                         </div>
-                        <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
-                          <p className="font-semibold mb-1 text-blue-300">Search for</p>
-                          <ul className="space-y-0.5 text-gray-200">
-                            <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
-                            <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
-                            <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
+
+                        }
+                      />
+                    )}
+
 
 
 
 
                   </div>
 
-                  {isSearchFocused ? <div
-                    style={{
-                      position: "absolute",
-                      left: "20%",
-                      width: "calc(60%)",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      zIndex: 100,
-                      minWidth: 150,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <SearchBar
-                        isSearchFocused={isSearchFocused}
-                        onSearchFocusChange={setIsSearchFocused}
-                        onNewRegionSelect={handleNewRegionSelect}
-                        windowWidth={window.innerWidth}
-                        fontSize={16}
-                        buttonPadding={6}
-                      />
-                    </div>
-                    <button
-                      onClick={() => dispatch(setNavSearchOpen(false))}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      aria-label="Close search"
-                      title="Close search"
-                      className="p-1 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150 flex-shrink-0"
-                    >
-                      <XMarkIcon className="w-5 h-5" />
-                    </button>
-                  </div> : ""}
 
 
 
@@ -691,20 +653,12 @@ export default function NavBar() {
 
         {/* Right side: dark mode + previous version (no session) */}
         {!currentSession && (
-          <div className="flex flex-row items-center gap-2 ml-auto flex-shrink-0">
+          <div className="flex flex-row items-center gap-2 ml-auto flex-shrink-0 mr-20">
 
-            <div className="h-8 flex flex-row items-center flex-shrink-0">
-              <Switch
-                checked={darkTheme}
-                onChange={(checked) => dispatch(setDarkTheme(checked))}
-                checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-              />
-            </div>
             <Button
               style={{
                 backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
-                padding: "4px 8px",
+                padding: "4px 6px",
                 color: "black",
                 width: "145px",
                 height: "32px",
@@ -716,8 +670,34 @@ export default function NavBar() {
               }
 
             >
-              Previous Version
+              Switch to v2022
             </Button>
+            <div className="h-8 flex flex-row items-center flex-shrink-0">
+              <Switch
+                checked={darkTheme}
+                onChange={(checked) => dispatch(setDarkTheme(checked))}
+                checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+              />
+            </div>
+
+            {props && !props.leftPanelOpen && (
+              <SessionToggleButton
+                open={props.leftPanelOpen}
+                onClick={() => props.setLeftPanelOpen((v) => !v)}
+
+
+
+
+
+
+                count={props.sessionId ? null : props.sessions.length}
+                textContent={
+                  "Previous sessions"
+
+                }
+              />
+            )}
 
           </div>
         )}
@@ -827,10 +807,10 @@ export default function NavBar() {
         <AnimatePresence>
           {currentTab !== null && currentSession !== null && (
             <motion.div
-              className={`absolute top-full ${isSmallScreen ? "left-0 right-0" : ""} bg-transparent z-50`}
+              className={`absolute ${isSmallScreen ? "top-full left-0 right-0" : ""} bg-transparent z-50`}
               style={
-                !isSmallScreen && tabAnchorLeft != null
-                  ? ({ left: `${tabAnchorLeft}px`, right: "auto", pointerEvents: "none" } as any)
+                !isSmallScreen && tabAnchorLeft != null && tabAnchorTop != null
+                  ? ({ left: `${tabAnchorLeft}px`, top: `${tabAnchorTop}px`, right: "auto", pointerEvents: "none" } as any)
                   : ({ pointerEvents: "none" } as any)
               }
               initial={{ opacity: 0, y: -8 }}

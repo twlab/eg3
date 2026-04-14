@@ -175,8 +175,8 @@ export class FeatureSegment {
 
 
     name2 = other.getName();
-    let thisStart = this.feature.strand === "+" ? this.relativeStart + this.feature.locus.start : this.relativeEnd + this.feature.locus.start
-    let otherEnd = other.feature.strand === "+" ? other.relativeEnd + other.feature.locus.start : other.relativeStart + other.feature.locus.start
+    let thisStart = this.feature.strand === "-" ? this.relativeEnd + this.feature.locus.start : this.relativeStart + this.feature.locus.start
+    let otherEnd = other.feature.strand === "-" ? other.relativeStart + other.feature.locus.start : other.relativeEnd + other.feature.locus.start
 
 
     return `${name1}:${thisStart}-${name2}:${otherEnd}`;

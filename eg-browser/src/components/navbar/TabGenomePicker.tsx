@@ -47,10 +47,7 @@ export default function TabGenomePicker({ onClose }: Props) {
             return "/browser/" + url;
         }
     };
-    const speciesInfo = useMemo(() => {
-        if (!filtered.length) return { name: "", logo: "" };
-        return getSpeciesInfo(filtered[0].versions[0]);
-    }, [filtered]);
+
     return (
         <div className="p-2 w-full">
             <div className="p-2 border-b border-gray-200 dark:border-gray-600">
@@ -101,7 +98,7 @@ export default function TabGenomePicker({ onClose }: Props) {
                                                 className="leading-tight text-center break-words w-full"
                                                 style={{
                                                     color: resolved ? "white" : undefined,
-                                                    fontSize: "14px",
+                                                    fontSize: "16px",
                                                 }}
                                             >
                                                 <span className={resolved ? "" : "text-gray-700 dark:text-dark-primary"}>

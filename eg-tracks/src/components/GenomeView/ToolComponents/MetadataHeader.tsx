@@ -25,10 +25,11 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
 }) => {
 
   const termWidth = 15;
-  const buttonWidth = 120;
+  // const buttonWidth = 120;
   const totalContentWidth = Math.max(
-    buttonWidth + terms.length * termWidth + (padding ? padding * 2 : 10),
-    windowWidth * 0.2
+    // buttonWidth + 
+    terms.length * termWidth + (padding ? padding * 2 : 10),
+    windowWidth * 0.15
   );
 
   return (

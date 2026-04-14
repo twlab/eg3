@@ -165,10 +165,9 @@ const GeneSearchBoxBase: React.FC<GeneSearchBoxBaseProps> = ({
             onChange: handleInputChange,
             onKeyUp: showIsoformsIfEnterPressed,
             style: {
-              width: "100%",
               padding: "6px 8px",
               border: "1px solid #e2e8f0",
-              borderRadius: "4px",
+              borderRadius: "4px"
             },
           }}
           ref={inputRef}

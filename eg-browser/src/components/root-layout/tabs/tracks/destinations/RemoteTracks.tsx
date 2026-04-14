@@ -250,7 +250,7 @@ function AddTracks() {
           />
         </div>
       )}
-      <div className="px-4 py-2 flex flex-col gap-4">
+      <div className="px-4 py-2 flex flex-col gap-3">
         {/* 1. Track Type */}
         <div ref={typeSectionRef} className="flex flex-col ">
           <div className="flex items-center justify-between">
@@ -373,7 +373,7 @@ function AddTracks() {
               // backgroundColor: "black",
               // color: "white",
               width: "fit-content",
-              padding: "8px 16px",
+              padding: "4px 6px",
             }}
           >
             Add Track
@@ -407,14 +407,14 @@ function AddTracks() {
                 }
               }}
               disabled={!canSubmit}
-              style={{ flex: 1, fontSize: "14px" }}
+              style={{ flex: 1, fontSize: "16px" }}
             >
               Add Same
             </Button>
             <Button
               backgroundColor="tint"
               onClick={handleAddNew}
-              style={{ flex: 1, fontSize: "14px" }}
+              style={{ flex: 1, fontSize: "16px" }}
             >
               Add New
             </Button>
@@ -715,7 +715,7 @@ function AddDataHubs() {
               // backgroundColor: "black",
               // color: "white",
               width: "fit-content",
-              padding: "8px 16px",
+              padding: "4px 6px",
             }}
           >
             {isLoading ? "Loading…" : "Load Hub"}

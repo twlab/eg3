@@ -3621,7 +3621,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             style={{
               backgroundColor: "var(--bg-color)",
               width: `${windowWidth + 120}px`,
-              marginTop: padding / 3 + 1 + 20,
+              marginTop: padding / 3,
               marginBottom: padding / 3,
               display: "flex",
               flexDirection: windowWidth <= 600 ? "column" : "row",

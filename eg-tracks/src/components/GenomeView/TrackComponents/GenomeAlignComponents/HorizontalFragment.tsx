@@ -171,7 +171,7 @@ function HorizontalLine(props) {
 
     marginTop: `${textHeight}px`,
     whiteSpace: "nowrap" as const,
-    marginLeft: "14px",
+    marginLeft: "16px",
   };
 
   return xSpan ? (

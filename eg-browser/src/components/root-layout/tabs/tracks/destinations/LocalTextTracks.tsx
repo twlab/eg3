@@ -233,8 +233,8 @@ export default function LocalTextTracks() {
       {trackState.msg && (
         <p
           className={`text-sm italic ${trackState.msg.toLowerCase().includes("success")
-              ? "text-green-600"
-              : "text-red-500"
+            ? "text-green-600"
+            : "text-red-500"
             }`}
         >
           {trackState.msg}
@@ -244,7 +244,7 @@ export default function LocalTextTracks() {
       <Button
         active={canSubmit}
         onClick={handleSubmit}
-        style={{ fontSize: "14px" }}
+        style={{ fontSize: "16px" }}
       >
         Add Track
       </Button>

@@ -146,7 +146,7 @@ export default function ImportSession() {
                     alignItems: "center",
                     gap: "4px",
                     cursor: "pointer",
-                    fontSize: "14px",
+                    fontSize: "16px",
                   }}
                 >
                   <input
@@ -197,8 +197,8 @@ export default function ImportSession() {
                           }}
                           style={{
                             width: "fit-content",
-                            padding: "4px 8px",
-                            fontSize: "14px",
+                            padding: "4px 6px",
+                            fontSize: "16px",
                             backgroundColor: "#E6F7EA",
                             color: "#1F6E3A",
                             borderRadius: "6px",
@@ -222,8 +222,8 @@ export default function ImportSession() {
                           }}
                           style={{
                             width: "fit-content",
-                            padding: "4px 8px",
-                            fontSize: "14px",
+                            padding: "4px 6px",
+                            fontSize: "16px",
                             backgroundColor: "#FDE8E8",
                             color: "#8B1C1C",
                             borderRadius: "6px",

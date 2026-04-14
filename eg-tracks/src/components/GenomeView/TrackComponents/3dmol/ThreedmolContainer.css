@@ -22,9 +22,11 @@
   position: relative;
   display: flex;
 }
+
 .picture .box1 {
   position: relative;
 }
+
 .picture .box2 {
   position: absolute;
   right: 0;
@@ -32,9 +34,11 @@
   border: 1px black solid;
   z-index: 2;
 }
+
 .side .box1 {
   position: relative;
 }
+
 .side .box2 {
   position: relative;
   border-left: 1px black solid;
@@ -233,7 +237,7 @@
 
 .enhanced-accordion-section:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
 }
 
 .enhanced-accordion-section.open {
@@ -269,7 +273,7 @@
 
 .accordion-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #1e293b;
   display: flex;
@@ -329,6 +333,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -603,11 +608,11 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.toggle-input:checked + .toggle-slider {
+.toggle-input:checked+.toggle-slider {
   background: linear-gradient(135deg, #3b82f6, #6366f1);
 }
 
-.toggle-input:checked + .toggle-slider:before {
+.toggle-input:checked+.toggle-slider:before {
   transform: translateX(24px);
 }
 
@@ -661,12 +666,12 @@
   margin-right: 8px;
 }
 
-.radio-input:checked + .radio-custom {
+.radio-input:checked+.radio-custom {
   border-color: #3b82f6;
   background: linear-gradient(135deg, #3b82f6, #6366f1);
 }
 
-.radio-input:checked + .radio-custom::after {
+.radio-input:checked+.radio-custom::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -712,7 +717,7 @@
   background: #ffffff;
 }
 
-.thumbnail-input:checked + .thumbnail-custom {
+.thumbnail-input:checked+.thumbnail-custom {
   border-color: #3b82f6;
   background: linear-gradient(135deg, #dbeafe, #e0e7ff);
 }
@@ -877,12 +882,13 @@
   min-height: 32px;
   box-sizing: border-box;
 }
+
 .enhanced-input {
   width: 100%;
   padding: 6px 10px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 16px;
   background: #ffffff;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -908,7 +914,7 @@
   padding: 6px 10px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 16px;
   background: #ffffff;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -1101,7 +1107,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  padding: 4px 6px;
   border-radius: 4px;
   transition: all 0.2s ease;
 }

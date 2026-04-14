@@ -84,7 +84,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
           const regionSets = object.regionSets
             ? object.regionSets.map(RegionSet.deserialize)
             : [];
-          const regionSetView = object?.regionSetView ? object?.regionSetView : object?.regionSets.length > 0 ? regionSets[0] : null;
+          const regionSetView = object?.regionSetView ? object.regionSetView : object?.regionSets && object.regionSets.length > 0 ? regionSets[0] : null;
 
           // Create the newBundle object based on the existing object.
 
@@ -464,7 +464,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
             <p
               style={{
                 margin: "0 0 16px 0",
-                fontSize: "14px",
+                fontSize: "16px",
                 lineHeight: "1.4",
               }}
             >
@@ -503,10 +503,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 disabled
                 style={{
                   width: "fit-content",
-                  padding: "4px 8px",
+                  padding: "4px 6px",
                   backgroundColor: "#E5E7EB",
                   color: "#6B7280",
-                  borderRadius: "6px", fontSize: "14px",
+                  borderRadius: "6px", fontSize: "16px",
                 }}
               >
                 Restored
@@ -516,10 +516,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 onClick={() => restoreSession(id)}
                 style={{
                   width: "fit-content",
-                  padding: "4px 8px",
+                  padding: "4px 6px",
                   backgroundColor: "#E6F7EA",
                   color: "#1F6E3A",
-                  borderRadius: "6px", fontSize: "14px",
+                  borderRadius: "6px", fontSize: "16px",
                 }}
               >
                 Restore
@@ -530,11 +530,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               onClick={() => deleteSession(id)}
               style={{
                 width: "fit-content",
-                padding: "4px 8px",
+                padding: "4px 6px",
                 backgroundColor: "#FDE8E8",
                 color: "#8B1C1C",
                 borderRadius: "6px",
-                fontSize: "14px",
+                fontSize: "16px",
               }}
             >
               Delete
@@ -566,7 +566,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   alignItems: "center",
                   gap: "4px",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  fontSize: "16px",
                 }}
               >
                 <input
@@ -748,7 +748,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 onChange={(e) => setRetrieveId(e.target.value.trim())}
               />
               <Button style={{
-                width: "fit-content", padding: "4px 8px", fontSize: "14px",
+                width: "fit-content", padding: "4px 6px", fontSize: "16px",
                 backgroundColor: "#5E7AC4",
                 color: "white",
                 borderRadius: "6px",
@@ -765,7 +765,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 clickMessage=""
                 orMessage=""
                 containerClassName=""
-                className="!h-7 px-3 border border-gray-300 rounded-lg text-sm whitespace-nowrap w-auto"
+                className="!h-8 px-3 border border-gray-300 rounded-lg text-sm whitespace-nowrap w-auto"
               />
             </div>
             <div className="w-full dark:bg-white bg-black" style={{ height: "1px" }} />
@@ -930,7 +930,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                           <Button
                             onClick={saveSession}
                             style={{
-                              width: "fit-content", padding: "4px 8px", fontSize: "14px",
+                              width: "fit-content", padding: "4px 6px", fontSize: "16px",
                               backgroundColor: "#5E7AC4",
                               color: "white",
                               borderRadius: "6px",
@@ -948,7 +948,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadAsSession}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 8px", fontSize: "14px" }}
+                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
                       >
                         Download current session
                       </Button>
@@ -956,7 +956,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadAsHub}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 8px", fontSize: "14px" }}
+                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
                       >
                         Download as datahub
                       </Button>
@@ -964,7 +964,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadWholeBundle}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 8px", fontSize: "14px" }}
+                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
                       >
                         Download whole bundle
                       </Button>
@@ -1007,9 +1007,9 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
 
                               backgroundColor: "#5E7AC4",
                               color: "white",
-                              fontSize: "14px",
-                              width: "fit-content", padding: "4px 8px",
-
+                              fontSize: "16px",
+                              width: "fit-content", padding: "4px 6px",
+                              borderRadius: "6px",
                             }}
                           >
                             Create remote bundle and save session
@@ -1041,7 +1041,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                           <Button
                             onClick={handleAttemptSave}
                             style={{
-                              padding: "12px 16px",
+                              padding: "4px 6px",
                               width: "fit-content",
 
                               background: "white",
@@ -1088,10 +1088,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                                     : "",
                                 );
                               }}
-
+                              outlined
                               style={{
 
-                                padding: "4px 8px",
+                                padding: "4px 6px",
                                 width: "fit-content",
 
 
@@ -1110,7 +1110,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadAsSession}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 8px", fontSize: "14px" }}
+                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
                       >
                         Download current session
                       </Button>
@@ -1118,7 +1118,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadAsHub}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 8px", fontSize: "14px" }}
+                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
                       >
                         Download as datahub
                       </Button>

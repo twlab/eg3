@@ -66,8 +66,8 @@ export default function SessionList({
 
   return (
     <div ref={containerRef} className="flex flex-col h-full relative">
-      <div className="relative flex items-center min-h-[40px]">
-        <div className="absolute left-0 top-0 flex items-center">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center">
           {!currentSession?.genomeId && (
             <ClearAllButton
               onClearAll={handleClearAll}
@@ -76,7 +76,7 @@ export default function SessionList({
             />
           )}
         </div>
-        <div className="absolute right-0 top-0 z-40">
+        <div className="flex items-center z-40">
           <SessionToggleButton
             open={open}
             onClick={() => {

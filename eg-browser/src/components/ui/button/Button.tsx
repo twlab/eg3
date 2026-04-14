@@ -138,7 +138,7 @@ export default function Button({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       className={classNames(
-        "w-19 h-7 rounded-xs flex items-center justify-center",
+        "rounded-xs flex items-center justify-center",
         "text-sm font-medium select-none",
         "text-gray-700 dark:text-gray-300 bg-gray-100/70 dark:bg-gray-800/50",
         "transition-all duration-150 cursor-pointer",
