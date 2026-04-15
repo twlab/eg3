@@ -45,7 +45,7 @@ export default function SessionList({
   const currentSession = useAppSelector(selectCurrentSession);
   const currentSessionId = useAppSelector(selectCurrentSessionId);
   const sortPreference = useAppSelector(selectSessionSortPreference);
-  const [sessionTab, setSessionTab] = useState<"edit" | "load" | "switch">(
+  const [sessionTab, setSessionTab] = useState<"edit" | "switch">(
     "edit",
   );
 
@@ -63,7 +63,7 @@ export default function SessionList({
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
-
+  console.log(sessionTab)
   return (
     <div ref={containerRef} className="flex flex-col h-full relative">
       <div className="flex items-center justify-between w-full">
@@ -76,46 +76,48 @@ export default function SessionList({
             />
           )}
         </div>
-        <div className="flex items-center z-40">
-          <SessionToggleButton
-            open={open}
-            onClick={() => {
-              if (onRequestClose) onRequestClose();
-            }}
-            className={"rounded-full bg-white dark:bg-dark-secondary shadow"}
-            // count={sessions ? sessions.length : 0}
 
-            count={
-              sessionTab === "switch"
-                ? sessions.length
-                : currentSession?.title
-                  ? null
-                  : sessions.length
-            }
-            textContent={
-              sessionTab === "switch" ? (
-                "Previous sessions"
-              ) : currentSession ? (
-                <div className="text-left">
-                  <div>{`Current Session: "${currentSession.title}"`}</div>
-                  <div>
-                    Session Bundle ID:{" "}
-                    {currentSession.bundleId ? (
-                      <span className="text-blue-600">
-                        {currentSession.bundleId}
-                      </span>
-                    ) : (
-                      <span className="text-red-600">Not saved remotely</span>
-                    )}
-                  </div>
+        <SessionToggleButton
+          open={open}
+          onClick={() => {
+            if (onRequestClose) onRequestClose();
+          }}
+          className={"rounded-full bg-white dark:bg-dark-secondary shadow"}
+          // count={sessions ? sessions.length : 0}
+
+          count={
+            sessionTab === "switch"
+              ? sessions.length
+              : (sessionTab === "edit" || (!currentSession?.title && currentSession))
+                ? null
+                : sessions.length
+          }
+          textContent={
+            sessionTab === "switch" ? (
+              "Previous sessions"
+            ) : currentSession ? (
+              <div className="text-left">
+                {currentSession?.title ? <div>{`Current Session: "${currentSession.title}"`}</div> :
+                  <div>{`Current Session: "Untitled Session"`}</div>}
+
+                <div>
+                  Session Bundle ID:{" "}
+                  {currentSession.bundleId ? (
+                    <span className="text-blue-600">
+                      {currentSession.bundleId}
+                    </span>
+                  ) : (
+                    <span className="text-red-600">Not saved remotely</span>
+                  )}
                 </div>
-              ) : (
-                "Previous sessions"
-              )
-            }
-          />
-        </div>
+              </div>
+            ) : (
+              "Previous sessions"
+            )
+          }
+        />
       </div>
+
 
       <div className="flex-1 min-h-0 overflow-y-auto ">
         {!currentSession?.genomeId ? (
@@ -310,12 +312,14 @@ function SessionListItem({
     >
       <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
         <div className="flex flex-col gap-1">
-          {session.title.length > 0 ? (
+          {session.title && session.title.length > 0 ? (
             <>
               <h1 className="text-l">{`Current Session: ${session.title}`}</h1>
             </>
           ) : (
-            ""
+            <>
+              <h1 className="text-l">{`Current Session: Untitled Session`}</h1>
+            </>
           )}
           {session.bundleId ? (
             <p className="text-sm">
@@ -479,8 +483,8 @@ function SessionTabs({
   onSessionClick: (s: BrowserSession) => void;
   sortPreference: "createdAt" | "updatedAt";
   currentSessionId: string | null;
-  tab: "edit" | "load" | "switch";
-  setTab: (t: "edit" | "load" | "switch") => void;
+  tab: "edit" | "switch";
+  setTab: (t: "edit" | "switch") => void;
 }) {
 
   return (

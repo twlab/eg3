@@ -84,7 +84,7 @@ export const browserSlice = createSlice({
         id: generateUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        title: "Untitled Session",
+        title: "",
         bundleId: null,
         customGenome: genome.customGenome ? genome.customGenome : null,
         chromosomes:
@@ -225,9 +225,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-        state,
-        state.browser.present.currentSession,
-      )
+      state,
+      state.browser.present.currentSession,
+    )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

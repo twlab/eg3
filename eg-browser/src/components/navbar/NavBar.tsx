@@ -54,6 +54,7 @@ import {
 import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
 import SessionToggleButton from "../sessions/SessionToggleButton";
+import { current } from "@reduxjs/toolkit";
 
 
 
@@ -87,14 +88,14 @@ export default function NavBar(props) {
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
 
-  const genome = useCurrentGenome();
+  const _genomeConfig = useCurrentGenome();
 
 
   // Reset search when switching to mobile so the expanded bar doesn't bleed over
   useEffect(() => { if (isSmallScreen) dispatch(setNavSearchOpen(false)); }, [isSmallScreen, dispatch]);
   const genomeConfig = useMemo(() => {
-    return genome ? GenomeSerializer.deserialize(genome) : null;
-  }, [genome]);
+    return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
+  }, [_genomeConfig]);
   useEffect(() => {
 
     if (!currentSession) {
@@ -227,8 +228,8 @@ export default function NavBar(props) {
     }
   };
 
-  const genomeLogoUrl: { name: string; logo: string } | null = genome?.name
-    ? getSpeciesInfo(genome.name)
+  const genomeLogoUrl: { name: string; logo: string, color: string } | null = _genomeConfig?.name
+    ? getSpeciesInfo(_genomeConfig.name)
     : null;
 
   // const genomeLogoUrl: string | null = null;
@@ -312,9 +313,9 @@ export default function NavBar(props) {
             alt=""
             className="absolute inset-0 w-full h-full object-contain"
           />
-          {currentSession &&
-            currentSession.title.length > 0 &&
-            genome?.name && (
+          {currentSession
+            &&
+            _genomeConfig?.name && (
               <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
                 <span
                   className="text-red-500 font-mono leading-none"
@@ -337,7 +338,7 @@ export default function NavBar(props) {
                   transition: "opacity 0.15s ease",
                 }}
               >
-                {genome?.name && (
+                {_genomeConfig?.name && (
                   <Button
                     onClick={(e) => openTab("tab-genome-picker", e)}
                     active={currentTab === "tab-genome-picker"}
@@ -372,7 +373,11 @@ export default function NavBar(props) {
                           <div
                             className="absolute inset-0 rounded-xs overflow-hidden"
                             style={{
-                              backgroundImage: `url(${genomeLogoUrl.logo.startsWith("http") ? genomeLogoUrl.logo : import.meta.env.BASE_URL + genomeLogoUrl.logo})`,
+                              backgroundImage: `url(${(() => {
+                                const url = genomeLogoUrl?.logo ?? "";
+                                if (url.startsWith('http')) return url;
+                                return (!import.meta || !import.meta.env ? "/browser/" : import.meta.env.BASE_URL) + url;
+                              })()})`,
                               backgroundSize: "cover",
                               backgroundPosition: "center",
                               backgroundRepeat: "no-repeat",
@@ -381,16 +386,16 @@ export default function NavBar(props) {
                         )}
 
 
-                        {(currentSession && currentSession.title.length > 0 && genome?.name) && (
+                        {currentSession && currentSession?.title && currentSession?.title.length > 0 && _genomeConfig?.name && (
                           <span
                             className="relative whitespace-nowrap leading-tight text-center break-words w-full "
-                            style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px", padding: "4px 6px" }}
+                            style={{ color: genomeLogoUrl?.color ? genomeLogoUrl?.color : "white", fontSize: "16px", padding: "4px 6px" }}
                           >
                             <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
                               {genomeLogoUrl?.name ? (
-                                <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
+                                <>{genomeLogoUrl.name}/<i>{_genomeConfig.name}</i></>
                               ) : (
-                                <i>{genome.name}</i>
+                                <i>{_genomeConfig.name}</i>
                               )}
                             </span>
                           </span>
@@ -399,6 +404,7 @@ export default function NavBar(props) {
                     </div>
                   </Button>
                 )}
+
                 {currentDisplayRegionModel && genomeConfig ? (
                   <Button
                     onClick={(e) => openTab("regions", e)}
@@ -472,7 +478,7 @@ export default function NavBar(props) {
                       transition: "opacity 0.15s ease",
                     }}
                   >
-                    {genome?.name && (
+                    {_genomeConfig?.name && (
                       <Button
                         onClick={(e) => openTab("tab-genome-picker", e)}
                         active={currentTab === "tab-genome-picker"}
@@ -516,16 +522,16 @@ export default function NavBar(props) {
                             )}
 
 
-                            {currentSession.title.length > 0 && genome?.name && (
+                            {currentSession && _genomeConfig?.name && (
                               <span
                                 className="relative whitespace-nowrap leading-tight text-center break-words w-full "
-                                style={{ color: genomeLogoUrl ? "white" : undefined, fontSize: "16px", padding: "4px 6px" }}
+                                style={{ color: genomeLogoUrl?.color ? genomeLogoUrl?.color : "white", fontSize: "16px", padding: "4px 6px" }}
                               >
                                 <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
                                   {genomeLogoUrl?.name ? (
-                                    <>{genomeLogoUrl.name}/<i>{genome.name}</i></>
+                                    <>{genomeLogoUrl.name}/<i>{_genomeConfig.id}</i></>
                                   ) : (
-                                    <i>{genome.name}</i>
+                                    <i>{_genomeConfig.id}</i>
                                   )}
                                 </span>
                               </span>
@@ -587,19 +593,39 @@ export default function NavBar(props) {
                       />
                     </div>
 
+                    {(props && !props.leftPanelOpen && !currentSession?.title) ? (
 
-                    {props && !props.leftPanelOpen && (
+
+                      <div className="relative group flex-shrink-0">
+                        <button
+                          onClick={() => props.setLeftPanelOpen((v) => !v)}
+                          aria-label="Open search"
+                          title="Session not saved — click to open search"
+                          className="group flex items-center justify-center w-9 h-8 rounded-full bg-red-50 hover:bg-red-100 dark:bg-transparent dark:hover:bg-red-900/20 border border-red-200 dark:border-red-700 shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-300"
+                        >
+                          <div className="relative inline-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-red-600" role="img">
+                              <title>Not saved remotely</title>
+                              <path d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z" fill="currentColor" />
+                            </svg>
+                            <span className="absolute -bottom-1 -right-0.5 text-red-600 font-semibold text-[13px] leading-none">×</span>
+                          </div>
+                        </button>
+
+                      </div>
+                    ) : props && !props.leftPanelOpen ?
                       <SessionToggleButton
                         open={props.leftPanelOpen}
                         onClick={() => props.setLeftPanelOpen((v) => !v)}
                         count={null}
                         textContent={<div className="flex ">
-                          <div>{`"${props.currentSession.title}"`}</div>
-                          <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />
+                          {currentSession?.title ? <><div>{`"${currentSession.title}"`}</div><span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" /></> : ""}
+
+
                           <div className="flex items-center">
 
 
-                            {props.currentSession.bundleId ? (
+                            {currentSession.bundleId ? (
                               <div className="flex items-center gap-1">
 
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-green-600" role="img">
@@ -624,8 +650,8 @@ export default function NavBar(props) {
                         </div>
 
                         }
-                      />
-                    )}
+                      /> : ""}
+
 
 
 
@@ -670,7 +696,7 @@ export default function NavBar(props) {
               }
 
             >
-              Switch to v2022
+              Switch to 2022v.
             </Button>
             <div className="h-8 flex flex-row items-center flex-shrink-0">
               <Switch
@@ -685,13 +711,10 @@ export default function NavBar(props) {
               <SessionToggleButton
                 open={props.leftPanelOpen}
                 onClick={() => props.setLeftPanelOpen((v) => !v)}
+                className={"rounded-full bg-white dark:bg-dark-secondary shadow"}
+                // count={sessions ? sessions.length : 0}
 
-
-
-
-
-
-                count={props.sessionId ? null : props.sessions.length}
+                count={currentSession ? null : props.sessions.length}
                 textContent={
                   "Previous sessions"
 

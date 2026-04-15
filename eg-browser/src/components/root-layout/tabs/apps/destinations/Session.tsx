@@ -103,7 +103,7 @@ const Session: React.FC<{ tab?: boolean }> = () => {
       tracks,
       viewRegion: userViewRegion ? userViewRegion : currentSession.viewRegion,
       viewInterval: curViewInterval,
-      title: currentSession?.title ? currentSession.title : "Untitled Session",
+      title: currentSession?.title ? currentSession.title : "",
     };
 
   }
@@ -171,7 +171,7 @@ const Session: React.FC<{ tab?: boolean }> = () => {
       chromosomes: sessionBundle.chromosomes ? sessionBundle.chromosomes : null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      title: sessionBundle.title ? sessionBundle.title : "Untitled Session",
+      title: sessionBundle.title ? sessionBundle.title : "",
       viewRegion: coordinate,
       userViewRegion: coordinate,
       tracks: sessionBundle.tracks.map((item: any) => ({
@@ -203,7 +203,7 @@ const Session: React.FC<{ tab?: boolean }> = () => {
 
   //add or delete session from bundle
   function onUpdateBundle(bundle: any) {
-    let title = "Untitled Session";
+    let title = "";
     if (
       bundle.sessionsInBundle &&
       bundle.sessionsInBundle[`${bundle.currentId}`]
