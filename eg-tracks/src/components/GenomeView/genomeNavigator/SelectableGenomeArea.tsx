@@ -36,7 +36,7 @@ interface SelectableGenomeAreaProps {
 export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAreaProps> {
   constructor(props: SelectableGenomeAreaProps) {
     super(props);
-    console.log(props);
+
     this.getBoxCaption = this.getBoxCaption.bind(this);
     this.getIsAreaValid = this.getIsAreaValid.bind(this);
     this.handleAreaSelect = this.handleAreaSelect.bind(this);
