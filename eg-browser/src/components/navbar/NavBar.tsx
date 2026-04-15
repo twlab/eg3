@@ -54,14 +54,8 @@ import {
 import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
 import SessionToggleButton from "../sessions/SessionToggleButton";
-import { current } from "@reduxjs/toolkit";
-
-
-
 
 export default function NavBar(props) {
-
-
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -90,17 +84,16 @@ export default function NavBar(props) {
 
   const _genomeConfig = useCurrentGenome();
 
-
   // Reset search when switching to mobile so the expanded bar doesn't bleed over
-  useEffect(() => { if (isSmallScreen) dispatch(setNavSearchOpen(false)); }, [isSmallScreen, dispatch]);
+  useEffect(() => {
+    if (isSmallScreen) dispatch(setNavSearchOpen(false));
+  }, [isSmallScreen, dispatch]);
   const genomeConfig = useMemo(() => {
     return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
   }, [_genomeConfig]);
   useEffect(() => {
-
     if (!currentSession) {
-      dispatch(setNavigationTab(null))
-
+      dispatch(setNavigationTab(null));
     }
   }, [currentSession]);
   useEffect(() => {
@@ -228,9 +221,8 @@ export default function NavBar(props) {
     }
   };
 
-  const genomeLogoUrl: { name: string; logo: string, color: string } | null = _genomeConfig?.name
-    ? getSpeciesInfo(_genomeConfig.name)
-    : null;
+  const genomeLogoUrl: { name: string; logo: string; color: string } | null =
+    _genomeConfig?.name ? getSpeciesInfo(_genomeConfig.name) : null;
 
   // const genomeLogoUrl: string | null = null;
 
@@ -276,7 +268,7 @@ export default function NavBar(props) {
       {/* Single full-width navbar row */}
       <div
         ref={navRef}
-        className="flex flex-row pt-1 pb-1 items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600  relative  px-2 gap-2"
+        className="flex flex-row py-1 items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600 px-4 relative  gap-2"
       >
         {/* Back button */}
         {currentSession ? (
@@ -313,18 +305,16 @@ export default function NavBar(props) {
             alt=""
             className="absolute inset-0 w-full h-full object-contain"
           />
-          {currentSession
-            &&
-            _genomeConfig?.name && (
-              <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
-                <span
-                  className="text-red-500 font-mono leading-none"
-                  style={{ fontSize: "10px" }}
-                >
-                  v{version}
-                </span>
-              </div>
-            )}
+          {currentSession && _genomeConfig?.name && (
+            <div className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white/50 dark:bg-dark-background/50 py-0.5">
+              <span
+                className="text-red-500 font-mono leading-none"
+                style={{ fontSize: "10px" }}
+              >
+                v{version}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Tab buttons / mobile controls — takes remaining space */}
@@ -334,7 +324,6 @@ export default function NavBar(props) {
               <div
                 className="flex flex-row flex-wrap items-center"
                 style={{
-
                   transition: "opacity 0.15s ease",
                 }}
               >
@@ -346,27 +335,33 @@ export default function NavBar(props) {
                       backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
                       color: "#0f172a",
 
-
                       display: "flex",
                       alignItems: "center",
-                      width: "fit-content", fontSize: "16px"
+                      width: "fit-content",
+                      fontSize: "16px",
                     }}
                   >
                     <div className="relative flex-shrink-0">
                       <div
                         className={classNames(
                           "relative h-8 flex items-center rounded-xs",
-                          sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                          genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
+                          sessionPanelOpen
+                            ? "bg-secondary dark:bg-dark-secondary"
+                            : "",
+                          genomeLogoUrl && !sessionPanelOpen
+                            ? "outline outline-gray-200"
+                            : "",
                         )}
                         style={{ opacity: genomeLogoUrl?.logo ? 0.9 : 1 }}
                         onMouseEnter={(e) => {
                           if (genomeLogoUrl)
-                            (e.currentTarget as HTMLElement).style.opacity = "1";
+                            (e.currentTarget as HTMLElement).style.opacity =
+                              "1";
                         }}
                         onMouseLeave={(e) => {
                           if (genomeLogoUrl)
-                            (e.currentTarget as HTMLElement).style.opacity = "0.9";
+                            (e.currentTarget as HTMLElement).style.opacity =
+                              "0.9";
                         }}
                       >
                         {genomeLogoUrl?.logo && (
@@ -375,8 +370,12 @@ export default function NavBar(props) {
                             style={{
                               backgroundImage: `url(${(() => {
                                 const url = genomeLogoUrl?.logo ?? "";
-                                if (url.startsWith('http')) return url;
-                                return (!import.meta || !import.meta.env ? "/browser/" : import.meta.env.BASE_URL) + url;
+                                if (url.startsWith("http")) return url;
+                                return (
+                                  (!import.meta || !import.meta.env
+                                    ? "/browser/"
+                                    : import.meta.env.BASE_URL) + url
+                                );
                               })()})`,
                               backgroundSize: "cover",
                               backgroundPosition: "center",
@@ -385,21 +384,38 @@ export default function NavBar(props) {
                           />
                         )}
 
-
-                        {currentSession && currentSession?.title && currentSession?.title.length > 0 && _genomeConfig?.name && (
-                          <span
-                            className="relative whitespace-nowrap leading-tight text-center break-words w-full "
-                            style={{ color: genomeLogoUrl?.color ? genomeLogoUrl?.color : "white", fontSize: "16px", padding: "4px 6px" }}
-                          >
-                            <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
-                              {genomeLogoUrl?.name ? (
-                                <>{genomeLogoUrl.name}/<i>{_genomeConfig.name}</i></>
-                              ) : (
-                                <i>{_genomeConfig.name}</i>
-                              )}
+                        {currentSession &&
+                          currentSession?.title &&
+                          currentSession?.title.length > 0 &&
+                          _genomeConfig?.name && (
+                            <span
+                              className="relative whitespace-nowrap leading-tight text-center break-words w-full "
+                              style={{
+                                color: genomeLogoUrl?.color
+                                  ? genomeLogoUrl?.color
+                                  : "white",
+                                fontSize: "16px",
+                                padding: "4px 6px",
+                              }}
+                            >
+                              <span
+                                className={
+                                  genomeLogoUrl
+                                    ? ""
+                                    : "text-gray-700 dark:text-dark-primary"
+                                }
+                              >
+                                {genomeLogoUrl?.name ? (
+                                  <>
+                                    {genomeLogoUrl.name}/
+                                    <i>{_genomeConfig.name}</i>
+                                  </>
+                                ) : (
+                                  <i>{_genomeConfig.name}</i>
+                                )}
+                              </span>
                             </span>
-                          </span>
-                        )}
+                          )}
                       </div>
                     </div>
                   </Button>
@@ -409,19 +425,35 @@ export default function NavBar(props) {
                   <Button
                     onClick={(e) => openTab("regions", e)}
                     active={currentTab === "regions"}
-                    style={{ backgroundColor: "#1f2e46", color: "white", width: "100px", fontSize: "10px" }}
+                    style={{
+                      backgroundColor: "#1f2e46",
+                      color: "white",
+                      width: "100px",
+                      fontSize: "10px",
+                    }}
                   >
                     {currentDisplayRegionModel.currentRegionAsString()}
                   </Button>
-                ) : ""}
+                ) : (
+                  ""
+                )}
                 {currentSession ? (
-                  <><IconButton onClick={() => { setMobileMenuOpen(!mobileMenuOpen); dispatch(setNavigationTab(null)); }} title="Menu">
-                    {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
-                  </IconButton><>
-
-
+                  <>
+                    <IconButton
+                      onClick={() => {
+                        setMobileMenuOpen(!mobileMenuOpen);
+                        dispatch(setNavigationTab(null));
+                      }}
+                      title="Menu"
+                    >
+                      {mobileMenuOpen ? (
+                        <XMarkIcon className="h-6 w-6" />
+                      ) : (
+                        <Bars3Icon className="h-6 w-6" />
+                      )}
+                    </IconButton>
+                    <>
                       <div className="relative group flex-shrink-0 ml-1">
-
                         {/* Hover tooltip */}
                         <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-300 z-50">
                           {/* Arrow pointing up toward button */}
@@ -429,21 +461,38 @@ export default function NavBar(props) {
                             <div className="w-2.5 h-2.5 bg-gray-900 dark:bg-gray-700 rotate-45 -mb-1.5 relative z-10" />
                           </div>
                           <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-lg">
-                            <p className="font-semibold mb-1 text-blue-300">Search for</p>
+                            <p className="font-semibold mb-1 text-blue-300">
+                              Search for
+                            </p>
                             <ul className="space-y-0.5 text-gray-200">
-                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Regions <span className="text-gray-400 ml-1">e.g. chr1:100-200</span></li>
-                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> Genes <span className="text-gray-400 ml-1">e.g. BRCA1</span></li>
-                              <li className="flex items-center gap-1"><span className="text-green-400">›</span> SNPs <span className="text-gray-400 ml-1">e.g. rs123456</span></li>
+                              <li className="flex items-center gap-1">
+                                <span className="text-green-400">›</span>{" "}
+                                Regions{" "}
+                                <span className="text-gray-400 ml-1">
+                                  e.g. chr1:100-200
+                                </span>
+                              </li>
+                              <li className="flex items-center gap-1">
+                                <span className="text-green-400">›</span> Genes{" "}
+                                <span className="text-gray-400 ml-1">
+                                  e.g. BRCA1
+                                </span>
+                              </li>
+                              <li className="flex items-center gap-1">
+                                <span className="text-green-400">›</span> SNPs{" "}
+                                <span className="text-gray-400 ml-1">
+                                  e.g. rs123456
+                                </span>
+                              </li>
                             </ul>
                           </div>
                         </div>
                       </div>
-
-
                     </>
-
                   </>
-                ) : ""}
+                ) : (
+                  ""
+                )}
               </div>
 
               <div
@@ -459,11 +508,7 @@ export default function NavBar(props) {
                   alignItems: "center",
                   gap: 4,
                 }}
-              >
-
-
-              </div>
-
+              ></div>
             </>
           ) : (
             <>
@@ -474,7 +519,6 @@ export default function NavBar(props) {
                     ref={tabButtonsRef}
                     className="flex flex-row flex-wrap items-center gap-1.5"
                     style={{
-
                       transition: "opacity 0.15s ease",
                     }}
                   >
@@ -483,30 +527,38 @@ export default function NavBar(props) {
                         onClick={(e) => openTab("tab-genome-picker", e)}
                         active={currentTab === "tab-genome-picker"}
                         style={{
-                          backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
+                          backgroundColor: sessionPanelOpen
+                            ? "#e6eef9"
+                            : "#f3f4f6",
                           color: "#0f172a",
-
 
                           display: "flex",
                           alignItems: "center",
-                          width: "fit-content", fontSize: "16px"
+                          width: "fit-content",
+                          fontSize: "16px",
                         }}
                       >
                         <div className="relative flex-shrink-0">
                           <div
                             className={classNames(
                               "relative h-8 flex items-center rounded-xs",
-                              sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
-                              genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : "",
+                              sessionPanelOpen
+                                ? "bg-secondary dark:bg-dark-secondary"
+                                : "",
+                              genomeLogoUrl && !sessionPanelOpen
+                                ? "outline outline-gray-200"
+                                : "",
                             )}
                             style={{ opacity: genomeLogoUrl?.logo ? 0.9 : 1 }}
                             onMouseEnter={(e) => {
                               if (genomeLogoUrl)
-                                (e.currentTarget as HTMLElement).style.opacity = "1";
+                                (e.currentTarget as HTMLElement).style.opacity =
+                                  "1";
                             }}
                             onMouseLeave={(e) => {
                               if (genomeLogoUrl)
-                                (e.currentTarget as HTMLElement).style.opacity = "0.9";
+                                (e.currentTarget as HTMLElement).style.opacity =
+                                  "0.9";
                             }}
                           >
                             {genomeLogoUrl?.logo && (
@@ -521,15 +573,29 @@ export default function NavBar(props) {
                               />
                             )}
 
-
                             {currentSession && _genomeConfig?.name && (
                               <span
                                 className="relative whitespace-nowrap leading-tight text-center break-words w-full "
-                                style={{ color: genomeLogoUrl?.color ? genomeLogoUrl?.color : "white", fontSize: "16px", padding: "4px 6px" }}
+                                style={{
+                                  color: genomeLogoUrl?.color
+                                    ? genomeLogoUrl?.color
+                                    : "white",
+                                  fontSize: "16px",
+                                  padding: "4px 6px",
+                                }}
                               >
-                                <span className={genomeLogoUrl ? "" : "text-gray-700 dark:text-dark-primary"}>
+                                <span
+                                  className={
+                                    genomeLogoUrl
+                                      ? ""
+                                      : "text-gray-700 dark:text-dark-primary"
+                                  }
+                                >
                                   {genomeLogoUrl?.name ? (
-                                    <>{genomeLogoUrl.name}/<i>{_genomeConfig.id}</i></>
+                                    <>
+                                      {genomeLogoUrl.name}/
+                                      <i>{_genomeConfig.id}</i>
+                                    </>
                                   ) : (
                                     <i>{_genomeConfig.id}</i>
                                   )}
@@ -544,7 +610,12 @@ export default function NavBar(props) {
                       <Button
                         onClick={(e) => openTab("regions", e)}
                         active={currentTab === "regions"}
-                        style={{ backgroundColor: "#1f2e46", color: "white", width: "fit-content", padding: "4px 6px" }}
+                        style={{
+                          backgroundColor: "#1f2e46",
+                          color: "white",
+                          width: "fit-content",
+                          padding: "4px 6px",
+                        }}
                       >
                         {currentDisplayRegionModel.currentRegionAsString()}
                       </Button>
@@ -552,35 +623,65 @@ export default function NavBar(props) {
                     <Button
                       onClick={(e) => openTab("tracks", e)}
                       active={currentTab === "tracks"}
-                      style={{ backgroundColor: "#dbe0ff", color: "#1e1b4b", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
+                      style={{
+                        backgroundColor: "#dbe0ff",
+                        color: "#1e1b4b",
+                        width: "fit-content",
+                        padding: "4px 6px",
+                        fontWeight: 600,
+                      }}
                     >
                       Tracks
                     </Button>
                     <Button
                       onClick={(e) => openTab("apps", e)}
                       active={currentTab === "apps"}
-                      style={{ backgroundColor: "#dafdf7", color: "#064e3b", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
+                      style={{
+                        backgroundColor: "#dafdf7",
+                        color: "#064e3b",
+                        width: "fit-content",
+                        padding: "4px 6px",
+                        fontWeight: 600,
+                      }}
                     >
                       Apps
                     </Button>
                     <Button
                       onClick={(e) => openTab("share", e)}
                       active={currentTab === "share"}
-                      style={{ backgroundColor: "#e6f9d2", color: "#14532d", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
+                      style={{
+                        backgroundColor: "#e6f9d2",
+                        color: "#14532d",
+                        width: "fit-content",
+                        padding: "4px 6px",
+                        fontWeight: 600,
+                      }}
                     >
                       Share
                     </Button>
                     <Button
                       onClick={(e) => openTab("settings", e)}
                       active={currentTab === "settings"}
-                      style={{ backgroundColor: "#ffc4c4", color: "#7f1d1d", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
+                      style={{
+                        backgroundColor: "#ffc4c4",
+                        color: "#7f1d1d",
+                        width: "fit-content",
+                        padding: "4px 6px",
+                        fontWeight: 600,
+                      }}
                     >
                       Settings
                     </Button>
                     <Button
                       onClick={(e) => openTab("help", e)}
                       active={currentTab === "help"}
-                      style={{ backgroundColor: "#fff1be", color: "#713f12", width: "fit-content", padding: "4px 6px", fontWeight: 600 }}
+                      style={{
+                        backgroundColor: "#fff1be",
+                        color: "#713f12",
+                        width: "fit-content",
+                        padding: "4px 6px",
+                        fontWeight: 600,
+                      }}
                     >
                       Help
                     </Button>
@@ -588,14 +689,16 @@ export default function NavBar(props) {
                       <Switch
                         checked={darkTheme}
                         onChange={(checked) => dispatch(setDarkTheme(checked))}
-                        checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                        uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+                        checkedIcon={
+                          <MoonIcon className="w-4 h-4 text-gray-400" />
+                        }
+                        uncheckedIcon={
+                          <SunIcon className="w-4 h-4 text-white" />
+                        }
                       />
                     </div>
 
-                    {(props && !props.leftPanelOpen && !currentSession?.title) ? (
-
-
+                    {props && !props.leftPanelOpen && !currentSession?.title ? (
                       <div className="relative group flex-shrink-0">
                         <button
                           onClick={() => props.setLeftPanelOpen((v) => !v)}
@@ -604,69 +707,88 @@ export default function NavBar(props) {
                           className="group flex items-center justify-center w-9 h-8 rounded-full bg-red-50 hover:bg-red-100 dark:bg-transparent dark:hover:bg-red-900/20 border border-red-200 dark:border-red-700 shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-300"
                         >
                           <div className="relative inline-block">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-red-600" role="img">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              className="h-5 w-5 text-red-600"
+                              role="img"
+                            >
                               <title>Not saved remotely</title>
-                              <path d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z" fill="currentColor" />
+                              <path
+                                d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z"
+                                fill="currentColor"
+                              />
                             </svg>
-                            <span className="absolute -bottom-1 -right-0.5 text-red-600 font-semibold text-[13px] leading-none">×</span>
+                            <span className="absolute -bottom-1 -right-0.5 text-red-600 font-semibold text-[13px] leading-none">
+                              ×
+                            </span>
                           </div>
                         </button>
-
                       </div>
-                    ) : props && !props.leftPanelOpen ?
+                    ) : props && !props.leftPanelOpen ? (
                       <SessionToggleButton
                         open={props.leftPanelOpen}
                         onClick={() => props.setLeftPanelOpen((v) => !v)}
                         count={null}
-                        textContent={<div className="flex ">
-                          {currentSession?.title ? <><div>{`"${currentSession.title}"`}</div><span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" /></> : ""}
-
-
-                          <div className="flex items-center">
-
-
-                            {currentSession.bundleId ? (
-                              <div className="flex items-center gap-1">
-
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-green-600" role="img">
-                                  <title>Saved remotely</title>
-                                  <path d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z" fill="currentColor" />
-                                </svg>
-                              </div>
+                        textContent={
+                          <div className="flex ">
+                            {currentSession?.title ? (
+                              <>
+                                <div>{`"${currentSession.title}"`}</div>
+                                <span className="w-px self-stretch bg-gray-300 dark:bg-gray-600 mx-2" />
+                              </>
                             ) : (
-                              <div className="relative inline-block">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-red-600" role="img">
-                                  <title>Not saved remotely</title>
-                                  <path d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z" fill="currentColor" />
-                                </svg>
-                                <span className="absolute -bottom-1 -right-0.5 text-red-600 font-semibold text-[13px] leading-none">×</span>
-                              </div>
-
-
-
-
+                              ""
                             )}
+
+                            <div className="flex items-center">
+                              {currentSession.bundleId ? (
+                                <div className="flex items-center gap-1">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    className="h-5 w-5 text-green-600"
+                                    role="img"
+                                  >
+                                    <title>Saved remotely</title>
+                                    <path
+                                      d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z"
+                                      fill="currentColor"
+                                    />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="relative inline-block">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    className="h-5 w-5 text-red-600"
+                                    role="img"
+                                  >
+                                    <title>Not saved remotely</title>
+                                    <path
+                                      d="M4 2h14v2H4v16h2v-6h12v6h2V6h2v16H2V2h2zm4 18h8v-4H8v4zM20 6h-2V4h2v2zM6 6h9v4H6V6z"
+                                      fill="currentColor"
+                                    />
+                                  </svg>
+                                  <span className="absolute -bottom-1 -right-0.5 text-red-600 font-semibold text-[13px] leading-none">
+                                    ×
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-
                         }
-                      /> : ""}
-
-
-
-
-
-
+                      />
+                    ) : (
+                      ""
+                    )}
                   </div>
-
-
-
-
                 </div>
               ) : (
                 <>
                   {!currentSession && (
-                    <div style={{ fontSize: 24 }}>
+                    <div style={{ fontSize: 21 }}>
                       <span>WashU </span> Epigenome Browser
                     </div>
                   )}
@@ -676,11 +798,9 @@ export default function NavBar(props) {
           )}
         </div>
 
-
         {/* Right side: dark mode + previous version (no session) */}
         {!currentSession && (
           <div className="flex flex-row items-center gap-2 ml-auto flex-shrink-0 mr-20">
-
             <Button
               style={{
                 backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
@@ -690,11 +810,12 @@ export default function NavBar(props) {
                 height: "32px",
                 borderRadius: "15px",
               }}
-
               onClick={() =>
-                window.open("https://epigenomegateway.wustl.edu/browser2022/", "_blank")
+                window.open(
+                  "https://epigenomegateway.wustl.edu/browser2022/",
+                  "_blank",
+                )
               }
-
             >
               Switch to 2022v.
             </Button>
@@ -711,20 +832,17 @@ export default function NavBar(props) {
               <SessionToggleButton
                 open={props.leftPanelOpen}
                 onClick={() => props.setLeftPanelOpen((v) => !v)}
-                className={"rounded-full bg-white dark:bg-dark-secondary shadow"}
+                className={
+                  "rounded-full bg-white dark:bg-dark-secondary shadow"
+                }
                 // count={sessions ? sessions.length : 0}
 
                 count={currentSession ? null : props.sessions.length}
-                textContent={
-                  "Previous sessions"
-
-                }
+                textContent={"Previous sessions"}
               />
             )}
-
           </div>
         )}
-
 
         <AnimatePresence>
           {isSmallScreen && mobileMenuOpen && (
@@ -812,12 +930,15 @@ export default function NavBar(props) {
                       <Switch
                         checked={darkTheme}
                         onChange={(checked) => dispatch(setDarkTheme(checked))}
-                        checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-                        uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+                        checkedIcon={
+                          <MoonIcon className="w-4 h-4 text-gray-400" />
+                        }
+                        uncheckedIcon={
+                          <SunIcon className="w-4 h-4 text-white" />
+                        }
                       />
                     </div>
                   </>
-
                 ) : (
                   ""
                 )}
@@ -833,7 +954,12 @@ export default function NavBar(props) {
               className={`absolute ${isSmallScreen ? "top-full left-0 right-0" : ""} bg-transparent z-50`}
               style={
                 !isSmallScreen && tabAnchorLeft != null && tabAnchorTop != null
-                  ? ({ left: `${tabAnchorLeft}px`, top: `${tabAnchorTop}px`, right: "auto", pointerEvents: "none" } as any)
+                  ? ({
+                      left: `${tabAnchorLeft}px`,
+                      top: `${tabAnchorTop}px`,
+                      right: "auto",
+                      pointerEvents: "none",
+                    } as any)
                   : ({ pointerEvents: "none" } as any)
               }
               initial={{ opacity: 0, y: -8 }}

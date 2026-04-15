@@ -65,9 +65,15 @@ export function SortableItem({
     transition,
   };
 
-  const handleMouseDown = (event) => {
+  const handlePointerDown = (event: React.PointerEvent<HTMLLIElement>) => {
+    // If dnd-kit provided a pointer listener, call it first so dragging still works.
+    const dndPointer = (listeners as any)?.onPointerDown;
+    if (typeof dndPointer === "function") {
+      dndPointer(event as any);
+    }
+    // Forward the pointer event to the existing onMouseDown prop (if provided).
     if (onMouseDown) {
-      onMouseDown(event);
+      onMouseDown(event as unknown as React.MouseEvent<HTMLDivElement>);
     }
   };
 
@@ -92,7 +98,7 @@ export function SortableItem({
         style={style}
         {...attributes}
         {...listeners}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
         onContextMenu={handleContextMenu}
       >
         {children}
