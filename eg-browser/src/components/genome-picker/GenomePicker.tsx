@@ -24,7 +24,7 @@ type AssemblyName = string;
 
 export default function GenomePicker() {
   const dispatch = useAppDispatch();
-  const isSmallScreen = useSmallScreen();
+
   const [selectedPath, setSelectedPath] = useState<
     [GenomeName, AssemblyName] | null
   >(null);
@@ -56,9 +56,6 @@ export default function GenomePicker() {
     return () => clearTimeout(timeout);
   }, [selectedPath]);
 
-  const handleSessionClick = (session: BrowserSession) => {
-    dispatch(setCurrentSession(session.id));
-  };
 
   const filteredGenomes = useMemo(() => {
     return GENOME_LIST.filter((genome) => {
@@ -75,7 +72,7 @@ export default function GenomePicker() {
   }, [debouncedSearchQuery]);
 
   return (
-    <div className="max-w-xl mx-auto py-4 h-full">
+    <div className="max-w-2xl mx-auto py-4 h-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
         <h2 className="text-2xl">Select a Genome</h2>
         <div className="relative mt-2 sm:mt-0 flex-1 w-full">

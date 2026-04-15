@@ -3603,7 +3603,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     <div
       style={{
         backgroundColor: "var(--bg-color)",
-        paddingLeft: "15px",
+        paddingLeft: "18px",
         marginBottom: "50px",
       }}
     >
