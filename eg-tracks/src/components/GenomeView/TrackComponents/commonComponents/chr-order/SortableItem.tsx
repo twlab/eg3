@@ -17,7 +17,7 @@ import "./SortableItem.css";
 
 interface Props {
   id: UniqueIdentifier;
-  onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
+  onMouseDown?: React.MouseEventHandler<HTMLDivElement>;
   onContextMenu?: React.MouseEventHandler<HTMLDivElement>;
   selectedTool: any;
 }
@@ -31,13 +31,13 @@ interface Context {
 const SortableItemContext = createContext<Context>({
   attributes: {},
   listeners: undefined,
-  ref() { },
+  ref() {},
 });
 
 export function SortableItem({
   children,
   id,
-  onPointerDown,
+  onMouseDown,
   onContextMenu,
   selectedTool,
 }: PropsWithChildren<Props>) {
@@ -57,7 +57,7 @@ export function SortableItem({
       listeners,
       ref: setActivatorNodeRef,
     }),
-    [attributes, listeners, setActivatorNodeRef]
+    [attributes, listeners, setActivatorNodeRef],
   );
   const style: CSSProperties = {
     opacity: isDragging ? 0.4 : undefined,
@@ -65,9 +65,9 @@ export function SortableItem({
     transition,
   };
 
-  const handlePointerDown = (event) => {
-    if (onPointerDown) {
-      onPointerDown(event);
+  const handleMouseDown = (event) => {
+    if (onMouseDown) {
+      onMouseDown(event);
     }
   };
 
@@ -92,7 +92,7 @@ export function SortableItem({
         style={style}
         {...attributes}
         {...listeners}
-        onPointerDown={handlePointerDown}
+        onMouseDown={handleMouseDown}
         onContextMenu={handleContextMenu}
       >
         {children}

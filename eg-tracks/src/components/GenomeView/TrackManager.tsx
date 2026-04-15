@@ -3809,7 +3809,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     renderItem={(item) => (
                       <SortableList.Item
                         id={item.id}
-                        onPointerDown={(event) =>
+                        onMouseDown={(event) =>
                           handleShiftSelect(event, item.id)
                         }
                         onContextMenu={(event) => handleRightClick(event, item)}
@@ -3818,7 +3818,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         <div
                           key={item.id}
                           style={{
-                            // width: `${windowWidth + 120}px`,
+                            width: `${windowWidth + 120}px`,
                             position: "relative",
                             paddingTop: "1px",
                             paddingBottom: "1px",
