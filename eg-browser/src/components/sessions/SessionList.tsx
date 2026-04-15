@@ -63,7 +63,7 @@ export default function SessionList({
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
-  console.log(sessionTab)
+
   return (
     <div ref={containerRef} className="flex flex-col h-full relative">
       <div className="flex items-center justify-between w-full">

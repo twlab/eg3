@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAppDispatch } from "../../lib/redux/hooks";
-import { getSpeciesInfo, GENOME_LIST } from "../genome-picker/genome-list";
+import { GENOME_LIST } from "../genome-picker/genome-list";
 import { getGenomeConfig, GenomeSerializer } from "wuepgg3-track";
 import { createSession } from "@/lib/redux/slices/browserSlice";
 import placeholder from "../../assets/placeholder.png";
@@ -97,7 +97,7 @@ export default function TabGenomePicker({ onClose }: Props) {
                                             <span
                                                 className="leading-tight text-center break-words w-full"
                                                 style={{
-                                                    color: resolved ? "white" : undefined,
+                                                    color: resolved && g?.color ? g.color : "white",
                                                     fontSize: "16px",
                                                 }}
                                             >
