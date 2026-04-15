@@ -17,7 +17,7 @@ import "./SortableItem.css";
 
 interface Props {
   id: UniqueIdentifier;
-  onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
+  onMouseDown?: React.MouseEventHandler<HTMLDivElement>;
   onContextMenu?: React.MouseEventHandler<HTMLDivElement>;
   selectedTool: any;
 }
@@ -31,13 +31,13 @@ interface Context {
 const SortableItemContext = createContext<Context>({
   attributes: {},
   listeners: undefined,
-  ref() { },
+  ref() {},
 });
 
 export function SortableItem({
   children,
   id,
-  onPointerDown,
+  onMouseDown,
   onContextMenu,
   selectedTool,
 }: PropsWithChildren<Props>) {
@@ -57,7 +57,7 @@ export function SortableItem({
       listeners,
       ref: setActivatorNodeRef,
     }),
-    [attributes, listeners, setActivatorNodeRef]
+    [attributes, listeners, setActivatorNodeRef],
   );
   const style: CSSProperties = {
     opacity: isDragging ? 0.4 : undefined,
@@ -65,9 +65,15 @@ export function SortableItem({
     transition,
   };
 
-  const handlePointerDown = (event) => {
-    if (onPointerDown) {
-      onPointerDown(event);
+  const handlePointerDown = (event: React.PointerEvent<HTMLLIElement>) => {
+    // If dnd-kit provided a pointer listener, call it first so dragging still works.
+    const dndPointer = (listeners as any)?.onPointerDown;
+    if (typeof dndPointer === "function") {
+      dndPointer(event as any);
+    }
+    // Forward the pointer event to the existing onMouseDown prop (if provided).
+    if (onMouseDown) {
+      onMouseDown(event as unknown as React.MouseEvent<HTMLDivElement>);
     }
   };
 

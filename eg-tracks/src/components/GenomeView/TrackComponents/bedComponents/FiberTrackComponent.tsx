@@ -289,7 +289,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3,
+          width: width / 3 + 120,
         }
       : {};
     let curEleStyle: any = forceSvg
@@ -373,7 +373,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
   return getAnnotationTrack["full"]({
     formattedData: data,
     trackState: trackState,
-    windowWidth: width / 3,
+    windowwidth: width / 3 + 120,
     configOptions: options,
     renderTooltip: renderTooltip,
     svgHeight: svgHeight,

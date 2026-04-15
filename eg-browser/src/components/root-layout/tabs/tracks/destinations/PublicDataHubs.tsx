@@ -51,54 +51,44 @@ export default function PublicDataHubs() {
     }
   }, [publicTracksPool.length]);
 
-
-
-
   const selectedGenomeHub = useMemo(() => {
-    let selectedHub: Array<any> = []
-    if (currentSession &&
+    let selectedHub: Array<any> = [];
+    if (
+      currentSession &&
       _genomeConfig &&
       (currentSession.genomeId === _genomeConfig.name ||
-        currentSession.genomeId === _genomeConfig.id)) {
-      const hub = _genomeConfig?.publicHubList
-      if (hub) {
-        hub.forEach((x: { genome: any }) => (x.genome = _genomeConfig.id));
-        selectedHub = hub
+        currentSession.genomeId === _genomeConfig.id)
+    ) {
+      const hubList = _genomeConfig?.publicHubList;
+      const genomeName = _genomeConfig.id;
+      if (hubList) {
+        selectedHub = hubList.map((x: any) => ({ ...x, genome: genomeName }));
       }
-
-
     }
-    return selectedHub
-
+    return selectedHub;
   }, [_genomeConfig]);
 
   const secondaryGenomesHub = useMemo(() => {
     const allSecondaryGenomes: Array<any> = [];
     if (currentSession) {
       if (currentSession?.tracks) {
-
         for (let track of currentSession.tracks) {
           if (track.querygenome && track.querygenome !== _genomeConfig?.id) {
-            const secondGenomeConfig = getGenomeConfig((track.querygenome));
-            const secondHub = secondGenomeConfig?.publicHubList
+            const secondGenomeConfig = getGenomeConfig(track.querygenome);
+            const secondHub = secondGenomeConfig?.publicHubList;
             if (secondHub) {
-              secondHub.forEach((x: { genome: any }) => (x.genome = secondGenomeConfig.genome.getName()));
-              allSecondaryGenomes.push(secondHub);
+              const mapped = secondHub.map((x: any) => ({
+                ...x,
+                genome: secondGenomeConfig.genome.getName(),
+              }));
+              allSecondaryGenomes.push(mapped);
             }
-
-
-
           }
         }
-
-
       }
     }
-    return allSecondaryGenomes.flat()
-
+    return allSecondaryGenomes.flat();
   }, [currentSession?.tracks]);
-
-
 
   const groupedHubs = useMemo(() => {
     const combinedHubs = [...selectedGenomeHub, ...secondaryGenomesHub];
@@ -178,10 +168,11 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center mr-2 ${isLoaded
-                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-                }`}
+              className={`size-6 rounded-md flex items-center justify-center mr-2 ${
+                isLoaded
+                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+              }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -203,7 +194,6 @@ export default function PublicDataHubs() {
     <div
       ref={searchBarGeometry.ref}
       className="sticky top-0 z-20 bg-white dark:bg-dark-background pb-1"
-
     >
       <input
         type="text"
@@ -217,7 +207,9 @@ export default function PublicDataHubs() {
           <div
             role="button"
             tabIndex={0}
-            onClick={() => rootRef.current?.scrollIntoView({ behavior: "smooth" })}
+            onClick={() =>
+              rootRef.current?.scrollIntoView({ behavior: "smooth" })
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
@@ -231,9 +223,7 @@ export default function PublicDataHubs() {
               background: "#B0E4CC",
             }}
           >
-            <span>
-              Track facet updated. Click to view.
-            </span>
+            <span>Track facet updated. Click to view.</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -354,38 +344,38 @@ export default function PublicDataHubs() {
   }
 
   return (
-    <div ref={rootRef} className="px-2 pt-1" >
+    <div ref={rootRef} className="px-2 pt-1">
       {currentSession && publicTracksPool.length > 0 ? (
         <div>
-
           <FacetTable
             tracks={publicTracksPool}
             addedTracks={currentSession!.tracks as ITrackModel[]}
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
             setIsModalOpen={setIsModalOpen}
           />
           <hr style={{ borderTop: "2px solid black" }} />
         </div>
-
       ) : (
         ""
       )}
 
-      {
-        !isModalOpen ? <>
+      {!isModalOpen ? (
+        <>
           {renderSearchBar()}
           <div>
             {Object.entries(groupedHubs).map(([collection, hubs]) =>
               renderHubGroup(collection, hubs),
             )}
           </div>
-          {renderInfoModal()}  </> : ''
-      }
-
-    </div >
+          {renderInfoModal()}{" "}
+        </>
+      ) : (
+        ""
+      )}
+    </div>
   );
 }

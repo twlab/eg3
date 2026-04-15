@@ -10,7 +10,6 @@ import {
 } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 
-
 function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
@@ -41,7 +40,7 @@ function ConfigMenuComponent(props: any) {
       menuData.configOptions,
       menuData.onConfigChange,
       menuData.trackId,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -86,21 +85,22 @@ function ConfigMenuComponent(props: any) {
       }}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div
         className="TrackContextMenu-body"
         style={{ backgroundColor: darkTheme ? "black" : "white" }}
-        onContextMenu={(e) => e.preventDefault()}
+        // onContextMenu={(e) => e.preventDefault()}
       >
         <MenuTitle
           title={
             menuData.selectCount > 1
               ? menuData.selectCount + " tracks selected"
               : menuData.selectCount === 1 &&
-                menuData.tracks &&
-                menuData.tracks[0] &&
-                menuData.tracks[0].options &&
-                menuData.tracks[0].options.label
+                  menuData.tracks &&
+                  menuData.tracks[0] &&
+                  menuData.tracks[0].options &&
+                  menuData.tracks[0].options.label
                 ? menuData.tracks[0].options.label
                 : "(unnamed track)"
           }
@@ -128,7 +128,7 @@ function ConfigMenuComponent(props: any) {
         )}
       </div>
     </div>,
-    portalTarget ?? document.body
+    portalTarget ?? document.body,
   );
 }
 

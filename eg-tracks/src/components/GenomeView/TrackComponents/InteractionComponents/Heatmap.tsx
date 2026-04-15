@@ -184,7 +184,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3,
+          width: width / 3 + 120,
         }
       : {};
     let curEleStyle: any = forceSvg
