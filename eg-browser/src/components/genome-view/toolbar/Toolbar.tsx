@@ -31,7 +31,12 @@ import Button from "../../ui/button/Button";
 import IconButton from "../../ui/button/IconButton";
 import History from "../../navbar/History";
 import SearchBar from "./SearchBar";
-import { GenomeSerializer, Tool, TOGGLE_TOOLS, ACTION_TOOLS } from "wuepgg3-track";
+import {
+  GenomeSerializer,
+  Tool,
+  TOGGLE_TOOLS,
+  ACTION_TOOLS,
+} from "wuepgg3-track";
 import HighlightMenu from "./HighlightMenu";
 import useCurrentGenome from "../../../lib/hooks/useCurrentGenome";
 import ReorderMany from "./ReorderMany";
@@ -75,7 +80,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
   // Helper functions for responsive sizing
   const fontSize = Math.max(14, Math.min(18, (windowWidth || 1920) * 0.0083));
 
-
   const getIconSize = () => {
     return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
   };
@@ -95,8 +99,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
       // Action tools are never shown as "active"
       isActive = false;
     }
-    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${isActive ? "bg-gray-300 dark:bg-dark-secondary" : ""
-      }`;
+    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${
+      isActive && buttonTool === Tool.Drag
+        ? "bg-blue-500"
+        : isActive
+          ? "bg-gray-300 dark:bg-dark-secondary"
+          : ""
+    }`;
   };
 
   const handleToolClick = (clickedTool: string | null): void => {
@@ -139,22 +148,19 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-        // animate={{
-        //   opacity: isSearchFocused ? 0.5 : 1,
-        //   scale: isSearchFocused ? 0.95 : 1,
-        // }}
-        // transition={{ duration: 0.2 }}
+          // animate={{
+          //   opacity: isSearchFocused ? 0.5 : 1,
+          //   scale: isSearchFocused ? 0.95 : 1,
+          // }}
+          // transition={{ duration: 0.2 }}
         >
-          <motion.div
-            className="flex flex-row items-center"
-            style={{ gap: 1 }}
-          >
+          <motion.div className="flex flex-row items-center" style={{ gap: 1 }}>
             <button
               onClick={() => handleToolClick(Tool.Drag)}
               className={getButtonClass(Tool.Drag)}
               style={{ padding: "5px 6px" }}
               title="Drag tool
-(Alt+H or Alt+D)"
+              (Alt+H or Alt+D)"
             >
               <span
                 className="text-gray-600 dark:text-dark-primary flex items-center justify-center"

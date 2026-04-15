@@ -540,9 +540,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, []);
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
-    if (dragOn.current === false) {
-      return;
-    }
     if (isMouseInsideRef.current) {
       // Use cached rect instead of calling getBoundingClientRect on every move
       const parentRect =
@@ -555,19 +552,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       mouseRelativePositionRef.current = { x, y };
 
       // Use requestAnimationFrame to throttle crosshair updates
-      if (!isDragging.current) {
-        if (rafId.current !== null) {
-          cancelAnimationFrame(rafId.current);
-        }
-        rafId.current = requestAnimationFrame(() => {
-          if (horizontalLineRef.current && verticalLineRef.current) {
-            horizontalLineRef.current.style.display = "block";
-            verticalLineRef.current.style.display = "block";
-            updateLinePosition(x, y);
-          }
-          rafId.current = null;
-        });
+
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
       }
+      rafId.current = requestAnimationFrame(() => {
+        if (horizontalLineRef.current && verticalLineRef.current) {
+          horizontalLineRef.current.style.display = "block";
+          verticalLineRef.current.style.display = "block";
+          updateLinePosition(x, y);
+        }
+        rafId.current = null;
+      });
     } else {
       // Hide crosshair lines when mouse is outside
       if (horizontalLineRef.current && verticalLineRef.current) {
@@ -575,7 +571,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         verticalLineRef.current.style.display = "none";
       }
     }
-
+    if (dragOn.current === false) {
+      return;
+    }
     if (!isDragging.current || isToolSelected.current) {
       return;
     }
@@ -3784,6 +3782,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   default:
                     if (dragOn.current) {
                       return "pointer";
+                    } else if (!tool) {
+                      return;
                     }
                     return "crosshair";
                 }
