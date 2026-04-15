@@ -68,13 +68,13 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       unit: PropTypes.string, // Unit to display after the number in tooltips
       options: PropTypes.shape({
         aggregateMethod: PropTypes.oneOf(
-          Object.values(DefaultAggregators.types)
+          Object.values(DefaultAggregators.types),
         ),
         height: PropTypes.number.isRequired, // Height of the track
       }).isRequired,
       isLoading: PropTypes.bool, // If true, applies loading styling
       error: PropTypes.any, // If present, applies error styling
-    }
+    },
   );
   xToValue: any;
   scales: any;
@@ -105,8 +105,8 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
 
     const visibleValues = _.flatten(
       xToValue.map((d) =>
-        d.slice(this.props.viewWindow.start, this.props.viewWindow.end)
-      )
+        d.slice(this.props.viewWindow.start, this.props.viewWindow.end),
+      ),
     );
     let max: any = _.max(visibleValues) || 0; // in case undefined returned here, cause maxboth be undefined too
     let min: any = _.min(visibleValues) || 0;
@@ -189,15 +189,16 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       ? xvaluesData
       : smooth === 0
         ? data.map(
-          (d) => this.aggregator.xToValueMaker(d, viewRegion, width, options)[0]
-        )
-        : Smooth(
-          data.map(
             (d) =>
-              this.aggregator.xToValueMaker(d, viewRegion, width, options)[0]
-          ),
-          smooth
-        );
+              this.aggregator.xToValueMaker(d, viewRegion, width, options)[0],
+          )
+        : Smooth(
+            data.map(
+              (d) =>
+                this.aggregator.xToValueMaker(d, viewRegion, width, options)[0],
+            ),
+            smooth,
+          );
     this.scales = this.computeScales(this.xToValue, height);
     const legend = (
       <div
@@ -219,23 +220,21 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
     }
     let curParentStyle: any = forceSvg
       ? {
-        position: "relative",
+          position: "relative",
 
-        overflow: "hidden",
-        width: width / 3,
-      }
+          overflow: "hidden",
+          width: width / 3 + 120,
+        }
       : {};
     let curEleStyle: any = forceSvg
       ? {
-        position: "relative",
-        transform: `translateX(${-viewWindow.start}px)`,
-      }
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
       : {};
     const visualizer = (
       // <HoverTooltipContext tooltipRelativeY={height} getTooltipContents={this.renderTooltip} >
       <React.Fragment>
-
-
         {!forceSvg ? (
           <div
             style={{
@@ -256,7 +255,8 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
               unit={unit ? unit : ""}
               hasReverse={true}
               options={options}
-            /></div>
+            />
+          </div>
         ) : (
           ""
         )}
@@ -280,7 +280,6 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
             />
           </div>
         </div>
-
       </React.Fragment>
     );
 
@@ -334,8 +333,8 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
 
     const color =
       trackModel.tracks &&
-        trackModel.tracks[trackIndex] &&
-        trackModel.tracks[trackIndex].options
+      trackModel.tracks[trackIndex] &&
+      trackModel.tracks[trackIndex].options
         ? trackModel.tracks[trackIndex].options.color || "blue"
         : "blue";
     return (

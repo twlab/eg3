@@ -100,7 +100,8 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     forceSvg,
     viewWindow,
     dataIdx,
-    initialLoad, updatedLegend
+    initialLoad,
+    updatedLegend,
   } = props;
 
   const aggregateRecords = useMemo(() => {
@@ -154,7 +155,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
   const scales = computeScales(
     aggregatedRecords,
     options.height,
-    options.maxMethyl
+    options.maxMethyl,
   );
 
   let { height, colorsForContext, depthColor, isCombineStrands, depthFilter } =
@@ -208,16 +209,16 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
 
   let curParentStyle: any = forceSvg
     ? {
-      position: "relative",
-      overflow: "hidden",
-      width: width / 3,
-    }
+        position: "relative",
+        overflow: "hidden",
+        width: width / 3 + 120,
+      }
     : {};
   let curEleStyle: any = forceSvg
     ? {
-      position: "relative",
-      transform: `translateX(${-viewWindow.start}px)`,
-    }
+        position: "relative",
+        transform: `translateX(${-viewWindow.start}px)`,
+      }
     : {};
 
   let visualizer;
@@ -226,13 +227,12 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     initialLoad ||
     options.forceSvg ||
     (dataIdx === currentViewDataIdx.current &&
-      !_.isEqual(viewWindow, currentViewWindow.current) && (!(scales.maxDepth === currentScale.current?.maxDepth) ||
+      !_.isEqual(viewWindow, currentViewWindow.current) &&
+      (!(scales.maxDepth === currentScale.current?.maxDepth) ||
         !(scales.maxMethyl === currentScale.current?.maxMethyl))) ||
     dataIdx !== currentViewDataIdx.current ||
     !_.isEqual(options, currentViewOptions.current) ||
     !options.usePrimaryNav
-
-
   ) {
     if (isCombineStrands) {
       strandRenderers = (
@@ -391,7 +391,7 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
           height={drawHeight}
           fill={color}
           fillOpacity={0.75}
-        />
+        />,
       );
     }
 
@@ -413,7 +413,14 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
         const y1 = scales.depthToY(currentRecord.depth);
         const y2 = scales.depthToY(nextRecord.depth);
         elements.push(
-          <line key={x} x1={x} y1={y1} x2={x + 1} y2={y2} stroke={depthColor} />
+          <line
+            key={x}
+            x1={x}
+            y1={y1}
+            x2={x + 1}
+            y2={y2}
+            stroke={depthColor}
+          />,
         );
       }
     }

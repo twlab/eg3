@@ -23,7 +23,7 @@ interface SelectableGenomeAreaProps {
   onRegionSelected?(
     start: number,
     end: number,
-    selectedTool: number | string
+    selectedTool: number | string,
   ): void;
   selectedTool?: any;
 }
@@ -36,6 +36,7 @@ interface SelectableGenomeAreaProps {
 export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAreaProps> {
   constructor(props: SelectableGenomeAreaProps) {
     super(props);
+    console.log(props);
     this.getBoxCaption = this.getBoxCaption.bind(this);
     this.getIsAreaValid = this.getIsAreaValid.bind(this);
     this.handleAreaSelect = this.handleAreaSelect.bind(this);
@@ -47,7 +48,7 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
     const navContext = selectableRegion.getNavigationContext();
     const drawModel = new LinearDrawingModel(
       selectableRegion,
-      dragLimits.getLength()
+      dragLimits.getLength(),
     );
 
     return new OpenInterval(xToBase(xSpan.start), xToBase(xSpan.end));
@@ -86,7 +87,7 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
       this.props.onRegionSelected!(
         baseSpan.start,
         baseSpan.end,
-        this.props.selectedTool ? this.props.selectedTool.title : "isJump"
+        this.props.selectedTool ? this.props.selectedTool.title : "isJump",
       );
     }
   }

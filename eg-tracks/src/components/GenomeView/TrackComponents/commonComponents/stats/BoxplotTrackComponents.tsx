@@ -77,7 +77,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
         console.log(
           "window size cannot larger than curent view width",
           "warning",
-          5000
+          5000,
         );
         size = width;
       } else {
@@ -114,7 +114,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
       viewRegion: DisplayedRegionModel,
       width: number,
       useCenter: boolean,
-      windowSize: number
+      windowSize: number,
     ) => {
       const aggregator = new FeatureAggregator();
       const xToFeatures = aggregator.makeXWindowMap(
@@ -122,7 +122,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
         viewRegion,
         width,
         useCenter,
-        windowSize
+        windowSize,
       );
       const hash = {};
       Object.keys(xToFeatures).forEach((x) => {
@@ -137,7 +137,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     return (xMap: any, xAlias: any, height: number, viewWindow: any) => {
       const visibleXs = Object.keys(xAlias).slice(
         viewWindow.start,
-        viewWindow.end
+        viewWindow.end,
       );
       const visibleValues: Array<any> = [];
       Object.keys(xMap).forEach((x) => {
@@ -166,7 +166,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     viewRegion,
     width,
     false,
-    options.windowSize
+    options.windowSize,
   );
 
   const scales = computeScales(xMap, xAlias, height, viewWindow);
@@ -201,16 +201,16 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
 
     let curParentStyle: any = forceSvg
       ? {
-        position: "relative",
-        overflow: "hidden",
-        width: width / 3,
-      }
+          position: "relative",
+          overflow: "hidden",
+          width: width / 3 + 120,
+        }
       : {};
     let curEleStyle: any = forceSvg
       ? {
-        position: "relative",
-        transform: `translateX(${-viewWindow.start}px)`,
-      }
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
       : {};
 
     visualizer = (

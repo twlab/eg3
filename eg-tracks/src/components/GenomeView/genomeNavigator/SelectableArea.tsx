@@ -106,7 +106,7 @@ export class SelectableArea extends React.PureComponent<
   getSelectedSpan(): OpenInterval {
     return new OpenInterval(
       Math.floor(Math.min(this.state.dragStartX, this.state.currentDragX)),
-      Math.floor(Math.max(this.state.dragStartX, this.state.currentDragX))
+      Math.floor(Math.max(this.state.dragStartX, this.state.currentDragX)),
     );
   }
 
@@ -130,6 +130,10 @@ export class SelectableArea extends React.PureComponent<
    */
   drag(event: React.MouseEvent) {
     const x = getRelativeCoordinates(event).x;
+    // Debug log
+    if (this.state.isDragging) {
+      // debug removed
+    }
     if (this.isInDragLimits(x)) {
       this.setState({ currentDragX: x });
     }
@@ -141,7 +145,6 @@ export class SelectableArea extends React.PureComponent<
   dragEnd() {
     if (this.state.isDragging) {
       const selectedSpan = this.getSelectedSpan();
-
       if (this.props.getIsAreaValid!(selectedSpan)) {
         this.props.onAreaSelected!(selectedSpan);
       }
@@ -185,7 +188,6 @@ export class SelectableArea extends React.PureComponent<
         width: selectedSpan.getLength() + "px",
         height,
       };
-
       theBox = (
         <div className={className} style={style}>
           {getInnerElement!(selectedSpan)}
