@@ -196,7 +196,7 @@ export default function AnnotationTracks() {
               className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
                 }`}
             >
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-background text-primary dark:text-dark-primary">
                 <CollectionView
                   isPrimaryGenome={isPrimary}
                   data={genomeData.tracks}
