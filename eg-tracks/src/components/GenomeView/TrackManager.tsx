@@ -1080,7 +1080,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const handleDelete = useCallback(
     (idArr: Array<any>) => {
-      console.log(idArr)
+
       const tempTracks: Array<TrackModel> = [];
       for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
         const track = trackManagerState.current.tracks[i];
@@ -2789,7 +2789,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (!initialLoad.current) {
 
-      console.log(tool)
+
       const toggleTool = tool.tool;
 
       if (tool.tool === "Drag") {
