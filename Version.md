@@ -1,4 +1,7 @@
 # Version history
+## 60.0.0
+- to be added
+
 ## 59.4.1
 - when zoomed in, while in modbed summary mode, rect now has same width as base instead of one pixel line
 

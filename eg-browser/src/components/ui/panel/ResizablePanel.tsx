@@ -191,7 +191,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     el.style.width = `${w}px`;
     el.style.height = `${h}px`;
     el.style.border = "2px dashed rgba(31,111,255,0.7)";
-    el.style.background = "rgba(255, 255, 255, 0.8)";
+    // change ghost box opacity 
+    el.style.background = "rgba(255, 255, 255, 0.3)";
     el.style.transition =
       "width 80ms linear, height 80ms linear, left 80ms linear, top 80ms linear";
     el.style.zIndex = "900";
@@ -519,7 +520,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     transform: `translate(${translate.x}px, ${translate.y}px)`,
     position: "relative",
     pointerEvents: "auto",
-    background: isResizing ? "transparent" : undefined,
+    // background: isResizing ? "transparent" : undefined,
     color: "var(--text, #111827)",
     display: "flex",
     flexDirection: "column",
@@ -534,12 +535,12 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     ? "linear-gradient(180deg, rgba(60,140,200,0.72), rgba(60,140,200,0.22))"
     : "linear-gradient(180deg, rgba(31, 169, 255, 0.56), rgba(135,206,250,0.14))";
 
-
+  // change resize box opacity and content style
   const contentStyle: React.CSSProperties = {
     // padding: 12,
     minWidth: 0,
-    opacity: isResizing ? 0.5 : 1,
-    transition: "opacity 120ms linear",
+    opacity: isResizing ? 0.9 : 1,
+    transition: "opacity 200ms linear",
     pointerEvents: isResizing ? "none" : undefined,
     willChange: "opacity",
   };
