@@ -30,7 +30,7 @@ import { GenomeHubManager } from "wuepgg3-track";
 const Session: React.FC<{ tab?: boolean }> = () => {
 
 
-  useExpandedNavigationTab();
+  // useExpandedNavigationTab();
   const dispatch = useAppDispatch();
 
   const customTracksPool = useAppSelector(selectCustomTracksPool);

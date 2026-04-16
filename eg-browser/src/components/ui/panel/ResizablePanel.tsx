@@ -103,11 +103,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const pendingPreviewRef = useRef<{ w?: number; h?: number } | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const preExpandRef = useRef<{
-    translate: { x: number; y: number };
-    width: number | string;
-    height: number | string;
-  } | null>(null);
+
 
   useEffect(() => {
     latestSliceRef.current = { w: sliceWidth, h: sliceHeight };
@@ -278,7 +274,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       const numericHeight = parseSizeToNumber(height, 0);
       const defaultW = Math.round(windowSize.width * 0.6);
       const defaultH = Math.round(windowSize.height * 0.9);
-      const altW = Math.round(windowSize.width * 0.4);
+      const altW = Math.round(windowSize.width * 0.5);
       const altH = Math.round(windowSize.height * 0.75);
 
       let newW = numericWidth !== numericInitialW && numericWidth !== altW ? numericWidth : defaultW;
@@ -286,9 +282,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       newW = Math.max(numericInitialW, newW);
       newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
-      if (!preExpandRef.current) {
-        preExpandRef.current = { translate: { ...translate }, width, height };
-      }
 
       // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
       const rectExpand = panelRef.current?.getBoundingClientRect();
@@ -340,7 +333,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       const numericInitialH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
       const numericWidth = parseSizeToNumber(width, 0);
       const numericHeight = parseSizeToNumber(height, 0);
-      const defaultW = Math.round(windowSize.width * 0.4);
+      const defaultW = Math.round(windowSize.width * 0.5);
       const defaultH = Math.round(windowSize.height * 0.75);
       const altW = Math.round(windowSize.width * 0.6);
       const altH = Math.round(windowSize.height * 0.9);
@@ -350,9 +343,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       newW = Math.max(numericInitialW, newW);
       newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
-      if (!preExpandRef.current) {
-        preExpandRef.current = { translate: { ...translate }, width, height };
-      }
+
 
       // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
       const rectMid = panelRef.current?.getBoundingClientRect();

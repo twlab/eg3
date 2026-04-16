@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ToolState, TOGGLE_TOOLS, ACTION_TOOLS } from "wuepgg3-track";
-import { RootState } from "../store";
+import { RootState } from "../createStore";
 
 interface UtilityState {
   toolState: ToolState;
@@ -9,8 +9,7 @@ interface UtilityState {
 }
 
 const initialToolState: ToolState = {
-  tool: null,
-  dragTool: true,
+  tool: "Drag",
   actionTool: null,
   actionCount: 0,
 };
@@ -25,12 +24,7 @@ export const utilitySlice = createSlice({
   name: "utility",
   initialState,
   reducers: {
-    /**
-     * Toggle the drag tool on/off. Independent of other tools.
-     */
-    toggleDrag: (state) => {
-      state.toolState.dragTool = !state.toolState.dragTool;
-    },
+
     /**
      * Set the active toggle tool.
      * If the same tool is already active, it is deselected (set to null).
@@ -72,16 +66,21 @@ export const utilitySlice = createSlice({
       state.shortLink = "";
       state.fullUrlForShortLink = "";
     },
+    /**
+     * Reset the utility slice back to its initial state.
+     * Use `dispatch(resetUtility())` to restore defaults.
+     */
+    resetUtility: () => initialState,
   },
 });
 
 export const {
-  toggleDrag,
   setToggleTool,
   dispatchAction,
   escapeTools,
   setShortLink,
   clearShortLink,
+  resetUtility,
 } = utilitySlice.actions;
 
 export const selectToolState = (state: RootState) => state.utility.toolState;

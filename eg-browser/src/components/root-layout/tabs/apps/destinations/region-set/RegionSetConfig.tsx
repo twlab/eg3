@@ -334,30 +334,31 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   };
 
   const inputCls =
-    "border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary";
+    "border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-0.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary";
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-4">
+    <div className="flex flex-col gap-3 px-4 py-1">
       {!regionSet && (
-        <div className="flex flex-col gap-3">
-          <p className="text-base text-primary/70 dark:text-dark-primary/70 leading-relaxed">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-primary/70 dark:text-dark-primary/70 leading-relaxed">
             Input gene names or coordinates, one per line. Coordinates must be in the form{" "}
-            <code className="bg-gray-100 dark:bg-dark-surface px-1 rounded text-base">
+
+            <code className="bg-gray-100 dark:bg-dark-surface px-1 rounded text-sm">
               chr1:345-678
             </code>
             .
           </p>
-          <form onSubmit={handleAddList} className="flex flex-col gap-3">
+          <form onSubmit={handleAddList} className="flex flex-col gap-2">
             <textarea
               value={regionList}
               onChange={handleListChange}
-              rows={10}
-              className={`w-full ${inputCls} font-mono resize-y`}
+              rows={8}
+              className={`w-full ${inputCls} font-mono resize-y text-sm`}
             />
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => { }}
-                style={{ backgroundColor: "#5E7AC4", color: "#fff" }}
+                style={{ backgroundColor: "#5E7AC4", color: "#fff", padding: "4px 6px" }}
               >
                 <input
                   type="submit"
@@ -367,7 +368,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
               </Button>
               <Button
                 onClick={resetList}
-                style={{ backgroundColor: "#6c757d", color: "#fff" }}
+                style={{ backgroundColor: "#6c757d", color: "#fff", padding: "4px 6px" }}
               >
                 Clear
               </Button>
@@ -396,12 +397,12 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
             />
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
             <p className="text-base font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
               2. Add or remove regions
             </p>
             <div className="flex flex-wrap items-end gap-3">
-              <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+              <label className="flex flex-col gap-1 text-sm text-primary dark:text-dark-primary">
                 Name
                 <input
                   type="text"
@@ -411,7 +412,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                   className={`w-44 ${inputCls}`}
                 />
               </label>
-              <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+              <label className="flex flex-col gap-1 text-sm text-primary dark:text-dark-primary">
                 Locus
                 <input
                   type="text"
@@ -421,14 +422,14 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                   className={`w-52 ${inputCls}`}
                 />
               </label>
-              <Button onClick={addRegion} leftIcon={<PlusIcon className="w-4 h-4" />}>
+              <Button onClick={addRegion} style={{ width: "fit-content", padding: "4px 6px" }} leftIcon={<PlusIcon className="w-4 h-4" />}>
                 Add
               </Button>
               <Button
                 onClick={() => setShowBulkAdd((v) => !v)}
                 leftIcon={<div style={{ display: "flex", flexDirection: "row" }}><PlusIcon className="w-4 h-4" /><PlusIcon className="w-4 h-4" /></div>}
 
-                style={{ width: "fit-content", padding: "6px 12px" }}
+                style={{ width: "fit-content", padding: "4px 6px" }}
               >
                 Add Multiple
               </Button>
@@ -450,9 +451,9 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                   transition={{ duration: 0.2, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700 mt-1">
+                  <div className="flex flex-col pt-2 border-t border-gray-200 dark:border-gray-700 mt-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-base text-primary/70 dark:text-dark-primary/70">
+                      <p className="text-sm text-primary/70 dark:text-dark-primary/70">
                         Input gene names or coordinates, one per line. Coordinates must be in the form{" "}
                         <code className="bg-gray-100 dark:bg-dark-surface px-1 rounded">
                           chr1:345-678
@@ -467,18 +468,19 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                         <XMarkIcon className="w-4 h-4" />
                       </button>
                     </div>
-                    <form onSubmit={handleBulkAdd} className="flex flex-col gap-2">
+                    <form onSubmit={handleBulkAdd} className="flex flex-col">
                       <textarea
                         value={bulkList}
                         onChange={(e) => setBulkList(e.target.value)}
                         rows={6}
                         placeholder={`CYP4A22\nchr10:96796528-96829254\nBRCA1`}
-                        className={`w-full ${inputCls} font-mono resize-y`}
+                        className={`w-full ${inputCls} font-mono resize-y text-sm`}
+
                       />
                       <div className="flex items-center gap-2">
                         <Button
                           onClick={() => { }}
-                          style={{ backgroundColor: "#5E7AC4", color: "#fff" }}
+                          style={{ backgroundColor: "#5E7AC4", color: "#fff", padding: "4px 6px" }}
                         >
                           <input
                             type="submit"
@@ -488,7 +490,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                         </Button>
                         <Button
                           onClick={() => setBulkList("")}
-                          style={{ backgroundColor: "#6c757d", color: "#fff" }}
+                          style={{ backgroundColor: "#6c757d", color: "#fff", padding: "4px 6px" }}
                         >
                           Clear
                         </Button>
@@ -506,7 +508,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
             <table
               {...getTableProps()}
-              className="w-full text-base text-primary dark:text-dark-primary"
+              className="w-full text-sm text-primary dark:text-dark-primary"
             >
               <thead>
                 {headerGroups.map((headerGroup) => (
@@ -516,7 +518,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                         {...column.getHeaderProps(
                           column.getSortByToggleProps(),
                         )}
-                        className="px-3 py-2 text-left text-base font-semibold uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 cursor-pointer select-none"
+                        className="px-3 py-0 text-left text-sm font-semibold uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 cursor-pointer select-none"
                       >
                         {column.render("Header")}
                         <span className="ml-1">
@@ -540,7 +542,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                       className="border-b border-gray-100 dark:border-gray-700 last:border-0"
                     >
                       {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} className="px-3 py-2">
+                        <td {...cell.getCellProps()} className="px-3 py-0">
                           {cell.render("Cell")}
                         </td>
                       ))}
@@ -558,7 +560,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
           <label
             htmlFor="flip"
-            className="flex items-center gap-2 text-base text-primary dark:text-dark-primary cursor-pointer"
+            className="flex items-center gap-2 text-sm text-primary dark:text-dark-primary cursor-pointer"
           >
             <input
               type="checkbox"
@@ -576,7 +578,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                 onSetConfigured?.(regionSet);
                 onClose?.();
               }}
-              style={{ backgroundColor: "#5E7AC4", color: "#fff", width: "fit-content", padding: "6px 12px" }}
+              style={{ backgroundColor: "#5E7AC4", color: "#fff", width: "fit-content", padding: "4px 6px" }}
             >
               Save changes
             </Button>
@@ -585,7 +587,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                 cancelPressed();
                 onClose?.();
               }}
-              style={{ backgroundColor: "#6c757d", color: "#fff" }}
+              style={{ backgroundColor: "#6c757d", color: "#fff", width: "fit-content", padding: "4px 6px" }}
             >
               Cancel
             </Button>

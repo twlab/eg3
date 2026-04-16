@@ -43,14 +43,14 @@ export default function ClearAllButton({
         onClick={handleClick}
         initial={false}
         aria-label={isConfirmed ? "Confirm clear all" : title}
-        className={`inline-flex items-center outline-none rounded-full shadow py-1.5 px-2 transition-colors duration-200 cursor-pointer hover:shadow-md ${bgClass} ${iconTextClass}`}
+        className={`inline-flex items-center outline-none rounded-full shadow py-1 px-2 transition-colors duration-200 cursor-pointer hover:shadow-md ${bgClass} ${iconTextClass}`}
       >
         {isConfirmed ? (
           <CheckIcon className="w-4 h-4 mr-1" />
         ) : (
           <TrashIcon className="w-4 h-4 mr-1" />
         )}
-        <span className="text-xs truncate max-w-[130px]">
+        <span className="text-sm truncate fit-content">
           {isConfirmed ? "Confirm" : title}
         </span>
       </motion.button>

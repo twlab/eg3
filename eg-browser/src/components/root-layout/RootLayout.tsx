@@ -42,11 +42,12 @@ import {
   setNavSearchOpen,
 } from "@/lib/redux/slices/navigationSlice";
 import {
-  toggleDrag,
+
   setToggleTool,
   escapeTools,
+  resetUtility,
 } from "@/lib/redux/slices/utilitySlice";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -113,7 +114,7 @@ export default function RootLayout(props: GenomeHubProps) {
   const [navBarHeight, setNavBarHeight] = useState(48);
   const currentTab = useAppSelector(selectNavigationTab);
   const navSearchOpen = useAppSelector(selectNavSearchOpen);
-
+  const year = useMemo(() => new Date().getFullYear(), []);
   useEffect(() => {
     const el = navBarRef.current;
     if (!el) return;
@@ -133,7 +134,7 @@ export default function RootLayout(props: GenomeHubProps) {
           case "h":
           case "d":
             event.preventDefault();
-            dispatch(toggleDrag());
+            dispatch(setToggleTool("Drag"));
             break;
           case "r":
           case "s":
@@ -177,7 +178,9 @@ export default function RootLayout(props: GenomeHubProps) {
   useEffect(() => {
     setLeftPanelOpen(false);
     dispatch(resetState());
+    dispatch(resetUtility());
     clearHistory();
+
   }, [sessionId]);
   const showNavBar = isPackageMode ? isNavBarVisible : true;
   function getConfig() {
@@ -334,7 +337,7 @@ export default function RootLayout(props: GenomeHubProps) {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
 
-                  className="absolute left-0 h-full z-60"
+                  className="absolute right-0 h-full z-60"
                   style={{ top: navBarHeight }}
                 >
                   <ResizablePanel
@@ -398,6 +401,15 @@ export default function RootLayout(props: GenomeHubProps) {
                   {sessionId && (
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
                       <GenomeView />
+                      <div
+                        ref={(el) => setPortalContainer(el as HTMLDivElement)}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          pointerEvents: "none",
+                          zIndex: 9000,
+                        }}
+                      />
                     </GenomeErrorBoundary>
                   )}
                 </div>
@@ -416,18 +428,24 @@ export default function RootLayout(props: GenomeHubProps) {
             /> */}
               </div>
             </div>
+
+            <>
+
+              <div style={{ textAlign: "center", color: "gray", backgroundColor: "inherit" }}>
+                Copyright &copy; 2018-{year} Washington University in St. Louis. All rights reserved.
+                <br /> Developed by the{" "}
+                <a href="http://wang.wustl.edu" target="_blank" rel="noopener noreferrer" style={{ color: "#007bff" }}>
+                  Wang Lab
+                </a>
+                <br /> <a style={{ color: "#007bff" }} href="LICENSE.html">
+                  Terms and Conditions of Use
+                </a>
+              </div>
+            </>
           </div>
 
           <MouseFollowingTooltip />
-          <div
-            ref={(el) => setPortalContainer(el as HTMLDivElement)}
-            style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
-              zIndex: 9000,
-            }}
-          />
+
         </div>
       </PortalContext.Provider>
     </EscapeHandlerContext.Provider>
