@@ -148,31 +148,30 @@ export default function PublicDataHubs() {
     const isLoaded = loadedPublicHub[hub.url];
 
     return (
-      <div key={hub.url} className="flex items-center justify-between py-1">
+      <div key={hub.url} className="flex items-center justify-between py-1 text-primary dark:text-white">
         <div className="flex items-center">
           <span className="text-sm mr-2">{hub.genome}</span>
           <span className="text-sm mr-2">{hub.name}</span>
           <button
-            className="size-5 rounded-md flex items-center justify-center bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="size-5 rounded-md flex items-center justify-center bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-primary dark:text-white"
             onClick={() => setInfoHub(hub)}
             aria-label={`More info about ${hub.name}`}
           >
-            <InformationCircleIcon className="size-4 text-primary dark:text-dark-primary" />
+            <InformationCircleIcon className="size-4 text-primary dark:text-white" />
           </button>
         </div>
         <div className="flex items-center flex-shrink-0 ml-2">
           <span className="text-sm mr-2">{hub.numTracks} tracks</span>
           {isLoading ? (
-            <div className="size-6 rounded-md bg-gray-200 flex items-center justify-center mr-2">
-              <div className="size-4 border-1 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            <div className="size-6 rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-2">
+              <div className="size-4 border-1 border-gray-400 dark:border-gray-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center mr-2 ${
-                isLoaded
+              className={`size-6 rounded-md flex items-center justify-center mr-2 ${isLoaded
                   ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
                   : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-              }`}
+                }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -200,7 +199,7 @@ export default function PublicDataHubs() {
         placeholder="Search hubs..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full px-4 mt-1 outline outline-blue-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+        className="w-full px-4 mt-1 outline outline-blue-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent bg-white dark:bg-dark-background text-primary dark:text-white"
       />
       {publicTracksPool.length > 0 && showPoolNotice ? (
         <div className="px-4  flex justify-center">
@@ -216,12 +215,9 @@ export default function PublicDataHubs() {
                 rootRef.current?.scrollIntoView({ behavior: "smooth" });
               }
             }}
-            className="cursor-pointer text-sm rounded-md px-3 py-2 shadow z-30 flex items-center justify-between mx-auto"
+            className="cursor-pointer text-sm rounded-md px-3 py-2 shadow z-30 flex items-center justify-between mx-auto bg-green-200 dark:bg-green-900 text-black dark:text-white"
             aria-live="polite"
-            style={{
-              width: "30%",
-              background: "#B0E4CC",
-            }}
+            style={{ width: "30%" }}
           >
             <span>Track facet updated. Click to view.</span>
             <button
@@ -243,14 +239,14 @@ export default function PublicDataHubs() {
   const renderHubGroup = (collection: string, hubs: any[]) => (
     <div key={collection} className="mb-2 relative">
       <h2
-        className="text-base font-medium  sticky z-10  bg-white dark:bg-dark-background"
+        className="text-base font-medium sticky z-10 bg-white dark:bg-dark-background text-primary dark:text-white"
         style={{
           top: `${searchBarGeometry.height}px`,
         }}
       >
         {collection}
       </h2>
-      <div className="pl-3 border-l border-gray-200">
+      <div className="pl-3 border-l border-gray-200 dark:border-dark-secondary">
         {hubs.map((hub) => renderHubItem(hub))}
       </div>
     </div>
@@ -304,9 +300,9 @@ export default function PublicDataHubs() {
         />
         <div className="relative bg-white dark:bg-dark-background rounded-md p-4 max-w-lg mx-4 z-10 shadow-lg">
           <div className="flex justify-between items-start">
-            <h3 className="text-lg font-semibold">{infoHub.name}</h3>
+            <h3 className="text-lg font-semibold text-primary dark:text-white">{infoHub.name}</h3>
             <button onClick={() => setInfoHub(null)} className="ml-2">
-              <XMarkIcon className="size-5 text-gray-600" />
+              <XMarkIcon className="size-5 text-gray-600 dark:text-gray-200" />
             </button>
           </div>
           {infoHub.description ? (
@@ -315,7 +311,7 @@ export default function PublicDataHubs() {
             </div>
           ) : null}
           {infoHub.collection ? (
-            <div className="mt-2 text-sm text-gray-500">
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-300">
               Collection: {renderField(infoHub.collection)}
             </div>
           ) : null}
@@ -353,11 +349,11 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
-            contentColorSetup={{ color: "#222", background: "white" }}
+            addTermToMetaSets={() => { }}
+            contentColorSetup={{ color: "var(--font-color)", background: "var(--bg-container-color)" }}
             setIsModalOpen={setIsModalOpen}
           />
-          <hr style={{ borderTop: "2px solid black" }} />
+          <hr className="border-t-2 border-black dark:border-white/80" />
         </div>
       ) : (
         ""

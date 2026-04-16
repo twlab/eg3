@@ -159,37 +159,34 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                         queryEndpoint={{}}
                       />
                       {isThereG3dTrack ? (
-                        <div>
+                        <><div>
                           <button
                             className="btn btn-sm btn-primary"
-                            onClick={() =>
-                              setShow3dGene ? setShow3dGene(gene) : () => {}
-                            }
+                            onClick={() => setShow3dGene ? setShow3dGene(gene) : () => { }}
                           >
                             Show in 3D
                           </button>
-                        </div>
+                        </div><div
+                            ref={arrowProps.ref}
+                            style={{
+                              ...arrowProps.style,
+                              width: 20,
+                              height: 20,
+                              position: "absolute",
+                              left: pageX - 8,
+                              top: pageY,
+                              borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                              borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                              borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()} /></>
                       ) : (
                         ""
                       )}
                     </OutsideClickDetector>
                   </div>
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                  />
+
                 </>,
                 document.body,
               )}
@@ -268,7 +265,7 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                           <button
                             className="btn btn-sm btn-primary"
                             onClick={() =>
-                              setShow3dGene ? setShow3dGene(gene) : () => {}
+                              setShow3dGene ? setShow3dGene(gene) : () => { }
                             }
                           >
                             Show in 3D

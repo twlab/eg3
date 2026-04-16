@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { PortalContext } from "wuepgg3-track";
 import ResizablePanel from "../ui/panel/ResizablePanel";
 /**
  * A component to show users' history of operations
@@ -26,6 +27,7 @@ const History: React.FC<Props> = ({
   handleToolClick,
   anchorEl,
 }) => {
+  const portalTarget = useContext(PortalContext);
   const [checkStateEmpty, setCheckStateEmpty] = useState(false);
 
   const handleCloseModal = () => {
@@ -171,8 +173,8 @@ const History: React.FC<Props> = ({
               </ResizablePanel>
             </div>
           );
-        })(),
-        document.body
+        })(), portalTarget ??
+      document.body
       )}
     </>
   );

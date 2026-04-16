@@ -103,11 +103,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const pendingPreviewRef = useRef<{ w?: number; h?: number } | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const preExpandRef = useRef<{
-    translate: { x: number; y: number };
-    width: number | string;
-    height: number | string;
-  } | null>(null);
+
 
   useEffect(() => {
     latestSliceRef.current = { w: sliceWidth, h: sliceHeight };
@@ -286,9 +282,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       newW = Math.max(numericInitialW, newW);
       newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
-      if (!preExpandRef.current) {
-        preExpandRef.current = { translate: { ...translate }, width, height };
-      }
 
       // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
       const rectExpand = panelRef.current?.getBoundingClientRect();
@@ -350,9 +343,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       newW = Math.max(numericInitialW, newW);
       newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
-      if (!preExpandRef.current) {
-        preExpandRef.current = { translate: { ...translate }, width, height };
-      }
+
 
       // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
       const rectMid = panelRef.current?.getBoundingClientRect();

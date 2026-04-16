@@ -1,5 +1,5 @@
-import React from "react";
-import { createPortal } from "react-dom";
+import React, { useContext } from "react";
+import { PortalContext } from "wuepgg3-track"
 import "./HighlightMenu.css";
 import ResizablePanel from "../../ui/panel/ResizablePanel";
 import {
@@ -8,6 +8,7 @@ import {
 } from "@/lib/redux/slices/browserSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { ColorPicker } from "wuepgg3-track";
+import { createPortal } from "react-dom";
 
 export class HighlightInterval {
   start: number;
@@ -46,7 +47,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   anchorEl,
 }) => {
   const dispatch = useAppDispatch();
-
+  const portalTarget = useContext(PortalContext);
   const currentSession = useAppSelector(selectCurrentSession);
 
   const handleHighlightIntervalUpdate = (
@@ -165,7 +166,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
         </div>
       </ResizablePanel>
     </div>,
-    document.body
+    portalTarget ?? document.body
   );
 };
 

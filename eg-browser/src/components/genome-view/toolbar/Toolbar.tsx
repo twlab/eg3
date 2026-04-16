@@ -1,36 +1,17 @@
 import { useAppSelector, useAppDispatch, useUndoRedo } from "@/lib/redux/hooks";
 import {
   selectToolState,
-  toggleDrag,
+
   setToggleTool,
   dispatchAction,
 } from "@/lib/redux/slices/utilitySlice";
-import {
-  selectNavigationTab,
-  selectSessionPanelOpen,
-  setNavigationTab,
-} from "@/lib/redux/slices/navigationSlice";
 import { selectCurrentState } from "@/lib/redux/selectors";
-
-import {
-  BoltIcon,
-  LightBulbIcon,
-  HandRaisedIcon,
-  MagnifyingGlassMinusIcon,
-  MagnifyingGlassPlusIcon,
-  ArrowLeftCircleIcon,
-  ArrowRightCircleIcon,
-  ArrowsUpDownIcon,
-  ArrowPathRoundedSquareIcon,
-  ArrowUturnLeftIcon,
-  ArrowUturnRightIcon,
-} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 import { useMemo, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import Button from "../../ui/button/Button";
+
 import IconButton from "../../ui/button/IconButton";
 import History from "../../navbar/History";
-import SearchBar from "./SearchBar";
+
 import {
   GenomeSerializer,
   Tool,
@@ -91,35 +72,33 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   const getButtonClass = (buttonTool: string) => {
     let isActive: boolean;
-    if (buttonTool === Tool.Drag) {
-      isActive = toolState.dragTool;
-    } else if (TOGGLE_TOOLS.has(buttonTool)) {
+    if (TOGGLE_TOOLS.has(buttonTool)) {
       isActive = toolState.tool === buttonTool;
     } else {
       // Action tools are never shown as "active"
       isActive = false;
     }
-    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer ${
-      isActive && buttonTool === Tool.Drag
-        ? "bg-blue-500"
-        : isActive
-          ? "bg-gray-300 dark:bg-dark-secondary"
-          : ""
-    }`;
+    return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer 
+    ${isActive
+        ? "bg-blue-200 dark:bg-dark-secondary"
+        : ""
+
+      }`;
   };
 
   const handleToolClick = (clickedTool: string | null): void => {
+
     if (clickedTool === null) {
       dispatch(setToggleTool(null));
-    } else if (clickedTool === Tool.Drag) {
-      dispatch(toggleDrag());
-    } else if (TOGGLE_TOOLS.has(clickedTool)) {
+    }
+
+    else if (TOGGLE_TOOLS.has(clickedTool)) {
       dispatch(setToggleTool(clickedTool));
     } else if (ACTION_TOOLS.has(clickedTool)) {
       dispatch(dispatchAction(clickedTool));
     }
   };
-
+  console.log(toolState)
   return (
     <div className="flex flex-row ">
       {/* Combined Search Bar and Toolbar Container */}
@@ -148,11 +127,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-          // animate={{
-          //   opacity: isSearchFocused ? 0.5 : 1,
-          //   scale: isSearchFocused ? 0.95 : 1,
-          // }}
-          // transition={{ duration: 0.2 }}
+        // animate={{
+        //   opacity: isSearchFocused ? 0.5 : 1,
+        //   scale: isSearchFocused ? 0.95 : 1,
+        // }}
+        // transition={{ duration: 0.2 }}
         >
           <motion.div className="flex flex-row items-center" style={{ gap: 1 }}>
             <button

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { createPortal } from "react-dom";
+import { PortalContext } from "wuepgg3-track"
 import ResizablePanel from "../../ui/panel/ResizablePanel";
 import {
   DndContext,
@@ -174,6 +175,7 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
   anchorEl,
 }) => {
   const dispatch = useAppDispatch();
+  const portalTarget = useContext(PortalContext);
   const [items, setItems] = useState<ITrackModel[]>([]);
   const [columnCount, setColumnCount] = useState<number>(1);
   const sensors = useSensors(
@@ -267,7 +269,7 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
         </div>
       </ResizablePanel>
     </div>,
-    document.body
+    portalTarget ?? document.body
   );
 };
 

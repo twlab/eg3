@@ -134,3 +134,83 @@ button.not-button {
     color: green;
     font-weight: bold;
 }
+
+/* Theme-aware color adjustments (do not change layout/sizing) */
+
+/* Light theme (default) */
+[data-theme="light"] .facet-content>div,
+[data-theme="light"] div.facet-column-header {
+    border-color: #ccc;
+    background-color: #ffffff;
+    color: #111827;
+}
+
+[data-theme="dark"] .facet-content>div,
+[data-theme="dark"] div.facet-column-header {
+    border-color: rgba(255,255,255,0.08);
+    background-color: transparent;
+    color: #e5e7eb;
+}
+
+/* Column header border adjustments */
+[data-theme="dark"] div.facet-column-header {
+    border-right: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Modal overlay/content — theme aware */
+.facet-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+[data-theme="light"] .facet-modal-overlay {
+    background-color: rgba(111,107,101,0.07);
+}
+
+[data-theme="dark"] .facet-modal-overlay {
+    background-color: rgba(0,0,0,0.6);
+}
+
+.facet-modal-content {
+    background-color: #ffffff;
+    padding: 16px 20px 10px 15px;
+    text-align: left;
+    width: 100%;
+    max-width: 90vw;
+    position: relative;
+    border-radius: 6px;
+}
+
+[data-theme="dark"] .facet-modal-content {
+    background-color: #111827; /* dark panel */
+    color: #e5e7eb;
+}
+
+.facet-modal-close {
+    cursor: pointer;
+    color: red;
+    font-size: 2em;
+    position: absolute;
+    top: -5px;
+    right: 20px;
+}
+
+/* Hover highlight tweaks for themes */
+[data-theme="light"] .facet-item:hover:after,
+[data-theme="light"] .facet-item:hover:before {
+    background-color: rgba(115,115,63,0.1);
+}
+
+[data-theme="dark"] .facet-item:hover:after,
+[data-theme="dark"] .facet-item:hover:before {
+    background-color: rgba(255,255,255,0.03);
+}
+
+/* Expanded button color adjustments */
+button.expanded { color: #6b7280; }
+[data-theme="dark"] button.expanded { color: #9ca3af; }

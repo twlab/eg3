@@ -135,6 +135,7 @@ export const Tool = {
 export type Tool = (typeof Tool)[keyof typeof Tool];
 
 export const TOGGLE_TOOLS: ReadonlySet<string> = new Set([
+  Tool.Drag,
   Tool.Reorder,
   Tool.Highlight,
   Tool.Zoom,
@@ -157,8 +158,7 @@ export const ACTION_TOOLS: ReadonlySet<string> = new Set([
 export interface ToolState {
   /** Currently selected toggle tool, or null if none */
   tool: string | null;
-  /** Whether the drag tool is active */
-  dragTool: boolean;
+
   /** The most recently dispatched action tool, or null */
   actionTool: string | null;
   /** Increments each time an action tool is dispatched, for force-triggering */

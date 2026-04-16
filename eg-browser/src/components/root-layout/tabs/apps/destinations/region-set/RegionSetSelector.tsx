@@ -31,9 +31,10 @@ import {
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 
 
-import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
+
+import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
 const RegionSetSelector: React.FC = () => {
-  useExpandedNavigationTab();
+  useMidSizeNavigationTab()
   const [showCreate, setShowCreate] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const createSectionRef = useRef<HTMLDivElement>(null);
