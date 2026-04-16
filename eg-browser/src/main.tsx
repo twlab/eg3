@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+import registerServiceWorker from "./registerServiceWorker";
 
 // const testProps = {
 //   viewRegion: "chr7:27181545-27245617",
@@ -41,3 +42,10 @@ createRoot(document.getElementById("root")!).render(
 
 //   />
 // );
+
+// Register service worker in production
+try {
+  registerServiceWorker();
+} catch (e) {
+  // ignore registration errors in development
+}
