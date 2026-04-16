@@ -169,8 +169,8 @@ export default function PublicDataHubs() {
           ) : (
             <button
               className={`size-6 rounded-md flex items-center justify-center mr-2 ${isLoaded
-                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
                 }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
@@ -199,7 +199,7 @@ export default function PublicDataHubs() {
         placeholder="Search hubs..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full px-4 mt-1 outline outline-blue-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent bg-white dark:bg-dark-background text-primary dark:text-white"
+        className="w-full px-4 mt-2 outline outline-blue-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent bg-white dark:bg-dark-background text-primary dark:text-white"
       />
       {publicTracksPool.length > 0 && showPoolNotice ? (
         <div className="px-4  flex justify-center">
@@ -353,7 +353,7 @@ export default function PublicDataHubs() {
             contentColorSetup={{ color: "var(--font-color)", background: "var(--bg-container-color)" }}
             setIsModalOpen={setIsModalOpen}
           />
-          <hr className="border-t-2 border-black dark:border-white/80" />
+
         </div>
       ) : (
         ""

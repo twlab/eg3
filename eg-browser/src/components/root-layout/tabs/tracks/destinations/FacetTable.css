@@ -99,13 +99,14 @@ button.expanded {
 
 .facet-item:hover:after {
     content: "";
-    height: 10000px;
+
     left: 0;
     position: absolute;
-    top: -5000px;
+    top: -100px;
     width: 100%;
     z-index: 1;
     pointer-events: none;
+    transition: background-color 120ms ease;
 }
 
 .facet-item:hover:after {
@@ -115,9 +116,10 @@ button.expanded {
 .facet-item:hover:before {
     content: "";
     height: 100%;
-    left: -5000px;
+    /* reduced horizontal padding for hover highlight */
+    left: -200px;
     position: absolute;
-    width: 10000px;
+    width: calc(100% + 400px);
     z-index: 1;
     pointer-events: none;
 }
@@ -199,6 +201,31 @@ button.not-button {
     position: absolute;
     top: -5px;
     right: 20px;
+}
+
+/* Back button for modal (replaces the close ×) */
+.facet-modal-back {
+    cursor: pointer;
+    color: var(--facet-back-color, #0b5fff);
+    font-size: 1rem;
+    position: absolute;
+    top: 10px;
+    left: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.facet-modal-back:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .facet-modal-back {
+    color: var(--facet-back-color-dark, #93c5fd);
 }
 
 /* Hover highlight tweaks for themes */

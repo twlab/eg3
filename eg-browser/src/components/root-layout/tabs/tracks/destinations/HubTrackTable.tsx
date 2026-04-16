@@ -4,6 +4,8 @@ import Fuse from "fuse.js";
 import _ from "lodash";
 import TrackSearchBox from "./TrackSearchBox";
 import { TrackModel } from "wuepgg3-track";
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
 
 const UNUSED_META_KEY = "notused";
 
@@ -70,6 +72,20 @@ const HubTrackTable: React.FC<Props> = ({
     handleSearchChange(search);
   };
 
+  const isDarkTheme = useAppSelector(selectDarkTheme);
+
+  const textColor = isDarkTheme ? "#e5e7eb" : "#333";
+  const mutedColor = isDarkTheme ? "#9CA3AF" : "#6c757d";
+  const borderColor = isDarkTheme ? "#374151" : "#ddd";
+  const inputBg = isDarkTheme ? "#0b1220" : "#fff";
+  const buttonBg = isDarkTheme ? "#111827" : "#fff";
+  const buttonColor = isDarkTheme ? "#e5e7eb" : "#333";
+  const buttonDisabledBg = isDarkTheme ? "#1f2937" : "#f9f9f9";
+  const buttonDisabledColor = isDarkTheme ? "#6b7280" : "#ccc";
+  const tableBg = isDarkTheme ? "#0b1220" : "#ffffff";
+  const headerFontSize = 13;
+  const cellFontSize = 13;
+
   const getAddTrackCell = useCallback(
     (row: any) => {
       const track = row.original;
@@ -112,7 +128,13 @@ const HubTrackTable: React.FC<Props> = ({
         accessor: (data: TrackModel) => data.getMetadata("genome") ?? "",
         width: 100,
       },
-      { Header: "Name", accessor: "name" },
+      {
+        Header: <span style={{ fontSize: headerFontSize, color: textColor }}>Name</span>,
+        accessor: "name",
+        Cell: ({ value }: any) => (
+          <span style={{ fontSize: cellFontSize, color: textColor }}>{value}</span>
+        ),
+      },
       { Header: "Data hub", accessor: "datahub" },
       { Header: "Format", accessor: "type", width: 100 },
       {
@@ -156,7 +178,7 @@ const HubTrackTable: React.FC<Props> = ({
     }
 
     return baseColumns;
-  }, [filteredTracks, getAddTrackCell, rowHeader, columnHeader]);
+  }, [filteredTracks, getAddTrackCell, rowHeader, columnHeader, textColor]);
 
   const {
     getTableProps,
@@ -193,7 +215,7 @@ const HubTrackTable: React.FC<Props> = ({
             <td
               {...cell.getCellProps()}
               key={cell.column.id}
-              style={{ borderBottom: "1px solid #ddd", padding: "8px" }}
+              style={{ borderBottom: `1px solid ${borderColor}`, padding: "2px", color: textColor, fontSize: cellFontSize }}
             >
               {cell.render("Cell")}
             </td>
@@ -216,35 +238,209 @@ const HubTrackTable: React.FC<Props> = ({
   const buttonStyle: React.CSSProperties = {
     padding: "6px 12px",
     margin: "0 4px",
-    backgroundColor: "#fff",
-    color: "#333",
-    border: "1px solid #ddd",
+    backgroundColor: buttonBg,
+    color: buttonColor,
+    border: `1px solid ${borderColor}`,
     borderRadius: "4px",
     cursor: "pointer",
-    fontSize: "16px",
+    fontSize: "12px",
     transition: "all 0.2s ease",
   };
 
   const buttonHoverStyle: React.CSSProperties = {
-    backgroundColor: "#f5f5f5",
-    borderColor: "#999",
+    backgroundColor: isDarkTheme ? "#111827" : "#f5f5f5",
+    borderColor: isDarkTheme ? "#9CA3AF" : "#999",
   };
 
   const buttonDisabledStyle: React.CSSProperties = {
-    backgroundColor: "#f9f9f9",
-    color: "#ccc",
+    backgroundColor: buttonDisabledBg,
+    color: buttonDisabledColor,
     cursor: "not-allowed",
-    borderColor: "#e0e0e0",
+    borderColor: borderColor,
   };
 
   const containerStyle: React.CSSProperties = {
+    backgroundColor: tableBg,
+    color: textColor,
+    padding: 8,
+    borderRadius: 4,
+  };
 
+  const PaginationPlaceholder: React.FC = () => {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, width: "100%", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            border: `1px solid ${borderColor}`,
+            borderRadius: 8,
+            overflow: "hidden",
+            height: 32,
+            background: buttonBg,
+          }}
+        >
+          <button
+            onClick={() => gotoPage(0)}
+            disabled={!canPreviousPage}
+            style={{
+              padding: "4px 2px",
+              border: "none",
+              background: "transparent",
+              color: canPreviousPage ? buttonColor : buttonDisabledColor,
+              cursor: canPreviousPage ? "pointer" : "not-allowed",
+              fontSize: 12,
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: canPreviousPage ? 1 : 0.45,
+            }}
+            onMouseEnter={(e) =>
+              canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "transparent" })
+            }
+            aria-disabled={!canPreviousPage}
+          >
+            First
+          </button>
+          <div style={{ width: 1, height: 18, backgroundColor: borderColor }} />
+          <button
+            onClick={() => previousPage()}
+            disabled={!canPreviousPage}
+            style={{
+              padding: "4px 10px",
+              border: "none",
+              background: "transparent",
+              color: canPreviousPage ? buttonColor : buttonDisabledColor,
+              cursor: canPreviousPage ? "pointer" : "not-allowed",
+              fontSize: 14,
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: canPreviousPage ? 1 : 0.45,
+            }}
+            onMouseEnter={(e) =>
+              canPreviousPage && Object.assign(e.currentTarget.style, buttonHoverStyle)
+            }
+            onMouseLeave={(e) =>
+              canPreviousPage && Object.assign(e.currentTarget.style, { backgroundColor: "transparent" })
+            }
+            aria-disabled={!canPreviousPage}
+          >
+            ‹
+          </button>
+          <div style={{ width: 1, height: 18, backgroundColor: borderColor }} />
+          <button
+            onClick={() => nextPage()}
+            disabled={!canNextPage}
+            style={{
+              padding: "4px 10px",
+              border: "none",
+              background: "transparent",
+              color: canNextPage ? buttonColor : buttonDisabledColor,
+              cursor: canNextPage ? "pointer" : "not-allowed",
+              fontSize: 14,
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: canNextPage ? 1 : 0.45,
+            }}
+            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
+            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "transparent" })}
+            aria-disabled={!canNextPage}
+          >
+            ›
+          </button>
+          <div style={{ width: 1, height: 18, backgroundColor: borderColor }} />
+          <button
+            onClick={() => gotoPage(pageCount - 1)}
+            disabled={!canNextPage}
+            style={{
+              padding: "4px 2px",
+              border: "none",
+              background: "transparent",
+              color: canNextPage ? buttonColor : buttonDisabledColor,
+              cursor: canNextPage ? "pointer" : "not-allowed",
+              fontSize: 12,
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: canNextPage ? 1 : 0.45,
+            }}
+            onMouseEnter={(e) => canNextPage && Object.assign(e.currentTarget.style, buttonHoverStyle)}
+            onMouseLeave={(e) => canNextPage && Object.assign(e.currentTarget.style, { backgroundColor: "transparent" })}
+            aria-disabled={!canNextPage}
+          >
+            Last
+          </button>
+        </div>
+
+        <div style={{ width: 8 }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={(e) => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                gotoPage(page);
+              }}
+              style={{
+                width: 44,
+                padding: "4px 6px",
+                border: `1px solid ${borderColor}`,
+                borderRadius: 6,
+                fontSize: 12,
+                backgroundColor: inputBg,
+                color: textColor,
+                textAlign: "center",
+                height: 28,
+              }}
+              placeholder="Page"
+            />
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              style={{
+                padding: "4px 2px",
+                border: `1px solid ${borderColor}`,
+                borderRadius: 6,
+                fontSize: 12,
+                backgroundColor: inputBg,
+                color: textColor,
+                cursor: "pointer",
+                height: 28,
+              }}
+            >
+              {[10, 20, 30, 40, 50].map((size) => (
+                <option key={size} value={size}>
+                  {size} per page
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ color: mutedColor, fontSize: 12 }}>
+            <span style={{ color: textColor, fontWeight: 600 }}>{pageIndex + 1}</span>
+            <span style={{ margin: "0 6px" }}>/</span>
+            <span style={{ color: textColor, fontWeight: 600 }}>{pageOptions.length}</span>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
     <React.Fragment>
       <div style={containerStyle}>
-        <h1 style={{ margin: 0, paddingBottom: "5vpx", textAlign: "center" }}>
+        <h1 style={{ margin: 0, textAlign: "center", marginBottom: 4 }}>
           Track Table
         </h1>
         <div style={{ flex: "1", overflow: "auto" }}>
@@ -253,46 +449,58 @@ const HubTrackTable: React.FC<Props> = ({
               display: "flex",
               alignItems: "center",
               gap: "12px",
-              marginBottom: "8px",
+
             }}
           >
             <input
               type="text"
               id="searchTrack"
               style={{
-                padding: "4px",
 
                 width: "300px",
+                backgroundColor: inputBg,
+                color: textColor,
+                border: `1px solid ${borderColor}`,
+                borderRadius: "4px",
+                padding: "3px",
+                fontSize: 14,
               }}
               placeholder="H1 or H3K4me3, etc..."
               value={searchText}
               onChange={handleSearchChangeRequest}
             />
-            <small id="searchTrackHelp" style={{ color: "#6c757d" }}>
+            <small id="searchTrackHelp" style={{ color: mutedColor }}>
               Free text search over track labels and metadata.
             </small>
             <button
               type="button"
               style={{
-                padding: "8px 12px",
+                padding: "3px",
                 backgroundColor: "#1F7D53",
                 color: "#fff",
                 border: "none",
                 borderRadius: "4px",
                 cursor: "pointer",
                 marginLeft: "auto",
+
+
+                fontSize: 14,
               }}
               onClick={() => handleAddAll(page)}
             >
               Add all in page
             </button>
           </div>
+          {/* Top pagination controls */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+            <PaginationPlaceholder />
+          </div>
           <table
             {...getTableProps()}
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              marginBottom: "8px",
+              marginBottom: "4px",
             }}
           >
             <thead>
@@ -306,9 +514,11 @@ const HubTrackTable: React.FC<Props> = ({
                       {...column.getHeaderProps()}
                       key={column.id}
                       style={{
-                        borderBottom: "2px solid #ddd",
-                        padding: "8px",
+                        borderBottom: `1px solid ${borderColor}`,
+                        padding: "6px 2px",
                         textAlign: "left",
+                        color: textColor,
+                        fontSize: headerFontSize,
                       }}
                     >
                       {column.render("Header")}
@@ -324,154 +534,8 @@ const HubTrackTable: React.FC<Props> = ({
             </tbody>
           </table>
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "4px",
-            flexShrink: 0,
-          }}
-        >
-          <button
-            onClick={() => gotoPage(0)}
-            disabled={!canPreviousPage}
-            style={{
-              ...buttonStyle,
-              ...(!canPreviousPage && buttonDisabledStyle),
-            }}
-            onMouseEnter={(e) =>
-              canPreviousPage &&
-              Object.assign(e.currentTarget.style, buttonHoverStyle)
-            }
-            onMouseLeave={(e) =>
-              canPreviousPage &&
-              Object.assign(e.currentTarget.style, {
-                backgroundColor: "#fff",
-                borderColor: "#ddd",
-              })
-            }
-          >
-            First
-          </button>
-          <button
-            onClick={() => previousPage()}
-            disabled={!canPreviousPage}
-            style={{
-              ...buttonStyle,
-              ...(!canPreviousPage && buttonDisabledStyle),
-              fontSize: "18px",
-            }}
-            onMouseEnter={(e) =>
-              canPreviousPage &&
-              Object.assign(e.currentTarget.style, buttonHoverStyle)
-            }
-            onMouseLeave={(e) =>
-              canPreviousPage &&
-              Object.assign(e.currentTarget.style, {
-                backgroundColor: "#fff",
-                borderColor: "#ddd",
-              })
-            }
-          >
-            ‹
-          </button>
-          <span
-            style={{
-              margin: "0 12px",
-              color: "#666",
-              fontSize: "16px",
-            }}
-          >
-            Page <strong style={{ color: "#333" }}>{pageIndex + 1}</strong> of{" "}
-            <strong style={{ color: "#333" }}>{pageOptions.length}</strong>
-          </span>
-          <button
-            onClick={() => nextPage()}
-            disabled={!canNextPage}
-            style={{
-              ...buttonStyle,
-              ...(!canNextPage && buttonDisabledStyle),
-              fontSize: "18px",
-            }}
-            onMouseEnter={(e) =>
-              canNextPage &&
-              Object.assign(e.currentTarget.style, buttonHoverStyle)
-            }
-            onMouseLeave={(e) =>
-              canNextPage &&
-              Object.assign(e.currentTarget.style, {
-                backgroundColor: "#fff",
-                borderColor: "#ddd",
-              })
-            }
-          >
-            ›
-          </button>
-          <button
-            onClick={() => gotoPage(pageCount - 1)}
-            disabled={!canNextPage}
-            style={{
-              ...buttonStyle,
-              ...(!canNextPage && buttonDisabledStyle),
-            }}
-            onMouseEnter={(e) =>
-              canNextPage &&
-              Object.assign(e.currentTarget.style, buttonHoverStyle)
-            }
-            onMouseLeave={(e) =>
-              canNextPage &&
-              Object.assign(e.currentTarget.style, {
-                backgroundColor: "#fff",
-                borderColor: "#ddd",
-              })
-            }
-          >
-            Last
-          </button>
-          <div
-            style={{
-              width: "1px",
-              height: "24px",
-              backgroundColor: "#ddd",
-              margin: "0 8px",
-            }}
-          ></div>
-          <input
-            type="number"
-            defaultValue={pageIndex + 1}
-            onChange={(e) => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0;
-              gotoPage(page);
-            }}
-            style={{
-              width: "60px",
-              padding: "6px 8px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "16px",
-              textAlign: "center",
-            }}
-            placeholder="Page"
-          />
-          <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            style={{
-              padding: "6px 8px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "16px",
-              backgroundColor: "#fff",
-              cursor: "pointer",
-            }}
-          >
-            {[10, 20, 30, 40, 50].map((size) => (
-              <option key={size} value={size}>
-                {size} per page
-              </option>
-            ))}
-          </select>
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
+          <PaginationPlaceholder />
         </div>
       </div>
     </React.Fragment>

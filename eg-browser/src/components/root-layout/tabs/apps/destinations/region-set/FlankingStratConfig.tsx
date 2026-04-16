@@ -39,7 +39,7 @@ const FlankingStratConfig: React.FC<FlankingStratConfigProps> = ({
         3. Set flanking region
       </p>
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+        <label className="flex flex-col gap-1 text-sm text-primary dark:text-dark-primary">
           Upstream bases
           <input
             type="number"
@@ -53,7 +53,7 @@ const FlankingStratConfig: React.FC<FlankingStratConfigProps> = ({
             className={inputCls}
           />
         </label>
-        <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+        <label className="flex flex-col gap-1 text-sm text-primary dark:text-dark-primary">
           Downstream bases
           <input
             type="number"
@@ -67,7 +67,7 @@ const FlankingStratConfig: React.FC<FlankingStratConfigProps> = ({
             className={inputCls}
           />
         </label>
-        <label className="flex flex-col gap-1 text-base text-primary dark:text-dark-primary">
+        <label className="flex flex-col gap-1 text-sm text-primary dark:text-dark-primary">
           Surrounding
           <select
             value={strategy.type}

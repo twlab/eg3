@@ -546,7 +546,6 @@ const FacetTable: React.FC<FacetTableProps> = ({
               style={{
 
                 backgroundColor: "white",
-                padding: "16px 20px 10px 15px",
 
 
                 textAlign: "left",
@@ -557,20 +556,14 @@ const FacetTable: React.FC<FacetTableProps> = ({
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <span
-                className="text-right"
-                style={{
-                  cursor: "pointer",
-                  color: "red",
-                  fontSize: "2em",
-                  position: "absolute",
-                  top: "-5px",
-                  right: "20px",
-                }}
+              <button
+                type="button"
+                className="facet-modal-back"
                 onClick={handleCloseModal}
+                aria-label="Back"
               >
-                ×
-              </span>
+                ← Back
+              </button>
               <HubTrackTable
                 key={state.showModalId || "modal"}
                 tracks={state.modalFound}

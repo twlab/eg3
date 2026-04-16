@@ -274,7 +274,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       const numericHeight = parseSizeToNumber(height, 0);
       const defaultW = Math.round(windowSize.width * 0.6);
       const defaultH = Math.round(windowSize.height * 0.9);
-      const altW = Math.round(windowSize.width * 0.4);
+      const altW = Math.round(windowSize.width * 0.5);
       const altH = Math.round(windowSize.height * 0.75);
 
       let newW = numericWidth !== numericInitialW && numericWidth !== altW ? numericWidth : defaultW;
@@ -333,7 +333,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       const numericInitialH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
       const numericWidth = parseSizeToNumber(width, 0);
       const numericHeight = parseSizeToNumber(height, 0);
-      const defaultW = Math.round(windowSize.width * 0.4);
+      const defaultW = Math.round(windowSize.width * 0.5);
       const defaultH = Math.round(windowSize.height * 0.75);
       const altW = Math.round(windowSize.width * 0.6);
       const altH = Math.round(windowSize.height * 0.9);

@@ -205,7 +205,7 @@ const RegionSetSelector: React.FC = () => {
                 }`}
             >
 
-              <div className="flex items-center justify-between py-2 px-8">
+              <div className="flex items-center justify-between py-1 px-4">
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <p className="text-primary dark:text-dark-primary font-medium text-base truncate">
                     {name}
@@ -232,7 +232,7 @@ const RegionSetSelector: React.FC = () => {
                       backgroundColor="tint"
                       onClick={() => onSetSelected(set)}
                       disabled={numRegions <= 0}
-                      style={{ fontSize: "16px", width: "fit-content", padding: "6px 12px" }}
+                      style={{ fontSize: "16px", width: "fit-content", padding: "4px 6px" }}
                     >
                       Enter View
                     </Button>
@@ -322,7 +322,7 @@ const RegionSetSelector: React.FC = () => {
             className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden"
           >
 
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-1 border-b border-gray-200 dark:border-gray-700">
               <p className="text-base font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
                 Create New Set
               </p>

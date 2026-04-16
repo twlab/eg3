@@ -2056,12 +2056,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
         }
       }
-
-      setDraw({
+      startTransition(() => setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
         completedFetchedRegion,
-      });
+      }));
+
     }
   }
 
@@ -3284,7 +3284,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         const newTrackComponents: Array<any> = [];
-        const newG3dComponents: Array<any> = [];
+
         const newAddedTrackModel: Array<any> = [];
         let checkHasGenAlign = false;
         for (let i = 0; i < filteredTracks.length; i++) {
