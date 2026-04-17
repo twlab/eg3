@@ -4,6 +4,7 @@ import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import OpenInterval from "../../../models/OpenInterval";
+import ErrorBoundary from "./commonComponents/ErrorBoundary";
 
 import {
   dynamicMatplotTracks,
@@ -130,13 +131,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       initialLoad: initialLoad.current,
     };
     let res;
-    try {
-      res = getDisplayModeFunction(displayArgs);
-    } catch (e) {
-      fetchError.current = "error when creating drawData";
-      displayArgs.errorInfo = fetchError.current;
-      res = getDisplayModeFunction(displayArgs);
-    }
+    // try {
+    res = getDisplayModeFunction(displayArgs);
+    // } 
+    // catch (e) {
+    //   fetchError.current = "error when creating drawData";
+    //   displayArgs.errorInfo = fetchError.current;
+    //   res = getDisplayModeFunction(displayArgs);
+    // }
 
     if (cacheDataIdx === dataIdx) {
       signalTrackLoadComplete(id);
@@ -152,6 +154,16 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         numHidden = res.numHidden;
       } else {
         result = res;
+      }
+
+      // Wrap the track component with an ErrorBoundary so render errors
+      // inside the display components don't crash the whole app.
+      try {
+        result = (
+          <ErrorBoundary errorDrawData={displayArgs}>{result as any}</ErrorBoundary>
+        );
+      } catch (wrapErr) {
+        console.error("Error wrapping result with ErrorBoundary:", wrapErr);
       }
 
       xPos.current = curXPos;

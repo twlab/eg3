@@ -100,6 +100,7 @@ async function getTextData(regionData: any) {
       regionData.trackModel.type === "longrange" &&
       regionData.trackModel.textConfig.subType === "AndreaGillespie"
     ) {
+
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LongrangeAndreaTextSource({
           blob: regionData.trackModel.fileObj,
@@ -107,6 +108,7 @@ async function getTextData(regionData: any) {
           url: "",
         });
     } else {
+
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new BedTextSource({
           blob: regionData.trackModel.fileObj,

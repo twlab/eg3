@@ -210,12 +210,10 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     updatedLegend, dataIdx, initialLoad
   } = props;
 
-  const safeData = data || [];
-  const filteredData = filterData(safeData, options);
+  const filteredData = filterData(data, options);
+  const scales = computeScale(filteredData, options);
 
-  const scales = computeScale(filteredData.data, options);
-
-  let interactionData = placeInteractions(filteredData.data, visRegion, width);
+  let interactionData = placeInteractions(filteredData, visRegion, width);
 
   let visualizer;
 

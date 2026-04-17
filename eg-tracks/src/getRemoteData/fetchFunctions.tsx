@@ -268,7 +268,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           }
         ) {
           let responses: Array<any> | { [key: string]: any } = [];
-          let error = null;
+          let error: any = null;
           const subTrackResults = await Promise.all(
             item.tracks.map((trackItem) => {
               trackItem["shouldPlaceRegion"] = item.shouldPlaceRegion;
@@ -295,17 +295,19 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         } else {
           const responses: any = await fetchData(item);
           let result;
-          let error = null;
+          let error: any = null;
           if (isFetchError(responses)) {
             result = [];
             error = responses.error;
           } else {
-            result = responses;
+            result = item.type === "hic" && typeof responses === "object" &&
+              !Array.isArray(responses) &&
+              "data" in responses ? responses.data : responses;
           }
 
           fetchResults.push({
             name: trackType,
-            result: result,
+            result: Array.isArray(result) ? result : [],
             fileInfos:
               typeof responses === "object" &&
                 !Array.isArray(responses) &&
@@ -497,7 +499,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     await Promise.all(
       genomeAlignTracks.map(async (item, index) => {
         let rawRecords;
-        let errorType = null;
+        let errorType: any = null;
         try {
           const responds = await trackFetchFunction["genomealign"]({
             nav: fetchArrNav,
