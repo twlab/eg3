@@ -39,19 +39,19 @@ export class GroupedTrackManager {
    * @returns list of groups found in the track list, their data, and their original indicies
    */
   public aggregator: NumericalAggregator;
-  dynseqAggregator: (
-    data: any[],
-    viewRegion: any,
-    width: number,
-    aggregatorId: string
-  ) => any;
+  // dynseqAggregator: (
+  //   data: any[],
+  //   viewRegion: any,
+  //   width: number,
+  //   aggregatorId: string
+  // ) => any;
   aggregateRecords: (data: any[], viewRegion: any, width: number) => any;
-  aggregateFeaturesMatplot: (
-    data: any,
-    viewRegion: any,
-    width: any,
-    aggregatorId: any
-  ) => any;
+  // aggregateFeaturesMatplot: (
+  //   data: any,
+  //   viewRegion: any,
+  //   width: any,
+  //   aggregatorId: any
+  // ) => any;
 
   constructor() {
     this.aggregator = new NumericalAggregator();
@@ -67,7 +67,7 @@ export class GroupedTrackManager {
   }
 
   getGroupScale(
-    tracks: TrackModel[],
+
     trackData: any,
     width: number,
     viewWindow: OpenInterval,
@@ -76,49 +76,70 @@ export class GroupedTrackManager {
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
     if (trackData) {
+
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
-      for (let i = 0; i < tracks.length; i++) {
+      for (let i = 0; i < trackData.length; i++) {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
+        const track = trackData[i];
+        console.log(track)
+        if (track.configOptions.group && track.trackModel.type in numericalTracksGroup) {
 
-        if (tracks[i].options.group && tracks[i].type in numericalTracksGroup) {
-          const g = tracks[i].options.group;
-          const tid = tracks[i].id;
-          if (tracks[i].options.yScale === ScaleChoices.FIXED) {
+          const g = track.configOptions.group;
+          const tid = track.id;
+          if (track.configOptions.yScale === ScaleChoices.FIXED) {
             grouping[g] = {
               scale: ScaleChoices.FIXED,
-              min: { [tid]: tracks[i].options.yMin },
-              max: { [tid]: tracks[i].options.yMax },
+              min: { [tid]: track.configOptions.yMin },
+              max: { [tid]: track.configOptions.yMax },
             };
             break;
           }
-          if (trackData[tid]) {
-            const data = trackData[tid].data;
+          if (track.data) {
+            const data = track.data;
             let xvalues;
-            // console.log(data);
+
             if (trackFetchedDataCache.current[tid][dataIdx]["xvalues"]) {
               xvalues = trackFetchedDataCache.current[tid][dataIdx]["xvalues"];
             } else {
               xvalues = this.aggregator.xToValueMaker(
                 data,
-                trackData[tid].visRegion,
+                track.visRegion,
                 width,
-                trackData[tid].configOptions
+                track.configOptions
               );
               if (!trackFetchedDataCache.current[tid][dataIdx]) {
                 trackFetchedDataCache.current[tid][dataIdx] = {};
               }
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
             }
+            let max = 0, min = 0;
+            let revmax = 0, revmin = 0;
+            if (xvalues[3]) {
+              max =
+                xvalues[0] && xvalues[0].length
+                  ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
+                  : 1;
 
-            const max =
-              xvalues[0] && xvalues[0].length
-                ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
-                : 1;
-            const min =
-              xvalues[1] && xvalues[1].length
-                ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
-                : 0;
+              min =
+                xvalues[0] && xvalues[0].length
+                  ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
+                  : 0;
+            }
+            if (xvalues[2]) {
+              revmax =
+                xvalues[1] && xvalues[1].length
+                  ? _.max(xvalues[1].slice(viewWindow.start, viewWindow.end))
+                  : 1;
+
+              revmin =
+                xvalues[1] && xvalues[1].length
+                  ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
+                  : 0;
+            }
+
+            max = Math.max(max, revmax) ? Math.max(max, revmax) : 0;
+            min = Math.min(min, revmin) ? Math.min(min, revmin) : 0;
 
             if (!grouping.hasOwnProperty(g)) {
               grouping[g] = {
@@ -132,46 +153,46 @@ export class GroupedTrackManager {
             }
           }
         } else {
-          const tid = tracks[i].id;
+          const tid = track.id;
 
-          if (trackData[tid]) {
-            const data = trackData[tid].data;
+          if (track.data) {
+            const data = track.data;
             let xvalues;
             if (
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"] &&
-              trackData[tid].usePrimaryNav
+              track.usePrimaryNav
             ) {
               continue;
             } else {
-              if (tracks[i].type === "dynseq") {
+              if (track.trackModel.type === "dynseq") {
                 xvalues = this.aggregator.xToValueMaker(
                   data,
-                  trackData[tid].visRegion,
+                  track.visRegion,
                   width,
-                  trackData[tid].configOptions
+                  track.configOptions
                 );
-              } else if (tracks[i].type === "methylc") {
+              } else if (track.trackModel.type === "methylc") {
                 xvalues = this.aggregateRecords(
                   data,
-                  trackData[tid].visRegion,
+                  track.visRegion,
                   width
                 );
-              } else if (tracks[i].type === "matplot") {
+              } else if (track.trackModel.type === "matplot") {
                 xvalues = data.map(
                   (d) =>
                     this.aggregator.xToValueMaker(
                       d,
-                      trackData[tid].visRegion,
+                      track.visRegion,
                       width,
-                      trackData[tid].configOptions
+                      track.configOptions
                     )[0]
                 );
               } else {
                 xvalues = this.aggregator.xToValueMaker(
                   data,
-                  trackData[tid].visRegion,
+                  track.visRegion,
                   width,
-                  trackData[tid].configOptions
+                  track.configOptions
                 );
               }
 
@@ -184,67 +205,11 @@ export class GroupedTrackManager {
         }
         // }
       }
-      // console.log(grouping);
+
       return _.isEmpty(grouping) ? {} : grouping;
     }
     return {};
   }
 
-  getGroupScaleWithXvalues(
-    tracks: TrackModel[],
-    trackData: any,
-    viewWindow: OpenInterval
-  ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
-    // console.log(tracks);
-    if (trackData) {
-      const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
-      for (let i = 0; i < tracks.length; i++) {
-        // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
-        // console.log(tracks[i]);
-        if (
-          !(tracks[i].type in numericalTracksGroup) ||
-          !tracks[i].options.group
-        ) {
-          continue;
-        }
-        const g = tracks[i].options.group;
-        const tid = tracks[i].id;
-        if (tracks[i].options.yScale === ScaleChoices.FIXED) {
-          grouping[g] = {
-            scale: ScaleChoices.FIXED,
-            min: { [tid]: tracks[i].options.yMin },
-            max: { [tid]: tracks[i].options.yMax },
-          };
-          break;
-        }
-        if (trackData[tid]) {
-          const xvalues = trackData[tid];
-          // console.log(data);
-          const max =
-            xvalues[0] && xvalues[0].length
-              ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
-              : 1;
-          const min =
-            xvalues[1] && xvalues[1].length
-              ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
-              : 0;
 
-          if (!grouping.hasOwnProperty(g)) {
-            grouping[g] = {
-              scale: ScaleChoices.AUTO,
-              min: { [tid]: min },
-              max: { [tid]: max },
-            };
-          } else {
-            grouping[g].min[tid] = min;
-            grouping[g].max[tid] = max;
-          }
-        }
-        // }
-      }
-      // console.log(grouping);
-      return _.isEmpty(grouping) ? {} : grouping;
-    }
-    return {};
-  }
 }

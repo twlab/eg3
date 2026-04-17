@@ -291,10 +291,10 @@ async function getRemoteData(regionData: any, trackType: string) {
         return [];
       }
       if (
-        (trackType === "repeat" || trackType === "rmskv2") &&
+        (trackType === "repeatmasker" || trackType === "rmskv2") &&
         regionData.basesPerPixel > 1000
       ) {
-        return [];
+        throw new Error("Zoom in to see repeat masker annotations");
       }
       if (trackType === "bigbed") {
         return fetchInstance

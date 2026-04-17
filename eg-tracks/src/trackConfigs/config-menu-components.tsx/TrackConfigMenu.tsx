@@ -67,12 +67,12 @@ function ConfigMenuComponent(props: any) {
 
       // overflow bottom viewport edge
       if (top + menuRect.height > viewportHeight) {
-        top = Math.max(8, viewportHeight - menuRect.height - 8);
+        top = Math.max(8, viewportHeight - menuRect.height);
       }
 
       // not off the left/top edges
       left = Math.max(8, left);
-      top = Math.max(8, top);
+      top = Math.max(8, top - 100);
 
       setPosition({ left, top });
       setVisible(true);

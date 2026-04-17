@@ -54,7 +54,7 @@ import { motion } from "framer-motion";
 import MetadataSelectionMenu from "./ToolComponents/MetadataSelectionMenu";
 import { ChevronRightIcon } from "@primer/octicons-react";
 import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
-import { title } from "process";
+import { config, title } from "process";
 
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
@@ -258,6 +258,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const stateSize = useRef(currentState.limit);
   const stateIdx = useRef(currentState.index);
   const globalTrackConfig = useRef<{ [key: string]: any }>({
+
     viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
   });
   const trackManagerState = useRef<any>({
@@ -845,6 +846,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     value: string | number,
     trackId: string | null = null,
   ) {
+    console.log(key, value)
     let newSelected: { [key: string]: any } = {};
     // these are options that changes the configMenu so we need to recreate the
     // the configmenu
@@ -879,44 +881,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               usePrimaryNav: false,
             });
 
-            const trackToDrawId = {};
-            for (const key in trackFetchedDataCache.current) {
-              if (key in selectedTracks.current) {
-                trackToDrawId[key] = {};
-                const curTrack = trackFetchedDataCache.current[key];
-
-                for (const cacheDataIdx in curTrack) {
-                  if (isInteger(cacheDataIdx)) {
-                    if (
-                      "dataCache" in
-                      trackFetchedDataCache.current[key][cacheDataIdx]
-                    ) {
-                      completedFetchedRegion.current.done[key] = false;
-                      trackFetchedDataCache.current[key][cacheDataIdx] = {};
-                    }
-                  }
+            const curCacheTrack = trackFetchedDataCache.current[item.id];
+            for (const cacheDataIdx in curCacheTrack) {
+              if (isInteger(cacheDataIdx)) {
+                if (
+                  "dataCache" in
+                  trackFetchedDataCache.current[item.id][cacheDataIdx]
+                ) {
+                  completedFetchedRegion.current.done[key] = false;
+                  trackFetchedDataCache.current[item.id][cacheDataIdx] = {};
                 }
               }
             }
-          } else if (key === "aggregateMethod") {
-            const trackToDrawId = {};
-            for (const key in trackFetchedDataCache.current) {
-              if (key in selectedTracks.current) {
-                trackToDrawId[key] = {};
-                const curTrack = trackFetchedDataCache.current[key];
 
-                for (const cacheDataIdx in curTrack) {
-                  if (isInteger(cacheDataIdx)) {
-                    if (
-                      "xvalues" in
-                      trackFetchedDataCache.current[key][cacheDataIdx]
-                    ) {
-                      delete trackFetchedDataCache.current[key][cacheDataIdx]
-                        .xvalues;
-                    }
-                  }
+
+          } else if (key === "aggregateMethod") {
+            const curCacheTrack = trackFetchedDataCache.current[item.id];
+            for (const cacheDataIdx in curCacheTrack) {
+              if (isInteger(cacheDataIdx)) {
+                if (
+                  "xvalues" in
+                  trackFetchedDataCache.current[item.id][cacheDataIdx]
+                ) {
+                  delete trackFetchedDataCache.current[item.id][cacheDataIdx]
+                    .xvalues;
                 }
               }
+
+
             }
           }
         }
@@ -1996,9 +1988,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (trackId in globalTrackConfig.current) {
           configOptions = globalTrackConfig.current[trackId].configOptions;
         } else {
-          curTrackModel = tracks.find(
-            (trackModel: any) => trackModel.id === trackId,
-          );
+          curTrackModel = trackFetchedDataCache.current[trackId].trackModel
 
           if (
             curTrackModel &&
@@ -2014,7 +2004,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             };
           }
         }
-
+        console.log(trackFetchedDataCache.current)
         if (
           configOptions &&
           configOptions.group &&
@@ -2033,7 +2023,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             newDrawData.trackToDrawId[`${trackId}`];
         }
       }
-
+      console.log(completedFetchedRegion.current)
       for (const groupId in completedFetchedRegion.current.groups) {
         const currGroupKeys = Object.keys(
           completedFetchedRegion.current.groups[`${groupId}`],
@@ -3017,9 +3007,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWindowConfig
 
   function getWindowViewConfig(viewWindow, dataIdx) {
+
     if (viewWindow && dataIdx !== undefined && dataIdx !== null) {
       const logDrawTrack: Array<any> = [];
-      const trackDataObj: { [key: string]: any } = {};
+      const trackDataObj: Array<any> = [];
       const trackToDrawId: { [key: string]: any } = {};
       let primaryVisData;
 
@@ -3028,7 +3019,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (!cacheTrackData.usePrimaryNav) {
           continue;
         }
-        let curTrackModel;
+        const curTrackModel = cacheTrackData.trackModel
         let configOptions;
         if (
           cacheTrackData["error"] ||
@@ -3046,9 +3037,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (key in globalTrackConfig.current) {
           configOptions = globalTrackConfig.current[key].configOptions;
         } else {
-          curTrackModel = tracks.find(
-            (trackModel: any) => trackModel.id === key,
-          );
 
           if (curTrackModel) {
             configOptions = {
@@ -3136,7 +3124,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 primaryVisData.visWidth;
 
               if (currentViewLength > 100000) {
-                trackDataObj[key] = {
+                trackDataObj.push({
+                  id: key,
                   data: combinedData,
                   visRegion: visRegion,
                   visWidth: primaryVisData.visWidth
@@ -3144,10 +3133,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     : windowWidth * 3,
                   configOptions,
                   usePrimaryNav: cacheTrackData.usePrimaryNav,
-                };
+                  trackModel: curTrackModel,
+                });
               }
             } else {
-              trackDataObj[key] = {
+              trackDataObj.push({
+                id: key,
                 data: combinedData,
                 visRegion: visRegion,
                 visWidth: primaryVisData.visWidth
@@ -3155,7 +3146,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   : windowWidth * 3,
                 configOptions,
                 usePrimaryNav: cacheTrackData.usePrimaryNav,
-              };
+                trackModel: curTrackModel,
+              });
             }
           }
         }
@@ -3168,7 +3160,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       const groupScale = groupManager.getGroupScale(
-        tracks,
+
         trackDataObj,
         primaryVisData && primaryVisData.visWidth
           ? primaryVisData.visWidth

@@ -466,12 +466,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           !applyTrackConfigChange[`${id}`]["normalization"] &&
           !applyTrackConfigChange[`${id}`]["binSize"]
         ) {
+
           let cacheDataIdx = dataIdx;
           let cacheTrackData = trackFetchedDataCache.current[`${id}`];
           let trackState = _.cloneDeep(
             globalTrackState.current.trackStates[cacheDataIdx].trackState,
           );
-          trackState["recreate"] = true;
+
 
           handleTrackDraw({
             cacheTrackData,
@@ -504,7 +505,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-      trackState["recreate"] = true;
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -607,7 +607,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[dataIdx].trackState[
           "groupScale"
           ];
-        console.log(trackState);
+
         if (combinedData) {
           sentScreenshotData({
             fetchData: {
