@@ -1,4 +1,7 @@
 # Version history
+## 60.0.1
+- fixed longrange and hic 
+
 ## 60.0.0
 - to be added
 
