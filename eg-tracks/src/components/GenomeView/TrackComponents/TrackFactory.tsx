@@ -43,7 +43,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   sentScreenshotData,
   dragX,
   newDrawData,
-  trackFetchedDataCache,
+  trackManagerState,
   globalTrackState,
   isScreenShotOpen,
   legendRef,
@@ -57,16 +57,30 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   initialLoad,
   selectedRegionSet,
 }) {
-  const configOptions = useRef(
-    trackOptionMap[trackModel.type]
-      ? { ...trackOptionMap[`${trackModel.type}`].defaultOptions }
-      : { ...trackOptionMap["error"].defaultOptions },
-  );
+  function getConfigOptions() {
+    try {
+      const globalCfg = trackManagerState.current.globalConfig;
+      if (globalCfg) {
+        // support either a ref-like shape (legacy) or plain object
+        const entry = globalCfg.current ? globalCfg.current[`${id}`] : globalCfg[`${id}`];
+        if (entry && entry.configOptions) {
+          return entry.configOptions;
+        }
+      }
+    } catch (e) {
+      // fallthrough to defaults
+    }
+    return trackOptionMap[trackModel.type]
+      ? { ...trackOptionMap[`${trackModel.type}`].defaultOptions, ...(trackModel.options || {}) }
+      : { ...trackOptionMap["error"].defaultOptions };
+  }
   const initTrackStart = useRef(true);
   const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
   const fetchError = useRef<string | null>(null);
+
+  const caches = trackManagerState.current.caches;
 
   const xPos = useRef(0);
 
@@ -80,7 +94,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   function getHeight(numRows: number): number {
     let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
-    let options = configOptions.current;
+    let options = getConfigOptions();
     let rowsToDraw = Math.min(numRows, options.maxRows);
     if (options.hideMinimalItems) {
       rowsToDraw -= 1;
@@ -110,7 +124,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       genomeName: genomeConfig.genome.getName(),
       trackState,
       windowWidth,
-      configOptions: configOptions.current,
+      configOptions: getConfigOptions(),
       renderTooltip:
         trackModel.type === "modbed" ? renderTooltipModbed : renderTooltip,
       svgHeight,
@@ -200,7 +214,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         onClose: onClose,
         isThereG3dTrack: isThereG3dTrack,
         setShow3dGene: setShow3dGene,
-        configOptions: configOptions.current,
+        configOptions: getConfigOptions(),
       });
     } catch (err) {
       currtooltip = (
@@ -298,8 +312,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     groupScale,
     xvalues,
     isInit,
-    matplotCheck,
-    skipNoData,
+
+
   }) {
     const primaryVisData = trackState.genomicFetchCoord
       ? trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData
@@ -317,25 +331,34 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : windowWidth * 3;
     trackState["dataIdx"] = dataIdx;
     if (isInit && initTrackStart.current) {
+      const baseOptions = getConfigOptions();
       if (interactionTracks.has(trackModel.type)) {
-        configOptions.current["trackManagerRef"] = trackManagerRef;
+        updateGlobalTrackConfig({
+          configOptions: { ...baseOptions, trackManagerRef },
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          usePrimaryNav: cacheTrackData.usePrimaryNav,
+        });
+      } else {
+        updateGlobalTrackConfig({
+          configOptions: { ...baseOptions, ...(trackModel.options || {}) },
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          usePrimaryNav: cacheTrackData.usePrimaryNav,
+        });
       }
-
-      configOptions.current = {
-        ...configOptions.current,
-        ...trackModel.options,
-      };
-      updateGlobalTrackConfig({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        usePrimaryNav: cacheTrackData.usePrimaryNav,
-      });
 
       initTrackStart.current = false;
     }
-    configOptions.current["usePrimaryNav"] = cacheTrackData.usePrimaryNav;
+    // ensure usePrimaryNav is reflected in global config
+    updateGlobalTrackConfig({
+      configOptions: { ...getConfigOptions(), usePrimaryNav: cacheTrackData.usePrimaryNav },
+      trackModel: trackModel,
+      id: id,
+      trackIdx: trackIdx,
+    });
 
     fetchError.current = cacheTrackData["error"]
       ? cacheTrackData["error"]
@@ -363,7 +386,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         combinedData.push(cacheTrackData[currIdx]);
         currIdx--;
       }
-      if (matplotCheck && dynamicMatplotTracks.has(trackModel.type)) {
+      if (dynamicMatplotTracks.has(trackModel.type)) {
         if (
           cacheTrackData[`${dataIdx}`] &&
           cacheTrackData[`${dataIdx}`]["xvalues"]
@@ -373,7 +396,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData = groupTracksArrMatPlot(combinedData);
         }
       }
-      if (!noData || skipNoData) {
+      if (!noData) {
         if (viewWindow) {
           trackState["viewWindow"] = viewWindow;
         }
@@ -418,7 +441,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       if (
-        !trackFetchedDataCache.current[`${id}`] ||
+        !caches[`${id}`] ||
         !globalTrackState.current.trackStates[dataIdx] ||
         !globalTrackState.current.trackStates[dataIdx].trackState
           .genomicFetchCoord
@@ -426,7 +449,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         return;
       }
 
-      const cacheTrackData = trackFetchedDataCache.current[`${id}`];
+      const cacheTrackData = caches[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
@@ -441,8 +464,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         isInit: true,
-        matplotCheck: true,
-        skipNoData: false,
+
       });
     }
   }, [newDrawData]);
@@ -451,16 +473,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     if (viewComponent !== null) {
       if (id in applyTrackConfigChange) {
-        configOptions.current = {
-          ...configOptions.current,
-          ...applyTrackConfigChange[`${id}`],
-        };
-        updateGlobalTrackConfig({
-          configOptions: configOptions.current,
-          trackModel: trackModel,
-          id: id,
-          trackIdx: trackIdx,
-        });
+        // global config is updated centrally in TrackManager; TrackFactory only handles redraw/cache responses here
         // config options that needs a refetch so we can't reuse data
         if (
           !applyTrackConfigChange[`${id}`]["normalization"] &&
@@ -468,7 +481,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         ) {
 
           let cacheDataIdx = dataIdx;
-          let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+          let cacheTrackData = caches[`${id}`];
           let trackState = _.cloneDeep(
             globalTrackState.current.trackStates[cacheDataIdx].trackState,
           );
@@ -484,8 +497,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               ],
             xvalues: cacheTrackData[dataIdx]?.xvalues,
             isInit: false,
-            matplotCheck: true,
-            skipNoData: false,
+
+
           });
         }
       }
@@ -499,12 +512,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       viewWindowConfigChange &&
       id in viewWindowConfigChange.trackToDrawId &&
       (trackModel.type in numericalTracks ||
-        configOptions.current.displayMode === "density")
+        getConfigOptions().displayMode === "density")
     ) {
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
-      let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+      let cacheTrackData = caches[`${id}`];
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -515,8 +528,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         isInit: false,
-        matplotCheck: true,
-        skipNoData: false,
+
+
       });
     }
   }, [viewWindowConfigChange]);
@@ -527,7 +540,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       async function handle() {
         let cacheDataIdx = dataIdx;
 
-        let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+        let cacheTrackData = caches[`${id}`];
         let combinedData: any = [];
         let trackState = _.cloneDeep(
           globalTrackState.current.trackStates[cacheDataIdx].trackState,
@@ -574,7 +587,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-            trackFetchedDataCache.current[`${id}`].queryGenome
+            caches[`${id}`].queryGenome
           ].queryRegion
           : primaryVisData.visRegion;
         // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
@@ -601,7 +614,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let end = expandedViewWindow.end - width / 3;
 
         trackState["viewWindow"] = new OpenInterval(start, end);
-        let drawOptions = { ...configOptions.current };
+        let drawOptions = { ...getConfigOptions() };
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
           globalTrackState.current.trackStates[dataIdx].trackState[
@@ -617,9 +630,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               windowWidth,
               configOptions: drawOptions,
               svgHeight:
-                configOptions.current.displayMode === "full"
+                getConfigOptions().displayMode === "full"
                   ? svgHeight.current
-                  : configOptions.current.height,
+                  : getConfigOptions().height,
               trackModel,
               basesByPixel: basePerPixel,
               genomeConfig,
@@ -676,15 +689,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           {legend ?? (
             <TrackLegend
               trackModel={trackModel}
-              height={40}
-              label={
-                trackModel.options?.label
-                  ? trackModel.options.label
-                  : trackModel.label
-                    ? trackModel.label
-                    : ""
+              height={
+                getConfigOptions().displayMode === "full"
+                  ? !fetchError.current
+                    ? svgHeight.current
+                    : 40
+                  : !fetchError.current
+                    ? getConfigOptions().height
+                    : 40
               }
-              forceSvg={false}
             />
           )}
         </div>
@@ -699,12 +712,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           height={
             !viewComponent
               ? 40
-              : configOptions.current.displayMode === "full"
+              : getConfigOptions().displayMode === "full"
                 ? !fetchError.current
                   ? svgHeight.current
                   : 40
                 : !fetchError.current
-                  ? configOptions.current.height
+                  ? getConfigOptions().height
                   : 40
           }
           color={trackModel.isSelected ? "black" : "var(--font-color)"}
@@ -740,12 +753,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
           color={trackModel.isSelected ? "black" : "var(--font-color)"}
           height={
-            configOptions.current.displayMode === "full"
+            getConfigOptions().displayMode === "full"
               ? !fetchError.current
                 ? svgHeight.current
                 : 40
               : !fetchError.current
-                ? configOptions.current.height
+                ? getConfigOptions().height
                 : 40
           }
           xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
@@ -769,12 +782,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             pointerEvents: "auto",
             height: fetchError.current
               ? 40
-              : configOptions.current.displayMode === "full"
+              : getConfigOptions().displayMode === "full"
                 ? svgHeight.current
-                : !configOptions.current.isCombineStrands &&
+                : !getConfigOptions().isCombineStrands &&
                   trackModel.type === "methylc"
-                  ? configOptions.current.height * 2
-                  : configOptions.current.height,
+                  ? getConfigOptions().height * 2
+                  : getConfigOptions().height,
             left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
           }}
         >
@@ -785,12 +798,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             height={
               fetchError.current
                 ? 40
-                : configOptions.current.displayMode === "full"
+                : getConfigOptions().displayMode === "full"
                   ? svgHeight.current
-                  : !configOptions.current.isCombineStrands &&
+                  : !getConfigOptions().isCombineStrands &&
                     trackModel.type === "methylc"
-                    ? configOptions.current.height * 2
-                    : configOptions.current.height
+                    ? getConfigOptions().height * 2
+                    : getConfigOptions().height
             }
           />
         </div>
@@ -801,12 +814,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           display: "flex",
           height: fetchError.current
             ? 40
-            : configOptions.current.displayMode === "full"
+            : getConfigOptions().displayMode === "full"
               ? svgHeight.current
-              : !configOptions.current.isCombineStrands &&
+              : !getConfigOptions().isCombineStrands &&
                 trackModel.type === "methylc"
-                ? configOptions.current.height * 2
-                : configOptions.current.height,
+                ? getConfigOptions().height * 2
+                : getConfigOptions().height,
 
           position: "relative",
           willChange: "transform",
@@ -826,7 +839,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             lineHeight: 0,
 
             transform: `translateX(${viewComponent ? viewComponent.xPos : 0}px)`,
-            backgroundColor: configOptions.current.backgroundColor,
+            backgroundColor: getConfigOptions().backgroundColor,
           }}
         >
           {viewComponent ? (

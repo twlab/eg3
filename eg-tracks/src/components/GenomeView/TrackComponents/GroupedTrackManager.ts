@@ -72,7 +72,7 @@ export class GroupedTrackManager {
     width: number,
     viewWindow: OpenInterval,
     dataIdx: number,
-    trackFetchedDataCache: any
+    caches: any
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
     if (trackData) {
@@ -99,8 +99,8 @@ export class GroupedTrackManager {
             const data = track.data;
             let xvalues;
 
-            if (trackFetchedDataCache.current[tid][dataIdx]["xvalues"]) {
-              xvalues = trackFetchedDataCache.current[tid][dataIdx]["xvalues"];
+            if (caches[tid][dataIdx]["xvalues"]) {
+              xvalues = caches[tid][dataIdx]["xvalues"];
             } else {
               xvalues = this.aggregator.xToValueMaker(
                 data,
@@ -108,10 +108,10 @@ export class GroupedTrackManager {
                 width,
                 track.configOptions
               );
-              if (!trackFetchedDataCache.current[tid][dataIdx]) {
-                trackFetchedDataCache.current[tid][dataIdx] = {};
+              if (!caches[tid][dataIdx]) {
+                caches[tid][dataIdx] = {};
               }
-              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
+              caches[tid][dataIdx]["xvalues"] = xvalues;
             }
             let max = 0, min = 0;
             let revmax = 0, revmin = 0;
@@ -159,7 +159,7 @@ export class GroupedTrackManager {
             const data = track.data;
             let xvalues;
             if (
-              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] &&
+              caches[tid][dataIdx]["xvalues"] &&
               track.usePrimaryNav
             ) {
               continue;
@@ -196,10 +196,10 @@ export class GroupedTrackManager {
                 );
               }
 
-              if (!trackFetchedDataCache.current[tid][dataIdx]) {
-                trackFetchedDataCache.current[tid][dataIdx] = {};
+              if (!caches[tid][dataIdx]) {
+                caches[tid][dataIdx] = {};
               }
-              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
+              caches[tid][dataIdx]["xvalues"] = xvalues;
             }
           }
         }
