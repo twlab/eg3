@@ -118,7 +118,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     ROW_HEIGHT,
     onClose,
     scales,
+    placeFeature
   }) {
+    console.log(placeFeature)
     function createFullVisualizer(
       placements,
       width,
@@ -682,47 +684,57 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
 
-    function getHeight(numRows: number): number {
-      let rowHeight = ROW_HEIGHT;
-      let options = configOptions;
+    let placeFeatureData;
+    let numHidden = 0;
+    let height = 0;
+    if (!placeFeature) {
 
-      let rowsToDraw = Math.min(numRows, options.maxRows);
-      if (options.hideMinimalItems) {
-        rowsToDraw -= 1;
-      }
-      if (rowsToDraw < 1) {
-        rowsToDraw = 1;
+      function getHeight(numRows: number): number {
+        let rowHeight = ROW_HEIGHT;
+        let options = configOptions;
+
+        let rowsToDraw = Math.min(numRows, options.maxRows);
+        if (options.hideMinimalItems) {
+          rowsToDraw -= 1;
+        }
+        if (rowsToDraw < 1) {
+          rowsToDraw = 1;
+        }
+
+        return trackModel.type === "modbed"
+          ? (rowsToDraw + 1) * rowHeight + 2
+          : rowsToDraw * rowHeight + TOP_PADDING;
       }
 
-      return trackModel.type === "modbed"
-        ? (rowsToDraw + 1) * rowHeight + 2
-        : rowsToDraw * rowHeight + TOP_PADDING;
+      let featureArrange = new FeatureArranger();
+      let sortType = SortItemsOptions.NOSORT;
+
+      placeFeatureData = featureArrange.arrange(
+        formattedData,
+        objToInstanceAlign(trackState.visRegion),
+        trackState.visWidth,
+        getGenePadding,
+        configOptions.hiddenPixels,
+        sortType,
+        trackState.viewWindow,
+      );
+
+      numHidden = placeFeatureData.numHidden;
+      height =
+        trackModel.type === "repeatmasker" ||
+          trackModel.type === "rmskv2" ||
+          trackModel.type === "categorical" ||
+          trackModel.type === "modbed"
+          ? configOptions.height
+          : placeFeatureData.numRowsAssigned
+            ? getHeight(placeFeatureData.numRowsAssigned)
+            : 40;
     }
-
-    let featureArrange = new FeatureArranger();
-    let sortType = SortItemsOptions.NOSORT;
-
-    const placeFeatureData = featureArrange.arrange(
-      formattedData,
-      objToInstanceAlign(trackState.visRegion),
-      trackState.visWidth,
-      getGenePadding,
-      configOptions.hiddenPixels,
-      sortType,
-      trackState.viewWindow,
-    );
-
-    let height;
-    height =
-      trackModel.type === "repeatmasker" ||
-        trackModel.type === "rmskv2" ||
-        trackModel.type === "categorical" ||
-        trackModel.type === "modbed"
-        ? configOptions.height
-        : placeFeatureData.numRowsAssigned
-          ? getHeight(placeFeatureData.numRowsAssigned)
-          : 40;
-
+    else {
+      placeFeatureData = placeFeature.placements;
+      height = placeFeature.height;
+      numHidden = placeFeature.numHidden;
+    }
     const legend = (
       <TrackLegend
         height={height}
@@ -740,7 +752,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (updatedLegend) {
       updatedLegend.current = legend;
     }
-
+    if (svgHeight) {
+      svgHeight.current = height;
+    }
     const svgDATA = createFullVisualizer(
       placeFeatureData.placements,
       trackState.visWidth,
@@ -749,11 +763,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       configOptions.maxRows,
       legend,
     );
-    if (svgHeight) {
-      svgHeight.current = height;
-    }
 
-    return { component: svgDATA, numHidden: placeFeatureData.numHidden };
+
+    return { component: svgDATA, numHidden: numHidden };
   },
 
   density: function getDensity({
@@ -1487,6 +1499,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   const { trackModel, configOptions, genesArr } = drawData;
+  console.log(drawData)
   const trackType = trackModel.type;
 
   // Helper function to create common parameters
@@ -1510,6 +1523,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     getGenePadding: drawData.getGenePadding,
     getHeight: drawData.getHeight,
     xvaluesData: drawData.xvaluesData,
+    placeFeature: drawData.placeFeature,
     ...createCommonParams(extraParams),
   });
 

@@ -37,6 +37,7 @@ import { ITrackModel, Tool } from "../../types";
 import {
   GroupedTrackManager,
   numericalTracks,
+
   numericalTracksGroup,
 } from "./TrackComponents/GroupedTrackManager";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
@@ -1900,7 +1901,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const regionLoci = genomeFeatureSegment.map((item, _index) =>
           item.getLocus(),
         );
-
+        console.log({
+          trackToFetch: genomeAlignTracks,
+          visData: curTrackState.visData,
+          genomicLoci: curTrackState.regionLoci,
+          viewWindowGenomicLoci: regionLoci,
+          primaryGenName: genomeConfig.genome.getName(),
+          trackModelArr: genomeAlignTracks,
+          regionExpandLoci: curTrackState.regionExpandLoci,
+          useFineModeNav: useFineModeNav.current,
+          windowWidth,
+          bpRegionSize: bpRegionSize.current,
+          fetchAfterGenAlignTracks: dataToFetchArr,
+          trackDataIdx: curIdx,
+          missingIdx: curIdx,
+          fetchNewRegion: true,
+        })
         enqueueGenomeAlignMessage({
           trackToFetch: genomeAlignTracks,
           visData: curTrackState.visData,
@@ -3082,7 +3098,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function aggViewWindowData(viewWindow, dataIdx) {
 
     if (viewWindow && dataIdx !== undefined && dataIdx !== null) {
-      const logDrawTrack: Array<any> = [];
       const trackDataObj: Array<any> = [];
       const trackToDrawId: { [key: string]: any } = {};
       let primaryVisData;
@@ -3121,9 +3136,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (
-          !configOptions ||
-          (!(cacheTrackData.trackType in numericalTracks) &&
-            configOptions.displayMode !== "density")
+          !configOptions
+
         ) {
           continue;
         }
@@ -3131,7 +3145,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         let combinedData: any = [];
         let noData = false;
         if (
-          !cacheTrackData?.[dataIdx]?.["xvalues"] &&
+          (!cacheTrackData?.[dataIdx]?.["xvalues"] && curTrackModel.type in numericalTracks) || ((!(cacheTrackData.trackType in numericalTracks) &&
+            configOptions.displayMode !== "density") && configOptions?.displayMode === "full" && !cacheTrackData?.[dataIdx]?.["placeFeature"]) &&
           cacheTrackData.usePrimaryNav
         ) {
           let currIdx = dataIdx + 1;
@@ -3227,7 +3242,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         if (!noData) {
           if (cacheTrackData.usePrimaryNav) {
-            logDrawTrack.push(cacheTrackData);
+
             trackToDrawId[key] = false;
           }
         }
@@ -3573,8 +3588,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           for (const key in trackManagerState.current.caches) {
             const trackCache = trackManagerState.current.caches[key];
+            const curtrackModel = getTrackModelById(key);
             if (trackCache.trackType === "genomealign") {
-              genomeAlignTracks.push(trackCache.trackModel);
+
+              genomeAlignTracks.push(curtrackModel);
             } else if (!trackCache.usePrimaryNav) {
               if (
                 trackManagerState.current.caches[key][
@@ -3585,7 +3602,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   viewWindowConfigData.current.dataIdx
                 ].dataCache;
               }
-              trackToFetch.push(trackCache.trackModel);
+              trackToFetch.push(curtrackModel);
             }
           }
 
@@ -3682,6 +3699,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         backgroundColor: "var(--bg-color)",
         paddingLeft: "18px",
         marginBottom: "20px",
+
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (

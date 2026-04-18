@@ -114,6 +114,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
     cacheDataIdx,
     xvalues = null,
+    placeFeature = null,
   ) {
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
@@ -143,6 +144,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       errorInfo: fetchError.current,
       handleRetryFetchTrack: handleRetryFetchTrack,
       initialLoad: initialLoad.current,
+      placeFeature
     };
     let res;
     // try {
@@ -312,7 +314,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     groupScale,
     xvalues,
     isInit,
-
+    placeFeature,
 
   }) {
     const primaryVisData = trackState.genomicFetchCoord
@@ -378,15 +380,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let combinedData: Array<any> = [];
       let currIdx = dataIdx + 1;
       let noData = false;
-      for (let i = 0; i < 3; i++) {
-        if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
-          noData = true;
-          continue;
-        }
-        combinedData.push(cacheTrackData[currIdx]);
-        currIdx--;
+
+      if (cacheTrackData[`${dataIdx}`]["xvalues"] || cacheTrackData[`${dataIdx}`]["placeFeature"]) {
+
+        console.log("TESSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", cacheTrackData[`${dataIdx}`])
+        combinedData = [];
       }
-      if (dynamicMatplotTracks.has(trackModel.type)) {
+      else if (dynamicMatplotTracks.has(trackModel.type)) {
         if (
           cacheTrackData[`${dataIdx}`] &&
           cacheTrackData[`${dataIdx}`]["xvalues"]
@@ -394,6 +394,18 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData = [];
         } else {
           combinedData = groupTracksArrMatPlot(combinedData);
+        }
+      }
+      else {
+
+        console.log("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO", cacheTrackData[`${dataIdx}`])
+        for (let i = 0; i < 3; i++) {
+          if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
+            noData = true;
+            continue;
+          }
+          combinedData.push(cacheTrackData[currIdx]);
+          currIdx--;
         }
       }
       if (!noData) {
@@ -408,6 +420,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData,
           dataIdx,
           xvalues ? xvalues : null,
+          placeFeature ? placeFeature : null,
         );
       }
     } else {
@@ -424,6 +437,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData,
           dataIdx,
           xvalues ? xvalues : null,
+          placeFeature ? placeFeature : null,
         );
       }
     }
@@ -463,6 +477,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           "groupScale"
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
+        placeFeature: cacheTrackData[dataIdx]?.placeFeature,
         isInit: true,
 
       });
@@ -496,6 +511,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               "groupScale"
               ],
             xvalues: cacheTrackData[dataIdx]?.xvalues,
+            placeFeature: cacheTrackData[dataIdx]?.placeFeature,
             isInit: false,
 
 
@@ -527,6 +543,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           "groupScale"
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
+        placeFeature: cacheTrackData[dataIdx]?.placeFeature,
         isInit: false,
 
 

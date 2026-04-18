@@ -288,7 +288,7 @@ async function getRemoteData(regionData: any, trackType: string) {
     if (fetchInstance) {
       regionData.trackModel.options["trackType"] = regionData.trackModel.type;
       if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
-        return [];
+        throw new Error("Zoom in to see");
       }
       if (
         (trackType === "repeatmasker" || trackType === "rmskv2") &&

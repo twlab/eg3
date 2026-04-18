@@ -9,6 +9,12 @@ import {
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
+import FeatureArranger from "../../../models/FeatureArranger";
+import { SortItemsOptions } from "../../../models/SortItemsOptions";
+import { trackOptionMap } from "./defaultOptionsMap";
+const featureArrange = new FeatureArranger();
+const sortType = SortItemsOptions.NOSORT;
+const TOP_PADDING = 2;
 export const numericalTracks = {
   bigwig: "",
   bedgraph: "",
@@ -34,6 +40,21 @@ export const possibleNumericalTracks = {
   snp: "",
 };
 export const numericalTracksGroup = { bigwig: "", bedgraph: "" };
+function getHeight(numRows: number, trackModel, configOptions): number {
+  let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
+  let options = configOptions;
+  let rowsToDraw = Math.min(numRows, options.maxRows);
+  if (options.hideMinimalItems) {
+    rowsToDraw -= 1;
+  }
+  if (rowsToDraw < 1) {
+    rowsToDraw = 1;
+  }
+
+  return trackModel.type === "modbed"
+    ? (rowsToDraw + 1) * rowHeight + 2
+    : rowsToDraw * rowHeight + TOP_PADDING;
+}
 export class GroupedTrackManager {
   /**
    * @returns list of groups found in the track list, their data, and their original indicies
@@ -82,7 +103,7 @@ export class GroupedTrackManager {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
         const track = trackData[i];
-        console.log(track)
+
         if (track.configOptions.group && track.trackModel.type in numericalTracksGroup) {
 
           const g = track.configOptions.group;
@@ -152,7 +173,7 @@ export class GroupedTrackManager {
               grouping[g].max[tid] = max;
             }
           }
-        } else {
+        } else if (track.trackModel.type in numericalTracks || track?.trackModel?.options?.displayMode === "density") {
           const tid = track.id;
 
           if (track.data) {
@@ -203,13 +224,58 @@ export class GroupedTrackManager {
             }
           }
         }
+        else if (track?.trackModel?.options?.displayMode !== "density") {
+
+          const tid = track.id;
+          if (
+            caches[tid][dataIdx]["placeFeature"] &&
+            track.usePrimaryNav
+          ) {
+            continue;
+          }
+          const curTrackModel = track.trackModel;
+          const configOptions = trackOptionMap[curTrackModel.type]
+            ? { ...trackOptionMap[`${curTrackModel.type}`].defaultOptions, ...curTrackModel.options }
+            : { ...trackOptionMap["error"].defaultOptions }
+
+          if (track) {
+            const data = track.data;
+
+            const placeFeatureData = featureArrange.arrange(
+              data,
+              track.visRegion,
+              width,
+              trackOptionMap[`${curTrackModel.type}`]
+                ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
+                : trackOptionMap["error"].getGenePadding,
+              configOptions.hiddenPixels,
+              sortType,
+              viewWindow,
+            );
+
+            const height =
+              curTrackModel.type === "repeatmasker" ||
+                curTrackModel.type === "rmskv2" ||
+                curTrackModel.type === "categorical" ||
+                curTrackModel.type === "modbed"
+                ? configOptions?.height
+                : placeFeatureData.numRowsAssigned
+                  ? getHeight(placeFeatureData.numRowsAssigned, curTrackModel, configOptions)
+                  : 40;
+
+            if (!caches[tid][dataIdx]) {
+
+              caches[tid][dataIdx] = {};
+            }
+
+            caches[tid][dataIdx]["placeFeature"] = { placements: placeFeatureData, height, numHidden: placeFeatureData.numHidden };
+          }
+        }
         // }
       }
-
+      // console.log(grouping);
       return _.isEmpty(grouping) ? {} : grouping;
     }
     return {};
   }
-
-
 }
