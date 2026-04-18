@@ -383,7 +383,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
       if (cacheTrackData[`${dataIdx}`]["xvalues"] || cacheTrackData[`${dataIdx}`]["placeFeature"]) {
 
-        console.log("TESSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", cacheTrackData[`${dataIdx}`])
+
         combinedData = [];
       }
       else if (dynamicMatplotTracks.has(trackModel.type)) {
@@ -391,6 +391,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           cacheTrackData[`${dataIdx}`] &&
           cacheTrackData[`${dataIdx}`]["xvalues"]
         ) {
+
           combinedData = [];
         } else {
           combinedData = groupTracksArrMatPlot(combinedData);
@@ -398,7 +399,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
       else {
 
-        console.log("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO", cacheTrackData[`${dataIdx}`])
+
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
             noData = true;
@@ -424,6 +425,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         );
       }
     } else {
+
       const combinedData = cacheTrackData[dataIdx]
         ? cacheTrackData[dataIdx].dataCache
         : null;

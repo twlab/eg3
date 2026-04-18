@@ -120,7 +120,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     scales,
     placeFeature
   }) {
-    console.log(placeFeature)
+
     function createFullVisualizer(
       placements,
       width,
@@ -1499,7 +1499,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   const { trackModel, configOptions, genesArr } = drawData;
-  console.log(drawData)
+
   const trackType = trackModel.type;
 
   // Helper function to create common parameters

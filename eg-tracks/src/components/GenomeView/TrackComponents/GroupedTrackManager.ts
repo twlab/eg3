@@ -93,9 +93,10 @@ export class GroupedTrackManager {
     width: number,
     viewWindow: OpenInterval,
     dataIdx: number,
-    caches: any
+    trackManagerState: any
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
+
     if (trackData) {
 
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
@@ -120,8 +121,8 @@ export class GroupedTrackManager {
             const data = track.data;
             let xvalues;
 
-            if (caches[tid][dataIdx]["xvalues"]) {
-              xvalues = caches[tid][dataIdx]["xvalues"];
+            if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
+              xvalues = trackManagerState.current.caches[tid][dataIdx]["xvalues"];
             } else {
               xvalues = this.aggregator.xToValueMaker(
                 data,
@@ -129,10 +130,10 @@ export class GroupedTrackManager {
                 width,
                 track.configOptions
               );
-              if (!caches[tid][dataIdx]) {
-                caches[tid][dataIdx] = {};
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
               }
-              caches[tid][dataIdx]["xvalues"] = xvalues;
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] = xvalues;
             }
             let max = 0, min = 0;
             let revmax = 0, revmin = 0;
@@ -180,7 +181,7 @@ export class GroupedTrackManager {
             const data = track.data;
             let xvalues;
             if (
-              caches[tid][dataIdx]["xvalues"] &&
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
               track.usePrimaryNav
             ) {
               continue;
@@ -217,10 +218,10 @@ export class GroupedTrackManager {
                 );
               }
 
-              if (!caches[tid][dataIdx]) {
-                caches[tid][dataIdx] = {};
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
               }
-              caches[tid][dataIdx]["xvalues"] = xvalues;
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] = xvalues;
             }
           }
         }
@@ -228,7 +229,7 @@ export class GroupedTrackManager {
 
           const tid = track.id;
           if (
-            caches[tid][dataIdx]["placeFeature"] &&
+            trackManagerState.current.caches[tid][dataIdx]["placeFeature"] &&
             track.usePrimaryNav
           ) {
             continue;
@@ -263,17 +264,18 @@ export class GroupedTrackManager {
                   ? getHeight(placeFeatureData.numRowsAssigned, curTrackModel, configOptions)
                   : 40;
 
-            if (!caches[tid][dataIdx]) {
+            if (!trackManagerState.current.caches[tid][dataIdx]) {
 
-              caches[tid][dataIdx] = {};
+              trackManagerState.current.caches[tid][dataIdx] = {};
             }
 
-            caches[tid][dataIdx]["placeFeature"] = { placements: placeFeatureData, height, numHidden: placeFeatureData.numHidden };
+            trackManagerState.current.caches[tid][dataIdx]["placeFeature"] = { placements: placeFeatureData, height, numHidden: placeFeatureData.numHidden };
           }
         }
         // }
       }
       // console.log(grouping);
+
       return _.isEmpty(grouping) ? {} : grouping;
     }
     return {};

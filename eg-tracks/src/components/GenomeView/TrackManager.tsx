@@ -917,14 +917,77 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             }
           }
+          else if (key === "yMax" || key === "yMin" || key === "yScale") {
+            const cfgForItem =
+              trackManagerState.current.globalConfig &&
+                trackManagerState.current.globalConfig[item.id] &&
+                trackManagerState.current.globalConfig[item.id].configOptions
+                ? trackManagerState.current.globalConfig[item.id].configOptions
+                : null;
+
+            const groupVal = cfgForItem ? cfgForItem.group : null;
+
+            if (groupVal) {
+              for (const cfgId in trackManagerState.current.globalConfig) {
+                const cfg = trackManagerState.current.globalConfig[cfgId];
+                if (cfg && cfg.configOptions && cfg.configOptions.group === groupVal) {
+                  // update only this key on the group's configOptions
+                  cfg.configOptions = { ...cfg.configOptions, [key]: value };
+
+                  const tm = trackManagerState.current.tracks.find(
+                    (t: any) => `${t.id}` === `${cfgId}`,
+                  );
+
+                  if (tm) {
+                    let oldOption = _.cloneDeep(tm.options);
+                    let newVal = _.cloneDeep(value);
+                    tm.options = { ...oldOption, [key]: newVal };
+                    newSelected[`${cfgId}`] = { [key]: value };
+
+                    updateGlobalTrackConfig({
+                      configOptions: {
+                        ...(trackManagerState.current.globalConfig &&
+                          trackManagerState.current.globalConfig[`${cfgId}`]
+                          ? trackManagerState.current.globalConfig[`${cfgId}`].configOptions
+                          : {}),
+                        ...tm.options,
+                      },
+                      trackModel: tm,
+                      id: cfgId,
+                      usePrimaryNav: false,
+                    });
+                  } else {
+                    // ensure global config persists even if trackModel not present
+                    updateGlobalTrackConfig({
+                      configOptions: { ...cfg.configOptions },
+                      trackModel: null,
+                      id: cfgId,
+                      usePrimaryNav: false,
+                    });
+                  }
+                }
+              }
+            }
+          }
         }
       });
     }
+
+
+
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
     }
 
-    if (key !== "legendFontColor") {
+    if (key === "yMax" || key === "yMin" || (key === "yScale")) {
+
+      onNewRegion(trackManagerState.current.viewRegion._startBase, trackManagerState.current.viewRegion._endBase);
+
+      const tempViewWindowConfig = _.cloneDeep(viewWindowConfigData.current);
+      viewWindowConfigData.current = tempViewWindowConfig
+      //forces viewWindowConfigData to update use Effect by using state
+    }
+    else if (key !== "legendFontColor") {
       setApplyTrackConfigChange(newSelected);
 
       for (const _id of Object.keys(newSelected)) {
@@ -1901,22 +1964,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const regionLoci = genomeFeatureSegment.map((item, _index) =>
           item.getLocus(),
         );
-        console.log({
-          trackToFetch: genomeAlignTracks,
-          visData: curTrackState.visData,
-          genomicLoci: curTrackState.regionLoci,
-          viewWindowGenomicLoci: regionLoci,
-          primaryGenName: genomeConfig.genome.getName(),
-          trackModelArr: genomeAlignTracks,
-          regionExpandLoci: curTrackState.regionExpandLoci,
-          useFineModeNav: useFineModeNav.current,
-          windowWidth,
-          bpRegionSize: bpRegionSize.current,
-          fetchAfterGenAlignTracks: dataToFetchArr,
-          trackDataIdx: curIdx,
-          missingIdx: curIdx,
-          fetchNewRegion: true,
-        })
+
         enqueueGenomeAlignMessage({
           trackToFetch: genomeAlignTracks,
           visData: curTrackState.visData,
@@ -2075,7 +2123,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             newDrawData.trackToDrawId[`${trackId}`];
         }
       }
-      console.log(completedFetchedRegion.current)
+
       for (const groupId in completedFetchedRegion.current.groups) {
         const currGroupKeys = Object.keys(
           completedFetchedRegion.current.groups[`${groupId}`],
@@ -3096,7 +3144,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWindowConfig
 
   function aggViewWindowData(viewWindow, dataIdx) {
-
+    console.log("aggViewWindowData", viewWindow, dataIdx);
     if (viewWindow && dataIdx !== undefined && dataIdx !== null) {
       const trackDataObj: Array<any> = [];
       const trackToDrawId: { [key: string]: any } = {};
@@ -3143,52 +3191,45 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         let combinedData: any = [];
-        let noData = false;
+        let hasData = true;
         if (
           (!cacheTrackData?.[dataIdx]?.["xvalues"] && curTrackModel.type in numericalTracks) || ((!(cacheTrackData.trackType in numericalTracks) &&
             configOptions.displayMode !== "density") && configOptions?.displayMode === "full" && !cacheTrackData?.[dataIdx]?.["placeFeature"]) &&
           cacheTrackData.usePrimaryNav
         ) {
+          console.log("NOT UER")
           let currIdx = dataIdx + 1;
-
+          // combine data from view region and adjacent regions using dataIdx
           for (let i = 0; i < 3; i++) {
             if (
-              !cacheTrackData[currIdx] ||
-              !cacheTrackData[currIdx].dataCache
+              cacheTrackData[currIdx]?.dataCache
             ) {
-              noData = true;
-              break;
-            } else {
               combinedData.push(cacheTrackData[currIdx]);
+            } else {
+              hasData = false;
+              break;
+
             }
             currIdx--;
           }
+          // these tracks has multiple subTracks that needs to to combined in groupTrack
+          if (
+            cacheTrackData.trackType in
+            { matplot: "", dynamic: "", dynamicbed: "" }
+          ) {
 
-          if (!noData) {
-            if (
-              cacheTrackData.trackType in
-              { matplot: "", dynamic: "", dynamicbed: "" }
-            ) {
-              if (combinedData[1].xvalues) {
-                combinedData = [];
-              } else {
-                combinedData = groupTracksArrMatPlot(combinedData);
-              }
+            if (cacheTrackData[currIdx]?.xvalues) {
+
+              combinedData = [];
             } else {
-              // combinedData = combinedData
-              //   .map((item) => {
-              //     if (item && item["dataCache"]) {
-              //       return item.dataCache;
-              //     } else {
-              //       noData = true;
-              //     }
-              //   })
-              //   .flat(1);
+              combinedData = groupTracksArrMatPlot(combinedData);
+
             }
           }
+
         }
 
-        if (!noData) {
+        if (hasData) {
           const trackState = {
             ...globalTrackState.current.trackStates[dataIdx].trackState,
           };
@@ -3239,15 +3280,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               });
             }
           }
-        }
-        if (!noData) {
-          if (cacheTrackData.usePrimaryNav) {
 
+          // tracks that don't use primary nav are drawn with genomealign in the ongenomealignmessage, so we just needto
+          // clarify that  
+          if (cacheTrackData.usePrimaryNav) {
             trackToDrawId[key] = false;
           }
         }
-      }
 
+      }
+      // TO-DO so far only group primary nav tracks, not track that align to secondary genome align, or nonprimary with primary
+      console.log(trackToDrawId)
       const groupScale = groupManager.getGroupScale(
 
         trackDataObj,
@@ -3256,7 +3299,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           : windowWidth * 3,
         viewWindow,
         dataIdx,
-        trackManagerState.current.caches,
+        trackManagerState,
       );
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
         groupScale;
