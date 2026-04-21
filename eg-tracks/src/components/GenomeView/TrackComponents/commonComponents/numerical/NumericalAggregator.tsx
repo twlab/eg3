@@ -34,7 +34,7 @@ export class NumericalAggregator {
 
   xToValueMaker(data, viewRegion, width, options) {
     const withDefaultOptions = Object.assign({}, DEFAULT_OPTIONS, options);
-    const { aggregateMethod, smooth, yScale, yMin } = withDefaultOptions;
+    const { aggregateMethod, smooth } = withDefaultOptions;
 
     let xToValue,
       xToValue2,
@@ -60,9 +60,10 @@ export class NumericalAggregator {
         }
         if (
           !hasReverse &&
-          xToValue2[i] &&
-          (yScale === ScaleChoices.AUTO ||
-            (yScale === ScaleChoices.FIXED && yMin < 0))
+          xToValue2[i]
+          // &&
+          // (yScale === ScaleChoices.AUTO ||
+          //   (yScale === ScaleChoices.FIXED && yMin < 0))
         ) {
           hasReverse = true;
         }

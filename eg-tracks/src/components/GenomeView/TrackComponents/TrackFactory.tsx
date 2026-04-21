@@ -13,7 +13,7 @@ import {
 } from "./displayModeComponentMap";
 const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
-import _ from "lodash";
+import _, { get } from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
 import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
@@ -25,21 +25,19 @@ import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
-  trackManagerRef,
   basePerPixel,
-  updateGlobalTrackConfig,
   side,
   windowWidth = 0,
   genomeConfig,
   trackModel,
   dataIdx,
   signalTrackLoadComplete,
-  trackIdx,
+
   id,
   setShow3dGene,
   isThereG3dTrack,
   viewWindowConfigChange,
-  applyTrackConfigChange,
+
   sentScreenshotData,
   dragX,
   newDrawData,
@@ -48,7 +46,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   isScreenShotOpen,
   legendRef,
   highlightElements,
-  viewWindowConfigData,
+
   metaSets,
   onColorBoxClick,
   messageData,
@@ -116,6 +114,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     xvalues = null,
     placeFeature = null,
   ) {
+
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
     const displayArgs: any = {
@@ -332,35 +331,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ? primaryVisData.visWidth
       : windowWidth * 3;
     trackState["dataIdx"] = dataIdx;
-    if (isInit && initTrackStart.current) {
-      const baseOptions = getConfigOptions();
-      if (interactionTracks.has(trackModel.type)) {
-        updateGlobalTrackConfig({
-          configOptions: { ...baseOptions, trackManagerRef },
-          trackModel: trackModel,
-          id: id,
-          trackIdx: trackIdx,
-          usePrimaryNav: cacheTrackData.usePrimaryNav,
-        });
-      } else {
-        updateGlobalTrackConfig({
-          configOptions: { ...baseOptions, ...(trackModel.options || {}) },
-          trackModel: trackModel,
-          id: id,
-          trackIdx: trackIdx,
-          usePrimaryNav: cacheTrackData.usePrimaryNav,
-        });
-      }
 
-      initTrackStart.current = false;
-    }
-    // ensure usePrimaryNav is reflected in global config
-    updateGlobalTrackConfig({
-      configOptions: { ...getConfigOptions(), usePrimaryNav: cacheTrackData.usePrimaryNav },
-      trackModel: trackModel,
-      id: id,
-      trackIdx: trackIdx,
-    });
+
 
     fetchError.current = cacheTrackData["error"]
       ? cacheTrackData["error"]
@@ -486,56 +458,24 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
   }, [newDrawData]);
 
-  // MARK: [applyConfig]
-  useEffect(() => {
-    if (viewComponent !== null) {
-      if (id in applyTrackConfigChange) {
-        // global config is updated centrally in TrackManager; TrackFactory only handles redraw/cache responses here
-        // config options that needs a refetch so we can't reuse data
-        if (
-          !applyTrackConfigChange[`${id}`]["normalization"] &&
-          !applyTrackConfigChange[`${id}`]["binSize"]
-        ) {
-
-          let cacheDataIdx = dataIdx;
-          let cacheTrackData = caches[`${id}`];
-          let trackState = _.cloneDeep(
-            globalTrackState.current.trackStates[cacheDataIdx].trackState,
-          );
 
 
-          handleTrackDraw({
-            cacheTrackData,
-            trackState,
-            viewWindow: viewWindowConfigData.current?.viewWindow,
-            groupScale:
-              globalTrackState.current.trackStates[dataIdx].trackState[
-              "groupScale"
-              ],
-            xvalues: cacheTrackData[dataIdx]?.xvalues,
-            placeFeature: cacheTrackData[dataIdx]?.placeFeature,
-            isInit: false,
-
-
-          });
-        }
-      }
-    }
-  }, [applyTrackConfigChange]);
 
   // MARK: [viewWindowConfigChange]
 
   useEffect(() => {
     if (
       viewWindowConfigChange &&
-      id in viewWindowConfigChange.trackToDrawId &&
-      (trackModel.type in numericalTracks ||
-        getConfigOptions().displayMode === "density")
+      id in viewWindowConfigChange.trackToDrawId
+      // &&
+      // (trackModel.type in numericalTracks ||
+      //   getConfigOptions().displayMode === "density")
     ) {
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
       let cacheTrackData = caches[`${id}`];
+
       handleTrackDraw({
         cacheTrackData,
         trackState,

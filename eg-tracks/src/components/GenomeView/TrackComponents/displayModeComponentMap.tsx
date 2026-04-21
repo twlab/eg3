@@ -778,6 +778,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
   }) {
+
     const canvasElements = (
       <NumericalTrack
         data={formattedData}

@@ -47,6 +47,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   width,
   height,
 }) {
+
   const [resizeRef, size] = useResizeObserver();
 
   const infiniteScrollWorkers = useRef<{

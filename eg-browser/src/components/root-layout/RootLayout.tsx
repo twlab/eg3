@@ -431,7 +431,7 @@ export default function RootLayout(props: GenomeHubProps) {
 
             <>
 
-              <div style={{ textAlign: "center", color: "gray", backgroundColor: "inherit", overflow: "hidden", }}>
+              <div style={{ textAlign: "center", color: "gray", backgroundColor: "inherit", }}>
                 Copyright &copy; 2018-{year} Washington University in St. Louis. All rights reserved.
                 <br /> Developed by the{" "}
                 <a href="http://wang.wustl.edu" target="_blank" rel="noopener noreferrer" style={{ color: "#007bff" }}>

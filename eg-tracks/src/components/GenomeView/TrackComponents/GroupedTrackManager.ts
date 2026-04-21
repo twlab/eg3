@@ -175,6 +175,7 @@ export class GroupedTrackManager {
             }
           }
         } else if (track.trackModel.type in numericalTracks || track?.trackModel?.options?.displayMode === "density") {
+
           const tid = track.id;
 
           if (track.data) {
@@ -184,56 +185,59 @@ export class GroupedTrackManager {
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
               track.usePrimaryNav
             ) {
-              continue;
-            } else {
-              if (track.trackModel.type === "dynseq") {
-                xvalues = this.aggregator.xToValueMaker(
-                  data,
-                  track.visRegion,
-                  width,
-                  track.configOptions
-                );
-              } else if (track.trackModel.type === "methylc") {
-                xvalues = this.aggregateRecords(
-                  data,
-                  track.visRegion,
-                  width
-                );
-              } else if (track.trackModel.type === "matplot") {
-                xvalues = data.map(
-                  (d) =>
-                    this.aggregator.xToValueMaker(
-                      d,
-                      track.visRegion,
-                      width,
-                      track.configOptions
-                    )[0]
-                );
-              } else {
-                xvalues = this.aggregator.xToValueMaker(
-                  data,
-                  track.visRegion,
-                  width,
-                  track.configOptions
-                );
-              }
-
-              if (!trackManagerState.current.caches[tid][dataIdx]) {
-                trackManagerState.current.caches[tid][dataIdx] = {};
-              }
-              trackManagerState.current.caches[tid][dataIdx]["xvalues"] = xvalues;
+              // continue;
             }
+
+            // else {
+            if (track.trackModel.type === "dynseq") {
+              xvalues = this.aggregator.xToValueMaker(
+                data,
+                track.visRegion,
+                width,
+                track.configOptions
+              );
+            } else if (track.trackModel.type === "methylc") {
+              xvalues = this.aggregateRecords(
+                data,
+                track.visRegion,
+                width
+              );
+            } else if (track.trackModel.type === "matplot") {
+              xvalues = data.map(
+                (d) =>
+                  this.aggregator.xToValueMaker(
+                    d,
+                    track.visRegion,
+                    width,
+                    track.configOptions
+                  )[0]
+              );
+            } else {
+
+              xvalues = this.aggregator.xToValueMaker(
+                data,
+                track.visRegion,
+                width,
+                track.configOptions
+              );
+            }
+
+            if (!trackManagerState.current.caches[tid][dataIdx]) {
+              trackManagerState.current.caches[tid][dataIdx] = {};
+            }
+            trackManagerState.current.caches[tid][dataIdx]["xvalues"] = xvalues;
           }
+          // }
         }
         else if (track?.trackModel?.options?.displayMode !== "density") {
 
           const tid = track.id;
-          if (
-            trackManagerState.current.caches[tid][dataIdx]["placeFeature"] &&
-            track.usePrimaryNav
-          ) {
-            continue;
-          }
+          // if (
+          //   trackManagerState.current.caches[tid][dataIdx]["placeFeature"] &&
+          //   track.usePrimaryNav
+          // ) {
+          //   continue;
+          // }
           const curTrackModel = track.trackModel;
           const configOptions = trackOptionMap[curTrackModel.type]
             ? { ...trackOptionMap[`${curTrackModel.type}`].defaultOptions, ...curTrackModel.options }
