@@ -127,7 +127,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             track.id = `${genomeViewId}-${idx}`;
             track.options = getOptions(
               track.type,
-              track.options ? track.options : {}
+              track.options ? track.options : {},
             );
             return track;
           }
@@ -144,12 +144,12 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             name: track.name
               ? track.name
               : track.type === "ruler"
-              ? "ruler"
-              : `track ${idx + 1}`,
+                ? "ruler"
+                : `track ${idx + 1}`,
             url: track.url,
             options: getOptions(track.type, track.options),
             id: generateUUID(),
-          })
+          }),
       );
 
     trackModelArr.forEach((track) => {
@@ -183,11 +183,11 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
     region: any,
 
     width: number,
-    trackModels: TrackModel[]
+    trackModels: TrackModel[],
   ) {
     const navContext = genomeConfig.navContext as NavigationContext;
     const parsedRegion = genomeConfig.navContext.parse(
-      region as GenomeCoordinate
+      region as GenomeCoordinate,
     );
 
     return {
@@ -202,13 +202,13 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
         visRegion: new DisplayedRegionModel(
           navContext,
           parsedRegion.start,
-          parsedRegion.end
+          parsedRegion.end,
         ),
         viewWindow: new OpenInterval(0, width),
         viewWindowRegion: new DisplayedRegionModel(
           navContext,
           parsedRegion.start,
-          parsedRegion.end
+          parsedRegion.end,
         ),
       },
     };
@@ -218,7 +218,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
   async function fetchDrawData(
     viewRegionData: any,
     width: number,
-    prevFetchResults?: any
+    prevFetchResults?: any,
   ) {
     if (!prevFetchResults) {
       const results = await fetchGenomicData([viewRegionData]);
@@ -232,11 +232,11 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
                 viewRegionData.visData.visRegion.getWidth() / width
                   ? width
                   : DEFAULT_WINDOW_WIDTH,
-                track.trackModel.options
+                track.trackModel.options,
               )
               .then((res: any) => {
                 track.result = res;
-              })
+              }),
           );
         } else if (track.trackModel.type === "bam") {
           fetchPromises.push(
@@ -244,7 +244,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
               .getData(viewRegionData.genomicLoci)
               .then((res: any) => {
                 track.result = res;
-              })
+              }),
           );
         }
       });
@@ -260,20 +260,45 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
 
         function renderTooltip(event, gene) {
           const genomeConfig = viewRegionData.genomeConfig;
-          const currtooltip = geneClickToolTipMap[`${item.trackModel.type}`]({
-            gene,
-            feature: gene,
-            snp: gene,
-            vcf: gene,
-            trackModel: item.trackModel,
-            pageX: event.pageX,
-            pageY: event.pageY,
-            name: genomeConfig.genome._name,
-            onClose: onClose,
-            isThereG3dTrack: false,
-            setShow3dGene: null,
-            configOptions: item.trackModel.options,
-          });
+          let currtooltip;
+          try {
+            currtooltip = geneClickToolTipMap[`${item.trackModel.type}`]({
+              gene,
+              feature: gene,
+              snp: gene,
+              vcf: gene,
+              trackModel: item.trackModel,
+              pageX: event.pageX,
+              pageY: event.pageY,
+              name: genomeConfig.genome._name,
+              onClose: onClose,
+              isThereG3dTrack: false,
+              setShow3dGene: null,
+              configOptions: item.trackModel.options,
+            });
+          } catch (err) {
+            currtooltip = (
+              <div
+                style={{
+                  position: "absolute",
+                  left: event.pageX,
+                  top: event.pageY,
+                  background: "#fff0f0",
+                  border: "1px solid red",
+                  padding: "8px",
+                  zIndex: 1001,
+                  borderRadius: 4,
+                }}
+              >
+                <span style={{ color: "red" }}>
+                  Tooltip error: {String(err)}
+                </span>
+                <button style={{ marginLeft: 8 }} onClick={onClose}>
+                  ✕
+                </button>
+              </div>
+            );
+          }
           setToolTipVisible(true);
           setToolTip(ReactDOM.createPortal(currtooltip, document.body));
         }
@@ -285,27 +310,52 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
           type,
           onCount = "",
           onPct = "",
-          total = ""
+          total = "",
         ) {
           let currtooltip;
-          if (type === "norm") {
-            currtooltip = geneClickToolTipMap["normModbed"]({
-              bs,
-              pageX: event.pageX,
-              pageY: event.pageY,
-              feature,
-              onClose,
-            });
-          } else {
-            currtooltip = geneClickToolTipMap["barModbed"]({
-              feature,
-              pageX: event.pageX,
-              pageY: event.pageY,
-              onCount,
-              onPct,
-              total,
-              onClose,
-            });
+          try {
+            if (type === "norm") {
+              currtooltip = geneClickToolTipMap["normModbed"]({
+                bs,
+                pageX: event.pageX,
+                pageY: event.pageY,
+                feature,
+                onClose,
+              });
+            } else {
+              currtooltip = geneClickToolTipMap["barModbed"]({
+                feature,
+                pageX: event.pageX,
+                pageY: event.pageY,
+                onCount,
+                onPct,
+                total,
+                onClose,
+              });
+            }
+          } catch (err) {
+            currtooltip = ReactDOM.createPortal(
+              <div
+                style={{
+                  position: "absolute",
+                  left: event.pageX,
+                  top: event.pageY,
+                  background: "#fff0f0",
+                  border: "1px solid red",
+                  padding: "8px",
+                  zIndex: 1001,
+                  borderRadius: 4,
+                }}
+              >
+                <span style={{ color: "red" }}>
+                  Tooltip error: {String(err)}
+                </span>
+                <button style={{ marginLeft: 8 }} onClick={onClose}>
+                  ✕
+                </button>
+              </div>,
+              document.body,
+            );
           }
           setToolTipVisible(true);
           setToolTip(currtooltip);
@@ -397,12 +447,12 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
       genomeConfig,
       region,
       width,
-      trackModels
+      trackModels,
     );
     const genomeDrawData = await fetchDrawData(
       viewRegionData,
       width,
-      prevGenomeDrawData
+      prevGenomeDrawData,
     );
     const element = createGenomeViewElement(genomeDrawData);
 

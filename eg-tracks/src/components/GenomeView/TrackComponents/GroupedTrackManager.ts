@@ -9,6 +9,23 @@ import {
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
+import FeatureArranger, {
+  FeaturePlacementResult,
+} from "../../../models/FeatureArranger";
+import { SortItemsOptions } from "../../../models/SortItemsOptions";
+import { trackOptionMap } from "./defaultOptionsMap";
+import {
+  FeaturePlacer,
+  PlacedFeature,
+  PlacementMode,
+} from "../../../models/getXSpan/FeaturePlacer";
+import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+import { Fiber } from "../../../models/Feature";
+import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
+import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+const featureArrange = new FeatureArranger();
+const sortType = SortItemsOptions.NOSORT;
+const TOP_PADDING = 2;
 export const numericalTracks = {
   bigwig: "",
   bedgraph: "",
@@ -34,24 +51,47 @@ export const possibleNumericalTracks = {
   snp: "",
 };
 export const numericalTracksGroup = { bigwig: "", bedgraph: "" };
+function getHeight(numRows: number, trackModel, configOptions): number {
+  let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
+  let options = configOptions;
+  let rowsToDraw = Math.min(numRows, options.maxRows);
+  if (options.hideMinimalItems) {
+    rowsToDraw -= 1;
+  }
+  if (rowsToDraw < 1) {
+    rowsToDraw = 1;
+  }
+
+  return trackModel.type === "modbed"
+    ? (rowsToDraw + 1) * rowHeight + 2
+    : rowsToDraw * rowHeight + TOP_PADDING;
+}
 export class GroupedTrackManager {
   /**
    * @returns list of groups found in the track list, their data, and their original indicies
    */
   public aggregator: NumericalAggregator;
-  dynseqAggregator: (
-    data: any[],
-    viewRegion: any,
-    width: number,
-    aggregatorId: string
-  ) => any;
+  // dynseqAggregator: (
+  //   data: any[],
+  //   viewRegion: any,
+  //   width: number,
+  //   aggregatorId: string
+  // ) => any;
   aggregateRecords: (data: any[], viewRegion: any, width: number) => any;
-  aggregateFeaturesMatplot: (
-    data: any,
-    viewRegion: any,
-    width: any,
-    aggregatorId: any
-  ) => any;
+  aggregateFibers: (
+    data: Fiber[],
+    viewRegion: DisplayedRegionModel,
+    width: number,
+  ) => {
+    xToFibers: Array<{ on: number; off: number; count: number }>;
+    placements: FeaturePlacementResult["placements"];
+  };
+  // aggregateFeaturesMatplot: (
+  //   data: any,
+  //   viewRegion: any,
+  //   width: any,
+  //   aggregatorId: any
+  // ) => any;
 
   constructor() {
     this.aggregator = new NumericalAggregator();
@@ -64,61 +104,145 @@ export class GroupedTrackManager {
         : [];
       return xToRecords.map(MethylCRecord.aggregateByStrand);
     };
+
+    this.aggregateFibers = (
+      data: Fiber[],
+      viewRegion: DisplayedRegionModel,
+      width: number,
+    ) => {
+      width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
+      const xToFibers = Array(width).fill(null);
+      for (let x = 0; x < width; x++) {
+        // Fill the array with empty arrays
+        xToFibers[x] = { on: 0, off: 0, count: 0 };
+      }
+      const placer = new FeaturePlacer();
+      const result: FeaturePlacementResult = placer.placeFeatures({
+        features: data,
+        viewRegion,
+        width,
+        mode: PlacementMode.PLACEMENT,
+      }) as FeaturePlacementResult;
+
+      const placements = result?.placements ?? [];
+      if (result && placements) {
+        for (const placedFeature of placements) {
+          const { feature, xSpan, visiblePart } =
+            placedFeature as PlacedFeature;
+          const { relativeStart, relativeEnd } = visiblePart;
+          const segmentWidth = relativeEnd - relativeStart;
+          const startX = Math.max(0, Math.floor(xSpan.start));
+          const endX = Math.min(width - 1, Math.ceil(xSpan.end));
+          for (let x = startX; x <= endX; x++) {
+            xToFibers[x].count += 1;
+          }
+          (feature as Fiber).ons!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(
+                  ((bs - relativeStart) / segmentWidth) * (endX - startX),
+                );
+              xToFibers[x].on += 1;
+            }
+          });
+          (feature as Fiber).offs!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(
+                  ((bs - relativeStart) / segmentWidth) * (endX - startX),
+                );
+              xToFibers[x].off += 1;
+            }
+          });
+        }
+      }
+      return { xToFibers, placements };
+    };
   }
 
   getGroupScale(
-    tracks: TrackModel[],
     trackData: any,
     width: number,
     viewWindow: OpenInterval,
     dataIdx: number,
-    trackFetchedDataCache: any
+    trackManagerState: any,
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
+    console.log(trackData, trackManagerState);
     if (trackData) {
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
-      for (let i = 0; i < tracks.length; i++) {
+      for (let i = 0; i < trackData.length; i++) {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
+        const track = trackData[i];
 
-        if (tracks[i].options.group && tracks[i].type in numericalTracksGroup) {
-          const g = tracks[i].options.group;
-          const tid = tracks[i].id;
-          if (tracks[i].options.yScale === ScaleChoices.FIXED) {
+        if (
+          track.configOptions.group &&
+          track.trackModel.type in numericalTracksGroup
+        ) {
+          const g = track.configOptions.group;
+          const tid = track.id;
+          if (track.configOptions.yScale === ScaleChoices.FIXED) {
             grouping[g] = {
               scale: ScaleChoices.FIXED,
-              min: { [tid]: tracks[i].options.yMin },
-              max: { [tid]: tracks[i].options.yMax },
+              min: { [tid]: track.configOptions.yMin },
+              max: { [tid]: track.configOptions.yMax },
             };
             break;
           }
-          if (trackData[tid]) {
-            const data = trackData[tid].data;
+          if (track.data) {
+            const data = track.data;
             let xvalues;
-            // console.log(data);
-            if (trackFetchedDataCache.current[tid][dataIdx]["xvalues"]) {
-              xvalues = trackFetchedDataCache.current[tid][dataIdx]["xvalues"];
+
+            if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
+              xvalues =
+                trackManagerState.current.caches[tid][dataIdx]["xvalues"];
             } else {
               xvalues = this.aggregator.xToValueMaker(
                 data,
-                trackData[tid].visRegion,
+                track.visRegion,
                 width,
-                trackData[tid].configOptions
+                track.configOptions,
               );
-              if (!trackFetchedDataCache.current[tid][dataIdx]) {
-                trackFetchedDataCache.current[tid][dataIdx] = {};
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
               }
-              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
+                xvalues;
+            }
+            let max = 0,
+              min = 0;
+            let revmax = 0,
+              revmin = 0;
+            if (xvalues[3]) {
+              max =
+                xvalues[0] && xvalues[0].length
+                  ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
+                  : 1;
+
+              min =
+                xvalues[0] && xvalues[0].length
+                  ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
+                  : 0;
+            }
+            if (xvalues[2]) {
+              revmax =
+                xvalues[1] && xvalues[1].length
+                  ? _.max(xvalues[1].slice(viewWindow.start, viewWindow.end))
+                  : 1;
+
+              revmin =
+                xvalues[1] && xvalues[1].length
+                  ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
+                  : 0;
             }
 
-            const max =
-              xvalues[0] && xvalues[0].length
-                ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
-                : 1;
-            const min =
-              xvalues[1] && xvalues[1].length
-                ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
-                : 0;
+            max = Math.max(max, revmax) ? Math.max(max, revmax) : 0;
+            min = Math.min(min, revmin) ? Math.min(min, revmin) : 0;
 
             if (!grouping.hasOwnProperty(g)) {
               grouping[g] = {
@@ -131,118 +255,131 @@ export class GroupedTrackManager {
               grouping[g].max[tid] = max;
             }
           }
-        } else {
-          const tid = tracks[i].id;
+        } else if (
+          track.trackModel.type in numericalTracks ||
+          track?.trackModel?.options?.displayMode === "density"
+        ) {
+          const tid = track.id;
 
-          if (trackData[tid]) {
-            const data = trackData[tid].data;
+          if (track.data) {
+            const data = track.data;
             let xvalues;
             if (
-              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] &&
-              trackData[tid].usePrimaryNav
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
+              track.usePrimaryNav
             ) {
-              continue;
+              // continue;
+            }
+
+            // else {
+            if (track.trackModel.type === "dynseq") {
+              xvalues = this.aggregator.xToValueMaker(
+                data,
+                track.visRegion,
+                width,
+                track.configOptions,
+              );
+            } else if (track.trackModel.type === "methylc") {
+              xvalues = this.aggregateRecords(data, track.visRegion, width);
+            } else if (track.trackModel.type === "matplot") {
+              xvalues = data.map(
+                (d) =>
+                  this.aggregator.xToValueMaker(
+                    d,
+                    track.visRegion,
+                    width,
+                    track.configOptions,
+                  )[0],
+              );
             } else {
-              if (tracks[i].type === "dynseq") {
-                xvalues = this.aggregator.xToValueMaker(
-                  data,
-                  trackData[tid].visRegion,
-                  width,
-                  trackData[tid].configOptions
-                );
-              } else if (tracks[i].type === "methylc") {
-                xvalues = this.aggregateRecords(
-                  data,
-                  trackData[tid].visRegion,
-                  width
-                );
-              } else if (tracks[i].type === "matplot") {
-                xvalues = data.map(
-                  (d) =>
-                    this.aggregator.xToValueMaker(
-                      d,
-                      trackData[tid].visRegion,
-                      width,
-                      trackData[tid].configOptions
-                    )[0]
-                );
-              } else {
-                xvalues = this.aggregator.xToValueMaker(
-                  data,
-                  trackData[tid].visRegion,
-                  width,
-                  trackData[tid].configOptions
-                );
+              xvalues = this.aggregator.xToValueMaker(
+                data,
+                track.visRegion,
+                width,
+                track.configOptions,
+              );
+            }
+
+            if (!trackManagerState.current.caches[tid][dataIdx]) {
+              trackManagerState.current.caches[tid][dataIdx] = {};
+            }
+            trackManagerState.current.caches[tid][dataIdx]["xvalues"] = xvalues;
+          }
+          // }
+        } else if (track?.trackModel?.options?.displayMode !== "density") {
+          const tid = track.id;
+
+          const curTrackModel = track.trackModel;
+          const configOptions = trackOptionMap[curTrackModel.type]
+            ? {
+                ...trackOptionMap[`${curTrackModel.type}`].defaultOptions,
+                ...curTrackModel.options,
+              }
+            : { ...trackOptionMap["error"].defaultOptions };
+
+          if (track) {
+            if (
+              (track.trackModel.type === "modbed" &&
+                track.visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
+                configOptions.displayMode === FiberDisplayModes.AUTO) ||
+              configOptions.displayMode === FiberDisplayModes.SUMMARY
+            ) {
+              const xvalues = this.aggregateFibers(
+                track.data,
+                track.visRegion,
+                width,
+              );
+
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
+              }
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
+                xvalues;
+            } else {
+              const data = track.data;
+
+              const placeFeatureData = featureArrange.arrange(
+                data,
+                track.visRegion,
+                width,
+                trackOptionMap[`${curTrackModel.type}`]
+                  ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
+                  : trackOptionMap["error"].getGenePadding,
+                configOptions.hiddenPixels,
+                sortType,
+                viewWindow,
+              );
+
+              const height =
+                curTrackModel.type === "repeatmasker" ||
+                curTrackModel.type === "rmskv2" ||
+                curTrackModel.type === "categorical" ||
+                curTrackModel.type === "modbed"
+                  ? configOptions?.height
+                  : placeFeatureData.numRowsAssigned
+                    ? getHeight(
+                        placeFeatureData.numRowsAssigned,
+                        curTrackModel,
+                        configOptions,
+                      )
+                    : 40;
+
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
               }
 
-              if (!trackFetchedDataCache.current[tid][dataIdx]) {
-                trackFetchedDataCache.current[tid][dataIdx] = {};
-              }
-              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
+              trackManagerState.current.caches[tid][dataIdx]["placeFeature"] = {
+                placements: placeFeatureData,
+                height,
+                numHidden: placeFeatureData.numHidden,
+              };
             }
           }
         }
         // }
       }
       // console.log(grouping);
-      return _.isEmpty(grouping) ? {} : grouping;
-    }
-    return {};
-  }
 
-  getGroupScaleWithXvalues(
-    tracks: TrackModel[],
-    trackData: any,
-    viewWindow: OpenInterval
-  ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
-    // console.log(tracks);
-    if (trackData) {
-      const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
-      for (let i = 0; i < tracks.length; i++) {
-        // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
-        // console.log(tracks[i]);
-        if (
-          !(tracks[i].type in numericalTracksGroup) ||
-          !tracks[i].options.group
-        ) {
-          continue;
-        }
-        const g = tracks[i].options.group;
-        const tid = tracks[i].id;
-        if (tracks[i].options.yScale === ScaleChoices.FIXED) {
-          grouping[g] = {
-            scale: ScaleChoices.FIXED,
-            min: { [tid]: tracks[i].options.yMin },
-            max: { [tid]: tracks[i].options.yMax },
-          };
-          break;
-        }
-        if (trackData[tid]) {
-          const xvalues = trackData[tid];
-          // console.log(data);
-          const max =
-            xvalues[0] && xvalues[0].length
-              ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
-              : 1;
-          const min =
-            xvalues[1] && xvalues[1].length
-              ? _.min(xvalues[1].slice(viewWindow.start, viewWindow.end))
-              : 0;
-
-          if (!grouping.hasOwnProperty(g)) {
-            grouping[g] = {
-              scale: ScaleChoices.AUTO,
-              min: { [tid]: min },
-              max: { [tid]: max },
-            };
-          } else {
-            grouping[g].min[tid] = min;
-            grouping[g].max[tid] = max;
-          }
-        }
-        // }
-      }
-      // console.log(grouping);
       return _.isEmpty(grouping) ? {} : grouping;
     }
     return {};

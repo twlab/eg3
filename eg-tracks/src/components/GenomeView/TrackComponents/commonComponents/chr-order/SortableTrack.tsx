@@ -51,12 +51,12 @@ export function SortableList<T extends BaseItem>({
 
             // Collect ids of items to be moved
             const selectedItems = items.filter(
-              (item) => item.trackModel.isSelected
+              (item) => item.trackModel.isSelected,
             );
 
             if (selectedItems.length > 0) {
               const nonSelectedItems = items.filter(
-                (item) => !item.trackModel.isSelected
+                (item) => !item.trackModel.isSelected,
               );
 
               const newItemsArray = [

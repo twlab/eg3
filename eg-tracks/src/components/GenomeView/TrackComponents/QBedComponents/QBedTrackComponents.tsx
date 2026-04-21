@@ -94,7 +94,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     }
     const visibleValues = xToValue.slice(
       props.viewWindow.start,
-      props.viewWindow.end
+      props.viewWindow.end,
     );
     let max = _.max(_.flatten(visibleValues).map((x: any) => x.value)) || 0;
     let min = 0;
@@ -154,7 +154,8 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     viewWindow,
     xvaluesData,
     dataIdx,
-    initialLoad, updatedLegend
+    initialLoad,
+    updatedLegend,
   } = props;
   const {
     height,
@@ -169,15 +170,16 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   } = options;
 
   const aggregator = useMemo(() => new FeatureAggregator(), []);
-  let xToValue: Array<any> = xvaluesData && options.usePrimaryNav
-    ? xvaluesData
-    : aggregator.makeXMap(data, viewRegion, width, true).xToFeaturesForward;
+  let xToValue: Array<any> =
+    xvaluesData && options.usePrimaryNav
+      ? xvaluesData
+      : aggregator.makeXMap(data, viewRegion, width, true).xToFeaturesForward;
   scalesRef.current = computeScales(xToValue, height);
   for (let i = 0; i < xToValue.length; i++) {
     for (let j = 0; j < xToValue[i].length; j++) {
       xToValue[i][j].relativeX = i;
       xToValue[i][j].relativeY = scalesRef.current.valueToY(
-        xToValue[i][j].value
+        xToValue[i][j].value,
       );
     }
   }
@@ -207,17 +209,17 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
 
   let curParentStyle: any = forceSvg
     ? {
-      position: "relative",
+        position: "relative",
 
-      overflow: "hidden",
-      width: width / 3,
-    }
+        overflow: "hidden",
+        width: width / 3 + 120,
+      }
     : {};
   let curEleStyle: any = forceSvg
     ? {
-      position: "relative",
-      transform: `translateX(${-viewWindow.start}px)`,
-    }
+        position: "relative",
+        transform: `translateX(${-viewWindow.start}px)`,
+      }
     : {};
   let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
 

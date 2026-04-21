@@ -17,7 +17,7 @@ const genome = new Genome("b_chiifu_v3", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("A01:1187814-1197077");
+const defaultRegion = "A01:1187814-1197077";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

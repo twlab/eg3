@@ -24,8 +24,9 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
 
   render() {
     const { feature, category, queryEndpoint } = this.props;
+
     const featureName = category
-      ? category[feature.getName()].name
+      ? category[feature.getName()]
       : feature.getName();
     let linkOut;
     if (feature.id) {
@@ -42,7 +43,6 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
             </a>
           );
         } else {
-
           const ncbiURL = `https://www.ncbi.nlm.nih.gov/gene/?term=${
             String(feature.id).split(".")[0]
           }`;

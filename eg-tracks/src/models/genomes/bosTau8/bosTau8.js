@@ -39,7 +39,7 @@ const genome = new Genome("bosTau8", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr4:69394240-69396207");
+const defaultRegion = "chr4:69394240-69396207";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

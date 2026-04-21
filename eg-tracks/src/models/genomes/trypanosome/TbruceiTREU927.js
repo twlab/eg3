@@ -137,7 +137,7 @@ const genome = new Genome("TbruceiTREU927", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("Tb927_01_v5.1:0-7906");
+const defaultRegion = "Tb927_01_v5.1:0-7906";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

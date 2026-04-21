@@ -5,6 +5,32 @@ import TextSource from "./localTextSource";
 import BedTextSource from "./BedTextSource";
 import LongrangeAndreaTextSource from "./LongrangeAndreaTextSource";
 import LocalBigSource from "./LocalBigSource";
+import { HicSource } from "../getRemoteData/hicSource";
+import Feature from "../models/Feature";
+import ChromosomeInterval from "../models/ChromosomeInterval";
+import NavigationContext from "../models/NavigationContext";
+import DisplayedRegionModel from "../models/DisplayedRegionModel";
+
+function objToInstanceAlign(alignment: { [key: string]: any }) {
+  const visRegionFeatures: Feature[] = [];
+  for (const feature of alignment._navContext._features) {
+    const newChr = new ChromosomeInterval(
+      feature.locus.chr,
+      feature.locus.start,
+      feature.locus.end
+    );
+    visRegionFeatures.push(new Feature(feature.name, newChr));
+  }
+  const visRegionNavContext = new NavigationContext(
+    alignment._navContext._name,
+    visRegionFeatures
+  );
+  return new DisplayedRegionModel(
+    visRegionNavContext,
+    alignment._startBase,
+    alignment._endBase
+  );
+}
 
 let cachedLocalFetchInstance: { [key: string]: any } = {};
 
@@ -45,6 +71,9 @@ export const localTrackFetchFunction: { [key: string]: any } = {
   methylc: async function methylcFetch(regionData: any) {
     return getLocalData(regionData, "bedOrTabix");
   },
+  hic: async function hicFetch(regionData: any) {
+    return getLocalHicData(regionData);
+  },
 };
 
 export const textFetchFunction: { [key: string]: any } = {
@@ -71,6 +100,7 @@ async function getTextData(regionData: any) {
       regionData.trackModel.type === "longrange" &&
       regionData.trackModel.textConfig.subType === "AndreaGillespie"
     ) {
+
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LongrangeAndreaTextSource({
           blob: regionData.trackModel.fileObj,
@@ -78,6 +108,7 @@ async function getTextData(regionData: any) {
           url: "",
         });
     } else {
+
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new BedTextSource({
           blob: regionData.trackModel.fileObj,
@@ -121,4 +152,22 @@ async function getLocalData(regionData: any, trackType: string) {
     regionData.nav,
     regionData.trackModel.options
   );
+}
+
+async function getLocalHicData(regionData: any) {
+
+  if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
+    cachedLocalFetchInstance[`${regionData.trackModel.id}`] = new HicSource(
+      regionData.trackModel.fileObj
+    );
+  }
+
+  const fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
+  const data = await fetchInstance.getData(
+    objToInstanceAlign(regionData.visRegion),
+    regionData.basesPerPixel,
+    regionData.trackModel.options
+  );
+  const fileInfos = fetchInstance.getFileInfo();
+  return { data, fileInfos };
 }

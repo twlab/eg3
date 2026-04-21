@@ -19,7 +19,7 @@ const genome = new Genome("xenTro10", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:42132108-42175007");
+const defaultRegion = "chr6:42132108-42175007";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

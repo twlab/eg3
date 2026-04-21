@@ -114,17 +114,17 @@ class RulerComponent extends React.Component<RulerComponentProps> {
 
     let curParentStyle: any = forceSvg
       ? {
-        position: "relative",
+          position: "relative",
 
-        overflow: "hidden",
-        width: this.props.width / 3,
-      }
+          overflow: "hidden",
+          width: this.props.width / 3 + 120,
+        }
       : {};
     let curEleStyle: any = forceSvg
       ? {
-        position: "relative",
-        transform: `translateX(${-this.props.viewWindow.start}px)`,
-      }
+          position: "relative",
+          transform: `translateX(${-this.props.viewWindow.start}px)`,
+        }
       : {};
 
     let hoverStyle: any = this.props.options.packageVersion

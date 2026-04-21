@@ -207,11 +207,11 @@ export const trackFetchFunction: { [key: string]: any } = {
   },
 
   repeatmasker: async function repeatmaskerFetch(regionData: any) {
-    return getRemoteData(regionData, "repeat");
+    return getRemoteData(regionData, "repeatmasker");
   },
 
   rmskv2: async function rmskv2Fetch(regionData: any) {
-    return getRemoteData(regionData, "repeat");
+    return getRemoteData(regionData, "rmskv2");
   },
   biginteract: async function biginteractFetch(regionData: any) {
     return getRemoteData(regionData, "big");
@@ -251,6 +251,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         indexUrl
       );
     } else if (trackType === "bigbed") {
+
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
         regionData.trackModel.url
       );
@@ -258,7 +259,11 @@ async function getRemoteData(regionData: any, trackType: string) {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
-    } else if (trackType === "repeat") {
+    } else if (trackType === "repeatmasker") {
+      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
+        regionData.trackModel.url
+      );
+    } else if (trackType === "rmskv2") {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
         regionData.trackModel.url
       );
@@ -283,13 +288,13 @@ async function getRemoteData(regionData: any, trackType: string) {
     if (fetchInstance) {
       regionData.trackModel.options["trackType"] = regionData.trackModel.type;
       if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
-        return [];
+        throw new Error("Zoom in to see");
       }
       if (
-        (trackType === "repeat" || trackType === "rmskv2") &&
+        (trackType === "repeatmasker" || trackType === "rmskv2") &&
         regionData.basesPerPixel > 1000
       ) {
-        return [];
+        throw new Error("Zoom in to see repeat masker annotations");
       }
       if (trackType === "bigbed") {
         return fetchInstance
@@ -338,6 +343,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             return data;
           })
           .catch((error) => {
+
             cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });

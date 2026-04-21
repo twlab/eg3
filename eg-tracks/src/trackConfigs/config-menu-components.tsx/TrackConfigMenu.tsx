@@ -14,8 +14,9 @@ function ConfigMenuComponent(props: any) {
   const darkTheme = props.darkTheme;
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: 0, top: 0 });
+  const [visible, setVisible] = useState(false);
 
-  // Use mouse coordinates for positioning
+  // Use mouse coordinates for positioning (page coordinates)
   const mouseX = menuData.pageX || 0;
   const mouseY = menuData.pageY || 0;
 
@@ -43,57 +44,56 @@ function ConfigMenuComponent(props: any) {
   );
 
   useEffect(() => {
-    if (menuRef.current) {
-      const menuRect = menuRef.current.getBoundingClientRect();
-      const topFromPage = menuRect.top + window.scrollY;
-      const leftFromPage = menuRect.left + window.scrollX;
+    if (!menuRef.current) return;
+
+    setVisible(false);
+
+    const adjust = () => {
+      const menuRect = menuRef.current!.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // Calculate position relative to the positioned container
-      let left = mouseX - leftFromPage;
-      let top = mouseY - topFromPage;
+      // cur viewport coords
+      const viewportX = mouseX - window.scrollX;
+      const viewportY = mouseY - window.scrollY;
 
-      // // Convert to viewport coordinates to check overflow
-      // const viewportX = mouseX - window.scrollX;
-      // const viewportY = mouseY - window.scrollY;
+      let left = viewportX;
+      let top = viewportY;
 
-      // Check if menu would overflow right edge of viewport
+      // overflow right viewport edge
       if (left + menuRect.width > viewportWidth) {
-        left = (left - menuRect.width);
+        left = Math.max(8, viewportWidth - menuRect.width - 8);
       }
 
-      // Check if menu would overflow bottom edge of viewport
-      if (menuData.viewportY + menuRect.height > viewportHeight) {
-        const diff = (menuData.viewportY + menuRect.height) - viewportHeight
-
-        top = (top - diff);
+      // overflow bottom viewport edge
+      if (top + menuRect.height > viewportHeight) {
+        top = Math.max(8, viewportHeight - menuRect.height);
       }
 
-      // // Ensure menu doesn't go off left edge
-      // if (left - window.scrollX < 0) {
-      //   left = window.scrollX + 10;
-      // }
-
-      // // Ensure menu doesn't go off top edge
-      // if (top - window.scrollY < 0) {
-      //   top = window.scrollY + 10;
-      // }
+      // not off the left/top edges
+      left = Math.max(8, left);
+      top = Math.max(8, top - 100);
 
       setPosition({ left, top });
-    }
-  }, [mouseX, mouseY]);
+      setVisible(true);
+    };
 
-  return (
+    // Run adjustment after render to measure size
+    const id = window.requestAnimationFrame(adjust);
+    return () => window.cancelAnimationFrame(id);
+  }, [mouseX, mouseY, menuData.items, menuData.tracks]);
+
+  const configMenu = (
     <div
       ref={menuRef}
       style={{
-        position: "absolute",
+        position: "fixed",
         left: position.left,
         top: position.top,
         color: darkTheme ? "white" : "black",
-        zIndex: 1000,
-        pointerEvents: "auto",
+        zIndex: 99999,
+        pointerEvents: visible ? "auto" : "none",
+        opacity: visible ? 1 : 0,
       }}
     >
       <div
@@ -137,6 +137,8 @@ function ConfigMenuComponent(props: any) {
       </div>
     </div>
   );
+
+  return configMenu;
 }
 
 export default React.memo(ConfigMenuComponent);

@@ -71,8 +71,8 @@ export const DEFAULT_OPTIONS = {
   scoreMax: 10,
   scalePercentile: 95,
   scoreMin: 0,
-  height: 500,
-  lineWidth: 2,
+  height: 300,
+  lineWidth: 1,
   greedyTooltip: false,
   fetchViewWindowOnly: false,
   bothAnchorsInView: false,
@@ -210,10 +210,8 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     updatedLegend, dataIdx, initialLoad
   } = props;
 
-  const safeData = data || [];
-  const filteredData = filterData(safeData, options);
-
-  const scales = computeScale(safeData, options);
+  const filteredData = filterData(data, options);
+  const scales = computeScale(filteredData, options);
 
   let interactionData = placeInteractions(filteredData, visRegion, width);
 

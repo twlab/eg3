@@ -21,7 +21,7 @@ import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComp
 
 import { niceBpCount } from "../models/util";
 import JSON5 from "json5";
-import { initial } from "lodash";
+
 export interface PlacedAlignment {
   record: AlignmentRecord;
   visiblePart: AlignmentSegment;
@@ -157,8 +157,15 @@ export interface MultiAlignment {
   [genome: string]: Alignment;
 }
 
+function isFetchError(r: unknown): r is { error: string } {
+  return (
+    r != null && !Array.isArray(r) && typeof r === "object" && "error" in r
+  );
+}
+
 // Main processing function that can be used both as worker and regular function
 export async function fetchGenomicData(data: any[]): Promise<any> {
+
   if (!Array.isArray(data)) {
     throw new Error(
       `fetchGenomicData expects an array, but received: ${typeof data}`,
@@ -167,7 +174,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
 
   const objectPromises = data.map((dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
-    const initialLoad = dataItem.initialLoad;
+
     const fetchResults: Array<any> = [];
     const genomicLoci = dataItem.genomicLoci;
     const regionExpandLoci = dataItem.regionExpandLoci
@@ -180,7 +187,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
     const trackToDrawId = dataItem.trackToDrawId || {};
     const trackDataIdx = dataItem.trackDataIdx;
     const missingIdx = dataItem.missingIdx;
-    const useFineModeNav = dataItem.useFineModeNav;
+
     let genomicFetchCoord = dataItem.genomicFetchCoord || {
       [primaryGenName]: {
         genomicLoci,
@@ -205,10 +212,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             id: id,
             metadata: item.metadata,
             trackModel: item,
-            result: {
-              error: "This track type is currently not supported. ",
-              Error: "UnsupportedTrack",
-            },
+            result: [],
+            errorType: "This track type is currently not supported. ",
           });
         } else if (
           item.metadata.genome &&
@@ -219,18 +224,17 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             id: id,
             metadata: item.metadata,
             trackModel: item,
-            result: {
-              error: `genomealign track with query genome "${item.metadata.genome}" is not found`,
-              Error: "UnsupportedTrack",
-            },
+            result: [],
+            errorType: `genomealign track with query genome "${item.metadata.genome}" is not found`,
           });
-        } else if (item.Error) {
+        } else if (item.error) {
           fetchResults.push({
             name: trackType,
             id: id,
             metadata: item.metadata,
             trackModel: item,
-            result: item.Error,
+            result: [],
+            errorType: item.error,
           });
         } else if (trackType === "ruler") {
           fetchResults.push({
@@ -263,15 +267,19 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             dynamichic: "",
           }
         ) {
-          let hasError = false;
           let responses: Array<any> | { [key: string]: any } = [];
-          for (const trackItem of item.tracks) {
-            trackItem["shouldPlaceRegion"] = item.shouldPlaceRegion;
-            const response: any = await fetchData(trackItem);
-            if (typeof response === "object" && "Error" in response) {
-              hasError = true;
-              responses = response;
-              break; // Stop processing remaining tracks
+          let error: any = null;
+          const subTrackResults = await Promise.all(
+            item.tracks.map((trackItem) => {
+              trackItem["shouldPlaceRegion"] = item.shouldPlaceRegion;
+              return fetchData(trackItem);
+            }),
+          );
+          for (const response of subTrackResults) {
+            if (isFetchError(response)) {
+              error = response.error;
+              responses = [];
+              break;
             }
             responses.push(response);
           }
@@ -282,23 +290,34 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             id: id,
             metadata: item.metadata,
             trackModel: item,
+            errorType: error,
           });
         } else {
-          const responses = await fetchData(item);
-          const result =
-            typeof responses === "object" && "data" in responses
-              ? responses.data
-              : responses;
+          const responses: any = await fetchData(item);
+          let result;
+          let error: any = null;
+          if (isFetchError(responses)) {
+            result = [];
+            error = responses.error;
+          } else {
+            result = item.type === "hic" && typeof responses === "object" &&
+              !Array.isArray(responses) &&
+              "data" in responses ? responses.data : responses;
+          }
+
           fetchResults.push({
             name: trackType,
-            result: result,
+            result: Array.isArray(result) ? result : [],
             fileInfos:
-              typeof responses === "object" && "fileInfos" in responses
+              typeof responses === "object" &&
+                !Array.isArray(responses) &&
+                "fileInfos" in responses
                 ? responses.fileInfos
                 : null,
             id: id,
             metadata: item.metadata,
             trackModel: item,
+            errorType: error,
           });
         }
       }),
@@ -348,6 +367,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       const isLocalFetch = trackModel.fileObj instanceof File;
       try {
         if (isLocalFetch && trackModel.url === "") {
+
           responses = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
               basesPerPixel: bpRegionSize / windowWidth,
@@ -358,6 +378,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               basesPerPixel: bpRegionSize / windowWidth,
               nav: curFetchNav,
               trackModel,
+              visRegion: visRegion,
             });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
@@ -384,11 +405,11 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           }
         }
       } catch (error) {
-
         responses = {
-          error: error["message"] || `Error fetching data for track ${trackModel.name}`,
-          Error: error,
-          trackModel: trackModel,
+          error:
+            error instanceof Error
+              ? error.message
+              : `Error fetching data for track ${trackModel.name}`,
         };
       }
       return responses;
@@ -442,7 +463,9 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     );
 
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
-    const visRegionFeatures = mapFeatures(visData.visRegion._navContext._features);
+    const visRegionFeatures = mapFeatures(
+      visData.visRegion._navContext._features,
+    );
     const visRegionNavContext = new NavigationContext(
       visData.visRegion._navContext._name,
       visRegionFeatures,
@@ -476,7 +499,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     await Promise.all(
       genomeAlignTracks.map(async (item, index) => {
         let rawRecords;
-
+        let errorType: any = null;
         try {
           const responds = await trackFetchFunction["genomealign"]({
             nav: fetchArrNav,
@@ -520,9 +543,11 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
           rawRecords = records;
           trackToDrawId[item.id] = "";
         } catch (error) {
-          rawRecords = {
-            error: `Error fetching genome align track with id ${item.id}`,
-          };
+          rawRecords = [];
+          errorType =
+            error instanceof Error
+              ? error.message
+              : `Error fetching genome align track with id ${item.id}`;
         }
 
         fetchResults[item.id] = {
@@ -533,6 +558,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
           trackModel: item,
           metadata: item.metadata,
           isBigChain: false,
+          errorType,
         };
       }),
     );
@@ -540,7 +566,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
     const successFetch = Object.values(fetchResults).filter(
-      (result: any) => !("error" in result.records),
+      (result: any) => !result.errorType,
     );
 
     const multiCalInstance = new MultiAlignmentViewCalculator(primaryGenName);

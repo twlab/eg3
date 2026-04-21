@@ -7,7 +7,7 @@ import chromSize from "./chromSize.json";
 const allSize = chromSize.map(genom => new Chromosome(genom.chr, genom.size));
 const genome = new Genome("canFam3", allSize);
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr1:34702809-34709639");
+const defaultRegion = "chr1:34702809-34709639";
 
 const defaultTracks = [
   new TrackModel({

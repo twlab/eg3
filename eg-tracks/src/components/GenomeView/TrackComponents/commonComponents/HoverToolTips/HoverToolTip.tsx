@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, memo } from "react";
+import { useEffect, useRef, useState, memo, useContext } from "react";
+import PortalContext from "../../../../../lib/PortalContext";
 import "./Tooltip.css";
 import AlignmentSequence from "../../GenomeAlignComponents/AlignmentCoordinate";
 import HorizontalFragment from "../../GenomeAlignComponents/HorizontalFragment";
@@ -62,7 +63,7 @@ export const getHoverTooltip = {
 
     return {
       toolTip: (
-        <div >
+        <div>
           <div>
             <span className="Tooltip-major-text" style={{ marginRight: 3 }}>
               {dataObj.hasReverse && "Forward: "} {stringValue}
@@ -130,12 +131,12 @@ export const getHoverTooltip = {
       quanta: any[],
       relativeX: number,
       relativeY: number,
-      radius: number
+      radius: number,
     ) {
       const distances = quanta.map(
         (quantum) =>
           Math.pow(relativeX - (quantum.relativeX || 0), 2) +
-          Math.pow(relativeY - (quantum.relativeY || 0), 2)
+          Math.pow(relativeY - (quantum.relativeY || 0), 2),
       );
 
       const mindist = Math.min(...distances);
@@ -404,7 +405,7 @@ export const getHoverTooltip = {
         <div>
           {renderTooltipContentsForStrand(
             strandsAtPixel,
-            options.isCombineStrands ? "combined" : "forward"
+            options.isCombineStrands ? "combined" : "forward",
           )}
           {!options.isCombineStrands &&
             renderTooltipContentsForStrand(strandsAtPixel, "reverse")}
@@ -461,7 +462,7 @@ export const getHoverTooltip = {
             </div>,
             <div key={contextName + "value"}>
               {contextData.value.toFixed(2)}
-            </div>
+            </div>,
           );
         }
         details = (
@@ -483,6 +484,7 @@ export const getHoverTooltip = {
   },
   interactionHeatmap: function getToolTip(dataObj) {
     const polygon = findPolygon(dataObj.relativeX, dataObj.relativeY);
+
     function renderTooltip() {
       if (polygon) {
         let { xSpan1, xSpan2 } = polygon;
@@ -551,8 +553,22 @@ export const getHoverTooltip = {
         beams: beamElements,
         toolTip: (
           <div>
-            <div>Locus1: {polygon.interaction.locus1.toString()}</div>
-            <div>Locus2: {polygon.interaction.locus2.toString()}</div>
+            <div>
+              Locus1:{" "}
+              {polygon.interaction.locus1.chr +
+                ":" +
+                polygon.interaction.locus1.start +
+                "-" +
+                polygon.interaction.locus1.end}
+            </div>
+            <div>
+              Locus2:{" "}
+              {polygon.interaction.locus2.chr +
+                ":" +
+                polygon.interaction.locus2.start +
+                "-" +
+                polygon.interaction.locus2.end}
+            </div>
             <div>Score: {polygon.interaction.score}</div>
           </div>
         ),
@@ -582,11 +598,11 @@ export const getHoverTooltip = {
               if (
                 sameLoci(
                   sortedArcs[j][4].locus1,
-                  tops[tops.length - 1][4].locus2
+                  tops[tops.length - 1][4].locus2,
                 ) &&
                 sameLoci(
                   sortedArcs[j][4].locus2,
-                  tops[tops.length - 1][4].locus1
+                  tops[tops.length - 1][4].locus1,
                 )
               ) {
                 continue;
@@ -598,8 +614,22 @@ export const getHoverTooltip = {
             return (
               <div key={i}>
                 {arc[4].name && <div>{arc[4].name}</div>}
-                <div>Locus1: {arc[4].locus1.toString()}</div>
-                <div>Locus2: {arc[4].locus2.toString()}</div>
+                <div>
+                  Locus1:{" "}
+                  {arc[4].locus1.chr +
+                    ":" +
+                    arc[4].locus1.start +
+                    "-" +
+                    arc[4].locus1.end}
+                </div>
+                <div>
+                  Locus2:{" "}
+                  {arc[4].locus2.chr +
+                    ":" +
+                    arc[4].locus2.start +
+                    "-" +
+                    arc[4].locus2.end}
+                </div>
                 <div>Score: {arc[4].score}</div>
               </div>
             );
@@ -620,8 +650,22 @@ export const getHoverTooltip = {
           return (
             <div>
               {arc[4].name && <div>{arc[4].name}</div>}
-              <div>Locus1: {arc[4].locus1.toString()}</div>
-              <div>Locus2: {arc[4].locus2.toString()}</div>
+              <div>
+                Locus1:{" "}
+                {arc[4].locus1.chr +
+                  ":" +
+                  arc[4].locus1.start +
+                  "-" +
+                  arc[4].locus1.end}
+              </div>
+              <div>
+                Locus2:{" "}
+                {arc[4].locus2.chr +
+                  ":" +
+                  arc[4].locus2.start +
+                  "-" +
+                  arc[4].locus2.end}
+              </div>
               <div>Score: {arc[4].score}</div>
             </div>
           );
@@ -635,7 +679,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-            item[2]
+            item[2],
           ) <=
           0.5 * item[3]
         ) {
@@ -651,7 +695,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-            item[2]
+            item[2],
           ) <=
           0.5 * item[3]
         ) {
@@ -695,9 +739,24 @@ export const getHoverTooltip = {
       ? {
         toolTip: (
           <div>
-            <div>Locus1: {interaction.locus1.toString()}</div>
-            <div>Locus2: {interaction.locus2.toString()}</div>
+            <div>
+              Locus1:{" "}
+              {interaction.locus1.chr +
+                ":" +
+                interaction.locus1.start +
+                "-" +
+                interaction.locus1.end}
+            </div>
+            <div>
+              Locus2:{" "}
+              {interaction.locus2.chr +
+                ":" +
+                interaction.locus2.start +
+                "-" +
+                interaction.locus2.end}
+            </div>
             <div>Score: {interaction.score}</div>
+
           </div>
         ),
       }
@@ -714,7 +773,7 @@ export const getHoverTooltip = {
           x.targetXSpan.end >= dataObj.relativeX
           ? i
           : iCusor,
-      NaN
+      NaN,
     );
     const cusorSegment = drawData[indexOfCusorSegment];
 
@@ -789,6 +848,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   xAlias,
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
+  const portalTarget = useContext(PortalContext);
   const [isVisible, setIsVisible] = useState(false);
   const [rectPosition, setPosition] = useState({
     mouseYPos: 0,
@@ -803,37 +863,46 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
     // windowwidth going over by 1 pixel because each region pixel array starts at 0
 
-    let trackHoverTooltip = getHoverTooltip[trackType]({
-      data:
-        isArrayNotEmpty(data) || (isObjectNotEmpty(data) && isDataValid(data))
-          ? data
-          : [],
-      trackModel,
-      data2:
-        isArrayNotEmpty(data2) ||
-          (isObjectNotEmpty(data2) && isDataValid(data2))
-          ? data2
-          : [],
-      viewRegion,
-      width: windowWidth,
-      unit,
-      relativeX: dataIdxX,
-      relativeY: dataIdxY,
-      windowScrollY: window.scrollY,
-      hasReverse,
-      options,
-      viewWindow,
-      legendWidth,
-      targetRef,
-      scale,
-      xAlias,
-    });
+    let trackHoverTooltip;
+    try {
+      trackHoverTooltip = getHoverTooltip[trackType]({
+        data:
+          isArrayNotEmpty(data) || (isObjectNotEmpty(data) && isDataValid(data))
+            ? data
+            : [],
+        trackModel,
+        data2:
+          isArrayNotEmpty(data2) ||
+            (isObjectNotEmpty(data2) && isDataValid(data2))
+            ? data2
+            : [],
+        viewRegion,
+        width: windowWidth,
+        unit,
+        relativeX: dataIdxX,
+        relativeY: dataIdxY,
+        windowScrollY: window.scrollY,
+        hasReverse,
+        options,
+        viewWindow,
+        legendWidth,
+        targetRef,
+        scale,
+        xAlias,
+      });
+    } catch (err) {
+      trackHoverTooltip = {
+        toolTip: (
+          <div style={{ color: "red" }}>Tooltip error: {String(err)}</div>
+        ),
+      };
+    }
 
     if (trackHoverTooltip) {
       setPosition({
         ...rectPosition,
-        mouseYPos: trackType === "genomealignRough" ? rect.top : e.pageY + 10,
-        mouseXPos: e.pageX + 10,
+        mouseYPos: trackType === "genomealignRough" ? rect.top : e.clientY + 10,
+        mouseXPos: e.clientX + 10,
         toolTip: trackHoverTooltip.toolTip,
         beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
       });
@@ -879,27 +948,29 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
           {options && options.trackManagerRef
             ? ReactDOM.createPortal(
               rectPosition.beams,
-              options.trackManagerRef.current
+              options.trackManagerRef.current,
             )
             : ""}
 
           {ReactDOM.createPortal(
             <div
               style={{
-                position: "absolute",
+                position: "fixed",
                 top: rectPosition.mouseYPos,
                 left: rectPosition.mouseXPos,
                 borderRadius: 4,
-                backgroundColor: trackType === "genomealignRough" ? "transparent" : "lightblue",
+                backgroundColor:
+                  trackType === "genomealignRough"
+                    ? "transparent"
+                    : "lightblue",
                 fontSize: 14,
-                zIndex: 1000,
-                // prevent the tooltip from getting clipped off the edge of the screen viewport
+                zIndex: 9999,
               }}
             >
               {/* {rectPosition.dataIdxX} */}
               {rectPosition.toolTip}
             </div>,
-            document.body
+            portalTarget ?? document.body,
           )}
         </>
       ) : (

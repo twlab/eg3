@@ -28,7 +28,7 @@ export const OpacityThickness = (props) => {
             borderRadius: "4px",
             padding: "4px",
             width: "60px",
-            fontSize: "14px",
+            fontSize: "16px",
           }}
         />
       </label>
@@ -53,7 +53,7 @@ export const OpacityThickness = (props) => {
             borderRadius: "4px",
             padding: "4px",
             width: "60px",
-            fontSize: "14px",
+            fontSize: "16px",
           }}
         />
       </label>
@@ -68,7 +68,7 @@ export const OpacityThickness = (props) => {
             border: "1px solid #e2e8f0",
             borderRadius: "4px",
             padding: "4px",
-            fontSize: "14px",
+            fontSize: "16px",
             minWidth: "80px",
           }}
         >

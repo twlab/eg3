@@ -44,7 +44,7 @@ const genome = new Genome("galGal5", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr2:32665920-32669380");
+const defaultRegion = "chr2:32665920-32669380";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

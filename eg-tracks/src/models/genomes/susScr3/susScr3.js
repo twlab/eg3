@@ -29,7 +29,7 @@ const genome = new Genome("susScr3", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr18:50045452-50083338");
+const defaultRegion = "chr18:50045452-50083338";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

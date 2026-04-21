@@ -4,6 +4,7 @@ import _ from "lodash";
 import NavigationContext from "../../../models/NavigationContext";
 
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
+import { GenomeCoordinate } from "@/types";
 
 const DEBOUNCE_INTERVAL = 250;
 const SNP_ENDPOINTS = {
@@ -14,15 +15,14 @@ const SNP_ENDPOINTS = {
 interface SnpSearchBoxProps {
   genomeConfig: any;
   navContext: NavigationContext;
-  onRegionSelected: (newStart: number,
-    newEnd: number,
-    toolTitle: number | string,
+  onRegionSelected: (query: string | GenomeCoordinate,
     highlightSearch: boolean,) => void;
   handleCloseModal: () => void;
   onNewHighlight?: (start: number, end: number, text: string) => void;
   doHighlight: boolean;
   color?: string;
   background?: string;
+  customButton?: React.ElementType;
 }
 
 interface SnpMapping {
@@ -47,11 +47,11 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
   genomeConfig,
   navContext,
   onRegionSelected,
-  handleCloseModal,
-  onNewHighlight,
+
   doHighlight,
   color,
   background,
+  customButton,
 }) => {
   const [inputValue, setInputValue] = useState<string>("");
   const [result, setResult] = useState<SnpResult | null>(null);
@@ -111,14 +111,11 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
       mapping.start - 1,
       mapping.end
     );
-    const interval = navContext.convertGenomeIntervalToBases(chrInterval)[0];
 
-    if (interval) {
-      onRegionSelected(interval.start, interval.end, "isJump", doHighlight);
-      handleCloseModal();
-      if (doHighlight && onNewHighlight) {
-        onNewHighlight(interval.start, interval.end, inputValue.trim());
-      }
+
+    if (chrInterval) {
+      onRegionSelected(chrInterval.toString(), doHighlight)
+
     } else {
       console.log(
         "SNP not available in current region set view",
@@ -184,25 +181,46 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
 
   return (
     <div>
-      <div>
+      <div className="flex items-center">
         <input
           type="text"
-          size={20}
           placeholder="SNP id"
           onChange={handleInputChange}
+
+          className="w-full"
           style={{
-            padding: "6px 8px",
+            padding: "4px 6px",
             border: "1px solid #e2e8f0",
             borderRadius: "4px",
+            marginRight: "10px",
           }}
         />
-        <button
+
+        {customButton ? (
+          (() => {
+            const CustomButton = customButton as React.ElementType;
+            return (
+              <CustomButton
+                onClick={searchSnp}
+                active={false}
+                style={{
+                  width: "fit-content",
+                  padding: "4px 6px",
+                }}
+                outlined
+              >
+                Go
+              </CustomButton>
+            );
+          })()
+        ) : <button
           className="btn btn-secondary btn-sm"
-          style={{ marginLeft: "2px" }}
+
           onClick={searchSnp}
         >
           Go
-        </button>{" "}
+        </button>}
+
         <span className="text-info font-italic">{loadingMsg}</span>
       </div>
       <div

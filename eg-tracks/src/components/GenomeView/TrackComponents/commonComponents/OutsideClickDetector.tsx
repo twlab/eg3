@@ -28,14 +28,17 @@ const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
   };
 
   useEffect(() => {
-    document.addEventListener("mousedown", detectOutsideClick);
+    // Use mouseup (and touchend) so users can press-and-drag to select
+    // text inside the tooltip without it closing on initial mousedown.
+    document.addEventListener("pointerup", detectOutsideClick);
+
     return () => {
-      document.removeEventListener("mousedown", detectOutsideClick);
+      document.removeEventListener("pointerup", detectOutsideClick);
     };
   }, []);
 
   return (
-    <div style={{ position: "relative", zIndex: 10000 }} ref={handleRef}>
+    <div style={{ position: "relative", zIndex: 50 }} ref={handleRef}>
       {children}
     </div>
   );

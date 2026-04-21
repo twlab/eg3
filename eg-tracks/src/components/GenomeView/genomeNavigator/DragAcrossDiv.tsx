@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useCallback } from "react";
 import { MouseButton } from "../../../models/util";
 
 export interface CoordinateDiff {
@@ -6,32 +6,17 @@ export interface CoordinateDiff {
   dy: number;
 }
 
-interface DragAcrossDivProps {
-  mouseButton: MouseButton | undefined; // The mouse button to respond to
-  style?: object; // Any style desired
-  children: React.ReactNode;
-  /**
-   * Callback for when dragging starts.
-   *
-   * @param {React.MouseEvent} event - the event that triggered this callback
-   */
-  onDragStart?(event: React.MouseEvent): void;
-
-  /**
-   * Callback for each little bit of movement during a drag.
-   *
-   * @param {React.MouseEvent} event - the event that triggered this callback
-   * @param {CoordinateDiff} coordinateDiff - how far the mouse has moved since the drag started
-   */
-  onDrag?(event: React.MouseEvent, coordinateDiff: CoordinateDiff): void;
-
-  /**
-   * Callback for when the user lets go of the mouse and stops dragging.
-   *
-   * @param {React.MouseEvent} event - the event that triggered this callback
-   * @param {CoordinateDiff} coordinateDiff - how far the mouse has moved since the drag started
-   */
-  onDragEnd?(event: React.MouseEvent, coordinateDiff: CoordinateDiff): void;
+interface DragAcrossDivProps extends React.HTMLAttributes<HTMLDivElement> {
+  mouseButton?: MouseButton;
+  onDragStart?(event: React.PointerEvent<HTMLDivElement>): void;
+  onDrag?(
+    event: React.PointerEvent<HTMLDivElement>,
+    coordinateDiff: CoordinateDiff,
+  ): void;
+  onDragEnd?(
+    event: React.PointerEvent<HTMLDivElement>,
+    coordinateDiff: CoordinateDiff,
+  ): void;
 }
 
 function doNothing() {}
@@ -40,92 +25,65 @@ function doNothing() {}
  * A <div> that listens for drag-across events, where a user drags the cursor inside the div.  The drag callbacks will
  * fire even for short clicks; be sure to take this possibility into account when working with this component!
  *
- * @author Silas Hsu
+ * Implemented as a function component using hooks.
  */
-export class DragAcrossDiv extends React.Component<DragAcrossDivProps> {
-  static defaultProps = {
-    onDragStart: doNothing,
-    onDrag: doNothing,
-    onDragEnd: doNothing,
-  };
+export function DragAcrossDiv(props: DragAcrossDivProps) {
+  const {
+    mouseButton,
+    onDragStart = doNothing,
+    onDrag = doNothing,
+    onDragEnd = doNothing,
+    children,
+    ...remainingProps
+  } = props;
 
-  private originEvent: React.MouseEvent | null;
+  const originRef = useRef<{ x: number; y: number } | null>(null);
 
-  constructor(props: DragAcrossDivProps) {
-    super(props);
-    this.originEvent = null;
-    this.mousedown = this.mousedown.bind(this);
-    this.mousemove = this.mousemove.bind(this);
-    this.mouseup = this.mouseup.bind(this);
-  }
+  const mousedown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (originRef.current === null && event.button === mouseButton) {
+        originRef.current = { x: event.clientX, y: event.clientY };
+        onDragStart(event);
+      }
+    },
+    [mouseButton, onDragStart],
+  );
 
-  /**
-   * Callback for mousedown events on the <div>.
-   *
-   * @param {React.MouseEvent} event - mouse event that triggered this callback
-   */
-  mousedown(event: React.MouseEvent) {
-    if (this.originEvent === null && event.button === this.props.mouseButton) {
-      event.persist();
-      this.originEvent = event;
-      this.props.onDragStart!(event);
-    }
-  }
+  const mousemove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (originRef.current !== null) {
+        const diff = {
+          dx: event.clientX - originRef.current.x,
+          dy: event.clientY - originRef.current.y,
+        };
+        onDrag(event, diff);
+      }
+    },
+    [onDrag],
+  );
 
-  /**
-   * Callback for mousemove events on the <div>.
-   *
-   * @param {React.MouseEvent} event - mouse event that triggered this callback
-   */
-  mousemove(event: React.MouseEvent) {
-    if (this.originEvent !== null) {
-      const diff = {
-        dx: event.clientX - this.originEvent.clientX,
-        dy: event.clientY - this.originEvent.clientY,
-      };
-      this.props.onDrag!(event, diff);
-    }
-  }
+  const mouseup = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (originRef.current !== null) {
+        const diff = {
+          dx: event.clientX - originRef.current.x,
+          dy: event.clientY - originRef.current.y,
+        };
+        onDragEnd(event, diff);
+        originRef.current = null;
+      }
+    },
+    [onDragEnd],
+  );
 
-  /**
-   * Callback for mouseup events on the <div>.
-   *
-   * @param {React.MouseEvent} event - mouse event that triggered this callback
-   */
-  mouseup(event: React.MouseEvent) {
-    if (this.originEvent !== null) {
-      const diff = {
-        dx: event.clientX - this.originEvent.clientX,
-        dy: event.clientY - this.originEvent.clientY,
-      };
-      this.props.onDragEnd!(event, diff);
-      this.originEvent = null;
-    }
-  }
-
-  /**
-   * @return {JSX.Element} a div that listens to drag events
-   * @override
-   */
-  render() {
-    const {
-      mouseButton,
-      onDragStart,
-      onDrag,
-      onDragEnd,
-      children,
-      ...remainingProps
-    } = this.props;
-
-    return (
-      <div
-        onMouseDown={this.mousedown}
-        onMouseMove={this.mousemove}
-        onMouseUp={this.mouseup}
-        {...remainingProps}
-      >
-        {children}
-      </div>
-    );
-  }
+  return (
+    <div
+      onPointerDown={mousedown}
+      onPointerMove={mousemove}
+      onPointerUp={mouseup}
+      {...remainingProps}
+    >
+      {children}
+    </div>
+  );
 }

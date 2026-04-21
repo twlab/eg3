@@ -25,7 +25,7 @@ const genome = new Genome("Creinhardtii5.6", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr1:219261-260991");
+const defaultRegion = "chr1:219261-260991";
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",

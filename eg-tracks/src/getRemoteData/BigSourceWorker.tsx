@@ -1,4 +1,4 @@
-import _ from "lodash";
+
 import { BigWigZoomLevels } from "../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { makeBwg } from "./vendor/bbi-js/main/bigwig";
 import { URLFetchable } from "./vendor/bbi-js/utils/bin";
@@ -52,7 +52,7 @@ class BigSourceWorker {
     const bigWigObj = await this.bigWigPromise;
     const zoomLevel =
       options.zoomLevel === undefined ||
-      options.zoomLevel === BigWigZoomLevels.AUTO
+        options.zoomLevel === BigWigZoomLevels.AUTO
         ? this._getMatchingZoomLevel(bigWigObj, basesPerPixel)
         : Number.parseInt(options.zoomLevel);
 
@@ -61,7 +61,7 @@ class BigSourceWorker {
     );
     const dataForEachLocus = await Promise.all(promises);
 
-    const combinedData = _.flatten(dataForEachLocus);
+    const combinedData = dataForEachLocus.flat();
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
     }

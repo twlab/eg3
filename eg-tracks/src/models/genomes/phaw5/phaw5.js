@@ -8,7 +8,7 @@ import chromSize from "./chromSize.json";
 const allSize = chromSize.map((genom) => new Chromosome(genom.chr, genom.size));
 const genome = new Genome("phaw5", allSize);
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("phaw_50.000135b:538531-1003670");
+const defaultRegion = "phaw_50.000135b:538531-1003670";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

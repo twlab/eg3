@@ -427,9 +427,9 @@ class ThreedmolContainer extends React.Component<
       showEnvelop: false,
       envelopColor: "grey",
       envelopOpacity: "0.3",
-      spinning: true,
+      spinning: false,
       spinDirection: "y",
-      spinSpeed: 0.2,
+      spinSpeed: 1,
       spinReverse: false,
     };
     this.paintWithBigwig = _.debounce(this.paintWithBigwig, 150);
@@ -445,7 +445,7 @@ class ThreedmolContainer extends React.Component<
     this.setState({ mainBoxHeight: height, mainBoxWidth: width });
     const features = viewRegion.getNavigationContext().getFeatures();
     features.forEach(
-      (feature) => (this.chromHash[feature.name] = feature.locus.end)
+      (feature) => (this.chromHash[feature.name] = feature.locus.end),
     );
     const element = this.myRef.current;
     const element2 = this.myRef2.current;
@@ -456,7 +456,7 @@ class ThreedmolContainer extends React.Component<
     this.viewer2.linkViewer(this.viewer);
     if (!g3dtrack) {
       this.setMessage(
-        "cannot parse g3d file error, please check your file or contact the browser team."
+        "cannot parse g3d file error, please check your file or contact the browser team.",
       );
       return;
     }
@@ -471,7 +471,7 @@ class ThreedmolContainer extends React.Component<
       await this.g3dFile.readHeader();
     } catch (error) {
       this.setMessage(
-        "parse g3d file error, please check your file or contact the browser team."
+        "parse g3d file error, please check your file or contact the browser team.",
       );
       return;
     }
@@ -481,7 +481,9 @@ class ThreedmolContainer extends React.Component<
       resolutions: this.g3dFile.meta.resolutions,
       resolution: reso,
     });
-    this.viewer.spin(this.state.spinDirection, this.state.spinSpeed);
+    if (this.state.spinning) {
+      this.viewer.spin(this.state.spinDirection, this.state.spinSpeed);
+    }
   }
 
   async componentDidUpdate(prevProps, prevState) {
@@ -587,28 +589,28 @@ class ThreedmolContainer extends React.Component<
           Object.keys(this.model2).forEach((hap) => this.model2[hap].show());
           this.viewer2.setStyle(
             {},
-            { cartoon: { colorscheme: "chrom", style: "trace", thickness: 1 } }
+            { cartoon: { colorscheme: "chrom", style: "trace", thickness: 1 } },
           );
           break;
         case "sphere":
           Object.keys(this.model2).forEach((hap) => this.model2[hap].show());
           this.viewer2.setStyle(
             {},
-            { sphere: { colorscheme: "chrom", opacity: 1, radius: 2 } }
+            { sphere: { colorscheme: "chrom", opacity: 1, radius: 2 } },
           );
           break;
         case "cross":
           Object.keys(this.model2).forEach((hap) => this.model2[hap].show());
           this.viewer2.setStyle(
             {},
-            { cross: { colorscheme: "chrom", opacity: 1, radius: 2 } }
+            { cross: { colorscheme: "chrom", opacity: 1, radius: 2 } },
           );
           break;
         case "line":
           Object.keys(this.model2).forEach((hap) => this.model2[hap].show());
           this.viewer2.setStyle(
             {},
-            { line: { colorscheme: "chrom", opacity: 1 } }
+            { line: { colorscheme: "chrom", opacity: 1 } },
           );
           break;
         case "hide":
@@ -715,48 +717,48 @@ class ThreedmolContainer extends React.Component<
     ) {
       this.setState({ paintRegion: "new" });
     }
-    if (layout !== prevState.layout) {
-      if (layout === "side" && thumbStyle !== "hide") {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: halftWidth,
-          thumbBoxHeight: height,
-          thumbBoxWidth: halftWidth,
-        });
-      } else {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: width,
-          thumbBoxHeight: 240,
-          thumbBoxWidth: 300,
-        });
-      }
-    }
-    if (width !== prevProps.width || height !== prevProps.height) {
-      // this.setState({ mainBoxHeight: height, mainBoxWidth: width });
-      if (layout === "side" && thumbStyle !== "hide") {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: halftWidth,
-          thumbBoxHeight: height,
-          thumbBoxWidth: halftWidth,
-        });
-      } else {
-        this.setState({
-          mainBoxHeight: height,
-          mainBoxWidth: width,
-          thumbBoxHeight: 240,
-          thumbBoxWidth: 300,
-        });
-      }
-    }
-    if (
-      mainBoxHeight !== prevState.mainBoxHeight ||
-      mainBoxWidth !== prevState.mainBoxWidth
-    ) {
-      this.viewer.render();
-      this.viewer2.render();
-    }
+    // if (layout !== prevState.layout) {
+    //   if (layout === "side" && thumbStyle !== "hide") {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: halftWidth,
+    //       thumbBoxHeight: height,
+    //       thumbBoxWidth: halftWidth,
+    //     });
+    //   } else {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: width,
+    //       thumbBoxHeight: 240,
+    //       thumbBoxWidth: 300,
+    //     });
+    //   }
+    // }
+    // if (width !== prevProps.width || height !== prevProps.height) {
+    //   // this.setState({ mainBoxHeight: height, mainBoxWidth: width });
+    //   if (layout === "side" && thumbStyle !== "hide") {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: halftWidth,
+    //       thumbBoxHeight: height,
+    //       thumbBoxWidth: halftWidth,
+    //     });
+    //   } else {
+    //     this.setState({
+    //       mainBoxHeight: height,
+    //       mainBoxWidth: width,
+    //       thumbBoxHeight: 240,
+    //       thumbBoxWidth: 300,
+    //     });
+    //   }
+    // }
+    // if (
+    //   mainBoxHeight !== prevState.mainBoxHeight ||
+    //   mainBoxWidth !== prevState.mainBoxWidth
+    // ) {
+    //   this.viewer.render();
+    //   this.viewer2.render();
+    // }
     if (highlightingColor !== prevState.highlightingColor) {
       this.setState({ highlightingColorChanged: true });
     }
@@ -812,6 +814,12 @@ class ThreedmolContainer extends React.Component<
   }
 
   componentWillUnmount() {
+    // Stop the spin rAF loop before clearing. Without this, the internal
+    // requestAnimationFrame loop keeps firing even after the canvas is removed
+    // from the DOM, accumulating orphaned render loops on each remount.
+    if (this.viewer) {
+      this.viewer.spin(false);
+    }
     this.clearScene();
     this.bwData = {}; //clean
     this.compData = {};
@@ -857,7 +865,7 @@ class ThreedmolContainer extends React.Component<
         locus.start,
         locus.end,
         resolution,
-        displayedModelKeys
+        displayedModelKeys,
       );
       // const img = document.createElement("img");
       const img = new Image();
@@ -873,7 +881,7 @@ class ThreedmolContainer extends React.Component<
               position: { x: atom.x, y: atom.y, z: atom.z },
               backgroundImage: img,
               // screenOffset: { x: 0, y: 0 },
-            })
+            }),
           );
         });
       });
@@ -904,7 +912,7 @@ class ThreedmolContainer extends React.Component<
           locus.start,
           locus.end,
           resolution,
-          displayedModelKeys
+          displayedModelKeys,
         );
         atoms.forEach((atom) => {
           let addingShape;
@@ -935,7 +943,7 @@ class ThreedmolContainer extends React.Component<
                 fontColor: myShapes[s].color,
                 backgroundColor: getContrastingColor(myShapes[s].color),
                 backgroundOpacity: 0.8,
-              })
+              }),
             );
           }
         });
@@ -948,7 +956,7 @@ class ThreedmolContainer extends React.Component<
             locus.start,
             locus.end,
             resolution,
-            displayedModelKeys
+            displayedModelKeys,
           );
           atoms.forEach((atom) => {
             let addingShape;
@@ -979,7 +987,7 @@ class ThreedmolContainer extends React.Component<
                   fontColor: myShapes[s].color,
                   backgroundColor: getContrastingColor(myShapes[s].color),
                   backgroundOpacity: 0.8,
-                })
+                }),
               );
             }
           });
@@ -1053,7 +1061,7 @@ class ThreedmolContainer extends React.Component<
           anchor.locus.start,
           anchor.locus.end,
           resolution,
-          displayedModelKeys
+          displayedModelKeys,
         );
         atoms.forEach((atom) => {
           this.arrows.push(
@@ -1064,7 +1072,7 @@ class ThreedmolContainer extends React.Component<
               color: anchor.color,
               radiusRadio: 0.2, //hard-coded
               mid: 1.0, //hard-coded
-            })
+            }),
           );
         });
       } else if (anchor.loci) {
@@ -1076,7 +1084,7 @@ class ThreedmolContainer extends React.Component<
             locus.start,
             locus.end,
             resolution,
-            displayedModelKeys
+            displayedModelKeys,
           );
           // console.log(atoms);
           atoms.forEach((atom) => {
@@ -1088,7 +1096,7 @@ class ThreedmolContainer extends React.Component<
                 color: anchor.color,
                 radiusRadio: 0.2, //hard-coded
                 mid: 1.0, //hard-coded
-              })
+              }),
             );
           });
         });
@@ -1136,7 +1144,7 @@ class ThreedmolContainer extends React.Component<
         }
         const binkey = reg2bin(
           atom.properties.start,
-          atom.properties.start + resolution
+          atom.properties.start + resolution,
         ).toString();
         if (
           !this.atomKeeper[resString][hap][atom.chain].hasOwnProperty(binkey)
@@ -1199,7 +1207,7 @@ class ThreedmolContainer extends React.Component<
         this.setState({
           childShow: true,
         });
-      }
+      },
     );
   };
 
@@ -1252,7 +1260,7 @@ class ThreedmolContainer extends React.Component<
             ];
           } else {
             this.atomStartsByChrom[resString][hap][atom.chain].push(
-              atom.properties.start
+              atom.properties.start,
             );
           }
         });
@@ -1295,7 +1303,7 @@ class ThreedmolContainer extends React.Component<
     const envelopCenter = new this.mol.Vector3(
       (maxX! + minX!) * 0.5,
       (maxY! + minY!) * 0.5,
-      (maxZ! + minZ!) * 0.5
+      (maxZ! + minZ!) * 0.5,
     );
     const envelopRadius =
       (2 / 3) *
@@ -1317,7 +1325,7 @@ class ThreedmolContainer extends React.Component<
           style: "trace",
           thickness: cartoonThickness,
         },
-      }
+      },
     );
     this.viewer2.render();
 
@@ -1326,7 +1334,7 @@ class ThreedmolContainer extends React.Component<
     // this.viewer.setBackgroundColor('white');
     this.viewer.setStyle(
       {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+      { line: { colorscheme: "chrom", opacity: lineOpacity } },
     );
 
     this.viewer.render();
@@ -1430,7 +1438,7 @@ class ThreedmolContainer extends React.Component<
           color: envelopColor,
           opacity: envelopOpacity,
         },
-      }
+      },
     );
   };
 
@@ -1451,7 +1459,7 @@ class ThreedmolContainer extends React.Component<
           color: envelopColor,
           opacity: envelopOpacity,
         },
-      }
+      },
     );
     if (needRender) {
       this.viewer.render();
@@ -1548,7 +1556,6 @@ class ThreedmolContainer extends React.Component<
     const resString = resolution.toString();
 
     if (!modelDisplayConfig) {
-
       return;
     }
 
@@ -1557,11 +1564,11 @@ class ThreedmolContainer extends React.Component<
       regions.forEach((reg) => {
         const leftResi = getClosestValueIndex(
           this.atomStartsByChrom[resString][hap][reg.chrom],
-          reg.start
+          reg.start,
         )[1];
         const rightResi = getClosestValueIndex(
           this.atomStartsByChrom[resString][hap][reg.chrom],
-          reg.end
+          reg.end,
         )[0];
         regionRange[hap][reg.chrom] = [leftResi, rightResi];
       });
@@ -1570,7 +1577,7 @@ class ThreedmolContainer extends React.Component<
     // this.viewer.setStyle({}, { line: { colorscheme: "chrom", opacity: 0.3, hidden: true } }); //remove existing style
     this.viewer.setStyle(
       {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+      { line: { colorscheme: "chrom", opacity: lineOpacity } },
     ); //remove existing style
     // regions.forEach((region) => {
     //     this.viewer.setStyle(
@@ -1581,19 +1588,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-          cartoon: {
-            color: highlightingColor,
-            style: "trace",
-            thickness: cartoonThickness,
-          },
-        }
+            cartoon: {
+              color: highlightingColor,
+              style: "trace",
+              thickness: cartoonThickness,
+            },
+          }
         : {
-          sphere: {
-            color: highlightingColor,
-            opacity: 1,
-            radius: cartoonThickness,
-          },
-        };
+            sphere: {
+              color: highlightingColor,
+              opacity: 1,
+              radius: cartoonThickness,
+            },
+          };
     let validateRegion = false;
     // console.log(regionRange);
     Object.keys(modelDisplayConfig).forEach((hap) => {
@@ -1602,15 +1609,16 @@ class ThreedmolContainer extends React.Component<
           regionRange[hap][region.chrom][0] !== undefined &&
           regionRange[hap][region.chrom][1] !== undefined
         ) {
-          const resiSelect = `${regionRange[hap][region.chrom][0]}-${regionRange[hap][region.chrom][1]
-            }`;
+          const resiSelect = `${regionRange[hap][region.chrom][0]}-${
+            regionRange[hap][region.chrom][1]
+          }`;
           this.viewer.setStyle(
             {
               chain: region.chrom,
               resi: [resiSelect],
               properties: { hap: hap },
             },
-            usedHighlightStyle
+            usedHighlightStyle,
           );
           validateRegion = true;
         }
@@ -1636,7 +1644,7 @@ class ThreedmolContainer extends React.Component<
     regions.forEach((region) => {
       this.viewer.setStyle(
         { chain: region.chrom },
-        { line: { colorscheme: "chrom", opacity: lineOpacity } }
+        { line: { colorscheme: "chrom", opacity: lineOpacity } },
       );
     });
     this.setState({ highlightingOn: false });
@@ -1647,7 +1655,7 @@ class ThreedmolContainer extends React.Component<
     chroms.forEach((chrom) => {
       this.viewer.setStyle(
         { chain: chrom },
-        { line: { colorscheme: "chrom", opacity: 0.3, hidden: true } }
+        { line: { colorscheme: "chrom", opacity: 0.3, hidden: true } },
       );
     });
     this.viewer.render();
@@ -1663,7 +1671,7 @@ class ThreedmolContainer extends React.Component<
     if (regionMode) {
       regions.forEach((region) => {
         const binkeys = reg2bins(region.start, region.end)!.map((k: any) =>
-          k.toString()
+          k.toString(),
         );
         binkeys.forEach((binkey) => {
           if (keepers.hasOwnProperty(region.chrom)) {
@@ -1751,7 +1759,7 @@ class ThreedmolContainer extends React.Component<
     const [minScore, maxScore] = this.minMaxOfKeepers(
       keepers,
       regions,
-      chooseRegion === "region"
+      chooseRegion === "region",
     );
     const filterRegions = {}; // key, chrom, value, list of [start, end] , for GSV later
     if (chooseRegion === "region") {
@@ -1801,19 +1809,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-          cartoon: {
-            colorfunc: colorByValue,
-            style: "trace",
-            thickness: cartoonThickness,
-          },
-        }
+            cartoon: {
+              colorfunc: colorByValue,
+              style: "trace",
+              thickness: cartoonThickness,
+            },
+          }
         : {
-          sphere: {
-            colorfunc: colorByValue,
-            opacity: 1,
-            radius: cartoonThickness,
-          },
-        };
+            sphere: {
+              colorfunc: colorByValue,
+              opacity: 1,
+              radius: cartoonThickness,
+            },
+          };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -1823,15 +1831,15 @@ class ThreedmolContainer extends React.Component<
           regions.forEach((reg) => {
             const leftResi = getClosestValueIndex(
               this.atomStartsByChrom[resString][hap][reg.chrom],
-              reg.start
+              reg.start,
             )[1];
             const rightResi = getClosestValueIndex(
               this.atomStartsByChrom[resString][hap][reg.chrom],
-              reg.end
+              reg.end,
             )[0];
             regionRange[hap][reg.chrom] = [leftResi, rightResi];
           });
-        }
+        },
       );
       Object.keys(modelDisplayConfig ? modelDisplayConfig : {}).forEach(
         (hap) => {
@@ -1843,11 +1851,11 @@ class ThreedmolContainer extends React.Component<
               const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
               this.viewer!.setStyle(
                 { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
-                usedHighlightStyle
+                usedHighlightStyle,
               );
             }
           });
-        }
+        },
       );
     } else {
       queryChroms.forEach((chrom) => {
@@ -1879,7 +1887,7 @@ class ThreedmolContainer extends React.Component<
     const data = await this.parseUploadedFile(numFileObject);
     if (!data) {
       this.setMessage(
-        "expression file empty or error parse file, please check your file 1"
+        "expression file empty or error parse file, please check your file 1",
       );
       return;
     }
@@ -1921,7 +1929,7 @@ class ThreedmolContainer extends React.Component<
     // this.viewer.setStyle({}, { cartoon: { color: "grey", style: "trace", thickness: 1 } });
     this.viewer.setStyle(
       {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+      { line: { colorscheme: "chrom", opacity: lineOpacity } },
     );
     if (showEnvelop && this.envelop) {
       this.updateEnvelop(false);
@@ -1964,7 +1972,7 @@ class ThreedmolContainer extends React.Component<
 
     this.viewer.setStyle(
       {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+      { line: { colorscheme: "chrom", opacity: lineOpacity } },
     );
     switch (chooseRegion) {
       case "region":
@@ -1978,7 +1986,7 @@ class ThreedmolContainer extends React.Component<
           bwUrl,
           resolution,
           Object.keys(this.chromHash),
-          chooseRegion
+          chooseRegion,
         );
         break;
       default:
@@ -2370,7 +2378,7 @@ class ThreedmolContainer extends React.Component<
     // console.log(data);
     if (!data) {
       this.setMessage(
-        "file empty or error parse annotation file, please check your file 1"
+        "file empty or error parse annotation file, please check your file 1",
       );
       return;
     }
@@ -2381,7 +2389,7 @@ class ThreedmolContainer extends React.Component<
       case "bedrgb":
         if (first.length < 9) {
           this.setMessage(
-            "requires at least 9 columns for bed annotations, abort"
+            "requires at least 9 columns for bed annotations, abort",
           );
           return;
         }
@@ -2536,7 +2544,7 @@ class ThreedmolContainer extends React.Component<
     const chroms = this.viewRegionToChroms();
     this.viewer.setStyle(
       {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+      { line: { colorscheme: "chrom", opacity: lineOpacity } },
     );
     switch (chooseRegion) {
       case "region":
@@ -2549,7 +2557,7 @@ class ThreedmolContainer extends React.Component<
         this.paintWithAnnotation(
           anndata,
           Object.keys(this.chromHash),
-          chooseRegion
+          chooseRegion,
         );
         break;
       default:
@@ -2604,7 +2612,7 @@ class ThreedmolContainer extends React.Component<
           anndata,
           atom,
           resolution,
-          annoUsePromoter
+          annoUsePromoter,
         );
         if (value !== undefined) {
           switch (annoFormat) {
@@ -2632,19 +2640,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-          cartoon: {
-            colorfunc: colorByAnnotation,
-            style: "trace",
-            thickness: cartoonThickness,
-          },
-        }
+            cartoon: {
+              colorfunc: colorByAnnotation,
+              style: "trace",
+              thickness: cartoonThickness,
+            },
+          }
         : {
-          sphere: {
-            colorfunc: colorByAnnotation,
-            opacity: 1,
-            radius: cartoonThickness,
-          },
-        };
+            sphere: {
+              colorfunc: colorByAnnotation,
+              opacity: 1,
+              radius: cartoonThickness,
+            },
+          };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -2654,15 +2662,15 @@ class ThreedmolContainer extends React.Component<
           regions.forEach((reg) => {
             const leftResi = getClosestValueIndex(
               this.atomStartsByChrom[resString][hap][reg.chrom],
-              reg.start
+              reg.start,
             )[1];
             const rightResi = getClosestValueIndex(
               this.atomStartsByChrom[resString][hap][reg.chrom],
-              reg.end
+              reg.end,
             )[0];
             regionRange[hap][reg.chrom] = [leftResi, rightResi];
           });
-        }
+        },
       );
       Object.keys(modelDisplayConfig ? modelDisplayConfig : {}).forEach(
         (hap) => {
@@ -2674,11 +2682,11 @@ class ThreedmolContainer extends React.Component<
               const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
               this.viewer.setStyle(
                 { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
-                usedHighlightStyle
+                usedHighlightStyle,
               );
             }
           });
-        }
+        },
       );
     } else {
       queryChroms.forEach((chrom) => {
@@ -2734,7 +2742,7 @@ class ThreedmolContainer extends React.Component<
     this.setState({ paintAnnotationRegion: "none" });
     this.viewer.setStyle(
       {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+      { line: { colorscheme: "chrom", opacity: lineOpacity } },
     );
     if (showEnvelop && this.envelop) {
       this.updateEnvelop(false);
@@ -2866,7 +2874,7 @@ class ThreedmolContainer extends React.Component<
 
   syncHic = () => {
     const dHicTracks = this.props.tracks.filter(
-      (tk) => tk.type === "dynamichic"
+      (tk) => tk.type === "dynamichic",
     );
     if (!dHicTracks.length) {
       this.setState({ message: "Abort, no dynamic hic track loaded..." });
@@ -3105,7 +3113,7 @@ class ThreedmolContainer extends React.Component<
     const data = await this.parseUploadedFile(fileobj);
     if (!data) {
       this.setMessage(
-        "loop file empty or error parse file, please check your file"
+        "loop file empty or error parse file, please check your file",
       );
       return;
     }
@@ -3192,7 +3200,7 @@ class ThreedmolContainer extends React.Component<
     const inputList = inputListRaw2.filter((item) => item !== "");
     if (inputList.length === 0) {
       this.setMessage(
-        "region file is empty or cannot find any location on genome, skip"
+        "region file is empty or cannot find any location on genome, skip",
       );
       return;
     }
@@ -3206,7 +3214,7 @@ class ThreedmolContainer extends React.Component<
         if (locus) {
           return { label, locus };
         }
-      } catch (error) { }
+      } catch (error) {}
       return getSymbolRegions(genomeName, symbol);
     });
     const parsed = await Promise.all(promise);
@@ -3223,7 +3231,7 @@ class ThreedmolContainer extends React.Component<
               locus: new ChromosomeInterval(
                 gene.chrom,
                 gene.txStart,
-                gene.txEnd
+                gene.txEnd,
               ),
             };
           }
@@ -3243,7 +3251,7 @@ class ThreedmolContainer extends React.Component<
       console.log(
         `${nullList.length} item(s) cannot find location(s) on genome`,
         "error",
-        2000
+        2000,
       );
     } else {
       console.log(`${parsed2.length} region(s) added`, "success", 2000);
@@ -3251,7 +3259,7 @@ class ThreedmolContainer extends React.Component<
     const parsed3 = parsed2.filter((item) => item);
     if (parsed3.length === 0) {
       this.setMessage(
-        "region file is empty or cannot find any location on genome, skip"
+        "region file is empty or cannot find any location on genome, skip",
       );
       return;
     }
@@ -3855,8 +3863,9 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${numFormat === "bwtrack" ? "info" : ""
-                          }`}
+                        className={`control-group ${
+                          numFormat === "bwtrack" ? "info" : ""
+                        }`}
                         style={{
                           display: numFormat === "bwtrack" ? "block" : "none",
                         }}
@@ -3912,8 +3921,9 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${numFormat === "geneexp" ? "info" : ""
-                          }`}
+                        className={`control-group ${
+                          numFormat === "geneexp" ? "info" : ""
+                        }`}
                         style={{
                           display: numFormat === "geneexp" ? "block" : "none",
                         }}
@@ -4085,8 +4095,9 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${annoFormat === "cytoband" ? "hidden" : ""
-                          }`}
+                        className={`control-group ${
+                          annoFormat === "cytoband" ? "hidden" : ""
+                        }`}
                         style={{
                           display: annoFormat === "cytoband" ? "none" : "block",
                         }}
@@ -4116,8 +4127,9 @@ class ThreedmolContainer extends React.Component<
                       </div>
 
                       <div
-                        className={`control-group ${annoFormat === "refgene" ? "" : "hidden"
-                          }`}
+                        className={`control-group ${
+                          annoFormat === "refgene" ? "" : "hidden"
+                        }`}
                         style={{
                           display: annoFormat === "refgene" ? "block" : "none",
                         }}
@@ -4370,12 +4382,12 @@ class ThreedmolContainer extends React.Component<
 
             {(paintMethod === "compartment" ||
               paintMethod === "annotation") && (
-                <CategoryLegend
-                  categories={categories}
-                  onUpdateLegendColor={this.updateLegendColor}
-                  fullWidth={paintMethod === "annotation"}
-                />
-              )}
+              <CategoryLegend
+                categories={categories}
+                onUpdateLegendColor={this.updateLegendColor}
+                fullWidth={paintMethod === "annotation"}
+              />
+            )}
           </div>
           <div id="static-legend">
             <StaticLegend categories={staticCategories} />

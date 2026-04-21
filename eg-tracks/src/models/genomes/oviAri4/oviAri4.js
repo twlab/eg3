@@ -36,7 +36,7 @@ const genome = new Genome("oviAri4", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr4:68723081-68936580");
+const defaultRegion = "chr4:68723081-68936580";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

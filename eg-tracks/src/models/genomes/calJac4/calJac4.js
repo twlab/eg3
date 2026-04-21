@@ -33,7 +33,7 @@ const genome = new Genome("calJac4", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr8:28982644-29067973");
+const defaultRegion = "chr8:28982644-29067973";
 const defaultTracks = [
     new TrackModel({
         type: "ruler",

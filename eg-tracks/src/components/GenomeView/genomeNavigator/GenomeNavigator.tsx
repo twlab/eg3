@@ -157,8 +157,9 @@ class GenomeNavigator extends React.Component<
    * @inheritdoc
    */
   render() {
+
     return (
-      <div>
+      <div style={{ marginTop: 1 }}>
         <MainPane
           viewRegion={this.state.viewRegion}
           selectedRegion={this.props.selectedRegion}

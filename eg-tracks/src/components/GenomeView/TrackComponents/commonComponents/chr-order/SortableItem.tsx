@@ -57,7 +57,7 @@ export function SortableItem({
       listeners,
       ref: setActivatorNodeRef,
     }),
-    [attributes, listeners, setActivatorNodeRef]
+    [attributes, listeners, setActivatorNodeRef],
   );
   const style: CSSProperties = {
     opacity: isDragging ? 0.4 : undefined,
@@ -65,9 +65,15 @@ export function SortableItem({
     transition,
   };
 
-  const handleMouseDown = (event) => {
+  const handlePointerDown = (event: React.PointerEvent<HTMLLIElement>) => {
+    // If dnd-kit provided a pointer listener, call it first so dragging still works.
+    const dndPointer = (listeners as any)?.onPointerDown;
+    if (typeof dndPointer === "function") {
+      dndPointer(event as any);
+    }
+    // Forward the pointer event to the existing onMouseDown prop (if provided).
     if (onMouseDown) {
-      onMouseDown(event);
+      onMouseDown(event as unknown as React.MouseEvent<HTMLDivElement>);
     }
   };
 
@@ -78,7 +84,7 @@ export function SortableItem({
     }
   };
   useEffect(() => {
-    if (!(selectedTool.title === 1 && selectedTool.isSelected)) {
+    if (!(selectedTool.title === "Reorder" && selectedTool.isSelected)) {
       setDisableDnD(true);
     } else {
       setDisableDnD(false);
@@ -92,7 +98,7 @@ export function SortableItem({
         style={style}
         {...attributes}
         {...listeners}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
         onContextMenu={handleContextMenu}
       >
         {children}

@@ -6,8 +6,8 @@ import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import LinearDrawingModel from "../../../models/LinearDrawingModel";
 
 const BOX_HEIGHT = 40;
-const GOTO_BUTTON_WIDTH = 50;
-const GOTO_BUTTON_HEIGHT = 50;
+const GOTO_BUTTON_WIDTH = 36;
+const GOTO_BUTTON_HEIGHT = 38;
 const GOTO_LABEL_HEIGHT = 11;
 
 const GOTO_BUTTON_Y = BOX_HEIGHT / 2 - GOTO_BUTTON_HEIGHT / 2;
