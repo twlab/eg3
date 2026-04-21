@@ -9,9 +9,20 @@ import {
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
-import FeatureArranger from "../../../models/FeatureArranger";
+import FeatureArranger, {
+  FeaturePlacementResult,
+} from "../../../models/FeatureArranger";
 import { SortItemsOptions } from "../../../models/SortItemsOptions";
 import { trackOptionMap } from "./defaultOptionsMap";
+import {
+  FeaturePlacer,
+  PlacedFeature,
+  PlacementMode,
+} from "../../../models/getXSpan/FeaturePlacer";
+import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+import { Fiber } from "../../../models/Feature";
+import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
+import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
 const TOP_PADDING = 2;
@@ -67,6 +78,14 @@ export class GroupedTrackManager {
   //   aggregatorId: string
   // ) => any;
   aggregateRecords: (data: any[], viewRegion: any, width: number) => any;
+  aggregateFibers: (
+    data: Fiber[],
+    viewRegion: DisplayedRegionModel,
+    width: number,
+  ) => {
+    xToFibers: Array<{ on: number; off: number; count: number }>;
+    placements: FeaturePlacementResult["placements"];
+  };
   // aggregateFeaturesMatplot: (
   //   data: any,
   //   viewRegion: any,
@@ -85,28 +104,86 @@ export class GroupedTrackManager {
         : [];
       return xToRecords.map(MethylCRecord.aggregateByStrand);
     };
+
+    this.aggregateFibers = (
+      data: Fiber[],
+      viewRegion: DisplayedRegionModel,
+      width: number,
+    ) => {
+      width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
+      const xToFibers = Array(width).fill(null);
+      for (let x = 0; x < width; x++) {
+        // Fill the array with empty arrays
+        xToFibers[x] = { on: 0, off: 0, count: 0 };
+      }
+      const placer = new FeaturePlacer();
+      const result: FeaturePlacementResult = placer.placeFeatures({
+        features: data,
+        viewRegion,
+        width,
+        mode: PlacementMode.PLACEMENT,
+      }) as FeaturePlacementResult;
+
+      const placements = result?.placements ?? [];
+      if (result && placements) {
+        for (const placedFeature of placements) {
+          const { feature, xSpan, visiblePart } =
+            placedFeature as PlacedFeature;
+          const { relativeStart, relativeEnd } = visiblePart;
+          const segmentWidth = relativeEnd - relativeStart;
+          const startX = Math.max(0, Math.floor(xSpan.start));
+          const endX = Math.min(width - 1, Math.ceil(xSpan.end));
+          for (let x = startX; x <= endX; x++) {
+            xToFibers[x].count += 1;
+          }
+          (feature as Fiber).ons!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(
+                  ((bs - relativeStart) / segmentWidth) * (endX - startX),
+                );
+              xToFibers[x].on += 1;
+            }
+          });
+          (feature as Fiber).offs!.forEach((rbs) => {
+            const bs = Math.abs(rbs);
+            if (bs >= relativeStart && bs < relativeEnd) {
+              const x =
+                startX +
+                Math.floor(
+                  ((bs - relativeStart) / segmentWidth) * (endX - startX),
+                );
+              xToFibers[x].off += 1;
+            }
+          });
+        }
+      }
+      return { xToFibers, placements };
+    };
   }
 
   getGroupScale(
-
     trackData: any,
     width: number,
     viewWindow: OpenInterval,
     dataIdx: number,
-    trackManagerState: any
+    trackManagerState: any,
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
-    console.log(trackData, trackManagerState)
+    console.log(trackData, trackManagerState);
     if (trackData) {
-
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
       for (let i = 0; i < trackData.length; i++) {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
         const track = trackData[i];
 
-        if (track.configOptions.group && track.trackModel.type in numericalTracksGroup) {
-
+        if (
+          track.configOptions.group &&
+          track.trackModel.type in numericalTracksGroup
+        ) {
           const g = track.configOptions.group;
           const tid = track.id;
           if (track.configOptions.yScale === ScaleChoices.FIXED) {
@@ -122,21 +199,25 @@ export class GroupedTrackManager {
             let xvalues;
 
             if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
-              xvalues = trackManagerState.current.caches[tid][dataIdx]["xvalues"];
+              xvalues =
+                trackManagerState.current.caches[tid][dataIdx]["xvalues"];
             } else {
               xvalues = this.aggregator.xToValueMaker(
                 data,
                 track.visRegion,
                 width,
-                track.configOptions
+                track.configOptions,
               );
               if (!trackManagerState.current.caches[tid][dataIdx]) {
                 trackManagerState.current.caches[tid][dataIdx] = {};
               }
-              trackManagerState.current.caches[tid][dataIdx]["xvalues"] = xvalues;
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
+                xvalues;
             }
-            let max = 0, min = 0;
-            let revmax = 0, revmin = 0;
+            let max = 0,
+              min = 0;
+            let revmax = 0,
+              revmin = 0;
             if (xvalues[3]) {
               max =
                 xvalues[0] && xvalues[0].length
@@ -174,8 +255,10 @@ export class GroupedTrackManager {
               grouping[g].max[tid] = max;
             }
           }
-        } else if (track.trackModel.type in numericalTracks || track?.trackModel?.options?.displayMode === "density") {
-
+        } else if (
+          track.trackModel.type in numericalTracks ||
+          track?.trackModel?.options?.displayMode === "density"
+        ) {
           const tid = track.id;
 
           if (track.data) {
@@ -194,14 +277,10 @@ export class GroupedTrackManager {
                 data,
                 track.visRegion,
                 width,
-                track.configOptions
+                track.configOptions,
               );
             } else if (track.trackModel.type === "methylc") {
-              xvalues = this.aggregateRecords(
-                data,
-                track.visRegion,
-                width
-              );
+              xvalues = this.aggregateRecords(data, track.visRegion, width);
             } else if (track.trackModel.type === "matplot") {
               xvalues = data.map(
                 (d) =>
@@ -209,16 +288,15 @@ export class GroupedTrackManager {
                     d,
                     track.visRegion,
                     width,
-                    track.configOptions
-                  )[0]
+                    track.configOptions,
+                  )[0],
               );
             } else {
-
               xvalues = this.aggregator.xToValueMaker(
                 data,
                 track.visRegion,
                 width,
-                track.configOptions
+                track.configOptions,
               );
             }
 
@@ -228,52 +306,74 @@ export class GroupedTrackManager {
             trackManagerState.current.caches[tid][dataIdx]["xvalues"] = xvalues;
           }
           // }
-        }
-        else if (track?.trackModel?.options?.displayMode !== "density") {
-
+        } else if (track?.trackModel?.options?.displayMode !== "density") {
           const tid = track.id;
-          // if (
-          //   trackManagerState.current.caches[tid][dataIdx]["placeFeature"] &&
-          //   track.usePrimaryNav
-          // ) {
-          //   continue;
-          // }
+
           const curTrackModel = track.trackModel;
           const configOptions = trackOptionMap[curTrackModel.type]
-            ? { ...trackOptionMap[`${curTrackModel.type}`].defaultOptions, ...curTrackModel.options }
-            : { ...trackOptionMap["error"].defaultOptions }
+            ? {
+                ...trackOptionMap[`${curTrackModel.type}`].defaultOptions,
+                ...curTrackModel.options,
+              }
+            : { ...trackOptionMap["error"].defaultOptions };
 
           if (track) {
-            const data = track.data;
+            if (
+              (track.trackModel.type === "modbed" &&
+                track.visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
+                configOptions.displayMode === FiberDisplayModes.AUTO) ||
+              configOptions.displayMode === FiberDisplayModes.SUMMARY
+            ) {
+              const xvalues = this.aggregateFibers(
+                track.data,
+                track.visRegion,
+                width,
+              );
 
-            const placeFeatureData = featureArrange.arrange(
-              data,
-              track.visRegion,
-              width,
-              trackOptionMap[`${curTrackModel.type}`]
-                ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
-                : trackOptionMap["error"].getGenePadding,
-              configOptions.hiddenPixels,
-              sortType,
-              viewWindow,
-            );
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
+              }
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
+                xvalues;
+            } else {
+              const data = track.data;
 
-            const height =
-              curTrackModel.type === "repeatmasker" ||
+              const placeFeatureData = featureArrange.arrange(
+                data,
+                track.visRegion,
+                width,
+                trackOptionMap[`${curTrackModel.type}`]
+                  ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
+                  : trackOptionMap["error"].getGenePadding,
+                configOptions.hiddenPixels,
+                sortType,
+                viewWindow,
+              );
+
+              const height =
+                curTrackModel.type === "repeatmasker" ||
                 curTrackModel.type === "rmskv2" ||
                 curTrackModel.type === "categorical" ||
                 curTrackModel.type === "modbed"
-                ? configOptions?.height
-                : placeFeatureData.numRowsAssigned
-                  ? getHeight(placeFeatureData.numRowsAssigned, curTrackModel, configOptions)
-                  : 40;
+                  ? configOptions?.height
+                  : placeFeatureData.numRowsAssigned
+                    ? getHeight(
+                        placeFeatureData.numRowsAssigned,
+                        curTrackModel,
+                        configOptions,
+                      )
+                    : 40;
 
-            if (!trackManagerState.current.caches[tid][dataIdx]) {
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
+              }
 
-              trackManagerState.current.caches[tid][dataIdx] = {};
+              trackManagerState.current.caches[tid][dataIdx]["placeFeature"] = {
+                placements: placeFeatureData,
+                height,
+                numHidden: placeFeatureData.numHidden,
+              };
             }
-
-            trackManagerState.current.caches[tid][dataIdx]["placeFeature"] = { placements: placeFeatureData, height, numHidden: placeFeatureData.numHidden };
           }
         }
         // }

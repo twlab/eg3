@@ -60,7 +60,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       const globalCfg = trackManagerState.current.globalConfig;
       if (globalCfg) {
         // support either a ref-like shape (legacy) or plain object
-        const entry = globalCfg.current ? globalCfg.current[`${id}`] : globalCfg[`${id}`];
+        const entry = globalCfg.current
+          ? globalCfg.current[`${id}`]
+          : globalCfg[`${id}`];
         if (entry && entry.configOptions) {
           return entry.configOptions;
         }
@@ -69,7 +71,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // fallthrough to defaults
     }
     return trackOptionMap[trackModel.type]
-      ? { ...trackOptionMap[`${trackModel.type}`].defaultOptions, ...(trackModel.options || {}) }
+      ? {
+          ...trackOptionMap[`${trackModel.type}`].defaultOptions,
+          ...(trackModel.options || {}),
+        }
       : { ...trackOptionMap["error"].defaultOptions };
   }
   const initTrackStart = useRef(true);
@@ -114,9 +119,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     xvalues = null,
     placeFeature = null,
   ) {
-    console.log(xvalues, "xvalues in create svg")
     const curXPos = getTrackXOffset(trackState, windowWidth);
-
+    console.log(getConfigOptions(), xvalues, placeFeature);
     const displayArgs: any = {
       basesByPixel: basePerPixel,
       genesArr,
@@ -143,12 +147,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       errorInfo: fetchError.current,
       handleRetryFetchTrack: handleRetryFetchTrack,
       initialLoad: initialLoad.current,
-      placeFeature
+      placeFeature,
     };
     let res;
     // try {
     res = getDisplayModeFunction(displayArgs);
-    // } 
+    // }
     // catch (e) {
     //   fetchError.current = "error when creating drawData";
     //   displayArgs.errorInfo = fetchError.current;
@@ -175,23 +179,24 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // inside the display components don't crash the whole app.
       try {
         result = (
-          <ErrorBoundary errorDrawData={displayArgs}>{result as any}</ErrorBoundary>
+          <ErrorBoundary errorDrawData={displayArgs}>
+            {result as any}
+          </ErrorBoundary>
         );
       } catch (wrapErr) {
         console.error("Error wrapping result with ErrorBoundary:", wrapErr);
       }
 
       xPos.current = curXPos;
-      // startTransition(() => 
+      // startTransition(() =>
       setViewComponent({
         component: result,
         dataIdx: cacheDataIdx,
         numHidden: numHidden,
         visData: trackState.visData,
         xPos: curXPos,
-      })
+      });
       // )
-
     }
   }
   function onClose() {
@@ -314,7 +319,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     xvalues,
     isInit,
     placeFeature,
-
   }) {
     const primaryVisData = trackState.genomicFetchCoord
       ? trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData
@@ -322,7 +326,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (cacheTrackData.trackType !== "genomealign") {
       let visRegion =
         !cacheTrackData.usePrimaryNav &&
-          trackState.genomicFetchCoord[cacheTrackData.queryGenome]?.queryRegion
+        trackState.genomicFetchCoord[cacheTrackData.queryGenome]?.queryRegion
           ? trackState.genomicFetchCoord[cacheTrackData.queryGenome].queryRegion
           : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
@@ -331,8 +335,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ? primaryVisData.visWidth
       : windowWidth * 3;
     trackState["dataIdx"] = dataIdx;
-
-
 
     fetchError.current = cacheTrackData["error"]
       ? cacheTrackData["error"]
@@ -353,25 +355,21 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let currIdx = dataIdx + 1;
       let noData = false;
 
-      if (cacheTrackData[`${dataIdx}`]["xvalues"] || cacheTrackData[`${dataIdx}`]["placeFeature"]) {
-
-
+      if (
+        cacheTrackData[`${dataIdx}`]["xvalues"] ||
+        cacheTrackData[`${dataIdx}`]["placeFeature"]
+      ) {
         combinedData = [];
-      }
-      else if (dynamicMatplotTracks.has(trackModel.type)) {
+      } else if (dynamicMatplotTracks.has(trackModel.type)) {
         if (
           cacheTrackData[`${dataIdx}`] &&
           cacheTrackData[`${dataIdx}`]["xvalues"]
         ) {
-
           combinedData = [];
         } else {
           combinedData = groupTracksArrMatPlot(combinedData);
         }
-      }
-      else {
-
-
+      } else {
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
             noData = true;
@@ -397,7 +395,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         );
       }
     } else {
-
       const combinedData = cacheTrackData[dataIdx]
         ? cacheTrackData[dataIdx].dataCache
         : null;
@@ -448,18 +445,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         viewWindow: newDrawData.viewWindow,
         groupScale:
           globalTrackState.current.trackStates[dataIdx].trackState[
-          "groupScale"
+            "groupScale"
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         placeFeature: cacheTrackData[dataIdx]?.placeFeature,
         isInit: true,
-
       });
     }
   }, [newDrawData]);
-
-
-
 
   // MARK: [viewWindowConfigChange]
 
@@ -482,13 +475,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         viewWindow: viewWindowConfigChange.viewWindow,
         groupScale:
           globalTrackState.current.trackStates[dataIdx].trackState[
-          "groupScale"
+            "groupScale"
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         placeFeature: cacheTrackData[dataIdx]?.placeFeature,
         isInit: false,
-
-
       });
     }
   }, [viewWindowConfigChange]);
@@ -504,7 +495,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let trackState = _.cloneDeep(
           globalTrackState.current.trackStates[cacheDataIdx].trackState,
         );
-        if (!cacheTrackData.useExpandedLoci) {
+        if (cacheTrackData["error"]) {
+          return;
+        } else if (
+          !cacheTrackData.useExpandedLoci &&
+          cacheTrackData.usePrimaryNav
+        ) {
           let currIdx = dataIdx + 1;
           var noData = false;
           for (let i = 0; i < 3; i++) {
@@ -527,14 +523,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             }
             trackState["groupScale"] =
               globalTrackState.current.trackStates[dataIdx].trackState[
-              "groupScale"
+                "groupScale"
               ];
           }
         } else {
           combinedData = cacheTrackData[dataIdx]
             ? _.clone(cacheTrackData[dataIdx].dataCache)
             : null;
-
+          console.log(cacheTrackData);
           if (combinedData) {
             if (newDrawData.viewWindow) {
               trackState["viewWindow"] = newDrawData.viewWindow;
@@ -545,9 +541,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackState.genomicFetchCoord[trackState.primaryGenName]
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
-          ? trackState.genomicFetchCoord[
-            caches[`${id}`].queryGenome
-          ].queryRegion
+          ? trackState.genomicFetchCoord[caches[`${id}`].queryGenome]
+              .queryRegion
           : primaryVisData.visRegion;
         // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
         trackState["visRegion"] = visRegion;
@@ -559,15 +554,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         const expandedViewWindow =
           updateSide.current === "right"
             ? new OpenInterval(
-              -(dragX! + (xPos.current + windowWidth)),
-              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
-            )
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
+              )
             : new OpenInterval(
-              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-              windowWidth * 3 -
-              (dragX! - (xPos.current + windowWidth)) +
-              windowWidth,
-            );
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth,
+              );
         let start = expandedViewWindow.start + width / 3;
 
         let end = expandedViewWindow.end - width / 3;
@@ -577,10 +572,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
           globalTrackState.current.trackStates[dataIdx].trackState[
-          "groupScale"
+            "groupScale"
           ];
 
         if (combinedData) {
+          console.log(combinedData, trackState);
           sentScreenshotData({
             fetchData: {
               genomeName: genomeConfig.genome.getName(),
@@ -664,7 +660,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         <Loading
           buttonLabel={
             (viewComponent && dataIdx !== viewComponent.dataIdx) ||
-              !viewComponent
+            !viewComponent
               ? "Loading View"
               : "Getting Data"
           }
@@ -686,20 +682,20 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             !viewComponent ||
             (viewComponent && dataIdx !== viewComponent.dataIdx)
           }
-        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-        // xOffset={0}
+          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+          // xOffset={0}
         >
           <div>
             {trackModel.id in messageData
               ? messageData[`${trackModel.id}`].map((item, index) => {
-                return (
-                  <div key={`${trackModel.index}loading-` + `${index}`}>
-                    {item.genomicLoci
-                      ? item.genomicLoci.map((item) => item.toString())
-                      : ""}{" "}
-                  </div>
-                );
-              })
+                  return (
+                    <div key={`${trackModel.index}loading-` + `${index}`}>
+                      {item.genomicLoci
+                        ? item.genomicLoci.map((item) => item.toString())
+                        : ""}{" "}
+                    </div>
+                  );
+                })
               : ""}
           </div>
         </Loading>
@@ -744,7 +740,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : getConfigOptions().displayMode === "full"
                 ? svgHeight.current
                 : !getConfigOptions().isCombineStrands &&
-                  trackModel.type === "methylc"
+                    trackModel.type === "methylc"
                   ? getConfigOptions().height * 2
                   : getConfigOptions().height,
             left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
@@ -760,7 +756,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 : getConfigOptions().displayMode === "full"
                   ? svgHeight.current
                   : !getConfigOptions().isCombineStrands &&
-                    trackModel.type === "methylc"
+                      trackModel.type === "methylc"
                     ? getConfigOptions().height * 2
                     : getConfigOptions().height
             }
@@ -776,7 +772,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : getConfigOptions().displayMode === "full"
               ? svgHeight.current
               : !getConfigOptions().isCombineStrands &&
-                trackModel.type === "methylc"
+                  trackModel.type === "methylc"
                 ? getConfigOptions().height * 2
                 : getConfigOptions().height,
 
@@ -785,13 +781,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           left: 120,
         }}
       >
-        {Toolbar.skeleton && !viewComponent ? (
-          <div style={{}}>
-            <Toolbar.skeleton width={windowWidth} height={40} />
-          </div>
-        ) : (
-          ""
-        )}
         <div
           style={{
             position: "absolute",
@@ -801,6 +790,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             backgroundColor: getConfigOptions().backgroundColor,
           }}
         >
+          {Toolbar.skeleton && !viewComponent ? (
+            <div style={{}}>
+              <Toolbar.skeleton width={windowWidth} height={40} />
+            </div>
+          ) : (
+            ""
+          )}
           {viewComponent ? (
             <div style={{ position: "relative", overflow: "hidden" }}>
               {viewComponent.component}
@@ -822,33 +818,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           // track
           highlightElements.length > 0
             ? highlightElements.map((item, index) => {
-              if (item.display) {
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      display: "flex",
-                      position: "relative",
-                      height: "100%",
-                    }}
-                  >
+                if (item.display) {
+                  return (
                     <div
                       key={index}
                       style={{
-                        position: "absolute",
-                        backgroundColor: item.color,
-                        top: "0",
+                        display: "flex",
+                        position: "relative",
                         height: "100%",
-                        left: item.side === "right" ? `${item.xPos}px` : "",
-                        right: item.side === "left" ? `${item.xPos}px` : "",
-                        width: item.width,
-                        pointerEvents: "none", // This makes the highlighted area non-interactive
                       }}
-                    ></div>
-                  </div>
-                );
-              }
-            })
+                    >
+                      <div
+                        key={index}
+                        style={{
+                          position: "absolute",
+                          backgroundColor: item.color,
+                          top: "0",
+                          height: "100%",
+                          left: item.side === "right" ? `${item.xPos}px` : "",
+                          right: item.side === "left" ? `${item.xPos}px` : "",
+                          width: item.width,
+                          pointerEvents: "none", // This makes the highlighted area non-interactive
+                        }}
+                      ></div>
+                    </div>
+                  );
+                }
+              })
             : ""
         }
       </div>

@@ -42,7 +42,6 @@ import {
   setNavSearchOpen,
 } from "@/lib/redux/slices/navigationSlice";
 import {
-
   setToggleTool,
   escapeTools,
   resetUtility,
@@ -180,7 +179,6 @@ export default function RootLayout(props: GenomeHubProps) {
     dispatch(resetState());
     dispatch(resetUtility());
     clearHistory();
-
   }, [sessionId]);
   const showNavBar = isPackageMode ? isNavBarVisible : true;
   function getConfig() {
@@ -252,7 +250,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                    props.viewRegion === null
+                  props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -273,12 +271,11 @@ export default function RootLayout(props: GenomeHubProps) {
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
-                typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                typeof props.viewRegion !== "string" || !props.viewRegion
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
@@ -323,7 +320,6 @@ export default function RootLayout(props: GenomeHubProps) {
                 <NavBar
                   leftPanelOpen={leftPanelOpen}
                   setLeftPanelOpen={setLeftPanelOpen}
-
                   sessionId={sessionId}
                   sessions={sessions}
                   currentSession={currentSession}
@@ -336,7 +332,6 @@ export default function RootLayout(props: GenomeHubProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-
                   className="absolute right-0 h-full z-60"
                   style={{ top: navBarHeight }}
                 >
@@ -361,13 +356,9 @@ export default function RootLayout(props: GenomeHubProps) {
             </AnimatePresence>
 
             <div>
-
-
               {/* MARK: - Main Content */}
 
-              <div
-                className="flex flex-1 h-full relative"
-              >
+              <div className="flex flex-1 h-full relative">
                 {/* MARK: - Genome View */}
                 <div
                   className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
@@ -430,14 +421,27 @@ export default function RootLayout(props: GenomeHubProps) {
             </div>
 
             <>
-
-              <div style={{ textAlign: "center", color: "gray", backgroundColor: "inherit", }}>
-                Copyright &copy; 2018-{year} Washington University in St. Louis. All rights reserved.
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "gray",
+                  backgroundColor: "inherit",
+                  padding: "36px",
+                }}
+              >
+                Copyright &copy; 2018-{year} Washington University in St. Louis.
+                All rights reserved.
                 <br /> Developed by the{" "}
-                <a href="http://wang.wustl.edu" target="_blank" rel="noopener noreferrer" style={{ color: "#007bff" }}>
+                <a
+                  href="http://wang.wustl.edu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#007bff" }}
+                >
                   Wang Lab
                 </a>
-                <br /> <a style={{ color: "#007bff" }} href="LICENSE.html">
+                <br />{" "}
+                <a style={{ color: "#007bff" }} href="LICENSE.html">
                   Terms and Conditions of Use
                 </a>
               </div>
@@ -445,7 +449,6 @@ export default function RootLayout(props: GenomeHubProps) {
           </div>
 
           <MouseFollowingTooltip />
-
         </div>
       </PortalContext.Provider>
     </EscapeHandlerContext.Provider>
