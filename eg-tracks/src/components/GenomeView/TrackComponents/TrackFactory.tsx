@@ -114,7 +114,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     xvalues = null,
     placeFeature = null,
   ) {
-
+    console.log(xvalues, "xvalues in create svg")
     const curXPos = getTrackXOffset(trackState, windowWidth);
 
     const displayArgs: any = {

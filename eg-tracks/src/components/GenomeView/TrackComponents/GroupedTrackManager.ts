@@ -96,7 +96,7 @@ export class GroupedTrackManager {
     trackManagerState: any
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
-
+    console.log(trackData, trackManagerState)
     if (trackData) {
 
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
