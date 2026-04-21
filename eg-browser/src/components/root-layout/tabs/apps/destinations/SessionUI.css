@@ -1,24 +1,163 @@
 button.SessionUI {
-    padding: 2px;
-    margin: 0 0 2px 5px;
+  padding: 2px;
+  margin: 0 0 2px 5px;
 }
 
 .SessionUI-upload-btn-wrapper {
-    position: relative;
+  position: relative;
 }
 
 .SessionUI-upload-btn-wrapper input[type="file"] {
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
 }
 
 .SessionUI-sessionlist label {
-    margin-right: 1ch;
-    margin-left: 1ch;
+  margin-right: 1ch;
+  margin-left: 1ch;
 }
 
 .SessionUI-sessionlist input {
-    margin-right: 2px;
+  margin-right: 2px;
+}
+
+.SessionUI-sessionlist ol {
+  list-style: decimal;
+  padding-left: 2em;
+  margin-top: 4px;
+}
+
+.SessionUI-sessionlist ol li {
+  line-height: 1.6;
+}
+
+.SessionUI-input {
+  border: 1px solid #adb5bd;
+  border-radius: 4px;
+  padding: 3px 6px;
+  outline: none;
+}
+
+.SessionUI-input:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+/* Bootstrap-like button styles */
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #337ab7;
+  border-color: #2e6da4;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #286090;
+  border-color: #204d74;
+}
+
+.btn-success {
+  color: #fff;
+  background-color: #5cb85c;
+  border-color: #4cae4c;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #449d44;
+  border-color: #398439;
+}
+
+.btn-info {
+  color: #fff;
+  background-color: #5bc0de;
+  border-color: #46b8da;
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: #31b0d5;
+  border-color: #269abc;
+}
+
+.btn-warning {
+  color: #fff;
+  background-color: #f0ad4e;
+  border-color: #eea236;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #ec971f;
+  border-color: #d58512;
+}
+
+.btn-danger {
+  color: #fff;
+  background-color: #d9534f;
+  border-color: #d43f3a;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c9302c;
+  border-color: #ac2925;
+}
+
+.btn-secondary,
+.btn-default {
+  color: #333;
+  background-color: #fff;
+  border-color: #ccc;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #e6e6e6;
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.font-italic {
+  font-style: italic;
+}
+
+.font-weight-bold {
+  font-weight: bold;
+}
+
+/* session list labels */
+.SessionUI-sessionlist label {
+  margin-right: 1ch;
+  margin-left: 1ch;
+}
+
+/* small responsive tweaks */
+@media (max-width: 520px) {
+  .SessionUI-create-input {
+    font-size: 13px;
+  }
 }

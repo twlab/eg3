@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { use, useMemo, useState } from "react";
 
 // UI Components
 import Button from "@/components/ui/button/Button";
-import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import TabView from "@/components/ui/tab-view/TabView";
 import FacetTable from "./FacetTable";
+import FileInput from "@/components/ui/input/FileInput";
 import { generateUUID } from "wuepgg3-track";
 // Redux Imports
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
@@ -19,7 +19,6 @@ import {
 } from "@/lib/redux/slices/hubSlice";
 
 // Custom Hooks
-import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
 // External Libraries
 import JSON5 from "json5";
@@ -34,7 +33,10 @@ import {
   HELP_LINKS,
   readFileAsText,
 } from "wuepgg3-track";
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
+import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
 export default function RemoteTracks() {
+  useMidSizeNavigationTab();
   return (
     <TabView
       tabs={[
@@ -55,13 +57,6 @@ export default function RemoteTracks() {
 
 // MARK: - Add Tracks
 
-enum AddTracksStep {
-  TRACK_TYPE = "select-track-type",
-  TRACK_FILE_URL = "track-file-url",
-  TRACK_LABEL = "track-label",
-  CONFIGURE_TRACK = "configure-track",
-}
-
 interface TrackState {
   type: string;
   url: string;
@@ -76,104 +71,133 @@ interface TrackState {
 }
 
 function AddTracks() {
-  useExpandedNavigationTab();
-  const session = useAppSelector(selectCurrentSession);
+  useMidSizeNavigationTab();
+  const currentSession = useAppSelector(selectCurrentSession);
   const customTracksPool = useAppSelector(selectCustomTracksPool);
   const [submitted, setSubmitted] = React.useState(false);
-
-  const [selectedStep, setSelectedStep] = React.useState<AddTracksStep | null>(
-    AddTracksStep.TRACK_TYPE
-  );
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
+  const _genomeConfig = useCurrentGenome();
   const dispatch = useAppDispatch();
-  const currentSession = useAppSelector(selectCurrentSession);
+
+  const typeSectionRef = React.useRef<HTMLDivElement>(null);
+  const urlSectionRef = React.useRef<HTMLDivElement>(null);
+  const genomeSectionRef = React.useRef<HTMLDivElement>(null);
 
   const [trackState, setTrackState] = React.useState<TrackState>({
     type: TRACK_TYPES.Numerical[0],
     url: "",
     name: "",
     urlError: "",
-    metadata: { genome: session?.genomeId ?? "" },
+    metadata: { genome: currentSession?.genomeId ?? "" },
     queryGenome: "",
   });
 
-  const handleStepChange = (step: AddTracksStep | null) => {
-    setSelectedStep(step ?? AddTracksStep.TRACK_TYPE);
-  };
+  const genomesInSession = useMemo(() => {
+    const querySet = new Set<string>();
+    if (
+      currentSession &&
+      _genomeConfig &&
+      (currentSession.genomeId === _genomeConfig.name ||
+        currentSession.genomeId === _genomeConfig.id)
+    ) {
+      querySet.add(currentSession.genomeId);
+      for (const track of currentSession.tracks) {
+        if (track?.type === "genomealign" && track?.querygenome) {
+          querySet.add(track.querygenome);
+        } else if (track?.type === "genomealign" && track?.metadata?.genome) {
+          querySet.add(track.metadata.genome);
+        }
+      }
+    }
+    return Array.from(querySet);
+  }, [_genomeConfig, currentSession]);
+
+  const needsIndex = TYPES_NEED_INDEX.includes(trackState.type.toLowerCase());
+  const typeComplete = !!trackState.type;
+  const urlComplete = !!trackState.url;
+  const genomeComplete = !!trackState.metadata.genome;
+  const canSubmit = typeComplete && urlComplete && genomeComplete;
 
   const handleTypeChange = (type: string) => {
     setTrackState((prev) => ({ ...prev, type }));
-    setSelectedStep(AddTracksStep.TRACK_FILE_URL);
-  };
-
-  const isValidUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
   };
 
   const handleUrlChange = (url: string) => {
     setTrackState((prev) => ({ ...prev, url, urlError: "" }));
-
-    const needsIndex = TYPES_NEED_INDEX.includes(trackState.type.toLowerCase());
-    if (isValidUrl(url)) {
-      if (!needsIndex) {
-        setSelectedStep(AddTracksStep.TRACK_LABEL);
-      }
-    }
+    setSubmitted(false);
   };
-  const canSubmit =
-    !!trackState.type && !!trackState.url && isValidUrl(trackState.url);
+
   const handleIndexUrlChange = (indexUrl: string) => {
     setTrackState((prev) => ({ ...prev, indexUrl }));
-
-    if (isValidUrl(trackState.url) && isValidUrl(indexUrl)) {
-      setSelectedStep(AddTracksStep.TRACK_LABEL);
-    }
   };
 
   const handleQueryGenomeChange = (queryGenome: string) => {
     setTrackState((prev) => ({ ...prev, queryGenome }));
   };
 
-  const handleTrackLabelEnter = () => {
-    setSelectedStep(AddTracksStep.CONFIGURE_TRACK);
+  const handleTrackGenomeChange = (genome: string) => {
+    setTrackState((prev) => ({
+      ...prev,
+      queryGenome: genome,
+      metadata: { ...prev.metadata, genome },
+    }));
   };
 
   const handleOptionsChange = (value: string) => {
     try {
       const options = JSON5.parse(value) as Record<string, any>;
       setTrackState((prev) => ({ ...prev, options }));
-    } catch (error) {
+    } catch {
       setTrackState((prev) => ({ ...prev, options: undefined }));
     }
   };
 
   const handleSubmit = () => {
-    if (canSubmit && session) {
+    setSubmitAttempted(true);
+    if (!canSubmit) {
+      if (!typeComplete) {
+        typeSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } else if (!urlComplete) {
+        urlSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } else if (!genomeComplete) {
+        genomeSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+      return;
+    }
+    if (currentSession) {
+      const rawUrl = trackState.url;
+      const finalUrl =
+        rawUrl && !/^https?:\/\/|^ftp:\/\//i.test(rawUrl)
+          ? `https://${rawUrl}`
+          : rawUrl;
       const track: ITrackModel = {
         type: trackState.type,
-        url: trackState.url,
+        url: finalUrl,
         name: trackState.name,
         options: trackState.options ?? {},
         metadata: { genome: trackState.metadata.genome },
         id: generateUUID(),
         isSelected: false,
       };
-
       if (trackState.indexUrl) {
         track.indexUrl = trackState.indexUrl;
       }
-
       if (track.type === "genomealign" || track.type === "bigchain") {
-        track.querygenome = trackState.queryGenome || session.genomeId;
+        track.querygenome = trackState.queryGenome || currentSession.genomeId;
       }
 
       dispatch(addCustomTracksPool([...customTracksPool, track]));
       dispatch(addTracks(track));
-      setSubmitted(true); // Mark as submitted
+      setSubmitted(true);
     }
   };
 
@@ -183,25 +207,25 @@ function AddTracks() {
       url: "",
       name: "",
       urlError: "",
-      metadata: { genome: session?.genomeId ?? "" },
+      metadata: { genome: currentSession?.genomeId ?? "" },
       queryGenome: "",
     });
-    setSubmitted(false); // Reset submit state
-    setSelectedStep(AddTracksStep.TRACK_TYPE);
+    setSubmitted(false);
+    setSubmitAttempted(false);
   };
 
   function onTracksAdded(tracks: TrackModel[]) {
     dispatch(
       updateCurrentSession({
         tracks: [...currentSession!.tracks, ...tracks],
-      })
+      }),
     );
   }
 
   const addedTrackUrls = useMemo(() => {
     if (currentSession) {
       return new Set(
-        currentSession!.tracks.map((track) => track.url || track.name)
+        currentSession!.tracks.map((track) => track.url || track.name),
       );
     } else {
       return new Set();
@@ -210,115 +234,155 @@ function AddTracks() {
 
   return (
     <div>
-      {currentSession && customTracksPool.length > 0 ? (
-        <div>
-          <h2 className="text-base font-medium mb-4">Available Tracks</h2>
+      {currentSession && customTracksPool.length > 0 && (
+        <div className="border-b border-gray-200 dark:border-gray-700 px-4 pb-3 mb-1">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider mb-2">
+            Available Tracks
+          </p>
           <FacetTable
             tracks={customTracksPool}
             addedTracks={currentSession!.tracks}
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
-      ) : (
-        ""
       )}
-      <div className="flex flex-col py-4">
-        <StepAccordion<AddTracksStep>
-          selectedItem={selectedStep}
-          onSelectedItemChange={handleStepChange}
-          items={[
-            {
-              label: "Track Type",
-              value: AddTracksStep.TRACK_TYPE,
-              valuePreview: trackState.type ? `${trackState.type}` : undefined,
-              component: (
-                <SelectTrackType
-                  selectedType={trackState.type}
-                  onTypeChange={handleTypeChange}
-                />
-              ),
-            },
-            {
-              label: "Track File URL",
-              value: AddTracksStep.TRACK_FILE_URL,
-              valuePreview: trackState.url ? `${trackState.url}` : undefined,
-              component: (
-                <TrackFileUrl
-                  url={trackState.url}
-                  indexUrl={trackState.indexUrl}
-                  urlError={trackState.urlError}
-                  showIndex={TYPES_NEED_INDEX.includes(
-                    trackState.type.toLowerCase()
-                  )}
-                  showQueryGenome={
-                    trackState.type === "genomealign" ||
-                    trackState.type === "bigchain"
-                  }
-                  queryGenome={trackState.queryGenome}
-                  onUrlChange={handleUrlChange}
-                  onIndexUrlChange={handleIndexUrlChange}
-                  onQueryGenomeChange={handleQueryGenomeChange}
-                />
-              ),
-            },
-            {
-              label: "Track Label",
-              value: AddTracksStep.TRACK_LABEL,
-              valuePreview: trackState.name ? `${trackState.name}` : undefined,
-              component: (
-                <TrackLabel
-                  name={trackState.name}
-                  onNameChange={(name) =>
-                    setTrackState((prev) => ({ ...prev, name }))
-                  }
-                  onEnterPress={handleTrackLabelEnter}
-                />
-              ),
-            },
-            {
-              label: "Configure Track",
-              value: AddTracksStep.CONFIGURE_TRACK,
-              valuePreview: trackState.options ? "Configured" : undefined,
-              component: (
-                <ConfigureTrack onOptionsChange={handleOptionsChange} />
-              ),
-            },
-          ]}
-        />
-        <Button
-          active={canSubmit && !submitted}
-          onClick={handleSubmit}
-          disabled={!canSubmit || submitted}
-          style={{
-            width: "100%",
-            marginTop: "10px",
-            background:
-              canSubmit && !submitted
-                ? "linear-gradient(90deg, #2563eb 0%, #38bdf8 100%)"
-                : "#f1f5fa",
-            color: canSubmit && !submitted ? "#fff" : "#888",
-            border: "none",
-            fontWeight: 600,
-            fontSize: "1rem",
-            boxShadow:
-              canSubmit && !submitted
-                ? "0 2px 8px rgba(56,189,248,0.15)"
-                : "none",
-            cursor: canSubmit && !submitted ? "pointer" : "not-allowed",
-            transition: "background 0.2s, color 0.2s",
-          }}
-        >
-          Submit
-        </Button>
-        {submitted && (
-          <>
+      <div className="px-4 py-2 flex flex-col gap-3">
+        {/* 1. Track Type */}
+        <div ref={typeSectionRef} className="flex flex-col ">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              Track Type{" "}
+              <span className="text-red-400 normal-case font-normal tracking-normal">
+                *
+              </span>
+            </p>
+            {submitAttempted && !typeComplete && (
+              <span className="text-sm text-red-500">Required</span>
+            )}
+          </div>
+          <SelectTrackType
+            selectedType={trackState.type}
+            onTypeChange={handleTypeChange}
+            hasError={submitAttempted && !typeComplete}
+          />
+        </div>
+
+        {/* 2. File URL */}
+        <div ref={urlSectionRef} className="flex flex-col ">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              File URL{" "}
+              <span className="text-red-400 normal-case font-normal tracking-normal">
+                *
+              </span>
+            </p>
+            {submitAttempted && !urlComplete && (
+              <span className="text-sm text-red-500">Required</span>
+            )}
+          </div>
+          <TrackFileUrl
+            url={trackState.url}
+            indexUrl={trackState.indexUrl}
+            urlError={trackState.urlError}
+            showIndex={needsIndex}
+            showQueryGenome={
+              trackState.type === "genomealign" ||
+              trackState.type === "bigchain"
+            }
+            queryGenome={trackState.queryGenome}
+            onUrlChange={handleUrlChange}
+            onIndexUrlChange={handleIndexUrlChange}
+            onQueryGenomeChange={handleQueryGenomeChange}
+            hasError={submitAttempted && !urlComplete}
+          />
+        </div>
+
+        {/* 3. Assembly */}
+        <div ref={genomeSectionRef} className="flex flex-col ">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              Assembly{" "}
+              <span className="text-red-400 normal-case font-normal tracking-normal">
+                *
+              </span>
+            </p>
+            {submitAttempted && !genomeComplete && (
+              <span className="text-sm text-red-500">Required</span>
+            )}
+          </div>
+          {genomesInSession.length > 0 ? (
+            <select
+              value={trackState.metadata.genome || genomesInSession[0]}
+              onChange={(e) => handleTrackGenomeChange(e.target.value)}
+              className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${submitAttempted && !genomeComplete
+                ? "border-red-400 focus:ring-red-400"
+                : "border-gray-300 dark:border-gray-600"
+                }`}
+            >
+              {genomesInSession.map((genome) => (
+                <option key={genome} value={genome}>
+                  {genome}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-sm text-primary/50 dark:text-dark-primary/50 italic">
+              No assemblies in current session.
+            </p>
+          )}
+        </div>
+
+        {/* 4. Track Label — optional */}
+        <div className="flex flex-col ">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            Track Label{" "}
+            <span className="normal-case font-normal tracking-normal opacity-50 text-sm">
+              optional
+            </span>
+          </p>
+          <TrackLabel
+            name={trackState.name}
+            onNameChange={(name) =>
+              setTrackState((prev) => ({ ...prev, name }))
+            }
+          />
+        </div>
+
+        {/* 5. Options — optional */}
+        <div className="flex flex-col ">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            Options{" "}
+            <span className="normal-case font-normal tracking-normal opacity-50 text-sm">
+              optional · JSON
+            </span>
+          </p>
+          <ConfigureTrack onOptionsChange={handleOptionsChange} />
+        </div>
+
+        {/* Actions */}
+        {!submitted ? (
+          <Button
+            active={canSubmit}
+            onClick={handleSubmit}
+            outlined
+            style={{
+              // backgroundColor: "black",
+              // color: "white",
+              width: "fit-content",
+              padding: "4px 6px",
+            }}
+          >
+            Add Track
+          </Button>
+        ) : (
+          <div className="flex gap-2">
             <Button
               onClick={() => {
-                if (canSubmit && session) {
+                if (canSubmit && currentSession) {
                   const track: ITrackModel = {
                     type: trackState.type,
                     url: trackState.url,
@@ -328,61 +392,33 @@ function AddTracks() {
                     id: generateUUID(),
                     isSelected: false,
                   };
-
                   if (trackState.indexUrl) {
                     track.indexUrl = trackState.indexUrl;
                   }
-
                   if (
                     track.type === "genomealign" ||
                     track.type === "bigchain"
                   ) {
                     track.querygenome =
-                      trackState.queryGenome || session.genomeId;
+                      trackState.queryGenome || currentSession.genomeId;
                   }
-
                   dispatch(addCustomTracksPool([...customTracksPool, track]));
                   dispatch(addTracks(track));
                 }
               }}
               disabled={!canSubmit}
-              style={{
-                width: "100%",
-                marginTop: "10px",
-                background: canSubmit
-                  ? "linear-gradient(90deg, #6366f1 0%, #38bdf8 100%)"
-                  : "#cbd5e1",
-                color: canSubmit ? "#fff" : "#888",
-                border: "none",
-                fontWeight: 600,
-                fontSize: "1rem",
-                boxShadow: canSubmit
-                  ? "0 2px 8px rgba(56,189,248,0.15)"
-                  : "none",
-                cursor: canSubmit ? "pointer" : "not-allowed",
-                transition: "background 0.2s, color 0.2s",
-              }}
+              style={{ flex: 1, fontSize: "16px" }}
             >
-              Add Same Track
+              Add Same
             </Button>
             <Button
+              backgroundColor="tint"
               onClick={handleAddNew}
-              style={{
-                width: "100%",
-                marginTop: "10px",
-                background: "linear-gradient(90deg, #38bdf8 0%, #2563eb 100%)",
-                color: "#fff",
-                border: "none",
-                fontWeight: 600,
-                fontSize: "1rem",
-                boxShadow: "0 2px 8px rgba(56,189,248,0.15)",
-                cursor: "pointer",
-                transition: "background 0.2s, color 0.2s",
-              }}
+              style={{ flex: 1, fontSize: "16px" }}
             >
               Add New
             </Button>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -392,27 +428,33 @@ function AddTracks() {
 interface SelectTrackTypeProps {
   selectedType: string;
   onTypeChange: (type: string) => void;
+  hasError?: boolean;
 }
 
-function SelectTrackType({ selectedType, onTypeChange }: SelectTrackTypeProps) {
+function SelectTrackType({
+  selectedType,
+  onTypeChange,
+  hasError,
+}: SelectTrackTypeProps) {
   return (
-    <div className="space-y-4 py-4">
-      <select
-        className="w-full p-2 border rounded"
-        value={selectedType}
-        onChange={(e) => onTypeChange(e.target.value)}
-      >
-        {Object.entries(TRACK_TYPES).map(([group, types]) => (
-          <optgroup label={group} key={group}>
-            {types.map((type) => (
-              <option key={type} value={type}>
-                {type} - {TYPES_DESC[type as keyof typeof TYPES_DESC]}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-    </div>
+    <select
+      className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${hasError
+        ? "border-red-400 focus:ring-red-400"
+        : "border-gray-300 dark:border-gray-600"
+        }`}
+      value={selectedType}
+      onChange={(e) => onTypeChange(e.target.value)}
+    >
+      {Object.entries(TRACK_TYPES).map(([group, types]) => (
+        <optgroup label={group} key={group}>
+          {types.map((type) => (
+            <option key={type} value={type}>
+              {type} — {TYPES_DESC[type as keyof typeof TYPES_DESC]}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
   );
 }
 
@@ -426,6 +468,7 @@ interface TrackFileUrlProps {
   onUrlChange: (url: string) => void;
   onIndexUrlChange: (indexUrl: string) => void;
   onQueryGenomeChange?: (queryGenome: string) => void;
+  hasError?: boolean;
 }
 
 function TrackFileUrl({
@@ -438,39 +481,46 @@ function TrackFileUrl({
   onUrlChange,
   onIndexUrlChange,
   onQueryGenomeChange,
+  hasError,
 }: TrackFileUrlProps) {
   return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Track File URL</label>
-        <input
-          type="text"
-          className="w-full p-2 border rounded"
-          value={url}
-          onChange={(e) => onUrlChange(e.target.value)}
-        />
-        {urlError && <span className="text-red-500">{urlError}</span>}
-      </div>
+    <div className="flex flex-col gap-2">
+      <input
+        type="text"
+        placeholder="https://example.com/track.bigWig"
+        className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${hasError
+          ? "border-red-400 focus:ring-red-400"
+          : "border-gray-300 dark:border-gray-600"
+          }`}
+        value={url}
+        onChange={(e) => onUrlChange(e.target.value)}
+      />
+      {urlError && <p className="text-sm text-red-500">{urlError}</p>}
       {showIndex && (
-        <div>
-          <label className="block mb-2">
-            Track Index URL (optional, only needed if data and index files are
-            not in same folder)
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-primary/60 dark:text-dark-primary/60">
+            Index URL{" "}
+            <span className="opacity-70">
+              — only if not co-located with data file
+            </span>
           </label>
           <input
             type="text"
-            className="w-full p-2 border rounded"
-            value={indexUrl}
+            placeholder="https://example.com/track.bigWig.tbi"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
+            value={indexUrl ?? ""}
             onChange={(e) => onIndexUrlChange(e.target.value)}
           />
         </div>
       )}
       {showQueryGenome && (
-        <div>
-          <label className="block mb-2">Query Genome</label>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-primary/60 dark:text-dark-primary/60">
+            Query Genome
+          </label>
           <input
             type="text"
-            className="w-full p-2 border rounded"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
             value={queryGenome || ""}
             onChange={(e) => onQueryGenomeChange?.(e.target.value)}
           />
@@ -494,18 +544,14 @@ function TrackLabel({ name, onNameChange, onEnterPress }: TrackLabelProps) {
   };
 
   return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Track Label</label>
-        <input
-          type="text"
-          className="w-full p-2 border rounded"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-      </div>
-    </div>
+    <input
+      type="text"
+      placeholder="My track"
+      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
+      value={name}
+      onChange={(e) => onNameChange(e.target.value)}
+      onKeyDown={handleKeyDown}
+    />
   );
 }
 
@@ -515,35 +561,28 @@ interface ConfigureTrackProps {
 
 function ConfigureTrack({ onOptionsChange }: ConfigureTrackProps) {
   return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Track Options (JSON)</label>
-        <textarea
-          className="w-full p-2 border rounded"
-          rows={5}
-          onChange={(e) => onOptionsChange(e.target.value)}
-        />
-      </div>
-    </div>
+    <textarea
+      rows={2}
+      placeholder='{ "color": "blue", "height": 20 }'
+      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3  bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary font-mono resize-none"
+      onChange={(e) => onOptionsChange(e.target.value)}
+    />
   );
 }
 
 // MARK: - Add Data Hubs
 
 function AddDataHubs() {
-  useExpandedNavigationTab();
+  useMidSizeNavigationTab();
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectCurrentSession);
   const [inputUrl, setInputUrl] = useState<any>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isHovered, setIsHovered] = useState(false);
   const customTracksPool = useAppSelector(selectCustomTracksPool);
   const currentSession = useAppSelector(selectCurrentSession);
 
-  const loadHub = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-
+  const loadHub = async () => {
     setIsLoading(true);
     let json;
     try {
@@ -553,9 +592,12 @@ function AddDataHubs() {
         setError("Error: data hub should be an array of JSON object.");
         return;
       }
-    } catch (error) {
+    } catch (err: any) {
       setIsLoading(false);
-      setError("Cannot load the hub. Error: ");
+      const status = err?.status
+        ? ` (${err.status} ${err.statusText ?? ""})`.trimEnd()
+        : "";
+      setError(`Cannot load the hub${status}. Check the URL and try again.`);
       return;
     }
 
@@ -568,7 +610,7 @@ function AddDataHubs() {
       "",
       false,
       0,
-      hubBase
+      hubBase,
     );
 
     if (tracks) {
@@ -577,18 +619,17 @@ function AddDataHubs() {
         dispatch(
           updateCurrentSession({
             tracks: [...session!.tracks, ...tracksToShow],
-          })
+          }),
         );
       }
+
       setIsLoading(false);
       setError(""); // onHubUpdated([], [...tracks], "custom");
     }
     dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));
   };
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = async (file: File | null) => {
+    console.log(file)
     if (!file) {
       return;
     }
@@ -599,15 +640,14 @@ function AddDataHubs() {
       const parser = new DataHubParser();
 
       const tracks = parser.getTracksInHub(json, "Custom hub");
-
-      if (tracks) {
-        if (tracks.length > 0) {
-          dispatch(
-            updateCurrentSession({
-              tracks: [...session!.tracks, ...tracks],
-            })
-          );
-        }
+      console.log(json)
+      const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
+      if (tracksToShow.length > 0) {
+        dispatch(
+          updateCurrentSession({
+            tracks: [...session!.tracks, ...tracksToShow],
+          }),
+        );
       }
       dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));
     } catch (error) {
@@ -617,7 +657,7 @@ function AddDataHubs() {
   const addedTrackUrls = useMemo(() => {
     if (currentSession) {
       return new Set(
-        currentSession!.tracks.map((track) => track.url || track.name)
+        currentSession!.tracks.map((track) => track.url || track.name),
       );
     } else {
       return new Set();
@@ -627,136 +667,88 @@ function AddDataHubs() {
     dispatch(
       updateCurrentSession({
         tracks: [...currentSession!.tracks, ...tracks],
-      })
+      }),
     );
   }
   return (
-    <>
-      {" "}
-      {currentSession && customTracksPool.length > 0 ? (
-        <div>
-          <h2 className="text-base font-medium mb-4">Available Tracks</h2>
+    <div>
+      {currentSession && customTracksPool.length > 0 && (
+        <div className="border-b border-gray-200 dark:border-gray-700 px-4 pb-3 mb-1">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider mb-2">
+            Available Tracks
+          </p>
           <FacetTable
             tracks={customTracksPool}
             addedTracks={currentSession!.tracks}
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
-      ) : (
-        ""
       )}
-      <div>
-        {" "}
-        <form>
-          <div className="form-group">
-            <label>Remote hub URL</label>
-            <div style={{ fontStyle: "italic" }}>
-              <a
-                href={HELP_LINKS.datahub}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                data hub documentation
-              </a>
-            </div>
-            <input
-              placeholder="Enter URL..."
-              type="text"
-              style={{
-                width: "100%",
-                padding: "10px",
-                marginBottom: "20px",
-                fontSize: "1rem",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                transition: "border-color 0.3s",
-                outline: "none",
-              }}
-              className="form-control"
-              value={inputUrl}
-              onChange={(event) => setInputUrl(event.target.value)}
-              onFocus={(event) => (event.target.style.borderColor = "#007bff")}
-              onBlur={(event) => (event.target.style.borderColor = "#ccc")}
-            />
-            <button
-              onClick={loadHub}
-              disabled={isLoading || !inputUrl}
-              style={{
-                padding: "10px 20px",
-                fontSize: "1rem",
-                borderRadius: "4px",
-                border: "none",
-                color: "#fff",
-                backgroundColor: isLoading || !inputUrl ? "#6c757d" : "#28a745",
-                transition: "background-color 0.3s, border-color 0.3s",
-                cursor: isLoading || !inputUrl ? "not-allowed" : "pointer",
-              }}
-              className="btn"
+      <div className="px-4 py-3 flex flex-col gap-4">
+        <div className="flex flex-col gap-2 ">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+              Remote Hub URL
+            </p>
+            <a
+              href={HELP_LINKS.datahub}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 dark:text-blue-400 underline underline-offset-2"
             >
-              Load from URL
-            </button>{" "}
+              Documentation
+            </a>
           </div>
-          <p style={{ color: "red" }}>{error}</p>
-        </form>
-        <br />
-        <div>
-          <div
-            style={{ display: "flex", alignItems: "center", margin: "20px 0" }}
-          >
-            <div
-              style={{ flex: 1, height: "1px", backgroundColor: "#ccc" }}
-            ></div>
-            <span style={{ margin: "0 10px", fontSize: "14px", color: "#666" }}>
-              or
-            </span>
-            <div
-              style={{ flex: 1, height: "1px", backgroundColor: "#ccc" }}
-            ></div>
-          </div>
-          <br />
-          <div
+          <input
+            placeholder="https://example.com/hub.json"
+            type="text"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
+          />
+          <Button
+            active={!!inputUrl && !isLoading}
+            onClick={loadHub}
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
+              // backgroundColor: "black",
+              // color: "white",
+              width: "fit-content",
+              padding: "4px 6px",
             }}
           >
-            <input
-              type="file"
-              id="inputGroupFile01"
-              onChange={handleFileUpload}
-              style={{
-                display: "none",
-              }}
-            />
-            <label
-              htmlFor="inputGroupFile01"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              style={{
-                cursor: "pointer",
-                padding: "10px 20px",
-                border: isHovered
-                  ? " 2px solid  #87CEEB"
-                  : "2px solid  #007bff",
-                borderRadius: "4px",
-                backgroundColor: isHovered ? "#87CEEB" : "#007bff",
+            {isLoading ? "Loading…" : "Load Hub"}
+          </Button>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
 
-                color: "#fff",
-                transition: "background-color 0.3s ease",
-                textAlign: "center",
-              }}
-            >
-              Choose Datahub File
-            </label>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+          <span className="text-sm text-primary/50 dark:text-dark-primary/50">
+            or
+          </span>
+          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+        </div>
+
+        <div className="flex flex-col ">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            Upload Hub File
+          </p>
+          <div className="w-full">
+            <FileInput
+              accept=".json"
+              onFileChange={handleFileUpload}
+              dragMessage="Drag and drop a .json hub file here"
+              containerClassName="max-w-md mx-auto w-full"
+              className="w-full"
+            />
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useEffect } from "react";
 
-const SMALL_SCREEN_WIDTH = 800;
+const SMALL_SCREEN_WIDTH = 600;
 
 export default function useSmallScreen() {
     const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < SMALL_SCREEN_WIDTH);

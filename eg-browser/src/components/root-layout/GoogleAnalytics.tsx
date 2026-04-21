@@ -68,13 +68,13 @@ export default function GoogleAnalytics() {
                     <div className="flex gap-2">
                         <button
                             onClick={() => dispatch(setCookieConsentStatus('denied'))}
-                            className="px-4 py-2 text-sm border border-gray-300 rounded-md"
+                            className="px-4  text-sm border border-gray-300 rounded-md"
                         >
                             Decline
                         </button>
                         <button
                             onClick={() => dispatch(setCookieConsentStatus('granted'))}
-                            className="px-4 py-2 text-sm bg-secondary text-black rounded-md"
+                            className="px-4 text-sm bg-secondary text-black rounded-md"
                         >
                             Accept
                         </button>

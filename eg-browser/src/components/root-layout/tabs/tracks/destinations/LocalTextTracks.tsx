@@ -1,4 +1,4 @@
-import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
+import Button from "@/components/ui/button/Button";
 import React from "react";
 import JSON5 from "json5";
 import { generateUUID } from "wuepgg3-track";
@@ -10,16 +10,11 @@ import {
 } from "@/lib/redux/slices/browserSlice";
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
-enum AddTextTrackStep {
-  TRACK_TYPE = "select-track-type",
-  TRACK_OPTIONS = "track-options",
-  TRACK_FILE = "track-file",
-}
-
 interface TextTrackState {
   textType: string;
   msg: string;
   isFileHuge: boolean;
+  files: FileList | null;
   options?: Record<string, unknown>;
 }
 
@@ -107,14 +102,10 @@ export default function LocalTextTracks() {
     textType: "bed",
     msg: "",
     isFileHuge: false,
+    files: null,
   });
 
-  const [selectedStep, setSelectedStep] =
-    React.useState<AddTextTrackStep | null>(AddTextTrackStep.TRACK_TYPE);
-
-  const handleStepChange = (step: AddTextTrackStep | null) => {
-    setSelectedStep(step ?? AddTextTrackStep.TRACK_TYPE);
-  };
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
 
   const handleTypeChange = (textType: string) => {
     setTrackState((prev) => ({ ...prev, textType }));
@@ -125,15 +116,24 @@ export default function LocalTextTracks() {
       const options = JSON5.parse(value);
       setTrackState((prev) => ({ ...prev, options }));
     } catch (error) {
-      // Ignore invalid JSON
       setTrackState((prev) => ({ ...prev, options: undefined }));
     }
   };
 
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files) return;
+  const handleFileChange = (files: FileList | null) => {
+    setTrackState((prev) => ({ ...prev, files }));
+  };
 
-    setTrackState((prev) => ({ ...prev, msg: "Uploading track..." }));
+  const handleHugeFileToggle = () => {
+    setTrackState((prev) => ({ ...prev, isFileHuge: !prev.isFileHuge }));
+  };
+
+  const handleSubmit = () => {
+    setSubmitAttempted(true);
+    if (!trackState.files) {
+      setTrackState((prev) => ({ ...prev, msg: "Please select files." }));
+      return;
+    }
 
     const { textType, isFileHuge, options } = trackState;
     const typedArray = textType.split("-");
@@ -142,7 +142,7 @@ export default function LocalTextTracks() {
       subType: typedArray[1],
     };
 
-    const fileList = Array.from(files);
+    const fileList = Array.from(trackState.files);
     const tracks: ITrackModel[] = fileList.map((file) => ({
       type: typedArray[0],
       url: "",
@@ -150,7 +150,7 @@ export default function LocalTextTracks() {
       name: file.name,
       label: file.name,
       isText: true,
-      files: [],
+      files: undefined,
       textConfig,
       options: options || {},
       metadata: {},
@@ -166,68 +166,88 @@ export default function LocalTextTracks() {
       );
     }
 
-    setTrackState((prev) => ({ ...prev, msg: "Track added." }));
+    setTrackState((prev) => ({ ...prev, msg: "Track added successfully." }));
   };
 
-  const handleHugeFileToggle = () => {
-    setTrackState((prev) => ({ ...prev, isFileHuge: !prev.isFileHuge }));
-  };
+  const filesComplete = !!trackState.files;
+  const canSubmit = filesComplete;
 
   return (
-    <div className="flex flex-col py-4">
-      <div className="mb-4">
-        You can upload track data in text file without formatting them to the
-        binary format. Check more at{" "}
+    <div className="px-4 py-3 flex flex-col gap-4">
+      <p className="text-sm text-primary/70 dark:text-dark-primary/70">
+        Upload track data as text files without binary formatting.{" "}
         <a
           href={HELP_LINKS.textTrack}
           target="_blank"
           rel="noopener noreferrer"
+          className="text-secondary underline"
         >
-          text tracks
+          Learn more
         </a>
-        .
+      </p>
+
+      {/* 1. Track Type */}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+          Track Type{" "}
+          <span className="text-red-400 normal-case font-normal tracking-normal">*</span>
+        </p>
+        <SelectTextType
+          selectedType={trackState.textType}
+          onTypeChange={handleTypeChange}
+        />
       </div>
 
-      <StepAccordion<AddTextTrackStep>
-        selectedItem={selectedStep}
-        onSelectedItemChange={handleStepChange}
-        items={[
-          {
-            label: "Track Type",
-            value: AddTextTrackStep.TRACK_TYPE,
-            valuePreview: trackState.textType
-              ? TEXT_TYPE_DESC[
-                trackState.textType as keyof typeof TEXT_TYPE_DESC
-              ].label
-              : undefined,
-            component: (
-              <SelectTextType
-                selectedType={trackState.textType}
-                onTypeChange={handleTypeChange}
-              />
-            ),
-          },
-          {
-            label: "Track Options",
-            value: AddTextTrackStep.TRACK_OPTIONS,
-            valuePreview: trackState.options ? "Configured" : undefined,
-            component: (
-              <ConfigureTrack
-                onOptionsChange={handleOptionsChange}
-                onHugeFileToggle={handleHugeFileToggle}
-                isFileHuge={trackState.isFileHuge}
-              />
-            ),
-          },
-          {
-            label: "Track File",
-            value: AddTextTrackStep.TRACK_FILE,
-            component: <TrackFileUpload onFileChange={handleFileUpload} />,
-          },
-        ]}
-      />
+      {/* 2. Track File */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+            Track File{" "}
+            <span className="text-red-400 normal-case font-normal tracking-normal">*</span>
+          </p>
+          {submitAttempted && !filesComplete && (
+            <span className="text-sm text-red-500">Required</span>
+          )}
+        </div>
+        <TrackFileUpload
+          onFileChange={handleFileChange}
+          hasError={submitAttempted && !filesComplete}
+        />
+      </div>
 
-      <div className="text-red-500 italic mt-4">{trackState.msg}</div>
+      {/* 3. Options */}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider">
+          Options{" "}
+          <span className="normal-case font-normal tracking-normal opacity-50 text-sm">
+            optional · JSON
+          </span>
+        </p>
+        <ConfigureTrack
+          onOptionsChange={handleOptionsChange}
+          onHugeFileToggle={handleHugeFileToggle}
+          isFileHuge={trackState.isFileHuge}
+        />
+      </div>
+
+      {trackState.msg && (
+        <p
+          className={`text-sm italic ${trackState.msg.toLowerCase().includes("success")
+            ? "text-green-600"
+            : "text-red-500"
+            }`}
+        >
+          {trackState.msg}
+        </p>
+      )}
+
+      <Button
+        active={canSubmit}
+        onClick={handleSubmit}
+        style={{ fontSize: "16px" }}
+      >
+        Add Track
+      </Button>
     </div>
   );
 }
@@ -242,9 +262,9 @@ function SelectTextType({ selectedType, onTypeChange }: SelectTextTypeProps) {
     TEXT_TYPE_DESC[selectedType as keyof typeof TEXT_TYPE_DESC];
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="flex flex-col gap-3">
       <select
-        className="w-full p-2 border rounded"
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary"
         value={selectedType}
         onChange={(e) => onTypeChange(e.target.value)}
       >
@@ -255,14 +275,15 @@ function SelectTextType({ selectedType, onTypeChange }: SelectTextTypeProps) {
         ))}
       </select>
 
-      <div className="mt-4">
-        <p>{currentType.desc}</p>
-        <div className="mt-4">
-          <h4 className="font-semibold mb-2">Example:</h4>
-          <pre className="font-mono text-sm bg-[#E8E8E8] p-4 rounded whitespace-pre overflow-x-auto">
-            {currentType.example}
-          </pre>
-        </div>
+      <p className="text-sm text-primary/70 dark:text-dark-primary/70">{currentType.desc}</p>
+
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-semibold text-primary/50 dark:text-dark-primary/50 uppercase tracking-wider">
+          Example
+        </p>
+        <pre className="font-mono text-xs bg-gray-100 dark:bg-dark-surface border border-gray-200 dark:border-gray-700 p-3 rounded-lg whitespace-pre overflow-x-auto text-primary dark:text-dark-primary">
+          {currentType.example}
+        </pre>
       </div>
     </div>
   );
@@ -280,17 +301,14 @@ function ConfigureTrack({
   isFileHuge,
 }: ConfigureTrackProps) {
   return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Track Options (JSON)</label>
-        <textarea
-          className="w-full p-2 border rounded"
-          rows={5}
-          onChange={(e) => onOptionsChange(e.target.value)}
-        />
-      </div>
-
-      <div className="flex items-center space-x-2">
+    <div className="flex flex-col gap-3">
+      <textarea
+        rows={3}
+        placeholder='{ "color": "blue", "height": 40 }'
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary font-mono resize-none"
+        onChange={(e) => onOptionsChange(e.target.value)}
+      />
+      <div className="flex items-center gap-2">
         <input
           type="checkbox"
           id="hugeCheck"
@@ -298,9 +316,9 @@ function ConfigureTrack({
           onChange={onHugeFileToggle}
           className="rounded"
         />
-        <label htmlFor="hugeCheck" className="text-sm">
+        <label htmlFor="hugeCheck" className="text-sm text-primary dark:text-dark-primary">
           Use a Worker thread{" "}
-          <span className="text-gray-500">(Check if your file is huge.)</span>
+          <span className="text-primary/50 dark:text-dark-primary/50">(Check if your file is huge.)</span>
         </label>
       </div>
     </div>
@@ -309,23 +327,34 @@ function ConfigureTrack({
 
 interface TrackFileUploadProps {
   onFileChange: (files: FileList | null) => void;
+  hasError?: boolean;
 }
 
-function TrackFileUpload({ onFileChange }: TrackFileUploadProps) {
+function TrackFileUpload({ onFileChange, hasError }: TrackFileUploadProps) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
   return (
-    <div className="space-y-4 py-4">
-      <div>
-        <label className="block mb-2">Select Text Files</label>
-        <input
-          type="file"
-          className="w-full p-2 border rounded"
-          multiple
-          onChange={(e) => onFileChange(e.target.files)}
-        />
-        <p className="text-sm text-gray-500 mt-2">
-          If you choose more than one file, make sure they are of same type.
-        </p>
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => onFileChange(e.target.files)}
+      />
+      <div
+        className={`max-w-md mx-auto w-full border-dashed border-2 rounded-md h-32 flex flex-col items-center justify-center cursor-pointer text-center px-4 ${hasError ? "border-red-400" : "border-gray-400 dark:border-gray-600"
+          }`}
+        onClick={() => inputRef.current?.click()}
+        onDrop={(e) => { e.preventDefault(); onFileChange(e.dataTransfer.files); }}
+        onDragOver={(e) => e.preventDefault()}
+      >
+        <p className="text-sm text-primary dark:text-dark-primary">Drag and drop text files here</p>
+        <p className="text-sm text-primary/50 dark:text-dark-primary/50">— or —</p>
+        <p className="text-sm text-primary dark:text-dark-primary">Click to select files</p>
       </div>
-    </div>
+      <p className="text-xs text-primary/50 dark:text-dark-primary/50 mt-1">
+        If you choose more than one file, make sure they are of the same type.
+      </p>
+    </>
   );
 }

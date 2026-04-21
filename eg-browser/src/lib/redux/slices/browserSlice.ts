@@ -11,7 +11,7 @@ import {
   PayloadAction,
 } from "@reduxjs/toolkit";
 
-import { RootState } from "../store";
+import { RootState } from "../createStore";
 import { generateUUID } from "wuepgg3-track";
 export type uuid = string;
 
@@ -58,14 +58,15 @@ export const browserSlice = createSlice({
         additionalTracks?: ITrackModel[];
         width?: null | number;
         height?: null | number;
-      }>
+      }>,
     ) => {
       //TO DO url param to also get bundleId and get it here as a property for initial startup
       const {
         genome,
         viewRegion: overrideViewRegion,
         additionalTracks = [],
-        width = null, height = null
+        width = null,
+        height = null,
       } = action.payload;
 
       const { defaultRegion, defaultTracks: tracks = [] } = genome;
@@ -83,7 +84,7 @@ export const browserSlice = createSlice({
         id: generateUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        title: "Untitled Session",
+        title: "",
         bundleId: null,
         customGenome: genome.customGenome ? genome.customGenome : null,
         chromosomes:
@@ -106,7 +107,7 @@ export const browserSlice = createSlice({
     },
     updateSession: (
       state,
-      action: PayloadAction<{ id: uuid; changes: Partial<BrowserSession> }>
+      action: PayloadAction<{ id: uuid; changes: Partial<BrowserSession> }>,
     ) => {
       browserSessionAdapter.updateOne(state.sessions, {
         id: action.payload.id,
@@ -118,7 +119,7 @@ export const browserSlice = createSlice({
     },
     updateCurrentSession: (
       state,
-      action: PayloadAction<Partial<BrowserSession>>
+      action: PayloadAction<Partial<BrowserSession>>,
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
@@ -218,14 +219,14 @@ export const selectCurrentSessionId = (state: RootState) => {
 };
 
 const browserSessionSelectors = browserSessionAdapter.getSelectors(
-  (state: RootState) => state.browser.present.sessions
+  (state: RootState) => state.browser.present.sessions,
 );
 
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
       state,
-      state.browser.present.currentSession
+      state.browser.present.currentSession,
     )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;

@@ -4,21 +4,22 @@ import {
   DisplayedRegionModel,
   GenomeSerializer,
   getGenomeConfig,
+  GenomeHubManager,
 } from "wuepgg3-track";
-import { setCurrentSession, upsertSession } from "../slices/browserSlice";
+import {
+  setCurrentSession,
+  updateCurrentSession,
+  upsertSession,
+} from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
-import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/SessionUI";
+import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
 import { updateBundle } from "../slices/hubSlice";
 import { generateUUID } from "wuepgg3-track";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import { addCustomGenomeRemote } from "./genome-hub";
 
-
-
 export function convertSession(session: any, dispatch: any) {
-
-
   let newGenomeConfig: GenomeConfig | null = null;
   let coordinate: GenomeCoordinate | null = null;
 
@@ -36,8 +37,12 @@ export function convertSession(session: any, dispatch: any) {
     : session.defaultTracks
       ? session.defaultTracks
       : [];
-  if (session.chromosomes && session.chromosomes.length > 0) {
-
+  if (
+    session.chromosomes &&
+    session.chromosomes.length > 0 &&
+    !getGenomeConfig(curGenomeName) &&
+    !GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)
+  ) {
     const _newGenomeConfig = {
       id: curGenomeName,
       name: curGenomeName,
@@ -50,32 +55,39 @@ export function convertSession(session: any, dispatch: any) {
 
     dispatch(addCustomGenomeRemote(_newGenomeConfig));
     newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
+  } else if (GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)) {
+    const _newGenomeConfig =
+      GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName);
+    if (_newGenomeConfig)
+      newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
   } else if (getGenomeConfig(curGenomeName)) {
     newGenomeConfig = getGenomeConfig(curGenomeName);
   } else if (session.viewRegion && typeof session.viewRegion === "object") {
     newGenomeConfig = getGenomeConfig(session.viewRegion._navContext._name);
-
   }
 
-  if (newGenomeConfig && session.viewRegion && typeof session.viewRegion === "object") {
+  if (
+    newGenomeConfig &&
+    session.viewRegion &&
+    typeof session.viewRegion === "object"
+  ) {
     coordinate = new DisplayedRegionModel(
       newGenomeConfig?.navContext,
       session.viewRegion._startBase,
-      session.viewRegion._endBase
+      session.viewRegion._endBase,
     ).currentRegionAsString() as GenomeCoordinate | null;
-
-  }
-  else if (newGenomeConfig && session.viewRegion !== undefined) {
+  } else if (newGenomeConfig && session?.viewRegion) {
     coordinate = session.viewRegion;
-  } else if (newGenomeConfig && session.viewInterval) {
+  } else if (newGenomeConfig && session?.viewInterval) {
     coordinate = new DisplayedRegionModel(
       newGenomeConfig?.navContext,
       session.viewInterval.start,
-      session.viewInterval.end
+      session.viewInterval.end,
     ).currentRegionAsString() as GenomeCoordinate | null;
-  } else if (newGenomeConfig && session.defaultRegion) {
-    coordinate = session.defaultRegion;
+  } else if (newGenomeConfig && newGenomeConfig.defaultRegion) {
+    coordinate = newGenomeConfig.defaultRegion;
   }
+
   if (!newGenomeConfig) {
     throw new Error("Invalid session file format, could not parse view region");
   }
@@ -91,7 +103,11 @@ export function convertSession(session: any, dispatch: any) {
 
   session = {
     id: generateUUID(),
-    genomeId: curGenomeName ? curGenomeName : newGenomeConfig ? newGenomeConfig?.genome.getName() : null,
+    genomeId: curGenomeName
+      ? curGenomeName
+      : newGenomeConfig
+        ? newGenomeConfig?.genome.getName()
+        : null,
     customGenome: session.customGenome,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -102,10 +118,12 @@ export function convertSession(session: any, dispatch: any) {
     highlights: session.highlights ?? [],
     metadataTerms: session.metadataTerms ?? [],
     bundleId: session.bundleId ? session.bundleId : null,
-    regionSets: [],
-    selectedRegionSet: session.regionSetView ?? null,
+    regionSets: session?.regionSets ? session.regionSets : null,
+    selectedRegionSet: session?.regionSetView ? session.regionSetView : null,
     overrideViewRegion: null,
+    chromosomes: session.chromosomes ?? null,
   } satisfies BrowserSession;
+
   return session;
 }
 
@@ -119,9 +137,8 @@ export const importOneSession = createAsyncThunk(
       session: any;
       navigatingToSession?: boolean;
     },
-    thunkApi
+    thunkApi,
   ) => {
-
     session = convertSession(session, thunkApi.dispatch);
 
     if (!session.id || !session.genomeId || !session.viewRegion) {
@@ -139,28 +156,27 @@ export const importOneSession = createAsyncThunk(
     if (navigatingToSession) {
       thunkApi.dispatch(setCurrentSession(session.id));
     }
-  }
+  },
 );
 
 export const addSessionsFromBundleId = createAsyncThunk(
   "session/addSessionsFromBundleId",
   async (sessionId: string, thunkApi) => {
-    const response = await fetch(
-      `https://eg-session.firebaseio.com/sessions/${sessionId}.json`
-    ).then((r) => r.json() as Promise<Isession>);
+    const response = await onRetrieveSession(sessionId);
 
-    let sessionInView: any = null
+    let sessionInView: any = null;
     if (response && response.currentId) {
-      sessionInView = response.sessionsInBundle[response.currentId].state
-      sessionInView["title"] = response.sessionsInBundle[response.currentId].label
-    }
-    else if (response && !response.currentId) {
-      const keys = Object.keys(response.sessionsInBundle)
+      sessionInView = response.sessionsInBundle[response.currentId].state;
+      sessionInView["title"] =
+        response.sessionsInBundle[response.currentId].label;
+    } else if (response && !response.currentId) {
+      const keys = Object.keys(response.sessionsInBundle);
       if (keys.length > 0) {
-        sessionInView = response.sessionsInBundle[keys[0]].state
-        sessionInView["title"] = response.sessionsInBundle[keys[0]].label
+        sessionInView = response.sessionsInBundle[keys[0]].state;
+        sessionInView["title"] = response.sessionsInBundle[keys[0]].label;
       }
     }
+
     // const sessions = Object.values(response.sessionsInBundle).map(
     //   (session) => session.state
     // );
@@ -171,10 +187,10 @@ export const addSessionsFromBundleId = createAsyncThunk(
 
     if (sessionInView) {
       thunkApi.dispatch(importOneSession({ session: sessionInView }));
+    } else {
+      thunkApi.dispatch(setCurrentSession(null));
     }
-
-    thunkApi.dispatch(setCurrentSession(null));
-  }
+  },
 );
 
 export const fetchBundle = createAsyncThunk(
@@ -187,50 +203,12 @@ export const fetchBundle = createAsyncThunk(
 
         if (resBundle) {
           thunkApi.dispatch(updateBundle(resBundle));
+        } else {
+          thunkApi.dispatch(updateCurrentSession({ bundleId: null }));
         }
       } catch (e) {
         // console.error(e);
       }
     }
-  }
+  },
 );
-interface Isession {
-  bundleId: string;
-  currentId: string;
-  sessionsInBundle: {
-    [key: string]: {
-      date: number;
-      label: string;
-      state: {
-        bundleId: string;
-        darkTheme: boolean;
-        genomeName: string;
-        isShowingNavigator: boolean;
-        isShowingVR: boolean;
-        regionSetViewIndex: number;
-        trackLegendWidth: number;
-        tracks: Array<{
-          fileObj: string;
-          isSelected: boolean;
-          isText: boolean;
-          label: string;
-          metadata: {
-            "Track type": string;
-          };
-          name: string;
-          options: {
-            label: string;
-            maxRows?: number;
-          };
-          type: string;
-          url: string;
-          genome?: string;
-        }>;
-        viewInterval: {
-          start: number;
-          end: number;
-        };
-      };
-    };
-  };
-}

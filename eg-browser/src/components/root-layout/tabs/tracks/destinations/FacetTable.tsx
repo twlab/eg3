@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
-import ReactDOM from "react-dom";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 
 import _ from "lodash";
 import HubTrackTable from "./HubTrackTable";
 import { TrackModel, ITrackModel, variableIsObject } from "wuepgg3-track";
 
 import "./FacetTable.css";
+import { useNavigation } from "@/components/core-navigation/NavigationStack";
 
 const DEFAULT_ROW = "Sample";
 const DEFAULT_COLUMN = "Assay";
@@ -19,6 +19,7 @@ type FacetTableProps = {
   addedTrackSets: Set<string>;
   publicTrackSets?: Set<string>;
   contentColorSetup: any;
+  setIsModalOpen?: any
 };
 
 const FacetTable: React.FC<FacetTableProps> = ({
@@ -27,7 +28,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
   onTracksAdded,
   addTermToMetaSets,
   addedTrackSets,
-  publicTrackSets,
+  publicTrackSets, setIsModalOpen
 }) => {
   const [state, setState] = useState<any>({
     tracks: [] as TrackModel[],
@@ -42,6 +43,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
     rowHeader: "",
     columnHeader: "",
     showModalId: null as string | null,
+    modalFound: null as any[] | null,
     metaKeys: [] as string[],
   });
 
@@ -155,19 +157,31 @@ const FacetTable: React.FC<FacetTableProps> = ({
         columnHeader: columnHeader || UNUSED_META_KEY,
       }));
     },
-    [addTermToMetaSets]
+    [addTermToMetaSets],
   );
 
   useEffect(() => {
     initializeTracks(tracks);
   }, [tracks]);
 
-  const handleOpenModal = (id: string) => {
-    setState((prevState) => ({ ...prevState, showModalId: id }));
+  const handleOpenModal = (id: string, found: any[]) => {
+    if (setIsModalOpen)
+      setIsModalOpen(id)
+    setState((prevState) => ({
+      ...prevState,
+      showModalId: id,
+      modalFound: found,
+    }));
   };
 
   const handleCloseModal = () => {
-    setState((prevState) => ({ ...prevState, showModalId: null }));
+    if (setIsModalOpen)
+      setIsModalOpen(null)
+    setState((prevState) => ({
+      ...prevState,
+      showModalId: null,
+      modalFound: null,
+    }));
   };
 
   const toggleHeader = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -220,56 +234,80 @@ const FacetTable: React.FC<FacetTableProps> = ({
     return list;
   };
 
-  const renderHeader = (attr: string) => {
-    let attrList, rowClass, colClass, expandClass;
-    if (attr === state.rowHeader) {
-      attrList = state.rowList;
-      rowClass = "facet-row-header";
-    } else {
-      attrList = state.columnList;
-      colClass = "facet-column-header";
-    }
+  // Header components memoized to avoid re-render on unrelated changes
+  const ColumnHeaders = React.memo(({ list }: { list: any[] }) => {
+    const colClass = "facet-column-header";
+    return (
+      <>
+        {list.map((element: any, idx: number) => {
+          const hasChildren = element.children && element.children.size;
+          const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
+          const expandClass = hasChildren && element.expanded ? "expanded" : "";
+          return (
+            <div key={`${element.name}-${idx}`} className={`${colClass}`}>
+              {hasChildren ? (
+                <button
+                  name={element.name}
+                  type="button"
+                  onClick={toggleHeader}
+                  className={expandClass}
+                >
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              ) : (
+                <button name={element.name} className="not-button">
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </>
+    );
+  });
 
-    return attrList.map((element, idx) => {
-      let prefix = "";
-      if (element.children && element.children.size) {
-        prefix = element.expanded ? "⊟" : "⊞";
-        expandClass = element.expanded ? "expanded" : "";
-        return (
-          <div
-            key={`${element.name}-${idx}`}
-            className={`${rowClass} ${colClass}`}
-          >
-            <button
-              name={element.name}
-              type="button"
-              onClick={toggleHeader}
-              className={expandClass}
-            >
-              <span>
-                {prefix}
-                {element.name}
-              </span>
-            </button>
-          </div>
-        );
-      } else {
-        return (
-          <div
-            key={`${element.name}-${idx}`}
-            className={`${rowClass} ${colClass}`}
-          >
-            <button name={element.name} className="not-button">
-              <span>
-                {prefix}
-                {element.name}
-              </span>
-            </button>
-          </div>
-        );
-      }
-    });
-  };
+  const RowHeaders = React.memo(({ list }: { list: any[] }) => {
+    const rowClass = "facet-row-header";
+    return (
+      <>
+        {list.map((element: any, idx: number) => {
+          const hasChildren = element.children && element.children.size;
+          const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
+          const expandClass = hasChildren && element.expanded ? "expanded" : "";
+          return (
+            <div key={`${element.name}-${idx}`} className={`${rowClass}`}>
+              {hasChildren ? (
+                <button
+                  name={element.name}
+                  type="button"
+                  onClick={toggleHeader}
+                  className={expandClass}
+                >
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              ) : (
+                <button name={element.name} className="not-button">
+                  <span>
+                    {prefix}
+                    {element.name}
+                  </span>
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </>
+    );
+  });
 
   const swapHeader = () => {
     let { rowHeader, columnHeader, rowList, columnList } = state;
@@ -289,40 +327,52 @@ const FacetTable: React.FC<FacetTableProps> = ({
     setColNumber();
   };
 
-  const buildMatrix = () => {
-    const { columnHeader, rowList, columnList } = state;
-    let divs: Array<any> = [];
-    if (columnHeader !== UNUSED_META_KEY) {
-      for (let row of rowList) {
-        for (let col of columnList) {
-          if (row.expanded || col.expanded) {
-            divs.push(<div key={`${row.name}-${col.name}`}></div>);
+  const MatrixGrid = React.memo(
+    ({
+      rowList,
+      columnList,
+      columnHeader,
+    }: {
+      rowList: any[];
+      columnList: any[];
+      columnHeader: string;
+    }) => {
+      const divs: Array<any> = [];
+      if (columnHeader !== UNUSED_META_KEY) {
+        for (let row of rowList) {
+          for (let col of columnList) {
+            if (row.expanded || col.expanded) {
+              divs.push(<div key={`${row.name}-${col.name}`}></div>);
+            } else {
+              divs.push(
+                <div key={`${row.name}-${col.name}`}>
+                  {countTracks(row, col)}
+                </div>,
+              );
+            }
+          }
+        }
+      } else {
+        for (let row of rowList) {
+          if (row.expanded) {
+            divs.push(<div key={`${row.name}-col`}></div>);
           } else {
             divs.push(
-              <div key={`${row.name}-${col.name}`}>{countTracks(row, col)}</div>
+              <div key={`${row.name}-col`}>
+                {countTracks(row, UNUSED_META_KEY)}
+              </div>,
             );
           }
         }
       }
-    } else {
-      for (let row of rowList) {
-        if (row.expanded) {
-          divs.push(<div key={`${row.name}-col`}></div>);
-        } else {
-          divs.push(
-            <div key={`${row.name}-col`}>
-              {countTracks(row, UNUSED_META_KEY)}
-            </div>
-          );
-        }
-      }
-    }
-    return divs;
-  };
+
+      return <>{divs}</>;
+    },
+  );
 
   const trackMetadataBelongsTo = (
     tkMeta: string | string[],
-    metaType: string
+    metaType: string,
   ) => {
     if (Array.isArray(tkMeta)) {
       return tkMeta.includes(metaType);
@@ -366,70 +416,16 @@ const FacetTable: React.FC<FacetTableProps> = ({
     if (!found.length) return null;
     const id = `modal-${row.name}-${col.name}`;
     const addUrls = found.filter(
-      (tk) => addedTrackSets?.has(tk.url) || addedTrackSets?.has(tk.name)
+      (tk) => addedTrackSets?.has(tk.url) || addedTrackSets?.has(tk.name),
     );
     return (
       <div>
-        <button onClick={() => handleOpenModal(id)} className="facet-item">
+        <button
+          onClick={() => handleOpenModal(id, found)}
+          className="facet-item"
+        >
           <span className="green">{addUrls.length}</span>/{found.length}
         </button>
-        {showModalId === id && ReactDOM.createPortal(
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(111,107,101, 0.7)",
-              zIndex: 9999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onClick={handleCloseModal}
-            role="dialog"
-            aria-label="track list"
-          >
-            <div
-              style={{
-                position: "relative",
-                backgroundColor: "white",
-                padding: "16px 20px 10px 15px",
-                borderRadius: "4px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                textAlign: "left",
-                width: "90vw",
-                height: "90vh",
-                overflow: "auto",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span
-                className="text-right"
-                style={{
-                  cursor: "pointer",
-                  color: "red",
-                  fontSize: "2em",
-                  position: "absolute",
-                  top: "-5px",
-                  right: "20px",
-                }}
-                onClick={handleCloseModal}
-              >
-                ×
-              </span>
-              <HubTrackTable
-                tracks={found}
-                addedTrackSets={addedTrackSets}
-                onTracksAdded={onTracksAdded}
-                rowHeader={rowHeader}
-                columnHeader={columnHeader}
-              />
-            </div>
-          </div>,
-          document.body
-        )}
       </div>
     );
   };
@@ -438,10 +434,20 @@ const FacetTable: React.FC<FacetTableProps> = ({
     let colNum = Math.max(1, state.columnList.length);
     document.documentElement.style.setProperty(
       "--colNum",
-      (colNum + 1).toString()
+      (colNum + 1).toString(),
     );
   };
 
+  // update column number when column list length or panel size changes
+  useEffect(() => {
+    setColNumber();
+  }, [state.columnList.length]);
+  useEffect(() => {
+    return () => {
+      if (setIsModalOpen)
+        setIsModalOpen(null)
+    }
+  }, []);
   const renderHeaderSelection = (isColumn: boolean) => {
     let stateToRead, otherState, changeCallback;
     if (isColumn) {
@@ -522,28 +528,78 @@ const FacetTable: React.FC<FacetTableProps> = ({
     return <p>Table is empty, please add some tracks.</p>;
   } else {
     return (
-      <div className="facet-container">
-        <div className="facet-config">
-          <div>{renderHeaderSelection(false)}</div>
+      <>
+        {state.showModalId && state.modalFound ? (
           <div
-            className="facet-swap"
-            title="swap row/column"
-            onClick={swapHeader}
+            style={{
+              backgroundColor: "rgba(111,107,101, 0.07)",
+
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onClick={handleCloseModal}
+            role="dialog"
+            aria-label="track list"
           >
-            &#8646;
+            <div
+              style={{
+
+                backgroundColor: "white",
+
+
+                textAlign: "left",
+                width: "100%",
+                maxWidth: "90vw",
+
+
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="facet-modal-back"
+                onClick={handleCloseModal}
+                aria-label="Back"
+              >
+                ← Back
+              </button>
+              <HubTrackTable
+                key={state.showModalId || "modal"}
+                tracks={state.modalFound}
+                addedTrackSets={addedTrackSets}
+                onTracksAdded={onTracksAdded}
+                rowHeader={state.rowHeader}
+                columnHeader={state.columnHeader}
+              />
+            </div>
           </div>
-          <div>{renderHeaderSelection(true)}</div>
-        </div>
-        <div className="facet-outer">
-          <div className="facet-content">
-            <div className="facet-holder"></div>
-            {renderHeader(state.columnHeader)}
-            {renderHeader(state.rowHeader)}
-            {buildMatrix()}
-            {setColNumber()}
+        ) : <div className="facet-container">
+          <div className="facet-config">
+            <div>{renderHeaderSelection(false)}</div>
+            <div
+              className="facet-swap"
+              title="swap row/column"
+              onClick={swapHeader}
+            >
+              &#8646;
+            </div>
+            <div>{renderHeaderSelection(true)}</div>
           </div>
-        </div>
-      </div>
+          <div className="facet-outer">
+            <div className="facet-content">
+              <div className="facet-holder"></div>
+              <ColumnHeaders list={state.columnList} />
+              <RowHeaders list={state.rowList} />
+              <MatrixGrid
+                rowList={state.rowList}
+                columnList={state.columnList}
+                columnHeader={state.columnHeader}
+              />
+            </div>
+          </div>
+        </div>}
+      </>
     );
   }
 };

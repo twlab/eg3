@@ -1,12 +1,14 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useContext } from "react";
+import { PortalContext } from "wuepgg3-track"
 import "./HighlightMenu.css";
+import ResizablePanel from "../../ui/panel/ResizablePanel";
 import {
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { ColorPicker } from "wuepgg3-track";
+import { createPortal } from "react-dom";
 
 export class HighlightInterval {
   start: number;
@@ -35,16 +37,17 @@ interface HighlightMenuProps {
   onNewRegion: (start: number, end: number) => void;
   handleToolClick: (tool: any) => void;
   windowWidth: number;
+  anchorEl?: React.RefObject<HTMLElement | null>;
 }
 
 const HighlightMenu: React.FC<HighlightMenuProps> = ({
   onNewRegion,
   handleToolClick,
   genomeConfig,
-  windowWidth,
+  anchorEl,
 }) => {
   const dispatch = useAppDispatch();
-
+  const portalTarget = useContext(PortalContext);
   const currentSession = useAppSelector(selectCurrentSession);
 
   const handleHighlightIntervalUpdate = (
@@ -80,6 +83,10 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   const handleCloseModal = () => {
     handleToolClick(null);
   };
+
+  const anchorRect = anchorEl?.current?.getBoundingClientRect();
+  const panelTop = anchorRect ? Math.round(anchorRect.bottom) + 8 : 90;
+  const panelLeft = anchorRect ? Math.round(anchorRect.left) : 100;
 
   const highlightElements = currentSession?.highlights?.length ? (
     <ol style={{ display: "flex", flexDirection: "column", gap: "0.2em" }}>
@@ -117,7 +124,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
           marginRight: "clamp(15px, 1.5vw, 25px)",
         }}
       />
-      <h4 style={{ fontSize: "clamp(14px, 1.2vw, 20px)" }}>No highlights</h4>
+      <h4 style={{ fontSize: "clamp(16px, 1.2vw, 20px)" }}>No highlights</h4>
       <h5
         style={{
           width: "clamp(300px, 40vw, 500px)",
@@ -130,53 +137,36 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
     </div>
   );
 
-  return (
-    <div className="relative">
-      <AnimatePresence>
-        <motion.div
-          className="absolute top-full left-0 mt-4 bg-white border border-gray-300 rounded-lg shadow-lg z-50 overflow-y-auto"
-          style={{
-            left: `-${windowWidth / 3.2}px`,
-            // width: `${windowWidth / 2}px`,
-            maxHeight: "500px",
-            maxWidth: `${windowWidth}px`,
-          }} // Adjusted left alignment
-          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="p-4">
-            <div
-              className="flex items-center justify-between mb-3"
-              style={{ width: `${windowWidth / 2}px`, fontSize: "16px" }}
-            >
-              <h5 className="font-semibold text-gray-800">Highlights</h5>
-              <div className="flex gap-2">
-                {(currentSession?.highlights?.length ?? 0) > 0 && (
-                  <button
-                    onClick={() =>
-                      dispatch(updateCurrentSession({ highlights: [] }))
-                    }
-                    className="px-3 py-1 text-sm border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
-                  >
-                    Remove all
-                  </button>
-                )}
-                <button
-                  onClick={handleCloseModal}
-                  className="px-3 py-1 text-sm border-1 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-
-            <div>{highlightElements}</div>
+  return createPortal(
+    <div style={{ position: "fixed", top: panelTop, left: panelLeft, zIndex: 1000 }}>
+      <ResizablePanel
+        title="Highlights"
+        initialWidth={500}
+        initialHeight={420}
+        onClose={handleCloseModal}
+        navigationPath={[]}
+        header
+        excludeRefs={anchorEl ? [anchorEl] : []}
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-end mb-3" style={{ fontSize: "16px" }}>
+            {(currentSession?.highlights?.length ?? 0) > 0 && (
+              <button
+                onClick={() =>
+                  dispatch(updateCurrentSession({ highlights: [] }))
+                }
+                className="px-3 py-1 text-sm border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
+              >
+                Remove all
+              </button>
+            )}
           </div>
-        </motion.div>
-      </AnimatePresence>
-    </div>
+
+          <div>{highlightElements}</div>
+        </div>
+      </ResizablePanel>
+    </div>,
+    portalTarget ?? document.body
   );
 };
 
@@ -208,7 +198,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
         border: `2px solid ${interval.color}`,
         borderRadius: "clamp(4px, 0.5vw, 8px)",
         padding: "clamp(0.5em, 1vw, 1.5em)",
-        fontSize: "clamp(10px, 0.9vw, 14px)",
+        fontSize: "clamp(10px, 0.9vw, 16px)",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -235,7 +225,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
         />
         <button
           onClick={() => onHandleHighlightIntervalUpdate(true, index)}
-          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 16px)" }}
         >
           Delete
         </button>
@@ -250,13 +240,13 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}
-          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 16px)" }}
         >
           {interval.display ? "Hide" : "Show"}
         </button>
         <button
           onClick={() => onHandleViewRegionJump(interval)}
-          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 16px)" }}
         >
           Jump
         </button>

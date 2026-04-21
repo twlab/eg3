@@ -2,12 +2,13 @@ import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { useEffect } from "react";
 import {
   selectDarkTheme,
   selectIsNavigatorVisible,
   selectIsToolBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import { selectToolState } from "@/lib/redux/slices/utilitySlice";
 import {
   selectScreenShotOpen,
   updateScreenShotData,
@@ -22,9 +23,9 @@ import "wuepgg3-track/style.css";
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 
-import { fetchBundle } from "../../lib/redux/thunk/session";
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { selectCurrentState } from "../../lib/redux/selectors";
+import { fetchBundle } from "@/lib/redux/thunk/session";
 
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
@@ -32,7 +33,7 @@ export default function GenomeView() {
 
   const dispatch = useAppDispatch();
 
-  const tool = useAppSelector(selectTool);
+  const toolState = useAppSelector(selectToolState);
 
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
@@ -42,9 +43,11 @@ export default function GenomeView() {
   const bundleId =
     currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
-  if (bundleId) {
-    dispatch(fetchBundle(bundleId));
-  }
+  useEffect(() => {
+    if (bundleId) {
+      dispatch(fetchBundle(bundleId));
+    }
+  }, [bundleId, dispatch]);
 
   // const bundleId = currentSession.bundleId;
 
@@ -64,7 +67,7 @@ export default function GenomeView() {
     dispatch(
       updateCurrentSession({
         userViewRegion: coordinate,
-      })
+      }),
     );
   };
 
@@ -73,19 +76,19 @@ export default function GenomeView() {
       updateCurrentSession({
         viewRegion: coordinate,
         userViewRegion: coordinate,
-      })
+      }),
     );
   };
   function handleSetSelected(
     set: RegionSet | null,
-    coordinate: GenomeCoordinate | null
+    coordinate: GenomeCoordinate | null,
   ) {
     if (currentSession?.selectedRegionSet || set) {
       dispatch(
         updateCurrentSession({
           selectedRegionSet: set,
           userViewRegion: coordinate,
-        })
+        }),
       );
     }
   }
@@ -110,7 +113,7 @@ export default function GenomeView() {
       onSetSelected={handleSetSelected}
       viewRegion={currentSession?.viewRegion}
       userViewRegion={currentSession.userViewRegion}
-      tool={tool}
+      tool={toolState}
       Toolbar={{ toolbar: Toolbar, skeleton: TrackPlaceHolder }}
       selectedRegionSet={currentSession?.selectedRegionSet}
       setScreenshotData={setScreenshotData}

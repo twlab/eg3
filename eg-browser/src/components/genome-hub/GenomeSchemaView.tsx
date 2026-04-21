@@ -365,7 +365,7 @@ export default function GenomeSchemaView() {
       <div
         ref={containerRef}
         data-scroll-container="true"
-        className="bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-dark-secondary rounded-lg p-4 break-words overflow-x-auto"
+        className="bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-dark-secondary rounded-lg p-4 break-words"
       >
         <SchemaNode
           node={genomeDataSchema as any}

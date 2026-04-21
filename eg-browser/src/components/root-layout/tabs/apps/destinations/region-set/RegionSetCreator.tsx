@@ -25,7 +25,7 @@ interface ElementsStepProps {
 
 function NameStep({ name, setName }: NameStepProps) {
     return (
-        <div className="py-4">
+        <div className="py-1">
             <label className="block text-sm font-medium text-gray-700">
                 Region Set Name
                 <input
@@ -33,7 +33,7 @@ function NameStep({ name, setName }: NameStepProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter name..."
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
             </label>
         </div>
@@ -42,7 +42,7 @@ function NameStep({ name, setName }: NameStepProps) {
 
 function ElementsStep({ elements, onAddElement, onRemoveElement, onElementNameChange }: ElementsStepProps) {
     return (
-        <div className="py-4 space-y-4">
+        <div className="py-2 space-y-4">
             <div>
                 <AnimatePresence initial={false}>
                     {elements.map((element) => (

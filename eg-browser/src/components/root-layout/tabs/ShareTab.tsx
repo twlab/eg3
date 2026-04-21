@@ -11,18 +11,29 @@ import Button from "@/components/ui/button/Button";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 
+import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
+
 function compressString(str: string): string {
   const bytes = new TextEncoder().encode(str);
   const compressedBytes = new Uint8Array(bytes.buffer);
   const compressedString = String.fromCharCode.apply(
     null,
-    Array.from(compressedBytes)
+    Array.from(compressedBytes),
   );
   const enc = btoa(compressedString);
   return enc.replace(/\+/g, ".").replace(/\//g, "_").replace(/=/g, "-");
 }
 
-export default function ShareTab() {
+export default function ShareTab({
+  panelCounter,
+  onNavigationPathChange,
+}: {
+  panelCounter?: number;
+  onNavigationPathChange?: (path: any) => void;
+}) {
+  // useExpandedNavigationTab()
+  useMidSizeNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const currentTab = useAppSelector(selectNavigationTab);
   const shortLink = useAppSelector(selectShortLink);
@@ -58,7 +69,7 @@ export default function ShareTab() {
 
       if (response.status !== 200) {
         throw new Error(
-          `Error with the tiny-url fetch operation. Status Code: ${response.status}`
+          `Error with the tiny-url fetch operation. Status Code: ${response.status}`,
         );
       }
 
@@ -81,13 +92,13 @@ export default function ShareTab() {
   const linkToShare = shortLink || fullUrl;
   const fullLinkToShare = fullUrl;
   const emailLink = `mailto:?subject=Browser%20View&body=${encodeURIComponent(
-    linkToShare
+    linkToShare,
   )}`;
   const iframeContent = `<iframe src="${linkToShare}" width="100%" height="1200" frameborder="0" style="border:0" allowfullscreen></iframe>`;
 
   const copyToClipboard = async (
     text: string,
-    setStateFn: (val: boolean) => void
+    setStateFn: (val: boolean) => void,
   ) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -100,103 +111,83 @@ export default function ShareTab() {
 
   const OutdatedLinkWarning = () =>
     isLinkOutdated ? (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-        <div className="flex items-center gap-2">
-          <p className="text-yellow-800">
-            The shortened link is for an older version of this view.
-          </p>
-          <Button
-            onClick={generateShortLink}
-            disabled={isGenerating}
-            style={{
-              marginLeft: "0.5rem",
-              color: "#5F6368",
-              border: "1px solid #3b82f6",
-              borderRadius: "0.25rem",
-            }}
-          >
-            {isGenerating ? "Generating..." : "Generate New Link"}
-          </Button>
-        </div>
+      <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
+        <p className="flex-1 text-base text-amber-800 dark:text-amber-300">
+          The shortened link is for an older version of this view.
+        </p>
+        <Button onClick={generateShortLink} disabled={isGenerating}>
+          {isGenerating ? "Generating..." : "Refresh link"}
+        </Button>
       </div>
     ) : null;
 
+  const inputCls =
+    "flex-1 px-3 py-1.5 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-surface text-primary dark:text-dark-primary focus:outline-none font-mono";
+  const sectionHeading =
+    "text-sm font-semibold text-primary dark:text-dark-primary uppercase tracking-wider";
+
   const UrlTab = () => (
-    <div className="flex flex-col gap-6 p-4">
+    <div className="flex flex-col gap-5 p-4">
       <OutdatedLinkWarning />
 
-      {/* Shortened Link Section */}
+      {/* Shortened Link */}
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Shortened Link{" "}
+        <p className={sectionHeading}>
+          Shortened link
           {isLinkOutdated && (
-            <span className="text-yellow-600">(outdated)</span>
+            <span className="text-amber-500 normal-case ml-1">(outdated)</span>
           )}
-        </h3>
-        <div className="flex items-center gap-3">
+        </p>
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={linkToShare}
             readOnly
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+            className={inputCls}
           />
           <Button
-            style={{
-              border: "1px solid #3b82f6",
-              borderRadius: "0.375rem",
-              padding: "0.5rem 1rem",
-              minWidth: "100px",
-            }}
             onClick={() => copyToClipboard(linkToShare, setCopiedShortLink)}
           >
-            {copiedShortLink ? "✓ Copied!" : "Copy"}
+            {copiedShortLink ? "✓ Copied" : "Copy"}
           </Button>
         </div>
       </div>
 
-      {/* Full Link Section */}
+      {/* Full Link */}
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Full Link{" "}
+        <p className={sectionHeading}>
+          Full link
           {isLinkOutdated && (
-            <span className="text-yellow-600">(outdated)</span>
+            <span className="text-amber-500 normal-case ml-1">(outdated)</span>
           )}
-        </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        </p>
+        <p className="text-sm text-primary/60 dark:text-dark-primary/60">
           Use this if the shortened link doesn't work
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={fullLinkToShare}
             readOnly
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+            className={inputCls}
           />
           <Button
-            style={{
-              border: "1px solid #3b82f6",
-              borderRadius: "0.375rem",
-              padding: "0.5rem 1rem",
-              minWidth: "100px",
-            }}
             onClick={() => copyToClipboard(fullLinkToShare, setCopiedFullLink)}
           >
-            {copiedFullLink ? "✓ Copied!" : "Copy"}
+            {copiedFullLink ? "✓ Copied" : "Copy"}
           </Button>
         </div>
       </div>
 
-      {/* Email Section */}
-      <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Email Link
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+      {/* Email */}
+      <div className="flex flex-col gap-1">
+        <p className={sectionHeading}>Email link</p>
+        <p className="text-base text-primary dark:text-dark-primary">
           <a
             href={emailLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+            className="text-blue-600 dark:text-blue-400 underline underline-offset-2"
           >
             Click here
           </a>{" "}
@@ -210,33 +201,32 @@ export default function ShareTab() {
     <div className="flex flex-col gap-4 p-4">
       <OutdatedLinkWarning />
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Embed Code
-        </h3>
+        <p className={sectionHeading}>Embed code</p>
         <textarea
-          className="w-full h-32 p-3 text-sm border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 font-mono"
+          className="w-full h-32 px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-surface text-primary dark:text-dark-primary font-mono focus:outline-none resize-none"
           value={iframeContent}
           readOnly
         />
-        <Button
-          style={{
-            border: "1px solid #3b82f6",
-            borderRadius: "0.375rem",
-            padding: "0.5rem 1rem",
-            alignSelf: "flex-start",
-          }}
-          onClick={() => copyToClipboard(iframeContent, setCopiedEmbed)}
-        >
-          {copiedEmbed ? "✓ Copied!" : "Copy Embed Code"}
-        </Button>
+        <div>
+          <Button
+            onClick={() => copyToClipboard(iframeContent, setCopiedEmbed)}
+          >
+            {copiedEmbed ? "✓ Copied" : "Copy embed code"}
+          </Button>
+        </div>
       </div>
     </div>
   );
 
   const QRTab = () => (
-    <div className="flex flex-col items-center p-4">
+    <div className="flex flex-col items-center gap-4 p-6">
       <OutdatedLinkWarning />
-      <QRCodeSVG value={shortLink} size={256} />
+      <div className="p-4 bg-white dark:bg-white rounded-xl shadow-sm border border-gray-200">
+        <QRCodeSVG value={shortLink} size={220} />
+      </div>
+      <p className="text-sm text-primary/60 dark:text-dark-primary/60">
+        Scan to open the current view
+      </p>
     </div>
   );
 
@@ -247,7 +237,7 @@ export default function ShareTab() {
   ];
 
   return (
-    <div className="p-4 bg-white dark:bg-dark-background h-full">
+    <div className="h-full overflow-y-auto bg-white dark:bg-dark-background">
       <TabView tabs={tabs} />
     </div>
   );

@@ -7,14 +7,12 @@ import {
   selectSessions,
   upsertSession,
   updateSession,
+  selectCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/16/solid";
+import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
+import { XMarkIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Switch from "@/components/ui/switch/Switch";
 import {
   selectSessionSortPreference,
@@ -23,21 +21,33 @@ import {
 import EmptyView from "../ui/empty/EmptyView";
 import useGenome from "@/lib/hooks/useGenome";
 import Button from "../ui/button/Button";
-import { useNavigation } from "../core-navigation/NavigationStack";
 import ClearAllButton from "./ClearAllButton";
 import { generateUUID } from "wuepgg3-track";
+import Session from "../root-layout/tabs/apps/destinations/Session";
+import { fetchBundle } from "@/lib/redux/thunk/session";
+import SessionToggleButton from "./SessionToggleButton";
+
+import TabView from "@/components/ui/tab-view/TabView";
+
 export default function SessionList({
   onSessionClick,
-  showImportSessionButton = false,
+
+  onRequestClose,
+  open = true,
 }: {
   onSessionClick: (session: BrowserSession) => void;
   showImportSessionButton?: boolean;
+  onRequestClose?: () => void;
+  open?: boolean;
 }) {
   const dispatch = useAppDispatch();
   const sessions = useAppSelector(selectSessions);
+  const currentSession = useAppSelector(selectCurrentSession);
   const currentSessionId = useAppSelector(selectCurrentSessionId);
   const sortPreference = useAppSelector(selectSessionSortPreference);
-  const navigation = useNavigation();
+  const [sessionTab, setSessionTab] = useState<"edit" | "switch">(
+    "edit",
+  );
 
   const sortedSessions = useMemo(() => {
     return [...sessions].sort((a, b) => {
@@ -48,69 +58,138 @@ export default function SessionList({
     });
   }, [sessions, sortPreference]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const handleClearAll = () => {
     dispatch(clearAllSessions());
   };
 
   return (
-    <div className="flex flex-col gap-4 py-1 h-full">
-      {showImportSessionButton && (
-        <div className="flex flex-row gap-2 w-full justify-start items-center">
-          <Button
-            leftIcon={<PlusIcon className="w-4 h-4" />}
-            active
-            onClick={() => {
-              navigation.push({
-                path: "import-session",
-              });
-            }}
-          >
-            Import by Session Bundle ID or File
-          </Button>
+    <div ref={containerRef} className="flex flex-col h-full relative">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center">
+          {!currentSession?.genomeId && (
+            <ClearAllButton
+              onClearAll={handleClearAll}
+              compact
+              title={"Clear All Sessions"}
+            />
+          )}
         </div>
-      )}
-      <div className="flex items-center justify-between">
-        <p>Sort by last updated</p>
-        <Switch
-          checked={sortPreference === "updatedAt"}
-          onChange={(checked) =>
-            dispatch(
-              setSessionSortPreference(checked ? "updatedAt" : "createdAt")
+
+        <SessionToggleButton
+          open={open}
+          onClick={() => {
+            if (onRequestClose) onRequestClose();
+          }}
+          className={"rounded-full bg-white dark:bg-dark-secondary shadow"}
+          // count={sessions ? sessions.length : 0}
+
+          count={
+            sessionTab === "switch"
+              ? sessions.length
+              : (sessionTab === "edit" || (!currentSession?.title && currentSession))
+                ? null
+                : sessions.length
+          }
+          textContent={
+            sessionTab === "switch" ? (
+              "Previous sessions"
+            ) : currentSession ? (
+              <div className="text-left">
+                {currentSession?.title ? <div>{`Current Session: "${currentSession.title}"`}</div> :
+                  <div>{`Current Session: "Untitled Session"`}</div>}
+
+                <div>
+                  Session Bundle ID:{" "}
+                  {currentSession.bundleId ? (
+                    <span className="text-blue-600">
+                      {currentSession.bundleId}
+                    </span>
+                  ) : (
+                    <span className="text-red-600">Not saved remotely</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              "Previous sessions"
             )
           }
         />
       </div>
-      {sortedSessions.length === 0 ? (
-        <EmptyView
-          title="No Sessions Found"
-          description="Sessions are stored locally in your browser. Start a session and it will appear here."
-        />
-      ) : (
-        <AnimatePresence initial={false}>
-          {sortedSessions.map((session) => (
-            <motion.div
-              key={session.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <SessionListItem
-                session={session}
-                onClick={() => onSessionClick(session)}
-                sortPreference={sortPreference}
-                allowDelete={
-                  currentSessionId === null || session.id !== currentSessionId
-                }
-              />
-            </motion.div>
-          ))}
-          <ClearAllButton onClearAll={handleClearAll} />
-        </AnimatePresence>
-      )}
+
+
+      <div className="flex-1 min-h-0 overflow-y-auto ">
+        {!currentSession?.genomeId ? (
+          <div className="flex items-center justify-between p-1 ">
+            <p className="text-sm text-primary dark:text-dark-primary">
+              Sort last updated
+            </p>
+            <Switch
+              checked={sortPreference === "updatedAt"}
+              onChange={(checked) =>
+                dispatch(
+                  setSessionSortPreference(checked ? "updatedAt" : "createdAt"),
+                )
+              }
+            />
+          </div>
+        ) : null}
+        {currentSession?.genomeId ? (
+          <div className="w-full">
+            <SessionTabs
+              currentSession={currentSession}
+              sortedSessions={sortedSessions}
+              onSessionClick={onSessionClick}
+              sortPreference={sortPreference}
+              currentSessionId={currentSessionId}
+              tab={sessionTab}
+              setTab={setSessionTab}
+            />
+          </div>
+        ) : sortedSessions.length === 0 ? (
+          <EmptyView
+            title="No Sessions Found"
+            description="Sessions are stored locally in your browser. Start a session and it will appear here."
+          />
+        ) : (
+          <AnimatePresence initial={false}>
+            {sortedSessions.map((session) => (
+              <motion.div
+                key={session.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.1 }}
+                className="mb-2 mr-2 last:mb-0"
+              >
+                <SessionListItem
+                  session={session}
+                  onClick={() => onSessionClick(session)}
+                  sortPreference={sortPreference}
+                  allowDelete={
+                    currentSessionId === null || session.id !== currentSessionId
+                  }
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
+      </div>
     </div>
   );
+}
+
+function formatDate(value: string | number | Date) {
+  const d = new Date(value);
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function SessionListItem({
@@ -126,6 +205,8 @@ function SessionListItem({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [copiedId, setCopiedId] = useState<boolean>(false);
+  const [codeHover, setCodeHover] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const { genome, error } = useGenome(session.genomeId);
 
@@ -140,6 +221,19 @@ function SessionListItem({
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [isConfirmingDelete]);
+
+  const handleCopyBundleId = async () => {
+    const id = session && session.bundleId ? session.bundleId : "";
+    if (!id) return;
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 1500);
+      console.log("Bundle ID copied to clipboard", "success", 1500);
+    } catch (e) {
+      console.error("Failed to copy bundle ID", e);
+    }
+  };
 
   const handleExport = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -192,7 +286,7 @@ function SessionListItem({
           changes: {
             title: newTitle,
           },
-        })
+        }),
       );
     }
   };
@@ -217,31 +311,75 @@ function SessionListItem({
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
-        <div className="flex flex-col gap-2">
-
-          {session.title.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          {session.title && session.title.length > 0 ? (
             <>
-              <h1 className="text-l">{session.title}</h1>
+              <h1 className="text-l">{`Current Session: ${session.title}`}</h1>
             </>
-          ) : ""}
-          {session.bundleId ? (
-            <p className="text-sm">{`Session Bundle ID: ${session.bundleId}`}</p>
           ) : (
-            ""
+            <>
+              <h1 className="text-l">{`Current Session: Untitled Session`}</h1>
+            </>
           )}
-          <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
+          {session.bundleId ? (
+            <p className="text-sm">
+              Session Bundle ID:{" "}
+              <span
+                className="text-blue-600 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopyBundleId();
+                }}
+                onMouseEnter={() => setCodeHover(true)}
+                onMouseLeave={() => setCodeHover(false)}
+                title={session.bundleId ? "Click to copy bundle ID" : ""}
+                style={{ textDecoration: codeHover ? "underline" : "none" }}
+              >
+                {session.bundleId}
+              </span>
+              {copiedId && (
+                <span className="ml-2 text-xs text-green-600">Copied</span>
+              )}
+            </p>
+          ) : (
+            <p className="text-sm">
+              Session Bundle ID:{" "}
+              <span className="text-red-600">Not saved remotely</span>
+            </p>
+          )}
           <p className="text-sm">
+            {session?.customGenome ? "Custom Genome: " : "Genome: "}
+            {genome?.name ?? "..."}
+          </p>
+          <p className="text-sm ">
             {sortPreference === "updatedAt"
-              ? `Updated: ${new Date(session.updatedAt).toLocaleString()}`
-              : `Created: ${new Date(session.createdAt).toLocaleString()}`}
+              ? `Updated: ${formatDate(session.updatedAt)}`
+              : `Created: ${formatDate(session.createdAt)}`}
           </p>
         </div>
-        <motion.div
-          animate={{ rotate: isHovered ? 90 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronRightIcon className="size-6" />
-        </motion.div>
+
+        <div className="flex items-center gap-2">
+          {allowDelete && (
+            <button
+              onClick={(e) => handleDelete(e)}
+              className={`p-1 rounded-md text-red-600 transition-colors duration-150 ${isConfirmingDelete ? "bg-alert text-white" : "hover:bg-red-100 dark:hover:bg-red-700"}`}
+              onMouseDown={(e) => e.stopPropagation()}
+              title={isConfirmingDelete ? "Confirm delete" : "Delete session"}
+            >
+              {isConfirmingDelete ? (
+                <ExclamationTriangleIcon className="w-5 h-5" />
+              ) : (
+                <XMarkIcon className="w-5 h-5" />
+              )}
+            </button>
+          )}
+          <motion.div
+            animate={{ rotate: isHovered ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronRightIcon className="size-6" />
+          </motion.div>
+        </div>
       </div>
 
       <motion.div
@@ -255,20 +393,38 @@ function SessionListItem({
         className="text-sm text-primary dark:text-dark-primary"
       >
         <div className="text-primary dark:text-dark-primary flex flex-col gap-2 pt-2 border-t border-primary">
-          <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
-          <p>
-            View region:{" "}
-            {session.viewRegion && typeof session.viewRegion === "object"
-              ? session.viewRegion.coordinate
-              : session.viewRegion
-                ? session.viewRegion
-                : ""}
-          </p>
-          <p>Active tracks: {session.tracks ? session.tracks.length : 0}</p>
-          <p>
-            Highlights: {session.highlights ? session.highlights.length : 0}
-          </p>
-          {session.metadataTerms.length > 0 && (
+          <div className="grid grid-cols-4 gap-4">
+            <div className="flex flex-col">
+              <span className="text-xs opacity-80">Last updated</span>
+              <span className="text-sm">{formatDate(session.updatedAt)}</span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs opacity-80">View region</span>
+              <span className="text-sm whitespace-normal break-words">
+                {session.viewRegion && typeof session.viewRegion === "object"
+                  ? session.viewRegion.coordinate
+                  : session.viewRegion
+                    ? session.viewRegion
+                    : ""}
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs opacity-80">Active tracks</span>
+              <span className="text-sm">
+                {session.tracks ? session.tracks.length : 0}
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs opacity-80">Highlights</span>
+              <span className="text-sm">
+                {session.highlights ? session.highlights.length : 0}
+              </span>
+            </div>
+          </div>
+          {/* {session.metadataTerms.length > 0 && (
             <div>
               <p>Metadata terms:</p>
               <div className="flex flex-wrap gap-1 mt-1">
@@ -282,40 +438,28 @@ function SessionListItem({
                 ))}
               </div>
             </div>
-          )}
-          <div className="flex flex-col items-stretch gap-2">
-            {allowDelete && (
-              <Button
-                backgroundColor={isConfirmingDelete ? "alert" : "tint"}
-                onClick={handleDelete}
-                style={{ flex: 1 }}
-                leftIcon={
-                  isConfirmingDelete ? (
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                  ) : undefined
-                }
-              >
-                {isConfirmingDelete ? "Confirm Delete" : "Delete"}
-              </Button>
-            )}
+          )} */}
+          <div className="flex flex-row items-center gap-1">
             <Button
               backgroundColor="tint"
               onClick={handleExport}
-              style={{ flex: 1 }}
+              style={{ width: "175px", fontSize: "14px" }}
             >
-              Export
+              Download Current Session
             </Button>
             <Button
-              backgroundColor="tint"
+              outlined
               onClick={handleDuplicate}
-              style={{ flex: 1 }}
+              // style={{ flex: 1 }}
+              style={{ fontSize: "14px" }}
             >
               Duplicate
             </Button>
             <Button
-              backgroundColor="tint"
+              outlined
               onClick={handleRename}
-              style={{ flex: 1 }}
+              // style={{ flex: 1 }}
+              style={{ fontSize: "14px" }}
             >
               Rename
             </Button>
@@ -323,5 +467,68 @@ function SessionListItem({
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function SessionTabs({
+
+  sortedSessions,
+  onSessionClick,
+  sortPreference,
+  tab,
+  setTab,
+}: {
+  currentSession: BrowserSession;
+  sortedSessions: BrowserSession[];
+  onSessionClick: (s: BrowserSession) => void;
+  sortPreference: "createdAt" | "updatedAt";
+  currentSessionId: string | null;
+  tab: "edit" | "switch";
+  setTab: (t: "edit" | "switch") => void;
+}) {
+
+  return (
+    <div className="w-full">
+      <TabView
+        selectedTab={tab}
+        onTabChange={setTab}
+        tabs={[
+          {
+            label: "Edit Session",
+            value: "edit" as const,
+            component: <Session tab={false} />,
+          },
+
+          {
+            label: "Switch Session",
+            value: "switch" as const,
+            component: (
+              <div className="flex-1 min-h-0 overflow-y-auto px-0">
+                <AnimatePresence initial={false}>
+                  {sortedSessions.map((session) => (
+                    <motion.div
+                      key={session.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.1 }}
+                      className="mb-2 mr-2 last:mb-0"
+                    >
+                      <SessionListItem
+                        session={session}
+                        onClick={() => onSessionClick(session)}
+                        sortPreference={sortPreference}
+                        allowDelete={false}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }

@@ -3,36 +3,30 @@ import {
   useAppSelector,
   useUndoRedo,
 } from "../../lib/redux/hooks";
-import {
-  selectNavigationTab,
-  setNavigationTab,
-  selectSessionPanelOpen,
-  selectExpandNavigationTab,
-  setSessionPanelOpen,
-} from "../../lib/redux/slices/navigationSlice";
 
 import GenomePicker from "../genome-picker/GenomePicker";
+
+import TabView from "../ui/tab-view/TabView";
+import AddCustomGenome from "../genome-hub/AddCustomGenome";
+import ImportSession from "../sessions/ImportSession";
+import SessionList from "../sessions/SessionList";
+
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
-import { AnimatePresence, motion } from "framer-motion";
-import TracksTab from "./tabs/tracks/TracksTab";
-import AppsTab from "./tabs/apps/AppsTab";
-import HelpTab from "./tabs/HelpTab";
-import ShareTab from "./tabs/ShareTab";
-import SettingsTab from "./tabs/SettingsTab";
-import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
   createSession,
   selectCurrentSessionId,
   setCurrentSession,
   updateCurrentSession,
+  selectSessions,
+  selectCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import SessionPanel from "../sessions/SessionPanel";
+
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 import MouseFollowingTooltip from "../ui/tooltip/MouseFollowingTooltip";
-const CURL_RADIUS = 15;
+
 import * as firebase from "firebase/app";
 import {
   selectDarkTheme,
@@ -41,17 +35,31 @@ import {
   setToolBarVisibility,
   selectIsNavBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
-import { use, useEffect, useRef } from "react";
+import {
+  selectNavigationTab,
+  setNavigationTab,
+  selectNavSearchOpen,
+  setNavSearchOpen,
+} from "@/lib/redux/slices/navigationSlice";
+import {
+  setToggleTool,
+  escapeTools,
+  resetUtility,
+} from "@/lib/redux/slices/utilitySlice";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
-  GenomeSerializer,
   getGenomeConfig,
   ITrackModel,
   GenomeCoordinate,
-  GenomeConfig,
+  IGenome,
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
+import ResizablePanel from "../ui/panel/ResizablePanel";
+import { PortalContext, EscapeHandlerContext } from "wuepgg3-track";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -88,19 +96,72 @@ export interface GenomeHubProps {
 
 export default function RootLayout(props: GenomeHubProps) {
   useBrowserInitialization();
-
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
+  const escapeHandlerRef = useRef<(() => void) | null>(null);
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
-  const navigationTab = useAppSelector(selectNavigationTab);
-  const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
-  const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
+  const sessions = useAppSelector(selectSessions);
+  const currentSession = useAppSelector(selectCurrentSession);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const isNavigationTabEmpty = !sessionId || navigationTab === null;
-  const isSmallScreen = useSmallScreen();
-  const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
-  const showModal = isSmallScreen && !isNavigationTabEmpty;
   const initialState = useRef(true);
   const { clearHistory } = useUndoRedo();
+  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
+  const navBarRef = useRef<HTMLDivElement>(null);
+  const [navBarHeight, setNavBarHeight] = useState(48);
+  const currentTab = useAppSelector(selectNavigationTab);
+  const navSearchOpen = useAppSelector(selectNavSearchOpen);
+  const year = useMemo(() => new Date().getFullYear(), []);
+  useEffect(() => {
+    const el = navBarRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setNavBarHeight(el.offsetHeight));
+    observer.observe(el);
+    setNavBarHeight(el.offsetHeight);
+    return () => observer.disconnect();
+  }, []);
+
+  // Escape closes the session panel and/or the active nav tab, the search bar,
+  // and unselects all toggle tools (drag is unaffected).
+  // Alt+key shortcuts dispatch the corresponding toggle tools.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey) {
+        switch (event.key.toLowerCase()) {
+          case "h":
+          case "d":
+            event.preventDefault();
+            dispatch(setToggleTool("Drag"));
+            break;
+          case "r":
+          case "s":
+            event.preventDefault();
+            dispatch(setToggleTool("Reorder"));
+            break;
+          case "m":
+            event.preventDefault();
+            dispatch(setToggleTool("Zoom"));
+            break;
+          case "n":
+            event.preventDefault();
+            dispatch(setToggleTool("Highlight"));
+            break;
+        }
+        return;
+      }
+      if (event.key !== "Escape") return;
+      escapeHandlerRef.current?.();
+      if (leftPanelOpen) setLeftPanelOpen(false);
+      if (currentTab !== null) dispatch(setNavigationTab(null));
+      if (navSearchOpen) dispatch(setNavSearchOpen(false));
+      dispatch(escapeTools());
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [leftPanelOpen, currentTab, navSearchOpen, dispatch]);
+
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
     (props.genomeName && props.tracks && props.viewRegion) ||
@@ -110,21 +171,20 @@ export default function RootLayout(props: GenomeHubProps) {
     dispatch(setCurrentSession(null));
   };
 
+  const isNavBarVisible = useAppSelector(selectIsNavBarVisible);
+
   // Reset state when session is cleared
   useEffect(() => {
+    setLeftPanelOpen(false);
     dispatch(resetState());
+    dispatch(resetUtility());
     clearHistory();
   }, [sessionId]);
-
-  // For package mode: use Redux state (controlled by props)
-  // For web mode: default to true (ignore persisted state)
-  const showNavBar = isPackageMode
-    ? useAppSelector(selectIsNavBarVisible)
-    : true;
+  const showNavBar = isPackageMode ? isNavBarVisible : true;
   function getConfig() {
     if (props.customGenome) {
       try {
-        return GenomeSerializer.deserialize(props.customGenome);
+        return props.customGenome;
       } catch {
         return null;
       }
@@ -177,11 +237,11 @@ export default function RootLayout(props: GenomeHubProps) {
       ((props.genomeName && props.tracks && props.viewRegion) ||
         props.customGenome)
     ) {
-      const genomeConfig: GenomeConfig | null = getConfig();
+      const genomeConfig: IGenome | null = getConfig();
       if (genomeConfig) {
         if (!sessionId) {
-          if (genomeConfig?.genome) {
-            const genome = GenomeSerializer.serialize(genomeConfig);
+          if (genomeConfig?.chromosomes && genomeConfig?.name) {
+            const genome = genomeConfig;
 
             let additionalTracks: ITrackModel[] = props.tracks as ITrackModel[];
 
@@ -215,8 +275,7 @@ export default function RootLayout(props: GenomeHubProps) {
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
-                typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                typeof props.viewRegion !== "string" || !props.viewRegion
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,
@@ -242,265 +301,156 @@ export default function RootLayout(props: GenomeHubProps) {
     sessionId,
   ]);
 
-  // Keyboard handler for Escape key
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (showModal || expandNavigationTab || showRightTab) {
-          // Close expanded navigation, modal, or right tab
-          dispatch(setNavigationTab(null));
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showModal, expandNavigationTab, showRightTab, dispatch]);
-
   return (
-    <div
-      className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
-      data-theme={darkTheme ? "dark" : "light"}
-    >
-      {/* {import.meta.env.VITE_PACKAGE === "false" ?  */}
-      <GoogleAnalytics />
-      {/* : null} */}
-      <motion.div
-        className="flex flex-col h-full text-primary dark:text-white"
-        animate={{
-          scale: showModal ? 0.95 : 1,
-          filter: showModal
-            ? "blur(5px) brightness(0.7)"
-            : "blur(0px) brightness(1)",
-          borderRadius: showModal ? 15 : 0,
-        }}
-      >
-        {/* {import.meta.env.VITE_PACKAGE === "false" || props.showNavBar ? ( */}
-        {showNavBar === false ? "" : <NavBar />}
-        {/* ) : null} */}
-        <div className="flex flex-row flex-1 relative bg-black">
-          <AnimatePresence mode="wait">
-            {sessionPanelOpen && (
-              <motion.div
-                className="h-full overflow-hidden absolute top-0 left-0 z-10"
-                key="navigation-tabs"
-                style={{
-                  width: "25vw",
-                  borderTopRightRadius: CURL_RADIUS,
-                  borderBottomRightRadius: CURL_RADIUS,
-                }}
-                initial={{
-                  translateX: "-100%",
-                }}
-                animate={{
-                  translateX: 0,
-                }}
-                exit={{
-                  translateX: "-100%",
-                }}
-              >
-                <div className="flex flex-col">
-                  <SessionPanel />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* MARK: - Main Content */}
-          <motion.div
-            className="flex flex-row flex-1 overflow-hidden bg-black"
-            animate={{
-              // scale: sessionPanelOpen ? 0.95 : 1,
-              borderRadius: sessionPanelOpen ? 15 : 0,
-              filter: sessionPanelOpen
-                ? "blur(5px) brightness(0.7)"
-                : "blur(0px) brightness(1)",
-            }}
-            onClick={
-              sessionPanelOpen
-                ? () => dispatch(setSessionPanelOpen(false))
-                : undefined
-            }
-          >
-            {/* MARK: - Genome View */}
-            <motion.div
-              className="h-full overflow-hidden bg-white dark:bg-dark-background"
-              initial={{
-                width: "100vw",
-              }}
-              animate={{
-                borderTopRightRadius: !showRightTab ? 0 : CURL_RADIUS,
-                borderBottomRightRadius: !showRightTab ? 0 : CURL_RADIUS,
-                borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
-                borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
-                // scale: expandNavigationTab ? 0.95 : 1,
-                filter: expandNavigationTab
-                  ? "brightness(0.85)"
-                  : "brightness(1)",
-
-                // filter: "blur(0px) brightness(1)",
-                // translateX: expandNavigationTab ? 50 : 0,
-                // width: !showRightTab ? "100vw" : "75vw",
-              }}
-              style={{
-                pointerEvents: sessionPanelOpen ? "none" : "auto",
-              }}
-            >
-              {/* Keep both components mounted, just hide/show them */}
-              <motion.div
-                className="flex flex-col w-screen pb-20"
-                style={{
-                  display: sessionId ? "flex" : "none",
-                }}
-                animate={{
-                  opacity: sessionId ? 1 : 0,
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                <GenomeErrorBoundary onGoHome={handleGoHome}>
-                  <GenomeView />
-                </GenomeErrorBoundary>
-              </motion.div>
-              {!sessionId ? (
-                <motion.div
-                  className="h-full w-full"
-                  animate={{
-                    opacity: 1,
-                  }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <GenomePicker />
-                </motion.div>
-              ) : (
-                ""
-              )}
-            </motion.div>
-
-            {/* MARK: - Navigation Tabs */}
-            <AnimatePresence>
-              {showRightTab && (
-                <motion.div
-                  className="h-full overflow-hidden z-10"
-                  key="navigation-tabs"
-                  initial={{
-                    width: 0,
-                    marginLeft: 0,
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
-                  }}
-                  animate={{
-                    width: expandNavigationTab ? "75vw" : "35vw",
-                    marginLeft: 5,
-                    borderTopLeftRadius: CURL_RADIUS,
-                    borderBottomLeftRadius: CURL_RADIUS,
-                  }}
-                  exit={{
-                    width: 0,
-                    marginLeft: 0,
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
-                  }}
-                >
-                  <div className="flex flex-col h-full">
-                    {/* Tab Header with close button */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-                      <h2 className="text-xl  text-gray-800 dark:text-white capitalize">
-                        {navigationTab}
-                      </h2>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          Press Esc to close
-                        </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          ||
-                        </span>
-
-                        <button
-                          onClick={() => dispatch(setNavigationTab(null))}
-                          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                          title="Close tab"
-                        >
-                          <svg
-                            className="w-5 h-5 text-gray-600 dark:text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex-1 relative overflow-hidden">
-                      <div className="h-full">
-                        {navigationTab === "tracks" && <TracksTab />}
-                        {navigationTab === "apps" && <AppsTab />}
-                        {navigationTab === "help" && <HelpTab />}
-                        {navigationTab === "share" && <ShareTab />}
-                        {navigationTab === "settings" && <SettingsTab />}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {showModal && (
-        <motion.div
-          className="absolute top-12 left-0 w-screen h-screen bg-white"
-          style={{ borderRadius: CURL_RADIUS }}
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
+    <EscapeHandlerContext.Provider value={escapeHandlerRef}>
+      <PortalContext.Provider value={portalContainer}>
+        <div
+          ref={rootRef}
+          className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+          data-theme={darkTheme ? "dark" : "light"}
+          style={{ position: "relative", overflowX: "hidden" }}
         >
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-            <h2 className="text-lg text-gray-800 dark:text-white capitalize">
-              {navigationTab}
-            </h2>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Press Esc to close
-              </span>
-              <button
-                onClick={() => dispatch(setNavigationTab(null))}
-                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title="Close tab"
-              >
-                <svg
-                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-col h-full">
-            {navigationTab === "tracks" && <TracksTab />}
-            {navigationTab === "apps" && <AppsTab />}
-            {navigationTab === "help" && <HelpTab />}
-            {navigationTab === "share" && <ShareTab />}
-            {navigationTab === "settings" && <SettingsTab />}
-          </div>
-        </motion.div>
-      )}
+          <GoogleAnalytics />
 
-      <MouseFollowingTooltip />
-    </div>
+          <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
+            {showNavBar === false ? (
+              ""
+            ) : (
+              <div ref={navBarRef}>
+                <NavBar
+                  leftPanelOpen={leftPanelOpen}
+                  setLeftPanelOpen={setLeftPanelOpen}
+                  sessionId={sessionId}
+                  sessions={sessions}
+                  currentSession={currentSession}
+                />
+              </div>
+            )}
+            <AnimatePresence>
+              {leftPanelOpen ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute right-0 h-full z-60"
+                  style={{ top: navBarHeight }}
+                >
+                  <ResizablePanel
+                    navigationPath={[]}
+                    initialWidth={window.innerWidth * 0.4}
+                    initialHeight={window.innerHeight - 50}
+                    onClose={() => setLeftPanelOpen(false)}
+                    header={false}
+                  >
+                    <SessionList
+                      onSessionClick={(s) => {
+                        dispatch(setCurrentSession(s.id));
+                        setLeftPanelOpen(false);
+                      }}
+                      showImportSessionButton
+                      onRequestClose={() => setLeftPanelOpen(false)}
+                    />
+                  </ResizablePanel>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <div>
+              {/* MARK: - Main Content */}
+
+              <div className="flex flex-1 h-full relative">
+                {/* MARK: - Genome View */}
+                <div
+                  className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
+                  style={{
+                    zIndex: 5,
+                  }}
+                >
+                  {!sessionId && (
+                    <TabView<"picker" | "add" | "import">
+                      centerTabs
+                      initialTab={"picker"}
+                      tabs={[
+                        {
+                          label: "CHOOSE A GENOME",
+                          value: "picker",
+                          component: <GenomePicker />,
+                        },
+                        {
+                          label: "ADD CUSTOM GENOME",
+                          value: "add",
+                          component: <AddCustomGenome />,
+                        },
+                        {
+                          label: "LOAD A SESSION",
+                          value: "import",
+                          component: <ImportSession />,
+                        },
+                      ]}
+                    />
+                  )}
+                  {sessionId && (
+                    <GenomeErrorBoundary onGoHome={handleGoHome}>
+                      <GenomeView />
+                      <div
+                        ref={(el) => setPortalContainer(el as HTMLDivElement)}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          pointerEvents: "none",
+                          zIndex: 9000,
+                        }}
+                      />
+                    </GenomeErrorBoundary>
+                  )}
+                </div>
+
+                {/* <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 15,
+                pointerEvents: sessionPanelOpen ? "auto" : "none",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                opacity: sessionPanelOpen ? 1 : 0,
+                transition: "opacity 0.3s ease",
+              }}
+              onClick={() => dispatch(setSessionPanelOpen(false))}
+            /> */}
+              </div>
+            </div>
+
+            <>
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "gray",
+                  backgroundColor: "inherit",
+                  padding: "36px",
+                }}
+              >
+                Copyright &copy; 2018-{year} Washington University in St. Louis.
+                All rights reserved.
+                <br /> Developed by the{" "}
+                <a
+                  href="http://wang.wustl.edu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#007bff" }}
+                >
+                  Wang Lab
+                </a>
+                <br />{" "}
+                <a style={{ color: "#007bff" }} href="LICENSE.html">
+                  Terms and Conditions of Use
+                </a>
+              </div>
+            </>
+          </div>
+
+          <MouseFollowingTooltip />
+        </div>
+      </PortalContext.Provider>
+    </EscapeHandlerContext.Provider>
   );
 }

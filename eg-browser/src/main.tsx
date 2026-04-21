@@ -2,6 +2,16 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 
+// Reload the page when the service worker requests an update (fallback path)
+if (typeof navigator !== 'undefined' && navigator.serviceWorker?.addEventListener) {
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    if (e.data?.type === 'SERVICE_WORKER_UPDATE') {
+      try { location.reload(); } catch (err) { /* ignore */ }
+    }
+  });
+}
+
+
 // const testProps = {
 //   viewRegion: "chr7:27181545-27245617",
 //   tracks: [
@@ -41,3 +51,4 @@ createRoot(document.getElementById("root")!).render(
 
 //   />
 // );
+

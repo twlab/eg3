@@ -100,7 +100,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const tracks = Array.from(
       document
         .querySelector("#screenshotContainer")
-        ?.querySelectorAll(".Track") ?? []
+        ?.querySelectorAll(".Track") ?? [],
     );
 
     // Copy relevant properties from original elements
@@ -112,13 +112,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     const boxHeight = tracks.reduce(
       (acc, cur) => acc + cur.clientHeight,
-      11 * tracks.length
+      11 * tracks.length,
     );
-    const boxWidth = props.windowWidth + 120;
+    const boxWidth = props.windowWidth;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
 
-    const width = props.windowWidth + 120;
+    const width = props.windowWidth;
     svgElem.setAttributeNS(null, "width", width + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
@@ -158,10 +158,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       let trackHeight = clientHeight + 1;
       const trackLabelText =
         ele.children[0].children[0].querySelector(
-          ".TrackLegend-label"
+          ".TrackLegend-label",
         ).textContent;
       const chrLabelText = ele.children[0].querySelector(
-        ".TrackLegend-chrLabel"
+        ".TrackLegend-chrLabel",
       )
         ? ele.children[0].querySelector(".TrackLegend-chrLabel").textContent
         : null;
@@ -229,7 +229,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           trackLegendAxisSvg.setAttribute("x", x2 + "");
           trackLegendAxisSvg.setAttribute(
             "y",
-            index * originalAxis[index].clientHeight + y + ""
+            index * originalAxis[index].clientHeight + y + "",
           );
           svgElemg.appendChild(trackLegendAxisSvg);
         });
@@ -297,7 +297,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     svgElem.setAttribute("xmlns", xmlns);
 
     const xS = highlights.map(
-      (h) => new OpenInterval(h.start + 120, h.end + 120)
+      (h) => new OpenInterval(h.start + 120, h.end + 120),
     );
     highlights.forEach((item, idx) => {
       const rect = document.createElementNS(xmlns, "rect");
@@ -384,7 +384,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           !(
             track.type in
             { dynamic: "", dbedgraph: "", dynamichic: "", dynamiclongrange: "" }
-          )
+          ),
       )
       .map((trackModel, index) => {
         const id = trackModel.id;
@@ -417,7 +417,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             key={index}
             style={{
               borderBottom: "1px solid #d3d3d3",
-              width: createSVGData.windowWidth + 120,
+
               position: "relative", // Position these elements absolutely
             }}
           >
@@ -462,13 +462,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   function updateScreenshot() {
     props.retakeScreenshot();
     setMsg(
-      "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+      "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file.",
     );
   }
   useEffect(() => {
     if (props.trackData && Object.keys(props.trackData).length > 0) {
       setMsg(
-        "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+        "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file.",
       );
     }
   }, [props.trackData]);
