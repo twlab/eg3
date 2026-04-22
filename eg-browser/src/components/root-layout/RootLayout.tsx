@@ -266,6 +266,7 @@ export default function RootLayout(props: GenomeHubProps) {
             );
           }
         } else {
+          console.log(props, "got props")
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
