@@ -250,7 +250,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                  props.viewRegion === null
+                    props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -271,7 +271,7 @@ export default function RootLayout(props: GenomeHubProps) {
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
@@ -302,110 +302,412 @@ export default function RootLayout(props: GenomeHubProps) {
   ]);
 
   return (
-    <EscapeHandlerContext.Provider value={escapeHandlerRef}>
-      <PortalContext.Provider value={portalContainer}>
-        <div
-          ref={rootRef}
-          className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
-          data-theme={darkTheme ? "dark" : "light"}
-          style={{ position: "relative", overflowX: "hidden" }}
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h1 style={{ fontSize: "36px", fontWeight: "bold" }}>
+        Browser embedding example
+      </h1>
+      <div
+        style={{
+          width: "100%",
+          padding: "16px 20px",
+          backgroundColor: "#f5f5f5",
+          borderBottom: "2px solid #ddd",
+          maxHeight: "100vh",
+          overflowY: "auto",
+          fontFamily: "sans-serif",
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <h2
+          style={{
+            marginTop: 0,
+            fontSize: "16px",
+            marginBottom: "12px",
+            textAlign: "center",
+          }}
         >
-          <GoogleAnalytics />
+          🧪 RootLayout Test Controls
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+              flexWrap: "wrap",
+              alignItems: "center",
 
-          <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
-            {showNavBar === false ? (
-              ""
-            ) : (
-              <div ref={navBarRef}>
-                <NavBar
-                  leftPanelOpen={leftPanelOpen}
-                  setLeftPanelOpen={setLeftPanelOpen}
-                  sessionId={sessionId}
-                  sessions={sessions}
-                  currentSession={currentSession}
-                />
-              </div>
-            )}
-            <AnimatePresence>
-              {leftPanelOpen ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute right-0 h-full z-60"
-                  style={{ top: navBarHeight }}
-                >
-                  <ResizablePanel
-                    navigationPath={[]}
-                    initialWidth={window.innerWidth * 0.4}
-                    initialHeight={window.innerHeight - 50}
-                    onClose={() => setLeftPanelOpen(false)}
-                    header={false}
-                  >
-                    <SessionList
-                      onSessionClick={(s) => {
-                        dispatch(setCurrentSession(s.id));
-                        setLeftPanelOpen(false);
-                      }}
-                      showImportSessionButton
-                      onRequestClose={() => setLeftPanelOpen(false)}
-                    />
-                  </ResizablePanel>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+              justifyContent: "center",
+            }}
+          >
+            {/* View Region */}
+            <div style={{ flex: "0 1 250px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  fontSize: "12px",
+                }}
+              >
+                View Region:
+              </label>
+              <div style={{ display: "flex", gap: "4px" }}>
+                <input
+                  type="text"
 
-            <div>
-              {/* MARK: - Main Content */}
 
-              <div className="flex flex-1 h-full relative">
-                {/* MARK: - Genome View */}
-                <div
-                  className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
                   style={{
-                    zIndex: 5,
+                    flex: 1,
+                    padding: "6px",
+                    borderRadius: "4px",
+                    border: "1px solid #ccc",
+                    fontSize: "11px",
+                  }}
+                  placeholder="chr7:27053397-27373765"
+                />
+                <button
+
+                  title="Apply this view region"
+                  style={{
+                    padding: "6px 10px",
+                    fontSize: "11px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontWeight: "600",
                   }}
                 >
-                  {!sessionId && (
-                    <TabView<"picker" | "add" | "import">
-                      centerTabs
-                      initialTab={"picker"}
-                      tabs={[
-                        {
-                          label: "CHOOSE A GENOME",
-                          value: "picker",
-                          component: <GenomePicker />,
-                        },
-                        {
-                          label: "ADD CUSTOM GENOME",
-                          value: "add",
-                          component: <AddCustomGenome />,
-                        },
-                        {
-                          label: "LOAD A SESSION",
-                          value: "import",
-                          component: <ImportSession />,
-                        },
-                      ]}
-                    />
-                  )}
-                  {sessionId && (
-                    <GenomeErrorBoundary onGoHome={handleGoHome}>
-                      <GenomeView />
-                      <div
-                        ref={(el) => setPortalContainer(el as HTMLDivElement)}
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          pointerEvents: "none",
-                          zIndex: 9000,
-                        }}
-                      />
-                    </GenomeErrorBoundary>
-                  )}
-                </div>
+                  ✓
+                </button>
+                <button
+                  onClick={() => {
 
-                {/* <div
+                  }}
+                  title="Set to null"
+                  style={{
+                    padding: "6px 8px",
+                    fontSize: "11px",
+                    backgroundColor: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Genome Name */}
+            <div style={{ flex: "0 1 150px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  fontSize: "12px",
+                }}
+              >
+                Genome:
+              </label>
+              <select
+
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #ccc",
+                  fontSize: "11px",
+                }}
+              >
+                <option value="hg19">hg19</option>
+                <option value="hg38">hg38</option>
+                <option value="mm10">mm10</option>
+                <option value="dm6">dm6</option>
+              </select>
+            </div>
+
+            {/* Track Set Selector */}
+            <div style={{ flex: "0 1 150px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  fontSize: "12px",
+                }}
+              >
+                Track Set:
+              </label>
+              <select
+
+
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "1px solid #ccc",
+                  fontSize: "11px",
+                }}
+              >
+                <option value="trackSet1">Track Set 1 (HIC/BAM)</option>
+                <option value="trackSet2">Track Set 2 (BED/MethylC)</option>
+              </select>
+            </div>
+
+            {/* Visibility Controls - Horizontal */}
+            <div
+              style={{
+                flex: "1 1 auto",
+                display: "flex",
+                gap: "8px",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Show Genome Navigator */}
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "6px 10px",
+
+                  borderRadius: "4px",
+
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                <input
+                  type="checkbox"
+
+                  style={{
+                    marginRight: "6px",
+                    cursor: "pointer",
+                  }}
+                />
+                Navigator
+              </label>
+
+              {/* Show NavBar */}
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "6px 10px",
+                  backgroundColor: showNavBar ? "#d4edda" : "#f8d7da",
+                  borderRadius: "4px",
+                  border: `2px solid ${showNavBar ? "#28a745" : "#dc3545"}`,
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={showNavBar}
+
+                  style={{
+                    marginRight: "6px",
+                    cursor: "pointer",
+                  }}
+                />
+                NavBar
+              </label>
+
+              {/* Show ToolBar */}
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "6px 10px",
+
+                  borderRadius: "4px",
+
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                <input
+                  type="checkbox"
+
+                  style={{
+                    marginRight: "6px",
+                    cursor: "pointer",
+                  }}
+                />
+                ToolBar
+              </label>
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ flex: "0 1 auto", display: "flex", gap: "6px" }}>
+              <button
+                onClick={() => {
+
+                }}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "11px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                Hide All
+              </button>
+
+              <button
+                onClick={() => {
+
+                }}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "11px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                Show All
+              </button>
+
+              <button
+                onClick={() => {
+
+                }}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "11px",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                Toggle
+              </button>
+            </div>
+          </div>
+
+          <EscapeHandlerContext.Provider value={escapeHandlerRef}>
+            <PortalContext.Provider value={portalContainer}>
+              <div
+                ref={rootRef}
+                className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+                data-theme={darkTheme ? "dark" : "light"}
+                style={{ position: "relative", overflowX: "hidden" }}
+              >
+                <GoogleAnalytics />
+
+                <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
+                  {showNavBar === false ? (
+                    ""
+                  ) : (
+                    <div ref={navBarRef}>
+                      <NavBar
+                        leftPanelOpen={leftPanelOpen}
+                        setLeftPanelOpen={setLeftPanelOpen}
+                        sessionId={sessionId}
+                        sessions={sessions}
+                        currentSession={currentSession}
+                      />
+                    </div>
+                  )}
+                  <AnimatePresence>
+                    {leftPanelOpen ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute right-0 h-full z-60"
+                        style={{ top: navBarHeight }}
+                      >
+                        <ResizablePanel
+                          navigationPath={[]}
+                          initialWidth={window.innerWidth * 0.4}
+                          initialHeight={window.innerHeight - 50}
+                          onClose={() => setLeftPanelOpen(false)}
+                          header={false}
+                        >
+                          <SessionList
+                            onSessionClick={(s) => {
+                              dispatch(setCurrentSession(s.id));
+                              setLeftPanelOpen(false);
+                            }}
+                            showImportSessionButton
+                            onRequestClose={() => setLeftPanelOpen(false)}
+                          />
+                        </ResizablePanel>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+
+                  <div>
+                    {/* MARK: - Main Content */}
+
+                    <div className="flex flex-1 h-full relative">
+                      {/* MARK: - Genome View */}
+                      <div
+                        className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
+                        style={{
+                          zIndex: 5,
+                        }}
+                      >
+                        {!sessionId && (
+                          <TabView<"picker" | "add" | "import">
+                            centerTabs
+                            initialTab={"picker"}
+                            tabs={[
+                              {
+                                label: "CHOOSE A GENOME",
+                                value: "picker",
+                                component: <GenomePicker />,
+                              },
+                              {
+                                label: "ADD CUSTOM GENOME",
+                                value: "add",
+                                component: <AddCustomGenome />,
+                              },
+                              {
+                                label: "LOAD A SESSION",
+                                value: "import",
+                                component: <ImportSession />,
+                              },
+                            ]}
+                          />
+                        )}
+                        {sessionId && (
+                          <GenomeErrorBoundary onGoHome={handleGoHome}>
+                            <GenomeView />
+                            <div
+                              ref={(el) => setPortalContainer(el as HTMLDivElement)}
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                pointerEvents: "none",
+                                zIndex: 9000,
+                              }}
+                            />
+                          </GenomeErrorBoundary>
+                        )}
+                      </div>
+
+                      {/* <div
               style={{
                 position: "absolute",
                 inset: 0,
@@ -417,40 +719,40 @@ export default function RootLayout(props: GenomeHubProps) {
               }}
               onClick={() => dispatch(setSessionPanelOpen(false))}
             /> */}
-              </div>
-            </div>
+                    </div>
+                  </div>
 
-            <>
-              <div
-                style={{
-                  textAlign: "center",
-                  color: "gray",
-                  backgroundColor: "inherit",
-                  padding: "36px",
-                }}
-              >
-                Copyright &copy; 2018-{year} Washington University in St. Louis.
-                All rights reserved.
-                <br /> Developed by the{" "}
-                <a
-                  href="http://wang.wustl.edu"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#007bff" }}
-                >
-                  Wang Lab
-                </a>
-                <br />{" "}
-                <a style={{ color: "#007bff" }} href="LICENSE.html">
-                  Terms and Conditions of Use
-                </a>
-              </div>
-            </>
-          </div>
+                  <>
+                    <div
+                      style={{
+                        textAlign: "center",
+                        color: "gray",
+                        backgroundColor: "inherit",
+                        padding: "36px",
+                      }}
+                    >
+                      Copyright &copy; 2018-{year} Washington University in St. Louis.
+                      All rights reserved.
+                      <br /> Developed by the{" "}
+                      <a
+                        href="http://wang.wustl.edu"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#007bff" }}
+                      >
+                        Wang Lab
+                      </a>
+                      <br />{" "}
+                      <a style={{ color: "#007bff" }} href="LICENSE.html">
+                        Terms and Conditions of Use
+                      </a>
+                    </div>
+                  </>
+                </div>
 
-          <MouseFollowingTooltip />
-        </div>
-      </PortalContext.Provider>
-    </EscapeHandlerContext.Provider>
+                <MouseFollowingTooltip />
+              </div>
+            </PortalContext.Provider>
+          </EscapeHandlerContext.Provider>     </div></div></div>
   );
 }

@@ -4,6 +4,8 @@ export * from "./types";
 export * from "./models";
 export { default as GenomeViewer } from "./components/index";
 export { default as TrackRegionController } from "./components/GenomeView/genomeNavigator/TrackRegionController";
+export { default as SnpSearchBox } from "./components/GenomeView/genomeNavigator/SnpSearchBox";
+export { default as GeneSearchBox } from "./components/GenomeView/genomeNavigator/GeneSearchBox";
 export {
   getGenomeDefaultState,
   getGenomeConfig,

@@ -300,10 +300,13 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
-          dy = -Math.min(overflow, rectExpand.top); // can't move up past viewport top edge
+          dy = -Math.min(overflow, rectExpand.top) > 0 ? -Math.min(overflow, rectExpand.top) : 0; // can't move up past viewport top edge
         }
         if (dx !== 0 || dy !== 0) {
-          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+          setTranslate((prev) => ({
+            x: prev.x + dx,
+            y: prev.y + dy
+          }));
         }
       }
 
@@ -365,7 +368,12 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           dy = -Math.min(overflow, rectMid.top); // can't move up past viewport top edge
         }
         if (dx !== 0 || dy !== 0) {
-          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+          setTranslate((prev) => ({
+            x: prev.x + dx, y:
+
+              prev.y + dy
+
+          }));
         }
       }
 
@@ -395,7 +403,12 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           dy = -Math.min(overflow, rectMid.top); // can't move up past viewport top edge
         }
         if (dx !== 0 || dy !== 0) {
-          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+          setTranslate((prev) => ({
+            x: prev.x + dx,
+            y:
+              prev.y + dy
+
+          }));
         }
       }
       setWidth(Number(initialWidth));
@@ -433,7 +446,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         const maxY = window.innerHeight - naturalTop - panelHeight * 0.2;
         setTranslate({
           x: Math.max(minX, Math.min(maxX, origX + dx)),
-          y: Math.max(minY, Math.min(maxY, origY + dy)),
+          y: Math.max(minY, Math.min(maxY, origY + dy < -40 ? -40 : origY + dy)),
         });
       }
       if (resizeState.current?.resizing) {
