@@ -7,8 +7,6 @@ import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import {
   AppStateSaver,
   ITrackModel,
-  DisplayedRegionModel,
-  getGenomeConfig,
   readFileAsText,
   HELP_LINKS,
   CopyToClip,
@@ -38,8 +36,6 @@ export interface BundleProps {
   viewInterval: { start: number; end: number } | null;
   title?: string;
 }
-
-
 
 interface HasBundleId {
   bundleId: string;
@@ -144,7 +140,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   curBundle,
   bundleId,
 }) => {
-  useExpandedNavigationTab()
+  useExpandedNavigationTab();
   const [newSessionLabel, setNewSessionLabel] = useState<string>(
     curBundle.title && curBundle.title !== "Untitled Session"
       ? curBundle.title
@@ -415,19 +411,28 @@ const SessionUI: React.FC<SessionUIProps> = ({
         let button;
         if (lastBundleId === bundle.bundleId && id === bundle.currentId) {
           button = (
-            <button className="SessionUI btn btn-secondary btn-sm" disabled={true}>
+            <button
+              className="SessionUI btn btn-secondary btn-sm"
+              disabled={true}
+            >
               Restored
             </button>
           );
         } else {
           button = (
-            <button className="SessionUI btn btn-success btn-sm" onClick={() => restoreSession(id)}>
+            <button
+              className="SessionUI btn btn-success btn-sm"
+              onClick={() => restoreSession(id)}
+            >
               Restore
             </button>
           );
         }
         const deleteButton = (
-          <button onClick={() => deleteSession(id)} className="SessionUI btn btn-danger btn-sm">
+          <button
+            onClick={() => deleteSession(id)}
+            className="SessionUI btn btn-danger btn-sm"
+          >
             Delete
           </button>
         );
@@ -441,7 +446,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
       });
       return (
         <div className="SessionUI-sessionlist">
-          Sort session by: <label>
+          Sort session by:{" "}
+          <label>
             <input
               type="radio"
               value="date"
@@ -451,7 +457,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
             />
             <span>Date</span>
           </label>
-
           <label>
             <input
               type="radio"
@@ -462,7 +467,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
             />
             <span>Label</span>
           </label>
-
           <ol>{buttons}</ol>
         </div>
       );
@@ -478,9 +482,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
     if (bundleSession.bundleId) {
       try {
         bundleRes = await onRetrieveSession(bundleSession.bundleId);
-      } catch (error) {
-
-      }
+      } catch (error) {}
     }
 
     if (bundleRes) {
@@ -534,9 +536,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
     };
 
     onRestoreSession(newBundle);
-
-
-
   };
 
   // function _restoreViewRegion(object: any, regionSetView: RegionSet) {
@@ -572,9 +571,11 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
   };
 
-
   return (
-    <div className="px-2 py-4 " style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+    <div
+      className="px-2 py-4 "
+      style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+    >
       <div>
         <label htmlFor="retrieveId">
           <input
@@ -586,74 +587,89 @@ const SessionUI: React.FC<SessionUIProps> = ({
             className="SessionUI-input"
           />
         </label>
-        <button className="SessionUI btn btn-info" onClick={() => retrieveBundle(retrieveId)}>
+        <button
+          className="SessionUI btn btn-info"
+          onClick={() => retrieveBundle(retrieveId)}
+        >
           Retrieve
         </button>
-
       </div>
       <div className="SessionUI-upload-btn-wrapper">
-        Or use a session file: <button className="SessionUI btn btn-success">Upload</button>
+        Or use a session file:{" "}
+        <button className="SessionUI btn btn-success">Upload</button>
         <input type="file" name="sessionfile" onChange={uploadSession} />
       </div>
-      {
-        !withGenomePicker && (
-          <React.Fragment>
-            <div>
-              <p>
-                Session bundle Id:{" "}
-                {bundle && bundle.bundleId
-                  ? <><span>{bundle.bundleId}</span>{" "}<CopyToClip value={bundle.bundleId} /></>
-                  : <span className="font-italic" style={{ color: "#888" }}>Save a session and a bundle ID will generate here.</span>
-                }
-              </p>
-              <label htmlFor="sessionLabel">
-                Name your session:{" "}
-                <input
-                  type="text"
-                  value={newSessionLabel}
-                  size={15}
-                  onChange={(e) => setNewSessionLabel(e.target.value.trim())}
-                  className="SessionUI-input"
-                />{" "}
-                or use a{" "}
-                <button
-                  type="button"
-                  className="SessionUI btn btn-warning btn-sm"
-                  onClick={() => setNewSessionLabel(getFunName())}
-                >
-                  {" "}
-                  Random name
-                </button>
-              </label>
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", marginTop: "4px" }}>
-              <button className="SessionUI btn btn-primary" onClick={saveSession}>
-                Save session
+      {!withGenomePicker && (
+        <React.Fragment>
+          <div>
+            <p>
+              Session bundle Id:{" "}
+              {bundle && bundle.bundleId ? (
+                <>
+                  <span>{bundle.bundleId}</span>{" "}
+                  <CopyToClip value={bundle.bundleId} />
+                </>
+              ) : (
+                <span className="font-italic" style={{ color: "#888" }}>
+                  Save a session and a bundle ID will generate here.
+                </span>
+              )}
+            </p>
+            <label htmlFor="sessionLabel">
+              Name your session:{" "}
+              <input
+                type="text"
+                value={newSessionLabel}
+                size={15}
+                onChange={(e) => setNewSessionLabel(e.target.value.trim())}
+                className="SessionUI-input"
+              />{" "}
+              or use a{" "}
+              <button
+                type="button"
+                className="SessionUI btn btn-warning btn-sm"
+                onClick={() => setNewSessionLabel(getFunName())}
+              >
+                {" "}
+                Random name
               </button>
-              <button className="SessionUI btn btn-success" onClick={downloadAsSession}>
-                Download current session
-              </button>
-              <button className="SessionUI btn btn-info" onClick={downloadAsHub}>
-                Download as datahub
-              </button>
-              <button className="SessionUI btn btn-warning" onClick={downloadWholeBundle}>
-                Download whole bundle
-              </button>
-            </div>
-          </React.Fragment>
-        )
-      }
+            </label>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", marginTop: "4px" }}>
+            <button className="SessionUI btn btn-primary" onClick={saveSession}>
+              Save session
+            </button>
+            <button
+              className="SessionUI btn btn-success"
+              onClick={downloadAsSession}
+            >
+              Download current session
+            </button>
+            <button className="SessionUI btn btn-info" onClick={downloadAsHub}>
+              Download as datahub
+            </button>
+            <button
+              className="SessionUI btn btn-warning"
+              onClick={downloadWholeBundle}
+            >
+              Download whole bundle
+            </button>
+          </div>
+        </React.Fragment>
+      )}
       {renderSavedSessions()}
       <div className="font-italic" style={{ maxWidth: "600px" }}>
-        Disclaimer: please use <span className="font-weight-bold">sessionFile</span> or{" "}
-        <span className="font-weight-bold">hub</span> URL for publishing using the Browser. Session id is
-        supposed to be shared with trusted people only. Please check our docs for{" "}
+        Disclaimer: please use{" "}
+        <span className="font-weight-bold">sessionFile</span> or{" "}
+        <span className="font-weight-bold">hub</span> URL for publishing using
+        the Browser. Session id is supposed to be shared with trusted people
+        only. Please check our docs for{" "}
         <a href={HELP_LINKS.publish} target="_blank" rel="noopener noreferrer">
           Publish with the browser
         </a>
         . Thank you!
       </div>
-    </div >
+    </div>
   );
 };
 
