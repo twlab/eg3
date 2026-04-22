@@ -20,8 +20,12 @@ if (
 
 createRoot(document.getElementById("root")!).render(
   <App
-    storeConfig={{ storeId: "main" }}
-    viewRegion={{ chr: "chr7", start: 27181545, end: 27245617 }}
+    storeConfig={{
+      storeId: "main",
+      // ,
+      // enablePersistence: false
+    }}
+    viewRegion={{ genomeCoordinate: "chr7:27181545-27245617" }}
     genomeName={"hg38"}
     tracks={[
       {
@@ -153,6 +157,7 @@ createRoot(document.getElementById("root")!).render(
     showGenomeNavigator={true}
     showNavBar={true}
     showToolBar={true}
+    // persistState={false}
   />,
 );
 // {...testProps}
