@@ -1,0 +1,47 @@
+{
+  "viewRegion": "chr7:27181545-27245617",
+  "userViewRegion": "",
+  "tracks": [
+    {
+      "type": "geneannotation",
+      "name": "refGene",
+      "genome": "hg19",
+      "options": {
+        "maxRows": 10,
+        "label": "refGene"
+      },
+      "metadata": {
+        "Track type": "geneannotation"
+      },
+      "label": "refGene"
+    },
+    {
+      "type": "geneannotation",
+      "name": "gencodeV47",
+      "genome": "hg19",
+      "options": {
+        "maxRows": 10,
+        "label": "gencodeV47"
+      },
+      "metadata": {
+        "Track type": "geneannotation"
+      },
+      "label": "gencodeV47"
+    },
+    {
+      "type": "repeatmasker",
+      "name": "RepeatMasker",
+      "url": "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
+      "options": {
+        "label": "RepeatMasker"
+      },
+      "metadata": {
+        "Track type": "repeatmasker"
+      },
+      "label": "RepeatMasker"
+    }
+  ],
+  "genomeId": "hg19",
+  "highlights": [],
+  "metadataTerms": []
+}

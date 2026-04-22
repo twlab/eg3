@@ -292,9 +292,9 @@ export default function RootLayout(props: AppProps) {
               ? undefined
               : (viewRegion as GenomeCoordinate),
           genomeId: props.genomeName,
-          customGenome: curGenomeConfig.genome ? curGenomeConfig.genome : null,
+          customGenome: curGenomeConfig?.genome ? curGenomeConfig.genome : null,
           chromosomes:
-            curGenomeConfig.genome && curGenomeConfig.chromosomes
+            curGenomeConfig?.genome && curGenomeConfig?.chromosomes
               ? curGenomeConfig.chromosomes
               : null,
           width:
