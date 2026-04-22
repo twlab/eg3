@@ -8,7 +8,7 @@ import {
   selectCustomTracksPool,
   updateBundle,
 } from "../../../../../lib/redux/slices/hubSlice";
-import SessionUI from "./SessionUI";
+
 import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settingsSlice";
 import { BundleProps } from "./SessionUI";
 import { addCustomGenomeRemote } from "../../../../../lib/redux/thunk/genome-hub";
@@ -20,16 +20,13 @@ import {
   getGenomeConfig,
   RegionSet,
 } from "wuepgg3-track";
-import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import TabSessionUI from "./TabSessionUI";
 import { GenomeHubManager } from "wuepgg3-track";
 
-
 const Session: React.FC<{ tab?: boolean }> = () => {
-
-
   // useExpandedNavigationTab();
   const dispatch = useAppDispatch();
 
@@ -50,8 +47,8 @@ const Session: React.FC<{ tab?: boolean }> = () => {
     currentSession &&
     _genomeConfig &&
     bundle &&
-    (currentSession.genomeId === _genomeConfig.id || currentSession.genomeId === _genomeConfig.name)
-
+    (currentSession.genomeId === _genomeConfig.id ||
+      currentSession.genomeId === _genomeConfig.name)
   ) {
     const highlights = currentSession.highlights;
     const isShowingNavigator = isNavigatorVisible;
@@ -105,7 +102,6 @@ const Session: React.FC<{ tab?: boolean }> = () => {
       viewInterval: curViewInterval,
       title: currentSession?.title ? currentSession.title : "",
     };
-
   }
   //provide data to genomeTracks to new current bundle session
   function onRestoreSession(sessionBundle: any) {
@@ -125,11 +121,12 @@ const Session: React.FC<{ tab?: boolean }> = () => {
 
       dispatch(addCustomGenomeRemote(_newGenomeConfig));
       newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
-    }
-    else if (getGenomeConfig(sessionBundle.genomeId)) {
+    } else if (getGenomeConfig(sessionBundle.genomeId)) {
       newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
     } else {
-      const cachedGenome = GenomeHubManager.getInstance().getGenomeFromCache(sessionBundle.genomeId);
+      const cachedGenome = GenomeHubManager.getInstance().getGenomeFromCache(
+        sessionBundle.genomeId,
+      );
       if (cachedGenome) {
         newGenomeConfig = GenomeSerializer.deserialize(cachedGenome);
       } else if (
@@ -213,14 +210,16 @@ const Session: React.FC<{ tab?: boolean }> = () => {
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId, title }));
   }
-  return <TabSessionUI
-    onRestoreSession={onRestoreSession}
-    onRetrieveBundle={onRetrieveBundle}
-    updateBundle={onUpdateBundle}
-    bundleId={bundle.bundleId ? bundle.bundleId : ""}
-    curBundle={bundle}
-    state={curUserState}
-  />
+  return (
+    <TabSessionUI
+      onRestoreSession={onRestoreSession}
+      onRetrieveBundle={onRetrieveBundle}
+      updateBundle={onUpdateBundle}
+      bundleId={bundle.bundleId ? bundle.bundleId : ""}
+      curBundle={bundle}
+      state={curUserState}
+    />
+  );
 
   // tab ? (
   //   <SessionUI

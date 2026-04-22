@@ -2,37 +2,44 @@ import { MotionConfig } from "framer-motion";
 import RootLayout from "./components/root-layout/RootLayout";
 import AppProvider, { AppProviderProps } from "./lib/redux/AppProvider";
 
-
 import "./index.css";
-
 
 export interface AppProps {
   storeConfig?: AppProviderProps["storeConfig"];
-  [key: string]: any;
+
+  viewRegion?: string | { [key: string]: any } | null | undefined;
+  genomeName?: string;
+  tracks?: Array<any>;
+  windowWidth?: number;
+  chromosomes?: any;
+  showGenomeNavigator?: boolean;
+  showNavBar?: boolean;
+  showToolBar?: boolean;
+  width?: number;
+  height?: number;
 }
 
-/**
- * app component can be exported and used as a package.
- * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
- * app component can be exported and used as a package.
- * supports multiple isolated instances through the storeConfig prop. give it a unique id for separate instances
- *
- * @param props configuration and layout props
- * @param props configuration and layout props
- */
-
-// storeConfig={{ storeId: "genome-1" }}
-// viewRegion={viewRegionInput}
-// genomeName={genomeName}
-// tracks={tracks}
-// showGenomeNavigator={showGenomeNavigator}
-// showNavBar={showNavBar}
-// showToolBar={showToolBar}
-export default function App({ storeConfig, onSessionUpdate, ...rootLayoutProps }: AppProps) {
+export default function App({
+  storeConfig,
+  viewRegion,
+  genomeName,
+  tracks,
+  showGenomeNavigator,
+  showNavBar,
+  showToolBar,
+}: AppProps) {
   return (
     <MotionConfig transition={snappyTransition}>
       <AppProvider storeConfig={storeConfig}>
-        <RootLayout {...rootLayoutProps} />
+        <RootLayout
+          viewRegion={viewRegion}
+          genomeName={genomeName}
+          tracks={tracks}
+          showGenomeNavigator={showGenomeNavigator}
+          showNavBar={showNavBar}
+          showToolBar={showToolBar}
+          persistState={false}
+        />
       </AppProvider>
     </MotionConfig>
   );

@@ -59,32 +59,64 @@ const createStorageWithErrorHandling = (storage: any) => {
   return {
     ...storage,
     setItem: async (key: string, value: string) => {
-      try {
-        await storage.setItem(key, value);
-      } catch (error: any) {
-        if (error?.name === "QuotaExceededError") {
-          console.error("Storage quota exceeded. Clearing old data...");
+        try {
+          await storage.setItem(key, value);
+        } catch (error: any) {
+          if (error?.name === "QuotaExceededError") {
+            console.error("Storage quota exceeded. Attempting to free space...");
 
-          // Try to clear old sessions or reduce data
-          try {
-            // Clear the specific key that's causing issues
-            await storage.removeItem(key);
+            // First try to remove the offending key and retry
+            try {
+              if (typeof storage.removeItem === "function") {
+                await storage.removeItem(key);
+              } else if (typeof window !== "undefined" && window.localStorage) {
+                window.localStorage.removeItem(key);
+              }
 
-            // Try again with the new value
-            await storage.setItem(key, value);
-            console.log("Successfully saved after clearing old data");
-          } catch (retryError) {
-            console.error("Failed to save even after clearing:", retryError);
-            // Optionally notify user
-            alert(
-              "Storage is full. Please delete some old sessions to continue.",
-            );
-            throw retryError;
+              await storage.setItem(key, value);
+              console.log("Successfully saved after removing the key");
+              return;
+            } catch (retryError) {
+              console.error("Failed to save after removing key:", retryError);
+
+              // Ask the user whether to clear all stored sessions (confirm shows OK/Cancel)
+              const userConfirmed =
+                typeof window !== "undefined" && typeof window.confirm === "function"
+                  ? window.confirm(
+                      "Storage is full. Clear all stored sessions to free space? Press OK to clear.",
+                    )
+                  : false;
+
+              if (userConfirmed) {
+                try {
+                  if (typeof storage.clear === "function") {
+                    await storage.clear();
+                  } else if (typeof window !== "undefined" && window.localStorage) {
+                    window.localStorage.clear();
+                  }
+
+                  // Try saving again after clearing
+                  await storage.setItem(key, value);
+                  alert("Storage cleared and data saved successfully.");
+                  console.log("Saved after user-cleared storage");
+                  return;
+                } catch (finalError) {
+                  console.error("Failed to save after clearing storage:", finalError);
+                  alert(
+                    "Failed to clear storage and save. Please manually delete some old sessions.",
+                  );
+                  throw finalError;
+                }
+              } else {
+                // User declined to clear storage
+                alert("Storage is full. Please delete some old sessions to continue.");
+                throw retryError;
+              }
+            }
+          } else {
+            throw error;
           }
-        } else {
-          throw error;
         }
-      }
     },
   };
 };

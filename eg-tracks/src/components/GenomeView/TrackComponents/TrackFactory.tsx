@@ -120,7 +120,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     placeFeature = null,
   ) {
     const curXPos = getTrackXOffset(trackState, windowWidth);
-    console.log(getConfigOptions(), xvalues, placeFeature);
+
     const displayArgs: any = {
       basesByPixel: basePerPixel,
       genesArr,
@@ -530,7 +530,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData = cacheTrackData[dataIdx]
             ? _.clone(cacheTrackData[dataIdx].dataCache)
             : null;
-          console.log(cacheTrackData);
+
           if (combinedData) {
             if (newDrawData.viewWindow) {
               trackState["viewWindow"] = newDrawData.viewWindow;
@@ -576,7 +576,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ];
 
         if (combinedData) {
-          console.log(combinedData, trackState);
           sentScreenshotData({
             fetchData: {
               genomeName: genomeConfig.genome.getName(),
