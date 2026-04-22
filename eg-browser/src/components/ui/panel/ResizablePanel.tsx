@@ -262,6 +262,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
   // when navigation tab expands, need bigger panel for content
   useEffect(() => {
+
     if (expandNavigationTab) {
 
       const windowSize = {
@@ -296,35 +297,41 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
           dx = -Math.min(overflow, rectExpand.left)
-          // - 20; // can't move left past viewport left edge
+            - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
-          dy = -Math.min(overflow, rectExpand.top); // can't move up past viewport top edge
+          dy = -Math.min(overflow, rectExpand.top); // use y pos of previous panel 
+          if (dx !== 0 || dy !== 0) {
+            setTranslate((prev) => ({
+              x: prev.x + dx,
+              y:
+                prev.y + dy < 0 ? 0 : prev.y + dy
+            }));
+          }
         }
-        if (dx !== 0 || dy !== 0) {
-          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
-        }
+
+        setWidth(newW);
+        setHeight(newH);
+
+        // center the panel when opening for the first time
+        // const rect = panelRef.current?.getBoundingClientRect();
+        // if (
+        //   rect &&
+        //   !dragState.current?.dragging &&
+        //   !resizeState.current?.resizing
+        // ) {
+        //   const desiredLeft = (window.innerWidth - Number(newW)) / 2;
+        //   // const desiredTop = (window.innerHeight - newH) / 2;
+        //   const deltaX = Math.round(desiredLeft - rect.left);
+
+        //   const deltaY = Math.round(-rect.top); // 36 for navbar height
+        //   setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+        // }
       }
+    }
+    else if (midSizeNavTab) {
 
-      setWidth(newW);
-      setHeight(newH);
-
-      // center the panel when opening for the first time
-      // const rect = panelRef.current?.getBoundingClientRect();
-      // if (
-      //   rect &&
-      //   !dragState.current?.dragging &&
-      //   !resizeState.current?.resizing
-      // ) {
-      //   const desiredLeft = (window.innerWidth - Number(newW)) / 2;
-      //   // const desiredTop = (window.innerHeight - newH) / 2;
-      //   const deltaX = Math.round(desiredLeft - rect.left);
-
-      //   const deltaY = Math.round(-rect.top); // 36 for navbar height
-      //   setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
-      // }
-    } else if (midSizeNavTab) {
       const windowSize = {
         width: window.innerWidth,
         height: window.innerHeight,
@@ -341,6 +348,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
       let newW = numericWidth !== numericInitialW && numericWidth !== altW ? numericWidth : defaultW;
       let newH = numericHeight !== numericInitialH && numericHeight !== altH ? numericHeight : defaultH;
+
       newW = Math.max(numericInitialW, newW);
       newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
@@ -358,14 +366,19 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
           dx = -Math.min(overflow, rectMid.left)
-          // - 20; // can't move left past viewport left edge
+            - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
-          dy = -Math.min(overflow, rectMid.top); // can't move up past viewport top edge
+          dy = -Math.min(overflow, rectMid.top); // use y pos of previous panel 
         }
         if (dx !== 0 || dy !== 0) {
-          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+          setTranslate((prev) => ({
+            x: prev.x + dx, y:
+
+              prev.y + dy < 0 ? 0 : prev.y + dy
+
+          }));
         }
       }
 
@@ -388,16 +401,21 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
           dx = -Math.min(overflow, rectMid.left)
-          // - 20; // can't move left past viewport left edge
+            - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
           dy = -Math.min(overflow, rectMid.top); // can't move up past viewport top edge
         }
         if (dx !== 0 || dy !== 0) {
-          setTranslate((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+          setTranslate((prev) => ({
+            x: prev.x + dx,
+            y: prev.y + dy < 0 ? 0 : prev.y + dy
+
+          }));
         }
       }
+
       setWidth(Number(initialWidth));
       setHeight(Number(initialHeight));
       // reset tab selection to navbar when using back button
@@ -433,7 +451,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         const maxY = window.innerHeight - naturalTop - panelHeight * 0.2;
         setTranslate({
           x: Math.max(minX, Math.min(maxX, origX + dx)),
-          y: Math.max(minY, Math.min(maxY, origY + dy)),
+          y: Math.max(minY, Math.min(maxY, origY + dy < -40 ? -40 : origY + dy)),
         });
       }
       if (resizeState.current?.resizing) {

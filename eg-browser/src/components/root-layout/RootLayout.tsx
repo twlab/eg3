@@ -237,6 +237,7 @@ export default function RootLayout(props: GenomeHubProps) {
       ((props.genomeName && props.tracks && props.viewRegion) ||
         props.customGenome)
     ) {
+      console.log("initial prop", props)
       const genomeConfig: IGenome | null = getConfig();
       if (genomeConfig) {
         if (!sessionId) {
@@ -250,7 +251,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                  props.viewRegion === null
+                    props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -266,12 +267,13 @@ export default function RootLayout(props: GenomeHubProps) {
             );
           }
         } else {
+          console.log(props, "got props")
           dispatch(
             updateCurrentSession({
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                props.viewRegion === null
+                  props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
@@ -301,111 +303,110 @@ export default function RootLayout(props: GenomeHubProps) {
     sessionId,
   ]);
 
-  return (
-    <EscapeHandlerContext.Provider value={escapeHandlerRef}>
-      <PortalContext.Provider value={portalContainer}>
-        <div
-          ref={rootRef}
-          className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
-          data-theme={darkTheme ? "dark" : "light"}
-          style={{ position: "relative", overflowX: "hidden" }}
-        >
-          <GoogleAnalytics />
+  return (<EscapeHandlerContext.Provider value={escapeHandlerRef}>
+    <PortalContext.Provider value={portalContainer}>
+      <div
+        ref={rootRef}
+        className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+        data-theme={darkTheme ? "dark" : "light"}
+        style={{ position: "relative", overflowX: "hidden" }}
+      >
+        <GoogleAnalytics />
 
-          <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
-            {showNavBar === false ? (
-              ""
-            ) : (
-              <div ref={navBarRef}>
-                <NavBar
-                  leftPanelOpen={leftPanelOpen}
-                  setLeftPanelOpen={setLeftPanelOpen}
-                  sessionId={sessionId}
-                  sessions={sessions}
-                  currentSession={currentSession}
-                />
-              </div>
-            )}
-            <AnimatePresence>
-              {leftPanelOpen ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute right-0 h-full z-60"
-                  style={{ top: navBarHeight }}
+        <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
+          {showNavBar === false ? (
+            ""
+          ) : (
+            <div ref={navBarRef}>
+              <NavBar
+                leftPanelOpen={leftPanelOpen}
+                setLeftPanelOpen={setLeftPanelOpen}
+                sessionId={sessionId}
+                sessions={sessions}
+                currentSession={currentSession}
+              />
+            </div>
+          )}
+          <AnimatePresence>
+            {leftPanelOpen ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute right-0 h-full z-60"
+                style={{ top: navBarHeight }}
+              >
+                <ResizablePanel
+                  navigationPath={[]}
+                  initialWidth={window.innerWidth * 0.4}
+                  initialHeight={window.innerHeight - 50}
+                  onClose={() => setLeftPanelOpen(false)}
+                  header={false}
                 >
-                  <ResizablePanel
-                    navigationPath={[]}
-                    initialWidth={window.innerWidth * 0.4}
-                    initialHeight={window.innerHeight - 50}
-                    onClose={() => setLeftPanelOpen(false)}
-                    header={false}
-                  >
-                    <SessionList
-                      onSessionClick={(s) => {
-                        dispatch(setCurrentSession(s.id));
-                        setLeftPanelOpen(false);
+                  <SessionList
+                    onSessionClick={(s) => {
+                      dispatch(setCurrentSession(s.id));
+                      setLeftPanelOpen(false);
+                    }}
+                    showImportSessionButton
+                    onRequestClose={() => setLeftPanelOpen(false)}
+                  />
+                </ResizablePanel>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
+          <div>
+            {/* MARK: - Main Content */}
+
+            <div className="flex flex-1 h-full relative">
+              {/* MARK: - Genome View */}
+              <div
+                className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
+                style={{
+                  zIndex: 5,
+                }}
+              >
+                {!sessionId && (
+                  <TabView<"picker" | "add" | "import">
+                    centerTabs
+                    initialTab={"picker"}
+                    tabs={[
+                      {
+                        label: "CHOOSE A GENOME",
+                        value: "picker",
+                        component: <GenomePicker />,
+                      },
+                      {
+                        label: "ADD CUSTOM GENOME",
+                        value: "add",
+                        component: <AddCustomGenome />,
+                      },
+                      {
+                        label: "LOAD A SESSION",
+                        value: "import",
+                        component: <ImportSession />,
+                      },
+                    ]}
+                  />
+                )}
+                {sessionId && (
+                  <GenomeErrorBoundary onGoHome={handleGoHome}>
+                    <GenomeView />
+                    <div
+                      ref={(el) => setPortalContainer(el as HTMLDivElement)}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        pointerEvents: "none",
+                        zIndex: 9000,
                       }}
-                      showImportSessionButton
-                      onRequestClose={() => setLeftPanelOpen(false)}
                     />
-                  </ResizablePanel>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+                  </GenomeErrorBoundary>
+                )}
+              </div>
 
-            <div>
-              {/* MARK: - Main Content */}
-
-              <div className="flex flex-1 h-full relative">
-                {/* MARK: - Genome View */}
-                <div
-                  className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
-                  style={{
-                    zIndex: 5,
-                  }}
-                >
-                  {!sessionId && (
-                    <TabView<"picker" | "add" | "import">
-                      centerTabs
-                      initialTab={"picker"}
-                      tabs={[
-                        {
-                          label: "CHOOSE A GENOME",
-                          value: "picker",
-                          component: <GenomePicker />,
-                        },
-                        {
-                          label: "ADD CUSTOM GENOME",
-                          value: "add",
-                          component: <AddCustomGenome />,
-                        },
-                        {
-                          label: "LOAD A SESSION",
-                          value: "import",
-                          component: <ImportSession />,
-                        },
-                      ]}
-                    />
-                  )}
-                  {sessionId && (
-                    <GenomeErrorBoundary onGoHome={handleGoHome}>
-                      <GenomeView />
-                      <div
-                        ref={(el) => setPortalContainer(el as HTMLDivElement)}
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          pointerEvents: "none",
-                          zIndex: 9000,
-                        }}
-                      />
-                    </GenomeErrorBoundary>
-                  )}
-                </div>
-
-                {/* <div
+              {/* <div
               style={{
                 position: "absolute",
                 inset: 0,
@@ -417,40 +418,40 @@ export default function RootLayout(props: GenomeHubProps) {
               }}
               onClick={() => dispatch(setSessionPanelOpen(false))}
             /> */}
-              </div>
             </div>
-
-            <>
-              <div
-                style={{
-                  textAlign: "center",
-                  color: "gray",
-                  backgroundColor: "inherit",
-                  padding: "36px",
-                }}
-              >
-                Copyright &copy; 2018-{year} Washington University in St. Louis.
-                All rights reserved.
-                <br /> Developed by the{" "}
-                <a
-                  href="http://wang.wustl.edu"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#007bff" }}
-                >
-                  Wang Lab
-                </a>
-                <br />{" "}
-                <a style={{ color: "#007bff" }} href="LICENSE.html">
-                  Terms and Conditions of Use
-                </a>
-              </div>
-            </>
           </div>
 
-          <MouseFollowingTooltip />
+          <>
+            <div
+              style={{
+                textAlign: "center",
+                color: "gray",
+                backgroundColor: "inherit",
+                padding: "36px",
+              }}
+            >
+              Copyright &copy; 2018-{year} Washington University in St. Louis.
+              All rights reserved.
+              <br /> Developed by the{" "}
+              <a
+                href="http://wang.wustl.edu"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#007bff" }}
+              >
+                Wang Lab
+              </a>
+              <br />{" "}
+              <a style={{ color: "#007bff" }} href="LICENSE.html">
+                Terms and Conditions of Use
+              </a>
+            </div>
+          </>
         </div>
-      </PortalContext.Provider>
-    </EscapeHandlerContext.Provider>
+
+        <MouseFollowingTooltip />
+      </div>
+    </PortalContext.Provider>
+  </EscapeHandlerContext.Provider>
   );
 }

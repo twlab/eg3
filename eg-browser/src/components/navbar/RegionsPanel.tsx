@@ -1,6 +1,7 @@
 import React, { useRef, useState, KeyboardEvent } from "react";
 
-import type { GenomeCoordinate, SnpSearchBox, GeneSearchBox } from "wuepgg3-track";
+import type { GenomeCoordinate } from "wuepgg3-track";
+import { GeneSearchBox, SnpSearchBox } from "wuepgg3-track"
 import Button from "@/components/ui/button/Button";
 
 import { DisplayedRegionModel, Genome } from "wuepgg3-track";
