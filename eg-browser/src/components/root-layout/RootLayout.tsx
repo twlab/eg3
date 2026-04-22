@@ -279,35 +279,35 @@ export default function RootLayout(props: AppProps) {
               : null,
         }),
       );
+    } else if (sessionId) {
+      dispatch(
+        updateCurrentSession({
+          tracks: props.tracks as ITrackModel[],
+          viewRegion:
+            typeof viewRegion !== "string" || viewRegion === null
+              ? undefined
+              : (viewRegion as GenomeCoordinate),
+          userViewRegion:
+            typeof viewRegion !== "string" || !viewRegion
+              ? undefined
+              : (viewRegion as GenomeCoordinate),
+          genomeId: props.genomeName,
+          customGenome: curGenomeConfig.genome ? curGenomeConfig.genome : null,
+          chromosomes:
+            curGenomeConfig.genome && curGenomeConfig.chromosomes
+              ? curGenomeConfig.chromosomes
+              : null,
+          width:
+            props.width !== null && props.width !== undefined
+              ? props.width
+              : null,
+          height:
+            props.height !== null && props.height !== undefined
+              ? props.height
+              : null,
+        }),
+      );
     }
-
-    // else {
-    //   if (props?.storeConfig?.enablePersistence === false) {
-    //     dispatch(
-    //       updateCurrentSession({
-    //         tracks: props.tracks as ITrackModel[],
-    //         viewRegion:
-    //           typeof viewRegion !== "string" || viewRegion === null
-    //             ? undefined
-    //             : (viewRegion as GenomeCoordinate),
-    //         userViewRegion:
-    //           typeof viewRegion !== "string" || !viewRegion
-    //             ? undefined
-    //             : (viewRegion as GenomeCoordinate),
-    //         genomeId: props.genomeName,
-    //         customGenome: curGenomeConfig,
-    //         width:
-    //           props.width !== null && props.width !== undefined
-    //             ? props.width
-    //             : null,
-    //         height:
-    //           props.height !== null && props.height !== undefined
-    //             ? props.height
-    //             : null,
-    //       }),
-    //     );
-    //   }
-    // }
   }, [
     props.genomeName,
     props.tracks,
