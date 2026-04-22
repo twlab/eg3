@@ -1,8 +1,4 @@
 {
-  "id": "60b9c547-0da5-471c-aec5-56720a1a1e85",
-  "createdAt": 1741716619364,
-  "updatedAt": 1741716619364,
-  "title": "",
   "viewRegion": "chr7:27181545-27245617",
   "userViewRegion": "",
   "tracks": [
@@ -17,17 +13,7 @@
       "metadata": {
         "Track type": "geneannotation"
       },
-      "label": "refGene",
-      "isSelected": false,
-      "url": "",
-      "fileObj": "",
-      "files": [],
-      "tracks": [],
-      "isText": false,
-      "textConfig": {},
-      "apiConfig": {},
-      "queryEndpoint": {},
-      "id": 0
+      "label": "refGene"
     },
     {
       "type": "geneannotation",
@@ -40,17 +26,7 @@
       "metadata": {
         "Track type": "geneannotation"
       },
-      "label": "gencodeV47",
-      "isSelected": false,
-      "url": "",
-      "fileObj": "",
-      "files": [],
-      "tracks": [],
-      "isText": false,
-      "textConfig": {},
-      "apiConfig": {},
-      "queryEndpoint": {},
-      "id": 1
+      "label": "gencodeV47"
     },
     {
       "type": "repeatmasker",
@@ -62,16 +38,7 @@
       "metadata": {
         "Track type": "repeatmasker"
       },
-      "label": "RepeatMasker",
-      "isSelected": false,
-      "fileObj": "",
-      "files": [],
-      "tracks": [],
-      "isText": false,
-      "textConfig": {},
-      "apiConfig": {},
-      "queryEndpoint": {},
-      "id": 2
+      "label": "RepeatMasker"
     }
   ],
   "genomeId": "hg19",
