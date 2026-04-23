@@ -190,7 +190,7 @@ export default function ImportSession() {
                               await dispatch(importOneSession({ session: sess, navigatingToSession: true }) as any).unwrap();
                               // optionally update lastBundleId
                               setLastBundleId(bundle.bundleId);
-                              console.log("Session restored.");
+          
                             } catch (e) {
                               console.error(e);
                             }
@@ -215,7 +215,7 @@ export default function ImportSession() {
                               const newBundle = { ...bundle };
                               delete newBundle.sessionsInBundle[id];
 
-                              console.log("Session deleted.");
+              
                             } catch (e) {
                               console.error(e);
                             }

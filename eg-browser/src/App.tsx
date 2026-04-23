@@ -3,6 +3,8 @@ import AppProvider from "./lib/redux/AppProvider";
 import { GenomeCoordinate } from "wuepgg3-track";
 import "./index.css";
 import { StoreConfig } from "./lib/redux/createStore";
+import { SessionData } from "./lib/hooks/useSessionData";
+import SessionDataMonitor from "./components/SessionDataMonitor";
 
 /**
  * Props for the `App` component.
@@ -13,10 +15,10 @@ export interface AppProps {
 
   /** Initial view region. String or object with `genomeCoordinate`. */
   viewRegion?:
-    | string
-    | { genomeCoordinate: string | GenomeCoordinate }
-    | null
-    | undefined;
+  | string
+  | { genomeCoordinate: string | GenomeCoordinate }
+  | null
+  | undefined;
   /** Genome name to load, e.g. 'hg38'. */
   genomeName?: string;
   /** Array of track configurations to render. */
@@ -35,6 +37,7 @@ export interface AppProps {
   width?: number;
   /** Desired app height in pixels. */
   height?: number;
+  onSessionUpdate?: (data: SessionData | null) => void;
 }
 
 /**
@@ -50,10 +53,12 @@ export default function App({
   showGenomeNavigator,
   showNavBar,
   showToolBar,
+  onSessionUpdate
 }: AppProps) {
   return (
     // <MotionConfig transition={snappyTransition}>
     <AppProvider storeConfig={storeConfig}>
+      {onSessionUpdate ? <SessionDataMonitor onSessionUpdate={onSessionUpdate} /> : null}
       <RootLayout
         viewRegion={viewRegion}
         genomeName={genomeName}

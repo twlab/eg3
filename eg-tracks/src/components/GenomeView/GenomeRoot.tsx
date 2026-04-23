@@ -287,7 +287,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {!has3dTracks ? (
-        <div style={{ ...(height && { height }) }}>
+        <div style={{ ...(height && { height }),overflowX: "hidden"}}>
           <TrackManager
             tracks={tracks}
             legendWidth={legendWidth}

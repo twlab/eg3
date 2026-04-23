@@ -64,9 +64,6 @@ export function clearOldSessions(): void {
  * Log storage usage information to console
  */
 export function logStorageInfo(): void {
-    console.group('📊 LocalStorage Usage');
-    console.log(`Total Size: ${getStorageSize()} KB`);
-    console.log('Breakdown by key:');
     const breakdown = getStorageBreakdown();
     Object.entries(breakdown)
         .sort((a, b) => b[1] - a[1])
