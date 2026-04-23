@@ -72,7 +72,7 @@ export class CubicCurveDisplay extends React.PureComponent<
             xSpan2Center,
             controlY,
             xSpan2Center,
-            0
+            0,
           )
         }
         fill="none"
@@ -87,10 +87,34 @@ export class CubicCurveDisplay extends React.PureComponent<
   };
 
   render() {
-    const { placedInteractions, width, forceSvg, height } = this.props;
+    const {
+      placedInteractions,
+      width,
+      forceSvg,
+      height,
+      options,
+      legend,
+      viewWindow,
+    } = this.props;
     // const sortedInteractions = placedInteractions.slice().sort((a, b)
     //        => b.interaction.score - a.interaction.score);
     // const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
+
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
+
+          overflow: "hidden",
+          width: width / 3 + 120,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
+    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
     return placedInteractions.length === 0 ? (
       <div
         style={{
@@ -99,13 +123,27 @@ export class CubicCurveDisplay extends React.PureComponent<
         }}
       ></div>
     ) : (
-      <DesignRenderer
-        type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-        width={width}
-        height={height}
-      >
-        {placedInteractions.map(this.renderCurve)}
-      </DesignRenderer>
+      <React.Fragment>
+        {" "}
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {forceSvg || options.packageVersion ? legend : ""}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              ...curEleStyle,
+            }}
+          >
+            <DesignRenderer
+              type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+              width={width}
+              height={height}
+            >
+              {placedInteractions.map(this.renderCurve)}
+            </DesignRenderer>
+          </div>
+        </div>
+      </React.Fragment>
     );
   }
 }
