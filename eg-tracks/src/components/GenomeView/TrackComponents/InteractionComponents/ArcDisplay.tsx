@@ -119,7 +119,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
     ]);
     return (
       <path
-        key={placedInteraction.generateKey() + index}
+      key={crypto.randomUUID() + index}
         // d={moveTo(xSpan1Center, 0) + quadraticCurveTo(spanCenter, curveYScale(spanLength), xSpan2Center, 0)}
         d={moveTo(xSpan1Center, 0) + arcTo(radius, xSpan2Center)}
         fill="none"
@@ -234,12 +234,6 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
     return items;
   };
 
-  set3dAnchors = (anchors: any) => {
-    if (this.props.onSetAnchors3d) {
-      this.props.onSetAnchors3d(anchors);
-    }
-    this.props.onHideTooltip();
-  };
 
   // clickTooltip = (event: React.MouseEvent) => {
   //     if (this.props.isThereG3dTrack) {
@@ -335,7 +329,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
           ></div>
         ) : (
                 <div style={{ display: "flex", ...curParentStyle }}>
-            {forceSvg || options.packageVersion ? legend : ""}
+            {(forceSvg || options.packageVersion) && legend ? legend : ""}
             <div
               style={{
                 display: "flex",

@@ -2475,7 +2475,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     let trackManagerRef = {};
     if (interactionTracks.has(tm.type)) {
-      trackManagerRef = { trackManagerRef: block };
+      trackManagerRef = { trackManagerRef: block.current };
     }
     trackManagerState.current.globalConfig[`${tm.id}`] = {
       configOptions: {
