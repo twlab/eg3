@@ -197,7 +197,6 @@ export default function RootLayout(props: AppProps) {
   ]);
 
   useEffect(() => {
-          console.log(props)
     let viewRegion: any = props.viewRegion;
 
     if (
@@ -228,22 +227,20 @@ export default function RootLayout(props: AppProps) {
       };
 
       dispatch(addCustomGenomeRemote(_newGenomeConfig));
-      curGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
+      curGenomeConfig = _newGenomeConfig;
     } else if (
       typeof props.genomeName === "string" &&
       getGenomeConfig(props.genomeName)
     ) {
-      const genomeconfig= getGenomeConfig(props.genomeName);
+      const genomeconfig = getGenomeConfig(props.genomeName);
       curGenomeConfig = GenomeSerializer.serialize(genomeconfig);
     } else if (typeof props.genomeName === "string") {
-       curGenomeConfig = GenomeHubManager.getInstance().getGenomeFromCache(
+      curGenomeConfig = GenomeHubManager.getInstance().getGenomeFromCache(
         props.genomeName,
       );
-    
     }
-       console.log(curGenomeConfig , sessionId , isPackageMode)
-    if (curGenomeConfig && isPackageMode) {
-      console.log(props)
+
+    if (curGenomeConfig && !sessionId && isPackageMode) {
       dispatch(
         createSession({
           genome: curGenomeConfig as IGenome,
@@ -264,68 +261,128 @@ export default function RootLayout(props: AppProps) {
               : null,
         }),
       );
-    } 
+    } else if (curGenomeConfig && sessionId && isPackageMode) {
+      dispatch(
+        updateCurrentSession({
+          tracks: props.tracks || ([] as ITrackModel[]),
+          viewRegion: viewRegion as GenomeCoordinate,
+          userViewRegion: viewRegion as GenomeCoordinate,
+        }),
+      );
+    }
 
-    
     initialState.current = false;
-  }, [
-    
-  
-  ]);
+  }, []);
 
-  // useEffect(() => {
-  //   if (
-  //     sessionId &&
-  //     props.viewRegion &&
-  //     isPackageMode
-  //   ) {
-  //     let viewRegion: any = props.viewRegion;
+  useEffect(() => {
+    if (
+      sessionId &&
+      props.viewRegion &&
+      props.genomeName && props.tracks&&
+      isPackageMode &&
+      !initialState.current
+    ) {
+      let viewRegion: any = props.viewRegion;
 
-  //     if (
-  //       props.viewRegion &&
-  //       typeof props.viewRegion === "object" &&
-  //       !Array.isArray(props.viewRegion)
-  //     ) {
-  //       if (props.viewRegion["genomeCoordinate"]) {
-  //         viewRegion = viewRegion["genomeCoordinate"];
-  //       }
-  //     }
+      if (
+        props.viewRegion &&
+        typeof props.viewRegion === "object" &&
+        !Array.isArray(props.viewRegion)
+      ) {
+        if (props.viewRegion["genomeCoordinate"]) {
+          viewRegion = viewRegion["genomeCoordinate"];
+        }
+      }
 
-  //     if (currentSession && currentSession.viewRegion !== viewRegion) {
-  //       updateCurrentSession({
-  //         viewRegion:
-  //           typeof viewRegion !== "string" || viewRegion === null
-  //             ? undefined
-  //             : (viewRegion as GenomeCoordinate),
-  //         userViewRegion:
-  //           typeof viewRegion !== "string" || !viewRegion
-  //             ? undefined
-  //             : (viewRegion as GenomeCoordinate),
-  //       });
-  //     }
-  //     else if(currentSession && viewRegion === currentSession.viewRegion){
-  //               updateCurrentSession({
-  //         viewRegion:
-  //           typeof viewRegion !== "string" || viewRegion === null
-  //             ? undefined
-  //             : (currentSession.userViewRegion as GenomeCoordinate),
-  //         userViewRegion:
-  //           typeof viewRegion !== "string" || !viewRegion
-  //             ? undefined
-  //             : (currentSession.userViewRegion as GenomeCoordinate),
-  //       });
-  //     }}
-  // }, [props.viewRegion]);
+      let curGenomeConfig: any = null;
+      if (
+        props.chromosomes &&
+        props.chromosomes.length > 0 &&
+        props.tracks &&
+        typeof props.genomeName === "string"
+      ) {
+        const _newGenomeConfig = {
+          id: props.genomeName,
+          name: props.genomeName,
+          chromosomes: props.chromosomes,
+          defaultTracks: props.tracks.map((item: any) => ({
+            ...item,
+            waitToUpdate: true,
+          })),
+        };
 
-  // useEffect(() => {
-  //   if ( sessionId && props.tracks && isPackageMode) {
-  //     if (currentSession) {
-  //       updateCurrentSession({
-  //         tracks: (props.tracks as ITrackModel[]) ? props.tracks : [],
-  //       });
-  //     }
-  //   }
-  // }, [props.tracks]);
+        dispatch(addCustomGenomeRemote(_newGenomeConfig));
+        curGenomeConfig = _newGenomeConfig;
+      } else if (
+        typeof props.genomeName === "string" &&
+        getGenomeConfig(props.genomeName)
+      ) {
+        const genomeconfig = getGenomeConfig(props.genomeName);
+        curGenomeConfig = GenomeSerializer.serialize(genomeconfig);
+      } else if (typeof props.genomeName === "string") {
+        curGenomeConfig = GenomeHubManager.getInstance().getGenomeFromCache(
+          props.genomeName,
+        );
+      }
+
+      if (curGenomeConfig && currentSession && viewRegion && props.genomeName && props.tracks) {
+        dispatch(
+          updateCurrentSession({
+            genomeId: props.genomeName,
+            tracks:
+              props.tracks.map((item: any) => ({
+                ...item,
+                waitToUpdate: true,
+              })) || ([] as ITrackModel[]),
+            viewRegion: viewRegion as GenomeCoordinate,
+            userViewRegion: viewRegion as GenomeCoordinate,
+          }),
+        );
+      }
+    }
+  }, [props.genomeName]);
+
+  useEffect(() => {
+    if (
+      sessionId &&
+      props.viewRegion &&
+      isPackageMode &&
+      !initialState.current
+    ) {
+      let viewRegion: any = props.viewRegion;
+
+      if (
+        props.viewRegion &&
+        typeof props.viewRegion === "object" &&
+        !Array.isArray(props.viewRegion)
+      ) {
+        if (props.viewRegion["genomeCoordinate"]) {
+          viewRegion = viewRegion["genomeCoordinate"];
+        }
+      }
+
+      if (currentSession && viewRegion) {
+        dispatch(
+          updateCurrentSession({
+            viewRegion: viewRegion,
+            userViewRegion: viewRegion,
+          }),
+        );
+      }
+    }
+  }, [props.viewRegion]);
+
+  useEffect(() => {
+    if (sessionId && props.tracks && isPackageMode && !initialState.current) {
+      if (currentSession) {
+        dispatch(
+          updateCurrentSession({
+            tracks: props?.tracks ? props.tracks : [],
+          }),
+        );
+      }
+    }
+  }, [props.tracks]);
 
   return (
     <EscapeHandlerContext.Provider value={escapeHandlerRef}>
