@@ -945,12 +945,25 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     >
       {isVisible ? (
         <>
-          {options && options.trackManagerRef
-            ? ReactDOM.createPortal(
-              rectPosition.beams,
-              options.trackManagerRef.current,
-            )
-            : ""}
+          {trackType === "interactionHeatmap" &&
+          options &&
+          options.trackManagerRef &&
+          typeof options.trackManagerRef === "object" &&
+          Object.prototype.hasOwnProperty.call(options.trackManagerRef, "current") &&
+          options.trackManagerRef.current &&
+          !Object.isFrozen(options.trackManagerRef) ? (
+            (() => {
+              try {
+                const container = options.trackManagerRef.current;
+                if (container && (typeof container.appendChild === "function" || container instanceof Node)) {
+                  return ReactDOM.createPortal(rectPosition.beams, container);
+                }
+              } catch (e) {
+                // defensive: fall through to empty string
+              }
+              return "";
+            })()
+          ) : ""}
 
           {ReactDOM.createPortal(
             <div
