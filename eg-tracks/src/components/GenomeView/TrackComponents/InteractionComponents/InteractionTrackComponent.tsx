@@ -259,17 +259,8 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
       />
     );
 
-    if (
-      updatedLegend &&
-      typeof updatedLegend === "object" &&
-      Object.prototype.hasOwnProperty.call(updatedLegend, "current") &&
-      !Object.isFrozen(updatedLegend)
-    ) {
-      try {
-        updatedLegend.current = legend;
-      } catch (e) {
-        // defensive: if it's not writable, skip assigning
-      }
+    if (updatedLegend) {
+      updatedLegend.current = legend;
     }
 
     switch (options.displayMode) {
