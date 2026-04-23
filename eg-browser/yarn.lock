@@ -6690,10 +6690,10 @@ wrappy@1:
   resolved "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz"
   integrity sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
 
-wuepgg3-track@^5.0.3:
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/wuepgg3-track/-/wuepgg3-track-5.0.3.tgz#5e2aba917753665d50a1103fe79eebac0bb62d64"
-  integrity sha512-+LUJCVF38Z6dCkuI8WFl45X6aHEOaIFi2OEtBrBfVNW69mf031lulSwBRo62gNn7c+Q6HIq1vAfXHpSemoopVA==
+wuepgg3-track@^5.0.5:
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/wuepgg3-track/-/wuepgg3-track-5.0.5.tgz#e577118efb4ae1ca256b4c8940cdd1d45c535ae5"
+  integrity sha512-IkEvTzmzM0PBE0G1ARvQ3hbEF+cZJVexPzxVDK7bSBQGcagjoaofZ1wsCDF9A7XQ9jnhMpI1gBLrf5iZAtxygw==
   dependencies:
     "3dmol" "^2.4.0"
     "@dnd-kit/core" "^6.3.1"
