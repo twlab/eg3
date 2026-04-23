@@ -141,19 +141,35 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
 
   render() {
     this.hmData = [];
-    const { placedInteractions, width, forceSvg, height, viewWindow, options } =
+    const { placedInteractions, width, forceSvg, height, viewWindow, options , legend} =
       this.props;
-    return (
-      <>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
+        
+      let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
-            zIndex: 3,
-          }}
-        >
+          overflow: "hidden",
+          width: width / 3 + 120,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
+    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+      return (
+       <React.Fragment>
+         {!forceSvg ? ( <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              ...hoverStyle,
+              zIndex: 3,
+            }}
+          >
           <HoverToolTip
             data={this.hmData}
             windowWidth={width}
@@ -163,7 +179,9 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
             hasReverse={true}
             options={this.props.options}
           />
-        </div>
+        </div>) : (
+          ""
+        )}
         {placedInteractions.length === 0 ? (
           <div
             style={{
@@ -172,15 +190,26 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
             }}
           ></div>
         ) : (
+
+           <div style={{ display: "flex", ...curParentStyle }}>
+            {forceSvg || options.packageVersion ? legend : ""}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
           <DesignRenderer
             type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
             width={width}
             height={height}
           >
             {placedInteractions.map(this.renderRect)}
-          </DesignRenderer>
+          </DesignRenderer></div>
+          </div>
         )}
-      </>
+      </React.Fragment>
     );
   }
 }
