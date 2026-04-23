@@ -34,6 +34,7 @@ import {
   setNavigatorVisibility,
   setToolBarVisibility,
   selectIsNavBarVisible,
+  setDarkTheme,
 } from "@/lib/redux/slices/settingsSlice";
 import {
   selectNavigationTab,
@@ -148,8 +149,7 @@ export default function RootLayout(props: AppProps) {
     props.tracks &&
     props.viewRegion;
   const emptyPropsPackageMode =
-    (props.genomeName || props.tracks || props.viewRegion) &&
-    props.showGenomePicker === false;
+    (props.genomeName || props.tracks || props.viewRegion) 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
@@ -176,6 +176,10 @@ export default function RootLayout(props: AppProps) {
       if (typeof props.showToolBar === "boolean") {
         dispatch(setToolBarVisibility(props.showToolBar));
       }
+            if (typeof props.darkMode === "boolean") {
+              console.log("Setting dark mode to", props.darkMode);
+        dispatch(setDarkTheme(props.darkMode));
+      }
     }
     // In web mode, ensure defaults are set to true (override any persisted false values)
     else {
@@ -188,6 +192,8 @@ export default function RootLayout(props: AppProps) {
     props.showGenomeNavigator,
     props.showNavBar,
     props.showToolBar,
+
+    props.darkMode,
   ]);
 
   useEffect(() => {
@@ -249,7 +255,7 @@ export default function RootLayout(props: AppProps) {
               : [],
             defaultRegion: viewRegion,
           } as IGenome,
-          id: props.sessionId ? props.sessionId : undefined,
+
           viewRegion:
             typeof viewRegion !== "string" || viewRegion === null
               ? undefined
@@ -353,8 +359,7 @@ export default function RootLayout(props: AppProps) {
           data-theme={darkTheme ? "dark" : "light"}
           style={{ position: "relative", overflowX: "hidden" }}
         >
-          <GoogleAnalytics />
-
+          {props.showDisclosure === false ? "" : <GoogleAnalytics />}
           <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
             {showNavBar === false ? (
               ""
@@ -451,7 +456,9 @@ export default function RootLayout(props: AppProps) {
                       </span>
                       Need more data to visualize!
                     </div>
-                  ) : ""}
+                  ) : (
+                    ""
+                  )}
                   {sessionId && (
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
                       <GenomeView />
@@ -483,7 +490,9 @@ export default function RootLayout(props: AppProps) {
               </div>
             </div>
 
-            
+            {props.showDisclosure === false ? (
+              ""
+            ) : (
               <div
                 style={{
                   textAlign: "center",
@@ -508,7 +517,7 @@ export default function RootLayout(props: AppProps) {
                   Terms and Conditions of Use
                 </a>
               </div>
-            
+            )}
           </div>
 
           <MouseFollowingTooltip />

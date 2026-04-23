@@ -33,14 +33,15 @@ export interface AppProps {
   showNavBar?: boolean;
   /** Show the toolbar controls. */
   showToolBar?: boolean;
-  /** Show the genome picker in the navigation bar. */
-  showGenomePicker?: boolean;
+
+
+  showDisclosure?: boolean;
   /** Desired app width in pixels. */
   width?: number;
   /** Desired app height in pixels. */
   height?: number;
+  darkMode?: boolean;
   onSessionUpdate?: (data: SessionData | null) => void;
-  sessionId?: string | null | undefined; 
 }
 
 /**
@@ -56,8 +57,9 @@ export default function App({
   showGenomeNavigator,
   showNavBar,
   showToolBar,
-  showGenomePicker,
-  sessionId,
+
+  showDisclosure,
+  darkMode, height, width,
   onSessionUpdate
 }: AppProps) {
   return (
@@ -66,13 +68,16 @@ export default function App({
       {onSessionUpdate ? <SessionDataMonitor onSessionUpdate={onSessionUpdate} /> : null}
       <RootLayout
         viewRegion={viewRegion}
-        sessionId={sessionId}
         genomeName={genomeName}
         tracks={tracks}
         showGenomeNavigator={showGenomeNavigator}
         showNavBar={showNavBar}
         showToolBar={showToolBar}
-        showGenomePicker={showGenomePicker}
+
+        showDisclosure={showDisclosure}
+        darkMode={darkMode}
+        width={width}
+        height={height}
 
       />
     </AppProvider>
