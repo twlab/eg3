@@ -1074,14 +1074,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       //   }
       // }
       if (Object.keys(curTrackToDrawId).length > 0) {
-        console.log(
-          curTrackToDrawId,
-          "curTrackToDrawId",
-          dataIdx.current,
-          globalTrackState.current.trackStates[dataIdx.current].trackState[
-            "groupScale"
-          ],
-        );
         // console.log("same region draw cachhe data", curTrackToDrawId);
         setViewWindowConfigChange({
           dataIdx: dataIdx.current,
@@ -3255,7 +3247,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     dataIdx,
     tracksToDraw: any = undefined,
   ) {
-    console.log(viewWindow, dataIdx, tracksToDraw);
     if (viewWindow && dataIdx !== undefined && dataIdx !== null) {
       const trackDataObj: Array<any> = [];
       const trackToDrawId = tracksToDraw
