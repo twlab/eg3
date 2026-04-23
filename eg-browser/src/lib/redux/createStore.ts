@@ -74,10 +74,10 @@ const createStorageWithErrorHandling = (storage: any) => {
             }
 
             await storage.setItem(key, value);
-         
+            console.log("Successfully saved after removing the key");
             return;
           } catch (retryError) {
-       
+            console.error("Failed to save after removing key:", retryError);
 
             // Ask the user whether to clear all stored sessions (confirm shows OK/Cancel)
             const userConfirmed =
@@ -102,7 +102,7 @@ const createStorageWithErrorHandling = (storage: any) => {
                 // Try saving again after clearing
                 await storage.setItem(key, value);
                 alert("Storage cleared and data saved successfully.");
-   
+                console.log("Saved after user-cleared storage");
                 return;
               } catch (finalError) {
                 console.error(

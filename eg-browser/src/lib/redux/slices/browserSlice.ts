@@ -53,6 +53,7 @@ export const browserSlice = createSlice({
     createSession: (
       state,
       action: PayloadAction<{
+        id?: string;
         genome: IGenome;
         viewRegion?: GenomeCoordinate;
         additionalTracks?: ITrackModel[];
@@ -62,6 +63,7 @@ export const browserSlice = createSlice({
     ) => {
       //TO DO url param to also get bundleId and get it here as a property for initial startup
       const {
+        id,
         genome,
         viewRegion: overrideViewRegion,
         additionalTracks = [],
@@ -81,7 +83,7 @@ export const browserSlice = createSlice({
         })) || [];
 
       const nextSession: BrowserSession = {
-        id: generateUUID(),
+        id: id ? id : generateUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",

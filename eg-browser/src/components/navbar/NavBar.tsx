@@ -11,7 +11,6 @@ import {
   BackspaceIcon,
   Bars3Icon,
   XMarkIcon,
-  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import classNames from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
@@ -26,7 +25,7 @@ import {
   selectSessionPanelOpen,
   setNavigationTab,
   setSessionPanelOpen,
-  selectNavSearchOpen,
+
   setNavSearchOpen,
 } from "../../lib/redux/slices/navigationSlice";
 import { getSpeciesInfo } from "../genome-picker/genome-list";
@@ -248,7 +247,7 @@ export default function NavBar(props) {
       {/* Single full-width navbar row */}
       <div
         ref={navRef}
-        className="flex flex-row py-1 items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600 px-4 relative  gap-2"
+        className="flex flex-row py-1 items-center outline outline-gray-300 bg-white dark:bg-dark-secondary border-b border-gray-300 dark:border-gray-600 px-4 relative  gap-2"
       >
         {/* Back button */}
         {currentSession ? (

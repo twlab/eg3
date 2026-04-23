@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { ActionCreators } from "redux-undo";
-import { AppDispatch } from "../store";
+import { AppDispatch } from "../createStore";
 
 export const undoRedoSlice = createSlice({
   name: "undoRedo",

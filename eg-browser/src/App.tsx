@@ -33,10 +33,14 @@ export interface AppProps {
   showNavBar?: boolean;
   /** Show the toolbar controls. */
   showToolBar?: boolean;
+
+
+  showDisclosure?: boolean;
   /** Desired app width in pixels. */
   width?: number;
   /** Desired app height in pixels. */
   height?: number;
+  darkMode?: boolean;
   onSessionUpdate?: (data: SessionData | null) => void;
 }
 
@@ -53,6 +57,9 @@ export default function App({
   showGenomeNavigator,
   showNavBar,
   showToolBar,
+
+  showDisclosure,
+  darkMode, height, width,
   onSessionUpdate
 }: AppProps) {
   return (
@@ -66,7 +73,12 @@ export default function App({
         showGenomeNavigator={showGenomeNavigator}
         showNavBar={showNavBar}
         showToolBar={showToolBar}
-        storeConfig={storeConfig}
+
+        showDisclosure={showDisclosure}
+        darkMode={darkMode}
+        width={width}
+        height={height}
+
       />
     </AppProvider>
     // </MotionConfig>

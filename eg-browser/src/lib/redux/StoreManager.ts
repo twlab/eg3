@@ -102,7 +102,7 @@ export class StoreManager {
       persistKeys.forEach((key) => {
         const storeId = key.replace("persist:", "");
         if (!this.stores.has(storeId)) {
-     
+          console.log(`Cleaning up storage for: ${storeId}`);
           localStorage.removeItem(key);
         }
       });
