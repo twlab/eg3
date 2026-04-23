@@ -589,7 +589,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   : getConfigOptions().height,
               trackModel,
               basesByPixel: basePerPixel,
-              genomeConfig : _.cloneDeep(genomeConfig),
+              genomeConfig: trackModel.type === "ruler" || trackModel.type === "dynseq"
+                ? _.cloneDeep(genomeConfig)
+                : null,
               xvaluesData: cacheTrackData[dataIdx].xvalues
                 ? cacheTrackData[dataIdx].xvalues
                 : null,

@@ -1634,7 +1634,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   }
 
   // Genome-specific tracks
-  if (trackType === "methylc" || trackType === "dynseq") {
+  if ( trackType === "dynseq") {
     return displayModeComponentMap[trackType](
       createFullParams({
         genomeConfig: drawData.genomeConfig,

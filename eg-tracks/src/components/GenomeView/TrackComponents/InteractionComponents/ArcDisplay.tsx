@@ -124,7 +124,8 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
         d={moveTo(xSpan1Center, 0) + arcTo(radius, xSpan2Center)}
         fill="none"
         opacity={opacityScale(Math.abs(score))}
-        className="ArcDisplay-emphasize-on-hover"
+              className={this.props.forceSvg ? undefined : "ArcDisplay-emphasize-on-hover"}
+
         stroke={score >= 0 ? color : color2}
         strokeWidth={lineWidth}
       // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
