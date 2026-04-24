@@ -231,9 +231,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // Eagerly init workers synchronously so the render condition sees them on the first render.
   // The useEffect below still handles adding workers when tracks grow beyond MAX_WORKERS.
   if (
-    tracks.some((t) => t.type === "genomealign") &&
+
     !fetchGenomeAlignWorker.current
   ) {
+
     fetchGenomeAlignWorker.current = {
       fetchWorker: new FetchGenomeAlignWorker(),
       hasOnMessage: false,

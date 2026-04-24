@@ -72,7 +72,7 @@ function ConfigMenuComponent(props: any) {
 
       // not off the left/top edges
       left = Math.max(8, left);
-      top = Math.max(8, top - 100);
+      top = Math.max(8, top );
 
       setPosition({ left, top });
       setVisible(true);
@@ -94,6 +94,9 @@ function ConfigMenuComponent(props: any) {
         zIndex: 99999,
         pointerEvents: visible ? "auto" : "none",
         opacity: visible ? 1 : 0,
+        maxHeight: "90vh",
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       <div

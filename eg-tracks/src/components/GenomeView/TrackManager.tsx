@@ -1636,6 +1636,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
+
     await Promise.all(
       event.data.map(async (dataItem: any) => {
         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
@@ -1752,6 +1753,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createGenomeAlignOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
+
     const regionDrawIdx = event.data.navData.trackDataIdx;
 
     const curTrackState = {
@@ -1826,6 +1828,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             completedFetchedRegion.current.groups = {};
           }
           if (fetchNewRegion || fetchedDragX === dragX.current) {
+       
             checkDrawData({
               curDataIdx: curTrackState.trackDataIdx,
               isInitial: undefined,
@@ -1836,6 +1839,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
           }
         } else {
+                
           checkDrawData({
             curDataIdx: curTrackState.trackDataIdx,
             isInitial: 0,
@@ -1940,6 +1944,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (needToFetch) {
+ 
       const dataToFetchArr: Array<any> = [];
       for (const curDataIdx of idxArr) {
         let trackToFetch: Array<TrackModel> = [];
@@ -1992,6 +1997,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (trackToFetch.length > 0) {
+     
           const genName = curGenomeConfig.current.genome.getName();
           dataToFetchArr.push({
             primaryGenName: genName,
@@ -2021,6 +2027,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       for (const key in trackManagerState.current.caches) {
         trackManagerState.current.caches[key]["firstLoad"] = false;
       }
+
       if (hasGenomeAlign.current && needToFetchGenAlign) {
         const genomeAlignTracks = trackManagerState.current.tracks.filter(
           (items, _index) => {
@@ -2599,6 +2606,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (basePerPixel.current < 10) {
           useFineModeNav.current = true;
         }
+          
+              hasGenomeAlign.current = true;
+ 
+        
       }
 
       if (
@@ -2902,19 +2913,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curGenomeConfig.current["navContext"] = userViewRegion._navContext;
 
       trackManagerState.current.genomeName = genomeConfig.genome.getName();
-      ((trackManagerState.current.tracks =
+      trackManagerState.current.tracks =
         tracks && tracks.length >= 0
           ? tracks.filter((trackModel) => trackModel.type !== "g3d")
           : genomeConfig.defaultTracks.filter(
               (trackModel) => trackModel.type !== "g3d",
-            )),
-        trackManagerState.current.tracks.map(
-          (items: { type: string }, _index: any) => {
-            if (items.type === "genomealign") {
-              hasGenomeAlign.current = true;
-            }
-          },
-        ));
+            );
 
       initializeTracks();
       preload.current = true;
