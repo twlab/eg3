@@ -87,7 +87,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
     const bpPixel = (1 / segmentWidth) * width;
     if (bpPixel < DOT_BP_PIXEL_CUTOFF) {
       const mainBody =
-        displayMode === FiberDisplayModes.AUTO ? (
+        displayMode === FiberDisplayModes.AUTO || FiberDisplayModes.DETAIL ? (
           <rect
             x={startX}
             y={rowHeight}
@@ -135,7 +135,10 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
         .clamp(true);
       xMap.forEach((x, idx) => {
         if (x.on || x.off) {
-          if (displayMode === FiberDisplayModes.AUTO) {
+          if (
+            displayMode === FiberDisplayModes.AUTO ||
+            FiberDisplayModes.DETAIL
+          ) {
             bars.push(
               <rect
                 key={idx + "bgbar"}
@@ -145,7 +148,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                 width={barWidth + (pixelsPadding || 0)}
                 fill="lightgray"
                 opacity={bgScale(totals[idx])}
-              />
+              />,
             );
             const barHeight = scale(pcts[idx]);
             bars.push(
@@ -165,11 +168,11 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                     "bar",
                     x.on,
                     pcts[idx],
-                    totals[idx]
+                    totals[idx],
                   )
                 }
                 onMouseOut={onHideTooltip}
-              />
+              />,
             );
           } else {
             const fillColor = pcts[idx] >= 0.5 ? color : color2;
@@ -190,11 +193,11 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                     "bar",
                     x.on,
                     pcts[idx],
-                    totals[idx]
+                    totals[idx],
                   )
                 }
                 onMouseOut={onHideTooltip}
-              />
+              />,
             );
           }
         }
@@ -234,10 +237,13 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
         const bs = Math.abs(rbs);
         if (bs >= relativeStart && bs < relativeEnd) {
           const fillColor = rbs > 0 ? color : color2;
-          if (displayMode === FiberDisplayModes.AUTO) {
+          if (
+            displayMode === FiberDisplayModes.AUTO ||
+            FiberDisplayModes.DETAIL
+          ) {
             const radius = Math.min(
               Math.max(bpPixel * 0.5, 2),
-              rowHeight * 0.5
+              rowHeight * 0.5,
             );
             const blockStart =
               startX + ((bs - relativeStart + 0.5) / segmentWidth) * width;
@@ -256,7 +262,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                   renderTooltip(event, feature, bs, "norm")
                 }
                 onMouseOut={onHideTooltip}
-              />
+              />,
             );
           } else {
             const rwidth = Math.max(1, bpPixel);
@@ -276,7 +282,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                   renderTooltip(event, feature, bs, "norm")
                 }
                 onMouseOut={onHideTooltip}
-              />
+              />,
             );
           }
         }
@@ -284,11 +290,14 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
       feature.offs.forEach((rbs, idx) => {
         const bs = Math.abs(rbs);
         if (bs >= relativeStart && bs < relativeEnd) {
-          if (displayMode === FiberDisplayModes.AUTO) {
+          if (
+            displayMode === FiberDisplayModes.AUTO ||
+            FiberDisplayModes.DETAIL
+          ) {
             const fillColor = rbs > 0 ? color : color2;
             const radius = Math.min(
               Math.max(bpPixel * 0.5, 2),
-              rowHeight * 0.5
+              rowHeight * 0.5,
             );
             const blockStart =
               startX + ((bs - relativeStart + 0.5) / segmentWidth) * width;
@@ -308,7 +317,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                   renderTooltip(event, feature, bs, "norm")
                 }
                 onMouseOut={onHideTooltip}
-              />
+              />,
             );
           } else {
             const rwidth = Math.max(1, bpPixel);
@@ -328,7 +337,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                   renderTooltip(event, feature, bs, "norm")
                 }
                 onMouseOut={onHideTooltip}
-              />
+              />,
             );
           }
         }

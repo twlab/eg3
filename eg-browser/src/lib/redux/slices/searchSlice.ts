@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "../store";
+import { RootState } from "../createStore";
 
 export type SlashCommandType = 'gene' | 'region' | 'track' | 'epigenome';
 

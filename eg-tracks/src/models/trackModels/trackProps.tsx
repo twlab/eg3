@@ -13,7 +13,7 @@ export interface TrackProps {
   userViewRegion?: DisplayedRegionModel;
   handleDelete: (trackIndex: number) => void;
   globalTrackState: any;
-  trackFetchedDataCache: any;
+  trackManagerState: any;
   dragX?: number;
   genomeConfig: any;
   genomeName?: string;

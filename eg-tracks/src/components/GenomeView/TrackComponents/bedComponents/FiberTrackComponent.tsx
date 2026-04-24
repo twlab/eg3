@@ -102,7 +102,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     getAnnotationTrack,
     trackState,
     renderTooltip,
-
+    xvaluesData,
     updatedLegend,
     viewWindow,
   } = props;
@@ -278,6 +278,13 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
           trackModel={trackModel}
           height={height}
           forceSvg={forceSvg}
+          axisScale={
+            (trackState.visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
+              options.displayMode === FiberDisplayModes.AUTO) ||
+            options.displayMode === FiberDisplayModes.SUMMARY
+              ? scales.pctToY
+              : scales.countToY
+          }
         />
       </div>
     );
@@ -354,36 +361,14 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     );
   };
 
-  if (
-    (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
-      options.displayMode === FiberDisplayModes.AUTO) ||
-    options.displayMode === FiberDisplayModes.SUMMARY
-  ) {
-    const { xToFibers: xMap, placements } = aggregateFibers(
-      data,
-      visRegion,
-      width,
-    );
+  let xvalues =
+    xvaluesData && options.usePrimaryNav
+      ? xvaluesData
+      : aggregateFibers(data, visRegion, width);
 
-    const scales = computeScales(xMap, options.height);
+  const scales = computeScales(xvalues.xToFibers, options.height);
 
-    return visualizer(xMap, scales, placements);
-  }
-
-  return getAnnotationTrack["full"]({
-    formattedData: data,
-    trackState: trackState,
-    windowwidth: width / 3 + 120,
-    configOptions: options,
-    renderTooltip: renderTooltip,
-    svgHeight: svgHeight,
-    updatedLegend: updatedLegend,
-    trackModel: trackModel,
-    getGenePadding: getGenePadding,
-    getHeight: getHeight,
-    ROW_HEIGHT: ROW_HEIGHT,
-    onClose,
-  }).component;
+  return visualizer(xvalues.xToFibers, scales, xvalues.placements);
 };
 
 export default FiberTrackComponent;

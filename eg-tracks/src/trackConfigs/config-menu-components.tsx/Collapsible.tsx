@@ -23,7 +23,7 @@ const Collapsible: React.FC<CollapsibleProps> = ({ trigger, children }) => {
   const buttonStyle: CSSProperties = {
     // backgroundColor: "#f9f9f9",
     cursor: "pointer",
-    padding: "6px",
+
     border: "none",
     textAlign: "left",
     outline: "none",
@@ -44,9 +44,7 @@ const Collapsible: React.FC<CollapsibleProps> = ({ trigger, children }) => {
     // padding: "0 18px",
   };
 
-  const TrackContextMenuItemStyle: CSSProperties = {
-    margin: "10px 0",
-  };
+  const TrackContextMenuItemStyle: CSSProperties = {};
 
   return (
     <div>

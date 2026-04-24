@@ -73,6 +73,7 @@ import VcfTrack from "./VcfComponents/VcfTrack";
 import Bedcolor from "./bedComponents/Bedcolor";
 
 import { generateUUID } from "../../../util";
+import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 export const bigWithNavTracks = new Set([
   "repeat",
@@ -118,6 +119,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     ROW_HEIGHT,
     onClose,
     scales,
+    placeFeature,
   }) {
     function createFullVisualizer(
       placements,
@@ -682,47 +684,55 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
 
-    function getHeight(numRows: number): number {
-      let rowHeight = ROW_HEIGHT;
-      let options = configOptions;
+    let placeFeatureData;
+    let numHidden = 0;
+    let height = 0;
+    if (!placeFeature) {
+      function getHeight(numRows: number): number {
+        let rowHeight = ROW_HEIGHT;
+        let options = configOptions;
 
-      let rowsToDraw = Math.min(numRows, options.maxRows);
-      if (options.hideMinimalItems) {
-        rowsToDraw -= 1;
-      }
-      if (rowsToDraw < 1) {
-        rowsToDraw = 1;
+        let rowsToDraw = Math.min(numRows, options.maxRows);
+        if (options.hideMinimalItems) {
+          rowsToDraw -= 1;
+        }
+        if (rowsToDraw < 1) {
+          rowsToDraw = 1;
+        }
+
+        return trackModel.type === "modbed"
+          ? (rowsToDraw + 1) * rowHeight + 2
+          : rowsToDraw * rowHeight + TOP_PADDING;
       }
 
-      return trackModel.type === "modbed"
-        ? (rowsToDraw + 1) * rowHeight + 2
-        : rowsToDraw * rowHeight + TOP_PADDING;
+      let featureArrange = new FeatureArranger();
+      let sortType = SortItemsOptions.NOSORT;
+
+      placeFeatureData = featureArrange.arrange(
+        formattedData,
+        trackState.visRegion,
+        trackState.visWidth,
+        getGenePadding,
+        configOptions.hiddenPixels,
+        sortType,
+        trackState.viewWindow,
+      );
+
+      numHidden = placeFeatureData.numHidden;
+      height =
+        trackModel.type === "repeatmasker" ||
+        trackModel.type === "rmskv2" ||
+        trackModel.type === "categorical" ||
+        trackModel.type === "modbed"
+          ? configOptions.height
+          : placeFeatureData.numRowsAssigned
+            ? getHeight(placeFeatureData.numRowsAssigned)
+            : 40;
+    } else {
+      placeFeatureData = placeFeature.placements;
+      height = placeFeature.height;
+      numHidden = placeFeature.numHidden;
     }
-
-    let featureArrange = new FeatureArranger();
-    let sortType = SortItemsOptions.NOSORT;
-
-    const placeFeatureData = featureArrange.arrange(
-      formattedData,
-      objToInstanceAlign(trackState.visRegion),
-      trackState.visWidth,
-      getGenePadding,
-      configOptions.hiddenPixels,
-      sortType,
-      trackState.viewWindow,
-    );
-
-    let height;
-    height =
-      trackModel.type === "repeatmasker" ||
-      trackModel.type === "rmskv2" ||
-      trackModel.type === "categorical" ||
-      trackModel.type === "modbed"
-        ? configOptions.height
-        : placeFeatureData.numRowsAssigned
-          ? getHeight(placeFeatureData.numRowsAssigned)
-          : 40;
-
     const legend = (
       <TrackLegend
         height={height}
@@ -740,7 +750,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (updatedLegend) {
       updatedLegend.current = legend;
     }
-
+    if (svgHeight) {
+      svgHeight.current = height;
+    }
     const svgDATA = createFullVisualizer(
       placeFeatureData.placements,
       trackState.visWidth,
@@ -749,11 +761,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
       configOptions.maxRows,
       legend,
     );
-    if (svgHeight) {
-      svgHeight.current = height;
-    }
 
-    return { component: svgDATA, numHidden: placeFeatureData.numHidden };
+    return { component: svgDATA, numHidden: numHidden };
   },
 
   density: function getDensity({
@@ -775,7 +784,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
@@ -809,7 +818,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         getGenePadding={getGenePadding}
@@ -839,7 +848,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <QBedTrackComponents
         data={formattedData}
         options={configOptions}
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         viewWindow={
           trackState.viewWindow
@@ -874,7 +883,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
@@ -903,7 +912,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
@@ -928,7 +937,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewWindow={
           new OpenInterval(trackState.startWindow, trackState.startWindow * 2)
         }
-        visRegion={objToInstanceAlign(trackState.visRegion)}
+        visRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
@@ -951,7 +960,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         data={formattedData}
         options={configOptions}
         viewWindow={new OpenInterval(0, trackState.visWidth)}
-        visRegion={objToInstanceAlign(trackState.visRegion)}
+        visRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         svgHeight={svgHeight}
@@ -974,7 +983,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         data={formattedData}
         options={configOptions}
         viewWindow={new OpenInterval(0, trackState.visWidth)}
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
@@ -997,7 +1006,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         data={formattedData}
         options={configOptions}
         viewWindow={new OpenInterval(0, trackState.visWidth)}
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
@@ -1032,7 +1041,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         }
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
-        visRegion={objToInstanceAlign(trackState.visRegion)}
+        visRegion={trackState.visRegion}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         isLoading={false}
@@ -1070,7 +1079,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        visRegion={objToInstanceAlign(trackState.visRegion)}
+        visRegion={trackState.visRegion}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
@@ -1102,7 +1111,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
@@ -1137,7 +1146,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             ? trackState.viewWindow
             : new OpenInterval(0, trackState.visWidth)
         }
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
@@ -1230,7 +1239,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             style={{
               display: "flex",
               position: "relative",
-              width: drawData.trackState.visWidth / 3,
+              width: drawData.trackState.visWidth / 3 + 120,
               overflow: "hidden",
             }}
           >
@@ -1332,7 +1341,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               position: "relative",
 
               overflow: "hidden",
-              width: drawData.trackState.visWidth / 3,
+              width: drawData.trackState.visWidth / 3 + 120,
             }
           : {};
         let curEleStyle: any = drawData.configOptions.forceSvg
@@ -1486,9 +1495,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
 };
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
-  const { trackModel, configOptions, genesArr } = drawData;
+  const { trackModel, configOptions, genesArr, trackState } = drawData;
+
   const trackType = trackModel.type;
 
+  if (trackState?.visRegion)
+    trackState["visRegion"] = objToInstanceAlign(trackState.visRegion);
   // Helper function to create common parameters
   const createCommonParams = (extraParams = {}) => ({
     trackState: drawData.trackState,
@@ -1510,6 +1522,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     getGenePadding: drawData.getGenePadding,
     getHeight: drawData.getHeight,
     xvaluesData: drawData.xvaluesData,
+    placeFeature: drawData.placeFeature,
     ...createCommonParams(extraParams),
   });
 
@@ -1571,13 +1584,29 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
 
   // Special parameter cases
   if (trackType === "modbed") {
-    return displayModeComponentMap.modbed(
-      createFullParams({
-        ROW_HEIGHT: configOptions.rowHeight + 2,
-        onHideToolTip: drawData.onHideToolTip,
-        onClose: drawData.onClose,
-      }),
-    );
+    if (trackState.visRegion) {
+      if (
+        (trackState.visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
+          configOptions.displayMode === FiberDisplayModes.AUTO) ||
+        configOptions.displayMode === FiberDisplayModes.SUMMARY
+      ) {
+        return displayModeComponentMap.modbed(
+          createFullParams({
+            ROW_HEIGHT: configOptions.rowHeight + 2,
+            onHideToolTip: drawData.onHideToolTip,
+            onClose: drawData.onClose,
+          }),
+        );
+      } else {
+        return displayModeComponentMap.full(
+          createFullParams({
+            ROW_HEIGHT: configOptions.rowHeight + 2,
+            onHideToolTip: drawData.onHideToolTip,
+            onClose: drawData.onClose,
+          }),
+        );
+      }
+    }
   }
 
   if (interactionTracks.has(trackType)) {

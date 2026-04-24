@@ -1,62 +1,80 @@
 # Version history
+
+## 60.0.3
+
+- fixed grouping
+- fixed sessions upload for genomealign
+
 ## 60.0.1
-- fixed longrange and hic 
+
+- fixed longrange and hic
 
 ## 60.0.0
+
 - to be added
 
 ## 59.4.1
+
 - when zoomed in, while in modbed summary mode, rect now has same width as base instead of one pixel line
 
 ## 59.4.0
+
 - fixed bug where you can't add tracks when there are no tracks
 - added genome
 
 ## 59.3.1
+
 - Added summary and detail displayMode to modbed
 
 ## 59.3.0
+
 - Allow consuming app, to obtain session data when used as a package
 
 ## 59.2.5
-- improved initial load 
+
+- improved initial load
 - fixed bug causing slow down when viewing vcf tracks
 - added export function, for users using package to obtain information about the trackstate
 
 ## 59.2.4
+
 - fixed performance issue when dragging track due to translateX
 - fixed performance issue when updating pointer position on track
 
 ## 59.2.3
+
 - added height and width property to package, user can change the size of container holding tracks
 
 ## 59.2.2
+
 - fixed config menu position in package
-- fixed bin and normalize options for hic track 
+- fixed bin and normalize options for hic track
 
 ## 59.2.1
+
 - recreated ReactModal and removed dependency on package
-- recreated trackfacet and table 
+- recreated trackfacet and table
 - fixed zIndex issue in package version where modal components behind other components
 - fixed trackConfig positioning issue in package
 
 ## 59.1.1
+
 - fixed vcf not updating when changing zooming and viewRegion
 - fixed screenshot causing crash when dragging track after opening and closing screenshot menu
-- fixed dbedgraph not displaying 
+- fixed dbedgraph not displaying
 - fixed css for some track during screenshot view
 - change browser back to save state after refresh
-- refactor tracklegend 
+- refactor tracklegend
 - mute some redux error
 
-
 ## 59.1.0
+
 - added config options to change tracklegend font color
 - fixed toolbar issue where click might not work
-- added more conditions to prevent tracks from redrawing 
+- added more conditions to prevent tracks from redrawing
 - fixed height issue with categorical tracks
-- fixed vcf zoom causing crash 
-- query genome follows genomealign in rough mode 
+- fixed vcf zoom causing crash
+- query genome follows genomealign in rough mode
 - outsideclicks now unselects and close config menu
 - added query genome Annotation tracks selection when user add genomealign
 - fixed crash when user move tracks when screenshot is open

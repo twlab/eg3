@@ -629,6 +629,7 @@ function AddDataHubs() {
     dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));
   };
   const handleFileUpload = async (file: File | null) => {
+
     if (!file) {
       return;
     }
@@ -639,6 +640,7 @@ function AddDataHubs() {
       const parser = new DataHubParser();
 
       const tracks = parser.getTracksInHub(json, "Custom hub");
+
       const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
       if (tracksToShow.length > 0) {
         dispatch(

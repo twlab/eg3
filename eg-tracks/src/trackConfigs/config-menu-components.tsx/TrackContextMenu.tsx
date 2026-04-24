@@ -39,7 +39,7 @@ export function RemoveOption(props) {
   return (
     <div
       onClick={() => props.onClick(props.trackId)}
-      className="TrackContextMenu-item TrackContextMenu-hoverable-item-danger"
+      className="TrackContextMenu-hoverable-item-danger"
     >
       {/* eslint-disable-next-line jsx-a11y/accessible-emoji */}❌{" "}
       {props.numTracks > 1 ? `Remove ${props.numTracks} tracks` : "Remove"}
@@ -54,7 +54,6 @@ export function HicBinSizeNormOptionConfig(props) {
 
   const isHicTracks = tracks.map((track) => track.type === "hic");
 
-
   if (!_.every(isHicTracks, Boolean)) {
     return null;
   }
@@ -62,7 +61,6 @@ export function HicBinSizeNormOptionConfig(props) {
   const allResolutions: Array<any> = [],
     allNormOptions: Array<any> = [];
   if (fileInfos) {
-
     Object.keys(fileInfos).forEach((trackId) => {
       if (!fileInfos[trackId]) {
         return;
@@ -77,7 +75,7 @@ export function HicBinSizeNormOptionConfig(props) {
   const commonResolutionsObj = { AUTO: 0 },
     commonNormOptionsObj = { NONE: "NONE" };
   commonResolutions.forEach(
-    (r) => (commonResolutionsObj[niceCount(r as number)] = r)
+    (r) => (commonResolutionsObj[niceCount(r as number)] = r),
   );
   commonNormOptions.forEach((r) => (commonNormOptionsObj[r as string] = r));
   return (
@@ -139,7 +137,7 @@ export function TrackMoreInfo(props) {
     info.push(
       <div key="details">
         <ObjectAsTable title="Details" content={track.details} />
-      </div>
+      </div>,
     );
   }
   if (track.url) {
@@ -149,7 +147,7 @@ export function TrackMoreInfo(props) {
           URL <CopyToClip value={track.url} />
         </h6>
         <p className="TrackContextMenu-URL">{track.url}</p>
-      </div>
+      </div>,
     );
   }
   if (track.indexUrl) {
@@ -159,14 +157,14 @@ export function TrackMoreInfo(props) {
           Index URL <CopyToClip value={track.indexUrl} />
         </h6>
         <p className="TrackContextMenu-URL">{track.indexUrl}</p>
-      </div>
+      </div>,
     );
   }
   if (track.metadata) {
     info.push(
       <div key="metadata">
         <ObjectAsTable title="Metadata" content={track.metadata} />
-      </div>
+      </div>,
     );
   }
   return (

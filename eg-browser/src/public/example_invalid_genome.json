@@ -1,0 +1,9 @@
+{
+    "genomeName": "SARS-CoV-2",
+    "chromosomes": [
+        {
+            "name": "Wuhan-1",
+            "length": 27000
+        }
+    ]
+}

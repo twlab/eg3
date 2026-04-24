@@ -4,7 +4,7 @@ import {
   PayloadAction,
 } from "@reduxjs/toolkit";
 import { IGenome } from "wuepgg3-track";
-import { RootState } from "../store";
+import { RootState } from "../createStore";
 
 const genomeHubAdapter = createEntityAdapter<IGenome>({
   sortComparer: (a, b) => a.name.localeCompare(b.name),

@@ -119,12 +119,13 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
     ]);
     return (
       <path
-        key={placedInteraction.generateKey() + index}
+      key={crypto.randomUUID() + index}
         // d={moveTo(xSpan1Center, 0) + quadraticCurveTo(spanCenter, curveYScale(spanLength), xSpan2Center, 0)}
         d={moveTo(xSpan1Center, 0) + arcTo(radius, xSpan2Center)}
         fill="none"
         opacity={opacityScale(Math.abs(score))}
-        className="ArcDisplay-emphasize-on-hover"
+              className={this.props.forceSvg ? undefined : "ArcDisplay-emphasize-on-hover"}
+
         stroke={score >= 0 ? color : color2}
         strokeWidth={lineWidth}
       // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
@@ -233,12 +234,6 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
     return items;
   };
 
-  set3dAnchors = (anchors: any) => {
-    if (this.props.onSetAnchors3d) {
-      this.props.onSetAnchors3d(anchors);
-    }
-    this.props.onHideTooltip();
-  };
 
   // clickTooltip = (event: React.MouseEvent) => {
   //     if (this.props.isThereG3dTrack) {
@@ -271,6 +266,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       fetchViewWindowOnly,
       bothAnchorsInView,
       options,
+      legend
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
@@ -282,18 +278,35 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       .clamp(false);
 
     const sortedInteractions = placedInteractions.slice().sort((a, b) => b.interaction.score - a.interaction.score);
-    const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
-    return (
-      <>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
+    
+  const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
+    
+      let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
-            zIndex: 3,
-          }}
-        >
+          overflow: "hidden",
+          width: width / 3 + 120,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
+    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+  return (
+    <React.Fragment>
+            {!forceSvg ? ( <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              ...hoverStyle,
+              zIndex: 3,
+            }}
+          >
           <HoverToolTip
             data={this.arcData}
             windowWidth={width}
@@ -303,7 +316,10 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
             hasReverse={true}
             options={options}
           />
-        </div>
+        </div> ) : (
+          ""
+        )}
+
         {placedInteractions.length === 0 ? (
           <div
             style={{
@@ -312,15 +328,25 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
             }}
           ></div>
         ) : (
+                <div style={{ display: "flex", ...curParentStyle }}>
+            {(forceSvg || options.packageVersion) && legend ? legend : ""}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
           <DesignRenderer
             type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
             width={width}
             height={height}
           >
             {slicedInteractions.map(this.renderArc)}
-          </DesignRenderer>
+          </DesignRenderer>  </div>
+          </div>
         )}
-      </>
+       </React.Fragment>
     );
   }
 }

@@ -110,12 +110,12 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
           ...defaults,
           ...userOptions,
           packageVersion: true,
-          trackManagerRef: interactionTracks.has(type) ? block : null,
+          trackManagerRef: interactionTracks.has(type) ? block.current : null,
         }
       : {
           ...defaults,
           packageVersion: true,
-          trackManagerRef: interactionTracks.has(type) ? block : null,
+          trackManagerRef: interactionTracks.has(type) ? block.current : null,
         };
   }
   function getTrackModels(genomeConfig: any, genomeViewId: string) {

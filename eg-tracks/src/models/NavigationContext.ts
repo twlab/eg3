@@ -364,7 +364,7 @@ class NavigationContext {
           endFeature.locus.start +
           this._minCoordinateForFeature.get(endFeature);
       }
-
+  
       return new OpenInterval(startContextCoord, endContextCoord);
     }
 

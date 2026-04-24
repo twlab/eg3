@@ -252,6 +252,7 @@ export function TrackContainerRepresentable({
   }
   const handleNewRegion = useCallback(
     (startbase: number, endbase: number) => {
+
       let newCoordinate;
       if (selectedRegionSet) {
         let setNavContext;

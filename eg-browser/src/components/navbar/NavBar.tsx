@@ -11,7 +11,6 @@ import {
   BackspaceIcon,
   Bars3Icon,
   XMarkIcon,
-  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import classNames from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
@@ -26,7 +25,7 @@ import {
   selectSessionPanelOpen,
   setNavigationTab,
   setSessionPanelOpen,
-  selectNavSearchOpen,
+
   setNavSearchOpen,
 } from "../../lib/redux/slices/navigationSlice";
 import { getSpeciesInfo } from "../genome-picker/genome-list";
@@ -58,7 +57,7 @@ import SessionToggleButton from "../sessions/SessionToggleButton";
 export default function NavBar(props) {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [storageError, setStorageError] = useState<string | null>(null);
+
   const navRef = useRef<HTMLDivElement | null>(null);
   const tabButtonsRef = useRef<HTMLDivElement | null>(null);
   const [tabAnchorLeft, setTabAnchorLeft] = useState<number | null>(null);
@@ -245,30 +244,10 @@ export default function NavBar(props) {
 
   return (
     <>
-      {storageError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 text-sm flex justify-between items-center ">
-          <span>{storageError}</span>
-          <button
-            onClick={() => {
-              if (
-                confirm(
-                  "Clear all local sessions to free up space? This cannot be undone.",
-                )
-              ) {
-                localStorage.clear();
-                window.location.reload();
-              }
-            }}
-            className="ml-4 underline font-semibold"
-          >
-            Clear Storage
-          </button>
-        </div>
-      )}
       {/* Single full-width navbar row */}
       <div
         ref={navRef}
-        className="flex flex-row py-1 items-center outline outline-gray-300 bg-white dark:bg-dark-background border-b border-gray-300 dark:border-gray-600 px-4 relative  gap-2"
+        className="flex flex-row py-1 items-center outline outline-gray-300 bg-white dark:bg-dark-secondary border-b border-gray-300 dark:border-gray-600 px-4 relative  gap-2"
       >
         {/* Back button */}
         {currentSession ? (

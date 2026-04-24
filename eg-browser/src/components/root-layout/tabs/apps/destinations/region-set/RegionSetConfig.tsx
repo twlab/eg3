@@ -140,7 +140,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         return item;
       }
     });
-    console.log(parsed, parsed2);
+
     const nullList = parsed2.filter(
       (item) => item === null || "statusCode" in item,
     );

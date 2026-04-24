@@ -34,6 +34,7 @@ import {
   setNavigatorVisibility,
   setToolBarVisibility,
   selectIsNavBarVisible,
+  setDarkTheme,
 } from "@/lib/redux/slices/settingsSlice";
 import {
   selectNavigationTab,
@@ -42,7 +43,6 @@ import {
   setNavSearchOpen,
 } from "@/lib/redux/slices/navigationSlice";
 import {
-
   setToggleTool,
   escapeTools,
   resetUtility,
@@ -55,12 +55,17 @@ import {
   getGenomeConfig,
   ITrackModel,
   GenomeCoordinate,
+  GenomeSerializer,
+  GenomeHubManager,
   IGenome,
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
 import ResizablePanel from "../ui/panel/ResizablePanel";
 import { PortalContext, EscapeHandlerContext } from "wuepgg3-track";
+import { addCustomGenomeRemote } from "../../lib/redux/thunk/genome-hub";
+import { AppProps } from "../../App";
+import { current } from "@reduxjs/toolkit";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -71,33 +76,9 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-export interface RootLayoutProps {
-  viewRegion?: string | null | undefined;
-  genomeName?: string;
-  tracks?: Array<any> | ITrackModel[];
-  windowWidth?: number;
-  customGenome?: any;
-  showGenomeNavigator?: boolean;
-  // showNavBar?: boolean;
-  // showToolBar?: boolean;
-}
-
-export interface GenomeHubProps {
-  viewRegion?: string | null | undefined;
-  genomeName?: string;
-  tracks?: Array<any> | ITrackModel[];
-  windowWidth?: number;
-  customGenome?: any;
-  showGenomeNavigator?: boolean;
-  showNavBar?: boolean;
-  showToolBar?: boolean;
-  width?: number;
-  height?: number;
-}
-
-export default function RootLayout(props: GenomeHubProps) {
+export default function RootLayout(props: AppProps) {
   useBrowserInitialization();
-  const rootRef = useRef<HTMLDivElement>(null);
+
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
     null,
   );
@@ -107,13 +88,13 @@ export default function RootLayout(props: GenomeHubProps) {
   const sessions = useAppSelector(selectSessions);
   const currentSession = useAppSelector(selectCurrentSession);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const initialState = useRef(true);
   const { clearHistory } = useUndoRedo();
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const navBarRef = useRef<HTMLDivElement>(null);
   const [navBarHeight, setNavBarHeight] = useState(48);
   const currentTab = useAppSelector(selectNavigationTab);
   const navSearchOpen = useAppSelector(selectNavSearchOpen);
+  const initialState = useRef(true);
   const year = useMemo(() => new Date().getFullYear(), []);
   useEffect(() => {
     const el = navBarRef.current;
@@ -165,9 +146,11 @@ export default function RootLayout(props: GenomeHubProps) {
 
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
-    (props.genomeName && props.tracks && props.viewRegion) ||
-    props.customGenome;
-
+    (props.genomeName || (props.genomeName && props.chromosomes)) &&
+    props.tracks &&
+    props.viewRegion;
+  const emptyPropsPackageMode =
+    props.genomeName || props.tracks || props.viewRegion;
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
@@ -180,27 +163,11 @@ export default function RootLayout(props: GenomeHubProps) {
     dispatch(resetState());
     dispatch(resetUtility());
     clearHistory();
-
   }, [sessionId]);
   const showNavBar = isPackageMode ? isNavBarVisible : true;
-  function getConfig() {
-    if (props.customGenome) {
-      try {
-        return props.customGenome;
-      } catch {
-        return null;
-      }
-    }
-    if (props.genomeName) {
-      return getGenomeConfig(props.genomeName);
-    }
-    return null;
-  }
 
   useEffect(() => {
-    // Only apply visibility props in package mode
-
-    if (isPackageMode) {
+    if (isPackageMode || emptyPropsPackageMode) {
       if (typeof props.showGenomeNavigator === "boolean") {
         dispatch(setNavigatorVisibility(props.showGenomeNavigator));
       }
@@ -209,6 +176,9 @@ export default function RootLayout(props: GenomeHubProps) {
       }
       if (typeof props.showToolBar === "boolean") {
         dispatch(setToolBarVisibility(props.showToolBar));
+      }
+      if (typeof props.darkMode === "boolean") {
+        dispatch(setDarkTheme(props.darkMode));
       }
     }
     // In web mode, ensure defaults are set to true (override any persisted false values)
@@ -222,99 +192,207 @@ export default function RootLayout(props: GenomeHubProps) {
     props.showGenomeNavigator,
     props.showNavBar,
     props.showToolBar,
+
+    props.darkMode,
   ]);
 
   useEffect(() => {
-    let usePrevSession = false;
-
-    if (initialState.current && sessionId) {
-      usePrevSession = true;
-      initialState.current = false;
-    } else if (!initialState.current) {
-      usePrevSession = false;
-    }
+    let viewRegion: any = props.viewRegion;
 
     if (
-      !usePrevSession &&
-      ((props.genomeName && props.tracks && props.viewRegion) ||
-        props.customGenome)
+      props.viewRegion &&
+      typeof props.viewRegion === "object" &&
+      !Array.isArray(props.viewRegion)
     ) {
-      const genomeConfig: IGenome | null = getConfig();
-      if (genomeConfig) {
-        if (!sessionId) {
-          if (genomeConfig?.chromosomes && genomeConfig?.name) {
-            const genome = genomeConfig;
-
-            let additionalTracks: ITrackModel[] = props.tracks as ITrackModel[];
-
-            dispatch(
-              createSession({
-                genome,
-                viewRegion:
-                  typeof props.viewRegion === "string" ||
-                    props.viewRegion === null
-                    ? undefined
-                    : props.viewRegion,
-                additionalTracks,
-                width:
-                  props.width !== null && props.width !== undefined
-                    ? props.width
-                    : null,
-                height:
-                  props.height !== null && props.height !== undefined
-                    ? props.height
-                    : null,
-              }),
-            );
-          }
-        } else {
-          dispatch(
-            updateCurrentSession({
-              tracks: props.tracks as ITrackModel[],
-              viewRegion:
-                typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
-                  ? undefined
-                  : (props.viewRegion as GenomeCoordinate),
-              userViewRegion:
-                typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
-                  ? undefined
-                  : (props.viewRegion as GenomeCoordinate),
-              genomeId: props.genomeName,
-              customGenome: props.customGenome,
-              width:
-                props.width !== null && props.width !== undefined
-                  ? props.width
-                  : null,
-              height:
-                props.height !== null && props.height !== undefined
-                  ? props.height
-                  : null,
-            }),
-          );
-        }
+      if (props.viewRegion["genomeCoordinate"]) {
+        viewRegion = viewRegion["genomeCoordinate"];
       }
     }
-  }, [
-    props.genomeName,
-    props.tracks,
-    props.viewRegion,
-    props.customGenome,
-    sessionId,
-  ]);
+
+    let curGenomeConfig: any = null;
+    if (
+      props.chromosomes &&
+      props.chromosomes.length > 0 &&
+      props.tracks &&
+      typeof props.genomeName === "string"
+    ) {
+      const _newGenomeConfig = {
+        id: props.genomeName,
+        name: props.genomeName,
+        chromosomes: props.chromosomes,
+        defaultTracks: props.tracks.map((item: any) => ({
+          ...item,
+          waitToUpdate: true,
+        })),
+      };
+
+      dispatch(addCustomGenomeRemote(_newGenomeConfig));
+      curGenomeConfig = _newGenomeConfig;
+    } else if (
+      typeof props.genomeName === "string" &&
+      getGenomeConfig(props.genomeName)
+    ) {
+      const genomeconfig = getGenomeConfig(props.genomeName);
+      curGenomeConfig = GenomeSerializer.serialize(genomeconfig);
+    } else if (typeof props.genomeName === "string") {
+      curGenomeConfig = GenomeHubManager.getInstance().getGenomeFromCache(
+        props.genomeName,
+      );
+    }
+
+    if (curGenomeConfig && !sessionId && isPackageMode) {
+      dispatch(
+        createSession({
+          genome: curGenomeConfig as IGenome,
+
+          viewRegion:
+            typeof viewRegion !== "string" || viewRegion === null
+              ? undefined
+              : (viewRegion as GenomeCoordinate),
+
+          additionalTracks: props.tracks ? (props.tracks as ITrackModel[]) : [],
+          width:
+            props.width !== null && props.width !== undefined
+              ? props.width
+              : null,
+          height:
+            props.height !== null && props.height !== undefined
+              ? props.height
+              : null,
+        }),
+      );
+    } else if (curGenomeConfig && sessionId && isPackageMode) {
+      dispatch(
+        updateCurrentSession({
+          tracks: props.tracks || ([] as ITrackModel[]),
+          viewRegion: viewRegion as GenomeCoordinate,
+          userViewRegion: viewRegion as GenomeCoordinate,
+        }),
+      );
+    }
+
+    initialState.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (
+      sessionId &&
+      props.viewRegion &&
+      props.genomeName && props.tracks&&
+      isPackageMode &&
+      !initialState.current
+    ) {
+      let viewRegion: any = props.viewRegion;
+
+      if (
+        props.viewRegion &&
+        typeof props.viewRegion === "object" &&
+        !Array.isArray(props.viewRegion)
+      ) {
+        if (props.viewRegion["genomeCoordinate"]) {
+          viewRegion = viewRegion["genomeCoordinate"];
+        }
+      }
+
+      let curGenomeConfig: any = null;
+      if (
+        props.chromosomes &&
+        props.chromosomes.length > 0 &&
+        props.tracks &&
+        typeof props.genomeName === "string"
+      ) {
+        const _newGenomeConfig = {
+          id: props.genomeName,
+          name: props.genomeName,
+          chromosomes: props.chromosomes,
+          defaultTracks: props.tracks.map((item: any) => ({
+            ...item,
+            waitToUpdate: true,
+          })),
+        };
+
+        dispatch(addCustomGenomeRemote(_newGenomeConfig));
+        curGenomeConfig = _newGenomeConfig;
+      } else if (
+        typeof props.genomeName === "string" &&
+        getGenomeConfig(props.genomeName)
+      ) {
+        const genomeconfig = getGenomeConfig(props.genomeName);
+        curGenomeConfig = GenomeSerializer.serialize(genomeconfig);
+      } else if (typeof props.genomeName === "string") {
+        curGenomeConfig = GenomeHubManager.getInstance().getGenomeFromCache(
+          props.genomeName,
+        );
+      }
+
+      if (curGenomeConfig && currentSession && viewRegion && props.genomeName && props.tracks) {
+        dispatch(
+          updateCurrentSession({
+            genomeId: props.genomeName,
+            tracks:
+              props.tracks.map((item: any) => ({
+                ...item,
+                waitToUpdate: true,
+              })) || ([] as ITrackModel[]),
+            viewRegion: viewRegion as GenomeCoordinate,
+            userViewRegion: viewRegion as GenomeCoordinate,
+          }),
+        );
+      }
+    }
+  }, [props.genomeName]);
+
+  useEffect(() => {
+    if (
+      sessionId &&
+      props.viewRegion &&
+      isPackageMode &&
+      !initialState.current
+    ) {
+      let viewRegion: any = props.viewRegion;
+
+      if (
+        props.viewRegion &&
+        typeof props.viewRegion === "object" &&
+        !Array.isArray(props.viewRegion)
+      ) {
+        if (props.viewRegion["genomeCoordinate"]) {
+          viewRegion = viewRegion["genomeCoordinate"];
+        }
+      }
+
+      if (currentSession && viewRegion) {
+        dispatch(
+          updateCurrentSession({
+            viewRegion: viewRegion,
+            userViewRegion: viewRegion,
+          }),
+        );
+      }
+    }
+  }, [props.viewRegion]);
+
+  useEffect(() => {
+    if (sessionId && props.tracks && isPackageMode && !initialState.current) {
+      if (currentSession) {
+        dispatch(
+          updateCurrentSession({
+            tracks: props?.tracks ? props.tracks : [],
+          }),
+        );
+      }
+    }
+  }, [props.tracks]);
 
   return (
     <EscapeHandlerContext.Provider value={escapeHandlerRef}>
       <PortalContext.Provider value={portalContainer}>
         <div
-          ref={rootRef}
           className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
           data-theme={darkTheme ? "dark" : "light"}
           style={{ position: "relative", overflowX: "hidden" }}
         >
-          <GoogleAnalytics />
-
+          {props.showDisclosure === false ? "" : <GoogleAnalytics />}
           <div className="flex flex-col h-full text-primary dark:text-white bg-secondary dark:bg-dark-secondary ">
             {showNavBar === false ? (
               ""
@@ -323,7 +401,6 @@ export default function RootLayout(props: GenomeHubProps) {
                 <NavBar
                   leftPanelOpen={leftPanelOpen}
                   setLeftPanelOpen={setLeftPanelOpen}
-
                   sessionId={sessionId}
                   sessions={sessions}
                   currentSession={currentSession}
@@ -336,7 +413,6 @@ export default function RootLayout(props: GenomeHubProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-
                   className="absolute right-0 h-full z-60"
                   style={{ top: navBarHeight }}
                 >
@@ -361,13 +437,9 @@ export default function RootLayout(props: GenomeHubProps) {
             </AnimatePresence>
 
             <div>
-
-
               {/* MARK: - Main Content */}
 
-              <div
-                className="flex flex-1 h-full relative"
-              >
+              <div className="flex flex-1 h-full relative">
                 {/* MARK: - Genome View */}
                 <div
                   className="flex-1 overflow-y-auto relative bg-white dark:bg-dark-background"
@@ -375,7 +447,7 @@ export default function RootLayout(props: GenomeHubProps) {
                     zIndex: 5,
                   }}
                 >
-                  {!sessionId && (
+                  {!sessionId && !emptyPropsPackageMode ? (
                     <TabView<"picker" | "add" | "import">
                       centerTabs
                       initialTab={"picker"}
@@ -397,6 +469,28 @@ export default function RootLayout(props: GenomeHubProps) {
                         },
                       ]}
                     />
+                  ) : !sessionId && emptyPropsPackageMode ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "200px",
+                        fontSize: "1.2em",
+                      }}
+                    >
+                      <span
+                        role="img"
+                        aria-label="cat"
+                        style={{ fontSize: "2em", marginBottom: "8px" }}
+                      >
+                        🐱
+                      </span>
+                      Need more data to visualize!
+                    </div>
+                  ) : (
+                    ""
                   )}
                   {sessionId && (
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
@@ -429,23 +523,37 @@ export default function RootLayout(props: GenomeHubProps) {
               </div>
             </div>
 
-            <>
-
-              <div style={{ textAlign: "center", color: "gray", backgroundColor: "inherit" }}>
-                Copyright &copy; 2018-{year} Washington University in St. Louis. All rights reserved.
+            {props.showDisclosure === false ? (
+              ""
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "gray",
+                  backgroundColor: "inherit",
+                  padding: "36px",
+                }}
+              >
+                Copyright &copy; 2018-{year} Washington University in St. Louis.
+                All rights reserved.
                 <br /> Developed by the{" "}
-                <a href="http://wang.wustl.edu" target="_blank" rel="noopener noreferrer" style={{ color: "#007bff" }}>
+                <a
+                  href="http://wang.wustl.edu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#007bff" }}
+                >
                   Wang Lab
                 </a>
-                <br /> <a style={{ color: "#007bff" }} href="LICENSE.html">
+                <br />{" "}
+                <a style={{ color: "#007bff" }} href="LICENSE.html">
                   Terms and Conditions of Use
                 </a>
               </div>
-            </>
+            )}
           </div>
 
           <MouseFollowingTooltip />
-
         </div>
       </PortalContext.Provider>
     </EscapeHandlerContext.Provider>
