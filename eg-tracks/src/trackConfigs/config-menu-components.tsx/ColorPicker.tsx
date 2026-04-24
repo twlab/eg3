@@ -21,6 +21,7 @@ interface ColorPickerProps {
   label?: string; // Predefined color palette
   onChange: (color: any) => void;
   disableAlpha?: boolean;
+  anchorPosition?: { left: number; top: number; pageX?: number; pageY?: number };
 }
 
 const ColorPicker: React.FC<ColorPickerProps> = ({
@@ -28,6 +29,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   label,
   onChange,
   disableAlpha = true, // Set default here
+  anchorPosition,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -55,21 +57,37 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           </span>
         )}
       </Reference>
-      <Popper placement="bottom" modifiers={[{ name: "flip", enabled: false }]}>
-        {({ ref, style, placement, arrowProps }) => (
-          <div ref={ref} style={{ zIndex: 2 }}>
-            {isOpen && (
-              <OutsideClickDetector onOutsideClick={closePicker}>
-                <SketchPicker
-                  color={color}
-                  onChangeComplete={onChange}
-                  disableAlpha={disableAlpha}
-                />
-              </OutsideClickDetector>
-            )}
-          </div>
-        )}
-      </Popper>
+      {anchorPosition ? (
+        // If anchorPosition provided, render the picker as a fixed-position popup
+        isOpen && (
+          (() => {
+            const winW = typeof window !== "undefined" ? window.innerWidth : 1024;
+            const calcLeft = Math.max(
+              8,
+              Math.min(anchorPosition.left + 120, winW - 220),
+            );
+            return (
+              <div style={{ position: "fixed", left: calcLeft, top: anchorPosition.top + 8, transform: "translateY(-100%)", zIndex: 9999 }}>
+                <OutsideClickDetector onOutsideClick={closePicker}>
+                  <SketchPicker color={color} onChangeComplete={onChange} disableAlpha={disableAlpha} />
+                </OutsideClickDetector>
+              </div>
+            );
+          })()
+        )
+      ) : (
+        <Popper placement="bottom" modifiers={[{ name: "flip", enabled: false }]}>
+          {({ ref, style, placement, arrowProps }) => (
+            <div ref={ref} style={{ zIndex: 2 }}>
+              {isOpen && (
+                <OutsideClickDetector onOutsideClick={closePicker}>
+                  <SketchPicker color={color} onChangeComplete={onChange} disableAlpha={disableAlpha} />
+                </OutsideClickDetector>
+              )}
+            </div>
+          )}
+        </Popper>
+      )}
     </Manager>
   );
 };

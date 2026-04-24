@@ -1,8 +1,8 @@
 import _ from "lodash";
-import Collapsible from "./Collapsible";
 import "./TrackContextMenu.css";
 import { CopyToClip } from "../../components/GenomeView/TrackComponents/commonComponents/CopyToClipboard";
-import React from "react";
+import OutsideClickDetector from "../../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
+import React, { useState } from "react";
 import { niceCount, variableIsObject } from "../../models/util";
 import SelectConfig from "./SelectConfig";
 import { getTrackConfig } from "../config-menu-models.tsx/getTrackConfig";
@@ -132,6 +132,9 @@ export function ObjectAsTable(props) {
 }
 export function TrackMoreInfo(props) {
   const track = props.track;
+  const anchorPosition = props.anchorPosition;
+  const [isOpen, setIsOpen] = useState(false);
+  const toggle = () => setIsOpen(!isOpen);
   let info: Array<any> = [];
   if (track.details) {
     info.push(
@@ -168,8 +171,35 @@ export function TrackMoreInfo(props) {
     );
   }
   return (
-    <Collapsible trigger="More information">
-      <div className="TrackContextMenu-item">{info}</div>
-    </Collapsible>
+    <div>
+      <button className="collapsible" onClick={toggle}>
+        More information
+      </button>
+      {anchorPosition && isOpen && (
+        (() => {
+          const winW = typeof window !== "undefined" ? window.innerWidth : 1024;
+          const calcLeft = Math.max(8, Math.min(anchorPosition.left + 120, winW - 320));
+          return (
+            <OutsideClickDetector onOutsideClick={() => setIsOpen(false)}>
+              <div
+                style={{
+                  position: "fixed",
+                  left: calcLeft,
+                  top: anchorPosition.top + 8,
+                  transform: "translateY(-100%)",
+                  zIndex: 99999,
+                  background: "white",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  maxHeight: "80vh",
+                  overflow: "auto",
+                }}
+              >
+                <div className="TrackContextMenu-item">{info}</div>
+              </div>
+            </OutsideClickDetector>
+          );
+        })()
+      )}
+    </div>
   );
 }

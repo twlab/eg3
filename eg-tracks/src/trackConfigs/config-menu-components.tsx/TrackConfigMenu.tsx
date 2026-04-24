@@ -15,6 +15,7 @@ function ConfigMenuComponent(props: any) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: 0, top: 0 });
   const [visible, setVisible] = useState(false);
+  const [menuHeight, setMenuHeight] = useState(0);
 
   // Use mouse coordinates for positioning (page coordinates)
   const mouseX = menuData.pageX || 0;
@@ -32,6 +33,7 @@ function ConfigMenuComponent(props: any) {
             defaultValue={defaultVal}
             onOptionSet={menuData.onConfigChange}
             trackId={menuData.trackId}
+            anchorPosition={{ left: position.left, top: position.top + menuHeight, pageX: mouseX, pageY: mouseY }}
           />
         );
       }),
@@ -40,6 +42,10 @@ function ConfigMenuComponent(props: any) {
       menuData.configOptions,
       menuData.onConfigChange,
       menuData.trackId,
+      position.left,
+      position.top,
+      mouseX,
+      mouseY,
     ]
   );
 
@@ -75,6 +81,7 @@ function ConfigMenuComponent(props: any) {
       top = Math.max(8, top );
 
       setPosition({ left, top });
+      setMenuHeight(menuRect.height);
       setVisible(true);
     };
 
@@ -133,7 +140,7 @@ function ConfigMenuComponent(props: any) {
           onApplyMatplot={menuData.handleAdd}
         />
         {menuData.tracks.length === 1 ? (
-          <TrackMoreInfo track={menuData.tracks[0]} />
+          <TrackMoreInfo track={menuData.tracks[0]} anchorPosition={{ left: position.left, top: position.top + menuHeight, pageX: mouseX, pageY: mouseY }} />
         ) : (
           ""
         )}
