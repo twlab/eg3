@@ -17,6 +17,7 @@ interface ColorConfigProps {
   color?: any;
   label: string;
   optionName: string;
+  anchorPosition?: { left: number; top: number; pageX?: number; pageY?: number };
 }
 export class ColorConfig extends React.PureComponent<ColorConfigProps> {
   constructor(props) {
@@ -37,6 +38,7 @@ export class ColorConfig extends React.PureComponent<ColorConfigProps> {
       <ColorPicker
         color={inputValue}
         label={this.props.label}
+        anchorPosition={this.props.anchorPosition}
         onChange={(color) => {
           setNewValue(color.hex);
         }}

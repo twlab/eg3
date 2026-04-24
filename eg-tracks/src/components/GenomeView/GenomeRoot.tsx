@@ -102,7 +102,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         setModel(FlexLayout.Model.fromJson(layout.current));
       }
     }
+      if (
+    tracks.some((t) => t.type === "genomealign") &&
+    !fetchGenomeAlignWorker.current
+  ) {
 
+    fetchGenomeAlignWorker.current = {
+      fetchWorker: new FetchGenomeAlignWorker(),
+      hasOnMessage: false,
+    };
+  }
     genomeConfig.defaultTracks = tracks;
   }, [tracks]);
 
@@ -234,6 +243,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     tracks.some((t) => t.type === "genomealign") &&
     !fetchGenomeAlignWorker.current
   ) {
+
     fetchGenomeAlignWorker.current = {
       fetchWorker: new FetchGenomeAlignWorker(),
       hasOnMessage: false,
