@@ -114,11 +114,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       (acc, cur) => acc + cur.clientHeight,
       11 * tracks.length,
     );
-    const boxWidth = props.windowWidth;
+    const boxWidth = props.windowWidth + 120 + 1;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
 
-    const width = props.windowWidth;
+    const width = props.windowWidth + 120 + 1;
     svgElem.setAttributeNS(null, "width", width + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
@@ -388,7 +388,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       )
       .map((trackModel, index) => {
         const id = trackModel.id;
-        const createSVGData = trackData[`${id}`].fetchData;
+        const createSVGData = trackData[`${id}`];
 
         const newTrackState = { ...createSVGData.trackState };
         newTrackState["viewWindow"] = viewWindow;

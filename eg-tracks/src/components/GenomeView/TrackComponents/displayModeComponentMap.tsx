@@ -1183,9 +1183,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
             : trackState.visRegion
         }
         viewWindow={
-          trackState?.visData?.viewWindow
-            ? trackState?.visData?.viewWindow
-            : new OpenInterval(0, trackState.visData.visWidth)
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
         }
         updatedLegend={updatedLegend}
         genomeConfig={genomeConfig}
