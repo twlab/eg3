@@ -1,5 +1,11 @@
 # Version history
 
+## 60.0.4
+
+- fixed categorical track config height
+- fixed ruler window view position in screenshot and svg download
+- fixed screenshot not displaying when there's a track with error
+
 ## 60.0.3
 
 - fixed grouping

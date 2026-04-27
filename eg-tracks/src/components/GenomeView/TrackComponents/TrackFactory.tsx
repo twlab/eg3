@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
@@ -9,13 +9,11 @@ import ErrorBoundary from "./commonComponents/ErrorBoundary";
 import {
   dynamicMatplotTracks,
   getDisplayModeFunction,
-  interactionTracks,
 } from "./displayModeComponentMap";
 const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
-import _, { get } from "lodash";
+import _ from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
-import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
@@ -179,7 +177,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // inside the display components don't crash the whole app.
       try {
         result = (
-          <ErrorBoundary errorDrawData={displayArgs}>
+          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError }>
             {result as any}
           </ErrorBoundary>
         );
@@ -496,7 +494,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState,
         );
         if (cacheTrackData["error"]) {
-          return;
+             sentScreenshotData({
+      
+              isError: fetchError.current,        
+              trackId: id,
+            
+  
+          });
+          return ;
         } else if (
           !cacheTrackData.useExpandedLoci &&
           cacheTrackData.usePrimaryNav
@@ -577,7 +582,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         if (combinedData) {
           sentScreenshotData({
-            fetchData: {
+      
               genomeName: genomeConfig.genome.getName(),
               genesArr: combinedData,
               trackState,
@@ -593,9 +598,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               xvaluesData: cacheTrackData[dataIdx].xvalues
                 ? cacheTrackData[dataIdx].xvalues
                 : null,
-              isError: fetchError.current,
-            },
-            trackId: id,
+              isError: fetchError.current,        trackId: id,
+            
+  
           });
         }
       }

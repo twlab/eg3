@@ -5,7 +5,7 @@ import TrackModel from "../../../models/TrackModel";
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
 import {
-  DefaultAggregators,
+
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";

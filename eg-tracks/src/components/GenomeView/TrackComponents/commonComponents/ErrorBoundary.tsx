@@ -6,6 +6,7 @@ type Props = {
     fallbackRender?: (error: Error | null) => React.ReactNode;
     // optional draw-data that can be used to build an error display
     errorDrawData?: { [key: string]: any } | null;
+    fetchError?: any; 
 };
 
 type State = {
@@ -36,6 +37,10 @@ class ErrorBoundary extends React.Component<Props, State> {
                     errorInfo: this.props.errorDrawData.errorInfo || "error when rendering",
                 };
                 const node = getDisplayModeFunction(drawData);
+                if(this.props.fetchError){
+                    this.props.fetchError.current = "error when rendering"
+                }
+       
                 this.setState({ fallbackElement: node });
             } catch (err) {
                 // eslint-disable-next-line no-console

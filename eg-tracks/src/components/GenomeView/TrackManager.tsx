@@ -1056,6 +1056,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         "smooth",
         "hiddenPixels",
         "displayMode",
+        "height"
       ]);
 
       if (reCalcAgg.has(key) || groupChange) {
@@ -2751,12 +2752,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
 
       const convertedITrackModel = curTracks
-        .filter(
-          (item) =>
-            item.type !== "dynamicbed" &&
-            item.type !== "dynamic" &&
-            item.type !== "dynamichic",
-        )
+        .filter((item) => {
+          if (
+            item.type === "dynamicbed" ||
+            item.type === "dynamic" ||
+            item.type === "dynamichic"
+          ) {
+            return false;
+          }
+
+          const screenshotData =
+            screenshotDataObj &&
+            screenshotDataObj.current &&
+            screenshotDataObj.current[`${item.id}`];
+   
+          if (screenshotData && screenshotData.isError) {
+            // remove errored entry from screenshot data and exclude from converted tracks
+            try {
+              delete screenshotDataObj.current[`${item.id}`];
+            } catch (e) {
+              // swallow any delete errors
+            }
+            return false;
+          }
+
+          return true;
+        })
         .map((item) => convertTrackModelToITrackModel(item));
 
       const curStartBp = bpX.current;
@@ -2800,7 +2821,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
                 .primaryVisData.viewWindow
             : draw.viewWindow;
-
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
