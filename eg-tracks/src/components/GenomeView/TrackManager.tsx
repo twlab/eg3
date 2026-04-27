@@ -1056,6 +1056,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         "smooth",
         "hiddenPixels",
         "displayMode",
+        "height"
       ]);
 
       if (reCalcAgg.has(key) || groupChange) {
@@ -1636,6 +1637,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
+
     await Promise.all(
       event.data.map(async (dataItem: any) => {
         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
@@ -1752,6 +1754,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createGenomeAlignOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
+
     const regionDrawIdx = event.data.navData.trackDataIdx;
 
     const curTrackState = {
@@ -1826,6 +1829,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             completedFetchedRegion.current.groups = {};
           }
           if (fetchNewRegion || fetchedDragX === dragX.current) {
+       
             checkDrawData({
               curDataIdx: curTrackState.trackDataIdx,
               isInitial: undefined,
@@ -1836,6 +1840,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
           }
         } else {
+                
           checkDrawData({
             curDataIdx: curTrackState.trackDataIdx,
             isInitial: 0,
@@ -1940,6 +1945,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (needToFetch) {
+ 
       const dataToFetchArr: Array<any> = [];
       for (const curDataIdx of idxArr) {
         let trackToFetch: Array<TrackModel> = [];
@@ -1992,6 +1998,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (trackToFetch.length > 0) {
+     
           const genName = curGenomeConfig.current.genome.getName();
           dataToFetchArr.push({
             primaryGenName: genName,
@@ -2021,6 +2028,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       for (const key in trackManagerState.current.caches) {
         trackManagerState.current.caches[key]["firstLoad"] = false;
       }
+
       if (hasGenomeAlign.current && needToFetchGenAlign) {
         const genomeAlignTracks = trackManagerState.current.tracks.filter(
           (items, _index) => {
@@ -2599,6 +2607,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (basePerPixel.current < 10) {
           useFineModeNav.current = true;
         }
+          
+              hasGenomeAlign.current = true;
+ 
+        
       }
 
       if (
@@ -2740,12 +2752,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
 
       const convertedITrackModel = curTracks
-        .filter(
-          (item) =>
-            item.type !== "dynamicbed" &&
-            item.type !== "dynamic" &&
-            item.type !== "dynamichic",
-        )
+        .filter((item) => {
+          if (
+            item.type === "dynamicbed" ||
+            item.type === "dynamic" ||
+            item.type === "dynamichic"
+          ) {
+            return false;
+          }
+
+          const screenshotData =
+            screenshotDataObj &&
+            screenshotDataObj.current &&
+            screenshotDataObj.current[`${item.id}`];
+   
+          if (screenshotData && screenshotData.isError) {
+            // remove errored entry from screenshot data and exclude from converted tracks
+            try {
+              delete screenshotDataObj.current[`${item.id}`];
+            } catch (e) {
+              // swallow any delete errors
+            }
+            return false;
+          }
+
+          return true;
+        })
         .map((item) => convertTrackModelToITrackModel(item));
 
       const curStartBp = bpX.current;
@@ -2789,7 +2821,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
                 .primaryVisData.viewWindow
             : draw.viewWindow;
-
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
@@ -2902,19 +2933,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curGenomeConfig.current["navContext"] = userViewRegion._navContext;
 
       trackManagerState.current.genomeName = genomeConfig.genome.getName();
-      ((trackManagerState.current.tracks =
+      trackManagerState.current.tracks =
         tracks && tracks.length >= 0
           ? tracks.filter((trackModel) => trackModel.type !== "g3d")
           : genomeConfig.defaultTracks.filter(
               (trackModel) => trackModel.type !== "g3d",
-            )),
-        trackManagerState.current.tracks.map(
-          (items: { type: string }, _index: any) => {
-            if (items.type === "genomealign") {
-              hasGenomeAlign.current = true;
-            }
-          },
-        ));
+            );
 
       initializeTracks();
       preload.current = true;
