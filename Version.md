@@ -1,5 +1,10 @@
 # Version history
 
+## 60.0.5
+
+- added select/deselect all tracks checkbox
+- fixed categorical track clicking on feature cause a crash
+
 ## 60.0.4
 
 - fixed categorical track config height

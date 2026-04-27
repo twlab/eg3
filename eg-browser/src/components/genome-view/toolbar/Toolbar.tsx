@@ -1,13 +1,12 @@
 import { useAppSelector, useAppDispatch, useUndoRedo } from "@/lib/redux/hooks";
 import {
   selectToolState,
-
   setToggleTool,
   dispatchAction,
 } from "@/lib/redux/slices/utilitySlice";
 import { selectCurrentState } from "@/lib/redux/selectors";
 import { motion } from "framer-motion";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, ChangeEvent, useState, useEffect } from "react";
 
 import IconButton from "../../ui/button/IconButton";
 import History from "../../navbar/History";
@@ -21,7 +20,11 @@ import {
 import HighlightMenu from "./HighlightMenu";
 import useCurrentGenome from "../../../lib/hooks/useCurrentGenome";
 import ReorderMany from "./ReorderMany";
-import { selectCurrentSession } from "../../../lib/redux/slices/browserSlice";
+import {
+  selectCurrentSession,
+  updateCurrentSession,
+} from "../../../lib/redux/slices/browserSlice";
+import _, { update } from "lodash";
 interface ToolbarProps {
   onNewRegionSelect: (
     start: number,
@@ -79,25 +82,48 @@ const Toolbar: React.FC<ToolbarProps> = ({
       isActive = false;
     }
     return `hover:bg-gray-300 dark:hover:bg-dark-secondary active:bg-gray-400 dark:active:bg-gray-600 rounded-md transition-colors duration-150 cursor-pointer 
-    ${isActive
-        ? "bg-blue-200 dark:bg-dark-secondary"
-        : ""
-
-      }`;
+    ${isActive ? "bg-blue-200 dark:bg-dark-secondary" : ""}`;
   };
 
   const handleToolClick = (clickedTool: string | null): void => {
-
     if (clickedTool === null) {
       dispatch(setToggleTool(null));
-    }
-
-    else if (TOGGLE_TOOLS.has(clickedTool)) {
+    } else if (TOGGLE_TOOLS.has(clickedTool)) {
       dispatch(setToggleTool(clickedTool));
     } else if (ACTION_TOOLS.has(clickedTool)) {
       dispatch(dispatchAction(clickedTool));
     }
   };
+  function selectAllTracks(selectAll: boolean) {
+    if (currentSession) {
+      const updatedTracks: Array<any> = [];
+      if (selectAll) {
+        for (let track of currentSession.tracks) {
+          const tmpTrack = _.cloneDeep(track);
+          tmpTrack.isSelected = true;
+          updatedTracks.push(tmpTrack);
+        }
+      } else {
+        for (let track of currentSession.tracks) {
+          const tmpTrack = _.cloneDeep(track);
+          tmpTrack.isSelected = false;
+          updatedTracks.push(tmpTrack);
+        }
+      }
+
+      dispatch(updateCurrentSession({ tracks: updatedTracks }));
+    }
+  }
+
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
+  const allSelected = currentSession ? currentSession.tracks.every((t: any) => t.isSelected) : false;
+  const someSelected = currentSession ? currentSession.tracks.some((t: any) => t.isSelected) : false;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected && !allSelected;
+    }
+  }, [someSelected, allSelected]);
 
   return (
     <div className="flex flex-row ">
@@ -127,13 +153,36 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-        // animate={{
-        //   opacity: isSearchFocused ? 0.5 : 1,
-        //   scale: isSearchFocused ? 0.95 : 1,
-        // }}
-        // transition={{ duration: 0.2 }}
+          // animate={{
+          //   opacity: isSearchFocused ? 0.5 : 1,
+          //   scale: isSearchFocused ? 0.95 : 1,
+          // }}
+          // transition={{ duration: 0.2 }}
         >
           <motion.div className="flex flex-row items-center" style={{ gap: 1 }}>
+            <label
+              className="inline-flex items-center text-gray-600 dark:text-dark-primary"
+              style={{ padding: "4px 6px 4px 0px" }}
+            >
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                aria-label="Select All/None tracks"
+                title="Select All/None tracks"
+                checked={allSelected}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.checked) {
+                    selectAllTracks(true);
+                  } else {
+                    selectAllTracks(false);
+                  }
+                }}
+                style={{
+    
+                }}
+              />
+            </label>
+
             <button
               onClick={() => handleToolClick(Tool.Drag)}
               className={getButtonClass(Tool.Drag)}
@@ -148,6 +197,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 ✋
               </span>
             </button>
+
             <button
               onClick={() => handleToolClick(Tool.Reorder)}
               className={getButtonClass(Tool.Reorder)}

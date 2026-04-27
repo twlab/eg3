@@ -3627,6 +3627,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         queueRegionToFetch(dataIdx.current);
         onTracksChange(filteredTracks);
       } else {
+        selectedTracks.current = {};
         // for options that don't need to redraw tracks, select, legend font color, reorder
         const newTrackComponents: Array<any> = [];
 
@@ -3636,6 +3637,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const curTrackModel = filteredTracks[i];
           if (curTrackModel.id !== trackComponents[i].trackModel.id) {
             needToToUpdate = true;
+          }
+          if(curTrackModel.isSelected && !selectedTracks?.current[`${curTrackModel.id}`]){
+            selectedTracks.current[curTrackModel.id] = ""
+             needToToUpdate = true;
           }
           // find tracks already in view
           for (let j = 0; j < trackComponents.length; j++) {
