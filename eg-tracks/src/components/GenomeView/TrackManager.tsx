@@ -301,7 +301,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const dragX = useRef(0);
   const hasGenomeAlign = useRef(false);
   const isToolSelected = useRef(false);
-  const needToFetchAddTrack = useRef(false);
   const side = useRef("right");
   const isDragging = useRef(false);
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
@@ -1056,7 +1055,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         "smooth",
         "hiddenPixels",
         "displayMode",
-        "height"
+        "height",
       ]);
 
       if (reCalcAgg.has(key) || groupChange) {
@@ -1637,7 +1636,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
-
     await Promise.all(
       event.data.map(async (dataItem: any) => {
         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
@@ -1754,7 +1752,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createGenomeAlignOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
-
     const regionDrawIdx = event.data.navData.trackDataIdx;
 
     const curTrackState = {
@@ -1829,7 +1826,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             completedFetchedRegion.current.groups = {};
           }
           if (fetchNewRegion || fetchedDragX === dragX.current) {
-       
             checkDrawData({
               curDataIdx: curTrackState.trackDataIdx,
               isInitial: undefined,
@@ -1840,7 +1836,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
           }
         } else {
-                
           checkDrawData({
             curDataIdx: curTrackState.trackDataIdx,
             isInitial: 0,
@@ -1945,7 +1940,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (needToFetch) {
- 
       const dataToFetchArr: Array<any> = [];
       for (const curDataIdx of idxArr) {
         let trackToFetch: Array<TrackModel> = [];
@@ -1998,7 +1992,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (trackToFetch.length > 0) {
-     
           const genName = curGenomeConfig.current.genome.getName();
           dataToFetchArr.push({
             primaryGenName: genName,
@@ -2165,7 +2158,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curViewWindow = globalTrackState.current.viewWindow;
       }
 
-      aggViewWindowData(curViewWindow, newDrawData.curDataIdx);
+      aggViewWindowData(
+        curViewWindow,
+        newDrawData.curDataIdx,
+        newDrawData.trackToDrawId,
+      );
 
       for (const trackId in newDrawData.trackToDrawId) {
         let configOptions;
@@ -2443,6 +2440,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //______________________________________________________________________________________________________________
 
   function initTrackFetchCache(initTrackModel: { [key: string]: any }) {
+    if (!trackManagerState.current.caches[`${initTrackModel.id}`]) {
+      trackManagerState.current.caches[`${initTrackModel.id}`] = {};
+    }
+
+    if (initTrackModel.type === "genomealign") {
+      if (basePerPixel.current < 10) {
+        useFineModeNav.current = true;
+      }
+
+      hasGenomeAlign.current = true;
+    }
+
+    if (
+      initTrackModel.type in
+      {
+        matplot: "",
+        dynamic: "",
+        dynamicbed: "",
+        dynamiclongrange: "",
+        dynamichic: "",
+      }
+    ) {
+      initTrackModel.tracks?.map((trackModel: TrackModel, index: any) => {
+        trackModel.id = `${initTrackModel.id}` + "subtrack" + `${index}`;
+      });
+    }
     trackManagerState.current.caches[`${initTrackModel.id}`]["queryGenome"] =
       "querygenome" in initTrackModel && initTrackModel.querygenome
         ? initTrackModel.querygenome
@@ -2603,36 +2626,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // loop through trackmanager checking to see if the track is already created else if create a new one with default valuies
 
     for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
-      if (trackManagerState.current.tracks[i].type === "genomealign") {
-        if (basePerPixel.current < 10) {
-          useFineModeNav.current = true;
-        }
-          
-              hasGenomeAlign.current = true;
- 
-        
-      }
-
-      if (
-        trackManagerState.current.tracks[i].type in
-        {
-          matplot: "",
-          dynamic: "",
-          dynamicbed: "",
-          dynamiclongrange: "",
-          dynamichic: "",
-        }
-      ) {
-        trackManagerState.current.tracks[i].tracks?.map(
-          (trackModel: TrackModel, index: any) => {
-            trackModel.id =
-              `${trackManagerState.current.tracks[i].id}` +
-              "subtrack" +
-              `${index}`;
-          },
-        );
-      }
-
       // else if (trackManagerState.current.tracks[i].type === "bam") {
       //   fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
       //     new BamSource(trackManagerState.current.tracks[i].url);
@@ -2641,7 +2634,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const newLegendRef = createRef();
 
       trackManagerState.current.tracks[i]["legendWidth"] = legendWidth;
-
+      initTrackFetchCache(trackManagerState.current.tracks[i]);
       newTrackComponents.push({
         trackIdx: i,
         id: trackManagerState.current.tracks[i].id,
@@ -2652,13 +2645,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     }
 
-    newTrackComponents.map((item, _index) => {
-      trackManagerState.current.caches[`${item.trackModel.id}`] = {};
-      initTrackFetchCache(item.trackModel);
-    });
-
     // initialize globalTrackConfig for each track
-
     addTermToMetaSets(trackManagerState.current.tracks);
 
     createRegionTrackState(
@@ -2765,7 +2752,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             screenshotDataObj &&
             screenshotDataObj.current &&
             screenshotDataObj.current[`${item.id}`];
-   
+
           if (screenshotData && screenshotData.isError) {
             // remove errored entry from screenshot data and exclude from converted tracks
             try {
@@ -3570,31 +3557,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             newAddedTrackModel.push(curTrackModel);
             if (curTrackModel.type === "genomealign") {
               checkHasGenAlign = true;
-              if (basePerPixel.current < 10) {
-                useFineModeNav.current = true;
-              }
-              hasGenomeAlign.current = true;
-            }
-            if (
-              curTrackModel.type in
-              {
-                matplot: "",
-                dynamic: "",
-                dynamicbed: "",
-                dynamiclongrange: "",
-                dynamichic: "",
-              }
-            ) {
-              curTrackModel.tracks?.map(
-                (trackModel: TrackModel, index: any) => {
-                  trackModel.id =
-                    `${curTrackModel.id}` + "subtrack" + `${index}`;
-                },
-              );
             }
 
+
             //create initial state for the new track, give it all the prevregion trackstate, and trigger fetch by updating trackcomponents
-            needToFetchAddTrack.current = true;
 
             const newLegendRef = createRef();
 
@@ -3608,9 +3574,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               legendRef: newLegendRef,
               trackModel: curTrackModel,
             });
-
-            trackManagerState.current.caches[`${curTrackModel.id}`] =
-              _.cloneDeep(globalTrackState.current.trackStates);
 
             initTrackFetchCache(curTrackModel);
           }
@@ -3638,9 +3601,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (curTrackModel.id !== trackComponents[i].trackModel.id) {
             needToToUpdate = true;
           }
-          if(curTrackModel.isSelected && !selectedTracks?.current[`${curTrackModel.id}`]){
-            selectedTracks.current[curTrackModel.id] = ""
-             needToToUpdate = true;
+          if (
+            curTrackModel.isSelected &&
+            !selectedTracks?.current[`${curTrackModel.id}`]
+          ) {
+            selectedTracks.current[curTrackModel.id] = "";
+            needToToUpdate = true;
           }
           // find tracks already in view
           for (let j = 0; j < trackComponents.length; j++) {
@@ -3855,7 +3821,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (curConfigOptions.group) {
               aggGroup[key] = false;
             }
-            if (cache.trackType in numericalTracks) {
+            else if ((cache.trackType !== "genomealign") || (cache.trackType === "genomealign" && !useFineModeNav.current)) {
               curTracksToDrawId[key] = false;
             }
           }

@@ -107,7 +107,7 @@ export const DefaultArrayAggregators = {
 /**
  * Aggregator of features.  Includes methods to construct x-to-data maps.
  *
- * @author Chanrung(Chad) Seng, Silas Hsu, Chanrung(Chad) Seng
+ * @author  Silas Hsu, Chanrung(Chad) Seng
  */
 export class FeatureAggregator {
   /**

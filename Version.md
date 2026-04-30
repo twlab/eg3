@@ -1,5 +1,13 @@
 # Version history
 
+## 60.0.6
+
+- refactor full svg, trackmanager init
+- fix bed featuredetail,
+- fixed matplot for bedgraph
+- display only negative range when data has negative data on auto for numerical tracks
+- position for name of genes shows in viewWindow
+
 ## 60.0.5
 
 - added select/deselect all tracks checkbox

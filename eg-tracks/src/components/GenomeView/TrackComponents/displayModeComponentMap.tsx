@@ -105,6 +105,365 @@ enum BedColumnIndex {
 }
 const TOP_PADDING = 2;
 export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
+// Extracted FullVisualizer component moved outside of the displayModeComponentMap
+// Factory to create annotation element map given rendering context
+function makeAnnotationElementMap(context: any) {
+  const {
+    configOptions,
+    trackState,
+    renderTooltip,
+    scales,
+    onClose,
+    onHideTooltip,
+  } = context;
+
+  function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+    const gene = placedGroup.feature;
+
+    return (
+      <GeneAnnotationScaffold
+        key={index}
+        gene={gene}
+        xSpan={placedGroup.xSpan}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
+        y={y}
+        isMinimal={isLastRow}
+        options={configOptions}
+        onClick={renderTooltip ? renderTooltip : () => {}}
+      >
+        {placedGroup.placedFeatures.map((placedGene: any, i: number) => (
+          <GeneAnnotation key={i} placedGene={placedGene} y={y} options={configOptions} />
+        ))}
+      </GeneAnnotationScaffold>
+    );
+  }
+
+  function getBedAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+    return placedGroup.placedFeatures.map((placement: any, i: number) => (
+      <BedAnnotation
+        key={i}
+        feature={placement.feature}
+        xSpan={placement.xSpan}
+        y={y}
+        isMinimal={isLastRow}
+        color={configOptions.color}
+        reverseStrandColor={configOptions.color2}
+        isInvertArrowDirection={placement.isReverse}
+        onClick={renderTooltip ? renderTooltip : () => {}}
+        alwaysDrawLabel={configOptions.alwaysDrawLabel}
+        hiddenPixels={configOptions.hiddenPixels}
+      />
+    ));
+  }
+
+  return {
+    geneannotation: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
+      getAnnotationElement(placedGroup, y, isLastRow, index),
+    refbed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
+      getAnnotationElement(placedGroup, y, isLastRow, index),
+    bed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
+      getBedAnnotationElement(placedGroup, y, isLastRow, index),
+    bedcolor: function renderAnnotation(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+      return placedGroup.placedFeatures.map((placement: any, i: number) => (
+        <Bedcolor
+          key={i}
+          feature={placement.feature}
+          xSpan={placement.xSpan}
+          y={y}
+          isMinimal={isLastRow}
+          height={configOptions.rowHeight}
+          onClick={renderTooltip}
+        />
+      ));
+    },
+    vcf: function renderAnnotation(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+      return placedGroup.placedFeatures.map((placement: any, i: number) => (
+        <VcfAnnotation
+          key={i}
+          feature={placement.feature as Vcf}
+          xSpan={placement.xSpan}
+          y={y}
+          isMinimal={isLastRow}
+          height={configOptions.rowHeight}
+          colorScale={scales}
+          onClick={renderTooltip}
+          alwaysDrawLabel={configOptions.alwaysDrawLabel}
+        />
+      ));
+    },
+    jaspar: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+      let scoreScale = scaleLinear().domain([0, 1000]).range([0, 1]).clamp(true);
+      return placedGroup.placedFeatures.map((placement: any, i: number) => (
+        <BedAnnotation
+          key={i}
+          feature={placement.feature}
+          xSpan={placement.xSpan}
+          y={y}
+          isMinimal={isLastRow}
+          color={configOptions.color}
+          reverseStrandColor={configOptions.color2}
+          isInvertArrowDirection={placement.isReverse}
+          onClick={renderTooltip ? renderTooltip : () => {}}
+          alwaysDrawLabel={configOptions.alwaysDrawLabel}
+          hiddenPixels={configOptions.hiddenPixels}
+          opacity={scoreScale(placement.feature.score)}
+        />
+      ));
+    },
+    bigbed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
+      getBedAnnotationElement(placedGroup, y, isLastRow, index),
+    modbed: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+      return placedGroup.placedFeatures.map((placement: any, i: number) => (
+        <FiberAnnotation
+          key={i}
+          y={y}
+          isMinimal={isLastRow}
+          placement={placement}
+          color={configOptions.color}
+          color2={configOptions.color2}
+          rowHeight={configOptions.rowHeight}
+          renderTooltip={renderTooltip ? renderTooltip : () => {}}
+          onHideTooltip={onClose}
+          hiddenPixels={configOptions.hiddenPixels}
+          hideMinimalItems={configOptions.hideMinimalItems}
+          pixelsPadding={configOptions.pixelsPadding}
+          displayMode={configOptions.displayMode}
+        />
+      ));
+    },
+    repeatmasker: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+      const { categoryColors } = configOptions;
+      const TEXT_HEIGHT = 9;
+      return placedGroup.placedFeatures.map((placement: any, i: number) => {
+        const { xSpan, feature, isReverse } = placement;
+        if (placement.xSpan.getLength <= 0) {
+          return null;
+        }
+        let color;
+
+        if (feature.rgb) {
+          color = `rgb(${feature.rgb})`;
+        } else {
+          const categoryId = feature.getCategoryId();
+          color = categoryColors[categoryId];
+        }
+
+        const contrastColor = getContrastingColor(color);
+        let scale = scaleLinear().domain([1, 0]).range([TOP_PADDING, configOptions.height]);
+
+        let yv = scale(feature.repeatValue);
+        const drawHeight = configOptions.height - yv;
+
+        const width = xSpan.getLength();
+        if (drawHeight <= 0) {
+          return null;
+        }
+        const mainBody = (
+          <rect x={xSpan.start} y={yv} width={width} height={drawHeight} fill={color} fillOpacity={0.75} />
+        );
+        let label;
+        const labelText = feature.getName();
+        const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
+        if (estimatedLabelWidth < 0.9 * width) {
+          const centerX = xSpan.start + 0.5 * width;
+          const centerY = height - TEXT_HEIGHT * 2;
+
+          label = (
+            <BackgroundedText x={centerX} y={centerY} height={TEXT_HEIGHT - 1} fill={contrastColor} dominantBaseline="hanging" textAnchor="middle">
+              {labelText}
+            </BackgroundedText>
+          );
+        }
+        const arrows = (
+          <AnnotationArrows startX={xSpan.start} endX={xSpan.end} y={height - TEXT_HEIGHT} height={TEXT_HEIGHT} opacity={0.75} isToRight={isReverse === (feature.strand === "-")} color="white" />
+        );
+
+        return (
+          <TranslatableG
+            onClick={(event) => {
+              if (renderTooltip) {
+                renderTooltip(event, feature);
+              }
+            }}
+            key={i}
+          >
+            {mainBody}
+            {arrows}
+            {label}
+          </TranslatableG>
+        );
+      });
+    },
+    rmskv2: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+      const { categoryColors } = configOptions;
+      const TEXT_HEIGHT = 9;
+      return placedGroup.placedFeatures.map((placement: any, i: number) => {
+        const { xSpan, feature, isReverse } = placement;
+        if (placement.xSpan.getLength <= 0) {
+          return null;
+        }
+        let color;
+
+        if (feature.rgb) {
+          color = `rgb(${feature.rgb})`;
+        } else {
+          const categoryId = feature.getCategoryId();
+          color = categoryColors[categoryId];
+        }
+
+        const contrastColor = getContrastingColor(color);
+        let scale = scaleLinear().domain([1, 0]).range([TOP_PADDING, configOptions.height]);
+        let yv = scale(feature.repeatValue);
+
+        const drawHeight = configOptions.height - yv;
+
+        const width = xSpan.getLength();
+        if (drawHeight <= 0) {
+          return null;
+        }
+        const mainBody = (
+          <rect x={xSpan.start} y={yv} width={width} height={drawHeight} fill={color} fillOpacity={0.75} />
+        );
+        let label;
+        const labelText = feature.getName();
+        const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
+        if (estimatedLabelWidth < 0.9 * width) {
+          const centerX = xSpan.start + 0.5 * width;
+          const centerY = height - TEXT_HEIGHT * 2;
+
+          label = (
+            <BackgroundedText x={centerX} y={centerY} height={TEXT_HEIGHT - 1} fill={contrastColor} dominantBaseline="hanging" textAnchor="middle">
+              {labelText}
+            </BackgroundedText>
+          );
+        }
+        const arrows = (
+          <AnnotationArrows startX={xSpan.start} endX={xSpan.end} y={height - TEXT_HEIGHT} height={TEXT_HEIGHT} opacity={0.75} isToRight={isReverse === (feature.strand === "-")} color="white" />
+        );
+
+        return (
+          <TranslatableG
+            onClick={(event) => {
+              if (renderTooltip) {
+                renderTooltip(event, feature);
+              }
+            }}
+            key={i}
+          >
+            {mainBody}
+            {arrows}
+            {label}
+          </TranslatableG>
+        );
+      });
+    },
+    categorical: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+      return placedGroup.placedFeatures.map((placement: any, i: number) => {
+        const featureName = placement.feature.getName();
+        const color = configOptions.category && configOptions.category[featureName] ? configOptions.category[`${featureName}`].color : "blue";
+
+        return (
+          <CategoricalAnnotation
+            key={i}
+            feature={placement.feature}
+            xSpan={placement.xSpan}
+            y={y}
+            isMinimal={false}
+            color={color}
+            onClick={renderTooltip ? renderTooltip : () => {}}
+            category={configOptions.category}
+            height={configOptions.height}
+            alwaysDrawLabel={configOptions.alwaysDrawLabel}
+          />
+        );
+      });
+    },
+    snp: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+      return placedGroup.placedFeatures.map((placement: any, i: number) => (
+        <SnpAnnotation
+          key={i}
+          snp={placement.feature}
+          xSpan={placement.xSpan}
+          y={y}
+          isMinimal={isLastRow}
+          color={configOptions.color}
+          reverseStrandColor={configOptions.color2}
+          isInvertArrowDirection={placement.isReverse}
+          onClick={renderTooltip ? renderTooltip : () => {}}
+          alwaysDrawLabel={configOptions.alwaysDrawLabel}
+          hiddenPixels={configOptions.hiddenPixels}
+        />
+      ));
+    },
+    bam: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+      return placedGroup.placedFeatures.map((placement: any, i: number) => (
+        <BamAnnotation key={i} placedRecord={placement} y={y} onClick={renderTooltip ? renderTooltip : () => {}} options={configOptions} />
+      ));
+    },
+  };
+}
+
+const FullVisualizer: React.FC<any> = ({
+  placements,
+  width,
+  height,
+  rowHeight,
+  maxRows,
+  legend,
+  windowWidth,
+  trackState,
+  configOptions,
+  trackModel,
+  renderTooltip,
+  scales,
+  onClose,
+
+}) => {
+    const getAnnotationElementMap = makeAnnotationElementMap({ configOptions, trackState, renderTooltip, scales, onClose });
+
+  function renderAnnotation(placedGroup: any, i: number) {
+    const maxRowIndex = (maxRows || Infinity) - 1;
+    const rowIndex = Math.min(placedGroup.row, maxRowIndex);
+    const y = rowIndex * rowHeight + TOP_PADDING;
+
+    return getAnnotationElementMap[`${trackModel.type}`](placedGroup, y, rowIndex === maxRowIndex, i, configOptions.height ?? 0);
+  }
+
+  const svgKey = generateUUID();
+
+  if (configOptions.forceSvg || configOptions.packageVersion) {
+    const curParentStyle: any = configOptions.forceSvg
+      ? { position: "relative", overflow: "hidden", width: windowWidth }
+      : {};
+    const curEleStyle: any = configOptions.forceSvg
+      ? { position: "relative", transform: `translateX(${ -trackState.viewWindow.start }px)` }
+      : {};
+
+    return (
+      <React.Fragment>
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {configOptions.forceSvg || configOptions.packageVersion ? legend : ""}
+          <div style={{ display: "flex", flexDirection: "column", ...curEleStyle }}>
+            <svg key={svgKey} width={trackState.visWidth} height={height}>
+              {placements.map(renderAnnotation)}
+            </svg>
+          </div>
+        </div>
+      </React.Fragment>
+    );
+  }
+
+  return (
+    <svg key={svgKey} width={trackState.visWidth} height={height}>
+      {placements.map(renderAnnotation)}
+    </svg>
+  );
+};
+
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
     formattedData,
@@ -121,503 +480,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     scales,
     placeFeature,
   }) {
-    function createFullVisualizer(
-      placements,
-      width,
-      height,
-      rowHeight,
-      maxRows,
-      legend,
-    ) {
-      // FullVisualizer class from eg2
-      function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
-        const maxRowIndex = (maxRows || Infinity) - 1;
-        // Compute y
-        const rowIndex = Math.min(placedGroup.row, maxRowIndex);
-        const y = rowIndex * rowHeight + TOP_PADDING;
+    // Full visualizer is now extracted to `FullVisualizer` component above
 
-        return getAnnotationElementMap[`${trackModel.type}`](
-          placedGroup,
-          y,
-          rowIndex === maxRowIndex,
-          i,
-          configOptions.height,
-        );
-      }
-      let svgKey = generateUUID();
-
-      if (configOptions.forceSvg || configOptions.packageVersion) {
-        //parent container must add the width of tracklegend because screenshot doesn't account for shift of legend like in trackfactory
-        let curParentStyle: any = configOptions.forceSvg
-          ? {
-              position: "relative",
-
-              overflow: "hidden",
-              width: windowWidth,
-            }
-          : {};
-        let curEleStyle: any = configOptions.forceSvg
-          ? {
-              position: "relative",
-              transform: `translateX(${-trackState.viewWindow.start}px)`,
-            }
-          : {};
-
-        return (
-          <React.Fragment>
-            <div style={{ display: "flex", ...curParentStyle }}>
-              {configOptions.forceSvg || configOptions.packageVersion
-                ? legend
-                : ""}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  ...curEleStyle,
-                }}
-              >
-                <svg key={svgKey} width={trackState.visWidth} height={height}>
-                  {placements.map(renderAnnotation)}
-                </svg>
-              </div>
-            </div>
-          </React.Fragment>
-        );
-      }
-
-      return (
-        <svg key={svgKey} width={trackState.visWidth} height={height}>
-          {placements.map(renderAnnotation)}
-          {/* <line
-            x1={trackState.visData.viewWindow.start}
-            y1={0}
-            x2={trackState.visData.viewWindow.start}
-            y2={height}
-            stroke="black"
-            strokeWidth={1}
-          />
-          <line
-            x1={trackState.visData.viewWindow.end}
-            y1={0}
-            x2={trackState.visData.viewWindow.end}
-            y2={height}
-            stroke="black"
-            strokeWidth={1}
-          />
-           */}
-        </svg>
-      );
-    }
-
-    // the function to create individual feature element from the GeneAnnotation track which is passed down to full visualizer
-    function getAnnotationElement(placedGroup, y, isLastRow, index) {
-      const gene = placedGroup.feature;
-
-      return (
-        <GeneAnnotationScaffold
-          key={index}
-          gene={gene}
-          xSpan={placedGroup.xSpan}
-          viewWindow={
-            configOptions.forceSvg
-              ? trackState.viewWindow
-              : new OpenInterval(0, trackState.visWidth)
-          }
-          y={y}
-          isMinimal={isLastRow}
-          options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => {}}
-        >
-          {placedGroup.placedFeatures.map((placedGene, i) => (
-            <GeneAnnotation
-              key={i}
-              placedGene={placedGene}
-              y={y}
-              options={configOptions}
-            />
-          ))}
-        </GeneAnnotationScaffold>
-      );
-    }
-
-    function getBedAnnotationElement(placedGroup, y, isLastRow, index) {
-      return placedGroup.placedFeatures.map((placement, i) => (
-        <BedAnnotation
-          key={i}
-          feature={placement.feature}
-          xSpan={placement.xSpan}
-          y={y}
-          isMinimal={isLastRow}
-          color={configOptions.color}
-          reverseStrandColor={configOptions.color2}
-          isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => {}}
-          alwaysDrawLabel={configOptions.alwaysDrawLabel}
-          hiddenPixels={configOptions.hiddenPixels}
-        />
-      ));
-    }
-
-    const getAnnotationElementMap: { [key: string]: any } = {
-      geneannotation: (placedGroup, y, isLastRow, index) =>
-        getAnnotationElement(placedGroup, y, isLastRow, index),
-      refbed: (placedGroup, y, isLastRow, index) =>
-        getAnnotationElement(placedGroup, y, isLastRow, index),
-      bed: (placedGroup, y, isLastRow, index) =>
-        getBedAnnotationElement(placedGroup, y, isLastRow, index),
-      bedcolor: function renderAnnotation(
-        placedGroup: PlacedFeatureGroup,
-        y: number,
-        isLastRow: boolean,
-        index: number,
-      ) {
-        return placedGroup.placedFeatures.map((placement, i) => (
-          <Bedcolor
-            key={i}
-            feature={placement.feature}
-            xSpan={placement.xSpan}
-            y={y}
-            isMinimal={isLastRow}
-            height={configOptions.rowHeight}
-            onClick={renderTooltip}
-          />
-        ));
-      },
-      vcf: function renderAnnotation(
-        placedGroup: PlacedFeatureGroup,
-        y: number,
-        isLastRow: boolean,
-        index: number,
-      ) {
-        return placedGroup.placedFeatures.map((placement, i) => (
-          <VcfAnnotation
-            key={i}
-            feature={placement.feature as Vcf}
-            xSpan={placement.xSpan}
-            y={y}
-            isMinimal={isLastRow}
-            height={configOptions.rowHeight}
-            colorScale={scales}
-            onClick={renderTooltip}
-            alwaysDrawLabel={configOptions.alwaysDrawLabel}
-          />
-        ));
-      },
-      jaspar: function getAnnotationElement(
-        placedGroup,
-        y,
-        isLastRow,
-        index,
-        height,
-      ) {
-        let scoreScale = scaleLinear()
-          .domain([0, 1000])
-          .range([0, 1])
-          .clamp(true);
-        return placedGroup.placedFeatures.map((placement, i) => (
-          <BedAnnotation
-            key={i}
-            feature={placement.feature}
-            xSpan={placement.xSpan}
-            y={y}
-            isMinimal={isLastRow}
-            color={configOptions.color}
-            reverseStrandColor={configOptions.color2}
-            isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
-            alwaysDrawLabel={configOptions.alwaysDrawLabel}
-            hiddenPixels={configOptions.hiddenPixels}
-            opacity={scoreScale(placement.feature.score)}
-          />
-        ));
-      },
-      bigbed: (placedGroup, y, isLastRow, index) =>
-        getBedAnnotationElement(placedGroup, y, isLastRow, index),
-      modbed: function getAnnotationElement(
-        placedGroup,
-        y,
-        isLastRow,
-        index,
-        height,
-      ) {
-        return placedGroup.placedFeatures.map((placement, i) => (
-          <FiberAnnotation
-            key={i}
-            y={y}
-            isMinimal={isLastRow}
-            placement={placement}
-            color={configOptions.color}
-            color2={configOptions.color2}
-            rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => {}}
-            onHideTooltip={onClose}
-            hiddenPixels={configOptions.hiddenPixels}
-            hideMinimalItems={configOptions.hideMinimalItems}
-            pixelsPadding={configOptions.pixelsPadding}
-            displayMode={configOptions.displayMode}
-          />
-        ));
-      },
-      repeatmasker: function getAnnotationElement(
-        placedGroup,
-        y,
-        isLastRow,
-        index,
-        height,
-      ) {
-        const { categoryColors } = configOptions;
-        const TEXT_HEIGHT = 9; // height for both text label and arrows.
-        return placedGroup.placedFeatures.map((placement, i) => {
-          const { xSpan, feature, isReverse } = placement;
-          if (placement.xSpan.getLength <= 0) {
-            return null;
-          }
-          let color;
-
-          if (feature.rgb) {
-            color = `rgb(${feature.rgb})`;
-          } else {
-            const categoryId = feature.getCategoryId();
-            color = categoryColors[categoryId];
-          }
-
-          const contrastColor = getContrastingColor(color);
-          let scale = scaleLinear()
-            .domain([1, 0])
-            .range([TOP_PADDING, configOptions.height]);
-
-          let y = scale(feature.repeatValue);
-          const drawHeight = configOptions.height - y;
-
-          const width = xSpan.getLength();
-          if (drawHeight <= 0) {
-            return null;
-          }
-          const mainBody = (
-            <rect
-              x={xSpan.start}
-              y={y}
-              width={width}
-              height={drawHeight}
-              fill={color}
-              fillOpacity={0.75}
-            />
-          );
-          let label;
-          const labelText = feature.getName();
-          const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
-          if (estimatedLabelWidth < 0.9 * width) {
-            const centerX = xSpan.start + 0.5 * width;
-            const centerY = height - TEXT_HEIGHT * 2;
-
-            label = (
-              <BackgroundedText
-                x={centerX}
-                y={centerY}
-                height={TEXT_HEIGHT - 1}
-                fill={contrastColor}
-                dominantBaseline="hanging"
-                textAnchor="middle"
-              >
-                {labelText}
-              </BackgroundedText>
-            );
-          }
-          const arrows = (
-            <AnnotationArrows
-              startX={xSpan.start}
-              endX={xSpan.end}
-              y={height - TEXT_HEIGHT}
-              height={TEXT_HEIGHT}
-              opacity={0.75}
-              isToRight={isReverse === (feature.strand === "-")}
-              color="white"
-            />
-          );
-
-          return (
-            <TranslatableG
-              onClick={(event) => {
-                if (renderTooltip) {
-                  renderTooltip(event, feature);
-                }
-              }}
-              key={i}
-            >
-              {mainBody}
-              {arrows}
-              {label}
-            </TranslatableG>
-          );
-        });
-      },
-
-      rmskv2: function getAnnotationElement(
-        placedGroup,
-        y,
-        isLastRow,
-        index,
-        height,
-      ) {
-        const { categoryColors } = configOptions;
-        const TEXT_HEIGHT = 9; // height for both text label and arrows.
-        return placedGroup.placedFeatures.map((placement, i) => {
-          const { xSpan, feature, isReverse } = placement;
-          if (placement.xSpan.getLength <= 0) {
-            return null;
-          }
-          let color;
-
-          if (feature.rgb) {
-            color = `rgb(${feature.rgb})`;
-          } else {
-            const categoryId = feature.getCategoryId();
-            color = categoryColors[categoryId];
-          }
-
-          const contrastColor = getContrastingColor(color);
-          let scale = scaleLinear()
-            .domain([1, 0])
-            .range([TOP_PADDING, configOptions.height]);
-          let y = scale(feature.repeatValue);
-
-          const drawHeight = configOptions.height - y;
-
-          const width = xSpan.getLength();
-          if (drawHeight <= 0) {
-            return null;
-          }
-          const mainBody = (
-            <rect
-              x={xSpan.start}
-              y={y}
-              width={width}
-              height={drawHeight}
-              fill={color}
-              fillOpacity={0.75}
-            />
-          );
-          let label;
-          const labelText = feature.getName();
-          const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
-          if (estimatedLabelWidth < 0.9 * width) {
-            const centerX = xSpan.start + 0.5 * width;
-            const centerY = height - TEXT_HEIGHT * 2;
-
-            label = (
-              <BackgroundedText
-                x={centerX}
-                y={centerY}
-                height={TEXT_HEIGHT - 1}
-                fill={contrastColor}
-                dominantBaseline="hanging"
-                textAnchor="middle"
-              >
-                {labelText}
-              </BackgroundedText>
-            );
-          }
-          const arrows = (
-            <AnnotationArrows
-              startX={xSpan.start}
-              endX={xSpan.end}
-              y={height - TEXT_HEIGHT}
-              height={TEXT_HEIGHT}
-              opacity={0.75}
-              isToRight={isReverse === (feature.strand === "-")}
-              color="white"
-            />
-          );
-
-          return (
-            <TranslatableG
-              onClick={(event) => {
-                if (renderTooltip) {
-                  renderTooltip(event, feature);
-                }
-              }}
-              key={i}
-            >
-              {mainBody}
-              {arrows}
-              {label}
-            </TranslatableG>
-          );
-        });
-      },
-      categorical: function getAnnotationElement(
-        placedGroup,
-        y,
-        isLastRow,
-        index,
-        height,
-      ) {
-        return placedGroup.placedFeatures.map((placement, i) => {
-          const featureName = placement.feature.getName();
-          const color =
-            configOptions.category && configOptions.category[featureName]
-              ? configOptions.category[`${featureName}`].color
-              : "blue";
-
-          return (
-            <CategoricalAnnotation
-              key={i}
-              feature={placement.feature}
-              xSpan={placement.xSpan}
-              y={y}
-              isMinimal={false}
-              color={color}
-              onClick={renderTooltip ? renderTooltip : () => {}}
-              category={configOptions.category}
-              height={configOptions.height}
-              alwaysDrawLabel={configOptions.alwaysDrawLabel}
-            />
-          );
-        });
-      },
-
-      snp: function getAnnotationElement(
-        placedGroup,
-        y,
-        isLastRow,
-        index,
-        height,
-      ) {
-        return placedGroup.placedFeatures.map((placement, i) => (
-          <SnpAnnotation
-            key={i}
-            snp={placement.feature}
-            xSpan={placement.xSpan}
-            y={y}
-            isMinimal={isLastRow}
-            color={configOptions.color}
-            reverseStrandColor={configOptions.color2}
-            isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
-            alwaysDrawLabel={configOptions.alwaysDrawLabel}
-            hiddenPixels={configOptions.hiddenPixels}
-          />
-        ));
-      },
-
-      bam: function getAnnotationElement(
-        placedGroup,
-        y,
-        isLastRow,
-        index,
-        height,
-      ) {
-        return placedGroup.placedFeatures.map((placement, i) => (
-          <BamAnnotation
-            key={i}
-            placedRecord={placement}
-            y={y}
-            onClick={renderTooltip ? renderTooltip : () => {}}
-            options={configOptions}
-          />
-        ));
-      },
-    };
+    // create annotation element map using top-level factory so closures (renderTooltip, etc.) are preserved
 
     if (trackModel.type === "omeroidr") {
       const calcTrackHeight = () => {
@@ -753,13 +618,20 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (svgHeight) {
       svgHeight.current = height;
     }
-    const svgDATA = createFullVisualizer(
-      placeFeatureData.placements,
-      trackState.visWidth,
-      height,
-      ROW_HEIGHT,
-      configOptions.maxRows,
-      legend,
+    const svgDATA = (
+      <FullVisualizer
+        placements={placeFeatureData.placements}
+        width={trackState.visWidth}
+        height={height}
+        rowHeight={ROW_HEIGHT}
+        maxRows={configOptions.maxRows}
+        legend={legend}
+        windowWidth={windowWidth}
+        trackState={trackState}
+        configOptions={configOptions}
+        trackModel={trackModel}
+          renderTooltip={renderTooltip}
+      />
     );
 
     return { component: svgDATA, numHidden: numHidden };
@@ -833,6 +705,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
+
       />
     );
   },
@@ -903,6 +776,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     xvaluesData,
   }) {
+
     const canvasElements = (
       <MatplotTrackComponent
         data={formattedData}
@@ -2250,6 +2124,7 @@ function formatMatplotData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
+
   if (initialLoad && regionLoci?.length) {
     const groupResult: any = regionLoci.map(() => []);
 
@@ -2257,10 +2132,12 @@ function formatMatplotData(
       const regionGroups: any = regionLoci.map(() => []);
 
       geneArr.forEach((record) => {
+            const unsafeValue = Number(record[3]);
+    const value = record.score? record.score : Number.isFinite(unsafeValue) ? unsafeValue : 0;
         const feature = new NumericalFeature(
           "",
           new ChromosomeInterval(record.chr, record.start, record.end),
-        ).withValue(record.score);
+        ).withValue(value);
 
         regionLoci.forEach((region, index) => {
           if (
@@ -2285,11 +2162,13 @@ function formatMatplotData(
   }
 
   return genesArr.map((geneArr) =>
-    geneArr.map((record) =>
-      new NumericalFeature(
+    geneArr.map((record) => {  const unsafeValue = Number(record[3]);
+    const value = record.score? record.score : Number.isFinite(unsafeValue) ? unsafeValue : 0;
+  
+  return new NumericalFeature(
         "",
         new ChromosomeInterval(record.chr, record.start, record.end),
-      ).withValue(record.score),
+      ).withValue(value)} ,
     ),
   );
 }

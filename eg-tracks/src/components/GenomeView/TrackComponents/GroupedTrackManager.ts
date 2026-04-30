@@ -172,12 +172,14 @@ export class GroupedTrackManager {
     trackManagerState: any,
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     if (trackData) {
+   
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
       for (let i = 0; i < trackData.length; i++) {
+
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
         const track = trackData[i];
-
+                         
         if (
           track.configOptions.group &&
           track.trackModel.type in numericalTracksGroup
@@ -257,9 +259,11 @@ export class GroupedTrackManager {
           track.trackModel.type in numericalTracks ||
           track?.trackModel?.options?.displayMode === "density"
         ) {
+       
           const tid = track.id;
 
           if (track.data) {
+            
             const data = track.data;
             let xvalues;
             if (
@@ -280,6 +284,7 @@ export class GroupedTrackManager {
             } else if (track.trackModel.type === "methylc") {
               xvalues = this.aggregateRecords(data, track.visRegion, width);
             } else if (track.trackModel.type === "matplot") {
+            
               xvalues = data.map(
                 (d) =>
                   this.aggregator.xToValueMaker(
@@ -289,6 +294,7 @@ export class GroupedTrackManager {
                     track.configOptions,
                   )[0],
               );
+            
             } else {
               xvalues = this.aggregator.xToValueMaker(
                 data,
