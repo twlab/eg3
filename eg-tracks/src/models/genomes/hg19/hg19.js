@@ -84,11 +84,11 @@ const defaultTracks = [
   //   name: "example github g3d",
   //   showOnHubLoad: true,
   // }),
-  // new TrackModel({
-  //   type: "bam",
-  //   name: "Test bam",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
-  // }),
+  new TrackModel({
+    type: "bam",
+    name: "Test bam",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+  }),
   // new TrackModel({
   //   type: "bigwig",
   //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
@@ -102,48 +102,40 @@ const defaultTracks = [
   //     assay: "MRE",
   //   },
   // }),
-  // new TrackModel({
-  //   type: "bigbed",
-  //   name: "test bigbed",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  // }),
+  new TrackModel({
+    type: "bigbed",
+    name: "test bigbed",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  }),
   // new TrackModel({
   //     type: "methylc",
   //     name: "Methylation",
   //     url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz"
   // }),
-  // new TrackModel({
-  //   type: "categorical",
-  //   name: "ChromHMM",
-  //   url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
-  //   options: {
-  //     category: {
-  //       1: { name: "Active TSS", color: "#ff0000" },
-  //       2: { name: "Flanking Active TSS", color: "#ff4500" },
-  //       3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
-  //       4: { name: "Strong transcription", color: "#008000" },
-  //       5: { name: "Weak transcription", color: "#006400" },
-  //       6: { name: "Genic enhancers", color: "#c2e105" },
-  //       7: { name: "Enhancers", color: "#ffff00" },
-  //       8: { name: "ZNF genes & repeats", color: "#66cdaa" },
-  //       9: { name: "Heterochromatin", color: "#8    a91d0" },
-  //       10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
-  //       11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
-  //       12: { name: "Bivalent Enhancer", color: "#bdb76b" },
-  //       13: { name: "Repressed PolyComb", color: "#808080" },
-  //       14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
-  //       15: { name: "Quiescent/Low", color: "#ffffff" },
-  //     },
-  //   },
-  // }),
-  // new TrackModel({
-  //   type: "hic",
-  //   name: "test hic",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //   options: {
-  //     displayMode: "arc",
-  //   },
-  // }),
+  new TrackModel({
+    type: "categorical",
+    name: "ChromHMM",
+    url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
+    options: {
+      category: {
+        1: { name: "Active TSS", color: "#ff0000" },
+        2: { name: "Flanking Active TSS", color: "#ff4500" },
+        3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
+        4: { name: "Strong transcription", color: "#008000" },
+        5: { name: "Weak transcription", color: "#006400" },
+        6: { name: "Genic enhancers", color: "#c2e105" },
+        7: { name: "Enhancers", color: "#ffff00" },
+        8: { name: "ZNF genes & repeats", color: "#66cdaa" },
+        9: { name: "Heterochromatin", color: "#8    a91d0" },
+        10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
+        11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
+        12: { name: "Bivalent Enhancer", color: "#bdb76b" },
+        13: { name: "Repressed PolyComb", color: "#808080" },
+        14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
+        15: { name: "Quiescent/Low", color: "#ffffff" },
+      },
+    },
+  }),
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",
@@ -161,10 +153,18 @@ const defaultTracks = [
   //   },
   // }),
   // new TrackModel({
-  //   type: "bam",
-  //   name: "Test bam",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   options: {
+  //     displayMode: "arc",
+  //   },
   // }),
+  new TrackModel({
+    type: "bam",
+    name: "Test bam",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+  }),
   // new TrackModel({
   //   type: "bam",
   //   name: "Test bam",

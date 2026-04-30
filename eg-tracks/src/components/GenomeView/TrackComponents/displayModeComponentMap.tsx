@@ -69,11 +69,14 @@ import QBed from "../../../models/QBed";
 import React from "react";
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
-import VcfTrack from "./VcfComponents/VcfTrack";
+
 import Bedcolor from "./bedComponents/Bedcolor";
 
 import { generateUUID } from "../../../util";
-import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import {
+  FiberDisplayModes,
+  VcfColorScaleKeys,
+} from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 export const bigWithNavTracks = new Set([
   "repeat",
@@ -117,7 +120,12 @@ function makeAnnotationElementMap(context: any) {
     onHideTooltip,
   } = context;
 
-  function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+  function getAnnotationElement(
+    placedGroup: any,
+    y: number,
+    isLastRow: boolean,
+    index: number,
+  ) {
     const gene = placedGroup.feature;
 
     return (
@@ -134,15 +142,18 @@ function makeAnnotationElementMap(context: any) {
         isMinimal={isLastRow}
         options={configOptions}
         onClick={renderTooltip ? renderTooltip : () => {}}
-      >
-        {placedGroup.placedFeatures.map((placedGene: any, i: number) => (
-          <GeneAnnotation key={i} placedGene={placedGene} y={y} options={configOptions} />
-        ))}
-      </GeneAnnotationScaffold>
+        placedGroup={placedGroup}
+        configOptions={configOptions}
+      />
     );
   }
 
-  function getBedAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+  function getBedAnnotationElement(
+    placedGroup: any,
+    y: number,
+    isLastRow: boolean,
+    index: number,
+  ) {
     return placedGroup.placedFeatures.map((placement: any, i: number) => (
       <BedAnnotation
         key={i}
@@ -161,13 +172,22 @@ function makeAnnotationElementMap(context: any) {
   }
 
   return {
-    geneannotation: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
-      getAnnotationElement(placedGroup, y, isLastRow, index),
+    geneannotation: (
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+    ) => getAnnotationElement(placedGroup, y, isLastRow, index),
     refbed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
       getAnnotationElement(placedGroup, y, isLastRow, index),
     bed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
       getBedAnnotationElement(placedGroup, y, isLastRow, index),
-    bedcolor: function renderAnnotation(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+    bedcolor: function renderAnnotation(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+    ) {
       return placedGroup.placedFeatures.map((placement: any, i: number) => (
         <Bedcolor
           key={i}
@@ -180,7 +200,12 @@ function makeAnnotationElementMap(context: any) {
         />
       ));
     },
-    vcf: function renderAnnotation(placedGroup: any, y: number, isLastRow: boolean, index: number) {
+    vcf: function renderAnnotation(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+    ) {
       return placedGroup.placedFeatures.map((placement: any, i: number) => (
         <VcfAnnotation
           key={i}
@@ -195,8 +220,17 @@ function makeAnnotationElementMap(context: any) {
         />
       ));
     },
-    jaspar: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
-      let scoreScale = scaleLinear().domain([0, 1000]).range([0, 1]).clamp(true);
+    jaspar: function getAnnotationElement(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+      height?: number,
+    ) {
+      let scoreScale = scaleLinear()
+        .domain([0, 1000])
+        .range([0, 1])
+        .clamp(true);
       return placedGroup.placedFeatures.map((placement: any, i: number) => (
         <BedAnnotation
           key={i}
@@ -216,7 +250,13 @@ function makeAnnotationElementMap(context: any) {
     },
     bigbed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
       getBedAnnotationElement(placedGroup, y, isLastRow, index),
-    modbed: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+    modbed: function getAnnotationElement(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+      height?: number,
+    ) {
       return placedGroup.placedFeatures.map((placement: any, i: number) => (
         <FiberAnnotation
           key={i}
@@ -235,7 +275,13 @@ function makeAnnotationElementMap(context: any) {
         />
       ));
     },
-    repeatmasker: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+    repeatmasker: function getAnnotationElement(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+      height?: number,
+    ) {
       const { categoryColors } = configOptions;
       const TEXT_HEIGHT = 9;
       return placedGroup.placedFeatures.map((placement: any, i: number) => {
@@ -253,7 +299,9 @@ function makeAnnotationElementMap(context: any) {
         }
 
         const contrastColor = getContrastingColor(color);
-        let scale = scaleLinear().domain([1, 0]).range([TOP_PADDING, configOptions.height]);
+        let scale = scaleLinear()
+          .domain([1, 0])
+          .range([TOP_PADDING, configOptions.height]);
 
         let yv = scale(feature.repeatValue);
         const drawHeight = configOptions.height - yv;
@@ -263,7 +311,14 @@ function makeAnnotationElementMap(context: any) {
           return null;
         }
         const mainBody = (
-          <rect x={xSpan.start} y={yv} width={width} height={drawHeight} fill={color} fillOpacity={0.75} />
+          <rect
+            x={xSpan.start}
+            y={yv}
+            width={width}
+            height={drawHeight}
+            fill={color}
+            fillOpacity={0.75}
+          />
         );
         let label;
         const labelText = feature.getName();
@@ -273,13 +328,28 @@ function makeAnnotationElementMap(context: any) {
           const centerY = height - TEXT_HEIGHT * 2;
 
           label = (
-            <BackgroundedText x={centerX} y={centerY} height={TEXT_HEIGHT - 1} fill={contrastColor} dominantBaseline="hanging" textAnchor="middle">
+            <BackgroundedText
+              x={centerX}
+              y={centerY}
+              height={TEXT_HEIGHT - 1}
+              fill={contrastColor}
+              dominantBaseline="hanging"
+              textAnchor="middle"
+            >
               {labelText}
             </BackgroundedText>
           );
         }
         const arrows = (
-          <AnnotationArrows startX={xSpan.start} endX={xSpan.end} y={height - TEXT_HEIGHT} height={TEXT_HEIGHT} opacity={0.75} isToRight={isReverse === (feature.strand === "-")} color="white" />
+          <AnnotationArrows
+            startX={xSpan.start}
+            endX={xSpan.end}
+            y={height - TEXT_HEIGHT}
+            height={TEXT_HEIGHT}
+            opacity={0.75}
+            isToRight={isReverse === (feature.strand === "-")}
+            color="white"
+          />
         );
 
         return (
@@ -298,7 +368,13 @@ function makeAnnotationElementMap(context: any) {
         );
       });
     },
-    rmskv2: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+    rmskv2: function getAnnotationElement(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+      height?: number,
+    ) {
       const { categoryColors } = configOptions;
       const TEXT_HEIGHT = 9;
       return placedGroup.placedFeatures.map((placement: any, i: number) => {
@@ -316,7 +392,9 @@ function makeAnnotationElementMap(context: any) {
         }
 
         const contrastColor = getContrastingColor(color);
-        let scale = scaleLinear().domain([1, 0]).range([TOP_PADDING, configOptions.height]);
+        let scale = scaleLinear()
+          .domain([1, 0])
+          .range([TOP_PADDING, configOptions.height]);
         let yv = scale(feature.repeatValue);
 
         const drawHeight = configOptions.height - yv;
@@ -326,7 +404,14 @@ function makeAnnotationElementMap(context: any) {
           return null;
         }
         const mainBody = (
-          <rect x={xSpan.start} y={yv} width={width} height={drawHeight} fill={color} fillOpacity={0.75} />
+          <rect
+            x={xSpan.start}
+            y={yv}
+            width={width}
+            height={drawHeight}
+            fill={color}
+            fillOpacity={0.75}
+          />
         );
         let label;
         const labelText = feature.getName();
@@ -336,13 +421,28 @@ function makeAnnotationElementMap(context: any) {
           const centerY = height - TEXT_HEIGHT * 2;
 
           label = (
-            <BackgroundedText x={centerX} y={centerY} height={TEXT_HEIGHT - 1} fill={contrastColor} dominantBaseline="hanging" textAnchor="middle">
+            <BackgroundedText
+              x={centerX}
+              y={centerY}
+              height={TEXT_HEIGHT - 1}
+              fill={contrastColor}
+              dominantBaseline="hanging"
+              textAnchor="middle"
+            >
               {labelText}
             </BackgroundedText>
           );
         }
         const arrows = (
-          <AnnotationArrows startX={xSpan.start} endX={xSpan.end} y={height - TEXT_HEIGHT} height={TEXT_HEIGHT} opacity={0.75} isToRight={isReverse === (feature.strand === "-")} color="white" />
+          <AnnotationArrows
+            startX={xSpan.start}
+            endX={xSpan.end}
+            y={height - TEXT_HEIGHT}
+            height={TEXT_HEIGHT}
+            opacity={0.75}
+            isToRight={isReverse === (feature.strand === "-")}
+            color="white"
+          />
         );
 
         return (
@@ -361,10 +461,19 @@ function makeAnnotationElementMap(context: any) {
         );
       });
     },
-    categorical: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+    categorical: function getAnnotationElement(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+      height?: number,
+    ) {
       return placedGroup.placedFeatures.map((placement: any, i: number) => {
         const featureName = placement.feature.getName();
-        const color = configOptions.category && configOptions.category[featureName] ? configOptions.category[`${featureName}`].color : "blue";
+        const color =
+          configOptions.category && configOptions.category[featureName]
+            ? configOptions.category[`${featureName}`].color
+            : "blue";
 
         return (
           <CategoricalAnnotation
@@ -382,7 +491,13 @@ function makeAnnotationElementMap(context: any) {
         );
       });
     },
-    snp: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+    snp: function getAnnotationElement(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+      height?: number,
+    ) {
       return placedGroup.placedFeatures.map((placement: any, i: number) => (
         <SnpAnnotation
           key={i}
@@ -399,9 +514,21 @@ function makeAnnotationElementMap(context: any) {
         />
       ));
     },
-    bam: function getAnnotationElement(placedGroup: any, y: number, isLastRow: boolean, index: number, height?: number) {
+    bam: function getAnnotationElement(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+      height?: number,
+    ) {
       return placedGroup.placedFeatures.map((placement: any, i: number) => (
-        <BamAnnotation key={i} placedRecord={placement} y={y} onClick={renderTooltip ? renderTooltip : () => {}} options={configOptions} />
+        <BamAnnotation
+          key={i}
+          placedRecord={placement}
+          y={y}
+          onClick={renderTooltip ? renderTooltip : () => {}}
+          options={configOptions}
+        />
       ));
     },
   };
@@ -421,34 +548,52 @@ const FullVisualizer: React.FC<any> = ({
   renderTooltip,
   scales,
   onClose,
-
 }) => {
-    const getAnnotationElementMap = makeAnnotationElementMap({ configOptions, trackState, renderTooltip, scales, onClose });
+  const getAnnotationElementMap = makeAnnotationElementMap({
+    configOptions,
+    trackState,
+    renderTooltip,
+    scales,
+    onClose,
+  });
 
   function renderAnnotation(placedGroup: any, i: number) {
     const maxRowIndex = (maxRows || Infinity) - 1;
     const rowIndex = Math.min(placedGroup.row, maxRowIndex);
     const y = rowIndex * rowHeight + TOP_PADDING;
 
-    return getAnnotationElementMap[`${trackModel.type}`](placedGroup, y, rowIndex === maxRowIndex, i, configOptions.height ?? 0);
+    return getAnnotationElementMap[`${trackModel.type}`](
+      placedGroup,
+      y,
+      rowIndex === maxRowIndex,
+      i,
+      configOptions.height ?? 0,
+    );
   }
-
-  const svgKey = generateUUID();
 
   if (configOptions.forceSvg || configOptions.packageVersion) {
     const curParentStyle: any = configOptions.forceSvg
       ? { position: "relative", overflow: "hidden", width: windowWidth }
       : {};
     const curEleStyle: any = configOptions.forceSvg
-      ? { position: "relative", transform: `translateX(${ -trackState.viewWindow.start }px)` }
+      ? {
+          position: "relative",
+          transform: `translateX(${-trackState.viewWindow.start}px)`,
+        }
       : {};
 
     return (
       <React.Fragment>
         <div style={{ display: "flex", ...curParentStyle }}>
           {configOptions.forceSvg || configOptions.packageVersion ? legend : ""}
-          <div style={{ display: "flex", flexDirection: "column", ...curEleStyle }}>
-            <svg key={svgKey} width={trackState.visWidth} height={height}>
+          <div
+            style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
+          >
+            <svg
+              key={trackModel.id + "forcesvg"}
+              width={trackState.visWidth}
+              height={height}
+            >
               {placements.map(renderAnnotation)}
             </svg>
           </div>
@@ -458,7 +603,11 @@ const FullVisualizer: React.FC<any> = ({
   }
 
   return (
-    <svg key={svgKey} width={trackState.visWidth} height={height}>
+    <svg
+      key={trackModel.id + "svg"}
+      width={trackState.visWidth}
+      height={height}
+    >
       {placements.map(renderAnnotation)}
     </svg>
   );
@@ -587,8 +736,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       height =
         trackModel.type === "repeatmasker" ||
         trackModel.type === "rmskv2" ||
-        trackModel.type === "categorical" ||
-        trackModel.type === "modbed"
+        trackModel.type === "categorical"
           ? configOptions.height
           : placeFeatureData.numRowsAssigned
             ? getHeight(placeFeatureData.numRowsAssigned)
@@ -630,7 +778,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackState={trackState}
         configOptions={configOptions}
         trackModel={trackModel}
-          renderTooltip={renderTooltip}
+        renderTooltip={renderTooltip}
+        scales={scales}
       />
     );
 
@@ -705,7 +854,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
-
       />
     );
   },
@@ -776,7 +924,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     xvaluesData,
   }) {
-
     const canvasElements = (
       <MatplotTrackComponent
         data={formattedData}
@@ -1434,6 +1581,9 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     "dynamichic",
     "vcf",
   ]);
+  if (drawData.svgHeight) {
+    drawData.svgHeight.current = configOptions.height;
+  }
 
   const isFullMode =
     (configOptions.displayMode === "full" &&
@@ -1451,7 +1601,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   }
 
   // Track types with standard full parameters
-  const standardFullTracks = ["vcf", "matplot"];
+  const standardFullTracks = ["matplot"];
   if (standardFullTracks.includes(trackType)) {
     return displayModeComponentMap[trackType](createFullParams());
   }
@@ -1483,7 +1633,30 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     }
   }
 
+  if (trackType === "vcf") {
+    const currentViewLength =
+      (trackState.visRegion.getWidth() *
+        (drawData.trackState.viewWindow.end -
+          drawData.trackState.viewWindow.start)) /
+      drawData.trackState.visData.visWidth;
+    if (
+      (drawData.configOptions.displayMode === "auto" &&
+        currentViewLength > 100000) ||
+      drawData.configOptions.displayMode === "density"
+    ) {
+      return displayModeComponentMap.density(createFullParams());
+    } else {
+      return displayModeComponentMap.full(
+        createFullParams({
+          scales: drawData.placeFeature.scales,
+          ROW_HEIGHT: configOptions.rowHeight + 2,
+        }),
+      );
+    }
+  }
+  console.log(drawData);
   if (interactionTracks.has(trackType)) {
+    console.log("TEE");
     return displayModeComponentMap.interaction(createFullParams());
   }
 
@@ -2124,7 +2297,6 @@ function formatMatplotData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-
   if (initialLoad && regionLoci?.length) {
     const groupResult: any = regionLoci.map(() => []);
 
@@ -2132,8 +2304,12 @@ function formatMatplotData(
       const regionGroups: any = regionLoci.map(() => []);
 
       geneArr.forEach((record) => {
-            const unsafeValue = Number(record[3]);
-    const value = record.score? record.score : Number.isFinite(unsafeValue) ? unsafeValue : 0;
+        const unsafeValue = Number(record[3]);
+        const value = record.score
+          ? record.score
+          : Number.isFinite(unsafeValue)
+            ? unsafeValue
+            : 0;
         const feature = new NumericalFeature(
           "",
           new ChromosomeInterval(record.chr, record.start, record.end),
@@ -2162,14 +2338,19 @@ function formatMatplotData(
   }
 
   return genesArr.map((geneArr) =>
-    geneArr.map((record) => {  const unsafeValue = Number(record[3]);
-    const value = record.score? record.score : Number.isFinite(unsafeValue) ? unsafeValue : 0;
-  
-  return new NumericalFeature(
+    geneArr.map((record) => {
+      const unsafeValue = Number(record[3]);
+      const value = record.score
+        ? record.score
+        : Number.isFinite(unsafeValue)
+          ? unsafeValue
+          : 0;
+
+      return new NumericalFeature(
         "",
         new ChromosomeInterval(record.chr, record.start, record.end),
-      ).withValue(value)} ,
-    ),
+      ).withValue(value);
+    }),
   );
 }
 

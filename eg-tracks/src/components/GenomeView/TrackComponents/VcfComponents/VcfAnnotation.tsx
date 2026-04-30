@@ -55,6 +55,7 @@ class VcfAnnotation extends React.Component<Props> {
       onClick,
       alwaysDrawLabel,
     } = this.props;
+
     const colorToUse = colorScale(feature.variant.QUAL);
     const contrastColor = getContrastingColor(colorToUse);
     const [startX, endX] = xSpan;

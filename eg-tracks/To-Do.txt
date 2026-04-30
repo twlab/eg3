@@ -1,3 +1,9 @@
+
+4/30/26
+check sort order 
+cancel large fetch when moving to new region
+fix mod and vcf height, and viewWindow
+
 4/09/26
 finish ADD ERROR CHECK TO FORMAT
 finsh LOAD FILE SESSION WITHOUT NEEDED BVUNDLE ID

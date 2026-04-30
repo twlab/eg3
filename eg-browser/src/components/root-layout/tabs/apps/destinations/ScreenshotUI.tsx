@@ -409,6 +409,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             ? createSVGData.xvaluesData
             : null,
           isError: createSVGData.isError,
+          placeFeature: createSVGData.placeFeature,
         });
 
         return (

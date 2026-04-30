@@ -375,11 +375,52 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     };
   };
+  // Cancel any in-flight fetch operations on workers. Prefer graceful abort
+  // via postMessage({type: 'abort'}) but fall back to terminate() if needed.
+  function cancelPendingWorkerFetches() {
+    try {
+      if (
+        infiniteScrollWorkers &&
+        infiniteScrollWorkers.current &&
+        Array.isArray(infiniteScrollWorkers.current.worker)
+      ) {
+        infiniteScrollWorkers.current.worker.forEach((w: any) => {
+          try {
+            w.fetchWorker.postMessage?.({ type: "abort" });
+          } catch (e) {
+            try {
+              w.fetchWorker.terminate?.();
+            } catch (err) {
+              // ignore
+            }
+          }
+        });
+      }
+
+      if (fetchGenomeAlignWorker && fetchGenomeAlignWorker.current) {
+        try {
+          fetchGenomeAlignWorker.current.fetchWorker.postMessage?.({
+            type: "abort",
+          });
+        } catch (e) {
+          try {
+            fetchGenomeAlignWorker.current.fetchWorker.terminate?.();
+          } catch (err) {
+            // ignore
+          }
+        }
+      }
+    } catch (err) {
+      // defensive: swallow any unexpected errors
+    }
+  }
   const onNewRegionSelectRef = useRef(onNewRegionSelect);
   onNewRegionSelectRef.current = onNewRegionSelect;
 
   const throttleOnNewRegionSelect = useRef(
     throttleViewRegion((startbase, endbase, highlightSearch) => {
+      // cancel any in-flight fetches before starting a new region select
+      // cancelPendingWorkerFetches();
       onNewRegionSelectRef.current(startbase, endbase, highlightSearch);
     }, 150),
   );
@@ -831,6 +872,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newSelected: { [key: string]: any } = {};
     // these are options that changes the configMenu so we need to recreate the
     // the configmenu
+    console.log(key, value);
     let groupChange = false;
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));
@@ -1056,6 +1098,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         "hiddenPixels",
         "displayMode",
         "height",
+        "rowHeight",
+        "maxRows",
       ]);
 
       if (reCalcAgg.has(key) || groupChange) {
@@ -3286,7 +3330,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           cacheTrackData.trackType in
           { hic: "", longrange: "", biginteraction: "" }
         ) {
-          trackToDrawId[key] = "";
+          trackToDrawId[key] = false;
           continue;
         }
         if (
@@ -3368,37 +3412,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (typeof visRegion === "object") {
               visRegion = objToInstanceAlign(visRegion);
             }
-            if (cacheTrackData.trackType === "vcf") {
-              const currentViewLength =
-                (visRegion.getWidth() * viewWindow.getLength()) /
-                primaryVisData.visWidth;
 
-              if (currentViewLength > 100000) {
-                trackDataObj.push({
-                  id: key,
-                  data: combinedData,
-                  visRegion: visRegion,
-                  visWidth: primaryVisData.visWidth
-                    ? primaryVisData.visWidth
-                    : windowWidth * 3,
-                  configOptions,
-                  usePrimaryNav: cacheTrackData.usePrimaryNav,
-                  trackModel: curTrackModel,
-                });
-              }
-            } else {
-              trackDataObj.push({
-                id: key,
-                data: combinedData,
-                visRegion: visRegion,
-                visWidth: primaryVisData.visWidth
-                  ? primaryVisData.visWidth
-                  : windowWidth * 3,
-                configOptions,
-                usePrimaryNav: cacheTrackData.usePrimaryNav,
-                trackModel: curTrackModel,
-              });
+            if (cacheTrackData.trackType === "vcf") {
+              console.log("ASDDSAAISDBUHJADSOUHNSDA");
             }
+            trackDataObj.push({
+              id: key,
+              data: combinedData,
+              visRegion: visRegion,
+              visWidth: primaryVisData.visWidth
+                ? primaryVisData.visWidth
+                : windowWidth * 3,
+              configOptions,
+              usePrimaryNav: cacheTrackData.usePrimaryNav,
+              trackModel: curTrackModel,
+            });
           }
 
           // tracks that don't use primary nav are drawn with genomealign in the ongenomealignmessage, so we just needto
@@ -3558,7 +3586,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (curTrackModel.type === "genomealign") {
               checkHasGenAlign = true;
             }
-
 
             //create initial state for the new track, give it all the prevregion trackstate, and trigger fetch by updating trackcomponents
 
@@ -3812,6 +3839,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         //__________________________________________________________
 
         const curTracksToDrawId = {};
+
         let aggGroup = {};
         for (let key in trackManagerState.current.caches) {
           const globalConfig = trackManagerState.current.globalConfig;
@@ -3820,8 +3848,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             const curConfigOptions = globalConfig[key].configOptions;
             if (curConfigOptions.group) {
               aggGroup[key] = false;
-            }
-            else if ((cache.trackType !== "genomealign") || (cache.trackType === "genomealign" && !useFineModeNav.current)) {
+            } else if (
+              cache.trackType === "geneannotation" ||
+              cache.trackType === "refbed" ||
+              cache.trackType in numericalTracks ||
+              curConfigOptions?.fetchViewWindowOnly ||
+              curConfigOptions?.bothAnchorsInView ||
+              curConfigOptions?.displayMode === "density" ||
+              (cache.trackType === "genomealign" && !useFineModeNav.current)
+            ) {
               curTracksToDrawId[key] = false;
             }
           }

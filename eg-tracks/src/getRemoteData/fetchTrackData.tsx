@@ -15,20 +15,20 @@ function objToInstanceAlign(alignment: { [key: string]: any }) {
     let newChr = new ChromosomeInterval(
       feature.locus.chr,
       feature.locus.start,
-      feature.locus.end
+      feature.locus.end,
     );
     visRegionFeatures.push(new Feature(feature.name, newChr));
   }
 
   let visRegionNavContext = new NavigationContext(
     alignment._navContext._name,
-    visRegionFeatures
+    visRegionFeatures,
   );
 
   let visRegion = new DisplayedRegionModel(
     visRegionNavContext,
     alignment._startBase,
-    alignment._endBase
+    alignment._endBase,
   );
   return visRegion;
 }
@@ -77,7 +77,7 @@ export const trackFetchFunction: { [key: string]: any } = {
         } catch (error) {
           console.error(
             `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
-            error
+            error,
           );
           throw error;
         }
@@ -115,8 +115,9 @@ export const trackFetchFunction: { [key: string]: any } = {
           throw new Error("Region is higher then 30000");
         }
 
-        const url = `${api}/${region.chr.substr(3)}:${region.start}-${region.end
-          }?content-type=application%2Fjson&feature=variation`;
+        const url = `${api}/${region.chr.substr(3)}:${region.start}-${
+          region.end
+        }?content-type=application%2Fjson&feature=variation`;
 
         try {
           const response = await fetch(url, {
@@ -131,18 +132,15 @@ export const trackFetchFunction: { [key: string]: any } = {
 
           return response.json();
         } catch (error) {
-
           if (region.end - region.start > 30000) {
             throw new Error("Region is higher then 30000");
-          }
-          else {
+          } else {
             console.error(
               `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
-              error
+              error,
             );
             throw error;
           }
-
         }
       });
 
@@ -243,41 +241,40 @@ async function getRemoteData(regionData: any, trackType: string) {
     if (trackType === "bedOrTabix") {
       cachedFetchInstance[regionData.trackModel.url] = new TabixSource(
         regionData.trackModel.url,
-        indexUrl
+        indexUrl,
       );
     } else if (trackType === "vcf") {
       cachedFetchInstance[regionData.trackModel.url] = new VcfSource(
         regionData.trackModel.url,
-        indexUrl
+        indexUrl,
       );
     } else if (trackType === "bigbed") {
-
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
-        regionData.trackModel.url
+        regionData.trackModel.url,
       );
     } else if (trackType === "big") {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url
+        regionData.trackModel.url,
       );
     } else if (trackType === "repeatmasker") {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
-        regionData.trackModel.url
+        regionData.trackModel.url,
       );
     } else if (trackType === "rmskv2") {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url
+        regionData.trackModel.url,
       );
     } else if (trackType === "jaspar") {
       cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url
+        regionData.trackModel.url,
       );
     } else if (trackType === "hic") {
       cachedFetchInstance[regionData.trackModel.url] = new HicSource(
-        regionData.trackModel.url
+        regionData.trackModel.url,
       );
     } else if (trackType === "bam") {
       cachedFetchInstance[regionData.trackModel.url] = new BamSource(
-        regionData.trackModel.url
+        regionData.trackModel.url,
       );
     } else {
       throw new Error(`Unsupported track type: ${trackType}`);
@@ -301,7 +298,7 @@ async function getRemoteData(regionData: any, trackType: string) {
           .getData(
             regionData.nav,
             regionData.basesPerPixel,
-            regionData.trackModel.options
+            regionData.trackModel.options,
           )
           .then((data: any) => {
             // cachedFetchInstance[regionData.trackModel.url] = null;
@@ -313,17 +310,17 @@ async function getRemoteData(regionData: any, trackType: string) {
             throw error;
           });
       } else if (trackType === "hic") {
-
         return fetchInstance
           .getData(
             objToInstanceAlign(regionData.visRegion),
             regionData.basesPerPixel,
-            regionData.trackModel.options
+            regionData.trackModel.options,
           )
           .then((data: any) => {
             // cachedFetchInstance[regionData.trackModel.url] = null;
-            const fileInfos = cachedFetchInstance[regionData.trackModel.url].getFileInfo();
-            const result = { data, fileInfos }
+            const fileInfos =
+              cachedFetchInstance[regionData.trackModel.url].getFileInfo();
+            const result = { data, fileInfos };
             return result;
           })
           .catch((error) => {
@@ -335,7 +332,7 @@ async function getRemoteData(regionData: any, trackType: string) {
           .getData(
             regionData.nav,
             regionData.basesPerPixel,
-            regionData.trackModel.options
+            regionData.trackModel.options,
           )
           .then((data: any) => {
             // cachedFetchInstance[regionData.trackModel.url] = null;
@@ -343,7 +340,6 @@ async function getRemoteData(regionData: any, trackType: string) {
             return data;
           })
           .catch((error) => {
-
             cachedFetchInstance[regionData.trackModel.url] = null;
             throw error;
           });

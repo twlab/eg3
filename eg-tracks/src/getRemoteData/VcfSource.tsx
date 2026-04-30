@@ -4,9 +4,31 @@ import { TabixIndexedFile } from "@gmod/tabix";
 import VCF from "@gmod/vcf";
 
 const ensembl: Array<string> = [
-  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
-  "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
-  "21", "22", "X", "Y", "M",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "X",
+  "Y",
+  "M",
 ];
 
 class VcfSource {
@@ -49,7 +71,9 @@ class VcfSource {
       this.chromNamingCache = ensembl.includes(firstChrom);
       return this.chromNamingCache;
     } catch (error) {
-      console.error("Error detecting chromosome naming. Check URL and file format.");
+      console.error(
+        "Error detecting chromosome naming. Check URL and file format.",
+      );
       return null;
     }
   }
@@ -67,7 +91,8 @@ class VcfSource {
     if (!this.parser) {
       this.parser = new VCF({ header: this.header });
     }
-    const isEnsembl = options?.ensemblStyle ?? (await this.detectChromosomeNaming());
+    const isEnsembl =
+      options?.ensemblStyle ?? (await this.detectChromosomeNaming());
     const promises = region.map((locus) =>
       this._getDataInLocus(locus, isEnsembl),
     );

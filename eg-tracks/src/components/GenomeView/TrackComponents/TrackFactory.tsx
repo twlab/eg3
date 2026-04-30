@@ -75,7 +75,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
       : { ...trackOptionMap["error"].defaultOptions };
   }
-  const initTrackStart = useRef(true);
+
   const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
@@ -177,7 +177,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // inside the display components don't crash the whole app.
       try {
         result = (
-          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError }>
+          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
             {result as any}
           </ErrorBoundary>
         );
@@ -413,10 +413,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
+    console.log(newDrawData, "newDrawData in trackfactory");
     if (
       newDrawData.completedFetchedRegion &&
       newDrawData.completedFetchedRegion.current["done"][id] === false
     ) {
+      console.log(newDrawData, "newDrawData in trackfactory");
       if (dataIdx === newDrawData.completedFetchedRegion.current["key"]) {
         newDrawData.completedFetchedRegion.current["done"][id] = true;
       } else {
@@ -431,12 +433,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) {
         return;
       }
-
+      console.log(newDrawData, "newDrawData in trackfactory");
       const cacheTrackData = caches[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
+      console.log("asdsad");
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -494,14 +496,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState,
         );
         if (cacheTrackData["error"]) {
-             sentScreenshotData({
-      
-              isError: fetchError.current,        
-              trackId: id,
-            
-  
+          sentScreenshotData({
+            isError: fetchError.current,
+            trackId: id,
           });
-          return ;
+          return;
         } else if (
           !cacheTrackData.useExpandedLoci &&
           cacheTrackData.usePrimaryNav
@@ -582,25 +581,25 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         if (combinedData) {
           sentScreenshotData({
-      
-              genomeName: genomeConfig.genome.getName(),
-              genesArr: combinedData,
-              trackState,
-              windowWidth,
-              configOptions: drawOptions,
-              svgHeight:
-                getConfigOptions().displayMode === "full"
-                  ? svgHeight.current
-                  : getConfigOptions().height,
-              trackModel,
-              basesByPixel: basePerPixel,
-              genomeConfig,
-              xvaluesData: cacheTrackData[dataIdx].xvalues
-                ? cacheTrackData[dataIdx].xvalues
-                : null,
-              isError: fetchError.current,        trackId: id,
-            
-  
+            genomeName: genomeConfig.genome.getName(),
+            genesArr: combinedData,
+            trackState,
+            windowWidth,
+            configOptions: drawOptions,
+            svgHeight:
+              getConfigOptions().displayMode === "full"
+                ? svgHeight.current
+                : getConfigOptions().height,
+            trackModel,
+            basesByPixel: basePerPixel,
+            genomeConfig,
+            xvaluesData: cacheTrackData[dataIdx].xvalues
+              ? cacheTrackData[dataIdx].xvalues
+              : null,
+            isError: fetchError.current,
+            trackId: id,
+
+            placeFeature: cacheTrackData[dataIdx]?.placeFeature,
           });
         }
       }
@@ -757,7 +756,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             height={
               fetchError.current
                 ? 40
-                : getConfigOptions().displayMode === "full"
+                : svgHeight.current
                   ? svgHeight.current
                   : !getConfigOptions().isCombineStrands &&
                       trackModel.type === "methylc"
@@ -773,7 +772,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           display: "flex",
           height: fetchError.current
             ? 40
-            : getConfigOptions().displayMode === "full"
+            : getConfigOptions().displayMode === "full" ||
+                (svgHeight.current && getConfigOptions().displayMode === "auto")
               ? svgHeight.current
               : !getConfigOptions().isCombineStrands &&
                   trackModel.type === "methylc"

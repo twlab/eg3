@@ -1,4 +1,4 @@
-import React, { Children } from "react";
+import React, { Children, useMemo } from "react";
 import OpenInterval from "../../../../models/OpenInterval";
 import Gene from "../../../../models/Gene";
 import GeneAnnotation, {
@@ -33,13 +33,15 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
   y,
   isMinimal,
   options,
-  children,
+
   onClick,
+  placedGroup,
+  configOptions,
 }) => {
   const [xStart, xEnd] = xSpan;
   const { color, backgroundColor, italicizeText } = getDrawColors(
     gene,
-    options
+    options,
   );
 
   const coveringRect = (
@@ -116,7 +118,18 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
     <TranslatableG y={y} onClick={(event) => onClick(event, gene)}>
       {coveringRect}
       {centerLine}
-      {children}
+      {useMemo(
+        () =>
+          placedGroup.placedFeatures.map((placedGene: any, i: number) => (
+            <GeneAnnotation
+              key={i}
+              placedGene={placedGene}
+              y={y}
+              options={configOptions}
+            />
+          )),
+        [placedGroup],
+      )}
       {label}
     </TranslatableG>
   );

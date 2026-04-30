@@ -66,7 +66,9 @@ class LocalBigSourceGmod {
       this.chromNamingCache = ensembl.includes(firstChrom);
       return this.chromNamingCache;
     } catch (error) {
-      console.error("Error detecting chromosome naming. Check URL and file format.");
+      console.error(
+        "Error detecting chromosome naming. Check URL and file format.",
+      );
       return null;
     }
   }
@@ -80,7 +82,8 @@ class LocalBigSourceGmod {
    */
   async getData(loci, options) {
     try {
-      const isEnsembl = options.ensemblStyle ?? (await this.detectChromosomeNaming());
+      const isEnsembl =
+        options.ensemblStyle ?? (await this.detectChromosomeNaming());
       const promises = loci.map((locus) => {
         let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
         if (chrom === "M") {

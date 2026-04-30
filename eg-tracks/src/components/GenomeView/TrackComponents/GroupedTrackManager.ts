@@ -5,7 +5,7 @@ import TrackModel from "../../../models/TrackModel";
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
 import {
-
+  DefaultAggregators,
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
@@ -22,7 +22,13 @@ import {
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { Fiber } from "../../../models/Feature";
 import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
-import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import {
+  FiberDisplayModes,
+  NumericalDisplayModes,
+  VcfColorScaleKeys,
+} from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { scaleLinear } from "d3-scale";
+import { config } from "process";
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
 const TOP_PADDING = 2;
@@ -32,16 +38,13 @@ export const numericalTracks = {
   methylc: "",
   boxplot: "",
   qbed: "",
-  vcf: "",
   dynseq: "",
   matplot: "",
-  longrange: "",
-  hic: "",
 };
 export const possibleNumericalTracks = {
   bigbed: "",
   geneannotation: "",
-
+  vcf: "",
   modbed: "",
   refbed: "",
   bed: "",
@@ -52,8 +55,17 @@ export const possibleNumericalTracks = {
 };
 export const numericalTracksGroup = { bigwig: "", bedgraph: "" };
 function getHeight(numRows: number, trackModel, configOptions): number {
-  let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
+  let rowHeight = trackOptionMap[`${trackModel.type}`]?.ROW_HEIGHT
+    ? trackOptionMap[`${trackModel.type}`]?.ROW_HEIGHT
+    : trackOptionMap[`${trackModel.type}`]?.rowHeight
+      ? trackOptionMap[`${trackModel.type}`]?.rowHeight
+      : 20;
+
   let options = configOptions;
+  if (configOptions.rowHeight) {
+    rowHeight = configOptions.rowHeight;
+  }
+
   let rowsToDraw = Math.min(numRows, options.maxRows);
   if (options.hideMinimalItems) {
     rowsToDraw -= 1;
@@ -172,14 +184,12 @@ export class GroupedTrackManager {
     trackManagerState: any,
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     if (trackData) {
-   
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
       for (let i = 0; i < trackData.length; i++) {
-
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
         const track = trackData[i];
-                         
+
         if (
           track.configOptions.group &&
           track.trackModel.type in numericalTracksGroup
@@ -259,11 +269,9 @@ export class GroupedTrackManager {
           track.trackModel.type in numericalTracks ||
           track?.trackModel?.options?.displayMode === "density"
         ) {
-       
           const tid = track.id;
 
           if (track.data) {
-            
             const data = track.data;
             let xvalues;
             if (
@@ -284,7 +292,6 @@ export class GroupedTrackManager {
             } else if (track.trackModel.type === "methylc") {
               xvalues = this.aggregateRecords(data, track.visRegion, width);
             } else if (track.trackModel.type === "matplot") {
-            
               xvalues = data.map(
                 (d) =>
                   this.aggregator.xToValueMaker(
@@ -294,7 +301,6 @@ export class GroupedTrackManager {
                     track.configOptions,
                   )[0],
               );
-            
             } else {
               xvalues = this.aggregator.xToValueMaker(
                 data,
@@ -339,6 +345,27 @@ export class GroupedTrackManager {
               }
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
                 xvalues;
+            } else if (
+              (track.trackModel.type === "vcf" &&
+                (track.visRegion.getWidth() *
+                  (viewWindow.end - viewWindow.start)) /
+                  width >
+                  100000 &&
+                configOptions.displayMode === "auto") ||
+              configOptions.displayMode === "density"
+            ) {
+              const xvalues = this.aggregator.xToValueMaker(
+                track.data,
+                track.visRegion,
+                width,
+                configOptions,
+              );
+
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
+              }
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
+                xvalues;
             } else {
               const data = track.data;
 
@@ -357,8 +384,7 @@ export class GroupedTrackManager {
               const height =
                 curTrackModel.type === "repeatmasker" ||
                 curTrackModel.type === "rmskv2" ||
-                curTrackModel.type === "categorical" ||
-                curTrackModel.type === "modbed"
+                curTrackModel.type === "categorical"
                   ? configOptions?.height
                   : placeFeatureData.numRowsAssigned
                     ? getHeight(
@@ -372,10 +398,51 @@ export class GroupedTrackManager {
                 trackManagerState.current.caches[tid][dataIdx] = {};
               }
 
+              let scales;
+              if (curTrackModel.type === "vcf") {
+                function computeColorScales(
+                  data: Array<any>,
+                  colorKey: string,
+                  lowValueColor: any,
+                  highValueColor: any,
+                ) {
+                  let values: any[];
+
+                  if (colorKey === VcfColorScaleKeys.QUAL) {
+                    values = data.map((v) => v.feature.variant.QUAL);
+                  } else if (colorKey === VcfColorScaleKeys.AF) {
+                    values = data.map((v) => {
+                      if (
+                        v.feature?.variant?.INFO &&
+                        v.feature?.variant?.INFO.hasOwnProperty("AF")
+                      ) {
+                        return v.feature.variant.INFO.AF[0];
+                      }
+                      return 0;
+                    });
+                  } else {
+                    values = [];
+                  }
+                  const colorScale = scaleLinear()
+                    .domain([0, _.max(values)])
+                    .range([lowValueColor, highValueColor])
+                    .clamp(true);
+                  return colorScale;
+                }
+
+                scales = computeColorScales(
+                  placeFeatureData.placements,
+                  configOptions.colorScaleKey,
+                  configOptions.lowValueColor,
+                  configOptions.highValueColor,
+                );
+              }
+
               trackManagerState.current.caches[tid][dataIdx]["placeFeature"] = {
                 placements: placeFeatureData,
                 height,
                 numHidden: placeFeatureData.numHidden,
+                scales,
               };
             }
           }
