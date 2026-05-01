@@ -9,7 +9,7 @@ import {
   updateSession,
   selectCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
+import { ExclamationTriangleIcon } from "@heroicons/react/16/solid";
 import { XMarkIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -24,7 +24,7 @@ import Button from "../ui/button/Button";
 import ClearAllButton from "./ClearAllButton";
 import { generateUUID } from "wuepgg3-track";
 import Session from "../root-layout/tabs/apps/destinations/Session";
-import { fetchBundle } from "@/lib/redux/thunk/session";
+
 import SessionToggleButton from "./SessionToggleButton";
 
 import TabView from "@/components/ui/tab-view/TabView";

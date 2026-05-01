@@ -518,7 +518,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             Array.isArray(msgObj.trackModelArr) &&
             msgObj.trackModelArr.length > 0
           ) {
-            const chunks = splitArrayIntoChunks(
+                                      const chunks = splitArrayIntoChunks(
               msgObj.trackModelArr,
               numWorkers,
             );
@@ -528,7 +528,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
 
-        if (messagesForWorker.length > 0) {
+        if (messagesForWorker.length > 0 && messagesForWorker[0].trackDataIdx === dataIdx.current) {
+          
           if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
             infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
               createInfiniteOnMessage;
@@ -881,7 +882,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newSelected: { [key: string]: any } = {};
     // these are options that changes the configMenu so we need to recreate the
     // the configmenu
-    console.log(key, value);
+
     let groupChange = false;
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));
@@ -3415,9 +3416,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               visRegion = objToInstanceAlign(visRegion);
             }
 
-            if (cacheTrackData.trackType === "vcf") {
-              console.log("ASDDSAAISDBUHJADSOUHNSDA");
-            }
+      
             trackDataObj.push({
               id: key,
               data: combinedData,

@@ -117,7 +117,7 @@ class RulerComponent extends React.Component<RulerComponentProps> {
           position: "relative",
 
           overflow: "hidden",
-          width: this.props.width / 3 + 120,
+            width: this.props.windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg

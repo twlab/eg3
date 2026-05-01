@@ -144,6 +144,7 @@ export default function NavigationStack({
           </div>
 
           {path.map((element, idx) => {
+
             const destination =
               destinationMap[element.path] ?? notFoundDestination;
             // const transform =
@@ -160,7 +161,9 @@ export default function NavigationStack({
                   // transition: "transform 220ms ease",
                 }}
               >
-                <destination.component params={element.params} />
+                {destination.path === "session" ?       
+                 <destination.component tab={currentOptions?.tab} /> : <destination.component />}
+        
               </div>
             );
           })}

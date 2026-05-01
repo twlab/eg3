@@ -149,7 +149,7 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth / 3 ,
         }
       : {};
     let curEleStyle: any = forceSvg

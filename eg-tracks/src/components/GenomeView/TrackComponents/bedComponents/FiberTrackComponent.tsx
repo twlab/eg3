@@ -105,6 +105,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     xvaluesData,
     updatedLegend,
     viewWindow,
+    windowWidth
   } = props;
 
   /**
@@ -296,7 +297,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg

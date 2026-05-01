@@ -25,9 +25,14 @@ import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import TabSessionUI from "./TabSessionUI";
 import { GenomeHubManager } from "wuepgg3-track";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
-const Session: React.FC<{ tab?: boolean }> = () => {
-  // useExpandedNavigationTab();
+const Session: React.FC<{ tab?: boolean }> = ({ tab}) => {
+
+  if(tab){
+    useExpandedNavigationTab();
+  }
+
   const dispatch = useAppDispatch();
 
   const customTracksPool = useAppSelector(selectCustomTracksPool);

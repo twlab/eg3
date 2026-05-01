@@ -68,6 +68,7 @@ export class FeatureArranger {
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
     for (const group of groups) {
+ 
       const horizontalPadding = isConstPadding
         ? (padding as number)
         : (padding as PaddingFunc)(group.feature, group.xSpan);

@@ -79,6 +79,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     viewWindow,
     dataIdx,
     initialLoad,
+    windowWidth
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
@@ -251,7 +252,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       position: "relative",
 
       overflow: "hidden",
-      width: width / 3,
+      width: windowWidth,
     }
     : {};
   let curEleStyle: any = forceSvg

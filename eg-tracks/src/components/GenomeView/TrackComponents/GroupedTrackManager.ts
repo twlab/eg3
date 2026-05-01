@@ -24,11 +24,11 @@ import { Fiber } from "../../../models/Feature";
 import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
 import {
   FiberDisplayModes,
-  NumericalDisplayModes,
+
   VcfColorScaleKeys,
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { scaleLinear } from "d3-scale";
-import { config } from "process";
+
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
 const TOP_PADDING = 2;
@@ -62,8 +62,12 @@ function getHeight(numRows: number, trackModel, configOptions): number {
       : 20;
 
   let options = configOptions;
+
   if (configOptions.rowHeight) {
     rowHeight = configOptions.rowHeight;
+  }
+  else if(configOptions.ROW_HEIGHT){
+    rowHeight = configOptions.ROW_HEIGHT;
   }
 
   let rowsToDraw = Math.min(numRows, options.maxRows);

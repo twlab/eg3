@@ -143,12 +143,12 @@ const defaultTracks = [
   //   genome: "hg38",
   //   url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.wave.vcf.gz",
   // }),
-  new TrackModel({
-    type: "categorical",
-    name: "categorical test",
-    url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/CGI/categorical/HG00097.bed.gz",
-    metadata: { genome: "HG00099_1" },
-  }),
+  // new TrackModel({
+  //   type: "categorical",
+  //   name: "categorical test",
+  //   url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/CGI/categorical/HG00097.bed.gz",
+  //   metadata: { genome: "HG00099_1" },
+  // }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -251,7 +251,7 @@ const defaultTracks = [
   //     assay: "MRE",
   //   },
   // }),
-  // new TrackModel({
+  // new TrackModel({     key={drawData.trackModel.id + "rough"}
   //   type: "matplot",
   //   name: "matplot wrap",
   //   tracks: [
@@ -325,11 +325,11 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-  // new TrackModel({
-  //   type: "bed",
-  //   name: "mm10 bed",
-  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  // }),
+  new TrackModel({
+    type: "bed",
+    name: "mm10 bed",
+    url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+  }),
   new TrackModel({
     type: "modbed",
     name: "examplemod",
@@ -598,16 +598,16 @@ const defaultTracks = [
   //   ],
   //   showOnHubLoad: true,
   // }),
-  new TrackModel({
-    type: "longrange",
-    name: "ES-E14 ChIA-PET",
-    url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  }),
-  new TrackModel({
-    type: "biginteract",
-    name: "test bigInteract",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
-  }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "ES-E14 ChIA-PET",
+  //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+  // }),
+  // new TrackModel({
+  //   type: "biginteract",
+  //   name: "test bigInteract",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
+  // }),
 ];
 // const defaultTracks = [
 //   new TrackModel({

@@ -95,6 +95,7 @@ export class CubicCurveDisplay extends React.PureComponent<
       options,
       legend,
       viewWindow,
+      windowWidth
     } = this.props;
     // const sortedInteractions = placedInteractions.slice().sort((a, b)
     //        => b.interaction.score - a.interaction.score);
@@ -105,7 +106,7 @@ export class CubicCurveDisplay extends React.PureComponent<
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg

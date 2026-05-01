@@ -70,9 +70,7 @@ import Vcf from "./VcfComponents/Vcf";
 import Bedcolor from "./bedComponents/Bedcolor";
 
 import { generateUUID } from "../../../util";
-import {
-  FiberDisplayModes,
-} from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 export const bigWithNavTracks = new Set([
   "repeat",
@@ -98,8 +96,8 @@ export const trackUsingExpandedLoci = {
 };
 
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
-  const dynamicTracks = new Set(["dynamic", "dynamicbed", "dynamiclongrange"]);
-    const simpleTracks = new Set(["qbed", "dbedgraph", "boxplot"]);
+const dynamicTracks = new Set(["dynamic", "dynamicbed", "dynamiclongrange"]);
+const simpleTracks = new Set(["qbed", "dbedgraph", "boxplot"]);
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -792,6 +790,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     groupScale,
     xvaluesData,
     initialLoad,
+    windowWidth,
   }) {
     const canvasElements = (
       <NumericalTrack
@@ -811,6 +810,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -822,6 +822,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     initialLoad,
+    windowWidth,
   }) {
     const canvasElements = (
       <QBedTrackComponents
@@ -841,6 +842,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -852,6 +854,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    windowWidth,
   }) {
     const canvasElements = (
       <BoxplotTrackComponents
@@ -869,6 +872,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         unit={""}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -881,6 +885,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     xvaluesData,
+    windowWidth,
   }) {
     const canvasElements = (
       <MatplotTrackComponent
@@ -897,6 +902,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         xvaluesData={xvaluesData}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -908,6 +914,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    windowWidth,
   }) {
     const canvasElements = (
       <DynamicInteractionTrackComponents
@@ -921,6 +928,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -933,6 +941,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     svgHeight,
     updatedLegend,
+    windowWidth,
   }) {
     const canvasElements = (
       <DynamicBedTrackComponents
@@ -945,6 +954,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         svgHeight={svgHeight}
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -956,6 +966,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    windowWidth,
   }) {
     const canvasElements = (
       <DynamicNumericalTrack
@@ -967,6 +978,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -979,6 +991,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    windowWidth,
   }) {
     const canvasElements = (
       <DynamicplotTrackComponent
@@ -990,6 +1003,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -1008,6 +1022,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     ROW_HEIGHT,
     onClose,
     xvaluesData,
+    windowWidth,
   }) {
     const canvasElements = (
       <FiberTrackComponent
@@ -1034,6 +1049,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         onClose={onClose}
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
+        windowWidth={windowWidth}
       />
     );
 
@@ -1048,6 +1064,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     initialLoad,
+    windowWidth,
   }) {
     const canvasElements = (
       <InteractionTrackComponent
@@ -1065,6 +1082,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
+        windowWidth={windowWidth}
       />
     );
 
@@ -1080,6 +1098,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     xvaluesData,
     initialLoad,
+    windowWidth,
   }) {
     const canvasElements = (
       <MethylCTrackComputation
@@ -1098,6 +1117,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
+        windowWidth={windowWidth}
       />
     );
 
@@ -1135,6 +1155,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
+        windowWidth={windowWidth}
       />
     );
 
@@ -1147,11 +1168,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     genomeName,
     genomeConfig,
+    windowWidth,
   }) {
     const canvasElements = (
       <RulerComponent
-        viewRegion={objToInstanceAlign(trackState.visData.visRegion)}
-        width={trackState.visData.visWidth}
+        viewRegion={trackState.visRegion}
+        width={trackState.visWidth}
         trackModel={trackModel}
         selectedRegion={
           trackState.genomicFetchCoord
@@ -1169,6 +1191,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend={updatedLegend}
         genomeConfig={genomeConfig}
         options={configOptions}
+        windowWidth={windowWidth}
       />
     );
     return canvasElements;
@@ -1211,6 +1234,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           renderGapText(item, index, drawData.configOptions),
         ),
       );
+
       let element;
       if (drawData.configOptions.forceSvg) {
         element = (
@@ -1218,7 +1242,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             style={{
               display: "flex",
               position: "relative",
-              width: drawData.trackState.visWidth / 3 + 120,
+              width: drawData.windowWidth + 120,
               overflow: "hidden",
             }}
           >
@@ -1231,7 +1255,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               }}
             >
               <svg
-                key={generateUUID()}
+                key={drawData.trackModel.id + "fine" + "forcesvg"}
                 width={drawData.trackState.visWidth}
                 height={drawData.configOptions.height}
               >
@@ -1267,7 +1291,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             </div>
 
             <svg
-              key={generateUUID()}
+              key={drawData.trackModel.id + "fine" + "forcesvg"}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
             >
@@ -1346,6 +1370,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 }}
               >
                 <svg
+                  key={drawData.trackModel.id + "rough" + "forcesvg"}
                   width={drawData.trackState.visWidth}
                   height={drawData.configOptions.height}
                 >
@@ -1378,6 +1403,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             </div>
 
             <svg
+              key={drawData.trackModel.id + "rough"}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
             >
@@ -1487,23 +1513,24 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     updatedLegend: drawData.updatedLegend,
     trackModel: drawData.trackModel,
     initialLoad: drawData.initialLoad,
+        windowWidth:
+      configOptions.forceSvg || configOptions.packageVersion
+        ? 120 + drawData.windowWidth
+        : drawData.windowWidth,
     ...extraParams,
   });
 
   const createFullParams = (extraParams = {}) => ({
     formattedData: genesArr,
-    windowWidth:
-      configOptions.forceSvg || configOptions.packageVersion
-        ? 120 + drawData.windowWidth
-        : drawData.windowWidth,
+
     renderTooltip: drawData.renderTooltip,
     svgHeight: drawData.svgHeight,
     getGenePadding: drawData.getGenePadding,
     getHeight: drawData.getHeight,
     xvaluesData: drawData.xvaluesData,
     placeFeature: drawData.placeFeature,
-            genomeConfig: drawData.genomeConfig,
-        basesByPixel: drawData.basesByPixel,
+    genomeConfig: drawData.genomeConfig,
+    basesByPixel: drawData.basesByPixel,
     ...createCommonParams(extraParams),
   });
 
@@ -1542,7 +1569,15 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     "vcf",
   ]);
   if (drawData.svgHeight) {
-    drawData.svgHeight.current = configOptions.height;
+    if (
+      (drawData.trackModel.type === "methylc" ||
+        drawData.trackModel.type === "dynseq") &&
+      !drawData.configOptions.isCombineStrands
+    ) {
+      drawData.svgHeight.current = configOptions.height * 2;
+    } else {
+      drawData.svgHeight.current = configOptions.height;
+    }
   }
 
   const isFullMode =
@@ -1559,7 +1594,6 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       }),
     );
   }
-
 
   // Special parameter cases
   else if (trackType === "modbed") {
@@ -1586,9 +1620,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
         );
       }
     }
-  }
-
-  else if (trackType === "vcf") {
+  } else if (trackType === "vcf") {
     const currentViewLength =
       (trackState.visRegion.getWidth() *
         (drawData.trackState.viewWindow.end -
@@ -1608,26 +1640,22 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
         }),
       );
     }
-  }
-
-  else if (interactionTracks.has(trackType)) {
+  } else if (interactionTracks.has(trackType)) {
     return displayModeComponentMap.interaction(createFullParams());
-  }
-  else if (trackType ==="matplot" ||trackType === "methylc" || trackType === "dynseq" || simpleTracks.has(trackType)) {
+  } else if (
+    trackType === "matplot" ||
+    trackType === "methylc" ||
+    trackType === "dynseq" ||
+    simpleTracks.has(trackType)
+  ) {
     return displayModeComponentMap[trackType](createFullParams());
-  }
-
- else if (trackType === "dynamichic") {
+  } else if (trackType === "dynamichic") {
     return displayModeComponentMap.dynamichic(
       createFullParams({
         configOptions: { ...configOptions, displayMode: "heatmap" },
       }),
     );
-  }
-
-
-
-  else if (dynamicTracks.has(trackType)) {
+  } else if (dynamicTracks.has(trackType)) {
     const displayType =
       trackType === "dynamiclongrange" ? "dynamichic" : trackType;
     return displayModeComponentMap[displayType](
@@ -1637,9 +1665,11 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     );
   }
 
-
   // Density tracks (fallback)
-  else if (densityTracks.has(trackType) || configOptions.displayMode === "density") {
+  else if (
+    densityTracks.has(trackType) ||
+    configOptions.displayMode === "density"
+  ) {
     // All density track types use the same formatted data (genesArr)
     return displayModeComponentMap.density(
       createFullParams({
@@ -1882,9 +1912,9 @@ function formatBedData(
 
     for (const record of genesArr) {
       const feature = new ColoredFeature(
-        "",
+        record[3],
         new ChromosomeInterval(record.chr, record.start, record.end),
-        "+",
+        record[5],
       ).withColor(record[3]);
 
       for (let i = 0; i < regionLoci.length; i++) {

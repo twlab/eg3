@@ -203,7 +203,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
       ? {
           position: "relative",
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg
