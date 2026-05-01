@@ -413,12 +413,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    console.log(newDrawData, "newDrawData in trackfactory");
+
     if (
       newDrawData.completedFetchedRegion &&
       newDrawData.completedFetchedRegion.current["done"][id] === false
     ) {
-      console.log(newDrawData, "newDrawData in trackfactory");
+
       if (dataIdx === newDrawData.completedFetchedRegion.current["key"]) {
         newDrawData.completedFetchedRegion.current["done"][id] = true;
       } else {
@@ -433,7 +433,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) {
         return;
       }
-      console.log(newDrawData, "newDrawData in trackfactory");
+
       const cacheTrackData = caches[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,

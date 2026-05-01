@@ -7,21 +7,18 @@ import Feature, {
   NumericalArrayFeature,
   NumericalFeature,
 } from "../../../models/Feature";
+
 import { Rmskv2Feature } from "../../../models/Rmskv2Feature";
-import FeatureArranger, {
-  PlacedFeatureGroup,
-} from "../../../models/FeatureArranger";
-import Gene, { IdbRecord } from "../../../models/Gene";
+import FeatureArranger from "../../../models/FeatureArranger";
+import Gene from "../../../models/Gene";
 import OpenInterval from "../../../models/OpenInterval";
 import { SortItemsOptions } from "../../../models/SortItemsOptions";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import TrackLegend from "./commonComponents/TrackLegend";
-import GeneAnnotation from "./geneAnnotationTrackComponents/GeneAnnotation";
 import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
 import { objToInstanceAlign } from "../TrackManager";
 import BedAnnotation from "./bedComponents/BedAnnotation";
 import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
-import { RepeatDASFeature } from "../../../models/RepeatMaskerFeature";
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
@@ -75,7 +72,6 @@ import Bedcolor from "./bedComponents/Bedcolor";
 import { generateUUID } from "../../../util";
 import {
   FiberDisplayModes,
-  VcfColorScaleKeys,
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 export const bigWithNavTracks = new Set([
@@ -102,7 +98,8 @@ export const trackUsingExpandedLoci = {
 };
 
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
-
+  const dynamicTracks = new Set(["dynamic", "dynamicbed", "dynamiclongrange"]);
+    const simpleTracks = new Set(["qbed", "dbedgraph", "boxplot"]);
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -818,45 +815,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
-
-  vcf: function getVcf({
-    formattedData,
-    trackState,
-    getHeight,
-    configOptions,
-    renderTooltip,
-    svgHeight,
-    updatedLegend,
-    trackModel,
-    getGenePadding,
-    xvaluesData,
-    initialLoad,
-  }) {
-    return (
-      <VcfTrack
-        viewWindow={
-          trackState.viewWindow
-            ? trackState.viewWindow
-            : new OpenInterval(0, trackState.visWidth)
-        }
-        viewRegion={trackState.visRegion}
-        width={trackState.visWidth}
-        trackModel={trackModel}
-        getGenePadding={getGenePadding}
-        renderTooltip={renderTooltip}
-        svgHeight={svgHeight}
-        forceSvg={configOptions.forceSvg}
-        data={formattedData}
-        trackState={trackState}
-        options={configOptions}
-        getHeight={getHeight}
-        xvaluesData={xvaluesData}
-        updatedLegend={updatedLegend}
-        dataIdx={trackState.dataIdx}
-        initialLoad={initialLoad}
-      />
-    );
-  },
   qbed: function getqbed({
     formattedData,
     trackState,
@@ -1544,6 +1502,8 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     getHeight: drawData.getHeight,
     xvaluesData: drawData.xvaluesData,
     placeFeature: drawData.placeFeature,
+            genomeConfig: drawData.genomeConfig,
+        basesByPixel: drawData.basesByPixel,
     ...createCommonParams(extraParams),
   });
 
@@ -1600,14 +1560,9 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     );
   }
 
-  // Track types with standard full parameters
-  const standardFullTracks = ["matplot"];
-  if (standardFullTracks.includes(trackType)) {
-    return displayModeComponentMap[trackType](createFullParams());
-  }
 
   // Special parameter cases
-  if (trackType === "modbed") {
+  else if (trackType === "modbed") {
     if (trackState.visRegion) {
       if (
         (trackState.visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
@@ -1633,7 +1588,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     }
   }
 
-  if (trackType === "vcf") {
+  else if (trackType === "vcf") {
     const currentViewLength =
       (trackState.visRegion.getWidth() *
         (drawData.trackState.viewWindow.end -
@@ -1654,13 +1609,15 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       );
     }
   }
-  console.log(drawData);
-  if (interactionTracks.has(trackType)) {
-    console.log("TEE");
+
+  else if (interactionTracks.has(trackType)) {
     return displayModeComponentMap.interaction(createFullParams());
   }
+  else if (trackType ==="matplot" ||trackType === "methylc" || trackType === "dynseq" || simpleTracks.has(trackType)) {
+    return displayModeComponentMap[trackType](createFullParams());
+  }
 
-  if (trackType === "dynamichic") {
+ else if (trackType === "dynamichic") {
     return displayModeComponentMap.dynamichic(
       createFullParams({
         configOptions: { ...configOptions, displayMode: "heatmap" },
@@ -1668,9 +1625,9 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     );
   }
 
-  // Dynamic track types
-  const dynamicTracks = new Set(["dynamic", "dynamicbed", "dynamiclongrange"]);
-  if (dynamicTracks.has(trackType)) {
+
+
+  else if (dynamicTracks.has(trackType)) {
     const displayType =
       trackType === "dynamiclongrange" ? "dynamichic" : trackType;
     return displayModeComponentMap[displayType](
@@ -1680,24 +1637,9 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     );
   }
 
-  // Genome-specific tracks
-  if (trackType === "methylc" || trackType === "dynseq") {
-    return displayModeComponentMap[trackType](
-      createFullParams({
-        genomeConfig: drawData.genomeConfig,
-        basesByPixel: drawData.basesByPixel,
-      }),
-    );
-  }
-
-  // Simple track types with standard parameters
-  const simpleTracks = ["qbed", "dbedgraph", "boxplot"];
-  if (simpleTracks.includes(trackType)) {
-    return displayModeComponentMap[trackType](createFullParams());
-  }
 
   // Density tracks (fallback)
-  if (densityTracks.has(trackType) || configOptions.displayMode === "density") {
+  else if (densityTracks.has(trackType) || configOptions.displayMode === "density") {
     // All density track types use the same formatted data (genesArr)
     return displayModeComponentMap.density(
       createFullParams({

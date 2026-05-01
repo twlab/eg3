@@ -162,7 +162,16 @@ export function bpNavToGenNav(bpNaletr: Array<any>, genome: GenomeConfig) {
 
   return genRes;
 }
-
+   const reCalcAgg = new Set([
+        "aggregateMethod",
+        "smooth",
+        "hiddenPixels",
+        "displayMode",
+        "height",
+        "rowHeight",
+        "maxRows",
+        "hideMinimalItems"
+      ]);
 interface TrackManagerProps {
   windowWidth: number;
   legendWidth: number;
@@ -1092,15 +1101,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       queueRegionToFetch(dataIdx.current);
     } else if (key !== "legendFontColor") {
       tempViewWindowConfig["tracksToDrawId"] = newSelected;
-      const reCalcAgg = new Set([
-        "aggregateMethod",
-        "smooth",
-        "hiddenPixels",
-        "displayMode",
-        "height",
-        "rowHeight",
-        "maxRows",
-      ]);
+   
 
       if (reCalcAgg.has(key) || groupChange) {
         aggViewWindowData(
@@ -1787,6 +1788,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           processQueue();
         }
+
       }),
     );
   };
@@ -3890,7 +3892,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setConfigMenu(null);
     }
   }
-
+  function handleOutsideConfigClick(){
+    if(configMenu){
+      setConfigMenu(null)
+    }
+  }
   // MARK: render________________________________________
   return (
     <div
@@ -4105,7 +4111,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }}
             >
               {trackComponents ? (
-                <div ref={trackWrapperRef}>
+                <div ref={trackWrapperRef} onClick={handleOutsideConfigClick}>
                   <SortableList
                     items={trackComponents}
                     onChange={handleReorder}
