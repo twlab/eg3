@@ -140,7 +140,35 @@ class VcfSource {
       if (isEnsembl) {
         variant.CHROM = locus.chr;
       }
-      variants.push(variant);
+      const samples = variant.SAMPLES;
+      const desc = Object.getOwnPropertyDescriptor(variant, "SAMPLES");
+
+      // If it's already enumerable, just push the object.
+      if (desc && desc.enumerable) {
+        variants.push(variant);
+        return;
+      }
+
+      // Otherwise try to define an enumerable property; if the property is
+      // non-configurable this will throw, so fall back to a shallow copy.
+      try {
+        if (!desc || desc.configurable) {
+          Object.defineProperty(variant, "SAMPLES", {
+            value: samples,
+            enumerable: true,
+            writable: true,
+            configurable: true,
+          });
+          variants.push(variant);
+        } else {
+          // Non-configurable and non-enumerable: create a shallow copy
+          // so we can expose SAMPLES as an own enumerable property.
+          variants.push(Object.assign({}, variant, { SAMPLES: samples }));
+        }
+      } catch (e) {
+        // Defensive fallback: shallow copy if defineProperty fails.
+        variants.push(Object.assign({}, variant, { SAMPLES: samples }));
+      }
     });
     return variants;
   }

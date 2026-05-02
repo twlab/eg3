@@ -64,6 +64,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
       return null;
     }
     if (isMinimal) {
+      console.log("WT", isMinimal, hideMinimalItems)
       if (hideMinimalItems) {
         return null;
       }

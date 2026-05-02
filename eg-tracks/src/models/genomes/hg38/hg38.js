@@ -131,12 +131,7 @@ const defaultTracks = [
     name: "mm10 bed",
     url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
   }),
-  new TrackModel({
-    type: "vcf",
-    name: "testVcf",
-    genome: "hg38",
-    url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.fixed-wave.vcf.gz",
-  }),
+
   new TrackModel({ 
 
     type:"jaspar",
@@ -149,7 +144,12 @@ const defaultTracks = [
     name: "test bigbed",
     url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
   }),
-
+  new TrackModel({
+    type: "vcf",
+    name: "testVcf",
+    genome: "hg38",
+    url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.fixed-wave.vcf.gz",
+  }),
     new TrackModel({
     type: "modbed",
     name: "examplemod",

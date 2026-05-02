@@ -18,6 +18,7 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
     const { vcf } = this.props;
 
     const vcfId = vcf.variant?.ID ?? "";
+    console.log(vcf)
     let linkOut,
       trimmed = {};
     if (vcfId) {
@@ -151,6 +152,7 @@ const samplesAsTable = (samples) => {
 const infoAsTable = (info) => {
   if (!info) return null;
   const cols = Object.keys(info);
+  console.log(cols)
   const trs = (
     <tr>
       {cols.map((col, idx) => (

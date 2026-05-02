@@ -79,7 +79,7 @@ function getHeight(numRows: number, trackModel, configOptions): number {
     rowsToDraw = 1;
   }
 
-  return trackModel.type === "modbed"
+  return trackModel.type === "modbed" || trackModel.type === "vcf"
     ? (rowsToDraw + 1) * rowHeight + 2
     : rowsToDraw * rowHeight + TOP_PADDING;
 }

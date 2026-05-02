@@ -2952,12 +2952,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // terminate the worker and listener when TrackManager  is unmounted
 
     const parentElement = block.current;
+    const clearCachedRect = () => {
 
+      parentRectCache.current = null;
+    };
     if (parentElement) {
       parentElement.addEventListener("mouseenter", handleMouseEnter);
       parentElement.addEventListener("mouseleave", handleMouseLeave);
+           window.addEventListener("scroll", clearCachedRect, true);
     }
 
+
+
+   
+  
     if (genomeConfig) {
       curGenomeConfig.current = _.cloneDeep(genomeConfig);
       prevWindowWidth.current = windowWidth;
@@ -3001,6 +3009,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
+            window.removeEventListener("scroll", clearCachedRect, true);
       }
 
       // document.removeEventListener("pointermove", handleMove);
@@ -3046,28 +3055,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, [trackComponents, windowWidth]);
 
-  // // Update cached rect when window size changes or scrolls
-  // useEffect(() => {
-  //   const updateCachedRect = () => {
-  //     if (block.current && isMouseInsideRef.current) {
-  //       parentRectCache.current = block.current.getBoundingClientRect();
-  //     }
-  //   };
-
-  //   const clearCachedRect = () => {
-  //     // Clear cache on scroll to force recalculation on next mouse move
-  //     // This ensures accurate positioning after scroll
-  //     parentRectCache.current = null;
-  //   };
-
-  //   window.addEventListener("resize", updateCachedRect);
-  //   window.addEventListener("scroll", clearCachedRect, true);
-
-  //   return () => {
-  //     window.removeEventListener("resize", updateCachedRect);
-  //     window.removeEventListener("scroll", clearCachedRect, true);
-  //   };
-  // }, []);
 
   useEffect(() => {
     if (!initialLoad.current) {
@@ -3860,7 +3847,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               curConfigOptions?.fetchViewWindowOnly ||
               curConfigOptions?.bothAnchorsInView ||
               curConfigOptions?.displayMode === "density" ||
-              (cache.trackType === "genomealign" && !useFineModeNav.current)
+              (cache.trackType === "genomealign" && !useFineModeNav.current)||
+              ((cache.trackType ==="vcf" || cache.trackType ==="modbed") && curConfigOptions?.displayMode === "auto" && bpRegionSize.current > 100000)
             ) {
               curTracksToDrawId[key] = false;
             }
@@ -3874,8 +3862,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           );
         }
         if (Object.keys(curTracksToDrawId).length > 0) {
-          console.log(viewWindowConfigData.current.viewWindow);
-          // console.log("same region draw cachhe data", curTrackToDrawId);
+
           setViewWindowConfigChange({
             dataIdx: dataIdx.current,
             viewWindow: viewWindowConfigData.current.viewWindow,
