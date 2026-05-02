@@ -114,7 +114,7 @@ export const trackFetchFunction: { [key: string]: any } = {
       const fetchPromises = regionData.nav.map(async (region: any) => {
    
         if (region.end - region.start > 30000) {
-          throw new Error("Please zoom in to see content.");
+          throw new Error("Please zoom in to see content. ");
         }
 
         const url = `${api}/${region.chr.substr(3)}:${region.start}-${
@@ -135,7 +135,7 @@ export const trackFetchFunction: { [key: string]: any } = {
           return response.json();
         } catch (error) {
           if (region.end - region.start > 30000) {
-            throw new Error("Please zoom in to see content.");
+            throw new Error("Please zoom in to see content. ");
           } else {
             console.error(
               `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}: `,

@@ -1448,9 +1448,45 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     getErrorLegend(legend);
 
-    return (
+    return errorInfo && errorInfo === "Please zoom in to see content. " ? (
       <div
         onClick={() => handleRetryFetchTrack(trackModel.id)}
+        style={{
+          width: trackState.visWidth,
+          height: 40,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          // gap: "8px",
+          backgroundColor: "#DFF1F1",
+          // border: "1px solid #BBD5DA",
+          borderRadius: "8px",
+          fontFamily: "Google Sans, Roboto, sans-serif",
+          fontSize: "16px",
+          color: "#254c53",
+          cursor: "pointer",
+          transition: "background-color 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          (e.target as HTMLDivElement).style.backgroundColor = "#BBD5DA";
+        }}
+        onMouseLeave={(e) => {
+          (e.target as HTMLDivElement).style.backgroundColor = "#DFF1F1";
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "2px",
+          }}
+        >
+          <span>{errorInfo ? errorInfo : "Something went wrong"}</span>
+        </div>
+      </div>
+    ) : (
+      <div
         style={{
           width: trackState.visWidth,
           height: 40,
@@ -1467,12 +1503,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           cursor: "pointer",
           transition: "background-color 0.2s",
         }}
-        onMouseEnter={(e) => {
-          (e.target as HTMLDivElement).style.backgroundColor = "#f8d7da";
-        }}
-        onMouseLeave={(e) => {
-          (e.target as HTMLDivElement).style.backgroundColor = "#fdf2f2";
-        }}
+     
       >
         <div
           style={{
@@ -1481,6 +1512,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
             alignItems: "center",
             gap: "2px",
           }}
+          onClick={() => handleRetryFetchTrack(trackModel.id)}
+             onMouseEnter={(e) => {
+          (e.target as HTMLDivElement).style.backgroundColor = "#f8d7da";
+        }}
+        onMouseLeave={(e) => {
+          (e.target as HTMLDivElement).style.backgroundColor = "#fdf2f2";
+        }}
         >
           <span>{errorInfo ? errorInfo : "Something went wrong"}</span>
           <span>! Refresh page or click track to try again.</span>
@@ -1514,7 +1552,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     updatedLegend: drawData.updatedLegend,
     trackModel: drawData.trackModel,
     initialLoad: drawData.initialLoad,
-        windowWidth:
+    windowWidth:
       configOptions.forceSvg || configOptions.packageVersion
         ? 120 + drawData.windowWidth
         : drawData.windowWidth,
@@ -2587,7 +2625,6 @@ function formatVcf(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 
