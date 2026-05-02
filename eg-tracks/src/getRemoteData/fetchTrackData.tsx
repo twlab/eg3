@@ -110,7 +110,9 @@ export const trackFetchFunction: { [key: string]: any } = {
     };
 
     try {
+
       const fetchPromises = regionData.nav.map(async (region: any) => {
+   
         if (region.end - region.start > 30000) {
           throw new Error("Region is higher then 30000");
         }

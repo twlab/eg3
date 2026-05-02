@@ -438,7 +438,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
+      console.log(newDrawData.viewWindow)
       handleTrackDraw({
         cacheTrackData,
         trackState,

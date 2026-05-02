@@ -162,16 +162,16 @@ export function bpNavToGenNav(bpNaletr: Array<any>, genome: GenomeConfig) {
 
   return genRes;
 }
-   const reCalcAgg = new Set([
-        "aggregateMethod",
-        "smooth",
-        "hiddenPixels",
-        "displayMode",
-        "height",
-        "rowHeight",
-        "maxRows",
-        "hideMinimalItems"
-      ]);
+const reCalcAgg = new Set([
+  "aggregateMethod",
+  "smooth",
+  "hiddenPixels",
+  "displayMode",
+  "height",
+  "rowHeight",
+  "maxRows",
+  "hideMinimalItems",
+]);
 interface TrackManagerProps {
   windowWidth: number;
   legendWidth: number;
@@ -518,7 +518,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             Array.isArray(msgObj.trackModelArr) &&
             msgObj.trackModelArr.length > 0
           ) {
-                                      const chunks = splitArrayIntoChunks(
+            const chunks = splitArrayIntoChunks(
               msgObj.trackModelArr,
               numWorkers,
             );
@@ -528,8 +528,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
 
-        if (messagesForWorker.length > 0 && messagesForWorker[0].trackDataIdx === dataIdx.current) {
-          
+        if (
+          messagesForWorker.length > 0 &&
+          messagesForWorker[0].trackDataIdx === dataIdx.current
+        ) {
           if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
             infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
               createInfiniteOnMessage;
@@ -1102,7 +1104,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       queueRegionToFetch(dataIdx.current);
     } else if (key !== "legendFontColor") {
       tempViewWindowConfig["tracksToDrawId"] = newSelected;
-   
 
       if (reCalcAgg.has(key) || groupChange) {
         aggViewWindowData(
@@ -1789,7 +1790,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           processQueue();
         }
-
       }),
     );
   };
@@ -2205,12 +2205,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curViewWindow = globalTrackState.current.viewWindow;
       }
 
-      aggViewWindowData(
-        curViewWindow,
-        newDrawData.curDataIdx,
-        newDrawData.trackToDrawId,
-      );
-
       for (const trackId in newDrawData.trackToDrawId) {
         let configOptions;
         let curTrackModel;
@@ -2252,6 +2246,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           completedFetchedRegion.current.groups[`${groupId}`][`${trackId}`] =
             newDrawData.trackToDrawId[`${trackId}`];
         } else {
+          aggViewWindowData(curViewWindow, newDrawData.curDataIdx, {
+            [trackId]: false,
+          });
           completedFetchedRegion.current.done[`${trackId}`] =
             newDrawData.trackToDrawId[`${trackId}`];
         }
@@ -2273,6 +2270,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           currGroupKeys.every((key) => checkGroupsKeys.includes(key));
 
         if (haveSameElements) {
+          aggViewWindowData(curViewWindow, newDrawData.curDataIdx, {
+            ...completedFetchedRegion.current.groups[`${groupId}`],
+          });
           completedFetchedRegion.current.done = {
             ...completedFetchedRegion.current.done,
             ...completedFetchedRegion.current.groups[`${groupId}`],
@@ -3416,7 +3416,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               visRegion = objToInstanceAlign(visRegion);
             }
 
-      
             trackDataObj.push({
               id: key,
               data: combinedData,
@@ -3451,6 +3450,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         dataIdx,
         trackManagerState,
       );
+      console.log(groupScale);
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
         groupScale;
 
@@ -3847,9 +3847,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const cache = trackManagerState.current.caches[key];
           if (globalConfig && key in globalConfig) {
             const curConfigOptions = globalConfig[key].configOptions;
+
             if (curConfigOptions.group) {
               aggGroup[key] = false;
-            } else if (
+            }
+
+            if (
               cache.trackType === "geneannotation" ||
               cache.trackType === "refbed" ||
               cache.trackType in numericalTracks ||
@@ -3870,6 +3873,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           );
         }
         if (Object.keys(curTracksToDrawId).length > 0) {
+          console.log(viewWindowConfigData.current.viewWindow);
           // console.log("same region draw cachhe data", curTrackToDrawId);
           setViewWindowConfigChange({
             dataIdx: dataIdx.current,
@@ -3891,9 +3895,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setConfigMenu(null);
     }
   }
-  function handleOutsideConfigClick(){
-    if(configMenu){
-      setConfigMenu(null)
+  function handleOutsideConfigClick() {
+    if (configMenu) {
+      setConfigMenu(null);
     }
   }
   // MARK: render________________________________________
