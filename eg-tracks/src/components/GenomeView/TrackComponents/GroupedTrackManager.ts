@@ -29,6 +29,7 @@ import {
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { scaleLinear } from "d3-scale";
 
+
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
 const TOP_PADDING = 2;
@@ -372,7 +373,7 @@ export class GroupedTrackManager {
                 xvalues;
             } else {
               const data = track.data;
-
+          
               const placeFeatureData = featureArrange.arrange(
                 data,
                 track.visRegion,
@@ -381,7 +382,7 @@ export class GroupedTrackManager {
                   ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
                   : trackOptionMap["error"].getGenePadding,
                 configOptions.hiddenPixels,
-                sortType,
+                configOptions.sortItems                 ? configOptions.sortItems : sortType,
                 viewWindow,
               );
 

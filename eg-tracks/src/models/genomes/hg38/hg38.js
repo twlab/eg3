@@ -125,17 +125,35 @@ const defaultTracks = [
   //   filetype: "genomealign",
   //   url: "https://hprc-epigenome.s3.us-east-2.amazonaws.com/samples/HG00097/hap1_vs_hg38.gz",
   // }),
+
+    new TrackModel({
+    type: "bed",
+    name: "mm10 bed",
+    url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+  }),
   new TrackModel({
     type: "vcf",
     name: "testVcf",
     genome: "hg38",
     url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.fixed-wave.vcf.gz",
   }),
-  new TrackModel({
-    type: "vcf",
-    name: "testVcf",
-    genome: "hg38",
-    url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.vcf.gz",
+  new TrackModel({ 
+
+    type:"jaspar",
+    name: "test jaspar",
+    url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb"
+  }),
+
+    new TrackModel({
+    type: "bigbed",
+    name: "test bigbed",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  }),
+
+    new TrackModel({
+    type: "modbed",
+    name: "examplemod",
+    url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
   }),
   // new TrackModel({
   //   type: "vcf",
@@ -149,6 +167,13 @@ const defaultTracks = [
   //   url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/CGI/categorical/HG00097.bed.gz",
   //   metadata: { genome: "HG00099_1" },
   // }),
+ new TrackModel({
+    type: "categorical",
+    name: "categorical test",
+    url: "  https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
+
+  }),
+
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -160,11 +185,7 @@ const defaultTracks = [
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-  // new TrackModel({
-  //   type: "bigbed",
-  //   name: "test bigbed",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  // }),
+
   // new TrackModel({
   //   type: "bigbed",
   //   name: "band2",
@@ -172,7 +193,7 @@ const defaultTracks = [
   // }),
   new TrackModel({
     type: "refbed",
-    name: "mm10 gencode basic",
+    name: "refbed",
     url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
     options: {
       categoryColors: {
@@ -325,16 +346,7 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-  }),
-  new TrackModel({
-    type: "modbed",
-    name: "examplemod",
-    url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
-  }),
+
   // new TrackModel({
   //   type: "qbed",
   //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
@@ -508,15 +520,15 @@ const defaultTracks = [
   //     },
   //   ],
   // }),
-  new TrackModel({
-    type: "hic",
-    name: "test hic",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-    // metadata: { genome: "mm10" },
-  }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",

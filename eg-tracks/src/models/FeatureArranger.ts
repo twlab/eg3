@@ -57,13 +57,14 @@ export class FeatureArranger {
     padding: number | PaddingFunc,
     sortItems: SortItemsOptions
   ): number {
-    // if (sortItems === SortItemsOptions.NONE) {
-    //   groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
-    // } else if (sortItems === SortItemsOptions.ASC) {
-    //   groups.sort((a, b) => a.feature.score - b.feature.score);
-    // } else if (sortItems === SortItemsOptions.DESC) {
-    //   groups.sort((a, b) => b.feature.score - a.feature.score);
-    // }
+    if (sortItems === SortItemsOptions.NONE) {
+      groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    } else if (sortItems === SortItemsOptions.ASC) {
+      groups.sort((a, b) => a.feature.score - b.feature.score);
+    } else if (sortItems === SortItemsOptions.DESC) {
+      groups.sort((a, b) => b.feature.score - a.feature.score);
+    }
+    
 
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
@@ -95,7 +96,7 @@ export class FeatureArranger {
     width: number,
     padding: number | PaddingFunc = 0,
     hiddenPixels: number = 0.5,
-    sortItems: SortItemsOptions = SortItemsOptions.NONE,
+    sortItems: SortItemsOptions = SortItemsOptions.NOSORT,
     viewWindow
   ): FeaturePlacementResult {
     const results: any = FEATURE_PLACER.placeFeatures({

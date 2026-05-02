@@ -8,7 +8,7 @@ import HiddenPixelsConfig from "../config-menu-components.tsx/HiddenPixelsConfig
 import HideMinimalItemsConfig from "../config-menu-components.tsx/HideMinimalItemsConfig";
 import MaxRowsConfig from "../config-menu-components.tsx/MaxRowsConfig";
 import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
-import { DEFAULT_OPTIONS } from "./AnnotationTrackConfig";
+
 import { TrackConfig } from "./TrackConfig";
 import RowHeightConfig from "../config-menu-components.tsx/RowHeightConfig";
 import PixelsPaddingConfig from "../config-menu-components.tsx/PixelsPaddingConfig";
