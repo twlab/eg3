@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, startTransition } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
@@ -91,7 +91,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-  const [legend, setLegend] = useState<any>(null);
 
   function getHeight(numRows: number): number {
     let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
@@ -147,9 +146,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       initialLoad: initialLoad.current,
       placeFeature,
     };
-    let res;
+
     // try {
-    res = getDisplayModeFunction(displayArgs);
+   const res = getDisplayModeFunction(displayArgs);
     // }
     // catch (e) {
     //   fetchError.current = "error when creating drawData";
@@ -186,18 +185,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       xPos.current = curXPos;
-      // startTransition(() =>
+      startTransition(() =>
       setViewComponent({
         component: result,
         dataIdx: cacheDataIdx,
         numHidden: numHidden,
         visData: trackState.visData,
         xPos: curXPos,
-      });
-      // )
+      })
+      )
     }
   }
   function onClose() {
+    setToolTipVisible(false);
     setToolTip(null);
   }
   // MARK: clickTool
@@ -301,11 +301,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     setToolTip(currtooltip);
   }
 
-  useEffect(() => {
-    if (viewComponent && viewComponent.dataIdx === dataIdx) {
-      setLegend(updatedLegend.current);
-    }
-  }, [viewComponent]);
+
 
   // MARK:[newDrawDat
   // Helper function to handle track drawing logic for newDrawData, viewWindowConfigChange, and configChange
@@ -438,7 +434,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-      console.log(newDrawData.viewWindow)
+   
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -644,7 +640,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             pointerEvents: "auto",
           }}
         >
-          {legend ?? (
+          {updatedLegend.current ?? (
             <TrackLegend
               trackModel={trackModel}
               height={

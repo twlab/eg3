@@ -57,9 +57,7 @@ import { motion } from "framer-motion";
 import MetadataSelectionMenu from "./ToolComponents/MetadataSelectionMenu";
 import { ChevronRightIcon } from "@primer/octicons-react";
 import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
-import { config, title } from "process";
-import { end } from "@popperjs/core";
-import { group } from "console";
+import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
 
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
@@ -86,7 +84,7 @@ export const convertTrackModelToITrackModel = (
   tracks: track.tracks,
 });
 const groupManager = new GroupedTrackManager();
-
+const nonWorkerTracks = new Set(["vcf", "repeatmasker", "rmskv2", "jaspar"]);
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
   [Tool.ZoomOutOneThirdFold]: {
     factor: 4 / 3,
@@ -171,7 +169,7 @@ const reCalcAgg = new Set([
   "rowHeight",
   "maxRows",
   "hideMinimalItems",
-  "sortItems"
+  "sortItems",
 ]);
 interface TrackManagerProps {
   windowWidth: number;
@@ -387,43 +385,43 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
   // Cancel any in-flight fetch operations on workers. Prefer graceful abort
   // via postMessage({type: 'abort'}) but fall back to terminate() if needed.
-  function cancelPendingWorkerFetches() {
-    try {
-      if (
-        infiniteScrollWorkers &&
-        infiniteScrollWorkers.current &&
-        Array.isArray(infiniteScrollWorkers.current.worker)
-      ) {
-        infiniteScrollWorkers.current.worker.forEach((w: any) => {
-          try {
-            w.fetchWorker.postMessage?.({ type: "abort" });
-          } catch (e) {
-            try {
-              w.fetchWorker.terminate?.();
-            } catch (err) {
-              // ignore
-            }
-          }
-        });
-      }
+  // function cancelPendingWorkerFetches() {
+  //   try {
+  //     if (
+  //       infiniteScrollWorkers &&
+  //       infiniteScrollWorkers.current &&
+  //       Array.isArray(infiniteScrollWorkers.current.worker)
+  //     ) {
+  //       infiniteScrollWorkers.current.worker.forEach((w: any) => {
+  //         try {
+  //           w.fetchWorker.postMessage?.({ type: "abort" });
+  //         } catch (e) {
+  //           try {
+  //             w.fetchWorker.terminate?.();
+  //           } catch (err) {
+  //             // ignore
+  //           }
+  //         }
+  //       });
+  //     }
 
-      if (fetchGenomeAlignWorker && fetchGenomeAlignWorker.current) {
-        try {
-          fetchGenomeAlignWorker.current.fetchWorker.postMessage?.({
-            type: "abort",
-          });
-        } catch (e) {
-          try {
-            fetchGenomeAlignWorker.current.fetchWorker.terminate?.();
-          } catch (err) {
-            // ignore
-          }
-        }
-      }
-    } catch (err) {
-      // defensive: swallow any unexpected errors
-    }
-  }
+  //     if (fetchGenomeAlignWorker && fetchGenomeAlignWorker.current) {
+  //       try {
+  //         fetchGenomeAlignWorker.current.fetchWorker.postMessage?.({
+  //           type: "abort",
+  //         });
+  //       } catch (e) {
+  //         try {
+  //           fetchGenomeAlignWorker.current.fetchWorker.terminate?.();
+  //         } catch (err) {
+  //           // ignore
+  //         }
+  //       }
+  //     }
+  //   } catch (err) {
+  //     // defensive: swallow any unexpected errors
+  //   }
+  // }
   const onNewRegionSelectRef = useRef(onNewRegionSelect);
   onNewRegionSelectRef.current = onNewRegionSelect;
 
@@ -492,7 +490,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setMessageData(getMessageData());
 
     const message = messageQueue.current.pop();
-
+  
     // split an array into N contiguous chunks
     function splitArrayIntoChunks(arr, numChunks) {
       const chunkSize = Math.ceil(arr.length / numChunks);
@@ -514,17 +512,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       for (let i = 0; i < numWorkers; i++) {
         const messagesForWorker: Array<any> = [];
+
         for (const msgObj of message) {
           if (
             Array.isArray(msgObj.trackModelArr) &&
             msgObj.trackModelArr.length > 0
           ) {
-            const chunks = splitArrayIntoChunks(
-              msgObj.trackModelArr,
-              numWorkers,
+            const workerTracks =  msgObj.trackModelArr.filter(
+              (tm: any) => !(tm && (nonWorkerTracks.has(tm.type))),
             );
-            if (chunks[i].length > 0) {
-              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+
+          
+            if (workerTracks.length > 0) {
+              const chunks = splitArrayIntoChunks(workerTracks, numWorkers);
+              if (chunks[i] && chunks[i].length > 0) {
+                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+              }
             }
           }
         }
@@ -538,10 +541,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               createInfiniteOnMessage;
             infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
           }
+
           infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
             messagesForWorker,
           );
         }
+      }
+      const nonWorkerMessage: Array<any> = [];
+      for (let i = 0; i < message.length; i++) {
+        const nonWorkerItems = message[i].trackModelArr.filter(
+          (tm: any) => tm && (nonWorkerTracks.has(tm.type)),
+        );
+        nonWorkerMessage.push({ ...message[i], trackModelArr: nonWorkerItems });
+      }
+
+      // tracks like vcf don't retain all their data when returning to onmessage 
+      if (nonWorkerMessage.length > 0) {
+        fetchGenomicData(nonWorkerMessage)
+          .then((nonWorkerData) => {
+            try {
+           
+              createInfiniteOnMessage({ data: nonWorkerData });
+            } catch (e) {
+              console.error(
+                "Error processing non-worker data in createInfiniteOnMessage:",
+                e,
+              );
+            }
+          })
+          .catch((err) => {
+            console.error("Error fetching non-worker data:", err);
+          });
       }
     }
   };
@@ -885,7 +915,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newSelected: { [key: string]: any } = {};
     // these are options that changes the configMenu so we need to recreate the
     // the configmenu
-    console.log(key, value)
+
     let groupChange = false;
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));
@@ -1942,7 +1972,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     for (const [key, curTrackCache] of Object.entries(
       trackManagerState.current.caches,
-    )) {
+    ) as [string, any][]) {
       let hasAllRegionData = true;
 
       for (const idx of idxArr) {
@@ -2953,19 +2983,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const parentElement = block.current;
     const clearCachedRect = () => {
-
       parentRectCache.current = null;
     };
     if (parentElement) {
       parentElement.addEventListener("mouseenter", handleMouseEnter);
       parentElement.addEventListener("mouseleave", handleMouseLeave);
-           window.addEventListener("scroll", clearCachedRect, true);
+      window.addEventListener("scroll", clearCachedRect, true);
     }
 
-
-
-   
-  
     if (genomeConfig) {
       curGenomeConfig.current = _.cloneDeep(genomeConfig);
       prevWindowWidth.current = windowWidth;
@@ -3009,7 +3034,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
-            window.removeEventListener("scroll", clearCachedRect, true);
+        window.removeEventListener("scroll", clearCachedRect, true);
       }
 
       // document.removeEventListener("pointermove", handleMove);
@@ -3054,7 +3079,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("pointerup", handleMouseUp);
     };
   }, [trackComponents, windowWidth]);
-
 
   useEffect(() => {
     if (!initialLoad.current) {
@@ -3438,7 +3462,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         dataIdx,
         trackManagerState,
       );
-      console.log(groupScale);
+
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
         groupScale;
 
@@ -3847,8 +3871,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               curConfigOptions?.fetchViewWindowOnly ||
               curConfigOptions?.bothAnchorsInView ||
               curConfigOptions?.displayMode === "density" ||
-              (cache.trackType === "genomealign" && !useFineModeNav.current)||
-              ((cache.trackType ==="vcf" || cache.trackType ==="modbed") && curConfigOptions?.displayMode === "auto" && bpRegionSize.current > 100000)
+              (cache.trackType === "genomealign" && !useFineModeNav.current) ||
+              ((cache.trackType === "vcf" || cache.trackType === "modbed") &&
+                curConfigOptions?.displayMode === "auto" &&
+                bpRegionSize.current > 100000)
             ) {
               curTracksToDrawId[key] = false;
             }
@@ -3862,7 +3888,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           );
         }
         if (Object.keys(curTracksToDrawId).length > 0) {
-
           setViewWindowConfigChange({
             dataIdx: dataIdx.current,
             viewWindow: viewWindowConfigData.current.viewWindow,

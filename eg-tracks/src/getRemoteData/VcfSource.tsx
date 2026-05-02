@@ -104,6 +104,7 @@ class VcfSource {
 
   async getData(region, basesPerPixel, options) {
     try {
+
       return await this.fetchSource(region, options);
     } catch (error) {
       console.error("Error fetching VCF data, recreating instance:", error);
@@ -127,51 +128,27 @@ class VcfSource {
     }
   }
 
-  async _getDataInLocus(locus, isEnsembl) {
-    const variants: any = [];
-    let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
-    if (chrom === "M") {
-      chrom = "MT";
-    }
-    //vcf is 1 based
-    // -1 compensation happened in Vcf feature constructor
-    await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) => {
-      const variant = this.parser.parseLine(line);
-      if (isEnsembl) {
-        variant.CHROM = locus.chr;
-      }
-      const samples = variant.SAMPLES;
-      const desc = Object.getOwnPropertyDescriptor(variant, "SAMPLES");
-
-      // If it's already enumerable, just push the object.
-      if (desc && desc.enumerable) {
-        variants.push(variant);
-        return;
-      }
-
-      // Otherwise try to define an enumerable property; if the property is
-      // non-configurable this will throw, so fall back to a shallow copy.
-      try {
-        if (!desc || desc.configurable) {
-          Object.defineProperty(variant, "SAMPLES", {
-            value: samples,
-            enumerable: true,
-            writable: true,
-            configurable: true,
-          });
-          variants.push(variant);
-        } else {
-          // Non-configurable and non-enumerable: create a shallow copy
-          // so we can expose SAMPLES as an own enumerable property.
-          variants.push(Object.assign({}, variant, { SAMPLES: samples }));
+    async _getDataInLocus(locus, options) {
+        const variants = [];
+        let chrom = this.chromNamingCache ? locus.chr.replace("chr", "") : locus.chr;
+        if (chrom === "M") {
+            chrom = "MT";
         }
-      } catch (e) {
-        // Defensive fallback: shallow copy if defineProperty fails.
-        variants.push(Object.assign({}, variant, { SAMPLES: samples }));
-      }
-    });
-    return variants;
-  }
+        //vcf is 1 based
+        // -1 compensation happened in Vcf feature constructor
+        await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) =>
+            variants.push(this.parser.parseLine(line))
+        );
+        if (options.ensemblStyle || this.chromNamingCache) {
+            for (let variant of variants) {
+                variant.CHROM = locus.chr;
+               
+            }
+        }
+        
+    
+        return variants;
+    }
 }
 
 export default VcfSource;

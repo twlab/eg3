@@ -65,7 +65,7 @@ import ResizablePanel from "../ui/panel/ResizablePanel";
 import { PortalContext, EscapeHandlerContext } from "wuepgg3-track";
 import { addCustomGenomeRemote } from "../../lib/redux/thunk/genome-hub";
 import { AppProps } from "../../App";
-import { current } from "@reduxjs/toolkit";
+
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,

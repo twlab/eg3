@@ -114,7 +114,7 @@ export const trackFetchFunction: { [key: string]: any } = {
       const fetchPromises = regionData.nav.map(async (region: any) => {
    
         if (region.end - region.start > 30000) {
-          throw new Error("Region is higher then 30000");
+          throw new Error("Please zoom in to see content.");
         }
 
         const url = `${api}/${region.chr.substr(3)}:${region.start}-${
@@ -135,10 +135,10 @@ export const trackFetchFunction: { [key: string]: any } = {
           return response.json();
         } catch (error) {
           if (region.end - region.start > 30000) {
-            throw new Error("Region is higher then 30000");
+            throw new Error("Please zoom in to see content.");
           } else {
             console.error(
-              `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}:`,
+              `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}: `,
               error,
             );
             throw error;
@@ -279,7 +279,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         regionData.trackModel.url,
       );
     } else {
-      throw new Error(`Unsupported track type: ${trackType}`);
+      throw new Error(`Unsupported track type: ${trackType}. `);
     }
   }
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
@@ -287,13 +287,13 @@ async function getRemoteData(regionData: any, trackType: string) {
     if (fetchInstance) {
       regionData.trackModel.options["trackType"] = regionData.trackModel.type;
       if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
-        throw new Error("Zoom in to see");
+        throw new Error("Please zoom in to see content. ");
       }
       if (
         (trackType === "repeatmasker" || trackType === "rmskv2") &&
         regionData.basesPerPixel > 1000
       ) {
-        throw new Error("Zoom in to see repeat masker annotations");
+        throw new Error("Please zoom in to see content. ");
       }
       if (trackType === "bigbed") {
         return fetchInstance

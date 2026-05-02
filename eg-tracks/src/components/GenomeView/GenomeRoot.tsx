@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
-import _, { has } from "lodash";
+import _ from "lodash";
 import { ITrackContainerState } from "../../types";
 import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
@@ -101,15 +101,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         setModel(FlexLayout.Model.fromJson(layout.current));
       }
     }
-    if (
-      tracks.some((t) => t.type === "genomealign") &&
-      !fetchGenomeAlignWorker.current
-    ) {
-      fetchGenomeAlignWorker.current = {
-        fetchWorker: new FetchGenomeAlignWorker(),
-        hasOnMessage: false,
-      };
-    }
+
     genomeConfig.defaultTracks = tracks;
   }, [tracks]);
 
