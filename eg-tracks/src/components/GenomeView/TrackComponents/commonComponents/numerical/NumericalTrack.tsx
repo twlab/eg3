@@ -81,6 +81,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     initialLoad,
     windowWidth
   } = props;
+
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);

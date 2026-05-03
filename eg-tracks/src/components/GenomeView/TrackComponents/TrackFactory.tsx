@@ -84,7 +84,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const caches = trackManagerState.current.caches;
 
   const xPos = useRef(0);
-
+  const [legend, setLegend] = useState<any>(null);
   const [viewComponent, setViewComponent] = useState<{
     [key: string]: any;
   } | null>(null);
@@ -302,7 +302,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
 
-
+  useEffect(() => {
+    if (viewComponent && viewComponent.dataIdx === dataIdx) {
+      setLegend(updatedLegend.current);
+    }
+  }, [viewComponent]);
   // MARK:[newDrawDat
   // Helper function to handle track drawing logic for newDrawData, viewWindowConfigChange, and configChange
   function handleTrackDraw({
@@ -640,7 +644,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             pointerEvents: "auto",
           }}
         >
-          {updatedLegend.current ?? (
+          {legend ?? (
             <TrackLegend
               trackModel={trackModel}
               height={
