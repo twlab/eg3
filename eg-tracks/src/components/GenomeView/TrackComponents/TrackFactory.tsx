@@ -773,6 +773,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           height: fetchError.current
             ? 40
             : getConfigOptions().displayMode === "full" ||
+                getConfigOptions().displayMode === "detail" ||
                 (svgHeight.current && getConfigOptions().displayMode === "auto")
               ? svgHeight.current
               : !getConfigOptions().isCombineStrands &&

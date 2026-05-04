@@ -14,6 +14,7 @@ class DataHubParser {
     let tracks: Array<any> = [],
       url,
       newTrack;
+
     for (let plainObject of parsedJson.slice(tracksStartIndex)) {
       if (plainObject.url) {
         if (!plainObject.url.toLowerCase().startsWith("http")) {

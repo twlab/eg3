@@ -19,7 +19,7 @@ import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
 import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import TrackModel from "../../models/TrackModel";
-import _, { indexOf, set, throttle } from "lodash";
+import _, { throttle } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 // import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
@@ -490,7 +490,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setMessageData(getMessageData());
 
     const message = messageQueue.current.pop();
-  
+
     // split an array into N contiguous chunks
     function splitArrayIntoChunks(arr, numChunks) {
       const chunkSize = Math.ceil(arr.length / numChunks);
@@ -518,11 +518,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             Array.isArray(msgObj.trackModelArr) &&
             msgObj.trackModelArr.length > 0
           ) {
-            const workerTracks =  msgObj.trackModelArr.filter(
-              (tm: any) => !(tm && (nonWorkerTracks.has(tm.type))),
+            const workerTracks = msgObj.trackModelArr.filter(
+              (tm: any) => !(tm && nonWorkerTracks.has(tm.type)),
             );
 
-          
             if (workerTracks.length > 0) {
               const chunks = splitArrayIntoChunks(workerTracks, numWorkers);
               if (chunks[i] && chunks[i].length > 0) {
@@ -550,17 +549,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const nonWorkerMessage: Array<any> = [];
       for (let i = 0; i < message.length; i++) {
         const nonWorkerItems = message[i].trackModelArr.filter(
-          (tm: any) => tm && (nonWorkerTracks.has(tm.type)),
+          (tm: any) => tm && nonWorkerTracks.has(tm.type),
         );
         nonWorkerMessage.push({ ...message[i], trackModelArr: nonWorkerItems });
       }
 
-      // tracks like vcf don't retain all their data when returning to onmessage 
+      // tracks like vcf don't retain all their data when returning to onmessage
       if (nonWorkerMessage.length > 0) {
         fetchGenomicData(nonWorkerMessage)
           .then((nonWorkerData) => {
             try {
-           
               createInfiniteOnMessage({ data: nonWorkerData });
             } catch (e) {
               console.error(
@@ -1911,6 +1909,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               missingIdx: curTrackState.missingIdx,
               trackDataIdx: curTrackState.trackDataIdx,
             });
+            console.log(curTrackState.fetchAfterGenAlignTracks);
             enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
           }
         } else {
@@ -2070,6 +2069,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (trackToFetch.length > 0) {
+
           const genName = curGenomeConfig.current.genome.getName();
           dataToFetchArr.push({
             primaryGenName: genName,
@@ -2092,6 +2092,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             bpRegionSize: bpRegionSize.current,
             trackDataIdx: curIdx,
             missingIdx: curDataIdx,
+            genomicFetchCoord: trackState?.genomicFetchCoord,
           });
         }
       }
@@ -3385,27 +3386,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         let currIdx = dataIdx + 1;
         // combine data from view region and adjacent regions using dataIdx
-        for (let i = 0; i < 3; i++) {
-          if (cacheTrackData[currIdx]?.dataCache) {
-            combinedData.push(cacheTrackData[currIdx]);
+        if (configOptions?.group && !cacheTrackData?.usePrimaryNav) {
+          if (cacheTrackData[dataIdx]?.dataCache) {
+            combinedData.push(cacheTrackData[dataIdx]);
           } else {
             hasData = false;
-            break;
           }
-          currIdx--;
-        }
-        // these tracks has multiple subTracks that needs to to combined in groupTrack
-        if (
-          cacheTrackData.trackType in
-          { matplot: "", dynamic: "", dynamicbed: "" }
-        ) {
-          if (cacheTrackData[1]?.xvalues) {
-            combinedData = [];
-          } else {
-            combinedData = groupTracksArrMatPlot(combinedData);
+        } else {
+          for (let i = 0; i < 3; i++) {
+            if (cacheTrackData[currIdx]?.dataCache) {
+              combinedData.push(cacheTrackData[currIdx]);
+            } else {
+              hasData = false;
+              break;
+            }
+            currIdx--;
+          }
+          // these tracks has multiple subTracks that needs to to combined in groupTrack
+          if (
+            cacheTrackData.trackType in
+            { matplot: "", dynamic: "", dynamicbed: "" }
+          ) {
+            if (cacheTrackData[1]?.xvalues) {
+              combinedData = [];
+            } else {
+              combinedData = groupTracksArrMatPlot(combinedData);
+            }
           }
         }
-
         // }
 
         if (hasData) {
@@ -3441,11 +3449,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             });
           }
 
-          // tracks that don't use primary nav are drawn with genomealign in the ongenomealignmessage, so we just needto
-          // clarify that
-          if (cacheTrackData.usePrimaryNav) {
-            trackToDrawId[key] = false;
-          }
+          trackToDrawId[key] = false;
         }
         // else {
         //   delete trackToDrawId[key]

@@ -74,7 +74,7 @@ export const DEFAULT_OPTIONS = {
   color: "orangered",
   color2: "blue",
   height: 40,
-  maxRows: 20,
+  maxRows: 10,
   displayMode: FiberDisplayModes.AUTO,
   hideMinimalItems: false,
   pixelsPadding: 0,
