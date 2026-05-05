@@ -274,7 +274,7 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultCategorical,
       rowHeight: 20,
       color: "blue",
-      maxRows: 20,
+      maxRows: 1,
       hiddenPixels: 0.5,
       backgroundColor: "var(--bg-color)",
       alwaysDrawLabel: false,
