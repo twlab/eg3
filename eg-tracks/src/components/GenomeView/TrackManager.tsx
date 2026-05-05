@@ -1909,7 +1909,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               missingIdx: curTrackState.missingIdx,
               trackDataIdx: curTrackState.trackDataIdx,
             });
-            console.log(curTrackState.fetchAfterGenAlignTracks);
+
             enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
           }
         } else {
@@ -2311,10 +2311,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
         }
       }
+
+      
       startTransition(() =>
         setDraw({
           trackToDrawId: { ...completedFetchedRegion.current.done },
-          viewWindow: curViewWindow,
+          viewWindow:     
+            bpRegionSize.current ===
+              curGenomeConfig.current.navContext._totalBases ? {start: 0, end: windowWidth} : curViewWindow,
           completedFetchedRegion,
         }),
       );

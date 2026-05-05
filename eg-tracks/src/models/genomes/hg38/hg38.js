@@ -209,20 +209,7 @@ const defaultTracks = [
   //   name: "band2",
   //   url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
   // }),
-  new TrackModel({
-    type: "refbed",
-    name: "refbed",
-    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-    options: {
-      categoryColors: {
-        coding: "rgb(101,1,168)",
-        nonCoding: "rgb(1,193,75)",
-        pseudo: "rgb(230,0,172)",
-        problem: "rgb(224,2,2)",
-        other: "rgb(128,128,128)",
-      },
-    },
-  }),
+
   // new TrackModel({
   //   type: "g3d",
   //   url: "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
@@ -269,6 +256,21 @@ const defaultTracks = [
       name: "Test bam",
       url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
     }),
+
+      new TrackModel({
+    type: "refbed",
+    name: "refbed",
+    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+    options: {
+      categoryColors: {
+        coding: "rgb(101,1,168)",
+        nonCoding: "rgb(1,193,75)",
+        pseudo: "rgb(230,0,172)",
+        problem: "rgb(224,2,2)",
+        other: "rgb(128,128,128)",
+      },
+    },
+  }),
   // new TrackModel({
   //   type: "bigwig",
   //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
@@ -361,14 +363,14 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+    options: {
+      color: "blue",
+    },
+  }),
 
   // new TrackModel({
   //   type: "qbed",
@@ -385,38 +387,55 @@ const defaultTracks = [
   //     opacity: [50],
   //   },
   // }),
+
+  
   // new TrackModel({
-  //   type: "matplot",
-  //   name: "matplot wrap",
-  //   tracks: [
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  //       name: "MeDIP",
-  //       options: {
-  //         color: "red",
-  //         backgroundColor: "#FFE7AB",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MeDIP",
-  //       },
-  //     },
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-  //       name: "MRE",
-  //       options: {
-  //         color: "blue",
-  //         backgroundColor: "#C0E3CC",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MRE",
-  //       },
-  //     },
-  //   ],
+  //   type: "qbed",
+  //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
+  //   name: "piggyBac insertions",
+  //   showOnHubLoad: "true",
+  //   options: {
+  //     color: "#D12134",
+  //     height: 100,
+  //     logScale: "log10",
+  //     show: "sample",
+  //     sampleSize: 1000,
+  //     markerSize: 5,
+  //     opacity: [50],
+  //   },
   // }),
+  new TrackModel({
+    type: "matplot",
+    name: "matplot wrap",
+    tracks: [
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+        name: "MeDIP",
+        options: {
+          color: "red",
+          backgroundColor: "#FFE7AB",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MeDIP",
+        },
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+        name: "MRE",
+        options: {
+          color: "blue",
+          backgroundColor: "#C0E3CC",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MRE",
+        },
+      },
+    ],
+  }),
   // new TrackModel({
   //   type: "dynseq",
   //   name: "example dynseq",
@@ -431,20 +450,20 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
   //   name: "CH12 H3K36me3",
   // }),
-  // new TrackModel({
-  //   type: "methylc",
-  //   name: "H1",
-  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-  //   options: {
-  //     label: "Methylation",
-  //     colorsForContext: {
-  //       CG: { color: "#648bd8", background: "#d9d9d9" },
-  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
-  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
-  //     },
-  //     depthColor: "#01E9FE",
-  //   },
-  // }),
+  new TrackModel({
+    type: "methylc",
+    name: "H1",
+    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+    options: {
+      label: "Methylation",
+      colorsForContext: {
+        CG: { color: "#648bd8", background: "#d9d9d9" },
+        CHG: { color: "#ff944d", background: "#ffe0cc" },
+        CHH: { color: "#ff00ff", background: "#ffe5ff" },
+      },
+      depthColor: "#01E9FE",
+    },
+  }),
 
   // new TrackModel({
   //   type: "methylc",

@@ -4,12 +4,13 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { generateUUID } from "wuepgg3-track";
-import React from "react";
+import React, { useMemo } from "react";
 import JSON5 from "json5";
 
 import { readFileAsText, TrackModel } from "wuepgg3-track";
 
 import useMidSizeNavigationTab from "@/lib/hooks/useMidSizeNavigationTab";
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 
 export default function LocalTracks() {
   return (
@@ -42,6 +43,9 @@ interface LocalTrackState {
   files: FileList | null;
   options?: TrackOptions;
   indexSuffix: string;
+    metadata: {
+    genome: string;
+  };
   msg: string;
 }
 
@@ -57,28 +61,55 @@ const ONE_TRACK_FILE_LIST = [
 
 function AddLocalTracks() {
   useMidSizeNavigationTab();
-  const session = useAppSelector(selectCurrentSession);
+  
+  const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
+    const _genomeConfig = useCurrentGenome();
   const [trackState, setTrackState] = React.useState<LocalTrackState>({
     type: "bigWig",
-    assembly: session?.genomeId ?? "hg19",
+    assembly: currentSession?.genomeId ?? "hg19",
     files: null,
     indexSuffix: ".tbi",
-
+metadata: { genome: currentSession?.genomeId ?? "" },
     msg: "",
   });
 
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const trackFileInputRef = React.useRef<HTMLInputElement>(null);
+  const genomesInSession = useMemo(() => {
+    const querySet = new Set<string>();
+    if (
+      currentSession &&
+      _genomeConfig &&
+      (currentSession.genomeId === _genomeConfig.name ||
+        currentSession.genomeId === _genomeConfig.id)
+    ) {
+      querySet.add(currentSession.genomeId);
+      for (const track of currentSession.tracks) {
+        if (track?.type === "genomealign" && track?.querygenome) {
+          querySet.add(track.querygenome);
+        } else if (track?.type === "genomealign" && track?.metadata?.genome) {
+          querySet.add(track.metadata.genome);
+        }
+      }
+    }
+    return Array.from(querySet);
+  }, [_genomeConfig, currentSession]);
 
   const handleTypeChange = (type: string) => {
     const indexSuffix = type.toLowerCase() === "bam" ? ".bai" : ".tbi";
     setTrackState((prev) => ({ ...prev, type, indexSuffix }));
   };
 
-  const handleAssemblyChange = (assembly: string) => {
-    setTrackState((prev) => ({ ...prev, assembly }));
+
+  const handleTrackGenomeChange = (genome: string) => {
+    setTrackState((prev) => ({
+      ...prev,
+      queryGenome: genome,
+      metadata: { ...prev.metadata, genome },
+    }));
   };
+
 
   const handleFileChange = (files: FileList | null) => {
     setTrackState((prev) => ({ ...prev, files }));
@@ -96,7 +127,7 @@ function AddLocalTracks() {
 
   const handleSubmit = () => {
     setSubmitAttempted(true);
-    const { type, files, assembly, options } = trackState;
+    const { files} = trackState;
     let tracks: TrackModel[] = [];
     if (!files) {
       setTrackState((prev) => ({ ...prev, msg: "Please select files" }));
@@ -115,8 +146,9 @@ function AddLocalTracks() {
             label: file.name,
             files: undefined,
             options: trackState.options ? trackState.options : {},
+                metadata: { genome: trackState.metadata.genome },
             id: generateUUID(),
-            metadata: { genome: trackState.assembly },
+         
           })
       );
     } else {
@@ -193,7 +225,7 @@ function AddLocalTracks() {
 
     dispatch(
       updateCurrentSession({
-        tracks: [...session!.tracks, ...tracks],
+        tracks: [...currentSession!.tracks, ...tracks],
       })
     );
     setTrackState((prev) => ({ ...prev, msg: "Track added successfully" }));
@@ -260,15 +292,26 @@ function AddLocalTracks() {
             <span className="text-sm text-red-500">Required</span>
           )}
         </div>
-        <input
-          type="text"
-          className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${submitAttempted && !assemblyComplete
-            ? "border-red-400 focus:ring-red-400"
-            : "border-gray-300 dark:border-gray-600"
-            }`}
-          value={trackState.assembly}
-          onChange={(e) => handleAssemblyChange(e.target.value)}
-        />
+      {genomesInSession.length > 0 ? (
+            <select
+              value={trackState.metadata.genome || genomesInSession[0]}
+              onChange={(e) => handleTrackGenomeChange(e.target.value)}
+              className={`w-full border rounded-lg px-3 py-1.5 bg-white dark:bg-dark-surface text-primary dark:text-dark-primary text-base focus:outline-none focus:ring-2 focus:ring-secondary ${submitAttempted 
+                ? "border-red-400 focus:ring-red-400"
+                : "border-gray-300 dark:border-gray-600"
+                }`}
+            >
+              {genomesInSession.map((genome) => (
+                <option key={genome} value={genome}>
+                  {genome}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-sm text-primary/50 dark:text-dark-primary/50 italic">
+              No assemblies in current session.
+            </p>
+          )}
       </div>
 
       {/* 4. Options */}

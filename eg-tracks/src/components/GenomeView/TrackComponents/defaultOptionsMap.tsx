@@ -269,7 +269,7 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultAnnotationTrack,
       ...defaultCategorical,
-      height: 20,
+      rowHeight: 10,
       color: "blue",
       maxRows: 1,
       hiddenPixels: 0.5,

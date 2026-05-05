@@ -119,7 +119,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         );
 
         max = _.max(visibleValues) || 1;
-
+      
         xValues2 = xToValue2.filter((x) => x);
         min =
           (xValues2.length
@@ -262,7 +262,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
 
   let visualizer;
-
+    
   if (
     initialLoad ||
     options.forceSvg ||

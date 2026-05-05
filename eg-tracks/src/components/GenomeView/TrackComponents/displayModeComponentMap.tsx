@@ -66,10 +66,7 @@ import QBed from "../../../models/QBed";
 import React from "react";
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
-
 import Bedcolor from "./bedComponents/Bedcolor";
-
-import { generateUUID } from "../../../util";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 export const bigWithNavTracks = new Set([

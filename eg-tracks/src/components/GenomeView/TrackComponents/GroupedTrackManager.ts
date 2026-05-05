@@ -5,7 +5,6 @@ import TrackModel from "../../../models/TrackModel";
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
 import {
-  DefaultAggregators,
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
@@ -388,8 +387,7 @@ export class GroupedTrackManager {
 
               const height =
                 curTrackModel.type === "repeatmasker" ||
-                curTrackModel.type === "rmskv2" ||
-                curTrackModel.type === "categorical"
+                curTrackModel.type === "rmskv2"
                   ? configOptions?.height
                   : placeFeatureData.numRowsAssigned
                     ? getHeight(

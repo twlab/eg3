@@ -318,6 +318,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     isInit,
     placeFeature,
   }) {
+
     const primaryVisData = trackState.genomicFetchCoord
       ? trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData
       : trackState.visData;
@@ -438,7 +439,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-   
+
       handleTrackDraw({
         cacheTrackData,
         trackState,

@@ -183,7 +183,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       xvaluesData,
       windowWidth
     } = this.props;
-
+   
     const { height, smooth, lineWidth } = options;
 
     this.xToValue = xvaluesData
