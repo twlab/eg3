@@ -1,4 +1,4 @@
-import React, { Children } from "react";
+import React, { Children, useMemo } from "react";
 import OpenInterval from "../../../../models/OpenInterval";
 import Gene from "../../../../models/Gene";
 import GeneAnnotation, {
@@ -33,13 +33,15 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
   y,
   isMinimal,
   options,
-  children,
+
   onClick,
+  placedGroup,
+  configOptions,
 }) => {
   const [xStart, xEnd] = xSpan;
   const { color, backgroundColor, italicizeText } = getDrawColors(
     gene,
-    options
+    options,
   );
 
   const coveringRect = (
@@ -51,27 +53,6 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
       height={HEIGHT}
       fill={isMinimal ? color : backgroundColor}
       opacity={isMinimal ? 1 : 0}
-    />
-  );
-
-  if (isMinimal) {
-    // Just render a box if minimal.
-    if (options?.hideMinimalItems) {
-      return <div></div>;
-    }
-    return <TranslatableG y={y}>{coveringRect}</TranslatableG>;
-  }
-
-  const centerY = HEIGHT / 2;
-  const centerLine = (
-    <line
-      x1={xStart}
-      y1={centerY}
-      x2={xEnd}
-      y2={centerY}
-      stroke={color}
-      strokeWidth={1}
-      strokeDasharray={4}
     />
   );
 
@@ -90,10 +71,11 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
     // Yay, we can put it on the right!
     labelX = xEnd + 4;
     textAnchor = "start";
-  } else if (!isBlockedLeft && !isBlockedRight) {
+  } else {
+    // Just put it directly on top of the annotation
     labelX = viewWindow!.start + 4;
     textAnchor = "start";
-    labelHasBackground = true;
+    labelHasBackground = true; // Need to add background for contrast purposes
   }
 
   const label = (
@@ -114,10 +96,42 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
 
   return (
     <TranslatableG y={y} onClick={(event) => onClick(event, gene)}>
-      {coveringRect}
-      {centerLine}
-      {children}
-      {label}
+      {useMemo(
+        () => (
+          <>
+            {isMinimal && options?.hideMinimalItems ? (
+              ""
+            ) : isMinimal ? (
+              <> {coveringRect} </>
+            ) : (
+              <>
+                <line
+                  x1={xStart}
+                  y1={HEIGHT / 2}
+                  x2={xEnd}
+                  y2={HEIGHT / 2}
+                  stroke={color}
+                  strokeWidth={1}
+                  strokeDasharray={4}
+                />
+                {placedGroup.placedFeatures.map(
+                  (placedGene: any, i: number) => (
+                    <GeneAnnotation
+                      key={i}
+                      placedGene={placedGene}
+                      y={y}
+                      options={configOptions}
+                    />
+                  ),
+                )}
+              </>
+            )}
+          </>
+        ),
+
+        [placedGroup],
+      )}
+      {!isMinimal ? label : ""}
     </TranslatableG>
   );
 };

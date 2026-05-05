@@ -17,7 +17,8 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
   render() {
     const { vcf } = this.props;
 
-    const vcfId = vcf.variant.ID;
+    const vcfId = vcf.variant?.ID ?? "";
+
     let linkOut,
       trimmed = {};
     if (vcfId) {
@@ -47,11 +48,15 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
         ));
       }
     }
-
-    const sampleKeys = Object.keys(vcf.variant.SAMPLES);
-    sampleKeys
-      .slice(0, SAMPLE_ROWS_THRESHOLD)
-      .forEach((k) => (trimmed[k] = vcf.variant.SAMPLES[k]));
+    let sampleKeys: any = null;
+    if (vcf.variant?.SAMPLES) {
+      {
+        sampleKeys = Object.keys(vcf.variant?.SAMPLES);
+        sampleKeys
+          .slice(0, SAMPLE_ROWS_THRESHOLD)
+          .forEach((k) => (trimmed[k] = vcf.variant?.SAMPLES[k]));
+      }
+    }
 
     return (
       <div>
@@ -69,25 +74,25 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
               <tr>
                 <th>REF</th>
                 <td style={{ wordBreak: "break-all", maxWidth: "300px" }}>
-                  {vcf.variant.REF}
+                  {vcf.variant?.REF ?? ""}
                 </td>
               </tr>
               <tr>
                 <th>ALT</th>
                 <td style={{ wordBreak: "break-all", maxWidth: "300px" }}>
-                  {vcf.variant.ALT.join(", ")}
+                  {vcf.variant?.ALT?.join(", ") ?? ""}
                 </td>
               </tr>
               <tr>
                 <th>QUAL</th>
-                <td>{vcf.variant.QUAL}</td>
+                <td>{vcf.variant?.QUAL ?? ""}</td>
               </tr>
             </tbody>
           </table>
           <div>
             {vcf.getLocus().toString()} ({vcf.getLocus().getLength()}bp)
           </div>
-          <div>{infoAsTable(vcf.variant.INFO)}</div>
+          <div>{infoAsTable(vcf.variant?.INFO ?? "")}</div>
           <div>
             {sampleKeys && sampleKeys.length > 0 && (
               <span>Sample count: {sampleKeys.length}</span>
@@ -147,6 +152,7 @@ const samplesAsTable = (samples) => {
 const infoAsTable = (info) => {
   if (!info) return null;
   const cols = Object.keys(info);
+
   const trs = (
     <tr>
       {cols.map((col, idx) => (

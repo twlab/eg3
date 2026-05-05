@@ -266,7 +266,8 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       fetchViewWindowOnly,
       bothAnchorsInView,
       options,
-      legend
+      legend,
+       windowWidth
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
@@ -286,7 +287,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg

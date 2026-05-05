@@ -5,7 +5,6 @@ import TrackModel from "../../../models/TrackModel";
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
 import {
-
   FeatureAggregator,
 } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
@@ -22,7 +21,14 @@ import {
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { Fiber } from "../../../models/Feature";
 import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
-import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import {
+  FiberDisplayModes,
+
+  VcfColorScaleKeys,
+} from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { scaleLinear } from "d3-scale";
+
+
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
 const TOP_PADDING = 2;
@@ -32,16 +38,13 @@ export const numericalTracks = {
   methylc: "",
   boxplot: "",
   qbed: "",
-  vcf: "",
   dynseq: "",
   matplot: "",
-  longrange: "",
-  hic: "",
 };
 export const possibleNumericalTracks = {
   bigbed: "",
   geneannotation: "",
-
+  vcf: "",
   modbed: "",
   refbed: "",
   bed: "",
@@ -52,8 +55,21 @@ export const possibleNumericalTracks = {
 };
 export const numericalTracksGroup = { bigwig: "", bedgraph: "" };
 function getHeight(numRows: number, trackModel, configOptions): number {
-  let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
+  let rowHeight = trackOptionMap[`${trackModel.type}`]?.ROW_HEIGHT
+    ? trackOptionMap[`${trackModel.type}`]?.ROW_HEIGHT
+    : trackOptionMap[`${trackModel.type}`]?.rowHeight
+      ? trackOptionMap[`${trackModel.type}`]?.rowHeight
+      : 20;
+
   let options = configOptions;
+
+  if (configOptions.rowHeight) {
+    rowHeight = configOptions.rowHeight;
+  }
+  else if(configOptions.ROW_HEIGHT){
+    rowHeight = configOptions.ROW_HEIGHT;
+  }
+
   let rowsToDraw = Math.min(numRows, options.maxRows);
   if (options.hideMinimalItems) {
     rowsToDraw -= 1;
@@ -62,7 +78,7 @@ function getHeight(numRows: number, trackModel, configOptions): number {
     rowsToDraw = 1;
   }
 
-  return trackModel.type === "modbed"
+  return trackModel.type === "modbed" || trackModel.type === "vcf"
     ? (rowsToDraw + 1) * rowHeight + 2
     : rowsToDraw * rowHeight + TOP_PADDING;
 }
@@ -333,9 +349,30 @@ export class GroupedTrackManager {
               }
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
                 xvalues;
+            } else if (
+              (track.trackModel.type === "vcf" &&
+                (track.visRegion.getWidth() *
+                  (viewWindow.end - viewWindow.start)) /
+                  width >
+                  100000 &&
+                configOptions.displayMode === "auto") ||
+              configOptions.displayMode === "density"
+            ) {
+              const xvalues = this.aggregator.xToValueMaker(
+                track.data,
+                track.visRegion,
+                width,
+                configOptions,
+              );
+
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
+              }
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
+                xvalues;
             } else {
               const data = track.data;
-
+          
               const placeFeatureData = featureArrange.arrange(
                 data,
                 track.visRegion,
@@ -344,15 +381,13 @@ export class GroupedTrackManager {
                   ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
                   : trackOptionMap["error"].getGenePadding,
                 configOptions.hiddenPixels,
-                sortType,
+                configOptions.sortItems                 ? configOptions.sortItems : sortType,
                 viewWindow,
               );
 
               const height =
                 curTrackModel.type === "repeatmasker" ||
-                curTrackModel.type === "rmskv2" ||
-                curTrackModel.type === "categorical" ||
-                curTrackModel.type === "modbed"
+                curTrackModel.type === "rmskv2"
                   ? configOptions?.height
                   : placeFeatureData.numRowsAssigned
                     ? getHeight(
@@ -366,10 +401,51 @@ export class GroupedTrackManager {
                 trackManagerState.current.caches[tid][dataIdx] = {};
               }
 
+              let scales;
+              if (curTrackModel.type === "vcf") {
+                function computeColorScales(
+                  data: Array<any>,
+                  colorKey: string,
+                  lowValueColor: any,
+                  highValueColor: any,
+                ) {
+                  let values: any[];
+
+                  if (colorKey === VcfColorScaleKeys.QUAL) {
+                    values = data.map((v) => v.feature.variant.QUAL);
+                  } else if (colorKey === VcfColorScaleKeys.AF) {
+                    values = data.map((v) => {
+                      if (
+                        v.feature?.variant?.INFO &&
+                        v.feature?.variant?.INFO.hasOwnProperty("AF")
+                      ) {
+                        return v.feature.variant.INFO.AF[0];
+                      }
+                      return 0;
+                    });
+                  } else {
+                    values = [];
+                  }
+                  const colorScale = scaleLinear()
+                    .domain([0, _.max(values)])
+                    .range([lowValueColor, highValueColor])
+                    .clamp(true);
+                  return colorScale;
+                }
+
+                scales = computeColorScales(
+                  placeFeatureData.placements,
+                  configOptions.colorScaleKey,
+                  configOptions.lowValueColor,
+                  configOptions.highValueColor,
+                );
+              }
+
               trackManagerState.current.caches[tid][dataIdx]["placeFeature"] = {
                 placements: placeFeatureData,
                 height,
                 numHidden: placeFeatureData.numHidden,
+                scales,
               };
             }
           }

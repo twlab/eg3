@@ -24,10 +24,16 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
 
   render() {
     const { feature, category, queryEndpoint } = this.props;
-    const name = feature.getName() ? feature.getName() : feature.name;
-    const featureName = category && category[name] && category[name].name
-      ? category[name].name
-      : name;
+    const name = feature.getName()
+      ? feature.getName()
+      : feature?.name
+        ? feature.name
+        : "";
+
+    const featureName =
+      category && category[name] && category[name].name
+        ? category[name].name
+        : name;
     let linkOut;
     if (feature.id) {
       if (_.isEmpty(queryEndpoint)) {
@@ -43,8 +49,9 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
             </a>
           );
         } else {
-          const ncbiURL = `https://www.ncbi.nlm.nih.gov/gene/?term=${String(feature.id).split(".")[0]
-            }`;
+          const ncbiURL = `https://www.ncbi.nlm.nih.gov/gene/?term=${
+            String(feature.id).split(".")[0]
+          }`;
 
           linkOut = (
             <a href={ncbiURL} target="_blank" rel="noopener noreferrer">

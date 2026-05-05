@@ -41,7 +41,9 @@ export default function AppsTab({ panelCounter, onNavigationPathChange }: { pane
         component: Session,
         options: {
           title: "Session",
+          tab: true,
         },
+     
       },
       {
         path: "go-live",

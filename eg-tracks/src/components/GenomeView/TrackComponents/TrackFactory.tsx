@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, startTransition } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
@@ -75,7 +75,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
       : { ...trackOptionMap["error"].defaultOptions };
   }
-  const initTrackStart = useRef(true);
+
   const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
@@ -84,14 +84,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const caches = trackManagerState.current.caches;
 
   const xPos = useRef(0);
-
+  const [legend, setLegend] = useState<any>(null);
   const [viewComponent, setViewComponent] = useState<{
     [key: string]: any;
   } | null>(null);
 
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-  const [legend, setLegend] = useState<any>(null);
 
   function getHeight(numRows: number): number {
     let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
@@ -147,9 +146,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       initialLoad: initialLoad.current,
       placeFeature,
     };
-    let res;
+
     // try {
-    res = getDisplayModeFunction(displayArgs);
+    const res = getDisplayModeFunction(displayArgs);
     // }
     // catch (e) {
     //   fetchError.current = "error when creating drawData";
@@ -177,7 +176,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // inside the display components don't crash the whole app.
       try {
         result = (
-          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError }>
+          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
             {result as any}
           </ErrorBoundary>
         );
@@ -186,18 +185,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       xPos.current = curXPos;
-      // startTransition(() =>
-      setViewComponent({
-        component: result,
-        dataIdx: cacheDataIdx,
-        numHidden: numHidden,
-        visData: trackState.visData,
-        xPos: curXPos,
-      });
-      // )
+      startTransition(() =>
+        setViewComponent({
+          component: result,
+          dataIdx: cacheDataIdx,
+          numHidden: numHidden,
+          visData: trackState.visData,
+          xPos: curXPos,
+        }),
+      );
     }
   }
   function onClose() {
+    setToolTipVisible(false);
     setToolTip(null);
   }
   // MARK: clickTool
@@ -306,7 +306,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
-
   // MARK:[newDrawDat
   // Helper function to handle track drawing logic for newDrawData, viewWindowConfigChange, and configChange
   function handleTrackDraw({
@@ -494,14 +493,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState,
         );
         if (cacheTrackData["error"]) {
-             sentScreenshotData({
-      
-              isError: fetchError.current,        
-              trackId: id,
-            
-  
+          sentScreenshotData({
+            isError: fetchError.current,
+            trackId: id,
           });
-          return ;
+          return;
         } else if (
           !cacheTrackData.useExpandedLoci &&
           cacheTrackData.usePrimaryNav
@@ -582,25 +578,25 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         if (combinedData) {
           sentScreenshotData({
-      
-              genomeName: genomeConfig.genome.getName(),
-              genesArr: combinedData,
-              trackState,
-              windowWidth,
-              configOptions: drawOptions,
-              svgHeight:
-                getConfigOptions().displayMode === "full"
-                  ? svgHeight.current
-                  : getConfigOptions().height,
-              trackModel,
-              basesByPixel: basePerPixel,
-              genomeConfig,
-              xvaluesData: cacheTrackData[dataIdx].xvalues
-                ? cacheTrackData[dataIdx].xvalues
-                : null,
-              isError: fetchError.current,        trackId: id,
-            
-  
+            genomeName: genomeConfig.genome.getName(),
+            genesArr: combinedData,
+            trackState,
+            windowWidth,
+            configOptions: drawOptions,
+            svgHeight:
+              getConfigOptions().displayMode === "full"
+                ? svgHeight.current
+                : getConfigOptions().height,
+            trackModel,
+            basesByPixel: basePerPixel,
+            genomeConfig,
+            xvaluesData: cacheTrackData[dataIdx].xvalues
+              ? cacheTrackData[dataIdx].xvalues
+              : null,
+            isError: fetchError.current,
+            trackId: id,
+
+            placeFeature: cacheTrackData[dataIdx]?.placeFeature,
           });
         }
       }
@@ -757,7 +753,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             height={
               fetchError.current
                 ? 40
-                : getConfigOptions().displayMode === "full"
+                : svgHeight.current
                   ? svgHeight.current
                   : !getConfigOptions().isCombineStrands &&
                       trackModel.type === "methylc"
@@ -773,7 +769,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           display: "flex",
           height: fetchError.current
             ? 40
-            : getConfigOptions().displayMode === "full"
+            : getConfigOptions().displayMode === "full" ||
+                getConfigOptions().displayMode === "detail" ||
+                (svgHeight.current && getConfigOptions().displayMode === "auto")
               ? svgHeight.current
               : !getConfigOptions().isCombineStrands &&
                   trackModel.type === "methylc"

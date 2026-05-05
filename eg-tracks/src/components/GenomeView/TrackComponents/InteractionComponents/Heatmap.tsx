@@ -169,11 +169,12 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       bothAnchorsInView,
       legend,
       options,
+      windowWidth,
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
-        ? 0.5 * (width / 3)
-        : 0.5 * width;
+        ? 0.5 * (windowWidth / 3 )
+        : 0.5 * windowWidth;
 
     this.clampScale = scaleLinear()
       .domain([0, heightStandard])
@@ -184,7 +185,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg

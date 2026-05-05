@@ -95,7 +95,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     viewRegion,
     width,
     options,
-
+    windowWidth,
     xvaluesData,
     forceSvg,
     viewWindow,
@@ -211,7 +211,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     ? {
         position: "relative",
         overflow: "hidden",
-        width: width / 3 + 120,
+        width: windowWidth,
       }
     : {};
   let curEleStyle: any = forceSvg

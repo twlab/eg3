@@ -19,6 +19,18 @@ import undoRedoReducer from "./slices/undoRedoSlice";
 import { setCurrentSession } from "./slices/browserSlice";
 import tabPanelReducer from "./slices/tabPanelSlice";
 
+// Detect whether this is a fresh browser start (as opposed to a page refresh).
+// sessionStorage survives page refreshes within the same tab but is cleared
+// when the browser (or the tab) is closed, so the absence of this flag means
+// the user opened a brand-new window/tab.
+const SESSION_ACTIVE_FLAG = "eg-browser-tab-active";
+const isFreshBrowserStart =
+  typeof window !== "undefined" &&
+  !sessionStorage.getItem(SESSION_ACTIVE_FLAG);
+if (typeof window !== "undefined") {
+  sessionStorage.setItem(SESSION_ACTIVE_FLAG, "true");
+}
+
 // Transform to reduce the size of persisted browser state
 const browserTransform = createTransform(
   // transform state on its way to being serialized and persisted
@@ -32,8 +44,21 @@ const browserTransform = createTransform(
       future: future.slice(0, 5), // Keep only first 5 future states when persisting
     };
   },
-  // transform state being rehydrated
-  (outboundState) => outboundState,
+  // transform state being rehydrated — clear the active session on a fresh
+  // browser start so the user always lands on the genome picker instead of
+  // resuming a stale session from a previous browser window.
+  (outboundState: any) => {
+    if (isFreshBrowserStart && outboundState?.present) {
+      return {
+        ...outboundState,
+        present: {
+          ...outboundState.present,
+          currentSession: null,
+        },
+      };
+    }
+    return outboundState;
+  },
   { whitelist: ["browser"] },
 );
 

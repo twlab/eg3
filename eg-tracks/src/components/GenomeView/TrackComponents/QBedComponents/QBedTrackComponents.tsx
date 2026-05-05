@@ -212,7 +212,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
         position: "relative",
 
         overflow: "hidden",
-        width: width / 3 + 120,
+        width: windowWidth / 3  / 3 + 120,
       }
     : {};
   let curEleStyle: any = forceSvg
