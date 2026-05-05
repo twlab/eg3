@@ -118,7 +118,7 @@ async function getTextData(regionData: any) {
   }
 
   let fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
-  console.log(await fetchInstance.getData(regionData.nav));
+
   return await fetchInstance.getData(regionData.nav);
 }
 

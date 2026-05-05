@@ -263,7 +263,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     if (updatedLegend) {
       updatedLegend.current = legend;
     }
-    console.log(props);
+   
     switch (options.displayMode) {
       case InteractionDisplayMode.HEATMAP:
         visualizer = (
