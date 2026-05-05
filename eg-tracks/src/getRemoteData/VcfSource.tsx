@@ -104,7 +104,6 @@ class VcfSource {
 
   async getData(region, basesPerPixel, options) {
     try {
-
       return await this.fetchSource(region, options);
     } catch (error) {
       console.error("Error fetching VCF data, recreating instance:", error);
@@ -128,27 +127,27 @@ class VcfSource {
     }
   }
 
-    async _getDataInLocus(locus, options) {
-        const variants = [];
-        let chrom = this.chromNamingCache ? locus.chr.replace("chr", "") : locus.chr;
-        if (chrom === "M") {
-            chrom = "MT";
-        }
-        //vcf is 1 based
-        // -1 compensation happened in Vcf feature constructor
-        await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) =>
-            variants.push(this.parser.parseLine(line))
-        );
-        if (options.ensemblStyle || this.chromNamingCache) {
-            for (let variant of variants) {
-                variant.CHROM = locus.chr;
-               
-            }
-        }
-        
-    
-        return variants;
+  async _getDataInLocus(locus, options) {
+    const variants = [];
+    let chrom = this.chromNamingCache
+      ? locus.chr.replace("chr", "")
+      : locus.chr;
+    if (chrom === "M") {
+      chrom = "MT";
     }
+    //vcf is 1 based
+    // -1 compensation happened in Vcf feature constructor
+    await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) =>
+      variants.push(this.parser.parseLine(line)),
+    );
+    if (options.ensemblStyle || this.chromNamingCache) {
+      for (let variant of variants) {
+        variant.CHROM = locus.chr;
+      }
+    }
+
+    return variants;
+  }
 }
 
 export default VcfSource;

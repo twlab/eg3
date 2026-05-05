@@ -148,7 +148,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     };
 
     // try {
-   const res = getDisplayModeFunction(displayArgs);
+    const res = getDisplayModeFunction(displayArgs);
     // }
     // catch (e) {
     //   fetchError.current = "error when creating drawData";
@@ -186,14 +186,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
       xPos.current = curXPos;
       startTransition(() =>
-      setViewComponent({
-        component: result,
-        dataIdx: cacheDataIdx,
-        numHidden: numHidden,
-        visData: trackState.visData,
-        xPos: curXPos,
-      })
-      )
+        setViewComponent({
+          component: result,
+          dataIdx: cacheDataIdx,
+          numHidden: numHidden,
+          visData: trackState.visData,
+          xPos: curXPos,
+        }),
+      );
     }
   }
   function onClose() {
@@ -301,7 +301,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     setToolTip(currtooltip);
   }
 
-
   useEffect(() => {
     if (viewComponent && viewComponent.dataIdx === dataIdx) {
       setLegend(updatedLegend.current);
@@ -318,7 +317,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     isInit,
     placeFeature,
   }) {
-
     const primaryVisData = trackState.genomicFetchCoord
       ? trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData
       : trackState.visData;
@@ -414,12 +412,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-
     if (
       newDrawData.completedFetchedRegion &&
       newDrawData.completedFetchedRegion.current["done"][id] === false
     ) {
-
       if (dataIdx === newDrawData.completedFetchedRegion.current["key"]) {
         newDrawData.completedFetchedRegion.current["done"][id] = true;
       } else {

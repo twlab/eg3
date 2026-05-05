@@ -17,18 +17,18 @@ function objToInstanceAlign(alignment: { [key: string]: any }) {
     const newChr = new ChromosomeInterval(
       feature.locus.chr,
       feature.locus.start,
-      feature.locus.end
+      feature.locus.end,
     );
     visRegionFeatures.push(new Feature(feature.name, newChr));
   }
   const visRegionNavContext = new NavigationContext(
     alignment._navContext._name,
-    visRegionFeatures
+    visRegionFeatures,
   );
   return new DisplayedRegionModel(
     visRegionNavContext,
     alignment._startBase,
-    alignment._endBase
+    alignment._endBase,
   );
 }
 
@@ -100,7 +100,6 @@ async function getTextData(regionData: any) {
       regionData.trackModel.type === "longrange" &&
       regionData.trackModel.textConfig.subType === "AndreaGillespie"
     ) {
-
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LongrangeAndreaTextSource({
           blob: regionData.trackModel.fileObj,
@@ -108,7 +107,6 @@ async function getTextData(regionData: any) {
           url: "",
         });
     } else {
-
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new BedTextSource({
           blob: regionData.trackModel.fileObj,
@@ -120,7 +118,7 @@ async function getTextData(regionData: any) {
   }
 
   let fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
-
+  console.log(await fetchInstance.getData(regionData.nav));
   return await fetchInstance.getData(regionData.nav);
 }
 
@@ -144,21 +142,20 @@ async function getLocalData(regionData: any, trackType: string) {
     return await fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,
-      regionData.trackModel.options
+      regionData.trackModel.options,
     );
   }
 
   return await fetchInstance.getData(
     regionData.nav,
-    regionData.trackModel.options
+    regionData.trackModel.options,
   );
 }
 
 async function getLocalHicData(regionData: any) {
-
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
     cachedLocalFetchInstance[`${regionData.trackModel.id}`] = new HicSource(
-      regionData.trackModel.fileObj
+      regionData.trackModel.fileObj,
     );
   }
 
@@ -166,7 +163,7 @@ async function getLocalHicData(regionData: any) {
   const data = await fetchInstance.getData(
     objToInstanceAlign(regionData.visRegion),
     regionData.basesPerPixel,
-    regionData.trackModel.options
+    regionData.trackModel.options,
   );
   const fileInfos = fetchInstance.getFileInfo();
   return { data, fileInfos };

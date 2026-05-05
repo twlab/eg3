@@ -41,6 +41,7 @@ export const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
     let genomeName;
     let apiConfigPrefix;
+
     const trackModel = regionData.trackModel;
     if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
       genomeName = trackModel["apiConfig"]["genome"];
@@ -110,9 +111,7 @@ export const trackFetchFunction: { [key: string]: any } = {
     };
 
     try {
-
       const fetchPromises = regionData.nav.map(async (region: any) => {
-   
         if (region.end - region.start > 30000) {
           throw new Error("Please zoom in to see content. ");
         }

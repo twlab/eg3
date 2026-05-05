@@ -481,6 +481,68 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     processGenomeAlignQueue();
   };
+  // const processQueue = async () => {
+  //   if (messageQueue.current.length === 0) {
+  //     setMessageData({});
+  //     return;
+  //   }
+
+  //   setMessageData(getMessageData());
+
+  //   const message = messageQueue.current.pop();
+
+  //   // split an array into N contiguous chunks
+  //   function splitArrayIntoChunks(arr, numChunks) {
+  //     const chunkSize = Math.ceil(arr.length / numChunks);
+  //     const chunks: Array<any> = [];
+  //     for (let i = 0; i < numChunks; i++) {
+  //       const start = i * chunkSize;
+  //       const end = start + chunkSize;
+  //       chunks.push(arr.slice(start, end));
+  //     }
+  //     return chunks;
+  //   }
+
+  //   // Send messages to worker workers
+  //   if (
+  //     infiniteScrollWorkers.current &&
+  //     infiniteScrollWorkers.current.worker.length > 0
+  //   ) {
+  //     const numWorkers = infiniteScrollWorkers.current.worker.length;
+
+  //     for (let i = 0; i < numWorkers; i++) {
+  //       const messagesForWorker: Array<any> = [];
+  //       for (const msgObj of message) {
+  //         if (
+  //           Array.isArray(msgObj.trackModelArr) &&
+  //           msgObj.trackModelArr.length > 0
+  //         ) {
+  //           const chunks = splitArrayIntoChunks(
+  //             msgObj.trackModelArr,
+  //             numWorkers,
+  //           );
+  //           if (chunks[i].length > 0) {
+  //             messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+  //           }
+  //         }
+  //       }
+
+  //       if (
+  //         messagesForWorker.length > 0 &&
+  //         messagesForWorker[0].trackDataIdx === dataIdx.current
+  //       ) {
+  //         if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
+  //           infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
+  //             createInfiniteOnMessage;
+  //           infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
+  //         }
+  //         infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+  //           messagesForWorker,
+  //         );
+  //       }
+  //     }
+  //   }
+  // };
   const processQueue = async () => {
     if (messageQueue.current.length === 0) {
       setMessageData({});
@@ -518,12 +580,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             Array.isArray(msgObj.trackModelArr) &&
             msgObj.trackModelArr.length > 0
           ) {
-            const workerTracks = msgObj.trackModelArr.filter(
-              (tm: any) => !(tm && nonWorkerTracks.has(tm.type)),
-            );
-
-            if (workerTracks.length > 0) {
-              const chunks = splitArrayIntoChunks(workerTracks, numWorkers);
+            if (msgObj.trackModelArr.length > 0) {
+              const chunks = splitArrayIntoChunks(
+                msgObj.trackModelArr,
+                numWorkers,
+              );
               if (chunks[i] && chunks[i].length > 0) {
                 messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
               }
@@ -546,34 +607,33 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           );
         }
       }
-      const nonWorkerMessage: Array<any> = [];
-      for (let i = 0; i < message.length; i++) {
-        const nonWorkerItems = message[i].trackModelArr.filter(
-          (tm: any) => tm && nonWorkerTracks.has(tm.type),
-        );
-        nonWorkerMessage.push({ ...message[i], trackModelArr: nonWorkerItems });
-      }
+      // const nonWorkerMessage: Array<any> = [];
+      // for (let i = 0; i < message.length; i++) {
+      //   const nonWorkerItems = message[i].trackModelArr.filter(
+      //     (tm: any) => tm && nonWorkerTracks.has(tm.type),
+      //   );
+      //   nonWorkerMessage.push({ ...message[i], trackModelArr: nonWorkerItems });
+      // }
 
-      // tracks like vcf don't retain all their data when returning to onmessage
-      if (nonWorkerMessage.length > 0) {
-        fetchGenomicData(nonWorkerMessage)
-          .then((nonWorkerData) => {
-            try {
-              createInfiniteOnMessage({ data: nonWorkerData });
-            } catch (e) {
-              console.error(
-                "Error processing non-worker data in createInfiniteOnMessage:",
-                e,
-              );
-            }
-          })
-          .catch((err) => {
-            console.error("Error fetching non-worker data:", err);
-          });
-      }
+      // // tracks like vcf don't retain all their data when returning to onmessage
+      // if (nonWorkerMessage.length > 0) {
+      //   fetchGenomicData(nonWorkerMessage)
+      //     .then((nonWorkerData) => {
+      //       try {
+      //         createInfiniteOnMessage({ data: nonWorkerData });
+      //       } catch (e) {
+      //         console.error(
+      //           "Error processing non-worker data in createInfiniteOnMessage:",
+      //           e,
+      //         );
+      //       }
+      //     })
+      //     .catch((err) => {
+      //       console.error("Error fetching non-worker data:", err);
+      //     });
+      // }
     }
   };
-
   const processGenomeAlignQueue = () => {
     if (genomeAlignMessageQueue.current.length === 0) {
       return;
@@ -913,7 +973,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newSelected: { [key: string]: any } = {};
     // these are options that changes the configMenu so we need to recreate the
     // the configmenu
-
+   
     let groupChange = false;
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));
@@ -2069,7 +2129,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (trackToFetch.length > 0) {
-
           const genName = curGenomeConfig.current.genome.getName();
           dataToFetchArr.push({
             primaryGenName: genName,
@@ -2312,13 +2371,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      
       startTransition(() =>
         setDraw({
           trackToDrawId: { ...completedFetchedRegion.current.done },
-          viewWindow:     
+          viewWindow:
             bpRegionSize.current ===
-              curGenomeConfig.current.navContext._totalBases ? {start: 0, end: windowWidth} : curViewWindow,
+            curGenomeConfig.current.navContext._totalBases
+              ? { start: 0, end: windowWidth }
+              : curViewWindow,
           completedFetchedRegion,
         }),
       );

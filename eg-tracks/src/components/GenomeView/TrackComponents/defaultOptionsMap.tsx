@@ -107,15 +107,18 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultAnnotationTrack,
     },
-    getGenePadding: function getGenePadding(feature: Feature, xSpan: OpenInterval) {
-        const width = xSpan.end - xSpan.start;
-        const estimatedLabelWidth = feature.getName().length * 9;
-    
-        if (estimatedLabelWidth < 0.5 * width) {
-            return 5;
-        } else {
-            return 9 + estimatedLabelWidth;
-        }
+    getGenePadding: function getGenePadding(
+      feature: Feature,
+      xSpan: OpenInterval,
+    ) {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
@@ -269,12 +272,12 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultAnnotationTrack,
       ...defaultCategorical,
-      rowHeight: 10,
+      rowHeight: 20,
       color: "blue",
-      maxRows: 1,
+      maxRows: 20,
       hiddenPixels: 0.5,
       backgroundColor: "var(--bg-color)",
-      alwaysDrawLabel: true,
+      alwaysDrawLabel: false,
       category: {},
     },
     getGenePadding: function getGenePadding(

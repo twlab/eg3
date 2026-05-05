@@ -66,7 +66,6 @@ import { PortalContext, EscapeHandlerContext } from "wuepgg3-track";
 import { addCustomGenomeRemote } from "../../lib/redux/thunk/genome-hub";
 import { AppProps } from "../../App";
 
-
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
@@ -278,7 +277,8 @@ export default function RootLayout(props: AppProps) {
     if (
       sessionId &&
       props.viewRegion &&
-      props.genomeName && props.tracks&&
+      props.genomeName &&
+      props.tracks &&
       isPackageMode &&
       !initialState.current
     ) {
@@ -325,7 +325,13 @@ export default function RootLayout(props: AppProps) {
         );
       }
 
-      if (curGenomeConfig && currentSession && viewRegion && props.genomeName && props.tracks) {
+      if (
+        curGenomeConfig &&
+        currentSession &&
+        viewRegion &&
+        props.genomeName &&
+        props.tracks
+      ) {
         dispatch(
           updateCurrentSession({
             genomeId: props.genomeName,
