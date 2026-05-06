@@ -33,7 +33,7 @@ import {
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
-import { ITrackModel, Tool } from "../../types";
+import { GenomeCoordinate, ITrackModel, Tool } from "../../types";
 import {
   GroupedTrackManager,
   numericalTracks,
@@ -772,7 +772,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     e.preventDefault();
   }
+  function getRegionOffsetByX(
+    region: DisplayedRegionModel,
+    xDiff: number,
+  ): OpenInterval {
+    // Why -1?  When the mouse moves to the right, parts on the left move into view.  Ergo, we're moving the view
+    // region to the left.  Vice-versa for moving the mouse to the left.
+    const basesPerPixel = region.getWidth() / windowWidth;
+    const baseDiff = Math.round(-1 * basesPerPixel * xDiff);
+    const navContext = region.getNavigationContext();
+    const [start, end] = region.getContextCoordinates();
 
+    const newStart = navContext.toGaplessCoordinate(
+      Math.max(0, start + baseDiff),
+    );
+    const newEnd = navContext.toGaplessCoordinate(
+      Math.min(end + baseDiff, navContext.getTotalBases() - 1),
+    );
+    return new OpenInterval(newStart, newEnd);
+  }
+
+  function currentRegionAsString(segments: FeatureSegment[]): string {
+    if (segments.length === 1) {
+      return segments[0].toString();
+    } else {
+      const first = segments[0];
+      const last = segments[segments.length - 1];
+
+      return first.toStringWithOther(last);
+    }
+  }
   function handleMouseUp() {
     isDragging.current = false;
     if (horizontalLineRef.current && verticalLineRef.current) {
@@ -783,6 +812,38 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     lastDragX.current = dragX.current;
+
+    if (
+      useFineModeNav.current &&
+      globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
+        ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData
+        ?.viewWindowRegion
+    ) {
+      const primaryVisData =
+        globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
+          ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData;
+      console.log(objToInstanceAlign(primaryVisData.viewWindowRegion));
+      const newRegion = getRegionOffsetByX(
+        objToInstanceAlign(primaryVisData.viewWindowRegion),
+        dragX.current,
+      );
+
+      const genomeFeatureSegment: Array<FeatureSegment> =
+        genomeConfig.navContext.getFeaturesInInterval(
+          newRegion.start,
+          newRegion.end,
+        );
+
+      const newCoordinate = currentRegionAsString(
+        genomeFeatureSegment,
+      ) as GenomeCoordinate;
+      console.log(
+        globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
+          ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData,
+        newRegion,
+        newCoordinate,
+      );
+    }
 
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
@@ -973,7 +1034,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newSelected: { [key: string]: any } = {};
     // these are options that changes the configMenu so we need to recreate the
     // the configmenu
-   
+
     let groupChange = false;
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));

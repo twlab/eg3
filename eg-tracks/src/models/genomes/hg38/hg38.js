@@ -132,7 +132,7 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
   // }),
 
-  // new TrackModel({ 
+  // new TrackModel({
 
   //   type:"jaspar",
   //   name: "test jaspar",
@@ -388,7 +388,6 @@ const defaultTracks = [
   //   },
   // }),
 
-  
   // new TrackModel({
   //   type: "qbed",
   //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
@@ -600,14 +599,14 @@ const defaultTracks = [
   //       "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/vsPanTro5/",
   //   },
   // }),
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "",
-  // }),
+  new TrackModel({
+    name: "hg38tomm10",
+    label: "Query mouse mm10 to hg38 blastz",
+    type: "genomealign",
+    querygenome: "mm10",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  }),
   // new TrackModel({
   //   type: "categorical",
   //   name: "ChromHMM",
