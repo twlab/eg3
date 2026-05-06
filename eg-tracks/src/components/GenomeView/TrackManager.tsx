@@ -312,7 +312,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const side = useRef("right");
   const isDragging = useRef(false);
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
-  const leftSectionSize = useRef<Array<any>>([]);
+  const leftSectionSize = useRef<Array<any>>([windowWidth]);
   const preloadedTracks = useRef<{ [key: string]: any }>({});
   const screenshotDataObj = useRef<{ [key: string]: any }>({});
   const preload = useRef<boolean>(false);
@@ -859,13 +859,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     bpX.current = curBp;
 
-    const curDataIdx = Math.ceil(dragX.current / windowWidth);
     if (dragX.current > 0 && side.current === "right") {
       side.current = "left";
     } else if (dragX.current <= 0 && side.current === "left") {
       side.current = "right";
     }
-
+    const curDataIdx =
+      side.current === "left"
+        ? Math.floor(dragX.current / windowWidth)
+        : Math.ceil(dragX.current / windowWidth);
     let curViewWindow =
       side.current === "right"
         ? new OpenInterval(
@@ -873,8 +875,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             -((dragX.current % windowWidth) + -windowWidth) + windowWidth,
           )
         : new OpenInterval(
+            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth * 2),
             windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
-            windowWidth * 3 - (dragX.current % windowWidth),
           );
 
     if (
@@ -892,6 +894,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       createRegionTrackState(0, "left", curViewWindow);
     }
     globalTrackState.current.viewWindow = curViewWindow;
+    console.log(curDataIdx);
     if (dataIdx.current === curDataIdx) {
       viewWindowConfigData.current = {
         viewWindow: curViewWindow,
@@ -2795,7 +2798,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     side.current = "right";
     isDragging.current = false;
     rightSectionSize.current = [windowWidth];
-    leftSectionSize.current = [];
+    leftSectionSize.current = [windowWidth];
 
     // let highlightElement = createHighlight(highlights);
     globalTrackState.current = {

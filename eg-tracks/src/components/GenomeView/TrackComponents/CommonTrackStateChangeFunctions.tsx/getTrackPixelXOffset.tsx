@@ -9,13 +9,13 @@ export function getTrackXOffset(
   } else if (trackState.side === "right") {
     resXPos =
       Math.floor(-trackState.xDist / trackState.visData.viewWindow.start) *
-      trackState.visData.viewWindow.start -
+        trackState.visData.viewWindow.start -
       trackState.visData.viewWindow.start;
   } else if (trackState.side === "left") {
     const rawXPos =
       Math.floor(trackState.xDist / trackState.visData.viewWindow.start) *
       trackState.visData.viewWindow.start;
-    resXPos = -2 * trackState.visData.viewWindow.start - rawXPos;
+    resXPos = -1 * trackState.visData.viewWindow.start - rawXPos;
   }
 
   return resXPos;
