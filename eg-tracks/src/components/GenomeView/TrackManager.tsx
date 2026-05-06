@@ -311,8 +311,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const isToolSelected = useRef(false);
   const side = useRef("right");
   const isDragging = useRef(false);
-  const rightSectionSize = useRef<Array<any>>([windowWidth]);
-  const leftSectionSize = useRef<Array<any>>([windowWidth]);
+  const rightSectionSize = useRef<Array<any>>([]);
+  const leftSectionSize = useRef<Array<any>>([]);
   const preloadedTracks = useRef<{ [key: string]: any }>({});
   const screenshotDataObj = useRef<{ [key: string]: any }>({});
   const preload = useRef<boolean>(false);
@@ -864,10 +864,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else if (dragX.current <= 0 && side.current === "left") {
       side.current = "right";
     }
-    const curDataIdx =
-      side.current === "left"
-        ? Math.floor(dragX.current / windowWidth)
-        : Math.ceil(dragX.current / windowWidth);
+
+    if (rightSectionSize.current.length === 0) {
+      rightSectionSize.current.push(windowWidth);
+    }
+    if (leftSectionSize.current.length === 0) {
+      leftSectionSize.current.push(windowWidth);
+    }
+
     let curViewWindow =
       side.current === "right"
         ? new OpenInterval(
@@ -894,7 +898,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       createRegionTrackState(0, "left", curViewWindow);
     }
     globalTrackState.current.viewWindow = curViewWindow;
-    console.log(curDataIdx);
+    let curDataIdx: number;
+    if (side.current === "left") {
+      let cumulativeSum = 0;
+      curDataIdx = 0;
+      for (let i = 0; i < leftSectionSize.current.length; i++) {
+        cumulativeSum += leftSectionSize.current[i];
+        if (cumulativeSum > dragX.current) {
+          curDataIdx = i;
+          break;
+        }
+      }
+    } else {
+      let cumulativeSum = 0;
+      curDataIdx = 0;
+      for (let i = 0; i < rightSectionSize.current.length; i++) {
+        cumulativeSum += rightSectionSize.current[i];
+        if (cumulativeSum > -dragX.current) {
+          curDataIdx = -i;
+          break;
+        }
+      }
+    }
+
     if (dataIdx.current === curDataIdx) {
       viewWindowConfigData.current = {
         viewWindow: curViewWindow,
