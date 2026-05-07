@@ -21,6 +21,7 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
+import HighlightRegion from "./commonComponents/HighlightRegion";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -183,7 +184,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // } catch (wrapErr) {
       //   console.error("Error wrapping result with ErrorBoundary:", wrapErr);
       // }
-      console.log(trackState.viewWindow, trackState.visData.viewWindow);
+
       xPos.current = curXPos;
 
       startTransition(() =>
@@ -193,10 +194,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           numHidden: numHidden,
           visData: trackState.visData,
           xPos: curXPos,
-          xOffset:
-            trackState?.visData?.viewWindow.start -
-            trackState?.genomicFetchCoord[trackState.primaryGenName]
-              ?.primaryVisData?.viewWindow?.start,
+          genomicFetchCoord: trackState.genomicFetchCoord,
         }),
       );
     }
@@ -481,7 +479,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackState?.genomicFetchCoord[trackState.primaryGenName]
             ?.primaryVisData?.viewWindow?.end + xDiff,
       };
-      console.log(trackState, sameRegionViewWindow, "sameRegionViewWindow");
+
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -622,7 +620,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }, [isScreenShotOpen]);
 
   // MARK: RENDER
-
+  console.log(viewComponent);
   return (
     <div
       style={{
@@ -831,8 +829,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
-
-        {
+        {/* {
           // highlight element is inside the track component because it has pixel relative to bp location, so we have to set them within the
           // track
           highlightElements.length > 0
@@ -854,14 +851,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                           backgroundColor: item.color,
                           top: "0",
                           height: "100%",
-                          left:
-                            item.side === "right"
-                              ? `${item.xPos + viewComponent?.xOffset || 0}px`
-                              : "",
-                          right:
-                            item.side === "left"
-                              ? `${item.xPos + viewComponent?.xOffset || 0}px`
-                              : "",
+                          left: item.side === "right" ? `${item.xPos}px` : "",
+                          right: item.side === "left" ? `${item.xPos}px` : "",
                           width: item.width,
                           pointerEvents: "none", // This makes the highlighted area non-interactive
                         }}
@@ -871,7 +862,37 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 }
               })
             : ""
-        }
+        } */}
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      >
+        <HighlightRegion
+          highlights={highlightElements}
+          legendWidth={120}
+          visData={
+            viewComponent?.genomicFetchCoord?.[genomeConfig.genome.getName()]
+              ?.primaryVisData
+          }
+          navContextBuilder={
+            viewComponent?.genomicFetchCoord?.[genomeConfig.genome.getName()]
+              ?.navContextBuilder
+          }
+          xOffset={
+            side === "left"
+              ? viewComponent?.xPos + windowWidth
+              : viewComponent?.xPos + windowWidth
+          }
+        />
       </div>
     </div>
   );

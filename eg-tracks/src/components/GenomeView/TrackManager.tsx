@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -120,6 +121,9 @@ function sumArray(numbers: Array<any>) {
 const MIN_VIEW_REGION_SIZE = 5;
 
 export function objToInstanceAlign(alignment: { [key: string]: any }) {
+  if (!alignment) {
+    return;
+  }
   let visRegionFeatures: Feature[] = [];
 
   for (let feature of alignment._navContext._features) {
@@ -371,6 +375,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const messageQueue = useRef<any>([]);
 
   const genomeAlignMessageQueue = useRef<any>([]);
+
+  // const currUserViewRegion = useMemo(() => {
+  //   const primaryData = globalTrackState.current.trackStates?.[dataIdx.current]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData
+  //   const  currViewWindow =   globalTrackState.current?.viewWindow
+  //      const trackState = _.cloneDeep(
+  //           globalTrackState.current?.trackStates?.[ dataIdx.current]?.trackState,
+  //         );
+  //   if(primaryData && currViewWindow && trackState ){
+  //           const xDiff =
+  //       currViewWindow.start -
+  //       trackState?.visData?.viewWindow.start;
+  //     return {
+  //       start:
+  //         trackState?.genomicFetchCoord[trackState.primaryGenName]
+  //           ?.primaryVisData?.viewWindow?.start + xDiff,
+  //       end:
+  //         trackState?.genomicFetchCoord[trackState.primaryGenName]
+  //           ?.primaryVisData?.viewWindow?.end + xDiff,
+  //     };
+  //   }
+
+  // }, [userViewRegion, viewWindowConfigData.current, dataIdx.current, draw]);
 
   const throttleViewRegion = (callback, limit) => {
     let timeoutId: any = null;
@@ -822,10 +848,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const primaryVisData =
         globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
           ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData;
-      console.log(objToInstanceAlign(primaryVisData.viewWindowRegion));
+
       const newRegion = getRegionOffsetByX(
         objToInstanceAlign(primaryVisData.viewWindowRegion),
-        dragX.current,
+        dragX.current % windowWidth,
       );
 
       const genomeFeatureSegment: Array<FeatureSegment> =
@@ -2518,6 +2544,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     toolTitle: number | string = "isJump",
     highlightSearch: boolean = false,
   ) {
+    const genomeFeatureSegment: Array<FeatureSegment> =
+      genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
+
+    const newCoordinate = currentRegionAsString(
+      genomeFeatureSegment,
+    ) as GenomeCoordinate;
+    console.log(newCoordinate, "SELECT");
+
     const newLength = endbase - startbase;
 
     if (newLength < MIN_VIEW_REGION_SIZE) {
@@ -4042,6 +4076,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setConfigMenu(null);
     }
   }
+  console.log(trackManagerState.current.caches);
   // MARK: render________________________________________
   return (
     <div
@@ -4340,7 +4375,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 (selectedTool.title === Tool.Highlight ||
                   selectedTool.title === Tool.Zoom) ? (
                   <SelectableGenomeArea
-                    selectableRegion={userViewRegion}
+                    selectableRegion={
+                      objToInstanceAlign(
+                        globalTrackState.current.trackStates?.[dataIdx.current]
+                          ?.trackState?.genomicFetchCoord[
+                          genomeConfig.genome.getName()
+                        ]?.primaryVisData?.viewWindowRegion,
+                      ) || userViewRegion
+                    }
                     dragLimits={
                       new OpenInterval(legendWidth, windowWidth + 120)
                     }

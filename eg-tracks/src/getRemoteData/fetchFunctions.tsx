@@ -650,6 +650,8 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
 
       genomicFetchCoord[primaryGenName].primaryVisData =
         queryAlignment.primaryVisData;
+      genomicFetchCoord[primaryGenName].navContextBuilder =
+        queryAlignment?.navContextBuilder;
 
       //save the genomic location so that track that has query as parent can use that data to get data
 
