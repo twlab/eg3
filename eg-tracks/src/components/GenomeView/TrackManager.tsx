@@ -812,7 +812,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     lastDragX.current = dragX.current;
+    if (dragX.current > 0 && side.current === "right") {
+      side.current = "left";
+    } else if (dragX.current <= 0 && side.current === "left") {
+      side.current = "right";
+    }
 
+    let currentRegionSizePx = windowWidth;
+    let curViewWindow =
+      side.current === "right"
+        ? new OpenInterval(
+            -((dragX.current % windowWidth) + -windowWidth),
+            -((dragX.current % windowWidth) + -windowWidth) + windowWidth,
+          )
+        : new OpenInterval(
+            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth * 2),
+            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
+          );
+    let newFetchXOffset = dragX.current % windowWidth;
     if (
       useFineModeNav.current &&
       globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
@@ -822,10 +839,52 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const primaryVisData =
         globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
           ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData;
-      console.log(objToInstanceAlign(primaryVisData.viewWindowRegion));
+
+      let windowViewDragXOffset: number;
+      if (side.current === "left") {
+        let cumulativeSum = 0;
+        windowViewDragXOffset = dragX.current;
+        for (let i = 0; i <= leftSectionSize.current.length; i++) {
+          cumulativeSum += leftSectionSize.current[i];
+          if (cumulativeSum > dragX.current) {
+            if (i - 1 >= 0) {
+              windowViewDragXOffset =
+                dragX.current % (cumulativeSum - leftSectionSize.current[i]);
+            }
+            break;
+          }
+        }
+      } else {
+        let cumulativeSum = 0;
+
+        for (let i = 0; i < rightSectionSize.current.length; i++) {
+          cumulativeSum += rightSectionSize.current[i];
+          if (cumulativeSum >= -dragX.current) {
+            cumulativeSum = cumulativeSum - rightSectionSize.current[i];
+            break;
+          }
+        }
+        windowViewDragXOffset =
+          cumulativeSum !== 0 ? dragX.current % -cumulativeSum : dragX.current;
+      }
+      const curFineWindowWidth = primaryVisData.viewWindow.start;
+
+      curViewWindow =
+        side.current === "right"
+          ? new OpenInterval(
+              -(windowViewDragXOffset + -curFineWindowWidth),
+              -(windowViewDragXOffset + -curFineWindowWidth) + windowWidth,
+            )
+          : new OpenInterval(
+              primaryVisData.visWidth -
+                (windowViewDragXOffset + curFineWindowWidth * 2),
+              primaryVisData.visWidth -
+                (windowViewDragXOffset + curFineWindowWidth),
+            );
+
       const newRegion = getRegionOffsetByX(
         objToInstanceAlign(primaryVisData.viewWindowRegion),
-        dragX.current,
+        windowViewDragXOffset,
       );
 
       const genomeFeatureSegment: Array<FeatureSegment> =
@@ -837,12 +896,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const newCoordinate = currentRegionAsString(
         genomeFeatureSegment,
       ) as GenomeCoordinate;
-      console.log(
-        globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
-          ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData,
-        newRegion,
-        newCoordinate,
-      );
+      console.log(newCoordinate);
+      currentRegionSizePx = primaryVisData.viewWindow.start;
     }
 
     const curBp =
@@ -859,52 +914,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     bpX.current = curBp;
 
-    if (dragX.current > 0 && side.current === "right") {
-      side.current = "left";
-    } else if (dragX.current <= 0 && side.current === "left") {
-      side.current = "right";
-    }
-
     if (rightSectionSize.current.length === 0) {
-      rightSectionSize.current.push(windowWidth);
+      rightSectionSize.current.push(currentRegionSizePx);
     }
     if (leftSectionSize.current.length === 0) {
-      leftSectionSize.current.push(windowWidth);
+      leftSectionSize.current.push(currentRegionSizePx);
     }
-
-    let curViewWindow =
-      side.current === "right"
-        ? new OpenInterval(
-            -((dragX.current % windowWidth) + -windowWidth),
-            -((dragX.current % windowWidth) + -windowWidth) + windowWidth,
-          )
-        : new OpenInterval(
-            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth * 2),
-            windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
-          );
 
     if (
       -dragX.current >= sumArray(rightSectionSize.current) &&
       dragX.current < 0
     ) {
-      rightSectionSize.current.push(windowWidth);
+      rightSectionSize.current.push(currentRegionSizePx);
 
       createRegionTrackState(0, "right", curViewWindow);
     } else if (
       dragX.current >= sumArray(leftSectionSize.current) &&
       dragX.current > 0
     ) {
-      leftSectionSize.current.push(windowWidth);
+      leftSectionSize.current.push(currentRegionSizePx);
       createRegionTrackState(0, "left", curViewWindow);
     }
     globalTrackState.current.viewWindow = curViewWindow;
+    globalTrackState.current.newFetchXOffset = newFetchXOffset;
     let curDataIdx: number;
     if (side.current === "left") {
       let cumulativeSum = 0;
       curDataIdx = 0;
       for (let i = 0; i < leftSectionSize.current.length; i++) {
         cumulativeSum += leftSectionSize.current[i];
-        if (cumulativeSum > dragX.current) {
+        if (cumulativeSum >= dragX.current) {
           curDataIdx = i;
           break;
         }
@@ -914,7 +953,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curDataIdx = 0;
       for (let i = 0; i < rightSectionSize.current.length; i++) {
         cumulativeSum += rightSectionSize.current[i];
-        if (cumulativeSum > -dragX.current) {
+        if (cumulativeSum >= -dragX.current) {
           curDataIdx = -i;
           break;
         }
@@ -4346,6 +4385,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             handleRetryFetchTrack={handleRetryFetchTrack}
                             initialLoad={initialLoad}
                             selectedRegionSet={selectedRegionSet}
+                            leftSectionSize={leftSectionSize}
+                            rightSectionSize={rightSectionSize}
                           />
                         </div>
                       </SortableList.Item>

@@ -52,6 +52,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   handleRetryFetchTrack,
   initialLoad,
   selectedRegionSet,
+  leftSectionSize,
+  rightSectionSize,
 }) {
   function getConfigOptions() {
     try {
@@ -116,7 +118,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     xvalues = null,
     placeFeature = null,
   ) {
-    const curXPos = getTrackXOffset(trackState, windowWidth);
+    console.log(leftSectionSize.current, rightSectionSize.current);
+    const curXPos = getTrackXOffset(
+      trackState,
+      windowWidth,
+      leftSectionSize.current,
+      rightSectionSize.current,
+      cacheDataIdx,
+    );
 
     const displayArgs: any = {
       basesByPixel: basePerPixel,
@@ -784,7 +793,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           position: "relative",
           willChange: "transform",
-          left: 120 + viewComponent?.xOffset || 0,
+          left: 120,
         }}
       >
         <div
@@ -841,8 +850,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                           backgroundColor: item.color,
                           top: "0",
                           height: "100%",
-                          left: item.side === "right" ? `${item.xPos + viewComponent?.xOffset || 0}px` : "",
-                          right: item.side === "left" ? `${item.xPos + viewComponent?.xOffset || 0}px` : "",
+                          left: item.side === "right" ? `${item.xPos}px` : "",
+                          right: item.side === "left" ? `${item.xPos}px` : "",
                           width: item.width,
                           pointerEvents: "none", // This makes the highlighted area non-interactive
                         }}
