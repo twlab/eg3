@@ -183,8 +183,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // } catch (wrapErr) {
       //   console.error("Error wrapping result with ErrorBoundary:", wrapErr);
       // }
-
+      console.log(trackState.viewWindow, trackState.visData.viewWindow);
       xPos.current = curXPos;
+
       startTransition(() =>
         setViewComponent({
           component: result,
@@ -469,11 +470,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
       let cacheTrackData = caches[`${id}`];
-
+      const xDiff =
+        viewWindowConfigChange.viewWindow.start -
+        trackState?.visData?.viewWindow.start;
+      const sameRegionViewWindow = {
+        start:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start + xDiff,
+        end:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.end + xDiff,
+      };
+      console.log(trackState, sameRegionViewWindow, "sameRegionViewWindow");
       handleTrackDraw({
         cacheTrackData,
         trackState,
-        viewWindow: viewWindowConfigChange.viewWindow,
+        viewWindow: sameRegionViewWindow,
         groupScale:
           globalTrackState.current.trackStates[dataIdx].trackState[
             "groupScale"
@@ -784,7 +796,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           position: "relative",
           willChange: "transform",
-          left: 120 + viewComponent?.xOffset || 0,
+          left: 120,
+          //  + viewComponent?.xOffset || 0,
         }}
       >
         <div
@@ -841,8 +854,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                           backgroundColor: item.color,
                           top: "0",
                           height: "100%",
-                          left: item.side === "right" ? `${item.xPos + viewComponent?.xOffset || 0}px` : "",
-                          right: item.side === "left" ? `${item.xPos + viewComponent?.xOffset || 0}px` : "",
+                          left:
+                            item.side === "right"
+                              ? `${item.xPos + viewComponent?.xOffset || 0}px`
+                              : "",
+                          right:
+                            item.side === "left"
+                              ? `${item.xPos + viewComponent?.xOffset || 0}px`
+                              : "",
                           width: item.width,
                           pointerEvents: "none", // This makes the highlighted area non-interactive
                         }}

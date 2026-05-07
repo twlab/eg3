@@ -601,6 +601,36 @@ const FullVisualizer: React.FC<any> = ({
       height={height}
     >
       {placements.map(renderAnnotation)}
+      <line
+        x1={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start
+        }
+        y1={0}
+        x2={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start
+        }
+        y2={height}
+        stroke="black"
+        strokeWidth={1}
+      />
+      <line
+        x1={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start +
+          trackState.visData.viewWindow.start
+        }
+        y1={0}
+        x2={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start +
+          trackState.visData.viewWindow.start
+        }
+        y2={height}
+        stroke="black"
+        strokeWidth={1}
+      />
     </svg>
   );
 };
@@ -1500,7 +1530,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
           cursor: "pointer",
           transition: "background-color 0.2s",
         }}
-     
       >
         <div
           style={{
@@ -1510,12 +1539,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
             gap: "2px",
           }}
           onClick={() => handleRetryFetchTrack(trackModel.id)}
-             onMouseEnter={(e) => {
-          (e.target as HTMLDivElement).style.backgroundColor = "#f8d7da";
-        }}
-        onMouseLeave={(e) => {
-          (e.target as HTMLDivElement).style.backgroundColor = "#fdf2f2";
-        }}
+          onMouseEnter={(e) => {
+            (e.target as HTMLDivElement).style.backgroundColor = "#f8d7da";
+          }}
+          onMouseLeave={(e) => {
+            (e.target as HTMLDivElement).style.backgroundColor = "#fdf2f2";
+          }}
         >
           <span>{errorInfo ? errorInfo : "Something went wrong"}</span>
           <span>! Refresh page or click track to try again.</span>
