@@ -829,31 +829,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
-        {
-          // highlight element is inside the track component because it has pixel relative to bp location, so we have to set them within the
-          // track
-          highlightElements.length > 0
-            ? highlightElements.map((item, index) => {
-                if (item.display) {
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        position: "absolute",
-                        backgroundColor: item.color,
-                        top: "0",
-                        height: "100%",
-                        left: 0,
-                        transform: `translateX(${item.xPos}px)`,
-                        width: item.width,
-                        pointerEvents: "none",
-                      }}
-                    />
-                  );
-                }
-              })
-            : ""
-        }
       </div>
     </div>
   );

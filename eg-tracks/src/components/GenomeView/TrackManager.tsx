@@ -309,6 +309,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const basePerPixel = useRef(0);
   const frameID = useRef(0);
   const trackWrapperRef = useRef<HTMLDivElement>(null);
+  const highlightContainerRef = useRef<HTMLDivElement>(null);
   const lastX = useRef(0);
   const dragX = useRef(0);
   const hasGenomeAlign = useRef(false);
@@ -812,6 +813,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             (border as HTMLElement).style.transform =
               `translate3d(${-dragX.current}px, 0, 0)`;
           });
+      }
+      if (highlightContainerRef.current) {
+        highlightContainerRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
       }
       trackComponents.forEach((component) => {
         if (component.legendRef.current) {
@@ -3308,6 +3312,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               `translate3d(${-dragX.current}px, 0, 0)`;
           });
       }
+      if (highlightContainerRef.current) {
+        highlightContainerRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
+      }
       trackComponents.forEach((component) => {
         if (component.legendRef.current) {
           (component.legendRef.current as HTMLElement).style.transform =
@@ -4447,6 +4454,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 </div>
               ) : (
                 ""
+              )}
+
+              {highlightElements.length > 0 && (
+                <div
+                  ref={highlightContainerRef}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: legendWidth,
+                    width: windowWidth,
+                    height: "100%",
+                    pointerEvents: "none",
+                    zIndex: 5,
+                  }}
+                >
+                  {highlightElements.map((item, index) => {
+                    if (!item.display) return null;
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          position: "absolute",
+                          backgroundColor: item.color,
+                          top: 0,
+                          height: "100%",
+                          left: 0,
+                          transform: `translateX(${item.xPos}px)`,
+                          width: item.width,
+                          pointerEvents: "none",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
               )}
 
               <div
