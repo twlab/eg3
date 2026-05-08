@@ -839,25 +839,16 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                     <div
                       key={index}
                       style={{
-                        display: "flex",
-                        position: "relative",
+                        position: "absolute",
+                        backgroundColor: item.color,
+                        top: "0",
                         height: "100%",
+                        left: 0,
+                        transform: `translateX(${item.xPos}px)`,
+                        width: item.width,
+                        pointerEvents: "none",
                       }}
-                    >
-                      <div
-                        key={index}
-                        style={{
-                          position: "absolute",
-                          backgroundColor: item.color,
-                          top: "0",
-                          height: "100%",
-                          left: item.side === "right" ? `${item.xPos}px` : "",
-                          right: item.side === "left" ? `${item.xPos}px` : "",
-                          width: item.width,
-                          pointerEvents: "none", // This makes the highlighted area non-interactive
-                        }}
-                      ></div>
-                    </div>
+                    />
                   );
                 }
               })

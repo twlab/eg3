@@ -380,7 +380,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       useFineModeNav.current &&
       globalTrackState.current.trackStates?.[
-        draw.completedFetchedRegion.current.key
+        draw?.completedFetchedRegion?.current?.key
       ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
         ?.primaryVisData?.viewWindowRegion
     ) {
@@ -2685,13 +2685,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     for (const curhighlight of highlightArr) {
       let highlightSide =
         curhighlight.start - startBase <= 0 ? "right" : "left";
-      console.log(startBase, curhighlight);
       let startHighlight = (curhighlight.start - startBase) * pixelPBase;
 
       let endHighlight = -(curhighlight.end - startBase) * pixelPBase;
       let highlightWidth = Math.abs(startHighlight + endHighlight);
 
-      let curXPos = highlightSide === "right" ? startHighlight : endHighlight;
+      let curXPos = startHighlight;
       // legendWidth is the width of the legend
       let tmpObj = {
         xPos: curXPos,
@@ -4164,7 +4163,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setConfigMenu(null);
     }
   }
-
+  console.log(highlightElements);
   // MARK: render________________________________________
   return (
     <div
