@@ -829,7 +829,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
-        {/* {
+        {
           // highlight element is inside the track component because it has pixel relative to bp location, so we have to set them within the
           // track
           highlightElements.length > 0
@@ -862,37 +862,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 }
               })
             : ""
-        } */}
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-          zIndex: 1,
-        }}
-      >
-        <HighlightRegion
-          highlights={highlightElements}
-          legendWidth={120}
-          visData={
-            viewComponent?.genomicFetchCoord?.[genomeConfig.genome.getName()]
-              ?.primaryVisData
-          }
-          navContextBuilder={
-            viewComponent?.genomicFetchCoord?.[genomeConfig.genome.getName()]
-              ?.navContextBuilder
-          }
-          xOffset={
-            side === "left"
-              ? viewComponent?.xPos + windowWidth
-              : viewComponent?.xPos + windowWidth
-          }
-        />
+        }
       </div>
     </div>
   );
