@@ -620,7 +620,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }, [isScreenShotOpen]);
 
   // MARK: RENDER
-  console.log(viewComponent);
+
   return (
     <div
       style={{
