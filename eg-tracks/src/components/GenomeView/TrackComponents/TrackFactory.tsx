@@ -532,9 +532,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
 
           if (!noData) {
-            if (newDrawData.viewWindow) {
-              trackState["viewWindow"] = newDrawData.viewWindow;
-            }
             trackState["groupScale"] =
               globalTrackState.current.trackStates[dataIdx].trackState[
                 "groupScale"
@@ -544,13 +541,20 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData = cacheTrackData[dataIdx]
             ? _.clone(cacheTrackData[dataIdx].dataCache)
             : null;
-
-          if (combinedData) {
-            if (newDrawData.viewWindow) {
-              trackState["viewWindow"] = newDrawData.viewWindow;
-            }
-          }
         }
+
+        const xDiff = viewWindowConfigChange?.viewWindow?.start
+          ? viewWindowConfigChange?.viewWindow?.start
+          : newDrawData?.viewWindow?.start -
+            trackState?.visData?.viewWindow.start;
+        console.log(
+          "xDiff for screenshot",
+          viewWindowConfigChange,
+          newDrawData,
+          trackState?.visData?.viewWindow,
+          trackState,
+          xDiff,
+        );
         const primaryVisData =
           trackState.genomicFetchCoord[trackState.primaryGenName]
             .primaryVisData;
@@ -560,28 +564,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           : primaryVisData.visRegion;
         // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
         trackState["visRegion"] = visRegion;
+        trackState["viewWindow"] = new OpenInterval(
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start + xDiff,
 
-        const width = primaryVisData.visWidth
-          ? primaryVisData.visWidth
-          : windowWidth * 3;
-
-        const expandedViewWindow =
-          updateSide.current === "right"
-            ? new OpenInterval(
-                -(dragX! + (xPos.current + windowWidth)),
-                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
-              )
-            : new OpenInterval(
-                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-                windowWidth * 3 -
-                  (dragX! - (xPos.current + windowWidth)) +
-                  windowWidth,
-              );
-        let start = expandedViewWindow.start + width / 3;
-
-        let end = expandedViewWindow.end - width / 3;
-
-        trackState["viewWindow"] = new OpenInterval(start, end);
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.end + xDiff,
+        );
         let drawOptions = { ...getConfigOptions() };
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
@@ -596,10 +585,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackState,
             windowWidth,
             configOptions: drawOptions,
-            svgHeight:
-              getConfigOptions().displayMode === "full"
-                ? svgHeight.current
-                : getConfigOptions().height,
+            svgHeight: svgHeight.current
+              ? svgHeight.current
+              : getConfigOptions().height,
             trackModel,
             basesByPixel: basePerPixel,
             genomeConfig,

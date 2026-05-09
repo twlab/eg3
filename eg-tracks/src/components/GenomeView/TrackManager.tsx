@@ -2995,10 +2995,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // When a track refreshes or a new genome is initialize, we
         // select the region that was selected before the refresh after the track is
         // created
-        if (highlights) {
-          let highlightElement = createHighlight(highlights);
-          if (highlightElement) setHighLightElements([...highlightElement]);
-        }
+        // if (highlights) {
+        //   let highlightElement = createHighlight(highlights);
+        //   if (highlightElement) setHighLightElements([...highlightElement]);
+        // }
         const isSelected: Array<any> = [];
         tracks.map((item) => {
           if (item.isSelected) {
@@ -3065,9 +3065,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             // remove errored entry from screenshot data and exclude from converted tracks
             try {
               delete screenshotDataObj.current[`${item.id}`];
-            } catch (e) {
-              // swallow any delete errors
-            }
+            } catch (e) {}
             return false;
           }
 
@@ -3075,55 +3073,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         })
         .map((item) => convertTrackModelToITrackModel(item));
 
-      const curStartBp = bpX.current;
-      const curEndBp = bpX.current + bpRegionSize.current;
-      const highlightPixelPos: Array<any> = [];
-
-      for (let i = 0; i < highlightElements.length; i++) {
-        const highlight = highlightElements[i];
-
-        if (
-          (highlight.start >= curStartBp && highlight.start <= curEndBp) ||
-          (highlight.end >= curStartBp && highlight.end <= curEndBp) ||
-          (highlight.start < curStartBp && highlight.end > curEndBp)
-        ) {
-          const highlightStart =
-            highlight.start < curStartBp ? curStartBp : highlight.start;
-
-          const highlightEnd =
-            highlight.end > curEndBp ? curEndBp : highlight.end;
-
-          const windowStart =
-            (highlightStart - curStartBp) * pixelPerBase.current;
-          const windowEnd = (highlightEnd - curStartBp) * pixelPerBase.current;
-          highlightPixelPos.push({
-            start: windowStart,
-            end: windowEnd,
-            color: highlight.color,
-          });
-          // The highlight is within the range
-        } else {
-          continue;
-        }
-      }
-      let curViewWindow = globalTrackState.current.viewWindow
-        ? globalTrackState.current.viewWindow
-        : viewWindowConfigData.current &&
-            viewWindowConfigData.current.dataIdx === dataIdx.current
-          ? viewWindowConfigData.current.viewWindow
-          : hasGenomeAlign.current
-            ? globalTrackState.current.trackStates[dataIdx.current].trackState
-                .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
-                .primaryVisData.viewWindow
-            : draw.viewWindow;
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
-        highlights: highlightPixelPos,
-        viewWindow: curViewWindow,
+        highlights: highlightElements,
+
         windowWidth,
-        // primaryView: Object.entries(screenshotDataObj.current)[0].fetchData
-        //   .trackState.visData,
+        legendWidth,
       });
       screenshotDataObj.current = {};
     }

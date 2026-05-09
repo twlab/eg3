@@ -373,7 +373,14 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   // };
 
   const makeSvgTrackElements = () => {
-    const { tracks, trackData, highlights, viewWindow } = props;
+    const {
+      tracks,
+      trackData,
+      highlights,
+      viewWindow,
+      legendWidth,
+      windowWidth,
+    } = props;
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
@@ -391,8 +398,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const createSVGData = trackData[`${id}`];
 
         const newTrackState = { ...createSVGData.trackState };
-        newTrackState["viewWindow"] = viewWindow;
-
+        console.log("createSVGData.trackState", createSVGData.trackState);
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
@@ -430,26 +436,29 @@ const ScreenshotUI: React.FC<Props> = (props) => {
               ? highlights.map((item, index) => {
                   return (
                     <div
-                      key={index}
                       style={{
-                        display: "flex",
                         position: "absolute",
-                        top: 0, // Adjust this accordingly to place above the track, e.g., '-10px'
-                        left: item.start + 120,
-                        width: item.end - item.start,
+                        top: 0,
+                        left: legendWidth,
+                        width: windowWidth,
                         height: "100%",
+                        pointerEvents: "none",
+                        zIndex: 5,
                       }}
                     >
                       <div
                         key={index}
                         style={{
+                          position: "absolute",
                           backgroundColor: item.color,
-                          top: "0",
+                          top: 0,
                           height: "100%",
-                          width: item.end - item.start,
-                          pointerEvents: "none", // This makes the highlighted area non-interactive
+                          left: 0,
+                          transform: `translateX(${item.xPos}px)`,
+                          width: item.width,
+                          pointerEvents: "none",
                         }}
-                      ></div>
+                      />
                     </div>
                   );
                 })
