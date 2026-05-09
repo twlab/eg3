@@ -380,17 +380,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const curViewWindowRegion = useMemo(() => {
     if (
+      draw?.completedFetchedRegion?.current?.key &&
       useFineModeNav.current &&
       globalTrackState.current.trackStates?.[
         draw?.completedFetchedRegion?.current?.key
-      ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
+      ]?.trackState?.genomicFetchCoord?.[genomeConfig.genome.getName()]
         ?.primaryVisData?.viewWindowRegion
     ) {
       let curBpInterval;
       const primaryVisData =
         globalTrackState.current.trackStates?.[
           draw.completedFetchedRegion.current.key
-        ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
+        ]?.trackState?.genomicFetchCoord?.[genomeConfig.genome.getName()]
           ?.primaryVisData;
       const viewWindowRegion = objToInstanceAlign(
         primaryVisData.viewWindowRegion,
@@ -417,6 +418,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return viewWindowRegion;
     }
   }, [viewWindowConfigData.current, userViewRegion, draw]);
+
+  useEffect(() => {
+    if (highlights) {
+      let highlightElement = createHighlight(highlights);
+      if (highlightElement) setHighLightElements([...highlightElement]);
+    }
+  }, [curViewWindowRegion]);
+
   // const currUserViewRegion = useMemo(() => {
   //   const primaryData = globalTrackState.current.trackStates?.[dataIdx.current]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData
   //   const  currViewWindow =   globalTrackState.current?.viewWindow
@@ -2656,7 +2665,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       useFineModeNav.current &&
       globalTrackState.current.trackStates?.[
-        draw.completedFetchedRegion.current.key
+        draw?.completedFetchedRegion?.current?.key
       ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
         ?.navContextBuilder
     ) {
