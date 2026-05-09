@@ -426,28 +426,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [curViewWindowRegion]);
 
-  // const currUserViewRegion = useMemo(() => {
-  //   const primaryData = globalTrackState.current.trackStates?.[dataIdx.current]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData
-  //   const  currViewWindow =   globalTrackState.current?.viewWindow
-  //      const trackState = _.cloneDeep(
-  //           globalTrackState.current?.trackStates?.[ dataIdx.current]?.trackState,
-  //         );
-  //   if(primaryData && currViewWindow && trackState ){
-  //           const xDiff =
-  //       currViewWindow.start -
-  //       trackState?.visData?.viewWindow.start;
-  //     return {
-  //       start:
-  //         trackState?.genomicFetchCoord[trackState.primaryGenName]
-  //           ?.primaryVisData?.viewWindow?.start + xDiff,
-  //       end:
-  //         trackState?.genomicFetchCoord[trackState.primaryGenName]
-  //           ?.primaryVisData?.viewWindow?.end + xDiff,
-  //     };
-  //   }
-
-  // }, [userViewRegion, viewWindowConfigData.current, dataIdx.current, draw]);
-
   const throttleViewRegion = (callback, limit) => {
     let timeoutId: any = null;
     return (...args) => {
@@ -503,8 +481,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const throttleOnNewRegionSelect = useRef(
     throttleViewRegion((startbase, endbase, highlightSearch) => {
-      // cancel any in-flight fetches before starting a new region select
-      // cancelPendingWorkerFetches();
       onNewRegionSelectRef.current(startbase, endbase, highlightSearch);
     }, 150),
   );
@@ -520,7 +496,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     messageQueue.current.forEach((messageArr: any) => {
       if (messageArr && Array.isArray(messageArr)) {
         // If missingIdx and genomicLoci are properties of the array itself
-
         messageArr.forEach((message: any) => {
           if (message.trackModelArr && Array.isArray(message.trackModelArr)) {
             message.trackModelArr.forEach((trackModel: any) => {
@@ -2659,138 +2634,59 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return base + gapBases;
   }
   function createHighlight(highlightArr: Array<any>) {
-    const startBase = leftStartCoord.current;
-    const endBase = rightStartCoord.current;
     let resHighlights: Array<any> = [];
-    if (
-      useFineModeNav.current &&
+
+    const navBuilds =
       globalTrackState.current.trackStates?.[
         draw?.completedFetchedRegion?.current?.key
-      ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
-        ?.navContextBuilder
-    ) {
-      const navBuilds =
-        globalTrackState.current.trackStates?.[
-          draw.completedFetchedRegion.current.key
-        ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
-          ?.navContextBuilder;
-      // const viewWindowRegion =     globalTrackState.current.trackStates?.[
-      //   draw.completedFetchedRegion.current.key
-      // ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
-      //   ?.navContextBuilder.primaryVisData.viewWindowRegion;
+      ]?.trackState?.genomicFetchCoord?.[genomeConfig.genome.getName()]
+        ?.navContextBuilder;
 
-      const drawModel = new LinearDrawingModel(
-        curViewWindowRegion,
-        windowWidth,
+    const drawModel = new LinearDrawingModel(curViewWindowRegion, windowWidth);
+
+    for (const curhighlight of highlightArr) {
+      let newIntervalEnd;
+      let newIntervalStart;
+
+      if (navBuilds) {
+        newIntervalStart = convertOldCoordinates(
+          curhighlight.start,
+          navBuilds._gaps,
+          navBuilds._cumulativeGapBases,
+        );
+        newIntervalEnd = convertOldCoordinates(
+          curhighlight.end,
+          navBuilds._gaps,
+          navBuilds._cumulativeGapBases,
+        );
+      } else {
+        newIntervalStart = curhighlight.start;
+        newIntervalEnd = curhighlight.end;
+      }
+
+      const xRegion = drawModel.baseSpanToXSpan(
+        new OpenInterval(newIntervalStart, newIntervalEnd),
       );
 
-      for (const curhighlight of highlightArr) {
-        let newIntervalEnd;
-        let newIntervalStart;
+      const start =
+        xRegion.start + Math.floor(-dragX.current / windowWidth) * windowWidth;
 
-        if (navBuilds) {
-          newIntervalStart = convertOldCoordinates(
-            curhighlight.start,
-            navBuilds._gaps,
-            navBuilds._cumulativeGapBases,
-          );
-          newIntervalEnd = convertOldCoordinates(
-            curhighlight.end,
-            navBuilds._gaps,
-            navBuilds._cumulativeGapBases,
-          );
-        }
+      const end =
+        xRegion.end + Math.floor(-dragX.current / windowWidth) * windowWidth;
+      let tmpObj = {
+        xPos: start,
+        width: end - start,
+        side: "right",
+        start: curhighlight.start,
+        end: curhighlight.end,
+        color: curhighlight.color,
+        display: curhighlight.display,
+        tag: curhighlight.tag,
+      };
 
-        const xRegion = drawModel.baseSpanToXSpan(
-          new OpenInterval(newIntervalStart, newIntervalEnd),
-        );
-        console.log(
-          Math.floor(-dragX.current / windowWidth) * windowWidth,
-          "DRAGX",
-        );
-        const start =
-          xRegion.start +
-          Math.floor(-dragX.current / windowWidth) * windowWidth;
-
-        const end =
-          xRegion.end + Math.floor(-dragX.current / windowWidth) * windowWidth;
-        let tmpObj = {
-          xPos: start,
-          width: end - start,
-          side: "right",
-          start: curhighlight.start,
-          end: curhighlight.end,
-          color: curhighlight.color,
-          display: curhighlight.display,
-          tag: curhighlight.tag,
-        };
-
-        resHighlights.push(tmpObj);
-        console.log(xRegion, newIntervalStart, newIntervalEnd, "newInterval");
-        // let pixelPBase = windowWidth / (endBase - startBase);
-        // let highlightSide =
-        //   newIntervalStart - startBase <= 0 ? "right" : "left";
-        // let startHighlight = (newIntervalStart - startBase) * pixelPBase;
-
-        // let endHighlight = -(newIntervalEnd - startBase) * pixelPBase;
-        // let highlightWidth = Math.abs(startHighlight + endHighlight);
-
-        // let curXPos = startHighlight;
-        // legendWidth is the width of the legend
-        // let tmpObj = {
-        //   xPos: curXPos,
-        //   width: highlightWidth,
-        //   side: highlightSide,
-        //   start: curhighlight.start,
-        //   end: curhighlight.end,
-        //   color: curhighlight.color,
-        //   display: curhighlight.display,
-        //   tag: curhighlight.tag,
-        // };
-        // resHighlights.push(tmpObj);
-        // const xRegion = drawModel.baseSpanToXSpan(
-        //   new OpenInterval(
-        //     newIntervalStart,
-
-        //     newIntervalEnd,
-        //   ),
-        // );
-
-        // console.log(xRegion, newIntervalStart, newIntervalEnd, "xRegion");
-        // let startHighlight = (curhighlight.start - startBase) * pixelPBase;
-
-        // let endHighlight = -(curhighlight.end - startBase) * pixelPBase;
-        // let highlightWidth = Math.abs(startHighlight + endHighlight);
-
-        // let curXPos = startHighlight;
-        // // legendWidth is the width of the legend
-      }
-    } else {
-      let pixelPBase = windowWidth / (endBase - startBase);
-      for (const curhighlight of highlightArr) {
-        let highlightSide =
-          curhighlight.start - startBase <= 0 ? "right" : "left";
-        let startHighlight = (curhighlight.start - startBase) * pixelPBase;
-
-        let endHighlight = -(curhighlight.end - startBase) * pixelPBase;
-        let highlightWidth = Math.abs(startHighlight + endHighlight);
-
-        let curXPos = startHighlight;
-        // legendWidth is the width of the legend
-        let tmpObj = {
-          xPos: curXPos,
-          width: highlightWidth,
-          side: highlightSide,
-          start: curhighlight.start,
-          end: curhighlight.end,
-          color: curhighlight.color,
-          display: curhighlight.display,
-          tag: curhighlight.tag,
-        };
-
-        resHighlights.push(tmpObj);
-      }
+      resHighlights.push(tmpObj);
     }
+
     return resHighlights;
   }
 

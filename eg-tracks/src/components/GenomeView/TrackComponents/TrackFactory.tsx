@@ -21,7 +21,6 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
-import HighlightRegion from "./commonComponents/HighlightRegion";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -175,15 +174,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
       // Wrap the track component with an ErrorBoundary so render errors
       // inside the display components don't crash the whole app.
-      // try {
-      //   result = (
-      //     <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
-      //       {result as any}
-      //     </ErrorBoundary>
-      //   );
-      // } catch (wrapErr) {
-      //   console.error("Error wrapping result with ErrorBoundary:", wrapErr);
-      // }
+      try {
+        result = (
+          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
+            {result as any}
+          </ErrorBoundary>
+        );
+      } catch (wrapErr) {
+        console.error("Error wrapping result with ErrorBoundary:", wrapErr);
+      }
 
       xPos.current = curXPos;
 
