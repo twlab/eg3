@@ -59,6 +59,7 @@ import MetadataSelectionMenu from "./ToolComponents/MetadataSelectionMenu";
 import { ChevronRightIcon } from "@primer/octicons-react";
 import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
 import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
+import { LinearDrawingModel } from "../../models";
 
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
@@ -2649,64 +2650,137 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return base + gapBases;
   }
   function createHighlight(highlightArr: Array<any>) {
-    // if (
-    //   useFineModeNav.current &&
-    //   globalTrackState.current.trackStates?.[
-    //     draw.completedFetchedRegion.current.key
-    //   ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
-    //     ?.navContextBuilder
-    // ) {
-    //   const navBuilds =
-    //     globalTrackState.current.trackStates?.[
-    //       draw.completedFetchedRegion.current.key
-    //     ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
-    //       ?.navContextBuilder;
-    //   if (navBuilds) {
-    //     newIntervalStart = convertOldCoordinates(
-    //       newIntervalStart,
-    //       navBuilds._gaps,
-    //       navBuilds._cumulativeGapBases,
-    //     );
-    //     newIntervalEnd = convertOldCoordinates(
-    //       newIntervalEnd,
-    //       navBuilds._gaps,
-    //       navBuilds._cumulativeGapBases,
-    //     );
-    //     console.log(newIntervalStart, newIntervalEnd);
-    //   }
-    //   const drawModel = new LinearDrawingModel(
-    //     objToInstanceAlign(viewWindowRegion),
-    //     viewWindow.end - viewWindow.start,
-    //   );
-    // }
-
-    let resHighlights: Array<any> = [];
-
     const startBase = leftStartCoord.current;
     const endBase = rightStartCoord.current;
+    let resHighlights: Array<any> = [];
+    if (
+      useFineModeNav.current &&
+      globalTrackState.current.trackStates?.[
+        draw.completedFetchedRegion.current.key
+      ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
+        ?.navContextBuilder
+    ) {
+      const navBuilds =
+        globalTrackState.current.trackStates?.[
+          draw.completedFetchedRegion.current.key
+        ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
+          ?.navContextBuilder;
+      // const viewWindowRegion =     globalTrackState.current.trackStates?.[
+      //   draw.completedFetchedRegion.current.key
+      // ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
+      //   ?.navContextBuilder.primaryVisData.viewWindowRegion;
 
-    let pixelPBase = windowWidth / (endBase - startBase);
-    for (const curhighlight of highlightArr) {
-      let highlightSide =
-        curhighlight.start - startBase <= 0 ? "right" : "left";
-      let startHighlight = (curhighlight.start - startBase) * pixelPBase;
+      const drawModel = new LinearDrawingModel(
+        curViewWindowRegion,
+        windowWidth,
+      );
 
-      let endHighlight = -(curhighlight.end - startBase) * pixelPBase;
-      let highlightWidth = Math.abs(startHighlight + endHighlight);
+      for (const curhighlight of highlightArr) {
+        let newIntervalEnd;
+        let newIntervalStart;
 
-      let curXPos = startHighlight;
-      // legendWidth is the width of the legend
-      let tmpObj = {
-        xPos: curXPos,
-        width: highlightWidth,
-        side: highlightSide,
-        start: curhighlight.start,
-        end: curhighlight.end,
-        color: curhighlight.color,
-        display: curhighlight.display,
-        tag: curhighlight.tag,
-      };
-      resHighlights.push(tmpObj);
+        if (navBuilds) {
+          newIntervalStart = convertOldCoordinates(
+            curhighlight.start,
+            navBuilds._gaps,
+            navBuilds._cumulativeGapBases,
+          );
+          newIntervalEnd = convertOldCoordinates(
+            curhighlight.end,
+            navBuilds._gaps,
+            navBuilds._cumulativeGapBases,
+          );
+        }
+
+        const xRegion = drawModel.baseSpanToXSpan(
+          new OpenInterval(newIntervalStart, newIntervalEnd),
+        );
+        console.log(
+          Math.floor(-dragX.current / windowWidth) * windowWidth,
+          "DRAGX",
+        );
+        const start =
+          xRegion.start +
+          Math.floor(-dragX.current / windowWidth) * windowWidth;
+
+        const end =
+          xRegion.end + Math.floor(-dragX.current / windowWidth) * windowWidth;
+        let tmpObj = {
+          xPos: start,
+          width: end - start,
+          side: "right",
+          start: curhighlight.start,
+          end: curhighlight.end,
+          color: curhighlight.color,
+          display: curhighlight.display,
+          tag: curhighlight.tag,
+        };
+
+        resHighlights.push(tmpObj);
+        console.log(xRegion, newIntervalStart, newIntervalEnd, "newInterval");
+        // let pixelPBase = windowWidth / (endBase - startBase);
+        // let highlightSide =
+        //   newIntervalStart - startBase <= 0 ? "right" : "left";
+        // let startHighlight = (newIntervalStart - startBase) * pixelPBase;
+
+        // let endHighlight = -(newIntervalEnd - startBase) * pixelPBase;
+        // let highlightWidth = Math.abs(startHighlight + endHighlight);
+
+        // let curXPos = startHighlight;
+        // legendWidth is the width of the legend
+        // let tmpObj = {
+        //   xPos: curXPos,
+        //   width: highlightWidth,
+        //   side: highlightSide,
+        //   start: curhighlight.start,
+        //   end: curhighlight.end,
+        //   color: curhighlight.color,
+        //   display: curhighlight.display,
+        //   tag: curhighlight.tag,
+        // };
+        // resHighlights.push(tmpObj);
+        // const xRegion = drawModel.baseSpanToXSpan(
+        //   new OpenInterval(
+        //     newIntervalStart,
+
+        //     newIntervalEnd,
+        //   ),
+        // );
+
+        // console.log(xRegion, newIntervalStart, newIntervalEnd, "xRegion");
+        // let startHighlight = (curhighlight.start - startBase) * pixelPBase;
+
+        // let endHighlight = -(curhighlight.end - startBase) * pixelPBase;
+        // let highlightWidth = Math.abs(startHighlight + endHighlight);
+
+        // let curXPos = startHighlight;
+        // // legendWidth is the width of the legend
+      }
+    } else {
+      let pixelPBase = windowWidth / (endBase - startBase);
+      for (const curhighlight of highlightArr) {
+        let highlightSide =
+          curhighlight.start - startBase <= 0 ? "right" : "left";
+        let startHighlight = (curhighlight.start - startBase) * pixelPBase;
+
+        let endHighlight = -(curhighlight.end - startBase) * pixelPBase;
+        let highlightWidth = Math.abs(startHighlight + endHighlight);
+
+        let curXPos = startHighlight;
+        // legendWidth is the width of the legend
+        let tmpObj = {
+          xPos: curXPos,
+          width: highlightWidth,
+          side: highlightSide,
+          start: curhighlight.start,
+          end: curhighlight.end,
+          color: curhighlight.color,
+          display: curhighlight.display,
+          tag: curhighlight.tag,
+        };
+
+        resHighlights.push(tmpObj);
+      }
     }
     return resHighlights;
   }
@@ -4170,7 +4244,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setConfigMenu(null);
     }
   }
-  console.log(highlightElements);
+
   // MARK: render________________________________________
   return (
     <div
