@@ -3036,7 +3036,58 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
   }
+  function getHighlightedXs() {
+    let resHighlights: Array<any> = [];
 
+    const navBuilds =
+      globalTrackState.current.trackStates?.[
+        draw?.completedFetchedRegion?.current?.key
+      ]?.trackState?.genomicFetchCoord?.[genomeConfig.genome.getName()]
+        ?.navContextBuilder;
+
+    const drawModel = new LinearDrawingModel(curViewWindowRegion, windowWidth);
+
+    for (const curhighlight of highlights) {
+      let newIntervalEnd;
+      let newIntervalStart;
+
+      if (navBuilds) {
+        newIntervalStart = convertOldCoordinates(
+          curhighlight.start,
+          navBuilds._gaps,
+          navBuilds._cumulativeGapBases,
+        );
+        newIntervalEnd = convertOldCoordinates(
+          curhighlight.end,
+          navBuilds._gaps,
+          navBuilds._cumulativeGapBases,
+        );
+      } else {
+        newIntervalStart = curhighlight.start;
+        newIntervalEnd = curhighlight.end;
+      }
+
+      const xRegion = drawModel.baseSpanToXSpan(
+        new OpenInterval(newIntervalStart, newIntervalEnd),
+      );
+      const start = xRegion.start;
+
+      const end = xRegion.end;
+      let tmpObj = {
+        xPos: start,
+        width: end - start,
+        side: "right",
+        start: curhighlight.start,
+        end: curhighlight.end,
+        color: curhighlight.color,
+        display: curhighlight.display,
+        tag: curhighlight.tag,
+      };
+
+      resHighlights.push(tmpObj);
+    }
+    return resHighlights;
+  }
   function sentScreenshotData(trackDataObj: { trackId: any }) {
     screenshotDataObj.current[`${trackDataObj.trackId}`] = trackDataObj;
     if (
@@ -3072,14 +3123,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return true;
         })
         .map((item) => convertTrackModelToITrackModel(item));
+      const currViewWindow = globalTrackState.current.viewWindow;
+      let trackState = _.cloneDeep(
+        globalTrackState.current?.trackStates?.[dataIdx.current]?.trackState,
+      );
 
+      const xDiff =
+        currViewWindow.start - trackState?.visData?.viewWindow.start;
+      console.log(currViewWindow, trackState, "VIEWWINDOWS");
+      const sameRegionViewWindow = {
+        start:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start + xDiff,
+        end:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.end + xDiff,
+      };
+      const newScreenShot = getHighlightedXs();
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
-        highlights: highlightElements,
-
+        highlights: newScreenShot,
+        viewWindow: sameRegionViewWindow,
         windowWidth,
         legendWidth,
+        xOffset: xDiff,
       });
       screenshotDataObj.current = {};
     }

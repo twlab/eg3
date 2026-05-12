@@ -9,7 +9,7 @@ export const GENOME_LIST: Genome[] = [
   {
     name: "Human",
     logoUrl: "https://vizhub.wustl.edu/public/images/Human.png",
-    versions: ["hg38", "hg19", "t2t-chm13-v2.0", "t2t-chm13-v1.1"],
+    versions: ["hg38", "hg19", "t2t-chm13-v2.0", "t2t-chm13-v1.1", "pan027Mat"],
     color: "white",
   },
   {

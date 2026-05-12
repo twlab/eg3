@@ -1816,6 +1816,7 @@ function formatRepeatMasker(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
+  console.log(genesArr);
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 

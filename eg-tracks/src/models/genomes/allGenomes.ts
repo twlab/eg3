@@ -58,7 +58,7 @@ import GRCg7w from "./GRCg7w/GRCg7w";
 import phaw5 from "./phaw5/phaw5";
 import mCalJa1_2_pat_X from "./mCalJa1.2.pat.X/mCalJa1.2.pat.X";
 import mT2T_Y_v1 from "./mT2T-Y_v1.0/mT2T-Y_v1.0";
-
+import pan027Mat from "./PAN027Mat/pan027Mat";
 /**
  * All available genomes.
  */
@@ -123,6 +123,7 @@ export const allGenomes = [
   phaw5,
   mCalJa1_2_pat_X,
   mT2T_Y_v1,
+  pan027Mat,
 ];
 
 export const genomeNameToConfig = {};
@@ -131,7 +132,7 @@ for (const config of allGenomes) {
   if (genomeNameToConfig[genomeName]) {
     // We need this, because when saving session, we save the genome name.
     throw new Error(
-      `Two genomes have the same name ${genomeName}.  Refusing to continue!`
+      `Two genomes have the same name ${genomeName}.  Refusing to continue!`,
     );
   }
   genomeNameToConfig[genomeName] = config;
@@ -196,7 +197,11 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
   },
   marmoset: {
     logoUrl: "https://vizhub.wustl.edu/public/calJac3/Marmoset.png",
-    assemblies: [mCalJa1_2_pat_X.genome.getName(), calJac4.genome.getName(), calJac3.genome.getName()],
+    assemblies: [
+      mCalJa1_2_pat_X.genome.getName(),
+      calJac4.genome.getName(),
+      calJac3.genome.getName(),
+    ],
     color: "yellow",
   },
   cow: {
@@ -292,8 +297,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "black",
   },
   arabidopsis: {
-    logoUrl:
-      "",
+    logoUrl: "",
     assemblies: [AraTha1.genome.getName()],
     color: "yellow",
   },
@@ -313,8 +317,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
     color: "black",
   },
   "P. falciparum": {
-    logoUrl:
-      "",
+    logoUrl: "",
     assemblies: [Pfal3D7.genome.getName()],
     color: "black",
   },
@@ -351,15 +354,13 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
  */
 export function getGenomeConfig(genomeName: string): GenomeConfig | null {
   if (genomeNameToConfig[genomeName]) {
-    return { ...genomeNameToConfig[genomeName] }
-  }
-  else {
-    return null
+    return { ...genomeNameToConfig[genomeName] };
+  } else {
+    return null;
   }
 }
 
 export function getSpeciesInfo(genomeName: string) {
-
   for (const [species, details] of Object.entries(treeOfLife)) {
     if (details.assemblies.includes(genomeName)) {
       return { name: species, logo: details.logoUrl, color: details.color };

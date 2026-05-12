@@ -16,6 +16,8 @@ interface Highlight {
   end: number;
   display: boolean;
   color: string;
+  xPos: number;
+  width: number;
 }
 
 interface Props {
@@ -296,13 +298,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     svgElem.appendChild(svgElemg2);
     svgElem.setAttribute("xmlns", xmlns);
 
-    const xS = highlights.map(
-      (h) => new OpenInterval(h.start + 120, h.end + 120),
-    );
-    highlights.forEach((item, idx) => {
+    highlights.forEach((item) => {
       const rect = document.createElementNS(xmlns, "rect");
-      rect.setAttribute("x", xS[idx].start + "");
-      rect.setAttribute("width", xS[idx].getLength() + "");
+      rect.setAttribute("x", legendWidth + item.xPos - props.xOffset + "");
+      rect.setAttribute("width", item.width + "");
       rect.setAttribute("height", boxHeight + "");
       rect.setAttribute("fill", item.color);
       svgElem.appendChild(rect);
@@ -380,11 +379,12 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       viewWindow,
       legendWidth,
       windowWidth,
+      xOffset,
     } = props;
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
-
+    console.log(highlights, windowWidth, xOffset);
     const trackSvgElements = tracks
       .filter(
         (track) =>
@@ -398,7 +398,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const createSVGData = trackData[`${id}`];
 
         const newTrackState = { ...createSVGData.trackState };
-        console.log("createSVGData.trackState", createSVGData.trackState);
+        newTrackState.viewWindow = viewWindow;
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
@@ -454,7 +454,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
                           top: 0,
                           height: "100%",
                           left: 0,
-                          transform: `translateX(${item.xPos}px)`,
+                          transform: `translateX(${item.xPos - xOffset}px)`,
                           width: item.width,
                           pointerEvents: "none",
                         }}

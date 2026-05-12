@@ -1,4 +1,3 @@
-
 import { BigWigZoomLevels } from "../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { makeBwg } from "./vendor/bbi-js/main/bigwig";
 import { URLFetchable } from "./vendor/bbi-js/utils/bin";
@@ -52,19 +51,20 @@ class BigSourceWorker {
     const bigWigObj = await this.bigWigPromise;
     const zoomLevel =
       options.zoomLevel === undefined ||
-        options.zoomLevel === BigWigZoomLevels.AUTO
+      options.zoomLevel === BigWigZoomLevels.AUTO
         ? this._getMatchingZoomLevel(bigWigObj, basesPerPixel)
         : Number.parseInt(options.zoomLevel);
 
     let promises = loci.map((locus: any) =>
-      this._getDataForChromosome(locus, bigWigObj, zoomLevel)
+      this._getDataForChromosome(locus, bigWigObj, zoomLevel),
     );
     const dataForEachLocus = await Promise.all(promises);
-
+    console.log(dataForEachLocus);
     const combinedData = dataForEachLocus.flat();
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
     }
+    console.log(combinedData);
     return combinedData;
   }
 
@@ -91,10 +91,10 @@ class BigSourceWorker {
       .slice()
       .sort((levelA: any, levelB: any) => levelB.reduction - levelA.reduction);
     let desiredZoom = sortedZoomLevels.find(
-      (zoomLevel: any) => zoomLevel.reduction < basesPerPixel
+      (zoomLevel: any) => zoomLevel.reduction < basesPerPixel,
     );
     return bigWigObj.zoomLevels.findIndex(
-      (zoomLevel: any) => zoomLevel === desiredZoom
+      (zoomLevel: any) => zoomLevel === desiredZoom,
     );
   }
 
@@ -109,7 +109,7 @@ class BigSourceWorker {
   _getDataForChromosome(
     interval: any,
     bigWigObj: any,
-    zoomLevel: number
+    zoomLevel: number,
   ): Promise<any[]> {
     // Compensate by adding +1 to start in 1-indexing.
     const start = interval.start + 1;

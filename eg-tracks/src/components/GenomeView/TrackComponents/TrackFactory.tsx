@@ -193,7 +193,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           numHidden: numHidden,
           visData: trackState.visData,
           xPos: curXPos,
-          genomicFetchCoord: trackState.genomicFetchCoord,
+          viewWindow: trackState.viewWindow,
         }),
       );
     }
@@ -498,6 +498,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     if (isScreenShotOpen) {
       async function handle() {
+        if (!viewComponent) {
+          return;
+        }
         let cacheDataIdx = dataIdx;
 
         let cacheTrackData = caches[`${id}`];
@@ -564,13 +567,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           : primaryVisData.visRegion;
         // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
         trackState["visRegion"] = visRegion;
-        trackState["viewWindow"] = new OpenInterval(
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.start + xDiff,
-
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.end + xDiff,
-        );
+        trackState["viewWindow"] = viewComponent.viewWindow;
         let drawOptions = { ...getConfigOptions() };
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
