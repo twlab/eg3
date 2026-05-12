@@ -13,14 +13,16 @@ import { useEffect, useMemo, useState } from "react";
 import placeholder from "../../assets/placeholder.png";
 import { useAppDispatch } from "../../lib/redux/hooks";
 
-import { GENOME_LIST } from "./genome-list";
-
-import { GenomeSerializer, getGenomeConfig } from "wuepgg3-track";
+import {
+  DEFAULT_GENOME_LIST,
+  allDefaultGenomeSets,
+  GenomeSerializer,
+  getGenomeConfig,
+  type SpeciesInfo,
+} from "wuepgg3-track";
 
 type GenomeName = string;
 type AssemblyName = string;
-
-
 
 export default function GenomePicker() {
   const dispatch = useAppDispatch();
@@ -30,6 +32,13 @@ export default function GenomePicker() {
   >(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const [selectedSetKey, setSelectedSetKey] = useState<string>("DEFAULT_GENOME_LIST");
+
+  const setKeys = Object.keys(allDefaultGenomeSets);
+
+  const activeGenomeList: Genome[] = selectedSetKey === "ALL"
+    ? Object.values(allDefaultGenomeSets).flat()
+    : (allDefaultGenomeSets as Record<string, Genome[]>)[selectedSetKey] ?? DEFAULT_GENOME_LIST;
 
   useEffect(() => {
     let timeout: any;
@@ -56,25 +65,45 @@ export default function GenomePicker() {
     return () => clearTimeout(timeout);
   }, [selectedPath]);
 
-
   const filteredGenomes = useMemo(() => {
-    return GENOME_LIST.filter((genome) => {
+    return activeGenomeList.filter((genome) => {
       if (!debouncedSearchQuery) return true;
 
       const searchLower = debouncedSearchQuery.toLowerCase();
       return (
         genome.name.toLowerCase().includes(searchLower) ||
-        genome.versions.some((version) =>
+        genome.assemblies.some((version) =>
           version.toLowerCase().includes(searchLower),
         )
       );
     });
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, activeGenomeList]);
 
   return (
     <div className="max-w-2xl mx-auto py-4 h-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-        <h2 className="text-2xl">Select a Genome</h2>
+        <div className="relative">
+          <select
+            value={selectedSetKey}
+            onChange={(e) => {
+              setSelectedSetKey(e.target.value);
+              setSelectedPath(null);
+            }}
+            className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-base font-medium focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
+          >
+            <option value="ALL">All</option>
+            {setKeys.map((key) => (
+              <option key={key} value={key}>
+                {key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+            <svg className="w-4 h-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
         <div className="relative mt-2 sm:mt-0 flex-1 w-full">
           <input
             type="text"
@@ -87,8 +116,9 @@ export default function GenomePicker() {
         </div>
       </div>
       <div
-        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${selectedPath !== null ? "items-center" : ""
-          }`}
+        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+          selectedPath !== null ? "items-center" : ""
+        }`}
       >
         {filteredGenomes
           // selectedPath === null
@@ -97,9 +127,15 @@ export default function GenomePicker() {
           .map((genome) => (
             <motion.div
               key={genome.name}
-              style={{ borderRadius: "12px", overflow: "hidden", boxShadow: "0 0 0 1px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.25)" }}
-              className={`dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""
-                }`}
+              style={{
+                borderRadius: "12px",
+                overflow: "hidden",
+                boxShadow:
+                  "0 0 0 1px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.25)",
+              }}
+              className={`dark:bg-dark-surface ${
+                selectedPath !== null ? "col-start-2" : ""
+              }`}
               layout
               initial={{ opacity: 0 }}
               animate={{
@@ -112,8 +148,12 @@ export default function GenomePicker() {
                 style={{
                   backgroundImage: `url(${(() => {
                     const url = genome.logoUrl ?? placeholder;
-                    if (url.startsWith('http')) return url;
-                    return (!import.meta || !import.meta.env ? "/browser/" : import.meta.env.BASE_URL) + url;
+                    if (url.startsWith("http")) return url;
+                    return (
+                      (!import.meta || !import.meta.env
+                        ? "/browser/"
+                        : import.meta.env.BASE_URL) + url
+                    );
                   })()})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
@@ -140,8 +180,8 @@ export default function GenomePicker() {
                   {genome.name}
                 </motion.h2>
                 {(selectedPath === null
-                  ? genome.versions
-                  : genome.versions.filter((v) => v === selectedPath[1])
+                  ? genome.assemblies
+                  : genome.assemblies.filter((v) => v === selectedPath[1])
                 ).map((version) => (
                   <motion.div
                     layout
@@ -153,10 +193,11 @@ export default function GenomePicker() {
                       <ChevronRightIcon className="w-4 h-4" />
                     )}
                     <motion.p
-                      className={`${selectedPath !== null
-                        ? "text-center text-xl w-full"
-                        : ""
-                        }`}
+                      className={`${
+                        selectedPath !== null
+                          ? "text-center text-xl w-full"
+                          : ""
+                      }`}
                     >
                       {version}
                     </motion.p>
@@ -189,7 +230,5 @@ export default function GenomePicker() {
         </div>
       )}
     </div>
-
-
   );
 }

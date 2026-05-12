@@ -138,215 +138,249 @@ for (const config of allGenomes) {
   genomeNameToConfig[genomeName] = config;
 }
 
-interface SpeciesConfig {
+export interface Genome {
+  name: string;
   logoUrl: string;
   assemblies: string[];
   color: string;
 }
-
-export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
-  human: {
-    logoUrl: "",
+export const custom_set_1 = [
+  {
+    name: "Human",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Human.png",
+    assemblies: [pan027Mat.genome._name],
+    color: "white",
+  },
+];
+export const DEFAULT_GENOME_LIST: Genome[] = [
+  {
+    name: "Human",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Human.png",
     assemblies: [
-      HG19.genome.getName(),
-      HG38.genome.getName(),
-      CHM13v1_1.genome.getName(),
-      CHMV2.genome.getName(),
+      HG38.genome._name,
+      HG19.genome._name,
+      CHMV2.genome._name,
+      CHM13v1_1.genome._name,
     ],
     color: "white",
   },
-  chimp: {
-    logoUrl: "",
+  {
+    name: "Chimp",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Chimp.png",
     assemblies: [
-      PANTRO6.genome.getName(),
-      PANTRO5.genome.getName(),
-      panTro4.genome.getName(),
+      PANTRO6.genome._name,
+      PANTRO5.genome._name,
+      panTro4.genome._name,
     ],
     color: "white",
   },
-  gorilla: {
+  {
+    name: "Gorilla",
     logoUrl: "https://vizhub.wustl.edu/public/gorGor3/Gorilla.png",
-    assemblies: [gorGor4.genome.getName(), gorGor3.genome.getName()],
+    assemblies: [gorGor4.genome._name, gorGor3.genome._name],
     color: "yellow",
   },
-  mT2T_Y_v1: {
-    logoUrl: "",
-    assemblies: [mT2T_Y_v1.genome.getName()],
-    color: "yellow",
-  },
-
-  gibbon: {
+  {
+    name: "Gibbon",
     logoUrl: "https://vizhub.wustl.edu/public/nomLeu3/Gibbon.png",
-    assemblies: [nomLeu3.genome.getName()],
+    assemblies: [nomLeu3.genome._name],
     color: "yellow",
   },
-  baboon: {
+  {
+    name: "Baboon",
     logoUrl: "https://vizhub.wustl.edu/public/papAnu2/Baboon.png",
-    assemblies: [papAnu2.genome.getName()],
+    assemblies: [papAnu2.genome._name],
     color: "yellow",
   },
-  rhesus: {
+  {
+    name: "Rhesus",
     logoUrl: "https://vizhub.wustl.edu/public/rheMac8/Rhesus_macaque.png",
     assemblies: [
-      rheMac10.genome.getName(),
-      RheMac8.genome.getName(),
-      rheMac3.genome.getName(),
-      rheMac2.genome.getName(),
+      rheMac10.genome._name,
+      RheMac8.genome._name,
+      rheMac3.genome._name,
+      rheMac2.genome._name,
     ],
     color: "yellow",
   },
-  marmoset: {
+  {
+    name: "Marmoset",
     logoUrl: "https://vizhub.wustl.edu/public/calJac3/Marmoset.png",
     assemblies: [
-      mCalJa1_2_pat_X.genome.getName(),
-      calJac4.genome.getName(),
-      calJac3.genome.getName(),
+      mCalJa1_2_pat_X.genome._name,
+      calJac4.genome._name,
+      calJac3.genome._name,
     ],
     color: "yellow",
   },
-  cow: {
+  {
+    name: "Cow",
     logoUrl: "https://vizhub.wustl.edu/public/bosTau8/Cow.png",
-    assemblies: [BosTau8.genome.getName()],
+    assemblies: [BosTau8.genome._name],
     color: "yellow",
   },
-  sheep: {
+  {
+    name: "Sheep",
     logoUrl: "https://vizhub.wustl.edu/public/oviAri4/sheep.png",
-    assemblies: [oviAri4.genome.getName()],
-    color: "white",
+    assemblies: [oviAri4.genome._name],
+    color: "yellow",
   },
-  pig: {
+  {
+    name: "Pig",
     logoUrl: "https://vizhub.wustl.edu/public/susScr11/pig.png",
-    assemblies: [susScr11.genome.getName(), susScr3.genome.getName()],
+    assemblies: [susScr11.genome._name, susScr3.genome._name],
     color: "white",
   },
-  rabbit: {
+  {
+    name: "Rabbit",
     logoUrl: "https://vizhub.wustl.edu/public/oryCun2/rabbit.png",
-    assemblies: [oryCun2.genome.getName()],
+    assemblies: [oryCun2.genome._name],
     color: "yellow",
   },
-  dog: {
+  {
+    name: "Dog",
     logoUrl: "https://vizhub.wustl.edu/public/canFam3/dog.png",
-    assemblies: [canFam3.genome.getName(), canFam2.genome.getName()],
-    color: "yellow",
-  },
-  mouse: {
-    logoUrl: "",
     assemblies: [
-      MM39.genome.getName(),
-      MM10.genome.getName(),
-      MM9.genome.getName(),
+      canFam6.genome._name,
+      canFam3.genome._name,
+      canFam2.genome._name,
     ],
     color: "yellow",
   },
-  rat: {
-    logoUrl: "",
+  {
+    name: "Mouse",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Mouse.png",
     assemblies: [
-      RN7.genome.getName(),
-      RN6.genome.getName(),
-      rn4.genome.getName(),
+      MM39.genome._name,
+      MM10.genome._name,
+      MM9.genome._name,
+      mT2T_Y_v1.genome._name,
     ],
+    color: "yellow",
+  },
+  {
+    name: "Rat",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Rat.png",
+    assemblies: [RN7.genome._name, RN6.genome._name, rn4.genome._name],
     color: "white",
   },
-  opossum: {
+  {
+    name: "Opossum",
     logoUrl: "https://vizhub.wustl.edu/public/monDom5/opossum.png",
-    assemblies: [monDom5.genome.getName()],
+    assemblies: [monDom5.genome._name],
     color: "white",
   },
-  chicken: {
-    logoUrl: "",
+  {
+    name: "Chicken",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Chicken.png",
     assemblies: [
-      GRCg7w.genome.getName(),
-      GRCg7b.genome.getName(),
-      GalGal6.genome.getName(),
-      GalGal5.genome.getName(),
+      GRCg7w.genome._name,
+      GRCg7b.genome._name,
+      GalGal6.genome._name,
+      GalGal5.genome._name,
     ],
     color: "yellow",
   },
-  frog: {
+  {
+    name: "Frog",
     logoUrl: "https://vizhub.wustl.edu/public/xenTro10/frog.png",
-    assemblies: [xenTro10.genome.getName()],
+    assemblies: [xenTro10.genome._name],
     color: "white",
   },
-  zebrafish: {
-    logoUrl: "",
+  {
+    name: "Zebrafish",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Zebrafish.png",
     assemblies: [
-      DAN_RER11.genome.getName(),
-      DAN_RER10.genome.getName(),
-      DAN_RER7.genome.getName(),
+      DAN_RER11.genome._name,
+      DAN_RER10.genome._name,
+      DAN_RER7.genome._name,
     ],
     color: "yellow",
   },
-  "spotted Gar": {
+  {
+    name: "Spotted Gar",
     logoUrl: "https://vizhub.wustl.edu/public/lepOcu1/SpottedGar.png",
-    assemblies: [LEPOCU1.genome.getName()],
+    assemblies: [LEPOCU1.genome._name],
     color: "white",
   },
-  "P. hawaiensis": {
+  {
+    name: "P. hawaiensis",
     logoUrl: "https://vizhub.wustl.edu/public/phaw5/phaw.png",
-    assemblies: [phaw5.genome.getName()],
+    assemblies: [phaw5.genome._name],
     color: "white",
   },
-  "fruit fly": {
-    logoUrl: "",
-    assemblies: [DM6.genome.getName()],
+  {
+    name: "Fruit Fly",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Fruit%20fly.png",
+    assemblies: [DM6.genome._name],
     color: "white",
   },
-  "c.elegans": {
-    logoUrl: "",
-    assemblies: [CE11.genome.getName()],
+  {
+    name: "C.elegans",
+    logoUrl: "https://vizhub.wustl.edu/public/images/C.elegans.png",
+    assemblies: [CE11.genome._name],
     color: "black",
   },
-  arabidopsis: {
-    logoUrl: "",
-    assemblies: [AraTha1.genome.getName()],
+  {
+    name: "Arabidopsis",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Arabidopsis.png",
+    assemblies: [AraTha1.genome._name],
     color: "yellow",
   },
-  brapa: {
+  {
+    name: "Brapa",
     logoUrl: "https://vizhub.wustl.edu/public/b_chiifu_v3/brapa.png",
-    assemblies: [b_chiifu_v3.genome.getName()],
+    assemblies: [b_chiifu_v3.genome._name],
     color: "white",
   },
-  seahare: {
+  {
+    name: "Seahare",
     logoUrl: "https://vizhub.wustl.edu/public/aplCal3/seaHare.png",
-    assemblies: [APLCAL3.genome.getName()],
+    assemblies: [APLCAL3.genome._name],
     color: "white",
   },
-  yeast: {
-    logoUrl: "",
-    assemblies: [SACCER3.genome.getName()],
+  {
+    name: "Yeast",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Yeast.png",
+    assemblies: [SACCER3.genome._name],
     color: "black",
   },
-  "P. falciparum": {
-    logoUrl: "",
-    assemblies: [Pfal3D7.genome.getName()],
+  {
+    name: "P. falciparum",
+    logoUrl: "https://vizhub.wustl.edu/public/images/Pfalciparum.png",
+    assemblies: [Pfal3D7.genome._name],
     color: "black",
   },
-  "Green algae": {
+  {
+    name: "Green Algae",
     logoUrl:
       "https://vizhub.wustl.edu/public/Creinhardtii506/Creinhardtii506.png",
-    assemblies: [Creinhardtii506.genome.getName()],
+    assemblies: [Creinhardtii506.genome._name],
     color: "yellow",
   },
-  virus: {
+  {
+    name: "Virus",
     logoUrl: "https://vizhub.wustl.edu/public/virus/virus.png",
     assemblies: [
-      nCoV2019.genome.getName(),
-      MERS.genome.getName(),
-      SARS.genome.getName(),
-      Ebola.genome.getName(),
-      hpv16.genome.getName(),
+      nCoV2019.genome._name,
+      MERS.genome._name,
+      SARS.genome._name,
+      Ebola.genome._name,
+      hpv16.genome._name,
     ],
     color: "yellow",
   },
-  trypanosome: {
+  {
+    name: "Trypanosome",
     logoUrl: "https://vizhub.wustl.edu/public/trypanosome/trypanosome.png",
-    assemblies: [
-      TbruceiTREU927.genome.getName(),
-      TbruceiLister427.genome.getName(),
-    ],
+    assemblies: [TbruceiTREU927.genome._name, TbruceiLister427.genome._name],
     color: "blue",
   },
-};
+];
+export const allDefaultGenomeSets = {
+  DEFAULT_GENOME_LIST,
+  custom_set_1,
+}
 
 /**
  * @param {string} genomeName - name of a genome
@@ -361,9 +395,11 @@ export function getGenomeConfig(genomeName: string): GenomeConfig | null {
 }
 
 export function getSpeciesInfo(genomeName: string) {
-  for (const [species, details] of Object.entries(treeOfLife)) {
-    if (details.assemblies.includes(genomeName)) {
-      return { name: species, logo: details.logoUrl, color: details.color };
+  for (const genomeList of Object.values(allDefaultGenomeSets)) {
+    for (const genome of genomeList) {
+      if (genome.assemblies.includes(genomeName)) {
+        return { name: genome.name, logo: genome.logoUrl, color: genome.color };
+      }
     }
   }
   return { name: "", logo: "", color: "" };

@@ -11,8 +11,13 @@ export {
   getGenomeConfig,
   restoreLegacyViewRegion,
   fetchDataHubTracks,
-  generateUUID
+  generateUUID,
 } from "./util";
-export { getSpeciesInfo } from "./models/genomes/allGenomes";
+export {
+  getSpeciesInfo,
+  DEFAULT_GENOME_LIST,
+  allDefaultGenomeSets,
+} from "./models/genomes/allGenomes";
+export type { Genome as SpeciesInfo } from "./models/genomes/allGenomes";
 export { default as PortalContext } from "./lib/PortalContext";
 export { default as EscapeHandlerContext } from "./lib/EscapeHandlerContext";

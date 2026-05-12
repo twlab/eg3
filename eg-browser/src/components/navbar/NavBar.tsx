@@ -25,10 +25,9 @@ import {
   selectSessionPanelOpen,
   setNavigationTab,
   setSessionPanelOpen,
-
   setNavSearchOpen,
 } from "../../lib/redux/slices/navigationSlice";
-import { getSpeciesInfo } from "../genome-picker/genome-list";
+import { getSpeciesInfo } from "wuepgg3-track";
 import TabGenomePicker from "./TabGenomePicker";
 import Button from "../ui/button/Button";
 import ResizablePanel from "../ui/panel/ResizablePanel";
