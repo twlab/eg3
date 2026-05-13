@@ -59,12 +59,12 @@ class BigSourceWorker {
       this._getDataForChromosome(locus, bigWigObj, zoomLevel),
     );
     const dataForEachLocus = await Promise.all(promises);
-    console.log(dataForEachLocus);
+
     const combinedData = dataForEachLocus.flat();
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
     }
-    console.log(combinedData);
+
     return combinedData;
   }
 

@@ -41,6 +41,8 @@ import {
   setNavigationTab,
   selectNavSearchOpen,
   setNavSearchOpen,
+  selectGenomePickerTab,
+  setGenomePickerTab,
 } from "@/lib/redux/slices/navigationSlice";
 import {
   setToggleTool,
@@ -93,6 +95,7 @@ export default function RootLayout(props: AppProps) {
   const [navBarHeight, setNavBarHeight] = useState(48);
   const currentTab = useAppSelector(selectNavigationTab);
   const navSearchOpen = useAppSelector(selectNavSearchOpen);
+  const genomePickerTab = useAppSelector(selectGenomePickerTab);
   const initialState = useRef(true);
   const year = useMemo(() => new Date().getFullYear(), []);
   useEffect(() => {
@@ -456,12 +459,13 @@ export default function RootLayout(props: AppProps) {
                   {!sessionId && !emptyPropsPackageMode ? (
                     <TabView<"picker" | "add" | "import">
                       centerTabs
-                      initialTab={"picker"}
+                      selectedTab={genomePickerTab}
+                      onTabChange={(v) => dispatch(setGenomePickerTab(v))}
                       tabs={[
                         {
                           label: "CHOOSE A GENOME",
                           value: "picker",
-                          component: <GenomePicker />,
+                          component: <GenomePicker variant="root" />,
                         },
                         {
                           label: "ADD CUSTOM GENOME",

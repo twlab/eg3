@@ -4,7 +4,7 @@ import {
   HELP_LINKS,
   pcorr,
   ColorPicker,
-  trackFetchFunction,
+  fetchTypeMap,
   ChromosomeInterval,
   NumericalFeature,
   RegionSet,
@@ -188,7 +188,7 @@ const ScatterPlot: React.FC = () => {
 
     const rawDataX = await Promise.all(
       flankedFeatures.map((item, index) =>
-        trackFetchFunction[trackX.type]({
+        fetchTypeMap[trackX.type]({
           nav: [
             {
               chr: item.locus.chr,
@@ -219,7 +219,7 @@ const ScatterPlot: React.FC = () => {
 
     const rawDataY = await Promise.all(
       flankedFeatures.map((item, index) =>
-        trackFetchFunction[trackY.type]({
+        fetchTypeMap[trackY.type]({
           nav: [
             {
               chr: item.locus.chr,
@@ -435,10 +435,11 @@ const ScatterPlot: React.FC = () => {
               <Button onClick={getScatterPlotData}>Plot</Button>
               {plotMsg && (
                 <span
-                  className={`text-base ${plotMsg === "Loading..."
+                  className={`text-base ${
+                    plotMsg === "Loading..."
                       ? "text-primary dark:text-dark-primary"
                       : "text-red-600 dark:text-red-400"
-                    }`}
+                  }`}
                 >
                   {plotMsg}
                 </span>

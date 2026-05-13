@@ -4,11 +4,11 @@ import OpenInterval from "../models/OpenInterval";
 import Feature from "../models/Feature";
 import { ViewExpansion } from "../models/RegionExpander";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
-import trackFetchFunction from "./fetchTrackData";
+import fetchTypeMap from "./fetchTypeMap";
 import {
-  localTrackFetchFunction,
-  textFetchFunction,
-} from "../getLocalData/localFetchData";
+  localFetchTypeMap,
+  textFetchTypeMap,
+} from "../getLocalData/localFetchTypeMap";
 
 import { AlignmentSegment } from "../models/AlignmentSegment";
 import { NavContextBuilder } from "../models/NavContextBuilder";
@@ -85,10 +85,177 @@ export interface PlacedSequenceSegment extends SequenceSegment {
   xSpan: OpenInterval;
 }
 
-interface QueryGenomePiece {
-  queryFeature: Feature;
-  queryXSpan: OpenInterval;
-}
+export const chromAlias: Record<string, Set<string>> = {
+  chr1: new Set([
+    "1",
+    "CM000663.1",
+    "NC_000001.10",
+    "CM000663.2",
+    "NC_000001.11",
+  ]),
+  chr2: new Set([
+    "2",
+    "CM000664.1",
+    "NC_000002.11",
+    "CM000664.2",
+    "NC_000002.12",
+  ]),
+  chr3: new Set([
+    "3",
+    "CM000665.1",
+    "NC_000003.11",
+    "CM000665.2",
+    "NC_000003.12",
+  ]),
+  chr4: new Set([
+    "4",
+    "CM000666.1",
+    "NC_000004.11",
+    "CM000666.2",
+    "NC_000004.12",
+  ]),
+  chr5: new Set([
+    "5",
+    "CM000667.1",
+    "NC_000005.9",
+    "CM000667.2",
+    "NC_000005.10",
+  ]),
+  chr6: new Set([
+    "6",
+    "CM000668.1",
+    "NC_000006.11",
+    "CM000668.2",
+    "NC_000006.12",
+  ]),
+  chr7: new Set([
+    "7",
+    "CM000669.1",
+    "NC_000007.13",
+    "CM000669.2",
+    "NC_000007.14",
+  ]),
+  chr8: new Set([
+    "8",
+    "CM000670.1",
+    "NC_000008.10",
+    "CM000670.2",
+    "NC_000008.11",
+  ]),
+  chr9: new Set([
+    "9",
+    "CM000671.1",
+    "NC_000009.11",
+    "CM000671.2",
+    "NC_000009.12",
+  ]),
+  chr10: new Set([
+    "10",
+    "CM000672.1",
+    "NC_000010.10",
+    "CM000672.2",
+    "NC_000010.11",
+  ]),
+  chr11: new Set([
+    "11",
+    "CM000673.1",
+    "NC_000011.9",
+    "CM000673.2",
+    "NC_000011.10",
+  ]),
+  chr12: new Set([
+    "12",
+    "CM000674.1",
+    "NC_000012.11",
+    "CM000674.2",
+    "NC_000012.12",
+  ]),
+  chr13: new Set([
+    "13",
+    "CM000675.1",
+    "NC_000013.10",
+    "CM000675.2",
+    "NC_000013.11",
+  ]),
+  chr14: new Set([
+    "14",
+    "CM000676.1",
+    "NC_000014.8",
+    "CM000676.2",
+    "NC_000014.9",
+  ]),
+  chr15: new Set([
+    "15",
+    "CM000677.1",
+    "NC_000015.9",
+    "CM000677.2",
+    "NC_000015.10",
+  ]),
+  chr16: new Set([
+    "16",
+    "CM000678.1",
+    "NC_000016.9",
+    "CM000678.2",
+    "NC_000016.10",
+  ]),
+  chr17: new Set([
+    "17",
+    "CM000679.1",
+    "NC_000017.10",
+    "CM000679.2",
+    "NC_000017.11",
+  ]),
+  chr18: new Set([
+    "18",
+    "CM000680.1",
+    "NC_000018.9",
+    "CM000680.2",
+    "NC_000018.10",
+  ]),
+  chr19: new Set([
+    "19",
+    "CM000681.1",
+    "NC_000019.9",
+    "CM000681.2",
+    "NC_000019.10",
+  ]),
+  chr20: new Set([
+    "20",
+    "CM000682.1",
+    "NC_000020.10",
+    "CM000682.2",
+    "NC_000020.11",
+  ]),
+  chr21: new Set([
+    "21",
+    "CM000683.1",
+    "NC_000021.8",
+    "CM000683.2",
+    "NC_000021.9",
+  ]),
+  chr22: new Set([
+    "22",
+    "CM000684.1",
+    "NC_000022.10",
+    "CM000684.2",
+    "NC_000022.11",
+  ]),
+  chrX: new Set([
+    "X",
+    "CM000685.1",
+    "NC_000023.10",
+    "CM000685.2",
+    "NC_000023.11",
+  ]),
+  chrY: new Set([
+    "Y",
+    "CM000686.1",
+    "NC_000024.9",
+    "CM000686.2",
+    "NC_000024.10",
+  ]),
+  chrM: new Set(["M", "NC_001807.4", "J01415.2", "NC_012920.1"]),
+};
 const componentMap: { [key: string]: any } = {
   geneannotation: "",
   bed: "",
@@ -372,12 +539,12 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       try {
         if (isLocalFetch && trackModel.url === "") {
           responses = trackModel.isText
-            ? await textFetchFunction[trackModel.type]({
+            ? await textFetchTypeMap[trackModel.type]({
                 basesPerPixel: bpRegionSize / windowWidth,
                 nav: curFetchNav,
                 trackModel,
               })
-            : await localTrackFetchFunction[trackModel.type]({
+            : await localFetchTypeMap[trackModel.type]({
                 basesPerPixel: bpRegionSize / windowWidth,
                 nav: curFetchNav,
                 trackModel,
@@ -385,7 +552,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               });
         } else if (!isLocalFetch) {
           if (trackModel.type in { geneannotation: "", snp: "" }) {
-            responses = await trackFetchFunction[trackModel.type]({
+            responses = await fetchTypeMap[trackModel.type]({
               genomeName:
                 "genome" in trackModel.metadata
                   ? trackModel.metadata.genome
@@ -399,7 +566,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               trackType: trackModel.type,
             });
           } else {
-            responses = await trackFetchFunction[trackModel.type]({
+            responses = await fetchTypeMap[trackModel.type]({
               basesPerPixel: bpRegionSize / windowWidth,
               nav: curFetchNav,
               trackModel,
@@ -504,7 +671,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
         let rawRecords;
         let errorType: any = null;
         try {
-          const responds = await trackFetchFunction["genomealign"]({
+          const responds = await fetchTypeMap["genomealign"]({
             nav: fetchArrNav,
             options: {
               height: 40,

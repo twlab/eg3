@@ -28,7 +28,7 @@ import {
   setNavSearchOpen,
 } from "../../lib/redux/slices/navigationSlice";
 import { getSpeciesInfo } from "wuepgg3-track";
-import TabGenomePicker from "./TabGenomePicker";
+import GenomePicker from "../genome-picker/GenomePicker";
 import Button from "../ui/button/Button";
 import ResizablePanel from "../ui/panel/ResizablePanel";
 import IconButton from "../ui/button/IconButton";
@@ -224,7 +224,7 @@ export default function NavBar(props) {
 
   // const genomeLogoUrl: string | null = null;
 
-  // Genome picker is now a tabbed panel component (TabGenomePicker).
+  // Genome picker is now a tabbed panel component (GenomePicker).
 
   // Monitor localStorage quota errors
   // useEffect(() => {
@@ -970,7 +970,8 @@ export default function NavBar(props) {
                     />
                   )}
                 {currentTab === "tab-genome-picker" && (
-                  <TabGenomePicker
+                  <GenomePicker
+                    variant="tab"
                     onClose={() => dispatch(setNavigationTab(null))}
                   />
                 )}

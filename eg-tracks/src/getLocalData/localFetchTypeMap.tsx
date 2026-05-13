@@ -34,7 +34,7 @@ function objToInstanceAlign(alignment: { [key: string]: any }) {
 
 let cachedLocalFetchInstance: { [key: string]: any } = {};
 
-export const localTrackFetchFunction: { [key: string]: any } = {
+export const localFetchTypeMap: { [key: string]: any } = {
   bed: async function bedFetch(regionData: any) {
     return getLocalData(regionData, "bedOrTabix");
   },
@@ -76,7 +76,7 @@ export const localTrackFetchFunction: { [key: string]: any } = {
   },
 };
 
-export const textFetchFunction: { [key: string]: any } = {
+export const textFetchTypeMap: { [key: string]: any } = {
   bed: async function bedFetch(regionData: any) {
     return getTextData(regionData);
   },
