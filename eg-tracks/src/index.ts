@@ -16,7 +16,7 @@ export {
 export {
   getSpeciesInfo,
   DEFAULT_GENOME_LIST,
-  allDefaultGenomeSets,
+  allDefaultGenomeCollections,
 } from "./models/genomes/allGenomes";
 export type { Genome as SpeciesInfo } from "./models/genomes/allGenomes";
 export { default as PortalContext } from "./lib/PortalContext";

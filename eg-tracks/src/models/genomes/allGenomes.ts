@@ -144,7 +144,7 @@ export interface Genome {
   assemblies: string[];
   color: string;
 }
-export const custom_set_1 = [
+export const custom_collection_1 = [
   {
     name: "Human",
     logoUrl: "https://vizhub.wustl.edu/public/images/Human.png",
@@ -377,10 +377,10 @@ export const DEFAULT_GENOME_LIST: Genome[] = [
     color: "blue",
   },
 ];
-export const allDefaultGenomeSets = {
+export const allDefaultGenomeCollections = {
   DEFAULT_GENOME_LIST,
-  custom_set_1,
-}
+  custom_collection_1,
+};
 
 /**
  * @param {string} genomeName - name of a genome
@@ -395,7 +395,7 @@ export function getGenomeConfig(genomeName: string): GenomeConfig | null {
 }
 
 export function getSpeciesInfo(genomeName: string) {
-  for (const genomeList of Object.values(allDefaultGenomeSets)) {
+  for (const genomeList of Object.values(allDefaultGenomeCollections)) {
     for (const genome of genomeList) {
       if (genome.assemblies.includes(genomeName)) {
         return { name: genome.name, logo: genome.logoUrl, color: genome.color };
