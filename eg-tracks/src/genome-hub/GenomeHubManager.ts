@@ -27,7 +27,7 @@ export default class GenomeHubManager {
     if (this.genomeCache.has(id)) {
       return this.genomeCache.get(id)!;
     }
-
+    console.log(id);
     const genome = await this.localGenomeRepository.getGenomeById(id);
 
     this.genomeCache.set(id, genome);
@@ -51,6 +51,16 @@ export default class GenomeHubManager {
   async putGenome(genome: IGenome): Promise<void> {
     this.localGenomeRepository.putGenome(genome);
     this.genomeCache.set(genome.id, genome);
+  }
+
+  async genomeExists(id: string): Promise<boolean> {
+    if (this.genomeCache.has(id)) return true;
+    try {
+      await this.localGenomeRepository.getGenomeById(id);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async deleteAllGenomes(): Promise<void> {

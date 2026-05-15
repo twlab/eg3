@@ -6,7 +6,11 @@ import { addCustomGenome } from "@/lib/redux/thunk/genome-hub";
 import { ArrowDownTrayIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import FileInput from "../ui/input/FileInput";
-import { GenomeSerializer } from "wuepgg3-track";
+import {
+  GenomeSerializer,
+  GenomeHubManager,
+  type IGenome,
+} from "wuepgg3-track";
 import GenomeHubPanel from "./GenomeHubPanel";
 import GenomeSchemaView from "./GenomeSchemaView";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,6 +40,10 @@ export default function AddCustomGenome() {
   const [validationErrors, setValidationErrors] = useState<ReturnType<
     typeof GenomeSerializer.validateGenomeObject
   > | null>(null);
+  const [duplicateIds, setDuplicateIds] = useState<string[]>([]);
+  const [fieldWarnings, setFieldWarnings] = useState<
+    { label: string; missing: string[] }[]
+  >([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSchema, setShowSchema] = useState(false);
 
@@ -91,11 +99,47 @@ export default function AddCustomGenome() {
     if (file) {
       (async () => {
         setIsLoading(true);
+        setDuplicateIds([]);
+        setFieldWarnings([]);
         try {
           const json = await file.text();
           const parsedJson = JSON.parse(json);
-          const errors = GenomeSerializer.validateGenomeObject(parsedJson);
+
+          // Normalize to array and auto-fill name from id if missing
+          const items: any[] = Array.isArray(parsedJson)
+            ? parsedJson
+            : [parsedJson];
+          items.forEach((item) => {
+            if (item && !item.name && item.id) {
+              item.name = item.id;
+            }
+          });
+
+          // Check required fields per genome and collect warnings
+          const REQUIRED = ["id", "chromosomes", "defaultRegion"] as const;
+          const warnings: { label: string; missing: string[] }[] = [];
+          items.forEach((item, i) => {
+            const missing = REQUIRED.filter((f) => !item[f]);
+            if (missing.length > 0) {
+              const label = item.name || item.id || `Genome #${i + 1}`;
+              warnings.push({ label, missing });
+            }
+          });
+          setFieldWarnings(warnings);
+
+          const errors = GenomeSerializer.validateGenomeObject(items);
           setValidationErrors(errors);
+
+          if (errors.valid && errors.normalizedData) {
+            const manager = GenomeHubManager.getInstance();
+            const duplicates: string[] = [];
+            for (const genome of errors.normalizedData) {
+              if (await manager.genomeExists(genome.id)) {
+                duplicates.push(genome.id);
+              }
+            }
+            setDuplicateIds(duplicates);
+          }
         } catch (error) {
           console.error(error);
           setValidationErrors({
@@ -109,6 +153,7 @@ export default function AddCustomGenome() {
                 message: "Invalid JSON format",
               },
             ] as any,
+            normalizedData: [],
           });
         } finally {
           setIsLoading(false);
@@ -118,8 +163,8 @@ export default function AddCustomGenome() {
   }, [file]);
 
   useEffect(() => {
-    if (file && validationErrors?.valid) {
-      dispatch(addCustomGenome(file));
+    if (file && validationErrors?.valid && validationErrors.normalizedData) {
+      dispatch(addCustomGenome(validationErrors.normalizedData as IGenome[]));
     }
   }, [file, validationErrors]);
 
@@ -146,6 +191,51 @@ export default function AddCustomGenome() {
         genome: entry,
         assemblyName,
       }),
+    );
+  };
+
+  const renderFieldWarnings = () => {
+    if (fieldWarnings.length === 0) return null;
+    return (
+      <div className="bg-orange-50 border border-orange-200 rounded-md p-4 mt-4">
+        <h3 className="text-orange-800 font-medium mb-2">
+          Missing Required Fields:
+        </h3>
+        <ul className="list-disc pl-5 text-orange-700 text-sm">
+          {fieldWarnings.map(({ label, missing }, i) => (
+            <li key={i} className="mb-1">
+              <span className="font-mono text-xs">{label}</span> is missing:{" "}
+              {missing.map((f) => (
+                <span
+                  key={f}
+                  className="font-mono text-xs bg-orange-100 px-1 rounded mr-1"
+                >
+                  {f}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  const renderDuplicateWarnings = () => {
+    if (duplicateIds.length === 0) return null;
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mt-4">
+        <h3 className="text-yellow-800 font-medium mb-2">
+          Duplicate Genome IDs:
+        </h3>
+        <ul className="list-disc pl-5 text-yellow-700 text-sm">
+          {duplicateIds.map((id) => (
+            <li key={id} className="mb-1">
+              A genome with id <span className="font-mono text-xs">{id}</span>{" "}
+              already exists and will be overwritten.
+            </li>
+          ))}
+        </ul>
+      </div>
     );
   };
 
@@ -582,7 +672,11 @@ export default function AddCustomGenome() {
                                 Validating...
                               </p>
                             ) : (
-                              renderValidationErrors()
+                              <>
+                                {renderFieldWarnings()}
+                                {renderDuplicateWarnings()}
+                                {renderValidationErrors()}
+                              </>
                             )}
                             <GenomeHubPanel />
                           </div>

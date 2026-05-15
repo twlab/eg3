@@ -4,7 +4,7 @@ import {
   ChevronRightIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { genomeDataSchema } from "wuepgg3-track";
+import { genomeFileSchema } from "wuepgg3-track";
 import Button from "../ui/button/Button";
 import { generateUUID } from "wuepgg3-track";
 type SchemaNode = {
@@ -77,7 +77,7 @@ const SchemaNode: React.FC<{
           className="ml-4 text-sm text-gray-600 dark:text-gray-400"
         >
           Allowed values: [{node.enum.map((v) => `"${v}"`).join(", ")}]
-        </div>
+        </div>,
       );
     }
 
@@ -88,7 +88,7 @@ const SchemaNode: React.FC<{
           className="ml-4 text-sm text-gray-600 dark:text-gray-400"
         >
           Minimum: {node.minimum}
-        </div>
+        </div>,
       );
     }
 
@@ -99,7 +99,7 @@ const SchemaNode: React.FC<{
           className="ml-4 text-sm text-gray-600 dark:text-gray-400"
         >
           No additional properties allowed
-        </div>
+        </div>,
       );
     }
 
@@ -124,7 +124,7 @@ const SchemaNode: React.FC<{
             required={isReq}
             depth={depth + 1}
             onExpand={onExpand}
-          />
+          />,
         );
       });
     }
@@ -140,7 +140,7 @@ const SchemaNode: React.FC<{
             depth={depth + 1}
             onExpand={onExpand}
           />
-        </div>
+        </div>,
       );
     }
 
@@ -159,7 +159,7 @@ const SchemaNode: React.FC<{
               depth={depth + 1}
               onExpand={onExpand}
             />
-          </div>
+          </div>,
         );
       });
     }
@@ -178,7 +178,7 @@ const SchemaNode: React.FC<{
               onExpand={onExpand}
             />
           ))}
-        </div>
+        </div>,
       );
     }
 
@@ -188,7 +188,7 @@ const SchemaNode: React.FC<{
   useEffect(() => {
     if (isTooltipVisible && iconContainerRef.current && tooltipRef.current) {
       const scrollContainer = iconContainerRef.current.closest<HTMLElement>(
-        '[data-scroll-container="true"]'
+        '[data-scroll-container="true"]',
       );
       if (!scrollContainer) return;
 
@@ -275,10 +275,11 @@ const SchemaNode: React.FC<{
         <div>
           <div className="flex items-center">
             <span
-              className={`font-semibold ${required
-                ? "text-black dark:text-white"
-                : "text-gray-600 dark:text-gray-400"
-                }`}
+              className={`font-semibold ${
+                required
+                  ? "text-black dark:text-white"
+                  : "text-gray-600 dark:text-gray-400"
+              }`}
             >
               {name}
               {required && <span className="text-red-500 ml-1">*</span>}
@@ -318,14 +319,16 @@ export default function GenomeSchemaView() {
   const [showExample, setShowExample] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const exampleData = {
-    name: "hg19",
-    id: generateUUID(),
-    chromosomes: [
-      { name: "chr1", length: 249250621 },
-      { name: "chrX", length: 155270560 },
-    ],
-  };
+  const exampleData = [
+    {
+      name: "hg19",
+      id: generateUUID(),
+      chromosomes: [
+        { name: "chr1", length: 249250621 },
+        { name: "chrX", length: 155270560 },
+      ],
+    },
+  ];
 
   const handleNodeExpand = () => {
     if (containerRef.current) {
@@ -341,8 +344,10 @@ export default function GenomeSchemaView() {
   return (
     <div className="max-w-4xl mx-auto">
       <p className="mb-4">
-        This schema defines the structure for genomic data files. Fields marked
-        with an asterisk (*) are required.
+        This schema defines the structure for genomic data files. The file
+        should contain an array of genome objects — or a single genome object
+        for backwards compatibility. Fields marked with an asterisk (*) are
+        required.
       </p>
 
       <div className="flex mb-4">
@@ -368,7 +373,7 @@ export default function GenomeSchemaView() {
         className="bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-dark-secondary rounded-lg p-4 break-words"
       >
         <SchemaNode
-          node={genomeDataSchema as any}
+          node={genomeFileSchema as any}
           name="Root"
           path="root"
           onExpand={handleNodeExpand}

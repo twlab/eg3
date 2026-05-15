@@ -23,14 +23,14 @@ export function convertSession(session: any, dispatch: any) {
   let newGenomeConfig: GenomeConfig | null = null;
   let coordinate: GenomeCoordinate | null = null;
 
-  const curGenomeName = session["genomeName"]
-    ? session["genomeName"]
-    : session["genomeId"]
-      ? session["genomeId"]
+  const curGenomeName = session["genomeId"]
+    ? session["genomeId"]
+    : session["id"]
+      ? session["id"]
       : session["name"]
         ? session["name"]
-        : session["id"]
-          ? session["id"]
+        : session["genomeName"]
+          ? session["genomeName"]
           : null;
   const tracks = session.tracks
     ? session.tracks
@@ -43,6 +43,10 @@ export function convertSession(session: any, dispatch: any) {
     !getGenomeConfig(curGenomeName) &&
     !GenomeHubManager.getInstance().getGenomeFromCache(curGenomeName)
   ) {
+    let defaultRegion;
+    if (session.viewRegion !== undefined) {
+      defaultRegion = session.viewRegion;
+    }
     const _newGenomeConfig = {
       id: curGenomeName,
       name: curGenomeName,
@@ -51,6 +55,7 @@ export function convertSession(session: any, dispatch: any) {
         ...item,
         waitToUpdate: true,
       })),
+      defaultRegion,
     };
 
     dispatch(addCustomGenomeRemote(_newGenomeConfig));

@@ -1,122 +1,148 @@
-import Ajv from 'ajv';
+import Ajv from "ajv";
 
 export const genomeDataSchema = {
-    type: 'object',
-    required: ['name', 'id', 'chromosomes', 'defaultRegion'],
-    properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        group: { type: 'string' },
-        chromosomes: {
-            type: 'array',
-            items: {
-                type: 'object',
-                required: ['name', 'length'],
-                properties: {
-                    name: { type: 'string' },
-                    length: { type: 'integer', minimum: 1 }
-                }
-            }
+  type: "object",
+  required: ["name", "id", "chromosomes", "defaultRegion"],
+  properties: {
+    id: { type: "string" },
+    name: { type: "string" },
+    group: { type: "string" },
+    chromosomes: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["name", "length"],
+        properties: {
+          name: { type: "string" },
+          length: { type: "integer", minimum: 1 },
         },
-        cytobands: {
-            type: 'object',
-            patternProperties: {
-                "^chr([0-9]+|[XYM])$": {
-                    type: 'array',
-                    items: {
-                        type: 'object',
-                        required: ['chrom', 'chromStart', 'chromEnd', 'name', 'gieStain'],
-                        properties: {
-                            chrom: { type: 'string' },
-                            chromStart: { type: 'integer', minimum: 0 },
-                            chromEnd: { type: 'integer', minimum: 1 },
-                            name: { type: 'string' },
-                            gieStain: {
-                                type: 'string',
-                                enum: ['gneg', 'gpos25', 'gpos50', 'gpos75', 'gpos100', 'acen', 'gvar', 'stalk']
-                            }
-                        }
-                    }
-                }
-            },
-            additionalProperties: false
-        },
-        defaultRegion: { type: 'string' },
-        defaultTracks: {
-            type: 'array',
-            items: {
-                type: 'object',
-                required: ['type', 'name'],
-                properties: {
-                    type: { type: 'string' },
-                    name: { type: 'string' },
-                    genome: { type: 'string' },
-                    url: { type: 'string' },
-                    options: { type: 'object' },
-                    metadata: { type: 'object' },
-                    label: { type: 'string' },
-                    isSelected: { type: 'boolean' },
-                    fileObj: { type: 'string' },
-                    files: { type: 'array' },
-                    tracks: { type: 'array' },
-                    isText: { type: 'boolean' },
-                    textConfig: { type: 'object' },
-                    apiConfig: { type: 'object' },
-                    queryEndpoint: { type: 'object' }
-                }
-            }
-        },
-        publicHubList: {
-            type: 'array',
-            items: {
-                type: 'object',
-                required: ['collection', 'name', 'numTracks', 'url'],
-                properties: {
-                    collection: { type: 'string' },
-                    name: { type: 'string' },
-                    numTracks: { type: 'integer', minimum: 0 },
-                    oldHubFormat: { type: 'boolean' },
-                    url: { type: 'string' },
-                    description: {
-                        oneOf: [
-                            { type: 'string' },
-                            { type: 'object' }
-                        ]
-                    }
-                }
-            }
-        },
-        publicHubData: { type: 'object' },
-        annotationTracks: {
-            type: 'object',
-            properties: {
-                Ruler: { type: 'array' },
-                Genes: { type: 'array' },
-                'Transcription Factor': { type: 'array' },
-                Variation: { type: 'array' },
-                RepeatMasker: { type: 'object' },
-                Conservation: { type: 'array' },
-                'Genome Annotation': { type: 'array' },
-                'Genome Comparison': { type: 'array' },
-                Mappability: { type: 'array' }
-            }
-        },
-        twoBitURL: { type: 'string' }
+      },
     },
-    additionalProperties: false
+    cytobands: {
+      type: "object",
+      patternProperties: {
+        "^chr([0-9]+|[XYM])$": {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["chrom", "chromStart", "chromEnd", "name", "gieStain"],
+            properties: {
+              chrom: { type: "string" },
+              chromStart: { type: "integer", minimum: 0 },
+              chromEnd: { type: "integer", minimum: 1 },
+              name: { type: "string" },
+              gieStain: {
+                type: "string",
+                enum: [
+                  "gneg",
+                  "gpos25",
+                  "gpos50",
+                  "gpos75",
+                  "gpos100",
+                  "acen",
+                  "gvar",
+                  "stalk",
+                ],
+              },
+            },
+          },
+        },
+      },
+      additionalProperties: false,
+    },
+    defaultRegion: { type: "string" },
+    defaultTracks: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["type", "name"],
+        properties: {
+          type: { type: "string" },
+          name: { type: "string" },
+          genome: { type: "string" },
+          url: { type: "string" },
+          options: { type: "object" },
+          metadata: { type: "object" },
+          label: { type: "string" },
+          isSelected: { type: "boolean" },
+          fileObj: { type: "string" },
+          files: { type: "array" },
+          tracks: { type: "array" },
+          isText: { type: "boolean" },
+          textConfig: { type: "object" },
+          apiConfig: { type: "object" },
+          queryEndpoint: { type: "object" },
+        },
+      },
+    },
+    publicHubList: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["collection", "name", "numTracks", "url"],
+        properties: {
+          collection: { type: "string" },
+          name: { type: "string" },
+          numTracks: { type: "integer", minimum: 0 },
+          oldHubFormat: { type: "boolean" },
+          url: { type: "string" },
+          description: {
+            oneOf: [{ type: "string" }, { type: "object" }],
+          },
+        },
+      },
+    },
+    publicHubData: { type: "object" },
+    annotationTracks: {
+      type: "object",
+      properties: {
+        Ruler: { type: "array" },
+        Genes: { type: "array" },
+        "Transcription Factor": { type: "array" },
+        Variation: { type: "array" },
+        RepeatMasker: { type: "object" },
+        Conservation: { type: "array" },
+        "Genome Annotation": { type: "array" },
+        "Genome Comparison": { type: "array" },
+        Mappability: { type: "array" },
+      },
+    },
+    twoBitURL: { type: "string" },
+  },
+  additionalProperties: false,
 };
 
-export function validateGenomeData(data: any) {
-    const ajv = new Ajv({ allErrors: true });
-    const validate = ajv.compile(genomeDataSchema);
-    const valid = validate(data);
+export const genomeFileSchema = {
+  type: "array",
+  items: genomeDataSchema,
+};
 
+export function validateGenomeData(data: any): {
+  valid: boolean;
+  errors?: any[];
+  normalizedData: any[];
+} {
+  const ajv = new Ajv({ allErrors: true });
+  const validate = ajv.compile(genomeDataSchema);
+
+  const items: any[] = Array.isArray(data) ? data : [data];
+  const allErrors: any[] = [];
+
+  items.forEach((item, i) => {
+    const valid = validate(item);
     if (!valid) {
-        return {
-            valid: false,
-            errors: validate.errors
-        };
+      const prefixed = (validate.errors || []).map((e) => ({
+        ...e,
+        instancePath:
+          items.length > 1 ? `[${i}]${e.instancePath}` : e.instancePath,
+      }));
+      allErrors.push(...prefixed);
     }
+  });
 
-    return { valid: true };
+  if (allErrors.length > 0) {
+    return { valid: false, errors: allErrors, normalizedData: items };
+  }
+
+  return { valid: true, normalizedData: items };
 }

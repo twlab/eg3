@@ -2,34 +2,7 @@ import _ from "lodash";
 import { BlobFile, RemoteFile } from "generic-filehandle";
 import { TabixIndexedFile } from "@gmod/tabix";
 import VCF from "@gmod/vcf";
-
-const ensembl: Array<string> = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20",
-  "21",
-  "22",
-  "X",
-  "Y",
-  "M",
-];
+import { chromAlias } from "./fetchFunctions";
 
 class VcfSource {
   header: any;
@@ -68,7 +41,9 @@ class VcfSource {
         this.chromNamingCache = false;
         return false;
       }
-      this.chromNamingCache = ensembl.includes(firstChrom);
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
       return this.chromNamingCache;
     } catch (error) {
       console.error(

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAppDispatch } from "@/lib/redux/hooks";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { BrowserSession, setCurrentSession, upsertSession } from "@/lib/redux/slices/browserSlice";
+import {
+  setCurrentSession,
+  upsertSession,
+} from "@/lib/redux/slices/browserSlice";
 import Button from "../ui/button/Button";
 import FileInput from "../ui/input/FileInput";
-
 
 import {
   addSessionsFromBundleId,
@@ -16,17 +18,15 @@ import { getDatabase, ref, remove } from "firebase/database";
 import { generateUUID } from "wuepgg3-track";
 export default function ImportSession() {
   const dispatch = useAppDispatch();
-  const [file, setFile] = useState<File | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [bundleId, setBundleId] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [bundle, setBundle] = useState<{ [key: string]: any } | null>(null);
   const [sortSession, setSortSession] = useState<string>("date");
-  const [lastBundleId, setLastBundleId] = useState<string>("");
 
   const handleFileChange = async (file: File | null) => {
     setError(null);
-    setFile(file);
 
     if (!file) return;
 
@@ -49,7 +49,6 @@ export default function ImportSession() {
       dispatch(setCurrentSession(session.id));
     } catch (e) {
       setError("Invalid session file. Please check the file format.");
-      setFile(null);
     }
   };
 
@@ -80,14 +79,13 @@ export default function ImportSession() {
                   const res = await onRetrieveSession(bundleId);
                   if (res) {
                     setBundle(res);
-                    setLastBundleId(res.bundleId);
                   }
                 } catch (e) {
                   // ignore
                 }
               } catch (e) {
                 setError(
-                  "Failed to import session bundle. Please check the Session Bundle ID."
+                  "Failed to import session bundle. Please check the Session Bundle ID.",
                 );
               } finally {
                 setIsLoading(false);
@@ -108,7 +106,6 @@ export default function ImportSession() {
               link.download = "example_session.json";
               link.click();
             }}
-
             backgroundColor="tint"
             style={{ width: "180px" }}
           >
@@ -126,10 +123,15 @@ export default function ImportSession() {
         {bundle && bundle.sessionsInBundle && (
           <div className="mt-6">
             <div className="grid grid-cols-[1fr_auto_auto] gap-3 mt-3">
-              <h1 className="text-md text-primary dark:text-dark-primary">Sessions In Bundle ({Object.keys(bundle.sessionsInBundle).length}) </h1>
+              <h1 className="text-md text-primary dark:text-dark-primary">
+                Sessions In Bundle (
+                {Object.keys(bundle.sessionsInBundle).length})
+              </h1>
 
               <div className="flex items-center gap-3">
-                <span className="text-sm text-primary dark:text-dark-primary">Sort by:</span>
+                <span className="text-sm text-primary dark:text-dark-primary">
+                  Sort by:
+                </span>
                 <label className="flex items-center gap-1 cursor-pointer text-sm">
                   <input
                     type="radio"
@@ -174,11 +176,19 @@ export default function ImportSession() {
                 }
 
                 return sessions.map(([id, session]: any, index: number) => (
-                  <li key={id} className="mb-2 p-2 rounded-md bg-secondary dark:bg-dark-secondary">
+                  <li
+                    key={id}
+                    className="mb-2 p-2 rounded-md bg-secondary dark:bg-dark-secondary"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-sm font-medium text-primary dark:text-dark-primary mr-2">{index + 1}.</span>
-                        <span className="text-sm text-primary dark:text-dark-primary">{session.label} - {new Date(session.date).toLocaleString()}</span>
+                        <span className="text-sm font-medium text-primary dark:text-dark-primary mr-2">
+                          {index + 1}.
+                        </span>
+                        <span className="text-sm text-primary dark:text-dark-primary">
+                          {session.label} -{" "}
+                          {new Date(session.date).toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -187,9 +197,12 @@ export default function ImportSession() {
                             try {
                               const sess = session.state;
 
-                              await dispatch(importOneSession({ session: sess, navigatingToSession: true }) as any).unwrap();
-                              // optionally update lastBundleId
-                              setLastBundleId(bundle.bundleId);
+                              await dispatch(
+                                importOneSession({
+                                  session: sess,
+                                  navigatingToSession: true,
+                                }) as any,
+                              ).unwrap();
                               console.log("Session restored.");
                             } catch (e) {
                               console.error(e);
@@ -211,7 +224,12 @@ export default function ImportSession() {
                             // delete session from remote bundle
                             try {
                               const db = getDatabase();
-                              await remove(ref(db, `sessions/${bundle.bundleId}/sessionsInBundle/${id}`));
+                              await remove(
+                                ref(
+                                  db,
+                                  `sessions/${bundle.bundleId}/sessionsInBundle/${id}`,
+                                ),
+                              );
                               const newBundle = { ...bundle };
                               delete newBundle.sessionsInBundle[id];
 

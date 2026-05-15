@@ -1,40 +1,13 @@
 import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
 import { BlobFile } from "generic-filehandle2";
+import { chromAlias } from "../getRemoteData/fetchFunctions";
 
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
  *
  * @author Daofeng Li
  */
-
-const ensembl: Array<string> = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20",
-  "21",
-  "22",
-  "X",
-  "Y",
-  "M",
-];
 class LocalBigSourceGmod {
   blob: any;
   bw: BigWig;
@@ -63,7 +36,9 @@ class LocalBigSourceGmod {
         this.chromNamingCache = false;
         return false;
       }
-      this.chromNamingCache = ensembl.includes(firstChrom);
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
       return this.chromNamingCache;
     } catch (error) {
       console.error(
