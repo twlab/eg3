@@ -4,6 +4,8 @@ import {
   setExpandNavigationTab,
   setGenomePickerTab,
   setOpenNewCollectionForm,
+  selectFocusCollection,
+  setFocusCollection,
 } from "@/lib/redux/slices/navigationSlice";
 import { selectCustomCollections } from "@/lib/redux/slices/settingsSlice";
 import {
@@ -39,6 +41,7 @@ export default function GenomePicker({
 }: Props) {
   const dispatch = useAppDispatch();
   const customCollections = useAppSelector(selectCustomCollections) ?? {};
+  const focusCollection = useAppSelector(selectFocusCollection);
 
   // Only expand the navigation tab in navbar (tab) mode — inlined to avoid a conditional hook call
   useEffect(() => {
@@ -83,6 +86,13 @@ export default function GenomePicker({
   const [selectedSetKeys, setSelectedSetKeys] = useState<Set<string>>(
     () => new Set([setKeys[0] ?? "DEFAULT_GENOME_LIST"]),
   );
+
+  // When a focusCollection is dispatched, switch to showing only that collection
+  useEffect(() => {
+    if (!focusCollection) return;
+    setSelectedSetKeys(new Set([focusCollection]));
+    dispatch(setFocusCollection(null));
+  }, [focusCollection]);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     () => new Set(),

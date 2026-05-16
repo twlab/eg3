@@ -1,6 +1,12 @@
 import { BamFile } from "@gmod/bam";
 import { BlobFile } from "generic-filehandle";
 
+const CORS_PROXY = "https://epigenome.wustl.edu/cors";
+
+function proxiedUrl(url: string): string {
+  return `${CORS_PROXY}/${url.replace(/^https?:\/\//, "")}`;
+}
+
 /**
  * Daofeng switched to use @gmod/bam instead
  */
@@ -8,17 +14,13 @@ import { BlobFile } from "generic-filehandle";
 class BamSource {
   bam: any;
   header: any;
+  private url: any;
+  private usingProxy: boolean = false;
+
   constructor(param) {
+    this.url = param;
     this.bam = null;
-    // this.bamPromise = new Promise((resolve, reject) => {
-    //     bam.makeBam(new bin.URLFetchable(url), new bin.URLFetchable(url + ".bai"), null, (reader, error) => {
-    //         if (error) {
-    //             reject(error);
-    //         } else {
-    //             resolve(reader);
-    //         }
-    //     });
-    // });
+    this.usingProxy = false;
     if (typeof param === "string") {
       this.bam = new BamFile({
         bamUrl: param,
@@ -36,29 +38,43 @@ class BamSource {
         baiFilehandle,
       });
     }
-    // console.log(this.bam);
     this.header = null;
   }
 
+  private switchToProxy() {
+    if (typeof this.url !== "string") return;
+    this.usingProxy = true;
+    this.header = null;
+    this.bam = new BamFile({
+      bamUrl: proxiedUrl(this.url),
+      baiUrl: proxiedUrl(this.url + ".bai"),
+    });
+  }
+
   async getData(locusArr, basesPerPixel, options = {}) {
-    // const bamObj = await this.bamPromise;
-    // let promises = region.getGenomeIntervals().map(locus => this._getDataInLocus(locus, bamObj));
-    if (!this.header) {
-      this.header = await this.bam.getHeader();
+    const fetchData = async () => {
+      if (!this.header) {
+        this.header = await this.bam.getHeader();
+      }
+      const promises = locusArr.map((locus) =>
+        this.bam.getRecordsForRange(locus.chr, locus.start, locus.end),
+      );
+      const dataForEachSegment = await Promise.all(promises);
+      const flattened = dataForEachSegment.flat();
+      return flattened.map((r) =>
+        Object.assign(r, { ref: this.bam.indexToChr[r.get("seq_id")].refName }),
+      );
+    };
+
+    try {
+      return await fetchData();
+    } catch (error) {
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        return await fetchData();
+      }
+      throw error;
     }
-
-    const promises = locusArr.map((locus) =>
-      this.bam.getRecordsForRange(locus.chr, locus.start, locus.end),
-    );
-
-    const dataForEachSegment = await Promise.all(promises);
-
-    const flattened = dataForEachSegment.flat();
-    const alignments = flattened.map((r) =>
-      Object.assign(r, { ref: this.bam.indexToChr[r.get("seq_id")].refName }),
-    );
-
-    return alignments;
   }
 }
 

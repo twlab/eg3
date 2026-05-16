@@ -28,6 +28,7 @@ export const navigationSlice = createSlice({
     navSearchOpen: false,
     genomePickerTab: "picker" as "picker" | "add" | "import",
     openNewCollectionForm: false,
+    focusCollection: null as string | null,
   },
   reducers: {
     setNavigationPath: (state, action: PayloadAction<NavigationPath>) => {
@@ -66,6 +67,9 @@ export const navigationSlice = createSlice({
     setOpenNewCollectionForm: (state, action: PayloadAction<boolean>) => {
       state.openNewCollectionForm = action.payload;
     },
+    setFocusCollection: (state, action: PayloadAction<string | null>) => {
+      state.focusCollection = action.payload;
+    },
   },
 });
 
@@ -79,6 +83,7 @@ export const {
   setNavSearchOpen,
   setGenomePickerTab,
   setOpenNewCollectionForm,
+  setFocusCollection,
 } = navigationSlice.actions;
 
 export const selectNavigationPath = (state: RootState) => state.navigation.path;
@@ -95,5 +100,7 @@ export const selectGenomePickerTab = (state: RootState) =>
   state.navigation.genomePickerTab;
 export const selectOpenNewCollectionForm = (state: RootState) =>
   state.navigation.openNewCollectionForm;
+export const selectFocusCollection = (state: RootState) =>
+  state.navigation.focusCollection;
 
 export default navigationSlice.reducer;

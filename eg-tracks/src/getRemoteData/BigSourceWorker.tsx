@@ -1,6 +1,14 @@
 import { BigWigZoomLevels } from "../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { makeBwg } from "./vendor/bbi-js/main/bigwig";
 import { URLFetchable } from "./vendor/bbi-js/utils/bin";
+import { chromAlias } from "./fetchFunctions";
+
+const CORS_PROXY = "https://epigenome.wustl.edu/cors";
+
+function proxiedUrl(url: string): string {
+  return `${CORS_PROXY}/${url.replace(/^https?:\/\//, "")}`;
+}
+
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely.  Gets DASFeature records, which vary in schema
  * depending on the file.
@@ -10,6 +18,8 @@ import { URLFetchable } from "./vendor/bbi-js/utils/bin";
 class BigSourceWorker {
   url: any;
   bigWigPromise: Promise<unknown>;
+  private usingProxy: boolean = false;
+  private chromNamingCache: boolean | null = null;
 
   /**
    * Prepares to fetch bigwig or bigbed data from a URL.
@@ -21,21 +31,48 @@ class BigSourceWorker {
     this.bigWigPromise = this.loadBigWig(url);
   }
 
-  // Function to handle the dynamic loading of the BigWig data
   private async loadBigWig(url: string): Promise<any> {
-    try {
-      return new Promise((resolve, reject) => {
-        makeBwg(new URLFetchable(url), (bigWigObj: any, error: any) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(bigWigObj);
-          }
-        });
+    return new Promise((resolve, reject) => {
+      makeBwg(new URLFetchable(url), (bigWigObj: any, error: any) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(bigWigObj);
+        }
       });
+    });
+  }
+
+  private switchToProxy() {
+    this.usingProxy = true;
+    this.chromNamingCache = null;
+    this.bigWigPromise = this.loadBigWig(proxiedUrl(this.url));
+  }
+
+  async detectChromosomeNaming(): Promise<boolean | null> {
+    if (this.chromNamingCache !== null) {
+      return this.chromNamingCache;
+    }
+    try {
+      const bigWigObj = await this.bigWigPromise;
+      const firstChrom = Object.keys(bigWigObj.chromsToIDs || {})[0];
+      if (!firstChrom) {
+        this.chromNamingCache = false;
+        return false;
+      }
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
+      return this.chromNamingCache;
     } catch (error) {
-      console.error("Failed to dynamically load the BigWig module:", error);
-      return Promise.reject(error);
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        return this.detectChromosomeNaming();
+      }
+      console.error(
+        "Error detecting chromosome naming. Check URL and file format.",
+      );
+      return null;
     }
   }
 
@@ -48,23 +85,49 @@ class BigSourceWorker {
    * @override
    */
   async getData(loci: any, basesPerPixel: any, options: any): Promise<any[]> {
-    const bigWigObj = await this.bigWigPromise;
-    const zoomLevel =
-      options.zoomLevel === undefined ||
-      options.zoomLevel === BigWigZoomLevels.AUTO
-        ? this._getMatchingZoomLevel(bigWigObj, basesPerPixel)
-        : Number.parseInt(options.zoomLevel);
+    const isEnsembl =
+      options.ensemblStyle ?? (await this.detectChromosomeNaming());
 
-    let promises = loci.map((locus: any) =>
-      this._getDataForChromosome(locus, bigWigObj, zoomLevel),
-    );
-    const dataForEachLocus = await Promise.all(promises);
+    const fetchForLoci = async () => {
+      const bigWigObj = await this.bigWigPromise;
+      const zoomLevel =
+        options.zoomLevel === undefined ||
+        options.zoomLevel === BigWigZoomLevels.AUTO
+          ? this._getMatchingZoomLevel(bigWigObj, basesPerPixel)
+          : Number.parseInt(options.zoomLevel);
+
+      return loci.map((locus: any) => {
+        let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
+        if (chrom === "M") chrom = "MT";
+        return this._getDataForChromosome(
+          { ...locus, chr: chrom },
+          bigWigObj,
+          zoomLevel,
+        );
+      });
+    };
+
+    let dataForEachLocus: any[][];
+    try {
+      dataForEachLocus = await Promise.all(await fetchForLoci());
+    } catch (error) {
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        dataForEachLocus = await Promise.all(await fetchForLoci());
+      } else {
+        throw error;
+      }
+    }
 
     const combinedData = dataForEachLocus.flat();
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
     }
-
+    if (isEnsembl) {
+      loci.forEach((locus: any, index: number) => {
+        dataForEachLocus[index].forEach((f: any) => (f.chr = locus.chr));
+      });
+    }
     return combinedData;
   }
 

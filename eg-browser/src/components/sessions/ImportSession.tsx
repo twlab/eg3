@@ -91,6 +91,14 @@ export default function ImportSession() {
                 setIsLoading(false);
               }
             }}
+            style={{
+              width: "fit-content",
+              padding: "4px 6px",
+              fontSize: "16px",
+              backgroundColor: "#5E7AC4",
+              color: "white",
+              borderRadius: "6px",
+            }}
             disabled={isLoading}
           >
             {isLoading ? "Importing..." : "Import"}
@@ -107,7 +115,11 @@ export default function ImportSession() {
               link.click();
             }}
             backgroundColor="tint"
-            style={{ width: "180px" }}
+            style={{
+              width: "fit-content",
+              padding: "4px 6px",
+              fontSize: "16px",
+            }}
           >
             Download Example
           </Button>
