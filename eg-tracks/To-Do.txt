@@ -9,13 +9,7 @@ default genome drop down width and get longer if theres more
 check sort order 
 cancel large fetch when moving to new region
 fix mod and vcf height, and viewWindow
-import React, { memo, startTransition } from "react";
-import { useEffect, useRef, useState } from "react";
-import { TrackProps } from "../../../models/trackModels/trackProps";
-import ReactDOM from "react-dom";
-import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
-import OpenInterval from "../../../models/OpenInterval";
-import ErrorBoundary from "./commonComponents/ErrorBoundary";
+
 
 
 4/09/26

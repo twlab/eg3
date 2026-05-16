@@ -25,6 +25,7 @@ export const settingsSlice = createSlice({
     cookieConsentStatus: "pending" as CookieConsentStatus,
     darkTheme: false,
     customCollections: {} as CustomCollections,
+    selectedCollections: ["DEFAULT_GENOME_LIST"] as string[],
   },
   reducers: {
     setNavigatorVisibility: (state, action: PayloadAction<boolean>) => {
@@ -98,6 +99,10 @@ export const settingsSlice = createSlice({
         ].filter((g) => g.name !== genomeName);
       }
     },
+    setSelectedCollections: (state, action: PayloadAction<string[]>) => {
+      state.selectedCollections =
+        action.payload.length > 0 ? action.payload : ["DEFAULT_GENOME_LIST"];
+    },
     resetSettings: (state) => {
       Object.assign(state, settingsSlice.getInitialState());
     },
@@ -116,6 +121,7 @@ export const {
   removeCustomCollection,
   addGenomeToCollection,
   removeGenomeFromCollection,
+  setSelectedCollections,
   resetSettings,
 } = settingsSlice.actions;
 
@@ -134,4 +140,6 @@ export const selectCookieConsentStatus = (state: RootState) =>
 export const selectDarkTheme = (state: RootState) => state.settings.darkTheme;
 export const selectCustomCollections = (state: RootState) =>
   state.settings.customCollections;
+export const selectSelectedCollections = (state: RootState) =>
+  state.settings.selectedCollections;
 export default settingsSlice.reducer;

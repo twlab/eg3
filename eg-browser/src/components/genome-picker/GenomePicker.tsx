@@ -7,7 +7,12 @@ import {
   selectFocusCollection,
   setFocusCollection,
 } from "@/lib/redux/slices/navigationSlice";
-import { selectCustomCollections } from "@/lib/redux/slices/settingsSlice";
+import {
+  selectCustomCollections,
+  selectSelectedCollections,
+  setSelectedCollections,
+} from "@/lib/redux/slices/settingsSlice";
+import { selectCustomGenomes } from "@/lib/redux/slices/genomeHubSlice";
 import {
   CheckIcon,
   ChevronRightIcon,
@@ -15,6 +20,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import placeholder from "../../assets/placeholder.png";
 import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
 import {
@@ -42,6 +48,8 @@ export default function GenomePicker({
   const dispatch = useAppDispatch();
   const customCollections = useAppSelector(selectCustomCollections) ?? {};
   const focusCollection = useAppSelector(selectFocusCollection);
+  const savedSelectedCollections = useAppSelector(selectSelectedCollections);
+  const customGenomes = useAppSelector(selectCustomGenomes);
 
   // Only expand the navigation tab in navbar (tab) mode — inlined to avoid a conditional hook call
   useEffect(() => {
@@ -52,16 +60,33 @@ export default function GenomePicker({
     };
   }, [variant, dispatch]);
 
-  // Merge default + custom collections
+  // Map custom genomes (IGenome[]) to SpeciesInfo[] for display
+  const customGenomeSpecies = useMemo<SpeciesInfo[]>(
+    () =>
+      customGenomes.map((g) => ({
+        name: g.name,
+        assemblies: [g.id],
+        logoUrl: "",
+        color: "white",
+      })),
+    [customGenomes],
+  );
+
+  // Merge default + custom collections, injecting CUSTOM_GENOMES when non-empty
   const allCollections = useMemo<Record<string, SpeciesInfo[]>>(() => {
-    const merged: Record<string, SpeciesInfo[]> = {
-      ...(allDefaultGenomeCollections as Record<string, SpeciesInfo[]>),
-    };
+    const merged: Record<string, SpeciesInfo[]> = {};
+    if (customGenomeSpecies.length > 0) {
+      merged["CUSTOM_GENOMES"] = customGenomeSpecies;
+    }
+    Object.assign(
+      merged,
+      allDefaultGenomeCollections as Record<string, SpeciesInfo[]>,
+    );
     for (const [key, genomes] of Object.entries(customCollections)) {
       merged[key] = genomes as SpeciesInfo[];
     }
     return merged;
-  }, [customCollections]);
+  }, [customCollections, customGenomeSpecies]);
 
   const setKeys = useMemo(() => Object.keys(allCollections), [allCollections]);
 
@@ -69,12 +94,14 @@ export default function GenomePicker({
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
+        !dropdownRef.current?.contains(e.target as Node) &&
+        !menuRef.current?.contains(e.target as Node)
       ) {
         setDropdownOpen(false);
       }
@@ -83,16 +110,44 @@ export default function GenomePicker({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const [selectedSetKeys, setSelectedSetKeys] = useState<Set<string>>(
-    () => new Set([setKeys[0] ?? "DEFAULT_GENOME_LIST"]),
+  const [selectedSetKeys, setSelectedSetKeysLocal] = useState<Set<string>>(
+    () =>
+      new Set(
+        savedSelectedCollections?.length
+          ? savedSelectedCollections
+          : [setKeys[0] ?? "DEFAULT_GENOME_LIST"],
+      ),
   );
+
+  const setSelectedSetKeys = (updater: (prev: Set<string>) => Set<string>) => {
+    setSelectedSetKeysLocal((prev) => {
+      const next = updater(prev);
+      dispatch(setSelectedCollections([...next]));
+      return next;
+    });
+  };
 
   // When a focusCollection is dispatched, switch to showing only that collection
   useEffect(() => {
     if (!focusCollection) return;
-    setSelectedSetKeys(new Set([focusCollection]));
+    setSelectedSetKeysLocal(new Set([focusCollection]));
+    dispatch(setSelectedCollections([focusCollection]));
     dispatch(setFocusCollection(null));
   }, [focusCollection]);
+
+  // Auto-remove CUSTOM_GENOMES from selection when it becomes empty
+  useEffect(() => {
+    if (customGenomeSpecies.length === 0) {
+      setSelectedSetKeysLocal((prev) => {
+        if (!prev.has("CUSTOM_GENOMES")) return prev;
+        const next = new Set(prev);
+        next.delete("CUSTOM_GENOMES");
+        if (next.size === 0) next.add(setKeys[0] ?? "DEFAULT_GENOME_LIST");
+        dispatch(setSelectedCollections([...next]));
+        return next;
+      });
+    }
+  }, [customGenomeSpecies.length]);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     () => new Set(),
@@ -145,6 +200,9 @@ export default function GenomePicker({
       dispatch(
         createSession({ genome: GenomeSerializer.serialize(genomeConfig) }),
       );
+    } else {
+      const iGenome = customGenomes.find((g) => g.id === selectedPath[1]);
+      if (iGenome) dispatch(createSession({ genome: iGenome }));
     }
     return () => clearTimeout(timeout);
   }, [selectedPath]);
@@ -158,26 +216,27 @@ export default function GenomePicker({
     const config = getGenomeConfig(assemblyName);
     if (config) {
       dispatch(createSession({ genome: GenomeSerializer.serialize(config) }));
+    } else {
+      const iGenome = customGenomes.find((g) => g.id === assemblyName);
+      if (iGenome) dispatch(createSession({ genome: iGenome }));
     }
     if (onClose) onClose();
   };
 
   const filteredCollections = useMemo(() => {
-    return activeCollections
-      .map((collection) => ({
-        ...collection,
-        genomes: collection.genomes.filter((genome) => {
-          if (!debouncedSearchQuery) return true;
-          const searchLower = debouncedSearchQuery.toLowerCase();
-          return (
-            genome.name.toLowerCase().includes(searchLower) ||
-            genome.assemblies.some((version) =>
-              version.toLowerCase().includes(searchLower),
-            )
-          );
-        }),
-      }))
-      .filter((c) => c.genomes.length > 0);
+    return activeCollections.map((collection) => ({
+      ...collection,
+      genomes: collection.genomes.filter((genome) => {
+        if (!debouncedSearchQuery) return true;
+        const searchLower = debouncedSearchQuery.toLowerCase();
+        return (
+          genome.name.toLowerCase().includes(searchLower) ||
+          genome.assemblies.some((version) =>
+            version.toLowerCase().includes(searchLower),
+          )
+        );
+      }),
+    }));
   }, [debouncedSearchQuery, activeCollections]);
 
   const isMultiCollection = selectedSetKeys.size > 1;
@@ -197,7 +256,13 @@ export default function GenomePicker({
   const collectionDropdown = (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setDropdownOpen((o) => !o)}
+        onClick={() => {
+          if (!dropdownOpen && dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            setDropdownPos({ top: rect.bottom + 4, left: rect.left });
+          }
+          setDropdownOpen((o) => !o);
+        }}
         className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-base font-medium focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
       >
         <span>
@@ -218,48 +283,58 @@ export default function GenomePicker({
         </motion.div>
       </button>
 
-      <AnimatePresence>
-        {dropdownOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute z-20 mt-1 min-w-max rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-surface shadow-lg py-1"
-          >
-            {setKeys.map((key) => {
-              const isSelected = selectedSetKeys.has(key);
-              const label = key
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase());
-              return (
-                <button
-                  key={key}
-                  onClick={() => toggleCollection(key)}
-                  className="flex items-center justify-between w-full gap-6 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
-                >
-                  <span>{label}</span>
-                  {isSelected && (
-                    <CheckIcon className="w-4 h-4 text-tint flex-shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-            <div className="my-1 border-t border-gray-200 dark:border-gray-600" />
-            <button
-              onClick={() => {
-                setDropdownOpen(false);
-                dispatch(setOpenNewCollectionForm(true));
-                dispatch(setGenomePickerTab("add"));
+      {createPortal(
+        <AnimatePresence>
+          {dropdownOpen && (
+            <motion.div
+              ref={menuRef}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              style={{
+                position: "fixed",
+                top: dropdownPos.top,
+                left: dropdownPos.left,
+                zIndex: 9999,
               }}
-              className="flex items-center w-full gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="min-w-max rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-surface shadow-lg py-1"
             >
-              <span className="text-base leading-none">+</span>
-              <span>Create New Collection</span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {setKeys.map((key) => {
+                const isSelected = selectedSetKeys.has(key);
+                const label = key
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase());
+                return (
+                  <button
+                    key={key}
+                    onClick={() => toggleCollection(key)}
+                    className="flex items-center justify-between w-full gap-6 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  >
+                    <span>{label}</span>
+                    {isSelected && (
+                      <CheckIcon className="w-4 h-4 text-tint flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+              <div className="my-1 border-t border-gray-200 dark:border-gray-600" />
+              <button
+                onClick={() => {
+                  setDropdownOpen(false);
+                  dispatch(setOpenNewCollectionForm(true));
+                  dispatch(setGenomePickerTab("add"));
+                }}
+                className="flex items-center w-full gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <span className="text-base leading-none">+</span>
+                <span>Create New Collection</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </div>
   );
 
