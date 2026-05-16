@@ -68,9 +68,10 @@ export default function AddCustomGenome() {
   const [genomesExpanded, setGenomesExpanded] = useState(true);
 
   // Toast notification
-  const [toast, setToast] = useState<{ visible: boolean; collection: string }>(
-    { visible: false, collection: "" },
-  );
+  const [toast, setToast] = useState<{ visible: boolean; collection: string }>({
+    visible: false,
+    collection: "",
+  });
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync selectedCollection when collections change
@@ -310,7 +311,9 @@ export default function AddCustomGenome() {
           >
             <span>
               Added to{" "}
-              <span className="font-semibold text-tint">"{toast.collection}"</span>
+              <span className="font-semibold text-tint">
+                "{toast.collection}"
+              </span>
             </span>
             <button
               onClick={() => {
