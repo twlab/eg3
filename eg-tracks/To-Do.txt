@@ -5,6 +5,11 @@ change checks for customgenome to new props name
 change size of search and dropdown genomepicker 
 change size of load a session 
 fix flicker of highlights when changing region 
+change button style of screenshot 
+add pdf download to screenshot
+add multi screenshot 
+add bedcolor 
+add rgbpeak 
 
 
 5/15/2026
