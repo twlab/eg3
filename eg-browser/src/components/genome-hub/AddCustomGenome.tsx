@@ -3,11 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Button from "../ui/button/Button";
 
 import { addCustomGenome } from "@/lib/redux/thunk/genome-hub";
-import {
-  ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
-  PlusIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import FileInput from "../ui/input/FileInput";
 import {
@@ -32,6 +28,7 @@ import {
   setGenomePickerTab,
   setFocusCollection,
 } from "@/lib/redux/slices/navigationSlice";
+import { selectCustomGenomes } from "@/lib/redux/slices/genomeHubSlice";
 import GenomePicker from "../genome-picker/GenomePicker";
 import { type SpeciesInfo } from "wuepgg3-track";
 
@@ -41,6 +38,7 @@ export default function AddCustomGenome() {
   const collectionKeys = Object.keys(customCollections);
   const hasCollections = collectionKeys.length > 0;
   const openNewCollectionForm = useAppSelector(selectOpenNewCollectionForm);
+  const customGenomes = useAppSelector(selectCustomGenomes) ?? [];
 
   const [file, setFile] = useState<File | null>(null);
   const [validationErrors, setValidationErrors] = useState<ReturnType<
@@ -57,15 +55,17 @@ export default function AddCustomGenome() {
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [selectedCollection, setSelectedCollection] = useState<string | null>(
-    null,
+    collectionKeys[0] ?? null,
   );
   const [collectionDropdownOpen, setCollectionDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Add genome panel mode
-  const [uploadOpen, setUploadOpen] = useState(true);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [genomesExpanded, setGenomesExpanded] = useState(true);
+  const [activePanel, setActivePanel] = useState<"upload" | "existing">(
+    "upload",
+  );
+  const [genomesExpanded, setGenomesExpanded] = useState(false);
+  const [hubPanelOpen, setHubPanelOpen] = useState(false);
 
   // Toast notification
   const [toast, setToast] = useState<{ visible: boolean; collection: string }>({
@@ -465,16 +465,16 @@ export default function AddCustomGenome() {
               /* ── Full UI: collections exist ── */
               <motion.div
                 key="full-ui"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.22 }}
                 className="flex flex-col gap-4"
               >
                 {/* Title row: collection selector inline */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-base font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">
-                    Adding Genome to Collection:
+                    Current Collection:
                   </span>
 
                   {/* Inline collection dropdown */}
@@ -537,6 +537,25 @@ export default function AddCustomGenome() {
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* Genomes in collection toggle button */}
+                  {selectedCollection && (
+                    <button
+                      onClick={() => setGenomesExpanded((e) => !e)}
+                      className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-background focus:outline-none cursor-pointer transition-colors"
+                    >
+                      <span>Genomes in collection</span>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-tint/15 text-tint text-xs font-semibold">
+                        {customCollections[selectedCollection]?.length ?? 0}
+                      </span>
+                      <motion.div
+                        animate={{ rotate: genomesExpanded ? 90 : 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                      >
+                        <ChevronRightIcon className="w-3.5 h-3.5 text-gray-400" />
+                      </motion.div>
+                    </button>
+                  )}
 
                   {/* New collection button / input — inline */}
                   <AnimatePresence mode="wait" initial={false}>
@@ -618,217 +637,271 @@ export default function AddCustomGenome() {
                     )}
                   </AnimatePresence>
                 </div>
+                {/* Genomes in collection — animated list */}
+                {selectedCollection && (
+                  <AnimatePresence initial={false}>
+                    {genomesExpanded && (
+                      <motion.div
+                        key="genome-list"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: "easeInOut" }}
+                        style={{ overflow: "hidden" }}
+                      >
+                        <div className="py-3 flex flex-col gap-1.5">
+                          {(customCollections[selectedCollection]?.length ??
+                            0) === 0 ? (
+                            <p className="text-xs text-gray-400 py-2">
+                              No genomes in this collection yet.
+                            </p>
+                          ) : (
+                            <>
+                              {(
+                                customCollections[selectedCollection] ?? []
+                              ).map((genome) => (
+                                <div
+                                  key={genome.name}
+                                  className="flex items-center justify-between px-3 py-1.5 rounded-md text-sm bg-gray-50 dark:bg-dark-background border border-gray-100 dark:border-gray-700"
+                                >
+                                  <div>
+                                    <span className="font-medium">
+                                      {genome.name}
+                                    </span>
+                                    <span className="ml-2 text-xs text-gray-400">
+                                      {genome.assemblies.join(", ")}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      dispatch(
+                                        removeGenomeFromCollection({
+                                          collectionName: selectedCollection,
+                                          genomeName: genome.name,
+                                        }),
+                                      )
+                                    }
+                                    className="text-gray-400 hover:text-red-500"
+                                  >
+                                    <XMarkIcon className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                onClick={() =>
+                                  (
+                                    customCollections[selectedCollection] ?? []
+                                  ).forEach((genome) =>
+                                    dispatch(
+                                      removeGenomeFromCollection({
+                                        collectionName: selectedCollection,
+                                        genomeName: genome.name,
+                                      }),
+                                    ),
+                                  )
+                                }
+                                className="mt-1 text-xs text-red-400 hover:text-red-500 cursor-pointer text-left"
+                              >
+                                Clear all
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
                 <div
                   className="w-full dark:bg-white bg-black"
                   style={{ height: "1px" }}
                 />
                 {selectedCollection && (
                   <div className="flex flex-col gap-3">
-                    <div className="flex flex-col">
-                      {/* Upload Custom Genome accordion */}
-                      <div>
-                        <button
-                          onClick={() => setUploadOpen((o) => !o)}
-                          className="flex items-center justify-between w-full py-3 text-base font-semibold text-gray-800 dark:text-gray-100 hover:text-tint dark:hover:text-tint border-b border-gray-200 dark:border-gray-700 group"
-                        >
-                          <span className="flex items-center gap-2">
-                            <ArrowUpTrayIcon className="w-4 h-4" />
-                            Upload Custom Genome
-                          </span>
-                          <motion.div
-                            animate={{ rotate: uploadOpen ? 90 : 0 }}
-                            transition={{ duration: 0.2, ease: "easeInOut" }}
-                          >
-                            <ChevronRightIcon className="w-5 h-5" />
-                          </motion.div>
-                        </button>
-                        <AnimatePresence initial={false}>
-                          {uploadOpen && (
-                            <motion.div
-                              key="upload-panel"
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.22, ease: "easeInOut" }}
-                              style={{ overflow: "hidden" }}
-                            >
-                              <div className="py-4 flex flex-col gap-4">
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    leftIcon={<PlusIcon className="w-4 h-4" />}
-                                    outlined
-                                    onClick={() => setShowSchema(true)}
-                                    style={{ width: "130px", fontSize: "13px" }}
-                                  >
-                                    View Schema
-                                  </Button>
-                                  <Button
-                                    leftIcon={
-                                      <ArrowDownTrayIcon className="w-4 h-4" />
-                                    }
-                                    onClick={() => {
-                                      const link = document.createElement("a");
-                                      link.href =
-                                        import.meta.env.BASE_URL +
-                                        "/example_hg19.json";
-                                      link.download = "example_hg19.json";
-                                      link.click();
-                                    }}
-                                    outlined
-                                    disabled={false}
-                                    backgroundColor="tint"
-                                    style={{ width: "170px", fontSize: "13px" }}
-                                  >
-                                    Download Example
-                                  </Button>
-                                </div>
-                                <FileInput
-                                  accept=".json"
-                                  onFileChange={setFile}
-                                  dragMessage="Drag and drop a .json genome file here"
-                                  className="w-full"
-                                />
-                                {isLoading ? (
-                                  <p className="text-sm text-gray-500 text-center">
-                                    Validating...
-                                  </p>
-                                ) : (
-                                  <>
-                                    {renderFieldWarnings()}
-                                    {renderDuplicateWarnings()}
-                                    {renderValidationErrors()}
-                                  </>
-                                )}
-                                <GenomeHubPanel />
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      {/* Add Existing Genome accordion */}
-                      <div>
-                        <button
-                          onClick={() => setPickerOpen((o) => !o)}
-                          className="flex items-center justify-between w-full py-3 text-base font-semibold text-gray-800 dark:text-gray-100 hover:text-tint dark:hover:text-tint border-b border-gray-200 dark:border-gray-700"
-                        >
-                          <span className="flex items-center gap-2">
-                            <PlusIcon className="w-4 h-4" />
-                            Existing Genome
-                          </span>
-                          <motion.div
-                            animate={{ rotate: pickerOpen ? 90 : 0 }}
-                            transition={{ duration: 0.2, ease: "easeInOut" }}
-                          >
-                            <ChevronRightIcon className="w-5 h-5" />
-                          </motion.div>
-                        </button>
-                        <AnimatePresence initial={false}>
-                          {pickerOpen && (
-                            <motion.div
-                              key="picker-panel"
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.22, ease: "easeInOut" }}
-                              style={{ overflow: "hidden" }}
-                            >
-                              <div className="py-2">
-                                <GenomePicker
-                                  variant="tab"
-                                  onSelectGenome={(genome, assemblyName) => {
-                                    handleAddGenome(genome, assemblyName);
-                                  }}
-                                />
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-
-                    {/* Collapsible genome list — kept in its own card */}
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => setGenomesExpanded((e) => !e)}
-                        className="flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-background border-t border-gray-200 dark:border-gray-700"
+                    {/* Panel switcher */}
+                    <div className="flex justify-center py-1">
+                      <div
+                        className="flex items-center p-1 rounded-full bg-gray-200 dark:bg-dark-background cursor-pointer"
+                        onClick={() =>
+                          setActivePanel(
+                            activePanel === "upload" ? "existing" : "upload",
+                          )
+                        }
                       >
-                        <span className="flex items-center gap-1.5">
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-tint/15 text-tint text-xs font-semibold">
-                            {customCollections[selectedCollection]?.length ?? 0}
-                          </span>
-                          <span>
-                            Genome
-                            {(customCollections[selectedCollection]?.length ??
-                              0) !== 1
-                              ? "s"
-                              : ""}{" "}
-                            in collection
-                          </span>
-                        </span>
-                        <motion.div
-                          animate={{ rotate: genomesExpanded ? 90 : 0 }}
-                          transition={{ duration: 0.2, ease: "easeInOut" }}
-                        >
-                          <ChevronRightIcon className="w-4 h-4 text-gray-400" />
-                        </motion.div>
-                      </button>
-                      <AnimatePresence initial={false}>
-                        {genomesExpanded && (
-                          <motion.div
-                            key="genome-list"
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2, ease: "easeInOut" }}
-                            style={{ overflow: "hidden" }}
+                        {(["upload", "existing"] as const).map((panel) => (
+                          <button
+                            key={panel}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActivePanel(panel);
+                            }}
+                            className="relative flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium"
                           >
-                            <div className="px-4 pb-4 pt-2">
-                              {(customCollections[selectedCollection]?.length ??
-                                0) === 0 ? (
-                                <p className="text-xs text-gray-400 text-center py-4">
-                                  No genomes in this collection yet.
-                                </p>
+                            {activePanel === panel && (
+                              <motion.div
+                                layoutId="panel-thumb"
+                                className="absolute inset-0 rounded-full bg-white dark:bg-dark-surface shadow"
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 400,
+                                  damping: 35,
+                                }}
+                              />
+                            )}
+                            <span
+                              className={`relative z-10 flex items-center gap-1.5 transition-colors duration-200 ${
+                                activePanel === panel
+                                  ? "text-gray-900 dark:text-white"
+                                  : "text-gray-400 dark:text-gray-500"
+                              }`}
+                            >
+                              {panel === "upload" ? (
+                                <ArrowUpTrayIcon className="w-4 h-4" />
                               ) : (
-                                <div className="flex flex-col gap-1.5">
-                                  {(
-                                    customCollections[selectedCollection] ?? []
-                                  ).map((genome) => (
-                                    <div
-                                      key={genome.name}
-                                      className="flex items-center justify-between px-3 py-1.5 rounded-md text-sm bg-gray-50 dark:bg-dark-background border border-gray-100 dark:border-gray-700"
-                                    >
-                                      <div>
-                                        <span className="font-medium">
-                                          {genome.name}
-                                        </span>
-                                        <span className="ml-2 text-xs text-gray-400">
-                                          {genome.assemblies.join(", ")}
-                                        </span>
-                                      </div>
-                                      <button
-                                        onClick={() =>
-                                          dispatch(
-                                            removeGenomeFromCollection({
-                                              collectionName:
-                                                selectedCollection,
-                                              genomeName: genome.name,
-                                            }),
-                                          )
-                                        }
-                                        className="text-gray-400 hover:text-red-500"
-                                      >
-                                        <XMarkIcon className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
+                                <PlusIcon className="w-4 h-4" />
                               )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                              {panel === "upload"
+                                ? "Upload Custom Genome to Collection"
+                                : "Add Existing Genome to Collection"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Active panel content */}
+                    <AnimatePresence mode="wait" initial={false}>
+                      {activePanel === "upload" ? (
+                        <motion.div
+                          key="upload-panel"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.18, ease: "easeInOut" }}
+                          className="flex flex-col gap-4"
+                        >
+                          <div className="flex gap-4 items-stretch">
+                            {/* Left: drag-and-drop */}
+                            <div className="flex-1 flex flex-col">
+                              <FileInput
+                                accept=".json"
+                                onFileChange={setFile}
+                                dragMessage="Drag and drop a .json genome file here"
+                                containerClassName="w-full h-full"
+                                className="!h-full"
+                              />
+                            </div>
+                            {/* Right: description */}
+                            <div className="flex-1 flex flex-col justify-center gap-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                              <p>
+                                Add your own custom genome by providing a JSON
+                                file. Make sure to have a unique{" "}
+                                <span className="font-mono text-xs bg-gray-100 dark:bg-dark-background px-1 rounded">
+                                  id
+                                </span>
+                                , a default region on first view, and a{" "}
+                                <span className="font-mono text-xs bg-gray-100 dark:bg-dark-background px-1 rounded">
+                                  chromosomes
+                                </span>{" "}
+                                array.
+                              </p>
+                              <p>
+                                See how to build the JSON at{" "}
+                                <button
+                                  onClick={() => setShowSchema(true)}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-medium text-blue-500 underline hover:text-blue-400 focus:outline-none cursor-pointer"
+                                >
+                                  View Schema
+                                </button>
+                                You can also{" "}
+                                <button
+                                  onClick={() => {
+                                    const link = document.createElement("a");
+                                    link.href =
+                                      import.meta.env.BASE_URL +
+                                      "/example_hg19.json";
+                                    link.download = "example_hg19.json";
+                                    link.click();
+                                  }}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-medium bg-tint dark:bg-dark-tint text-white focus:outline-none cursor-pointer transition-opacity hover:opacity-90"
+                                >
+                                  download an example JSON file
+                                </button>
+                              </p>
+                            </div>
+                          </div>
+                          {isLoading ? (
+                            <p className="text-sm text-gray-500 text-center">
+                              Validating...
+                            </p>
+                          ) : (
+                            <>
+                              {renderFieldWarnings()}
+                              {renderDuplicateWarnings()}
+                              {renderValidationErrors()}
+                            </>
+                          )}
+                          {/* Genome Hub Panel accordion */}
+                          <div>
+                            <button
+                              onClick={() => setHubPanelOpen((o) => !o)}
+                              className="flex items-center justify-between w-full py-3 text-sm text-gray-800 dark:text-gray-100 hover:text-tint dark:hover:text-tint border-b border-gray-200 dark:border-gray-700"
+                            >
+                              <span className="flex items-center gap-2">
+                                Uploaded Custom Genomes
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-tint/15 text-tint text-xs font-semibold">
+                                  {customGenomes.length}
+                                </span>
+                              </span>
+                              <motion.div
+                                animate={{ rotate: hubPanelOpen ? 90 : 0 }}
+                                transition={{
+                                  duration: 0.2,
+                                  ease: "easeInOut",
+                                }}
+                              >
+                                <ChevronRightIcon className="w-5 h-5" />
+                              </motion.div>
+                            </button>
+                            <AnimatePresence initial={false}>
+                              {hubPanelOpen && (
+                                <motion.div
+                                  key="hub-panel"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{
+                                    duration: 0.22,
+                                    ease: "easeInOut",
+                                  }}
+                                  style={{ overflow: "hidden" }}
+                                >
+                                  <div className="py-3">
+                                    <GenomeHubPanel />
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="picker-panel"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.18, ease: "easeInOut" }}
+                        >
+                          <GenomePicker
+                            variant="tab"
+                            onSelectGenome={(genome, assemblyName) => {
+                              handleAddGenome(genome, assemblyName);
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* (genome list moved above divider) */}
                   </div>
                 )}
               </motion.div>

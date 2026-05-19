@@ -72,7 +72,6 @@ export default function GenomeHubPanel() {
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl">Custom Genomes available</h1>
         <div>
           <ClearAllButton
             onClearAll={() => dispatch(clearAllGenomes())}
