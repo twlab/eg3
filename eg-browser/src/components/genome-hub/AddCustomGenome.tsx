@@ -2,23 +2,31 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { useEffect, useRef, useState } from "react";
 import Button from "../ui/button/Button";
 
-import { addCustomGenome } from "@/lib/redux/thunk/genome-hub";
-import { ArrowUpTrayIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import FileInput from "../ui/input/FileInput";
 import {
-  GenomeSerializer,
-  GenomeHubManager,
-  type IGenome,
-} from "wuepgg3-track";
-import GenomeHubPanel from "./GenomeHubPanel";
+  addCustomGenome,
+  deleteCustomGenome,
+  clearAllGenomes,
+  refreshLocalGenomes,
+} from "@/lib/redux/thunk/genome-hub";
+import { ArrowUpTrayIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronRightIcon,
+  XMarkIcon,
+  CheckIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
+import FileInput from "../ui/input/FileInput";
+import { GenomeSerializer, type IGenome } from "wuepgg3-track";
 import GenomeSchemaView from "./GenomeSchemaView";
+import { selectCustomGenomesLoadStatus } from "@/lib/redux/slices/genomeHubSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   addCustomCollection,
   removeCustomCollection,
   addGenomeToCollection,
   removeGenomeFromCollection,
+  removeAssemblyFromCollection,
+  removeAssembliesFromAllCollections,
   selectCustomCollections,
   type CustomGenomeEntry,
 } from "@/lib/redux/slices/settingsSlice";
@@ -39,12 +47,13 @@ export default function AddCustomGenome() {
   const hasCollections = collectionKeys.length > 0;
   const openNewCollectionForm = useAppSelector(selectOpenNewCollectionForm);
   const customGenomes = useAppSelector(selectCustomGenomes) ?? [];
+  const customGenomesLoadStatus = useAppSelector(selectCustomGenomesLoadStatus);
 
   const [file, setFile] = useState<File | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<ReturnType<
     typeof GenomeSerializer.validateGenomeObject
   > | null>(null);
-  const [duplicateIds, setDuplicateIds] = useState<string[]>([]);
   const [fieldWarnings, setFieldWarnings] = useState<
     { label: string; missing: string[] }[]
   >([]);
@@ -86,6 +95,18 @@ export default function AddCustomGenome() {
     }
   }, [customCollections]);
 
+  // Refresh custom genomes from IndexedDB when panel opens
+  useEffect(() => {
+    if (hubPanelOpen && customGenomesLoadStatus === "idle") {
+      dispatch(refreshLocalGenomes());
+    }
+  }, [hubPanelOpen, customGenomesLoadStatus]);
+
+  // Reset confirm-delete when panel closes
+  useEffect(() => {
+    if (!hubPanelOpen) setConfirmDeleteId(null);
+  }, [hubPanelOpen]);
+
   // Consume the "open new collection form" flag dispatched from GenomePicker
   useEffect(() => {
     if (openNewCollectionForm) {
@@ -112,7 +133,6 @@ export default function AddCustomGenome() {
     if (file) {
       (async () => {
         setIsLoading(true);
-        setDuplicateIds([]);
         setFieldWarnings([]);
         try {
           const json = await file.text();
@@ -142,17 +162,6 @@ export default function AddCustomGenome() {
 
           const errors = GenomeSerializer.validateGenomeObject(items);
           setValidationErrors(errors);
-
-          if (errors.valid && errors.normalizedData) {
-            const manager = GenomeHubManager.getInstance();
-            const duplicates: string[] = [];
-            for (const genome of errors.normalizedData) {
-              if (await manager.genomeExists(genome.id)) {
-                duplicates.push(genome.id);
-              }
-            }
-            setDuplicateIds(duplicates);
-          }
         } catch (error) {
           console.error(error);
           setValidationErrors({
@@ -177,7 +186,31 @@ export default function AddCustomGenome() {
 
   useEffect(() => {
     if (file && validationErrors?.valid && validationErrors.normalizedData) {
-      dispatch(addCustomGenome(validationErrors.normalizedData as IGenome[]));
+      const genomes = validationErrors.normalizedData as IGenome[];
+      dispatch(addCustomGenome(genomes));
+      if (selectedCollection) {
+        for (const genome of genomes) {
+          const entry: CustomGenomeEntry = {
+            name: genome.name || genome.id,
+            logoUrl: "",
+            assemblies: [],
+            color: "white",
+          };
+          dispatch(
+            addGenomeToCollection({
+              collectionName: selectedCollection,
+              genome: entry,
+              assemblyName: genome.id,
+            }),
+          );
+        }
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToast({ visible: true, collection: selectedCollection });
+        toastTimerRef.current = setTimeout(
+          () => setToast((t) => ({ ...t, visible: false })),
+          4000,
+        );
+      }
     }
   }, [file, validationErrors]);
 
@@ -233,25 +266,6 @@ export default function AddCustomGenome() {
                   {f}
                 </span>
               ))}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
-  const renderDuplicateWarnings = () => {
-    if (duplicateIds.length === 0) return null;
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mt-4">
-        <h3 className="text-yellow-800 font-medium mb-2">
-          Duplicate Genome IDs:
-        </h3>
-        <ul className="list-disc pl-5 text-yellow-700 text-sm">
-          {duplicateIds.map((id) => (
-            <li key={id} className="mb-1">
-              A genome with id <span className="font-mono text-xs">{id}</span>{" "}
-              already exists and will be overwritten.
             </li>
           ))}
         </ul>
@@ -342,7 +356,7 @@ export default function AddCustomGenome() {
           onClick={() => setShowSchema(false)}
         >
           <div
-            className="relative bg-white dark:bg-dark-background rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6"
+            className="relative bg-white dark:bg-dark-background rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -358,7 +372,7 @@ export default function AddCustomGenome() {
       )}
 
       <div className="w-full flex justify-center">
-        <div className="w-full max-w-2xl bg-white dark:bg-dark-surface rounded-lg p-6 shadow-sm">
+        <div className="w-full max-w-2xl bg-white dark:bg-dark-surface rounded-lg p-4 shadow-sm">
           <AnimatePresence mode="wait">
             {!hasCollections ? (
               /* ── Empty state: no collections yet ── */
@@ -473,8 +487,8 @@ export default function AddCustomGenome() {
               >
                 {/* Title row: collection selector inline */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-base font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">
-                    Current Collection:
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Current collection:
                   </span>
 
                   {/* Inline collection dropdown */}
@@ -666,29 +680,37 @@ export default function AddCustomGenome() {
                               ).map((genome) => (
                                 <div
                                   key={genome.name}
-                                  className="flex items-center justify-between px-3 py-1.5 rounded-md text-sm bg-gray-50 dark:bg-dark-background border border-gray-100 dark:border-gray-700"
+                                  className="flex flex-col gap-1 px-3 py-2 rounded-md bg-gray-50 dark:bg-dark-background border border-gray-100 dark:border-gray-700"
                                 >
-                                  <div>
-                                    <span className="font-medium">
-                                      {genome.name}
-                                    </span>
-                                    <span className="ml-2 text-xs text-gray-400">
-                                      {genome.assemblies.join(", ")}
-                                    </span>
+                                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                    {genome.name}
+                                  </span>
+                                  <div className="flex flex-wrap gap-1">
+                                    {genome.assemblies.map((assembly) => (
+                                      <span
+                                        key={assembly}
+                                        className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-tint/10 text-tint text-xs font-medium"
+                                      >
+                                        {assembly}
+                                        <button
+                                          onClick={() =>
+                                            dispatch(
+                                              removeAssemblyFromCollection({
+                                                collectionName:
+                                                  selectedCollection,
+                                                genomeName: genome.name,
+                                                assemblyName: assembly,
+                                              }),
+                                            )
+                                          }
+                                          className="text-tint/60 hover:text-red-500 transition-colors"
+                                          aria-label={`Remove ${assembly}`}
+                                        >
+                                          <XMarkIcon className="w-3 h-3" />
+                                        </button>
+                                      </span>
+                                    ))}
                                   </div>
-                                  <button
-                                    onClick={() =>
-                                      dispatch(
-                                        removeGenomeFromCollection({
-                                          collectionName: selectedCollection,
-                                          genomeName: genome.name,
-                                        }),
-                                      )
-                                    }
-                                    className="text-gray-400 hover:text-red-500"
-                                  >
-                                    <XMarkIcon className="w-4 h-4" />
-                                  </button>
                                 </div>
                               ))}
                               <button
@@ -845,7 +867,6 @@ export default function AddCustomGenome() {
                           ) : (
                             <>
                               {renderFieldWarnings()}
-                              {renderDuplicateWarnings()}
                               {renderValidationErrors()}
                             </>
                           )}
@@ -884,8 +905,187 @@ export default function AddCustomGenome() {
                                   }}
                                   style={{ overflow: "hidden" }}
                                 >
-                                  <div className="py-3">
-                                    <GenomeHubPanel />
+                                  <div className="py-3 flex flex-col gap-2">
+                                    {/* Header: clear all */}
+                                    {customGenomes.length > 0 && (
+                                      <div className="flex justify-end">
+                                        <button
+                                          onClick={() => {
+                                            dispatch(
+                                              removeAssembliesFromAllCollections(
+                                                customGenomes.map((g) => g.id),
+                                              ),
+                                            );
+                                            dispatch(clearAllGenomes());
+                                          }}
+                                          className="text-xs text-red-400 hover:text-red-500 cursor-pointer"
+                                        >
+                                          Clear all custom genomes
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    {customGenomes.length === 0 ? (
+                                      <div className="flex flex-col items-center gap-2 py-6 text-gray-400">
+                                        <ExclamationTriangleIcon className="w-8 h-8 opacity-40" />
+                                        <p className="text-sm font-medium">
+                                          No Custom Genomes
+                                        </p>
+                                        <p className="text-xs text-center max-w-xs">
+                                          Custom genomes are stored locally in
+                                          your browser. Upload a genome file
+                                          above and it will appear here.
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      customGenomes.map((genome) => {
+                                        const isInCollection =
+                                          selectedCollection
+                                            ? (
+                                                customCollections[
+                                                  selectedCollection
+                                                ] ?? []
+                                              ).some((entry) =>
+                                                entry.assemblies.includes(
+                                                  genome.id,
+                                                ),
+                                              )
+                                            : false;
+                                        const isConfirming =
+                                          confirmDeleteId === genome.id;
+                                        return (
+                                          <div
+                                            key={genome.id}
+                                            onClick={() => {
+                                              if (
+                                                isInCollection ||
+                                                !selectedCollection
+                                              )
+                                                return;
+                                              const entry: CustomGenomeEntry = {
+                                                name: genome.name || genome.id,
+                                                logoUrl: "",
+                                                assemblies: [],
+                                                color: "white",
+                                              };
+                                              dispatch(
+                                                addGenomeToCollection({
+                                                  collectionName:
+                                                    selectedCollection,
+                                                  genome: entry,
+                                                  assemblyName: genome.id,
+                                                }),
+                                              );
+                                              if (toastTimerRef.current)
+                                                clearTimeout(
+                                                  toastTimerRef.current,
+                                                );
+                                              setToast({
+                                                visible: true,
+                                                collection: selectedCollection,
+                                              });
+                                              toastTimerRef.current =
+                                                setTimeout(
+                                                  () =>
+                                                    setToast((t) => ({
+                                                      ...t,
+                                                      visible: false,
+                                                    })),
+                                                  4000,
+                                                );
+                                            }}
+                                            className={`flex flex-row justify-between items-center p-3 rounded-xl border transition-colors ${
+                                              isInCollection
+                                                ? "bg-tint/5 border-tint/20 cursor-default"
+                                                : selectedCollection
+                                                  ? "bg-secondary dark:bg-dark-secondary border-transparent hover:border-tint/30 cursor-pointer"
+                                                  : "bg-secondary dark:bg-dark-secondary border-transparent cursor-default opacity-60"
+                                            }`}
+                                          >
+                                            {/* Left: genome info */}
+                                            <div className="flex flex-col gap-1">
+                                              <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium">
+                                                  {genome.name}
+                                                </span>
+                                                {isInCollection && (
+                                                  <span className="inline-flex items-center gap-1 text-xs text-tint font-semibold">
+                                                    <CheckIcon className="w-3.5 h-3.5" />
+                                                    In collection
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <span className="text-xs text-gray-400">
+                                                {genome.chromosomes.length > 0
+                                                  ? genome.chromosomes
+                                                      .slice(0, 3)
+                                                      .map((c) => c.name)
+                                                      .join(", ") +
+                                                    (genome.chromosomes.length >
+                                                    3
+                                                      ? ` +${
+                                                          genome.chromosomes
+                                                            .length - 3
+                                                        } more`
+                                                      : "")
+                                                  : "No chromosomes"}
+                                              </span>
+                                            </div>
+
+                                            {/* Right: delete button */}
+                                            <button
+                                              onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (!isConfirming) {
+                                                  setConfirmDeleteId(genome.id);
+                                                  setTimeout(
+                                                    () =>
+                                                      setConfirmDeleteId(
+                                                        (id) =>
+                                                          id === genome.id
+                                                            ? null
+                                                            : id,
+                                                      ),
+                                                    2000,
+                                                  );
+                                                  return;
+                                                }
+                                                setConfirmDeleteId(null);
+                                                await dispatch(
+                                                  deleteCustomGenome(genome.id),
+                                                ).unwrap();
+                                                dispatch(
+                                                  removeAssembliesFromAllCollections(
+                                                    [genome.id],
+                                                  ),
+                                                );
+                                              }}
+                                              className={`p-1 rounded-md transition-colors ${
+                                                isConfirming
+                                                  ? "bg-red-500 text-white"
+                                                  : "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                              }`}
+                                              aria-label={
+                                                isConfirming
+                                                  ? `Confirm delete ${genome.name}`
+                                                  : `Delete ${genome.name}`
+                                              }
+                                              title={
+                                                isConfirming
+                                                  ? "Click again to confirm"
+                                                  : "Delete genome"
+                                              }
+                                            >
+                                              {isConfirming ? (
+                                                <ExclamationTriangleIcon className="w-4 h-4" />
+                                              ) : (
+                                                <XMarkIcon className="w-4 h-4" />
+                                              )}
+                                            </button>
+                                          </div>
+                                        );
+                                      })
+                                    )}
                                   </div>
                                 </motion.div>
                               )}
@@ -902,6 +1102,7 @@ export default function AddCustomGenome() {
                         >
                           <GenomePicker
                             variant="tab"
+                            currentCollection={selectedCollection ?? undefined}
                             onSelectGenome={(genome, assemblyName) => {
                               handleAddGenome(genome, assemblyName);
                             }}

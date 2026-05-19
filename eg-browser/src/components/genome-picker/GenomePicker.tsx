@@ -38,12 +38,15 @@ type Props = {
   onClose?: () => void;
   /** When provided, clicking an assembly calls this instead of creating a session */
   onSelectGenome?: (genome: SpeciesInfo, assemblyName: string) => void;
+  /** Collection name that is currently active in the parent — shown as non-interactive in the dropdown */
+  currentCollection?: string;
 };
 
 export default function GenomePicker({
   variant = "tab",
   onClose,
   onSelectGenome,
+  currentCollection,
 }: Props) {
   const dispatch = useAppDispatch();
   const customCollections = useAppSelector(selectCustomCollections) ?? {};
@@ -89,6 +92,20 @@ export default function GenomePicker({
   }, [customCollections, customGenomeSpecies]);
 
   const setKeys = useMemo(() => Object.keys(allCollections), [allCollections]);
+
+  // Keys that are built-in (default collections + CUSTOM_GENOMES) vs user-created
+  const builtinKeys = useMemo(
+    () =>
+      new Set(["CUSTOM_GENOMES", ...Object.keys(allDefaultGenomeCollections)]),
+    [],
+  );
+
+  // Longest possible label — used to lock the button & menu width so they never shrink
+  const longestLabel = useMemo(() => {
+    const labels = setKeys.map((k) => k.replace(/_/g, " "));
+    if (setKeys.length > 1) labels.push(`${setKeys.length} Collections`);
+    return labels.reduce((a, b) => (b.length > a.length ? b : a), "");
+  }, [setKeys]);
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -152,8 +169,10 @@ export default function GenomePicker({
   }, [customGenomeSpecies.length]);
 
   // Keep local state in sync when Redux selectedCollections changes (e.g. after collection deleted)
-  // Also cleans up stale persisted Redux state on mount/collection change
+  // Also cleans up stale persisted Redux state on mount/collection change.
+  // Skip when focusCollection is pending — that effect will set the correct selection.
   useEffect(() => {
+    if (focusCollection) return;
     const valid = (savedSelectedCollections ?? []).filter((k) =>
       setKeys.includes(k),
     );
@@ -166,7 +185,7 @@ export default function GenomePicker({
       dispatch(setSelectedCollections(cleaned));
     }
     setSelectedSetKeysLocal(new Set(cleaned));
-  }, [setKeys.join(",")]);
+  }, [setKeys.join(","), focusCollection]);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     () => new Set(),
@@ -284,13 +303,16 @@ export default function GenomePicker({
         }}
         className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-base font-medium focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
       >
-        <span>
-          {selectedSetKeys.size === 1
-            ? (() => {
-                const k = [...selectedSetKeys][0];
-                return k.replace(/_/g, " ");
-              })()
-            : `${selectedSetKeys.size} Collections`}
+        {/* Ghost span locks the button width to the longest possible label */}
+        <span className="relative">
+          <span aria-hidden="true" className="invisible whitespace-nowrap">
+            {longestLabel}
+          </span>
+          <span className="absolute left-0 top-0 whitespace-nowrap">
+            {selectedSetKeys.size === 1
+              ? [...selectedSetKeys][0].replace(/_/g, " ")
+              : `${selectedSetKeys.size} Collections`}
+          </span>
         </span>
         <motion.div
           animate={{ rotate: dropdownOpen ? 90 : 0 }}
@@ -317,20 +339,51 @@ export default function GenomePicker({
               }}
               className="min-w-max rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-surface shadow-lg py-1"
             >
-              {setKeys.map((key) => {
+              {/* Ghost row locks the menu width to longest label + right-side indicator */}
+              <div
+                aria-hidden="true"
+                className="invisible h-0 overflow-hidden flex items-center justify-between gap-6 px-4 text-sm whitespace-nowrap"
+              >
+                <span>{longestLabel}</span>
+                <CheckIcon className="w-4 h-4 flex-shrink-0" />
+              </div>
+              {setKeys.map((key, i) => {
                 const isSelected = selectedSetKeys.has(key);
+                const isCurrent = key === currentCollection;
+                const isBuiltin = builtinKeys.has(key);
+                const prevIsBuiltin =
+                  i === 0 || builtinKeys.has(setKeys[i - 1]);
+                const showDivider = !isBuiltin && prevIsBuiltin;
                 const label = key.replace(/_/g, " ");
                 return (
-                  <button
-                    key={key}
-                    onClick={() => toggleCollection(key)}
-                    className="flex items-center justify-between w-full gap-6 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
-                  >
-                    <span>{label}</span>
-                    {isSelected && (
-                      <CheckIcon className="w-4 h-4 text-tint flex-shrink-0" />
+                  <div key={key}>
+                    {showDivider && (
+                      <div className="my-1 border-t border-gray-200 dark:border-gray-600" />
                     )}
-                  </button>
+                    <button
+                      onClick={() => {
+                        if (isCurrent) return;
+                        toggleCollection(key);
+                      }}
+                      disabled={isCurrent}
+                      className={`flex items-center justify-between w-full gap-6 px-4 py-2 text-sm ${
+                        isCurrent
+                          ? "text-tint font-semibold cursor-default"
+                          : isBuiltin
+                            ? "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                            : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      }`}
+                    >
+                      <span>{label}</span>
+                      {isCurrent ? (
+                        <span className="text-xs text-tint opacity-70 font-normal">
+                          current
+                        </span>
+                      ) : isSelected ? (
+                        <CheckIcon className="w-4 h-4 text-tint flex-shrink-0" />
+                      ) : null}
+                    </button>
+                  </div>
                 );
               })}
               <div className="my-1 border-t border-gray-200 dark:border-gray-600" />

@@ -2,11 +2,10 @@ import Ajv from "ajv";
 
 export const genomeDataSchema = {
   type: "object",
-  required: ["name", "id", "chromosomes", "defaultRegion"],
+  required: ["id", "chromosomes", "defaultRegion"],
   properties: {
     id: { type: "string" },
     name: { type: "string" },
-    group: { type: "string" },
     chromosomes: {
       type: "array",
       items: {

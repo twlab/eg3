@@ -1,417 +1,342 @@
-import { useState, useRef, CSSProperties, useEffect } from "react";
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  InformationCircleIcon,
-} from "@heroicons/react/24/outline";
+﻿// @ts-nocheck
+import { useState } from "react";
 import { genomeFileSchema } from "wuepgg3-track";
-import Button from "../ui/button/Button";
-import { generateUUID } from "wuepgg3-track";
+
 type SchemaNode = {
-  type: string;
+  type?: string | string[];
   required?: string[];
   properties?: Record<string, SchemaNode>;
   items?: SchemaNode;
-  enum?: string[];
+  enum?: (string | number)[];
   minimum?: number;
+  description?: string;
   patternProperties?: Record<string, SchemaNode>;
-  additionalProperties?: boolean;
+  additionalProperties?: boolean | SchemaNode;
   oneOf?: SchemaNode[];
+  anyOf?: SchemaNode[];
 };
 
-const SchemaNode: React.FC<{
-  node: SchemaNode;
-  name: string;
-  path: string;
-  required?: boolean;
-  depth?: number;
-  onExpand?: () => void;
-}> = ({ node, name, path, required = false, depth = 0, onExpand }) => {
-  const [isExpanded, setIsExpanded] = useState(depth < 2);
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-  const [tooltipStyle, setTooltipStyle] = useState<CSSProperties>({
-    position: "absolute",
-    visibility: "hidden",
-  });
-  const iconContainerRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+function resolveType(schema: SchemaNode): string {
+  if (schema.oneOf || schema.anyOf) return "oneOf";
+  const t = Array.isArray(schema.type) ? schema.type[0] : schema.type;
+  return t ?? "any";
+}
 
-  const hasChildren =
-    (node.properties && Object.keys(node.properties).length > 0) ||
-    node.items ||
-    (node.patternProperties && Object.keys(node.patternProperties).length > 0);
+function typeColor(t: string) {
+  switch (t) {
+    case "string":
+      return "text-green-600 dark:text-green-400";
+    case "integer":
+    case "number":
+      return "text-amber-500 dark:text-amber-300";
+    case "boolean":
+      return "text-violet-500 dark:text-violet-400";
+    case "array":
+      return "text-sky-500 dark:text-sky-400";
+    default:
+      return "text-rose-400 dark:text-rose-400";
+  }
+}
 
-  const toggle = () => {
-    const newExpanded = !isExpanded;
-    setIsExpanded(newExpanded);
-    if (newExpanded && onExpand) {
-      onExpand();
-    }
-  };
+function placeholderValue(schema: SchemaNode): string {
+  if (schema.enum) return `"${schema.enum[0]}"`;
+  const t = resolveType(schema);
+  switch (t) {
+    case "string":
+      return '"…"';
+    case "integer":
+    case "number":
+      return "0";
+    case "boolean":
+      return "true";
+    default:
+      return "null";
+  }
+}
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "string":
-        return "text-green-600 dark:text-green-400";
-      case "integer":
-      case "number":
-        return "text-blue-600 dark:text-blue-400";
-      case "boolean":
-        return "text-purple-600 dark:text-purple-400";
-      case "array":
-        return "text-yellow-600 dark:text-yellow-400";
-      case "object":
-        return "text-red-600 dark:text-red-400";
-      default:
-        return "text-gray-600 dark:text-gray-400";
-    }
-  };
+type NodeProps = {
+  schema: SchemaNode;
+  keyName?: string;
+  isRequired: boolean;
+  indent: number;
+  isLast: boolean;
+};
 
-  const renderAdditionalDetails = () => {
-    const details = [];
+function SchemaValue({
+  schema,
+  keyName,
+  isRequired,
+  indent,
+  isLast,
+}: NodeProps) {
+  const [open, setOpen] = useState(indent < 2);
+  const t = resolveType(schema);
+  const isObject = t === "object";
+  const isArray = t === "array";
+  const isComplex = isObject || isArray || t === "oneOf";
+  const pad = "  ".repeat(indent);
 
-    if (node.enum) {
-      details.push(
-        <div
-          key="enum"
-          className="ml-4 text-sm text-gray-600 dark:text-gray-400"
-        >
-          Allowed values: [{node.enum.map((v) => `"${v}"`).join(", ")}]
-        </div>,
-      );
-    }
+  const annotation = (
+    <span className="ml-3 font-sans text-xs select-none opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+      {isRequired ? (
+        <span className="text-red-400 mr-1.5">required</span>
+      ) : (
+        <span className="text-gray-400 dark:text-gray-600 mr-1.5">
+          optional
+        </span>
+      )}
+      <span className={typeColor(t)}>{t}</span>
+      {schema.enum && (
+        <span className="ml-1 text-gray-400">
+          (
+          {schema.enum
+            .slice(0, 4)
+            .map((v) => `"${v}"`)
+            .join(" | ")}
+          )
+        </span>
+      )}
+      {schema.minimum !== undefined && (
+        <span className="ml-1 text-gray-400">≥ {schema.minimum}</span>
+      )}
+    </span>
+  );
 
-    if (node.minimum !== undefined) {
-      details.push(
-        <div
-          key="min"
-          className="ml-4 text-sm text-gray-600 dark:text-gray-400"
-        >
-          Minimum: {node.minimum}
-        </div>,
-      );
-    }
-
-    if (node.additionalProperties === false) {
-      details.push(
-        <div
-          key="additionalProps"
-          className="ml-4 text-sm text-gray-600 dark:text-gray-400"
-        >
-          No additional properties allowed
-        </div>,
-      );
-    }
-
-    return details;
-  };
-
-  const renderChildren = () => {
-    if (!isExpanded) return null;
-
-    const children = [];
-
-    if (node.properties) {
-      const properties = Object.entries(node.properties);
-      properties.forEach(([propName, propSchema], index) => {
-        const isReq = node.required?.includes(propName) || false;
-        children.push(
-          <SchemaNode
-            key={`${path}.${propName}`}
-            node={propSchema}
-            name={propName}
-            path={`${path}.${propName}`}
-            required={isReq}
-            depth={depth + 1}
-            onExpand={onExpand}
-          />,
-        );
-      });
-    }
-
-    if (node.items) {
-      children.push(
-        <div key={`${path}.items`} className="ml-8 mt-2">
-          <div className="font-medium">Array items:</div>
-          <SchemaNode
-            node={node.items}
-            name="items"
-            path={`${path}.items`}
-            depth={depth + 1}
-            onExpand={onExpand}
-          />
-        </div>,
-      );
-    }
-
-    if (node.patternProperties) {
-      Object.entries(node.patternProperties).forEach(([pattern, schema]) => {
-        children.push(
-          <div key={`${path}.pattern.${pattern}`} className="ml-8 mt-2">
-            <div className="font-medium">
-              Pattern:{" "}
-              <span className="font-mono text-orange-600">{pattern}</span>
-            </div>
-            <SchemaNode
-              node={schema}
-              name="patternProperty"
-              path={`${path}.pattern.${pattern}`}
-              depth={depth + 1}
-              onExpand={onExpand}
-            />
-          </div>,
-        );
-      });
-    }
-
-    if (node.oneOf) {
-      children.push(
-        <div key={`${path}.oneOf`} className="ml-8 mt-2">
-          <div className="font-medium">One of:</div>
-          {node.oneOf.map((schema, index) => (
-            <SchemaNode
-              key={`${path}.oneOf.${index}`}
-              node={schema}
-              name={`option ${index + 1}`}
-              path={`${path}.oneOf.${index}`}
-              depth={depth + 1}
-              onExpand={onExpand}
-            />
-          ))}
-        </div>,
-      );
-    }
-
-    return children.length > 0 ? <div className="ml-8">{children}</div> : null;
-  };
-
-  useEffect(() => {
-    if (isTooltipVisible && iconContainerRef.current && tooltipRef.current) {
-      const scrollContainer = iconContainerRef.current.closest<HTMLElement>(
-        '[data-scroll-container="true"]',
-      );
-      if (!scrollContainer) return;
-
-      const iconRect = iconContainerRef.current.getBoundingClientRect();
-      const scrollRect = scrollContainer.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-
-      const spaceBelow = scrollRect.bottom - iconRect.bottom;
-      const spaceAbove = iconRect.top - scrollRect.top;
-
-      let top = iconRect.height + 4;
-      let left = (iconRect.width - tooltipRect.width) / 2;
-
-      if (
-        spaceBelow < tooltipRect.height + 4 &&
-        spaceAbove > tooltipRect.height + 4
-      ) {
-        top = -(tooltipRect.height + 4);
-      } else if (
-        spaceBelow < tooltipRect.height + 4 &&
-        spaceAbove < tooltipRect.height + 4
-      ) {
-        if (spaceAbove > spaceBelow) {
-          top = -(tooltipRect.height + 4);
-          if (iconRect.top + top < scrollRect.top) {
-            top = scrollRect.top - iconRect.top;
-          }
-        } else {
-          if (iconRect.bottom + top + tooltipRect.height > scrollRect.bottom) {
-            top = scrollRect.bottom - iconRect.bottom - tooltipRect.height;
-          }
-        }
-      }
-
-      const desiredLeftEdge = iconRect.left + left;
-      const desiredRightEdge = desiredLeftEdge + tooltipRect.width;
-
-      if (desiredRightEdge > scrollRect.right) {
-        left -= desiredRightEdge - scrollRect.right + 4;
-      }
-      if (desiredLeftEdge < scrollRect.left) {
-        left += scrollRect.left - desiredLeftEdge + 4;
-      }
-
-      setTooltipStyle((prevStyle) => ({
-        ...prevStyle,
-        top: `${top}px`,
-        left: `${left}px`,
-        visibility: "visible",
-      }));
-    }
-  }, [isTooltipVisible]);
-
-  const handleMouseEnter = () => {
-    setIsTooltipVisible(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsTooltipVisible(false);
-    setTooltipStyle({
-      position: "absolute",
-      visibility: "hidden",
-    });
-  };
-
-  return (
-    <div className={`mt-1 ${depth > 0 ? "ml-4" : ""}`}>
-      <div className="flex items-start">
-        {hasChildren ? (
-          <button
-            onClick={toggle}
-            className="mr-1 mt-1 text-gray-500 hover:text-gray-800 focus:outline-none"
-          >
-            {isExpanded ? (
-              <ChevronDownIcon className="w-4 h-4" />
-            ) : (
-              <ChevronRightIcon className="w-4 h-4" />
-            )}
-          </button>
-        ) : (
-          <span className="w-5" />
+  if (!isComplex) {
+    return (
+      <div className="flex items-baseline group hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded px-1">
+        <span className="whitespace-pre text-gray-400 select-none">{pad}</span>
+        <span className="w-3 shrink-0" />
+        {keyName !== undefined && (
+          <>
+            <span className="text-sky-600 dark:text-sky-300">"{keyName}"</span>
+            {isRequired && <span className="text-red-400 select-none">*</span>}
+            <span className="text-gray-400">: </span>
+          </>
         )}
-
-        <div>
-          <div className="flex items-center">
-            <span
-              className={`font-semibold ${
-                required
-                  ? "text-black dark:text-white"
-                  : "text-gray-600 dark:text-gray-400"
-              }`}
-            >
-              {name}
-              {required && <span className="text-red-500 ml-1">*</span>}
-            </span>
-            <span
-              className={`ml-2 text-sm font-mono ${getTypeColor(node.type)}`}
-            >
-              {node.type}
-            </span>
-            {path !== "root" && (
-              <div
-                ref={iconContainerRef}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                className="ml-2 text-gray-500 text-xs cursor-help relative"
-              >
-                <InformationCircleIcon className="w-4 h-4" />
-                <div
-                  ref={tooltipRef}
-                  style={tooltipStyle}
-                  className="bg-gray-800 text-white text-xs p-2 rounded w-48 z-10 pointer-events-none"
-                >
-                  JSON path: {path}
-                </div>
-              </div>
-            )}
-          </div>
-          {renderAdditionalDetails()}
-        </div>
+        <span className={typeColor(t)}>{placeholderValue(schema)}</span>
+        {!isLast && <span className="text-gray-400">,</span>}
+        {annotation}
       </div>
-      {renderChildren()}
+    );
+  }
+
+  if (isObject) {
+    const props = schema.properties ?? {};
+    const requiredSet = new Set(schema.required ?? []);
+    const entries = Object.entries(props).sort(([a], [b]) => {
+      const aReq = requiredSet.has(a) ? 0 : 1;
+      const bReq = requiredSet.has(b) ? 0 : 1;
+      return aReq - bReq;
+    });
+    return (
+      <div>
+        <div className="flex items-baseline group hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded px-1">
+          <span className="whitespace-pre text-gray-400 select-none">
+            {pad}
+          </span>
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 mr-1 w-3 text-xs leading-none shrink-0"
+          >
+            {open ? "▾" : "▸"}
+          </button>
+          {keyName !== undefined && (
+            <>
+              <span className="text-sky-600 dark:text-sky-300">
+                "{keyName}"
+              </span>
+              {isRequired && (
+                <span className="text-red-400 select-none">*</span>
+              )}
+              <span className="text-gray-400">: </span>
+            </>
+          )}
+          {open ? (
+            <span className="text-gray-400">{"{"}</span>
+          ) : (
+            <>
+              <span className="text-gray-400 italic text-xs">
+                {"{ "}
+                {entries
+                  .slice(0, 3)
+                  .map(([k]) => `"${k}"`)
+                  .join(", ")}
+                {entries.length > 3 ? ", …" : ""}
+                {" }"}
+              </span>
+              {!isLast && <span className="text-gray-400">,</span>}
+            </>
+          )}
+          {annotation}
+        </div>
+        {open && (
+          <>
+            {entries.map(([k, v], i) => (
+              <SchemaValue
+                key={k}
+                schema={v}
+                keyName={k}
+                isRequired={requiredSet.has(k)}
+                indent={indent + 1}
+                isLast={i === entries.length - 1}
+              />
+            ))}
+            <div className="flex items-baseline px-1">
+              <span className="whitespace-pre text-gray-400 select-none">
+                {pad}
+              </span>
+              <span className="text-gray-400">{"}"}</span>
+              {!isLast && <span className="text-gray-400">,</span>}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (isArray) {
+    const itemSchema = schema.items;
+    return (
+      <div>
+        <div className="flex items-baseline group hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded px-1">
+          <span className="whitespace-pre text-gray-400 select-none">
+            {pad}
+          </span>
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 mr-1 w-3 text-xs leading-none shrink-0"
+          >
+            {open ? "▾" : "▸"}
+          </button>
+          {keyName !== undefined && (
+            <>
+              <span className="text-sky-600 dark:text-sky-300">
+                "{keyName}"
+              </span>
+              {isRequired && (
+                <span className="text-red-400 select-none">*</span>
+              )}
+              <span className="text-gray-400">: </span>
+            </>
+          )}
+          {open ? (
+            <span className="text-gray-400">{"["}</span>
+          ) : (
+            <>
+              <span className="text-gray-400 italic text-xs">{"[ … ]"}</span>
+              {!isLast && <span className="text-gray-400">,</span>}
+            </>
+          )}
+          {annotation}
+        </div>
+        {open && itemSchema && (
+          <>
+            <SchemaValue
+              schema={itemSchema}
+              isRequired={false}
+              indent={indent + 1}
+              isLast={true}
+            />
+            <div className="flex items-baseline px-1">
+              <span className="whitespace-pre text-gray-400 select-none">
+                {pad}
+              </span>
+              <span className="text-gray-400">{"]"}</span>
+              {!isLast && <span className="text-gray-400">,</span>}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // oneOf / anyOf fallback
+  return (
+    <div className="flex items-baseline group px-1">
+      <span className="whitespace-pre text-gray-400 select-none">{pad}</span>
+      <span className="w-3 shrink-0" />
+      {keyName !== undefined && (
+        <>
+          <span className="text-sky-600 dark:text-sky-300">"{keyName}"</span>
+          {isRequired && <span className="text-red-400 select-none">*</span>}
+          <span className="text-gray-400">: </span>
+        </>
+      )}
+      <span className="text-gray-400 italic text-xs">{"…"}</span>
+      {!isLast && <span className="text-gray-400">,</span>}
+      {annotation}
     </div>
   );
-};
+}
+
+function Legend() {
+  const items = [
+    { label: "key", color: "text-sky-600 dark:text-sky-300" },
+    { label: "string", color: "text-green-600 dark:text-green-400" },
+    { label: "integer/number", color: "text-amber-500 dark:text-amber-300" },
+    { label: "boolean", color: "text-violet-500 dark:text-violet-400" },
+    { label: "object/array", color: "text-rose-400 dark:text-rose-400" },
+  ];
+  return (
+    <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs font-mono mb-3 px-1 text-gray-500">
+      {items.map(({ label, color }) => (
+        <span key={label} className={color}>
+          {label}
+        </span>
+      ))}
+      <span className="font-sans text-red-400 ml-2">* required</span>
+      <span className="font-sans text-gray-400">optional</span>
+    </div>
+  );
+}
+
+const EXAMPLE = [
+  {
+    name: "hg19",
+    id: "6d73be1a-e8e0-4969-8770-0be2df703bc0",
+    chromosomes: [
+      { name: "chr1", length: 249250621 },
+      { name: "chrX", length: 155270560 },
+    ],
+    defaultRegion: { chr: "chr1", start: 0, end: 100000 },
+  },
+];
 
 export default function GenomeSchemaView() {
   const [showExample, setShowExample] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const exampleData = [
-    {
-      name: "hg19",
-      id: generateUUID(),
-      chromosomes: [
-        { name: "chr1", length: 249250621 },
-        { name: "chrX", length: 155270560 },
-      ],
-    },
-  ];
-
-  const handleNodeExpand = () => {
-    if (containerRef.current) {
-      setTimeout(() => {
-        containerRef.current?.scrollTo({
-          left: containerRef.current.scrollWidth,
-          behavior: "smooth",
-        });
-      }, 100);
-    }
-  };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <p className="mb-4">
-        This schema defines the structure for genomic data files. The file
-        should contain an array of genome objects — or a single genome object
-        for backwards compatibility. Fields marked with an asterisk (*) are
-        required.
+    <div className="max-w-3xl mx-auto text-sm">
+      <p className="mb-4 text-gray-600 dark:text-gray-300">
+        The file must be a JSON array of genome objects (or a single object).
+        Hover any line to see its type and whether it is required. Click{" "}
+        <span className="font-mono text-xs">▸</span> to collapse sections.
       </p>
 
-      <div className="flex mb-4">
-        <Button onClick={() => setShowExample(!showExample)} active>
-          {showExample ? "Hide Example" : "Show Example"}
-        </Button>
-      </div>
-
-      {showExample && (
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-dark-background rounded-lg">
-          <h2 className="text-lg font-semibold mb-2">
-            Example (minimal valid data):
-          </h2>
-          <pre className="bg-white dark:bg-dark-background p-4 rounded overflow-auto text-sm">
-            {JSON.stringify(exampleData, null, 2)}
+      <div className="mb-4">
+        <button
+          onClick={() => setShowExample((s) => !s)}
+          className="text-xs px-3 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          {showExample ? "Hide example" : "Show minimal example"}
+        </button>
+        {showExample && (
+          <pre className="mt-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-mono overflow-auto text-gray-800 dark:text-gray-200 leading-5">
+            {JSON.stringify(EXAMPLE, null, 2)}
           </pre>
-        </div>
-      )}
-
-      <div
-        ref={containerRef}
-        data-scroll-container="true"
-        className="bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-dark-secondary rounded-lg p-4 break-words"
-      >
-        <SchemaNode
-          node={genomeFileSchema as any}
-          name="Root"
-          path="root"
-          onExpand={handleNodeExpand}
-        />
+        )}
       </div>
 
-      <div className="mt-6 text-sm text-gray-400">
-        <h3 className="text-lg font-semibold mb-2">Validation Tips:</h3>
-        <ul className="list-disc pl-6">
-          <li className="mb-1">
-            The{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">genomeName</code>,{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">chromosomes</code>,
-            and{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">cytobands</code>{" "}
-            fields are required.
-          </li>
-          <li className="mb-1">
-            Chromosome names should follow the pattern{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">chr1</code>,{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">chr2</code>, etc.,
-            with <code className="bg-gray-50 px-1 py-0.5 rounded">chrX</code>,{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">chrY</code>, and{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">chrM</code> also
-            accepted.
-          </li>
-          <li className="mb-1">
-            For chromosome positions,{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">chromEnd</code>{" "}
-            must be greater than{" "}
-            <code className="bg-gray-50 px-1 py-0.5 rounded">chromStart</code>.
-          </li>
-          <li className="mb-1">
-            The <code className="bg-gray-50 px-1 py-0.5 rounded">gieStain</code>{" "}
-            field must be one of the predefined values: gneg, gpos25, gpos50,
-            gpos75, gpos100, acen, gvar, or stalk.
-          </li>
-        </ul>
+      <Legend />
+
+      <div className="font-mono text-sm leading-6 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 overflow-auto">
+        <SchemaValue
+          schema={genomeFileSchema as SchemaNode}
+          isRequired={true}
+          indent={0}
+          isLast={true}
+        />
       </div>
     </div>
   );

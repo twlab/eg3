@@ -27,7 +27,7 @@ export default class GenomeHubManager {
     if (this.genomeCache.has(id)) {
       return this.genomeCache.get(id)!;
     }
-    console.log(id);
+
     const genome = await this.localGenomeRepository.getGenomeById(id);
 
     this.genomeCache.set(id, genome);

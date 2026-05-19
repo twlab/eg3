@@ -105,6 +105,44 @@ export const settingsSlice = createSlice({
         ].filter((g) => g.name !== genomeName);
       }
     },
+    removeAssemblyFromCollection: (
+      state,
+      action: PayloadAction<{
+        collectionName: string;
+        genomeName: string;
+        assemblyName: string;
+      }>,
+    ) => {
+      const { collectionName, genomeName, assemblyName } = action.payload;
+      if (!state.customCollections) return;
+      const collection = state.customCollections[collectionName];
+      if (!collection) return;
+      const genome = collection.find((g) => g.name === genomeName);
+      if (!genome) return;
+      genome.assemblies = genome.assemblies.filter((a) => a !== assemblyName);
+      if (genome.assemblies.length === 0) {
+        state.customCollections[collectionName] = collection.filter(
+          (g) => g.name !== genomeName,
+        );
+      }
+    },
+    removeAssembliesFromAllCollections: (
+      state,
+      action: PayloadAction<string[]>,
+    ) => {
+      if (!state.customCollections) return;
+      const ids = new Set(action.payload);
+      for (const collectionName of Object.keys(state.customCollections)) {
+        state.customCollections[collectionName] = state.customCollections[
+          collectionName
+        ]
+          .map((genome) => ({
+            ...genome,
+            assemblies: genome.assemblies.filter((a) => !ids.has(a)),
+          }))
+          .filter((genome) => genome.assemblies.length > 0);
+      }
+    },
     setSelectedCollections: (state, action: PayloadAction<string[]>) => {
       state.selectedCollections =
         action.payload.length > 0 ? action.payload : ["DEFAULT_GENOME_LIST"];
@@ -127,6 +165,8 @@ export const {
   removeCustomCollection,
   addGenomeToCollection,
   removeGenomeFromCollection,
+  removeAssemblyFromCollection,
+  removeAssembliesFromAllCollections,
   setSelectedCollections,
   resetSettings,
 } = settingsSlice.actions;
