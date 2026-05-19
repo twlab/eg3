@@ -384,9 +384,6 @@ export default function AddCustomGenome() {
                       transition={{ duration: 0.18 }}
                       className="flex flex-col items-center gap-3 py-12"
                     >
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
-                        No genome collections yet.
-                      </p>
                       <Button
                         leftIcon={<PlusIcon className="w-4 h-4" />}
                         onClick={() => setShowCreateInput(true)}
@@ -399,8 +396,11 @@ export default function AddCustomGenome() {
                           borderRadius: "6px",
                         }}
                       >
-                        Create a new collection
+                        New collection
                       </Button>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+                        No genome collections yet.
+                      </p>
                     </motion.div>
                   ) : (
                     <motion.div
@@ -481,7 +481,7 @@ export default function AddCustomGenome() {
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setCollectionDropdownOpen((o) => !o)}
-                      className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-semibold text-tint focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
+                      className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 h-7 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-semibold text-tint focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
                     >
                       <span>{selectedCollection ?? "Select collection"}</span>
                       <motion.div
@@ -542,11 +542,14 @@ export default function AddCustomGenome() {
                   {selectedCollection && (
                     <button
                       onClick={() => setGenomesExpanded((e) => !e)}
-                      className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-background focus:outline-none cursor-pointer transition-colors"
+                      className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 h-7 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-background focus:outline-none cursor-pointer transition-colors"
                     >
                       <span>Genomes in collection</span>
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-tint/15 text-tint text-xs font-semibold">
-                        {customCollections[selectedCollection]?.length ?? 0}
+                        {(customCollections[selectedCollection] ?? []).reduce(
+                          (sum, g) => sum + (g.assemblies?.length ?? 1),
+                          0,
+                        )}
                       </span>
                       <motion.div
                         animate={{ rotate: genomesExpanded ? 90 : 0 }}
@@ -572,8 +575,9 @@ export default function AddCustomGenome() {
                           onClick={() => setShowCreateInput(true)}
                           style={{
                             width: "fit-content",
-                            padding: "4px 6px",
-                            fontSize: "16px",
+                            padding: "0px 6px",
+                            height: "28px",
+                            fontSize: "14px",
                             backgroundColor: "#5E7AC4",
                             color: "white",
                             borderRadius: "6px",
@@ -794,11 +798,16 @@ export default function AddCustomGenome() {
                             <div className="flex-1 flex flex-col justify-center gap-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                               <p>
                                 Add your own custom genome by providing a JSON
-                                file. Make sure to have a unique{" "}
+                                file. For each genome in the array, make sure to
+                                have a unique
                                 <span className="font-mono text-xs bg-gray-100 dark:bg-dark-background px-1 rounded">
                                   id
                                 </span>
-                                , a default region on first view, and a{" "}
+                                , a{" "}
+                                <span className="font-mono text-xs bg-gray-100 dark:bg-dark-background px-1 rounded">
+                                  defaultRegion
+                                </span>{" "}
+                                to position tracks on first view , and a{" "}
                                 <span className="font-mono text-xs bg-gray-100 dark:bg-dark-background px-1 rounded">
                                   chromosomes
                                 </span>{" "}

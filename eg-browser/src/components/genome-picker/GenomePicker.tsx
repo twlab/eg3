@@ -111,12 +111,14 @@ export default function GenomePicker({
   }, []);
 
   const [selectedSetKeys, setSelectedSetKeysLocal] = useState<Set<string>>(
-    () =>
-      new Set(
-        savedSelectedCollections?.length
-          ? savedSelectedCollections
-          : [setKeys[0] ?? "DEFAULT_GENOME_LIST"],
-      ),
+    () => {
+      const valid = savedSelectedCollections?.filter((k) =>
+        Object.keys(allCollections).includes(k),
+      );
+      return new Set(
+        valid?.length ? valid : [setKeys[0] ?? "DEFAULT_GENOME_LIST"],
+      );
+    },
   );
 
   const setSelectedSetKeys = (updater: (prev: Set<string>) => Set<string>) => {
@@ -148,6 +150,23 @@ export default function GenomePicker({
       });
     }
   }, [customGenomeSpecies.length]);
+
+  // Keep local state in sync when Redux selectedCollections changes (e.g. after collection deleted)
+  // Also cleans up stale persisted Redux state on mount/collection change
+  useEffect(() => {
+    const valid = (savedSelectedCollections ?? []).filter((k) =>
+      setKeys.includes(k),
+    );
+    const cleaned = valid.length > 0 ? valid : ["DEFAULT_GENOME_LIST"];
+    const current = savedSelectedCollections ?? [];
+    if (
+      cleaned.length !== current.length ||
+      cleaned.some((k, i) => k !== current[i])
+    ) {
+      dispatch(setSelectedCollections(cleaned));
+    }
+    setSelectedSetKeysLocal(new Set(cleaned));
+  }, [setKeys.join(",")]);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     () => new Set(),
@@ -185,7 +204,7 @@ export default function GenomePicker({
       .filter((key) => selectedSetKeys.has(key))
       .map((key) => ({
         key,
-        label: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        label: key.replace(/_/g, " "),
         genomes: allCollections[key] ?? [],
       }));
   }, [selectedSetKeys, allCollections, setKeys]);
@@ -269,9 +288,7 @@ export default function GenomePicker({
           {selectedSetKeys.size === 1
             ? (() => {
                 const k = [...selectedSetKeys][0];
-                return k
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase());
+                return k.replace(/_/g, " ");
               })()
             : `${selectedSetKeys.size} Collections`}
         </span>
@@ -302,9 +319,7 @@ export default function GenomePicker({
             >
               {setKeys.map((key) => {
                 const isSelected = selectedSetKeys.has(key);
-                const label = key
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase());
+                const label = key.replace(/_/g, " ");
                 return (
                   <button
                     key={key}

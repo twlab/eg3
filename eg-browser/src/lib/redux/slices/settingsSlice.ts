@@ -65,6 +65,12 @@ export const settingsSlice = createSlice({
     removeCustomCollection: (state, action: PayloadAction<string>) => {
       if (!state.customCollections) return;
       delete state.customCollections[action.payload];
+      state.selectedCollections = state.selectedCollections.filter(
+        (k) => k !== action.payload,
+      );
+      if (state.selectedCollections.length === 0) {
+        state.selectedCollections = ["DEFAULT_GENOME_LIST"];
+      }
     },
     addGenomeToCollection: (
       state,
