@@ -1,3 +1,12 @@
+5/18/2026
+change examples and schema
+change prop names for custom genomes
+change checks for customgenome to new props name 
+change size of search and dropdown genomepicker 
+change size of load a session 
+fix flicker of highlights when changing region 
+
+
 5/15/2026
 save collection selected to localstorage
 create customGenomes collection when a new genome is added/ check remote session, local session/ root session remote, local
