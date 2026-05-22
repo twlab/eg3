@@ -53,12 +53,6 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
     if (!xOffset) {
       return new OpenInterval(xToBase(xSpan.start), xToBase(xSpan.end));
     } else {
-      console.log(
-        new OpenInterval(
-          xToBase(xSpan.start + xOffset),
-          xToBase(xSpan.end + xOffset),
-        ),
-      );
       return new OpenInterval(
         xToBase(xSpan.start + xOffset),
         xToBase(xSpan.end + xOffset),
