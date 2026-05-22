@@ -3,14 +3,16 @@ change examples and schema     (done)
 change prop names for custom genomes (done)
 change checks for customgenome to new props name  (done)
 change size of search and dropdown genomepicker  (done)
-have even layout size for the three tabs 
-change size of load a session  
-fix flicker of highlights when changing region 
+have even layout size for the three tabs  (done)
+change size of load a session  (done)
+fix flicker of highlights when changing region (done)
 change button style of screenshot 
 add pdf download to screenshot
 add multi screenshot 
 add bedcolor 
 add rgbpeak 
+add new collection for shihua
+fix legend width change
 
 
 5/15/2026
