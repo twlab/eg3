@@ -48,7 +48,7 @@ export default function GenomeView() {
       dispatch(fetchBundle(bundleId));
     }
   }, [bundleId, dispatch]);
-  console.log(currentSession, genomeConfig);
+
   // const bundleId = currentSession.bundleId;
 
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {

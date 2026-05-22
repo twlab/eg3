@@ -119,16 +119,17 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
     ]);
     return (
       <path
-      key={crypto.randomUUID() + index}
+        key={crypto.randomUUID() + index}
         // d={moveTo(xSpan1Center, 0) + quadraticCurveTo(spanCenter, curveYScale(spanLength), xSpan2Center, 0)}
         d={moveTo(xSpan1Center, 0) + arcTo(radius, xSpan2Center)}
         fill="none"
         opacity={opacityScale(Math.abs(score))}
-              className={this.props.forceSvg ? undefined : "ArcDisplay-emphasize-on-hover"}
-
+        className={
+          this.props.forceSvg ? undefined : "ArcDisplay-emphasize-on-hover"
+        }
         stroke={score >= 0 ? color : color2}
         strokeWidth={lineWidth}
-      // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
+        // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
       />
     );
   };
@@ -155,7 +156,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
             if (
               sameLoci(
                 sortedArcs[j][4].locus1,
-                tops[tops.length - 1][4].locus2
+                tops[tops.length - 1][4].locus2,
               ) &&
               sameLoci(sortedArcs[j][4].locus2, tops[tops.length - 1][4].locus1)
             ) {
@@ -208,7 +209,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       if (
         Math.abs(
           Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-          item[2]
+            item[2],
         ) <=
         0.5 * item[3]
       ) {
@@ -224,7 +225,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       if (
         Math.abs(
           Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-          item[2]
+            item[2],
         ) <=
         0.5 * item[3]
       ) {
@@ -233,7 +234,6 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
     }
     return items;
   };
-
 
   // clickTooltip = (event: React.MouseEvent) => {
   //     if (this.props.isThereG3dTrack) {
@@ -267,7 +267,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       bothAnchorsInView,
       options,
       legend,
-       windowWidth
+      windowWidth,
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
@@ -278,11 +278,13 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       .range([0, 1])
       .clamp(false);
 
-    const sortedInteractions = placedInteractions.slice().sort((a, b) => b.interaction.score - a.interaction.score);
-    
-  const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
-    
-      let curParentStyle: any = forceSvg
+    const sortedInteractions = placedInteractions
+      .slice()
+      .sort((a, b) => b.interaction.score - a.interaction.score);
+
+    const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
+
+    let curParentStyle: any = forceSvg
       ? {
           position: "relative",
 
@@ -297,9 +299,10 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
         }
       : {};
     let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
-  return (
-    <React.Fragment>
-            {!forceSvg ? ( <div
+    return (
+      <React.Fragment>
+        {!forceSvg ? (
+          <div
             style={{
               display: "flex",
               flexDirection: "row",
@@ -308,28 +311,40 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
               zIndex: 3,
             }}
           >
-          <HoverToolTip
-            data={this.arcData}
-            windowWidth={width}
-            viewWindow={viewWindow}
-            trackType={"interactionArc"}
-            height={height}
-            hasReverse={true}
-            options={options}
-          />
-        </div> ) : (
+            <HoverToolTip
+              data={this.arcData}
+              windowWidth={width}
+              viewWindow={viewWindow}
+              trackType={"interactionArc"}
+              height={height}
+              hasReverse={true}
+              options={options}
+            />
+          </div>
+        ) : (
           ""
         )}
 
         {placedInteractions.length === 0 ? (
           <div
             style={{
+              display: "flex",
+              ...curParentStyle,
               width: width,
               height: height,
             }}
-          ></div>
+          >
+            {forceSvg || options.packageVersion ? legend : ""}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            ></div>
+          </div>
         ) : (
-                <div style={{ display: "flex", ...curParentStyle }}>
+          <div style={{ display: "flex", ...curParentStyle }}>
             {(forceSvg || options.packageVersion) && legend ? legend : ""}
             <div
               style={{
@@ -338,16 +353,17 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
                 ...curEleStyle,
               }}
             >
-          <DesignRenderer
-            type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-            width={width}
-            height={height}
-          >
-            {slicedInteractions.map(this.renderArc)}
-          </DesignRenderer>  </div>
+              <DesignRenderer
+                type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+                width={width}
+                height={height}
+              >
+                {slicedInteractions.map(this.renderArc)}
+              </DesignRenderer>{" "}
+            </div>
           </div>
         )}
-       </React.Fragment>
+      </React.Fragment>
     );
   }
 }
@@ -370,7 +386,7 @@ export function cubicCurveTo(
   controlX2: number,
   controlY2: number,
   x: number,
-  y: number
+  y: number,
 ) {
   return `C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${x} ${y} `;
 }

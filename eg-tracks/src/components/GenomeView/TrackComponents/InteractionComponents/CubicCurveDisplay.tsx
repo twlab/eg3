@@ -95,7 +95,7 @@ export class CubicCurveDisplay extends React.PureComponent<
       options,
       legend,
       viewWindow,
-      windowWidth
+      windowWidth,
     } = this.props;
     // const sortedInteractions = placedInteractions.slice().sort((a, b)
     //        => b.interaction.score - a.interaction.score);
@@ -116,34 +116,47 @@ export class CubicCurveDisplay extends React.PureComponent<
         }
       : {};
     let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
-    return placedInteractions.length === 0 ? (
-      <div
-        style={{
-          width: width,
-          height: height,
-        }}
-      ></div>
-    ) : (
+    return (
       <React.Fragment>
-        {" "}
-        <div style={{ display: "flex", ...curParentStyle }}>
-          {forceSvg || options.packageVersion ? legend : ""}
+        {placedInteractions.length === 0 ? (
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              ...curEleStyle,
+              ...curParentStyle,
+              width: width,
+              height: height,
             }}
           >
-            <DesignRenderer
-              type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-              width={width}
-              height={height}
-            >
-              {placedInteractions.map(this.renderCurve)}
-            </DesignRenderer>
+            {forceSvg || options.packageVersion ? legend : ""}
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            ></div>
           </div>
-        </div>
+        ) : (
+          <div style={{ display: "flex", ...curParentStyle }}>
+            {forceSvg || options.packageVersion ? legend : ""}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
+              <DesignRenderer
+                type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+                width={width}
+                height={height}
+              >
+                {placedInteractions.map(this.renderCurve)}
+              </DesignRenderer>
+            </div>
+          </div>
+        )}
       </React.Fragment>
     );
   }

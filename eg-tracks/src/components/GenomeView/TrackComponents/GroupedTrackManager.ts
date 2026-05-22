@@ -182,7 +182,6 @@ export class GroupedTrackManager {
     dataIdx: number,
     trackManagerState: any,
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
-    console.log(trackData, trackManagerState);
     if (trackData) {
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
       for (let i = 0; i < trackData.length; i++) {
@@ -392,7 +391,7 @@ export class GroupedTrackManager {
                         configOptions,
                       )
                     : 40;
-              console.log(configOptions);
+
               if (!trackManagerState.current.caches[tid][dataIdx]) {
                 trackManagerState.current.caches[tid][dataIdx] = {};
               }
