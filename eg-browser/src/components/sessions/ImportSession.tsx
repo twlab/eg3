@@ -53,13 +53,15 @@ export default function ImportSession() {
   };
 
   return (
-    <div className="w-full flex justify-center">
-      <div className="w-full max-w-2xl bg-white dark:bg-dark-surface rounded-lg p-6 shadow-sm">
-        <h1 className="text-xl">Import by Session Bundle ID</h1>
+    <div className="w-full flex justify-center mb-30">
+      <div className="w-full max-w-2xl bg-white dark:bg-dark-surface gap-4 rounded-lg shadow-sm  mt-4">
+        <h1 className="text-base  font-semibold">
+          Import by Session Bundle ID:
+        </h1>
         <div className="flex flex-row gap-2 w-full mb-4">
           <input
             type="text"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter Session bundle Id"
             value={bundleId}
             onChange={(e) => setBundleId(e.target.value)}
@@ -104,31 +106,42 @@ export default function ImportSession() {
             {isLoading ? "Importing..." : "Import"}
           </Button>
         </div>
-        <h1 className="text-xl">Import by File</h1>
-        <div className="flex flex-row gap-2 w-full justify-start items-center mb-4">
-          <Button
-            leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
-            onClick={() => {
-              const link = document.createElement("a");
-              link.href = import.meta.env.BASE_URL + "/example_session.json";
-              link.download = "example_session.json";
-              link.click();
-            }}
-            backgroundColor="tint"
-            style={{
-              width: "fit-content",
-              padding: "4px 6px",
-              fontSize: "16px",
-            }}
-          >
-            Download Example
-          </Button>
+        <h1 className="text-base font-semibold">Import by File:</h1>
+        <div className="flex gap-4 items-stretch">
+          {/* Left: drag-and-drop */}
+          <div className="flex-1 flex flex-col">
+            <FileInput
+              accept=".json"
+              onFileChange={handleFileChange}
+              dragMessage="Drag and drop a session file here"
+              containerClassName="w-full h-full"
+              className="!h-full"
+            />
+          </div>
+          {/* Right: description */}
+          <div className="flex-1 flex flex-col justify-center gap-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            <p>
+              Reload a previously saved session state by uploading a previously
+              saved JSON file. Check the example JSON to make sure you have the
+              correct format.
+            </p>
+            <p>
+              You can also{" "}
+              <button
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href =
+                    import.meta.env.BASE_URL + "/example_session.json";
+                  link.download = "example_session.json";
+                  link.click();
+                }}
+                className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-medium bg-tint dark:bg-dark-tint text-white focus:outline-none cursor-pointer transition-opacity hover:opacity-90"
+              >
+                download an example JSON file
+              </button>
+            </p>
+          </div>
         </div>
-        <FileInput
-          accept=".json"
-          onFileChange={handleFileChange}
-          dragMessage="Drag and drop a session file here"
-        />
 
         {error && <div className="text-red-500 text-sm mt-4">{error}</div>}
         {/* Sessions list from bundle (if available) */}

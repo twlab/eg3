@@ -311,7 +311,7 @@ export default function AddCustomGenome() {
   };
 
   return (
-    <div className="flex flex-col gap-4 relative mb-30">
+    <div className="flex flex-col relative mb-30">
       {/* Toast notification */}
       <AnimatePresence>
         {toast.visible && (
@@ -372,7 +372,7 @@ export default function AddCustomGenome() {
       )}
 
       <div className="w-full flex justify-center">
-        <div className="w-full max-w-2xl bg-white dark:bg-dark-surface rounded-lg p-4 shadow-sm">
+        <div className="w-full max-w-2xl bg-white dark:bg-dark-surface mt-3">
           <AnimatePresence mode="wait">
             {!hasCollections ? (
               /* ── Empty state: no collections yet ── */
@@ -483,11 +483,14 @@ export default function AddCustomGenome() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.22 }}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-3"
               >
                 {/* Title row: collection selector inline */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                  <span
+                    className="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap"
+                    style={{ fontSize: "16px" }}
+                  >
                     Current collection:
                   </span>
 
@@ -495,7 +498,7 @@ export default function AddCustomGenome() {
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setCollectionDropdownOpen((o) => !o)}
-                      className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 h-7 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-semibold text-tint focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
+                      className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 font-semibold text-tint bg-white dark:bg-dark-surface text-base font-medium focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
                     >
                       <span>{selectedCollection ?? "Select collection"}</span>
                       <motion.div
@@ -556,7 +559,7 @@ export default function AddCustomGenome() {
                   {selectedCollection && (
                     <button
                       onClick={() => setGenomesExpanded((e) => !e)}
-                      className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 h-7 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-background focus:outline-none cursor-pointer transition-colors"
+                      className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-base font-medium focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
                     >
                       <span>Genomes in collection</span>
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-tint/15 text-tint text-xs font-semibold">
@@ -588,12 +591,11 @@ export default function AddCustomGenome() {
                           leftIcon={<PlusIcon className="w-3 h-3" />}
                           onClick={() => setShowCreateInput(true)}
                           style={{
-                            width: "fit-content",
-                            padding: "0px 6px",
-                            height: "28px",
-                            fontSize: "14px",
                             backgroundColor: "#5E7AC4",
                             color: "white",
+                            fontSize: "16px",
+                            width: "fit-content",
+                            padding: "6px",
                             borderRadius: "6px",
                           }}
                         >
