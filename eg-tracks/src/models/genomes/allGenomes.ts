@@ -58,7 +58,14 @@ import GRCg7w from "./GRCg7w/GRCg7w";
 import phaw5 from "./phaw5/phaw5";
 import mCalJa1_2_pat_X from "./mCalJa1.2.pat.X/mCalJa1.2.pat.X";
 import mT2T_Y_v1 from "./mT2T-Y_v1.0/mT2T-Y_v1.0";
-import pan027Mat from "./PAN027Mat/pan027Mat";
+import PAN010Mat from "./PAN010Mat/pan010Mat";
+import PAN010Pat from "./PAN010Pat/pan010Pat";
+import PAN011Mat from "./PAN011Mat/pan011Mat";
+import PAN011Pat from "./PAN011Pat/pan011Pat";
+import PAN027Mat from "./PAN027Mat/pan027Mat";
+import PAN027Pat from "./PAN027Pat/pan027Pat";
+import PAN028Mat from "./PAN028Mat/pan028Mat";
+import PAN028Pat from "./PAN028Pat/pan028Pat";
 /**
  * All available genomes.
  */
@@ -123,7 +130,14 @@ export const allGenomes = [
   phaw5,
   mCalJa1_2_pat_X,
   mT2T_Y_v1,
-  pan027Mat,
+  PAN010Mat,
+  PAN010Pat,
+  PAN011Mat,
+  PAN011Pat,
+  PAN027Mat,
+  PAN027Pat,
+  PAN028Mat,
+  PAN028Pat,
 ];
 
 export const genomeNameToConfig = {};
@@ -144,11 +158,20 @@ export interface Genome {
   assemblies: string[];
   color: string;
 }
-export const custom_collection_1 = [
+export const Pedigree_T2T = [
   {
     name: "Human",
     logoUrl: "https://vizhub.wustl.edu/public/images/Human.png",
-    assemblies: [pan027Mat.genome._name],
+    assemblies: [
+      PAN010Mat.genome._name,
+      PAN010Pat.genome._name,
+      PAN011Mat.genome._name,
+      PAN011Pat.genome._name,
+      PAN027Mat.genome._name,
+      PAN027Pat.genome._name,
+      PAN028Mat.genome._name,
+      PAN028Pat.genome._name,
+    ],
     color: "white",
   },
 ];
@@ -379,7 +402,7 @@ export const DEFAULT_GENOME_LIST: Genome[] = [
 ];
 export const allDefaultGenomeCollections = {
   DEFAULT_GENOME_LIST,
-  custom_collection_1,
+  Pedigree_T2T,
 };
 
 /**

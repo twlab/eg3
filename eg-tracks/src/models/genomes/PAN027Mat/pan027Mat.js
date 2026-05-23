@@ -2,7 +2,7 @@ import Chromosome from "../../Chromosome";
 import Genome from "../../Genome";
 import TrackModel from "../../TrackModel";
 
-const genome = new Genome("pan027Mat", [
+const genome = new Genome("PAN027Mat", [
   new Chromosome("chr1", 247024343),
   new Chromosome("chr2", 242507436),
   new Chromosome("chr3", 201412341),
@@ -72,7 +72,7 @@ const defaultTracks = [
 ];
 
 const publicHubData = {};
-const pan027Mat = {
+const PAN027Mat = {
   genome: genome,
   navContext: navContext,
   defaultRegion: defaultRegion,
@@ -81,4 +81,4 @@ const pan027Mat = {
     "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN027Mat/PAN027Mat.2bit",
 };
 
-export default pan027Mat;
+export default PAN027Mat;
