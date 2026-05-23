@@ -54,7 +54,7 @@ export default function ImportSession() {
 
   return (
     <div className="w-full flex justify-center mb-30">
-      <div className="w-full max-w-2xl bg-white dark:bg-dark-surface gap-4 rounded-lg shadow-sm  mt-4">
+      <div className="w-full max-w-2xl bg-white dark:bg-dark-surface gap-4   mt-4">
         <h1 className="text-base  font-semibold">
           Import by Session Bundle ID:
         </h1>

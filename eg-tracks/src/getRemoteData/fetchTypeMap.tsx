@@ -185,6 +185,9 @@ export const fetchTypeMap: { [key: string]: any } = {
   bigbed: async function bigbedFetch(regionData: any) {
     return getRemoteData(regionData, "bigbed");
   },
+  bigbedcolor: async function bigbedcolorFetch(regionData: any) {
+    return getRemoteData(regionData, "bigbed");
+  },
   refbed: async function refbedFetch(regionData: any) {
     return getRemoteData(regionData, "bedOrTabix");
   },

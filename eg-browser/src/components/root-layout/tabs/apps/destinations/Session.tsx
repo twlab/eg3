@@ -267,19 +267,6 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab }) => {
       state={curUserState}
     />
   );
-
-  // tab ? (
-  //   <SessionUI
-  //     onRestoreSession={onRestoreSession}
-  //     onRetrieveBundle={onRetrieveBundle}
-  //     updateBundle={onUpdateBundle}
-  //     bundleId={bundle.bundleId ? bundle.bundleId : ""}
-  //     curBundle={bundle}
-  //     state={curUserState}
-  //   />
-  // ) : (
-
-  // );
 };
 
 export default Session;

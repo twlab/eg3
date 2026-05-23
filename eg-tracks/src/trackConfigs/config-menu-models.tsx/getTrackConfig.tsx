@@ -6,6 +6,7 @@ import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
 import { QBedTrackConfig } from "./QBedTrackConfig";
 import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
 import { BigBedTrackConfig } from "./BigBedTrackConfig";
+import { BigBedTrackColorConfig } from "./BigBedTrackColorConfig";
 import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
 import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import { GeneAnnotationTrackConfig } from "./GeneAnnotationTrackConfig";
@@ -57,6 +58,7 @@ export const TYPE_NAME_TO_CONFIG = {
   bed: BedTrackConfig,
   categorical: CategoricalTrackConfig,
   bigbed: BigBedTrackConfig,
+  bigbedcolor: BigBedTrackColorConfig,
   bigwig: BigWigTrackConfig,
   hic: HicTrackConfig,
   longrange: LongRangeTrackConfig,
@@ -111,7 +113,7 @@ if (process.env.NODE_ENV !== "production") {
   for (const subtypeName in TYPE_NAME_TO_CONFIG) {
     if (subtypeName.toLowerCase() !== subtypeName) {
       throw new TypeError(
-        `Type names may not contain uppercase letters.  Offender: "${subtypeName}"`
+        `Type names may not contain uppercase letters.  Offender: "${subtypeName}"`,
       );
     }
   }

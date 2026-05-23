@@ -382,7 +382,8 @@ export class GroupedTrackManager {
 
               const height =
                 curTrackModel.type === "repeatmasker" ||
-                curTrackModel.type === "rmskv2"
+                curTrackModel.type === "rmskv2" ||
+                curTrackModel.type === "bigbedcolor"
                   ? configOptions?.height
                   : placeFeatureData.numRowsAssigned
                     ? getHeight(

@@ -260,6 +260,7 @@ const componentMap: { [key: string]: any } = {
   geneannotation: "",
   bed: "",
   // bedcolor: "",
+  bigbedcolor: "",
   bigwig: "",
   dynseq: "",
   methylc: "",
@@ -566,6 +567,9 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               trackType: trackModel.type,
             });
           } else {
+            if (!trackModel.url) {
+              throw new Error(`No URL provided for track ${trackModel.name}`);
+            }
             responses = await fetchTypeMap[trackModel.type]({
               basesPerPixel: bpRegionSize / windowWidth,
               nav: curFetchNav,

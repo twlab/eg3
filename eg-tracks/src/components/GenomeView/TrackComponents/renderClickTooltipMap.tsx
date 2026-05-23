@@ -96,6 +96,91 @@ export const geneClickToolTipMap: { [key: string]: any } = {
       document.body,
     );
   },
+  bigbedcolor: function bedClickToolTip({
+    feature,
+    pageX,
+    pageY,
+    name,
+    onClose,
+  }: {
+    feature: any;
+    pageX: number;
+    pageY: number;
+    name: string;
+    onClose: () => void;
+  }) {
+    const contentStyle = Object.assign({
+      marginTop: ARROW_SIZE,
+      pointerEvents: "auto",
+    });
+
+    return ReactDOM.createPortal(
+      <Manager>
+        <Reference>
+          {({ ref }) => (
+            <div
+              ref={ref}
+              style={{
+                position: "absolute",
+                left: pageX - 8 * 2,
+                top: pageY,
+              }}
+            />
+          )}
+        </Reference>
+        <Popper
+          placement="bottom-start"
+          modifiers={[{ name: "flip", enabled: false }]}
+        >
+          {({ ref, style, placement, arrowProps }) => (
+            <div>
+              {ReactDOM.createPortal(
+                <>
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                      ...contentStyle,
+                      zIndex: 1001,
+                    }}
+                    className="Tooltip"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <FeatureDetail
+                        feature={feature}
+                        category={undefined}
+                        queryEndpoint={undefined}
+                      />
+                    </OutsideClickDetector>
+                  </div>
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
+                </>,
+                document.body,
+              )}
+            </div>
+          )}
+        </Popper>
+      </Manager>,
+      document.body,
+    );
+  },
 
   geneannotation: function refGeneClickTooltip({
     gene,
@@ -159,14 +244,18 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                         queryEndpoint={{}}
                       />
                       {isThereG3dTrack ? (
-                        <><div>
-                          <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() => setShow3dGene ? setShow3dGene(gene) : () => { }}
-                          >
-                            Show in 3D
-                          </button>
-                        </div><div
+                        <>
+                          <div>
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() =>
+                                setShow3dGene ? setShow3dGene(gene) : () => {}
+                              }
+                            >
+                              Show in 3D
+                            </button>
+                          </div>
+                          <div
                             ref={arrowProps.ref}
                             style={{
                               ...arrowProps.style,
@@ -180,13 +269,14 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                               borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
                             }}
                             onPointerDown={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()} /></>
+                            onMouseDown={(e) => e.stopPropagation()}
+                          />
+                        </>
                       ) : (
                         ""
                       )}
                     </OutsideClickDetector>
                   </div>
-
                 </>,
                 document.body,
               )}
@@ -265,7 +355,7 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                           <button
                             className="btn btn-sm btn-primary"
                             onClick={() =>
-                              setShow3dGene ? setShow3dGene(gene) : () => { }
+                              setShow3dGene ? setShow3dGene(gene) : () => {}
                             }
                           >
                             Show in 3D

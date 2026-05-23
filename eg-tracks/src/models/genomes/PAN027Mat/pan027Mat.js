@@ -57,21 +57,17 @@ const defaultTracks = [
     type: "refbed",
     url: "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN027Mat/PAN027Mat.refbed.gz",
   }),
-  // new TrackModel({
-  //   type: "bed",
-  //   name: "PAN027Mat_cenSatbed",
-  //   label: "pan027Mat_cenSatbed",
-  //   url: "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN027Mat/PAN027Mat_cenSat.bed",
-  // }),
+
   new TrackModel({
-    type: "bigbed",
+    type: "bigbedcolor",
     name: "pan027MatRepeatMasker",
     label: "pan027MatRepeatMasker",
-    url: "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN027Mat/PAN027Mat_RM.repeatMasker.bb",
+    url: "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN027Mat/PAN027Mat_repeatMasker.bb",
   }),
   new TrackModel({
-    type: "bigbed",
-    name: "",
+    type: "bigbedcolor",
+    name: "	PAN027Mat_cenSat",
+    url: "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN027Mat/PAN027Mat_cenSat.bb",
   }),
 ];
 
