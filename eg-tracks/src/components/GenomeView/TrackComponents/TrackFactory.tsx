@@ -478,7 +478,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackState?.genomicFetchCoord[trackState.primaryGenName]
             ?.primaryVisData?.viewWindow?.end + xDiff,
       };
-
+      console.log(sameRegionViewWindow, "sameRegionViewWindow");
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -546,18 +546,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : null;
         }
 
-        const xDiff = viewWindowConfigChange?.viewWindow?.start
-          ? viewWindowConfigChange?.viewWindow?.start
-          : newDrawData?.viewWindow?.start -
-            trackState?.visData?.viewWindow.start;
-        console.log(
-          "xDiff for screenshot",
-          viewWindowConfigChange,
-          newDrawData,
-          trackState?.visData?.viewWindow,
-          trackState,
-          xDiff,
-        );
         const primaryVisData =
           trackState.genomicFetchCoord[trackState.primaryGenName]
             .primaryVisData;

@@ -15,7 +15,7 @@ export {
 } from "./util";
 export {
   getSpeciesInfo,
-  DEFAULT_GENOME_LIST,
+  Tree_of_Life,
   allDefaultGenomeCollections,
 } from "./models/genomes/allGenomes";
 export type { Genome as SpeciesInfo } from "./models/genomes/allGenomes";

@@ -25,7 +25,7 @@ export const settingsSlice = createSlice({
     cookieConsentStatus: "pending" as CookieConsentStatus,
     darkTheme: false,
     customCollections: {} as CustomCollections,
-    selectedCollections: ["DEFAULT_GENOME_LIST"] as string[],
+    selectedCollections: ["Tree_of_Life"] as string[],
   },
   reducers: {
     setNavigatorVisibility: (state, action: PayloadAction<boolean>) => {
@@ -69,7 +69,7 @@ export const settingsSlice = createSlice({
         (k) => k !== action.payload,
       );
       if (state.selectedCollections.length === 0) {
-        state.selectedCollections = ["DEFAULT_GENOME_LIST"];
+        state.selectedCollections = ["Tree_of_Life"];
       }
     },
     addGenomeToCollection: (
@@ -145,7 +145,7 @@ export const settingsSlice = createSlice({
     },
     setSelectedCollections: (state, action: PayloadAction<string[]>) => {
       state.selectedCollections =
-        action.payload.length > 0 ? action.payload : ["DEFAULT_GENOME_LIST"];
+        action.payload.length > 0 ? action.payload : ["Tree_of_Life"];
     },
     resetSettings: (state) => {
       Object.assign(state, settingsSlice.getInitialState());

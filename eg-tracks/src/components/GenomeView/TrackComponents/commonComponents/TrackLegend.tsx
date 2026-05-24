@@ -37,12 +37,16 @@ const AXIS_WIDTH = 32;
  *
  * @author Chanrung(Chad) Seng, Silas Hsu
  */
-class TrackLegend extends React.PureComponent<TrackLegendProps> {
+class TrackLegend extends React.PureComponent<
+  TrackLegendProps,
+  { showFull: boolean }
+> {
   static defaultProps = {
     width: 120,
     forceSvg: false,
-
   };
+
+  state = { showFull: false };
 
   private gNode: any;
 
@@ -121,7 +125,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
             .append("g")
             .attr(
               "transform",
-              "translate(" + 0 + "," + this.props.height * 0.5 + ")"
+              "translate(" + 0 + "," + this.props.height * 0.5 + ")",
             )
             .call(axis2)
             .selectAll(".tick")
@@ -161,6 +165,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
   }
 
   render() {
+    const { showFull } = this.state;
     const {
       trackModel,
       width,
@@ -227,7 +232,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
         const segmentsAll = selectedRegion!.getFeatureSegments();
         // not showing Gap
         const segments = segmentsAll.filter(
-          (s) => s && s.feature.getName() !== "Gap"
+          (s) => s && s.feature.getName() !== "Gap",
         );
         if (segments.length === 1) {
           chromLabel = segments[0].feature.getName();
@@ -245,7 +250,16 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
             ? track.options.color
             : "blue";
         return (
-          <div key={i} style={{ color }}>
+          <div
+            key={i}
+            style={{
+              color,
+              overflow: showFull ? "visible" : "hidden",
+              textOverflow: showFull ? "clip" : "ellipsis",
+              whiteSpace: showFull ? "normal" : "nowrap",
+              minWidth: 0,
+            }}
+          >
             {track && track.label ? track.label : ""}
           </div>
         );
@@ -264,7 +278,10 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       );
     }
     return (
-      <div style={divStyle}>
+      <div
+        style={{ ...divStyle, cursor: "pointer" }}
+        onClick={() => this.setState((s) => ({ showFull: !s.showFull }))}
+      >
         <div
           className="TrackLegend-wrap"
           title={trackModel.options ? trackModel.options.label : ""}

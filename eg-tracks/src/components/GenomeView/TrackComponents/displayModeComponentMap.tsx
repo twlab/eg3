@@ -593,7 +593,7 @@ const FullVisualizer: React.FC<any> = ({
       height={height}
     >
       {placements.map(renderAnnotation)}
-      <line
+      {/* <line
         x1={
           trackState?.genomicFetchCoord[trackState.primaryGenName]
             ?.primaryVisData?.viewWindow?.start
@@ -622,7 +622,7 @@ const FullVisualizer: React.FC<any> = ({
         y2={height}
         stroke="black"
         strokeWidth={1}
-      />
+      /> */}
     </svg>
   );
 };
@@ -1808,7 +1808,6 @@ function formatRepeatMasker(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  console.log(genesArr);
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 

@@ -368,7 +368,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     );
     const boxWidth = props.windowWidth + 120 + 1;
 
-    const scale = 5;
+    const scale = 4;
     const svgBlob = new Blob([cleanedSvg], {
       type: "image/svg+xml;charset=utf-8",
     });
@@ -458,7 +458,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
-    console.log(highlights, windowWidth, xOffset);
+
     const trackSvgElements = tracks
       .filter(
         (track) =>

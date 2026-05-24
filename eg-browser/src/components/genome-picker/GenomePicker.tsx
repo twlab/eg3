@@ -132,9 +132,7 @@ export default function GenomePicker({
       const valid = savedSelectedCollections?.filter((k) =>
         Object.keys(allCollections).includes(k),
       );
-      return new Set(
-        valid?.length ? valid : [setKeys[0] ?? "DEFAULT_GENOME_LIST"],
-      );
+      return new Set(valid?.length ? valid : [setKeys[0] ?? "Tree_of_Life"]);
     },
   );
 
@@ -161,7 +159,7 @@ export default function GenomePicker({
         if (!prev.has("CUSTOM_GENOMES")) return prev;
         const next = new Set(prev);
         next.delete("CUSTOM_GENOMES");
-        if (next.size === 0) next.add(setKeys[0] ?? "DEFAULT_GENOME_LIST");
+        if (next.size === 0) next.add(setKeys[0] ?? "Tree_of_Life");
         dispatch(setSelectedCollections([...next]));
         return next;
       });
@@ -176,7 +174,7 @@ export default function GenomePicker({
     const valid = (savedSelectedCollections ?? []).filter((k) =>
       setKeys.includes(k),
     );
-    const cleaned = valid.length > 0 ? valid : ["DEFAULT_GENOME_LIST"];
+    const cleaned = valid.length > 0 ? valid : ["Tree_of_Life"];
     const current = savedSelectedCollections ?? [];
     if (
       cleaned.length !== current.length ||
@@ -200,7 +198,7 @@ export default function GenomePicker({
     setSelectedSetKeys((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
-        if (next.size > 1) next.delete(key);
+        next.delete(key);
       } else {
         next.add(key);
       }
@@ -563,9 +561,11 @@ export default function GenomePicker({
         {totalFilteredCount === 0 && (
           <div className="flex flex-col items-center justify-center mt-16">
             <p className="text-xl text-gray-500">
-              {debouncedSearchQuery
-                ? `No genomes found matching "${debouncedSearchQuery}"`
-                : "No genomes found"}
+              {activeCollections.length === 0
+                ? "No collection selected"
+                : debouncedSearchQuery
+                  ? `No genomes found matching "${debouncedSearchQuery}"`
+                  : "No genomes found"}
             </p>
           </div>
         )}
@@ -717,9 +717,11 @@ export default function GenomePicker({
 
       {totalFilteredCount === 0 && (
         <div className="p-4 text-center text-sm text-gray-500">
-          {debouncedSearchQuery
-            ? `No genomes matching "${debouncedSearchQuery}"`
-            : "No genomes found"}
+          {activeCollections.length === 0
+            ? "No collection selected"
+            : debouncedSearchQuery
+              ? `No genomes matching "${debouncedSearchQuery}"`
+              : "No genomes found"}
         </div>
       )}
     </div>

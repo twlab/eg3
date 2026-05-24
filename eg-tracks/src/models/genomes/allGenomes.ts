@@ -58,14 +58,14 @@ import GRCg7w from "./GRCg7w/GRCg7w";
 import phaw5 from "./phaw5/phaw5";
 import mCalJa1_2_pat_X from "./mCalJa1.2.pat.X/mCalJa1.2.pat.X";
 import mT2T_Y_v1 from "./mT2T-Y_v1.0/mT2T-Y_v1.0";
-import PAN010Mat from "./PAN010Mat/pan010Mat";
-import PAN010Pat from "./PAN010Pat/pan010Pat";
-import PAN011Mat from "./PAN011Mat/pan011Mat";
-import PAN011Pat from "./PAN011Pat/pan011Pat";
-import PAN027Mat from "./PAN027Mat/pan027Mat";
-import PAN027Pat from "./PAN027Pat/pan027Pat";
-import PAN028Mat from "./PAN028Mat/pan028Mat";
-import PAN028Pat from "./PAN028Pat/pan028Pat";
+import PAN010Mat from "./PAN010Mat/PAN010Mat";
+import PAN010Pat from "./PAN010Pat/PAN010Pat";
+import PAN011Mat from "./PAN011Mat/PAN011Mat";
+import PAN011Pat from "./PAN011Pat/PAN011Pat";
+import PAN027Mat from "./PAN027Mat/PAN027Mat";
+import PAN027Pat from "./PAN027Pat/PAN027Pat";
+import PAN028Mat from "./PAN028Mat/PAN028Mat";
+import PAN028Pat from "./PAN028Pat/PAN028Pat";
 /**
  * All available genomes.
  */
@@ -175,7 +175,7 @@ export const Pedigree_T2T = [
     color: "white",
   },
 ];
-export const DEFAULT_GENOME_LIST: Genome[] = [
+export const Tree_of_Life: Genome[] = [
   {
     name: "Human",
     logoUrl: "https://vizhub.wustl.edu/public/images/Human.png",
@@ -401,7 +401,7 @@ export const DEFAULT_GENOME_LIST: Genome[] = [
   },
 ];
 export const allDefaultGenomeCollections = {
-  DEFAULT_GENOME_LIST,
+  Tree_of_Life,
   Pedigree_T2T,
 };
 
