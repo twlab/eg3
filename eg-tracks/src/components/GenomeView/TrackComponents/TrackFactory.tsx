@@ -478,7 +478,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackState?.genomicFetchCoord[trackState.primaryGenName]
             ?.primaryVisData?.viewWindow?.end + xDiff,
       };
-      console.log(sameRegionViewWindow, "sameRegionViewWindow");
+
       handleTrackDraw({
         cacheTrackData,
         trackState,
