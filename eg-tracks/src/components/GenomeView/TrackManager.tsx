@@ -4184,7 +4184,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         if (Object.keys(aggGroup).length > 0) {
           aggViewWindowData(
-            viewWindowConfigData.currvent.viewWindow,
+            viewWindowConfigData.current.viewWindow,
             viewWindowConfigData.current.dataIdx,
             aggGroup,
           );
