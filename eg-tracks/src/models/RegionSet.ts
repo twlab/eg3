@@ -41,37 +41,39 @@ class RegionSet {
     public genome: Genome,
     public flankingStrategy: FlankingStrategy,
     public genomeName: string = "",
-    public id: any = ""
+    public id: any = "",
   ) {
     this.name = name;
     this.features = features;
     this.genome = genome;
     this.flankingStrategy = flankingStrategy;
+    this.genomeName = genomeName;
   }
 
   serialize(): IRegionSet {
     return {
       name: this.name,
       features: this.features.map((feature) => feature.serialize()),
-      genomeName: this.genome.getName(),
+      genomeName: this.genome._name,
       flankingStrategy: this.flankingStrategy.serialize(),
     };
   }
 
   static deserialize(object: IRegionSet): RegionSet {
-
-    const genomeName = object.genomeName ? object.genomeName : object.genome._name;
+    const genomeName = object.genomeName
+      ? object.genomeName
+      : object.genome._name;
     const genomeConfig = getGenomeConfig(genomeName);
     if (!genomeConfig) {
       throw new Error(
-        `Cannot deserialize RegionSet object due to unknown genome name ${genomeName}`
+        `Cannot deserialize RegionSet object due to unknown genome name ${genomeName}`,
       );
     }
     return new RegionSet(
       object.name,
       object.features.map(Feature.deserialize),
       genomeConfig.genome,
-      FlankingStrategy.deserialize(object.flankingStrategy)
+      FlankingStrategy.deserialize(object.flankingStrategy),
     );
   }
 
@@ -101,14 +103,14 @@ class RegionSet {
       throw new RangeError("Feature must have a name");
     }
     const featureNames = new Set(
-      this.features.map((feature) => feature.getName())
+      this.features.map((feature) => feature.getName()),
     );
     if (featureNames.has(feature.getName())) {
       throw new RangeError("No duplicate feature names allowed");
     }
 
     const genomeIntersection = this.genome.intersectInterval(
-      feature.getLocus()
+      feature.getLocus(),
     );
     if (
       !genomeIntersection ||
@@ -152,7 +154,7 @@ class RegionSet {
    */
   makeFlankedFeatures() {
     return this.features.map((feature) =>
-      this.flankingStrategy.makeFlankedFeature(feature, this.genome)
+      this.flankingStrategy.makeFlankedFeature(feature, this.genome),
     );
   }
 
@@ -165,7 +167,7 @@ class RegionSet {
     const flankedFeatures = this.makeFlankedFeatures();
     if (flankedFeatures.some((feature) => feature === null)) {
       throw new Error(
-        "Cannot make nav context out of null features.  Double check the flanking strategy."
+        "Cannot make nav context out of null features.  Double check the flanking strategy.",
       );
     }
     return new NavigationContext(this.name, flankedFeatures);

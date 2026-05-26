@@ -65,6 +65,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
   const currentViewOptions = useRef({});
+  const currentWindowWidth = useRef(0);
   const {
     data,
     viewRegion,
@@ -79,7 +80,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     viewWindow,
     dataIdx,
     initialLoad,
-    windowWidth
+    windowWidth,
   } = props;
 
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
@@ -119,13 +120,13 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         );
 
         max = _.max(visibleValues) || 1;
-      
+
         xValues2 = xToValue2.filter((x) => x);
         min =
           (xValues2.length
             ? _.min(
-              xToValue2.slice(props.viewWindow.start, props.viewWindow.end),
-            )
+                xToValue2.slice(props.viewWindow.start, props.viewWindow.end),
+              )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -250,11 +251,11 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   }
   let curParentStyle: any = forceSvg
     ? {
-      position: "relative",
+        position: "relative",
 
-      overflow: "hidden",
-      width: windowWidth,
-    }
+        overflow: "hidden",
+        width: windowWidth,
+      }
     : {};
   let curEleStyle: any = forceSvg
     ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
@@ -262,7 +263,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
 
   let visualizer;
-    
+
   if (
     initialLoad ||
     options.forceSvg ||
@@ -272,8 +273,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         !(scales.min === currentScale.current?.min))) ||
     scales.zeroLine !== currentScale.current?.zeroLine ||
     dataIdx !== currentViewDataIdx.current ||
-    !_.isEqual(options, currentViewOptions.current) 
-    
+    !_.isEqual(options, currentViewOptions.current) ||
+    windowWidth !== currentWindowWidth.current
+
     // ||
     // !options.usePrimaryNav
   ) {
@@ -401,6 +403,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   } else {
     visualizer = currentVisualizer.current;
   }
+  currentWindowWidth.current = windowWidth;
   currentVisualizer.current = visualizer;
   currentViewDataIdx.current = dataIdx;
   currentViewWindow.current = viewWindow;

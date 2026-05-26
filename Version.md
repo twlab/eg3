@@ -1,5 +1,9 @@
 # Version history
 
+## 60.1.0
+
+- to be added
+
 ## 60.0.8
 
 - to be added

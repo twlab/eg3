@@ -53,6 +53,16 @@ export default class GenomeHubManager {
     this.genomeCache.set(genome.id, genome);
   }
 
+  async genomeExists(id: string): Promise<boolean> {
+    if (this.genomeCache.has(id)) return true;
+    try {
+      await this.localGenomeRepository.getGenomeById(id);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async deleteAllGenomes(): Promise<void> {
     await this.localGenomeRepository.deleteAllGenomes();
     this.genomeCache.clear();

@@ -21,11 +21,12 @@ interface BedAnnotationProps {
   isInvertArrowDirection?: boolean;
   onClick?: (
     event: React.MouseEvent<SVGGElement, MouseEvent>,
-    feature: Feature
+    feature: Feature,
   ) => void;
   alwaysDrawLabel?: boolean;
   hiddenPixels?: number;
   opacity?: number;
+  height?: number | undefined;
 }
 
 class BedAnnotation extends React.Component<BedAnnotationProps> {
@@ -38,7 +39,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
     opacity: 1,
     onClick: (
       event: React.MouseEvent<SVGGElement, MouseEvent>,
-      feature: Feature
+      feature: Feature,
     ) => undefined,
   };
 
@@ -53,16 +54,20 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
       isInvertArrowDirection = false,
       onClick = (
         event: React.MouseEvent<SVGGElement, MouseEvent>,
-        feature: Feature
+        feature: Feature,
       ) => undefined,
       alwaysDrawLabel = false,
       hiddenPixels = 0,
       opacity = 1,
+      height = undefined,
     } = this.props;
 
-    const colorToUse = feature.getIsReverseStrand()
-      ? reverseStrandColor
-      : color;
+    const colorToUse = feature.color
+      ? feature.color
+      : feature.getIsReverseStrand()
+        ? reverseStrandColor
+        : color;
+    const drawHeight = feature.color && height ? height : HEIGHT;
     const contrastColor = getContrastingColor(colorToUse);
     const [startX, endX] = xSpan;
     const width2 = endX - startX;
@@ -77,7 +82,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
         x={startX}
         y={0}
         width={width}
-        height={HEIGHT}
+        height={drawHeight}
         fill={colorToUse}
         opacity={opacity}
       />
@@ -97,7 +102,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
         <AnnotationArrows
           startX={startX}
           endX={endX}
-          height={HEIGHT}
+          height={drawHeight}
           isToRight={feature.getIsReverseStrand() === isInvertArrowDirection}
           color={contrastColor}
           opacity={opacity}
@@ -106,14 +111,14 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
     }
 
     let label: any = null;
-    const estimatedLabelWidth = feature.getName().length * HEIGHT;
+    const estimatedLabelWidth = feature.getName().length * drawHeight;
     if (estimatedLabelWidth < 0.5 * width) {
       const centerX = startX + 0.5 * width;
       label = (
         <BackgroundedText
           x={centerX}
           y={0}
-          height={HEIGHT - 1}
+          height={drawHeight - 1}
           fill={contrastColor}
           dominantBaseline="hanging"
           textAnchor="middle"
@@ -128,7 +133,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
         <BackgroundedText
           x={endX + 4} // 4px space between rect and text label
           y={0}
-          height={HEIGHT - 1}
+          height={drawHeight - 1}
           fill={colorToUse}
           dominantBaseline="hanging"
           textAnchor="start"

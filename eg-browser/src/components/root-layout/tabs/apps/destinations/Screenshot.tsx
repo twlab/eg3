@@ -60,6 +60,7 @@ export default function Screenshot() {
         metadataTerms={[]}
         retakeScreenshot={retakeScreenshot}
         windowWidth={screenShotData.windowWidth}
+        xOffset={screenShotData.xOffset}
       />
     </div>
   ) : (

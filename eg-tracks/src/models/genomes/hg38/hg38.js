@@ -132,14 +132,14 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
   // }),
 
-  // new TrackModel({ 
+  // new TrackModel({
 
   //   type:"jaspar",
   //   name: "test jaspar",
   //   url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb"
   // }),
 
-  //   new TrackModel({
+  // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
@@ -388,7 +388,6 @@ const defaultTracks = [
   //   },
   // }),
 
-  
   // new TrackModel({
   //   type: "qbed",
   //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
@@ -606,7 +605,7 @@ const defaultTracks = [
   //   type: "genomealign",
   //   querygenome: "mm10",
   //   filetype: "genomealign",
-  //   url: "",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   // }),
   // new TrackModel({
   //   type: "categorical",

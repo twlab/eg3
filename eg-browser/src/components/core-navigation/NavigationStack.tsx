@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import NotFound from "./NotFound";
-import NavigationToolbar from "./NavigationToolbar";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 // animations removed: no framer-motion
 
@@ -89,8 +88,9 @@ export default function NavigationStack({
 }) {
   const { ref, width, height } = useElementGeometry();
   useEffect(() => {
-    if (panelCounter) { if (path.length > 0) setPath(path.slice(0, -1)); }
-
+    if (panelCounter) {
+      if (path.length > 0) setPath(path.slice(0, -1));
+    }
   }, [panelCounter]);
   const [path, setPathState] = useState<NavigationPath>([]);
   const setPath = (p: NavigationPath) => {
@@ -144,7 +144,6 @@ export default function NavigationStack({
           </div>
 
           {path.map((element, idx) => {
-
             const destination =
               destinationMap[element.path] ?? notFoundDestination;
             // const transform =
@@ -161,9 +160,11 @@ export default function NavigationStack({
                   // transition: "transform 220ms ease",
                 }}
               >
-                {destination.path === "session" ?       
-                 <destination.component tab={currentOptions?.tab} /> : <destination.component />}
-        
+                {destination.path === "session" ? (
+                  <destination.component tab={currentOptions?.tab} />
+                ) : (
+                  <destination.component />
+                )}
               </div>
             );
           })}

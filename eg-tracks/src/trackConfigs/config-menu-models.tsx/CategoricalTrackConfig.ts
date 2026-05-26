@@ -1,4 +1,3 @@
-
 import { TrackConfig } from "./TrackConfig";
 import { BackgroundColorConfig } from "../config-menu-components.tsx/ColorConfig";
 // import { CategoryColorConfig } from "../trackContextMenu/CategoryColorConfig";

@@ -37,7 +37,7 @@ const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 // Map track types to their data source types
 
 let cachedFetchInstance: { [key: string]: any } = {};
-export const trackFetchFunction: { [key: string]: any } = {
+export const fetchTypeMap: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
     let genomeName;
     let apiConfigPrefix;
@@ -183,6 +183,9 @@ export const trackFetchFunction: { [key: string]: any } = {
     return getRemoteData(regionData, "jaspar");
   },
   bigbed: async function bigbedFetch(regionData: any) {
+    return getRemoteData(regionData, "bigbed");
+  },
+  bigbedcolor: async function bigbedcolorFetch(regionData: any) {
     return getRemoteData(regionData, "bigbed");
   },
   refbed: async function refbedFetch(regionData: any) {
@@ -352,4 +355,4 @@ async function getRemoteData(regionData: any, trackType: string) {
   }
 }
 
-export default trackFetchFunction;
+export default fetchTypeMap;

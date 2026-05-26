@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
 import _, { create } from "lodash";
+import { jsPDF } from "jspdf";
+import Button from "../../../../ui/button/Button";
+import {
+  ArrowDownTrayIcon,
+  DocumentArrowDownIcon,
+  CameraIcon,
+} from "@heroicons/react/24/outline";
 
 import { ClipLoader } from "react-spinners";
 import {
@@ -16,6 +23,8 @@ interface Highlight {
   end: number;
   display: boolean;
   color: string;
+  xPos: number;
+  width: number;
 }
 
 interface Props {
@@ -296,13 +305,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     svgElem.appendChild(svgElemg2);
     svgElem.setAttribute("xmlns", xmlns);
 
-    const xS = highlights.map(
-      (h) => new OpenInterval(h.start + 120, h.end + 120),
-    );
-    highlights.forEach((item, idx) => {
+    highlights.forEach((item) => {
       const rect = document.createElementNS(xmlns, "rect");
-      rect.setAttribute("x", xS[idx].start + "");
-      rect.setAttribute("width", xS[idx].getLength() + "");
+      rect.setAttribute("x", legendWidth + item.xPos - props.xOffset + "");
+      rect.setAttribute("width", item.width + "");
       rect.setAttribute("height", boxHeight + "");
       rect.setAttribute("fill", item.color);
       svgElem.appendChild(rect);
@@ -324,6 +330,73 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     dl.setAttribute("href", svgUrl);
     dl.setAttribute("download", new Date().toISOString() + "_eg.svg");
     dl.click();
+  };
+
+  const downloadPdf = () => {
+    const svgContent = prepareSvg();
+
+    // foreignObject containing HTML taints the canvas and blocks toDataURL.
+    // Replace each foreignObject with a native SVG <text> element instead.
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
+    svgDoc.querySelectorAll("foreignObject").forEach((fo) => {
+      const x = parseFloat(fo.getAttribute("x") || "0");
+      const y = parseFloat(fo.getAttribute("y") || "0");
+      const height = parseFloat(fo.getAttribute("height") || "20");
+      const label = fo.textContent?.trim() || "";
+      const text = svgDoc.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", String(x + 2));
+      text.setAttribute("y", String(y + Math.min(height * 0.4, 12)));
+      text.setAttribute("font-size", "9px");
+      text.setAttribute("class", "svg-text-bg");
+      text.textContent =
+        label.length > 20 ? label.slice(0, 18) + "\u2026" : label;
+      fo.parentNode?.replaceChild(text, fo);
+    });
+    const cleanedSvg = new XMLSerializer().serializeToString(
+      svgDoc.documentElement,
+    );
+
+    const tracks = Array.from(
+      document
+        .querySelector("#screenshotContainer")
+        ?.querySelectorAll(".Track") ?? [],
+    );
+    const boxHeight = tracks.reduce(
+      (acc, cur) => acc + cur.clientHeight,
+      11 * tracks.length,
+    );
+    const boxWidth = props.windowWidth + 120 + 1;
+
+    const scale = 4;
+    const svgBlob = new Blob([cleanedSvg], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.width = boxWidth * scale;
+    img.height = boxHeight * scale;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = boxWidth * scale;
+      canvas.height = boxHeight * scale;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0, boxWidth, boxHeight);
+      URL.revokeObjectURL(svgUrl);
+
+      const orientation = boxWidth > boxHeight ? "landscape" : "portrait";
+      const pdf = new jsPDF({
+        orientation,
+        unit: "px",
+        format: [boxWidth, boxHeight],
+      });
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, boxWidth, boxHeight);
+      pdf.save(new Date().toISOString() + "_eg.pdf");
+    };
+    img.src = svgUrl;
   };
   const styles = {
     container: {
@@ -373,7 +446,15 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   // };
 
   const makeSvgTrackElements = () => {
-    const { tracks, trackData, highlights, viewWindow } = props;
+    const {
+      tracks,
+      trackData,
+      highlights,
+      viewWindow,
+      legendWidth,
+      windowWidth,
+      xOffset,
+    } = props;
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
@@ -391,8 +472,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const createSVGData = trackData[`${id}`];
 
         const newTrackState = { ...createSVGData.trackState };
-        newTrackState["viewWindow"] = viewWindow;
-
+        newTrackState.viewWindow = viewWindow;
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
@@ -430,26 +510,29 @@ const ScreenshotUI: React.FC<Props> = (props) => {
               ? highlights.map((item, index) => {
                   return (
                     <div
-                      key={index}
                       style={{
-                        display: "flex",
                         position: "absolute",
-                        top: 0, // Adjust this accordingly to place above the track, e.g., '-10px'
-                        left: item.start + 120,
-                        width: item.end - item.start,
+                        top: 0,
+                        left: legendWidth,
+                        width: windowWidth,
                         height: "100%",
+                        pointerEvents: "none",
+                        zIndex: 5,
                       }}
                     >
                       <div
                         key={index}
                         style={{
+                          position: "absolute",
                           backgroundColor: item.color,
-                          top: "0",
+                          top: 0,
                           height: "100%",
-                          width: item.end - item.start,
-                          pointerEvents: "none", // This makes the highlighted area non-interactive
+                          left: 0,
+                          transform: `translateX(${item.xPos - xOffset}px)`,
+                          width: item.width,
+                          pointerEvents: "none",
                         }}
-                      ></div>
+                      />
                     </div>
                   );
                 })
@@ -504,22 +587,50 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             You can get the updated view of the tracks by retaking your
             screenshot.
           </div>
-          <div style={{ display: "flex", gap: "1ch" }}>
-            <button
-              className="btn btn-primary btn-sm"
-              style={{ marginBottom: "2ch" }}
+          <div style={{ display: "flex", gap: "1ch", marginBottom: "2ch" }}>
+            <Button
               onClick={downloadSvg}
+              backgroundColor="tint"
+              leftIcon={<ArrowDownTrayIcon style={{ width: 15, height: 15 }} />}
+              style={{
+                width: "fit-content",
+                padding: "4px 8px",
+                fontSize: "14px",
+              }}
             >
-              ⬇ Download SVG
-            </button>
+              Download SVG
+            </Button>
 
-            <button
-              className="btn btn-primary btn-sm"
-              style={{ marginBottom: "2ch" }}
-              onClick={updateScreenshot}
+            <Button
+              onClick={downloadPdf}
+              leftIcon={
+                <DocumentArrowDownIcon style={{ width: 15, height: 15 }} />
+              }
+              style={{
+                width: "fit-content",
+                padding: "4px 8px",
+                fontSize: "14px",
+                backgroundColor: "#C0392B",
+                color: "white",
+              }}
             >
-              📷 Retake Screenshot
-            </button>
+              Download PDF
+            </Button>
+
+            <Button
+              onClick={updateScreenshot}
+              outlined
+              leftIcon={<CameraIcon style={{ width: 15, height: 15 }} />}
+              style={{
+                width: "fit-content",
+                padding: "4px 8px",
+                fontSize: "14px",
+                backgroundColor: "white",
+                color: "#374151",
+              }}
+            >
+              Retake Screenshot
+            </Button>
           </div>
           <div id="screenshotContainer">{svgView}</div>
           {/* <div id="pdfContainer"></div> */}

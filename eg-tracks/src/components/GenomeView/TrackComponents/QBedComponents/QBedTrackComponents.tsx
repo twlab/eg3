@@ -56,6 +56,7 @@ type QBedTrackProps = {
   xvaluesData?: Array<any>;
   dataIdx: number;
   initialLoad: boolean;
+  windowWidth?: number;
 };
 
 export const DEFAULT_OPTIONS = {
@@ -85,6 +86,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   const currentViewDataIdx = useRef<number | null>(null);
   const currentViewWindow = useRef<any | null>(null);
   const currentScale = useRef<any | null>(null);
+  const currentWindowWidth = useRef(0);
 
   const currentViewOptions = useRef({});
   const computeScales = (xToValue: any, height: number) => {
@@ -156,6 +158,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     dataIdx,
     initialLoad,
     updatedLegend,
+    windowWidth = 0,
   } = props;
   const {
     height,
@@ -212,7 +215,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
         position: "relative",
 
         overflow: "hidden",
-        width: windowWidth / 3  / 3 + 120,
+        width: windowWidth / 3 / 3 + 120,
       }
     : {};
   let curEleStyle: any = forceSvg
@@ -234,7 +237,8 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
         !(scalesRef.current.min === currentScale.current?.min))) ||
     dataIdx !== currentViewDataIdx.current ||
     !_.isEqual(options, currentViewOptions.current) ||
-    !options.usePrimaryNav
+    !options.usePrimaryNav ||
+    windowWidth !== currentWindowWidth.current
   ) {
     visualizer = (
       <React.Fragment>
@@ -298,6 +302,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
 
   currentScale.current = scalesRef.current;
   currentViewOptions.current = options;
+  currentWindowWidth.current = windowWidth;
   xToValue = [];
   return visualizer;
 };

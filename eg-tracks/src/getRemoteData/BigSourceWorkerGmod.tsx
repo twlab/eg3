@@ -1,32 +1,11 @@
 import { BigWig } from "@gmod/bbi";
+import { chromAlias } from "./fetchFunctions";
 
-const ensembl: Array<string> = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20",
-  "21",
-  "22",
-  "X",
-  "Y",
-  "M",
-];
+const CORS_PROXY = "https://epigenome.wustl.edu/cors";
+
+function proxiedUrl(url: string): string {
+  return `${CORS_PROXY}/${url.replace(/^https?:\/\//, "")}`;
+}
 
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
@@ -36,6 +15,7 @@ const ensembl: Array<string> = [
 class BigSourceWorkerGmod {
   url: string;
   bw: BigWig;
+  private usingProxy: boolean = false;
   private chromNamingCache: boolean | null = null;
 
   /**
@@ -46,6 +26,12 @@ class BigSourceWorkerGmod {
     this.url = url;
     this.bw = new BigWig({ url });
     this.chromNamingCache = null;
+  }
+
+  private switchToProxy() {
+    this.usingProxy = true;
+    this.chromNamingCache = null;
+    this.bw = new BigWig({ url: proxiedUrl(this.url) });
   }
 
   async detectChromosomeNaming(): Promise<boolean | null> {
@@ -59,9 +45,15 @@ class BigSourceWorkerGmod {
         this.chromNamingCache = false;
         return false;
       }
-      this.chromNamingCache = ensembl.includes(firstChrom);
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
       return this.chromNamingCache;
     } catch (error) {
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        return this.detectChromosomeNaming();
+      }
       console.error(
         "Error detecting chromosome naming. Check URL and file format.",
       );
@@ -81,21 +73,32 @@ class BigSourceWorkerGmod {
     const isEnsembl =
       options.ensemblStyle ?? (await this.detectChromosomeNaming());
 
-    const promises = loci.map((locus) => {
-      let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
-      if (chrom === "M") {
-        chrom = "MT";
-      }
+    const fetchForLoci = () =>
+      loci.map((locus) => {
+        let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
+        if (chrom === "M") {
+          chrom = "MT";
+        }
+        return this.bw.getFeatures(chrom, locus.start, locus.end);
+      });
 
-      return this.bw.getFeatures(chrom, locus.start, locus.end);
-    });
-    const dataForEachLocus = await Promise.all(promises);
+    let dataForEachLocus: any[][];
+    try {
+      dataForEachLocus = await Promise.all(fetchForLoci());
+    } catch (error) {
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        dataForEachLocus = await Promise.all(fetchForLoci());
+      } else {
+        throw error;
+      }
+    }
+
     loci.forEach((locus, index) => {
       dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
     });
-    const combinedData = dataForEachLocus.flat();
 
-    return combinedData;
+    return dataForEachLocus.flat();
   }
 }
 

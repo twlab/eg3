@@ -4,9 +4,7 @@ import TrackModel from "../../../models/TrackModel";
 
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
-import {
-  FeatureAggregator,
-} from "../../../models/FeatureAggregator";
+import { FeatureAggregator } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
 import FeatureArranger, {
   FeaturePlacementResult,
@@ -23,11 +21,9 @@ import { Fiber } from "../../../models/Feature";
 import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
 import {
   FiberDisplayModes,
-
   VcfColorScaleKeys,
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { scaleLinear } from "d3-scale";
-
 
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
@@ -65,8 +61,7 @@ function getHeight(numRows: number, trackModel, configOptions): number {
 
   if (configOptions.rowHeight) {
     rowHeight = configOptions.rowHeight;
-  }
-  else if(configOptions.ROW_HEIGHT){
+  } else if (configOptions.ROW_HEIGHT) {
     rowHeight = configOptions.ROW_HEIGHT;
   }
 
@@ -372,7 +367,7 @@ export class GroupedTrackManager {
                 xvalues;
             } else {
               const data = track.data;
-          
+
               const placeFeatureData = featureArrange.arrange(
                 data,
                 track.visRegion,
@@ -381,13 +376,14 @@ export class GroupedTrackManager {
                   ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
                   : trackOptionMap["error"].getGenePadding,
                 configOptions.hiddenPixels,
-                configOptions.sortItems                 ? configOptions.sortItems : sortType,
+                configOptions.sortItems ? configOptions.sortItems : sortType,
                 viewWindow,
               );
 
               const height =
                 curTrackModel.type === "repeatmasker" ||
-                curTrackModel.type === "rmskv2"
+                curTrackModel.type === "rmskv2" ||
+                curTrackModel.type === "bigbedcolor"
                   ? configOptions?.height
                   : placeFeatureData.numRowsAssigned
                     ? getHeight(

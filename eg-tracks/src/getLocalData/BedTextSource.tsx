@@ -3,6 +3,7 @@ import _ from "lodash";
 import TextSource from "./localTextSource";
 import BinIndexer from "../models/BinIndexer";
 import BedRecord from "../models/BedRecord";
+import { chromAlias } from "../getRemoteData/fetchFunctions";
 /**
  * @author Daofeng Li
  * get data from TextSource, index it and return by region querying
@@ -14,6 +15,7 @@ class BedTextSource {
   indexer: any;
   ready: boolean;
   type: string = "";
+  private chromNamingCache: boolean | null = null;
   constructor(config) {
     this.source = new TextSource(config);
     this.textData = null;
@@ -106,14 +108,45 @@ class BedTextSource {
     this.ready = true;
   }
 
-  async getData(loci) {
+  async detectChromosomeNaming(): Promise<boolean | null> {
+    if (this.chromNamingCache !== null) {
+      return this.chromNamingCache;
+    }
+    try {
+      if (!this.ready) {
+        await this.init();
+      }
+      const firstItem = this.textData?.data?.[0];
+      const firstChrom = firstItem?.[0];
+      if (!firstChrom) {
+        this.chromNamingCache = false;
+        return false;
+      }
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error("Error detecting chromosome naming. Check file format.");
+      return null;
+    }
+  }
+
+  async getData(loci, options: any = {}) {
     if (!this.ready) {
       await this.init();
     }
+    const isEnsembl =
+      options.ensemblStyle ?? (await this.detectChromosomeNaming());
 
-    const data = loci.map((locus) =>
-      this.indexer.get(locus.chr, locus.start, locus.end)
-    );
+    const data = loci.map((locus) => {
+      const chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
+      const records = this.indexer.get(chrom, locus.start, locus.end);
+      if (isEnsembl) {
+        records.forEach((r) => (r.chr = locus.chr));
+      }
+      return records;
+    });
 
     return _.flatten(data);
   }

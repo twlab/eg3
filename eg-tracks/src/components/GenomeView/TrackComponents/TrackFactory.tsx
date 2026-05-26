@@ -185,6 +185,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       xPos.current = curXPos;
+
       startTransition(() =>
         setViewComponent({
           component: result,
@@ -192,6 +193,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           numHidden: numHidden,
           visData: trackState.visData,
           xPos: curXPos,
+          viewWindow: trackState.viewWindow,
         }),
       );
     }
@@ -465,11 +467,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
       let cacheTrackData = caches[`${id}`];
+      const xDiff =
+        viewWindowConfigChange.viewWindow.start -
+        trackState?.visData?.viewWindow.start;
+      const sameRegionViewWindow = {
+        start:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start + xDiff,
+        end:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.end + xDiff,
+      };
 
       handleTrackDraw({
         cacheTrackData,
         trackState,
-        viewWindow: viewWindowConfigChange.viewWindow,
+        viewWindow: sameRegionViewWindow,
         groupScale:
           globalTrackState.current.trackStates[dataIdx].trackState[
             "groupScale"
@@ -485,6 +498,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     if (isScreenShotOpen) {
       async function handle() {
+        if (!viewComponent) {
+          return;
+        }
         let cacheDataIdx = dataIdx;
 
         let cacheTrackData = caches[`${id}`];
@@ -519,9 +535,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
 
           if (!noData) {
-            if (newDrawData.viewWindow) {
-              trackState["viewWindow"] = newDrawData.viewWindow;
-            }
             trackState["groupScale"] =
               globalTrackState.current.trackStates[dataIdx].trackState[
                 "groupScale"
@@ -531,13 +544,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData = cacheTrackData[dataIdx]
             ? _.clone(cacheTrackData[dataIdx].dataCache)
             : null;
-
-          if (combinedData) {
-            if (newDrawData.viewWindow) {
-              trackState["viewWindow"] = newDrawData.viewWindow;
-            }
-          }
         }
+
         const primaryVisData =
           trackState.genomicFetchCoord[trackState.primaryGenName]
             .primaryVisData;
@@ -547,28 +555,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           : primaryVisData.visRegion;
         // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
         trackState["visRegion"] = visRegion;
-
-        const width = primaryVisData.visWidth
-          ? primaryVisData.visWidth
-          : windowWidth * 3;
-
-        const expandedViewWindow =
-          updateSide.current === "right"
-            ? new OpenInterval(
-                -(dragX! + (xPos.current + windowWidth)),
-                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
-              )
-            : new OpenInterval(
-                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-                windowWidth * 3 -
-                  (dragX! - (xPos.current + windowWidth)) +
-                  windowWidth,
-              );
-        let start = expandedViewWindow.start + width / 3;
-
-        let end = expandedViewWindow.end - width / 3;
-
-        trackState["viewWindow"] = new OpenInterval(start, end);
+        trackState["viewWindow"] = viewComponent.viewWindow;
         let drawOptions = { ...getConfigOptions() };
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
@@ -583,10 +570,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackState,
             windowWidth,
             configOptions: drawOptions,
-            svgHeight:
-              getConfigOptions().displayMode === "full"
-                ? svgHeight.current
-                : getConfigOptions().height,
+            svgHeight: svgHeight.current
+              ? svgHeight.current
+              : getConfigOptions().height,
             trackModel,
             basesByPixel: basePerPixel,
             genomeConfig,
@@ -781,6 +767,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           position: "relative",
           willChange: "transform",
           left: 120,
+          //  + viewComponent?.xOffset || 0,
         }}
       >
         <div
@@ -814,41 +801,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
-
-        {
-          // highlight element is inside the track component because it has pixel relative to bp location, so we have to set them within the
-          // track
-          highlightElements.length > 0
-            ? highlightElements.map((item, index) => {
-                if (item.display) {
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        display: "flex",
-                        position: "relative",
-                        height: "100%",
-                      }}
-                    >
-                      <div
-                        key={index}
-                        style={{
-                          position: "absolute",
-                          backgroundColor: item.color,
-                          top: "0",
-                          height: "100%",
-                          left: item.side === "right" ? `${item.xPos}px` : "",
-                          right: item.side === "left" ? `${item.xPos}px` : "",
-                          width: item.width,
-                          pointerEvents: "none", // This makes the highlighted area non-interactive
-                        }}
-                      ></div>
-                    </div>
-                  );
-                }
-              })
-            : ""
-        }
       </div>
     </div>
   );

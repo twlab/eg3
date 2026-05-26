@@ -2,34 +2,13 @@ import _ from "lodash";
 import { BlobFile, RemoteFile } from "generic-filehandle";
 import { TabixIndexedFile } from "@gmod/tabix";
 import VCF from "@gmod/vcf";
+import { chromAlias } from "./fetchFunctions";
 
-const ensembl: Array<string> = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20",
-  "21",
-  "22",
-  "X",
-  "Y",
-  "M",
-];
+const CORS_PROXY = "https://epigenome.wustl.edu/cors";
+
+function proxiedUrl(url: string): string {
+  return `${CORS_PROXY}/${url.replace(/^https?:\/\//, "")}`;
+}
 
 class VcfSource {
   header: any;
@@ -38,6 +17,7 @@ class VcfSource {
   url: any;
   indexUrl: any;
   private chromNamingCache: boolean | null = null;
+  private usingProxy: boolean = false;
   constructor(url, indexUrl = null) {
     this.url = url;
     this.indexUrl = indexUrl;
@@ -68,14 +48,34 @@ class VcfSource {
         this.chromNamingCache = false;
         return false;
       }
-      this.chromNamingCache = ensembl.includes(firstChrom);
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
       return this.chromNamingCache;
     } catch (error) {
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        return this.detectChromosomeNaming();
+      }
       console.error(
         "Error detecting chromosome naming. Check URL and file format.",
       );
       return null;
     }
+  }
+
+  private switchToProxy() {
+    if (Array.isArray(this.url)) return;
+    this.usingProxy = true;
+    this.chromNamingCache = null;
+    this.header = null;
+    this.parser = null;
+    this.vcf = new TabixIndexedFile({
+      filehandle: new RemoteFile(proxiedUrl(this.url)),
+      tbiFilehandle: new RemoteFile(
+        proxiedUrl(this.indexUrl ?? this.url + ".tbi"),
+      ),
+    });
   }
 
   /**
@@ -106,23 +106,11 @@ class VcfSource {
     try {
       return await this.fetchSource(region, options);
     } catch (error) {
-      console.error("Error fetching VCF data, recreating instance:", error);
-
-      // try {
-      //   if (typeof window !== "undefined" && "caches" in window) {
-      //     const cacheNames = await caches.keys();
-      //     await Promise.all(
-      //       cacheNames.map((cacheName) => caches.delete(cacheName))
-      //     );
-      //   }
-
-      //   // recreate the fetch instance and retry once, because it might be a disk cache issue
-      //   this.recreateVcfInstance();
-
-      //   return await this.fetchSource(region, options);
-      // } catch (error) {
-      //   throw error;
-      // }
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        return await this.fetchSource(region, options);
+      }
+      console.error("Error fetching VCF data:", error);
       throw error;
     }
   }

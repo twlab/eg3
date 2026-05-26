@@ -104,7 +104,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
 
-
   useEffect(() => {
     latestSliceRef.current = { w: sliceWidth, h: sliceHeight };
   }, [sliceWidth, sliceHeight]);
@@ -165,13 +164,15 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     if (!onClose) return;
     const handleOutsideClick = (e: PointerEvent) => {
       if (pinned) return;
-      if (excludeRefs?.some((r) => r.current?.contains(e.target as Node))) return;
+      if (excludeRefs?.some((r) => r.current?.contains(e.target as Node)))
+        return;
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
     document.addEventListener("pointerdown", handleOutsideClick);
-    return () => document.removeEventListener("pointerdown", handleOutsideClick);
+    return () =>
+      document.removeEventListener("pointerdown", handleOutsideClick);
   }, [pinned, onClose, excludeRefs]);
 
   // overlay helpers: lightweight DOM element updated via rAF
@@ -191,7 +192,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     el.style.width = `${w}px`;
     el.style.height = `${h}px`;
     el.style.border = "2px dashed rgba(31,111,255,0.7)";
-    // change ghost box opacity 
+    // change ghost box opacity
     el.style.background = "rgba(255, 255, 255, 0.3)";
     el.style.transition =
       "width 80ms linear, height 80ms linear, left 80ms linear, top 80ms linear";
@@ -222,7 +223,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     if (ghostRef.current) {
       try {
         document.body.removeChild(ghostRef.current);
-      } catch (e) { }
+      } catch (e) {}
       ghostRef.current = null;
     }
     pendingPreviewRef.current = null;
@@ -262,16 +263,20 @@ export default function ResizablePanel(props: ResizablePanelProps) {
 
   // when navigation tab expands, need bigger panel for content
   useEffect(() => {
-
     if (expandNavigationTab) {
-
       const windowSize = {
         width: window.innerWidth,
         height: window.innerHeight,
       };
 
-      const numericInitialW = typeof initialWidth === "number" ? initialWidth : parseSizeToNumber(initialWidth as string, 0);
-      const numericInitialH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
+      const numericInitialW =
+        typeof initialWidth === "number"
+          ? initialWidth
+          : parseSizeToNumber(initialWidth as string, 0);
+      const numericInitialH =
+        typeof initialHeight === "number"
+          ? initialHeight
+          : parseSizeToNumber(initialHeight as string, 0);
       const numericWidth = parseSizeToNumber(width, 0);
       const numericHeight = parseSizeToNumber(height, 0);
       const defaultW = Math.round(windowSize.width * 0.6);
@@ -279,8 +284,14 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       const altW = Math.round(windowSize.width * 0.5);
       const altH = Math.round(windowSize.height * 0.75);
 
-      let newW = numericWidth !== numericInitialW && numericWidth !== altW ? numericWidth : defaultW;
-      let newH = numericHeight !== numericInitialH && numericHeight !== altH ? numericHeight : defaultH;
+      let newW =
+        numericWidth !== numericInitialW && numericWidth !== altW
+          ? numericWidth
+          : defaultW;
+      let newH =
+        numericHeight !== numericInitialH && numericHeight !== altH
+          ? numericHeight
+          : defaultH;
       newW = Math.max(numericInitialW, newW);
       newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
@@ -288,27 +299,32 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
       const rectExpand = panelRef.current?.getBoundingClientRect();
       if (rectExpand) {
-        const numericNewW = typeof newW === "number" ? newW : parseSizeToNumber(newW as string, 0);
-        const numericNewH = typeof newH === "number" ? newH : parseSizeToNumber(newH as string, 0);
+        const numericNewW =
+          typeof newW === "number"
+            ? newW
+            : parseSizeToNumber(newW as string, 0);
+        const numericNewH =
+          typeof newH === "number"
+            ? newH
+            : parseSizeToNumber(newH as string, 0);
         const projectedRight = rectExpand.left + numericNewW;
         const projectedBottom = rectExpand.top + numericNewH;
         let dx = 0;
         let dy = 0;
+
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
-          dx = -Math.min(overflow, rectExpand.left)
-            - 20; // can't move left past viewport left edge
+          dx = -Math.min(overflow, rectExpand.left) - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
-          dy = -Math.min(overflow, rectExpand.top); // use y pos of previous panel 
-          if (dx !== 0 || dy !== 0) {
-            setTranslate((prev) => ({
-              x: prev.x + dx,
-              y:
-                prev.y + dy < 0 ? 0 : prev.y + dy
-            }));
-          }
+          dy = -Math.min(overflow, rectExpand.top); // use y pos of previous panel
+        }
+        if (dx !== 0 || dy !== 0) {
+          setTranslate((prev) => ({
+            x: prev.x + dx,
+            y: prev.y + dy < 0 ? 0 : prev.y + dy,
+          }));
         }
 
         setWidth(newW);
@@ -329,16 +345,20 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         //   setTranslate((prev) => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
         // }
       }
-    }
-    else if (midSizeNavTab) {
-
+    } else if (midSizeNavTab) {
       const windowSize = {
         width: window.innerWidth,
         height: window.innerHeight,
       };
 
-      const numericInitialW = typeof initialWidth === "number" ? initialWidth : parseSizeToNumber(initialWidth as string, 0);
-      const numericInitialH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
+      const numericInitialW =
+        typeof initialWidth === "number"
+          ? initialWidth
+          : parseSizeToNumber(initialWidth as string, 0);
+      const numericInitialH =
+        typeof initialHeight === "number"
+          ? initialHeight
+          : parseSizeToNumber(initialHeight as string, 0);
       const numericWidth = parseSizeToNumber(width, 0);
       const numericHeight = parseSizeToNumber(height, 0);
       const defaultW = Math.round(windowSize.width * 0.5);
@@ -346,38 +366,46 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       const altW = Math.round(windowSize.width * 0.6);
       const altH = Math.round(windowSize.height * 0.9);
 
-      let newW = numericWidth !== numericInitialW && numericWidth !== altW ? numericWidth : defaultW;
-      let newH = numericHeight !== numericInitialH && numericHeight !== altH ? numericHeight : defaultH;
+      let newW =
+        numericWidth !== numericInitialW && numericWidth !== altW
+          ? numericWidth
+          : defaultW;
+      let newH =
+        numericHeight !== numericInitialH && numericHeight !== altH
+          ? numericHeight
+          : defaultH;
 
       newW = Math.max(numericInitialW, newW);
       newH = Math.max(numericInitialH, newH);
       // store current translate/size so we can restore on collapse
 
-
       // If the new size would overflow the right or bottom edge, shift until back in view — clamped to (0,0)
       const rectMid = panelRef.current?.getBoundingClientRect();
       if (rectMid) {
-        const numericNewW = typeof newW === "number" ? newW : parseSizeToNumber(newW as string, 0);
-        const numericNewH = typeof newH === "number" ? newH : parseSizeToNumber(newH as string, 0);
+        const numericNewW =
+          typeof newW === "number"
+            ? newW
+            : parseSizeToNumber(newW as string, 0);
+        const numericNewH =
+          typeof newH === "number"
+            ? newH
+            : parseSizeToNumber(newH as string, 0);
         const projectedRight = rectMid.left + numericNewW;
         const projectedBottom = rectMid.top + numericNewH;
         let dx = 0;
         let dy = 0;
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
-          dx = -Math.min(overflow, rectMid.left)
-            - 20; // can't move left past viewport left edge
+          dx = -Math.min(overflow, rectMid.left) - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
-          dy = -Math.min(overflow, rectMid.top); // use y pos of previous panel 
+          dy = -Math.min(overflow, rectMid.top); // use y pos of previous panel
         }
         if (dx !== 0 || dy !== 0) {
           setTranslate((prev) => ({
-            x: prev.x + dx, y:
-
-              prev.y + dy < 0 ? 0 : prev.y + dy
-
+            x: prev.x + dx,
+            y: prev.y + dy < 0 ? 0 : prev.y + dy,
           }));
         }
       }
@@ -392,16 +420,21 @@ export default function ResizablePanel(props: ResizablePanelProps) {
       };
       const rectMid = panelRef.current?.getBoundingClientRect();
       if (rectMid) {
-        const numericNewW = typeof initialWidth === "number" ? initialWidth : parseSizeToNumber(initialWidth as string, 0);
-        const numericNewH = typeof initialHeight === "number" ? initialHeight : parseSizeToNumber(initialHeight as string, 0);
+        const numericNewW =
+          typeof initialWidth === "number"
+            ? initialWidth
+            : parseSizeToNumber(initialWidth as string, 0);
+        const numericNewH =
+          typeof initialHeight === "number"
+            ? initialHeight
+            : parseSizeToNumber(initialHeight as string, 0);
         const projectedRight = rectMid.left + numericNewW;
         const projectedBottom = rectMid.top + numericNewH;
         let dx = 0;
         let dy = 0;
         if (projectedRight > windowSize.width) {
           const overflow = projectedRight - windowSize.width;
-          dx = -Math.min(overflow, rectMid.left)
-            - 20; // can't move left past viewport left edge
+          dx = -Math.min(overflow, rectMid.left) - 20; // can't move left past viewport left edge
         }
         if (projectedBottom > windowSize.height) {
           const overflow = projectedBottom - windowSize.height;
@@ -410,8 +443,7 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         if (dx !== 0 || dy !== 0) {
           setTranslate((prev) => ({
             x: prev.x + dx,
-            y: prev.y + dy < 0 ? 0 : prev.y + dy
-
+            y: prev.y + dy < 0 ? 0 : prev.y + dy,
           }));
         }
       }
@@ -451,7 +483,10 @@ export default function ResizablePanel(props: ResizablePanelProps) {
         const maxY = window.innerHeight - naturalTop - panelHeight * 0.2;
         setTranslate({
           x: Math.max(minX, Math.min(maxX, origX + dx)),
-          y: Math.max(minY, Math.min(maxY, origY + dy < -40 ? -40 : origY + dy)),
+          y: Math.max(
+            minY,
+            Math.min(maxY, origY + dy < -40 ? -40 : origY + dy),
+          ),
         });
       }
       if (resizeState.current?.resizing) {
@@ -627,46 +662,50 @@ export default function ResizablePanel(props: ResizablePanelProps) {
               {title ? title.charAt(0).toUpperCase() + title.slice(1) : title}
 
               {navigationPath.length > 0 &&
-                navigationPath[navigationPath.length - 1]?.path
+              navigationPath[navigationPath.length - 1]?.path
                 ? ` / ${String(navigationPath[navigationPath.length - 1].path)
-                  .split("-")
-                  .map((s) =>
-                    s ? s.charAt(0).toUpperCase() + s.slice(1) : s,
-                  )
-                  .join(" ")}`
+                    .split("-")
+                    .map((s) =>
+                      s ? s.charAt(0).toUpperCase() + s.slice(1) : s,
+                    )
+                    .join(" ")}`
                 : ""}
             </strong>
           </div>
         </div>
-        {header ? <div className="flex items-center gap-1">
-          <span className="text-sm text-gray-700 dark:text-dark-primary">
-            <kbd
-              className="px-1 font-mono"
-              style={{
-                backgroundColor: "var(--foreground)",
-                color: "var(--background)",
-                opacity: 0.7,
-              }}
+        {header ? (
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-gray-700 dark:text-dark-primary">
+              <kbd
+                className="px-1 font-mono"
+                style={{
+                  backgroundColor: "var(--foreground)",
+                  color: "var(--background)",
+                  opacity: 0.7,
+                }}
+              >
+                Esc
+              </kbd>{" "}
+              to close
+            </span>
+
+            <button
+              onClick={onClose}
+              onPointerDown={(e) => e.stopPropagation()}
+              aria-label="Close"
+              title="Close"
+              className="rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
             >
-              Esc
-            </kbd>{" "}
-            to close
-          </span>
-
-          <button
-            onClick={onClose}
-            onPointerDown={(e) => e.stopPropagation()}
-            aria-label="Close"
-            title="Close"
-            className="rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </button>
-        </div> : <div style={{
-          height: 8,
-
-        }}></div>}
-
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+        ) : (
+          <div
+            style={{
+              height: 8,
+            }}
+          ></div>
+        )}
       </div>
       <div className="flex-1 overflow-auto" style={contentStyle}>
         {children}
@@ -691,7 +730,6 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             padding: 2,
             backgroundColor: pinned ? "#3b82f6" : "#d1d5db",
             flexShrink: 0,
-
           }}
         >
           <div

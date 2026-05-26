@@ -20,9 +20,9 @@ import Chromosome from "./Chromosome";
  * @author Silas Hsu
  */
 export class Genome {
-  private _name: string;
-  private _chromosomes: Chromosome[];
-  private _nameToChromosome: { [chrName: string]: Chromosome };
+  public _name: string;
+  public _chromosomes: Chromosome[];
+  public _nameToChromosome: { [chrName: string]: Chromosome };
 
   /**
    * Makes a new instance, with name and list of chromosomes.  For best results, chromosomes should have unique names.
@@ -38,7 +38,7 @@ export class Genome {
       const chrName = chromosome.getName();
       if (this._nameToChromosome[chrName] !== undefined) {
         console.warn(
-          `Duplicate chromosome name "${chrName}" in genome "${name}"`
+          `Duplicate chromosome name "${chrName}" in genome "${name}"`,
         );
       }
       this._nameToChromosome[chrName] = chromosome;
@@ -71,7 +71,7 @@ export class Genome {
    * @return {ChromosomeInterval} intersection result, or null if there is no overlap at all
    */
   intersectInterval(
-    chrInterval: ChromosomeInterval
+    chrInterval: ChromosomeInterval,
   ): ChromosomeInterval | null {
     const chrName = chrInterval.chr;
     const matchingChr = this.getChromosome(chrName);
@@ -81,7 +81,7 @@ export class Genome {
     return new ChromosomeInterval(
       chrName,
       0,
-      matchingChr.getLength()
+      matchingChr.getLength(),
     ).getOverlap(chrInterval);
   }
 
@@ -96,7 +96,7 @@ export class Genome {
       const name = chr.getName();
       return new Feature(
         name,
-        new ChromosomeInterval(name, 0, chr.getLength())
+        new ChromosomeInterval(name, 0, chr.getLength()),
       );
     });
     return new NavigationContext(this.getName(), features);

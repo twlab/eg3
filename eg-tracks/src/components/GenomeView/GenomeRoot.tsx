@@ -17,9 +17,9 @@ const MAX_WORKERS = 6;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
-import FetchDataWorker from "../../getRemoteData/fetchDataWorker.ts?worker&inline";
+import FetchDataWorker from "../../getRemoteData/createFetchWorker.ts?worker&inline";
 // @ts-ignore
-import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
+import FetchGenomeAlignWorker from "../../getRemoteData/createFetchGenomeAlignWorker.ts?worker&inline";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 

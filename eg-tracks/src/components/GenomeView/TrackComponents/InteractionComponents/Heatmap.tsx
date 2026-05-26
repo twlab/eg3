@@ -173,7 +173,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
-        ? 0.5 * (windowWidth / 3 )
+        ? 0.5 * (windowWidth / 3)
         : 0.5 * windowWidth;
 
     this.clampScale = scaleLinear()
@@ -226,10 +226,22 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
         {placedInteractions.length === 0 ? (
           <div
             style={{
+              display: "flex",
+              ...curParentStyle,
               width: width,
               height: height,
             }}
-          ></div>
+          >
+            {forceSvg || options.packageVersion ? legend : ""}
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            ></div>
+          </div>
         ) : (
           <div style={{ display: "flex", ...curParentStyle }}>
             {forceSvg || options.packageVersion ? legend : ""}

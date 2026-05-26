@@ -5,17 +5,25 @@ export function getTrackXOffset(
   let resXPos;
 
   if (trackState.initial === 1) {
-    resXPos = -trackState.visData.viewWindow.start;
+    resXPos =
+      -trackState?.genomicFetchCoord[trackState.primaryGenName]?.primaryVisData
+        ?.viewWindow?.start;
   } else if (trackState.side === "right") {
     resXPos =
       Math.floor(-trackState.xDist / trackState.visData.viewWindow.start) *
-      trackState.visData.viewWindow.start -
-      trackState.visData.viewWindow.start;
+        trackState.visData.viewWindow.start -
+      trackState?.genomicFetchCoord[trackState.primaryGenName]?.primaryVisData
+        ?.viewWindow?.start;
   } else if (trackState.side === "left") {
     const rawXPos =
       Math.floor(trackState.xDist / trackState.visData.viewWindow.start) *
+        trackState.visData.viewWindow.start +
       trackState.visData.viewWindow.start;
-    resXPos = -2 * trackState.visData.viewWindow.start - rawXPos;
+    resXPos =
+      -1 *
+        trackState?.genomicFetchCoord[trackState.primaryGenName]?.primaryVisData
+          ?.viewWindow?.start -
+      rawXPos;
   }
 
   return resXPos;

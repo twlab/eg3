@@ -10,9 +10,6 @@ export default function NavigationToolbar({
   canGoBack: boolean;
   pop: () => void;
 }) {
-  const navigationBarEmpty =
-    !canGoBack && !options?.title && !options?.trailing;
-
   return (
     <div style={{ padding: "4px" }}>
       {canGoBack && (

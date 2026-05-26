@@ -7,7 +7,7 @@ export default function useCurrentGenome(): IGenome | null {
   const session = useAppSelector(selectCurrentSession);
   const genomeId = session?.genomeId;
 
-  const { genome } = useGenome(genomeId ?? "");
+  const { genome } = useGenome(genomeId ?? "", session?.customGenome ?? false);
 
   return genome;
 }

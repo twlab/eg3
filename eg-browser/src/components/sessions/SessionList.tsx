@@ -22,12 +22,14 @@ import EmptyView from "../ui/empty/EmptyView";
 import useGenome from "@/lib/hooks/useGenome";
 import Button from "../ui/button/Button";
 import ClearAllButton from "./ClearAllButton";
-import { generateUUID } from "wuepgg3-track";
+import { generateUUID, GenomeSerializer, RegionSet } from "wuepgg3-track";
 import Session from "../root-layout/tabs/apps/destinations/Session";
 
 import SessionToggleButton from "./SessionToggleButton";
 
 import TabView from "@/components/ui/tab-view/TabView";
+import _ from "lodash";
+import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 
 export default function SessionList({
   onSessionClick,
@@ -45,9 +47,7 @@ export default function SessionList({
   const currentSession = useAppSelector(selectCurrentSession);
   const currentSessionId = useAppSelector(selectCurrentSessionId);
   const sortPreference = useAppSelector(selectSessionSortPreference);
-  const [sessionTab, setSessionTab] = useState<"edit" | "switch">(
-    "edit",
-  );
+  const [sessionTab, setSessionTab] = useState<"edit" | "switch">("edit");
 
   const sortedSessions = useMemo(() => {
     return [...sessions].sort((a, b) => {
@@ -88,7 +88,8 @@ export default function SessionList({
           count={
             sessionTab === "switch"
               ? sessions.length
-              : (sessionTab === "edit" || (!currentSession?.title && currentSession))
+              : sessionTab === "edit" ||
+                  (!currentSession?.title && currentSession)
                 ? null
                 : sessions.length
           }
@@ -97,8 +98,11 @@ export default function SessionList({
               "Previous sessions"
             ) : currentSession ? (
               <div className="text-left">
-                {currentSession?.title ? <div>{`Current Session: "${currentSession.title}"`}</div> :
-                  <div>{`Current Session: "Untitled Session"`}</div>}
+                {currentSession?.title ? (
+                  <div>{`Current Session: "${currentSession.title}"`}</div>
+                ) : (
+                  <div>{`Current Session: "Untitled Session"`}</div>
+                )}
 
                 <div>
                   Session Bundle ID:{" "}
@@ -117,7 +121,6 @@ export default function SessionList({
           }
         />
       </div>
-
 
       <div className="flex-1 min-h-0 overflow-y-auto ">
         {!currentSession?.genomeId ? (
@@ -208,8 +211,10 @@ function SessionListItem({
   const [copiedId, setCopiedId] = useState<boolean>(false);
   const [codeHover, setCodeHover] = useState<boolean>(false);
   const dispatch = useAppDispatch();
-  const { genome, error } = useGenome(session.genomeId);
-
+  const { genome: _genomeConfig, error } = useGenome(session.genomeId);
+  const currentSession = useAppSelector(selectCurrentSession);
+  const selectedRegionSet = currentSession?.selectedRegionSet;
+  const userViewRegion = currentSession?.userViewRegion;
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     if (isConfirmingDelete) {
@@ -237,12 +242,36 @@ function SessionListItem({
 
   const handleExport = (event: React.MouseEvent) => {
     event.stopPropagation();
-
+    if (!_genomeConfig) {
+      return;
+    }
     const filename = session.title
       ? `${session.title}.json`
-      : `genome_${genome?.name ?? session.genomeId}.json`;
+      : `genome_${_genomeConfig?.name ?? session.genomeId}.json`;
 
-    const sessionData = JSON.stringify(session, null, 2);
+    const cloneSessionData = _.clone(session);
+    const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
+    const navContext = genomeConfig.navContext as NavigationContext;
+    let setNavContext;
+    if (selectedRegionSet) {
+      if (typeof selectedRegionSet === "object") {
+        const newRegionSet = RegionSet.deserialize(selectedRegionSet);
+        setNavContext = newRegionSet.makeNavContext();
+      } else {
+        setNavContext = selectedRegionSet.makeNavContext();
+      }
+    }
+
+    const curViewInterval: any = setNavContext
+      ? userViewRegion
+        ? setNavContext.parse(userViewRegion)
+        : setNavContext.parse(genomeConfig.defaultRegion)
+      : userViewRegion
+        ? navContext.parse(userViewRegion)
+        : navContext.parse(genomeConfig.defaultRegion);
+    cloneSessionData.genomeName = session.genomeId;
+    cloneSessionData.viewInterval = curViewInterval;
+    const sessionData = JSON.stringify(cloneSessionData, null, 2);
     const blob = new Blob([sessionData], { type: "application/json" });
 
     const url = URL.createObjectURL(blob);
@@ -349,7 +378,7 @@ function SessionListItem({
           )}
           <p className="text-sm">
             {session?.customGenome ? "Custom Genome: " : "Genome: "}
-            {genome?.name ?? "..."}
+            {_genomeConfig?.name ?? "..."}
           </p>
           <p className="text-sm ">
             {sortPreference === "updatedAt"
@@ -471,7 +500,6 @@ function SessionListItem({
 }
 
 function SessionTabs({
-
   sortedSessions,
   onSessionClick,
   sortPreference,
@@ -486,7 +514,6 @@ function SessionTabs({
   tab: "edit" | "switch";
   setTab: (t: "edit" | "switch") => void;
 }) {
-
   return (
     <div className="w-full">
       <TabView

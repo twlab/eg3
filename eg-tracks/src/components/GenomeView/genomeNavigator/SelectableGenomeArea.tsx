@@ -43,23 +43,28 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
   }
 
   getSelectedBases(xSpan: OpenInterval): OpenInterval {
-    const { selectableRegion, dragLimits } = this.props;
+    const { selectableRegion, dragLimits, xOffset } = this.props;
 
     const navContext = selectableRegion.getNavigationContext();
     const drawModel = new LinearDrawingModel(
       selectableRegion,
       dragLimits.getLength(),
     );
-
-    return new OpenInterval(xToBase(xSpan.start), xToBase(xSpan.end));
-
+    if (!xOffset) {
+      return new OpenInterval(xToBase(xSpan.start), xToBase(xSpan.end));
+    } else {
+      return new OpenInterval(
+        xToBase(xSpan.start + xOffset),
+        xToBase(xSpan.end + xOffset),
+      );
+    }
     function xToBase(x: number) {
       x -= dragLimits.start;
       const rawBase = drawModel.xToBase(x);
+
       return navContext.toGaplessCoordinate(Math.round(rawBase));
     }
   }
-
   getIsBaseSpanValid(baseSpan: OpenInterval): boolean {
     return baseSpan.getLength() >= MIN_VIEW_REGION_SIZE;
   }

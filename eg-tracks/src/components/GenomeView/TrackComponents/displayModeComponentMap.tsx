@@ -69,28 +69,13 @@ import Vcf from "./VcfComponents/Vcf";
 import Bedcolor from "./bedComponents/Bedcolor";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
-export const bigWithNavTracks = new Set([
-  "repeat",
-  "jaspar",
-  "bigbed",
-  "rmskv2",
-]);
-export const instanceFetchTracks = new Set(["hic", "dynamichic", "bam"]);
+
 export const dynamicMatplotTracks = new Set([
   "matplot",
   "dynamic",
   "dynamicbed",
 ]);
-export const anchorTracks = new Set(["hic", "longrange"]);
 export const densityTracks = new Set(["bigwig", "qbed", "bedgraph"]);
-export const trackUsingExpandedLoci = {
-  biginteract: "",
-  dynamichic: "",
-  dynamiclongrange: "",
-  hic: "",
-  longrange: "",
-  genomealign: "",
-};
 
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 const dynamicTracks = new Set(["dynamic", "dynamicbed", "dynamiclongrange"]);
@@ -159,6 +144,7 @@ function makeAnnotationElementMap(context: any) {
         onClick={renderTooltip ? renderTooltip : () => {}}
         alwaysDrawLabel={configOptions.alwaysDrawLabel}
         hiddenPixels={configOptions.hiddenPixels}
+        height={configOptions.height}
       />
     ));
   }
@@ -242,6 +228,12 @@ function makeAnnotationElementMap(context: any) {
     },
     bigbed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
       getBedAnnotationElement(placedGroup, y, isLastRow, index),
+    bigbedcolor: (
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+    ) => getBedAnnotationElement(placedGroup, y, isLastRow, index),
     modbed: function getAnnotationElement(
       placedGroup: any,
       y: number,
@@ -601,6 +593,36 @@ const FullVisualizer: React.FC<any> = ({
       height={height}
     >
       {placements.map(renderAnnotation)}
+      {/* <line
+        x1={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start
+        }
+        y1={0}
+        x2={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start
+        }
+        y2={height}
+        stroke="black"
+        strokeWidth={1}
+      />
+      <line
+        x1={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start +
+          trackState.visData.viewWindow.start
+        }
+        y1={0}
+        x2={
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start +
+          trackState.visData.viewWindow.start
+        }
+        y2={height}
+        stroke="black"
+        strokeWidth={1}
+      /> */}
     </svg>
   );
 };
@@ -1500,7 +1522,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
           cursor: "pointer",
           transition: "background-color 0.2s",
         }}
-     
       >
         <div
           style={{
@@ -1510,12 +1531,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
             gap: "2px",
           }}
           onClick={() => handleRetryFetchTrack(trackModel.id)}
-             onMouseEnter={(e) => {
-          (e.target as HTMLDivElement).style.backgroundColor = "#f8d7da";
-        }}
-        onMouseLeave={(e) => {
-          (e.target as HTMLDivElement).style.backgroundColor = "#fdf2f2";
-        }}
+          onMouseEnter={(e) => {
+            (e.target as HTMLDivElement).style.backgroundColor = "#f8d7da";
+          }}
+          onMouseLeave={(e) => {
+            (e.target as HTMLDivElement).style.backgroundColor = "#fdf2f2";
+          }}
         >
           <span>{errorInfo ? errorInfo : "Something went wrong"}</span>
           <span>! Refresh page or click track to try again.</span>
@@ -2056,7 +2077,6 @@ function formatBigBedData(
       let name = record.name || record.label || "";
       let score = record.score;
       let orientation = record.orientation;
-
       if (record.rest) {
         const [parsedName, parsedScore, parsedOrientation] =
           record.rest.split("\t");
@@ -2115,7 +2135,85 @@ function formatBigBedData(
     );
   });
 }
+function formatBigBedColorData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
 
+    for (const record of genesArr) {
+      // Handle both old format (segment/min/max) and new format (chr/start/end)
+      const chr = record.segment || record.chr;
+      const start = record.min ?? record.start;
+      const end = record.max ?? record.end;
+
+      // Parse rest field if present (format: "name\tscore\torientation")
+      let name = record.name || record.label || "";
+      let score = record.score;
+      let orientation = record.orientation;
+      let color = record.color;
+      if (record.rest) {
+        const [parsedName, parsedScore, parsedOrientation] =
+          record.rest.split("\t");
+        name = parsedName || name;
+        score = parsedScore ? Number(parsedScore) : score;
+        orientation = parsedOrientation || orientation;
+      }
+
+      const feature = new Feature(
+        name,
+        new ChromosomeInterval(chr, start, end),
+        orientation,
+        score,
+        color,
+      );
+
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            feature.locus.chr,
+            feature.locus.start,
+            feature.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(feature);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr.map((record) => {
+    // Handle both old format (segment/min/max) and new format (chr/start/end)
+    const chr = record.segment || record.chr;
+    const start = record.min ?? record.start;
+    const end = record.max ?? record.end;
+
+    // Parse rest field if present (format: "name\tscore\torientation")
+    let name = record.name || record.label || "";
+    let score = record.score;
+    let orientation = record.orientation;
+    let color = record.color;
+    if (record.rest) {
+      const [parsedName, parsedScore, parsedOrientation] =
+        record.rest.split("\t");
+      name = parsedName || name;
+      score = parsedScore ? Number(parsedScore) : score;
+      orientation = parsedOrientation || orientation;
+    }
+
+    return new Feature(
+      name,
+      new ChromosomeInterval(chr, start, end),
+      orientation,
+      score,
+      color,
+    );
+  });
+}
 function formatSnpData(
   genesArr: any[],
   initialLoad: boolean,
@@ -2697,16 +2795,6 @@ function formatLongRange(genesArr: any[]) {
     })
     .filter(Boolean);
 }
-export const twoDataTypeTracks = {
-  // bigbed: "",
-  // geneannotation: "",
-  // refbed: "",
-  // bed: "",
-  // repeatmasker: "",
-  // omeroidr: "",
-  // bam: "",
-  // snp: "",
-};
 
 const formatFunctions: {
   [key: string]: (
@@ -2725,6 +2813,7 @@ const formatFunctions: {
   bam: formatBamData,
   omeroidr: formatOmeroidrData,
   bigbed: formatBigBedData,
+  bigbedcolor: formatBigBedColorData,
   snp: formatSnpData,
   jaspar: formatJasper,
   modbed: formatModBedData,

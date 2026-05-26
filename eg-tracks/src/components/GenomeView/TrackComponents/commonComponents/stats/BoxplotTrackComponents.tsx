@@ -38,6 +38,7 @@ interface BoxplotTrackProps {
   updatedLegend?: any;
   dataIdx?: number;
   initialLoad?: boolean;
+  windowWidth?: number;
 }
 
 const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
@@ -47,6 +48,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
   const currentViewOptions = useRef(null);
+  const currentWindowWidth = useRef(0);
 
   const {
     data,
@@ -60,6 +62,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     updatedLegend,
     dataIdx = 0,
     initialLoad = false,
+    windowWidth = 0,
   } = props;
 
   const { height, boxColor, lineColor } = options;
@@ -182,7 +185,8 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
         !(scales.min === currentScale.current?.min))) ||
     !_.isEqual(options, currentViewOptions.current) ||
     dataIdx !== currentViewDataIdx.current ||
-    !options.usePrimaryNav
+    !options.usePrimaryNav ||
+    windowWidth !== currentWindowWidth.current
   ) {
     const legend = (
       <TrackLegend
@@ -274,6 +278,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
 
   currentScale.current = scales;
   currentViewOptions.current = options;
+  currentWindowWidth.current = windowWidth;
 
   return visualizer;
 };

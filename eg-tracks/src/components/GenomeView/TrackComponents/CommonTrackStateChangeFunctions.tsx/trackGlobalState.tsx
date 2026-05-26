@@ -7,8 +7,7 @@ export function trackGlobalState({
   trackState,
   globalTrackState,
 }: cacheFetchedDataParams) {
-  const primaryVisData =
-    trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
+  const primaryVisData = trackState.visData;
 
   if (trackState.initial === 1) {
     let trackState0 = {
@@ -47,23 +46,23 @@ export function trackGlobalState({
     // };
 
     globalTrackState.current.trackStates[globalTrackState.current["leftIdx"]] =
-    {
-      trackState: trackState0,
-    };
+      {
+        trackState: trackState0,
+      };
 
     globalTrackState.current["leftIdx"]++;
 
     globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
-    {
-      trackState: trackState1,
-    };
+      {
+        trackState: trackState1,
+      };
 
     globalTrackState.current["rightIdx"]--;
 
     globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
-    {
-      trackState: trackState2,
-    };
+      {
+        trackState: trackState2,
+      };
 
     globalTrackState.current["rightIdx"]--;
     // globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =

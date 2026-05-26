@@ -6,7 +6,7 @@ import {
   ColorPicker,
   COLORS,
   HELP_LINKS,
-  trackFetchFunction,
+  fetchTypeMap,
   ChromosomeInterval,
   NumericalFeature,
   RegionSet,
@@ -197,7 +197,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
     const rawData = await Promise.all(
       flankedFeatures.map((item, index) =>
-        trackFetchFunction[trackModel.type]({
+        fetchTypeMap[trackModel.type]({
           nav: [
             {
               chr: item.locus.chr,
@@ -425,10 +425,11 @@ const Geneplot: React.FC<GeneplotProps> = () => {
               <Button onClick={getPlotData}>Plot</Button>
               {plotMsg && (
                 <span
-                  className={`text-base ${plotMsg === "Loading..."
+                  className={`text-base ${
+                    plotMsg === "Loading..."
                       ? "text-primary dark:text-dark-primary"
                       : "text-red-600 dark:text-red-400"
-                    }`}
+                  }`}
                 >
                   {plotMsg}
                 </span>
