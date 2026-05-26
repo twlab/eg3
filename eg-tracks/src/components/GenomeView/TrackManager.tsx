@@ -3393,6 +3393,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // if (trackCache.trackType === "genomealign") {
       for (const dataKey in trackCache) {
         if (isInteger(dataKey)) {
+          if (trackManagerState.current.caches[key][dataKey].xvalues) {
+            delete trackManagerState.current.caches[key][dataKey].xvalues;
+          }
+          if (trackManagerState.current.caches[key][dataKey].placeFeature) {
+            delete trackManagerState.current.caches[key][dataKey].placeFeature;
+          }
+
           delete trackManagerState.current.caches[key][dataKey].dataCache;
         }
         // }
@@ -3443,10 +3450,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       completedFetchedRegion.current.key = dataIdx.current;
       completedFetchedRegion.current.done = {};
       completedFetchedRegion.current.groups = {};
-      for (const cacheKey in trackManagerState.current.caches) {
-        trackToDrawId[cacheKey] = false;
-        completedFetchedRegion.current.done[cacheKey] = false;
-      }
+      // for (const cacheKey in trackManagerState.current.caches) {
+      //   trackToDrawId[cacheKey] = false;
+      //   completedFetchedRegion.current.done[cacheKey] = false;
+      // }
       const prevStateWindowWidth = prevWindowWidth.current;
 
       const newWindowWidth = windowWidthRef.current;
@@ -3569,10 +3576,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         deleteCache();
-        const tmpArr = [...trackComponents];
-        setTrackComponents(tmpArr);
 
         queueRegionToFetch(dataIdx.current);
+        const tmpArr = [...trackComponents];
+        setTrackComponents(tmpArr);
       } else {
         for (const key in trackManagerState.current.caches) {
           const curTrack = trackManagerState.current.caches[key];

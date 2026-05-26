@@ -95,7 +95,7 @@ const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
             }}
           >
             <div style={{ fontStyle: "italic", pointerEvents: "none" }}>
-              {numHidden} items hidden - zoom{" "}
+              {numHidden} items hidden - zoom in to view them
               <span
                 onClick={() => setDismissed(true)}
                 style={{
