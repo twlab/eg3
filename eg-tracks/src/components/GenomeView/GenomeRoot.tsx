@@ -84,6 +84,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         for (let track of newG3dTracks) {
           const newLayout = {
             type: "tabset",
+            weight: 100,
             children: [
               {
                 type: "tab",
@@ -127,7 +128,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         }),
       );
     });
-
+    console.log(width, height);
     return (
       <ThreedmolContainer
         key={g3dtrack.id}
@@ -317,7 +318,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           />
         </div>
       ) : (
-        <div style={{ width: size.width, height: 900 }}>
+        <div
+          style={{ width: size.width - 20, height: window.innerHeight - 45 }}
+        >
           <FlexLayout.Layout model={model} factory={factory} />
         </div>
       )}
