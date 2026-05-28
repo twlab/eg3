@@ -148,7 +148,10 @@ export default function PublicDataHubs() {
     const isLoaded = loadedPublicHub[hub.url];
 
     return (
-      <div key={hub.url} className="flex items-center justify-between py-1 text-primary dark:text-white">
+      <div
+        key={hub.url}
+        className="flex items-center justify-between py-1 text-primary dark:text-white"
+      >
         <div className="flex items-center">
           <span className="text-sm mr-2">{hub.genome}</span>
           <span className="text-sm mr-2">{hub.name}</span>
@@ -168,10 +171,11 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center mr-2 ${isLoaded
-                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-                }`}
+              className={`size-6 rounded-md flex items-center justify-center mr-2 ${
+                isLoaded
+                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+              }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -300,7 +304,9 @@ export default function PublicDataHubs() {
         />
         <div className="relative bg-white dark:bg-dark-background rounded-md p-4 max-w-lg mx-4 z-10 shadow-lg">
           <div className="flex justify-between items-start">
-            <h3 className="text-lg font-semibold text-primary dark:text-white">{infoHub.name}</h3>
+            <h3 className="text-lg font-semibold text-primary dark:text-white">
+              {infoHub.name}
+            </h3>
             <button onClick={() => setInfoHub(null)} className="ml-2">
               <XMarkIcon className="size-5 text-gray-600 dark:text-gray-200" />
             </button>
@@ -349,11 +355,13 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
-            contentColorSetup={{ color: "var(--font-color)", background: "var(--bg-container-color)" }}
+            addTermToMetaSets={() => {}}
+            contentColorSetup={{
+              color: "var(--font-color)",
+              background: "var(--bg-container-color)",
+            }}
             setIsModalOpen={setIsModalOpen}
           />
-
         </div>
       ) : (
         ""

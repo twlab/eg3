@@ -364,6 +364,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [metaSets, setMetaSets] = useState<{ [key: string]: any }>({
     suggestedMetaSets: new Set(),
     terms: new Array(),
+    termValues: {} as { [term: string]: string[] },
   });
 
   const [viewWindowConfigChange, setViewWindowConfigChange] = useState<null | {
@@ -2902,7 +2903,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackLegendWidth: legendWidth,
       tracks:
         tracks && tracks.length >= 0
-          ? tracks
+          ? tracks.filter((trackModel) => trackModel.type !== "g3d")
           : curGenomeConfig.current.defaultTracks,
     };
 
@@ -3177,50 +3178,45 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: METATERMS
   function addTermToMetaSets(tracks: Array<any>) {
-    const allKeys = tracks.map((track) => Object.keys(track.metadata));
-    const metaKeys = _.union(...allKeys);
-    const toBeAdded = metaKeys.filter((key) => !metaSets.terms.includes(key));
-
-    if (toBeAdded.length === 0) return;
-
-    const newSuggestedMetaSets = new Set([
-      ...metaSets.suggestedMetaSets,
-      ...toBeAdded,
-    ]);
-
-    setMetaSets({ ...metaSets, suggestedMetaSets: newSuggestedMetaSets });
+    setMetaSets((prev) => {
+      const allKeys = tracks.map((track) => Object.keys(track.metadata));
+      const metaKeys = _.union(...allKeys);
+      const toBeAdded = metaKeys.filter((key) => !prev.terms.includes(key));
+      if (toBeAdded.length === 0) return prev;
+      const newSuggestedMetaSets = new Set([
+        ...prev.suggestedMetaSets,
+        ...toBeAdded,
+      ]);
+      return { ...prev, suggestedMetaSets: newSuggestedMetaSets };
+    });
   }
-  function onNewTerms(tracks: Array<any>) {
-    const newSuggestedMetaSets = new Set(
-      [...metaSets.suggestedMetaSets].filter((term) => !tracks.includes(term)),
-    );
-
-    const newTerms = Array.from(new Set([...metaSets.terms, ...tracks]));
-
-    setMetaSets({
-      ...metaSets,
-      terms: newTerms,
-      suggestedMetaSets: newSuggestedMetaSets,
+  function onNewTerms(newTermsList: Array<any>) {
+    setMetaSets((prev) => {
+      const newSuggestedMetaSets = new Set(
+        [...prev.suggestedMetaSets].filter(
+          (term) => !newTermsList.includes(term),
+        ),
+      );
+      const newTerms = Array.from(new Set([...prev.terms, ...newTermsList]));
+      return {
+        ...prev,
+        terms: newTerms,
+        suggestedMetaSets: newSuggestedMetaSets,
+      };
     });
   }
 
   function onRemoveTerm(termsToRemove: string[]) {
-    // Remove the terms from the terms array
-    const newTerms = metaSets.terms.filter((t) => !termsToRemove.includes(t));
-
-    // Add the removed terms back to suggestedMetaSets
-    const newSuggestedMetaSets = new Set(metaSets.suggestedMetaSets);
-    termsToRemove.forEach((term) => newSuggestedMetaSets.add(term));
-
-    // Update the metaSets state with the new terms and suggestedMetaSets
-    const updatedMetaSets = {
-      ...metaSets,
-      terms: newTerms,
-      suggestedMetaSets: newSuggestedMetaSets,
-    };
-
-    // Call the setMetaSets function to update the state
-    setMetaSets(updatedMetaSets);
+    setMetaSets((prev) => {
+      const newTerms = prev.terms.filter((t) => !termsToRemove.includes(t));
+      const newSuggestedMetaSets = new Set(prev.suggestedMetaSets);
+      termsToRemove.forEach((term) => newSuggestedMetaSets.add(term));
+      return {
+        ...prev,
+        terms: newTerms,
+        suggestedMetaSets: newSuggestedMetaSets,
+      };
+    });
   }
   async function onColorBoxClick(metaDataKey, value) {
     await onTrackUnSelect();
@@ -3254,6 +3250,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
+
+  // Recompute termValues whenever the active terms list changes.
+  // Runs after render so trackManagerState.current.tracks is always up to date.
+  useEffect(() => {
+    if (metaSets.terms.length === 0) return;
+    const currentTracks = trackManagerState.current.tracks;
+    if (!currentTracks || currentTracks.length === 0) return;
+    const newTermValues: { [term: string]: string[] } = {};
+    for (const term of metaSets.terms) {
+      const values = new Set<string>();
+      currentTracks.forEach((track: any) => {
+        const v = track.metadata?.[term];
+        if (v !== undefined && v !== null && v !== "") {
+          if (Array.isArray(v)) v.forEach((vi: any) => values.add(String(vi)));
+          else values.add(String(v));
+        }
+      });
+      newTermValues[term] = Array.from(values);
+    }
+    setMetaSets((prev) => ({ ...prev, termValues: newTermValues }));
+  }, [metaSets.terms]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
 
@@ -4353,6 +4371,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       onNewTerms={onNewTerms}
                       suggestedMetaSets={metaSets.suggestedMetaSets}
                       onRemoveTerm={onRemoveTerm}
+                      tracks={trackManagerState.current.tracks}
+                      onTracksChange={(updatedTracks) => {
+                        // Re-wrap as TrackModel instances in case MetadataSelectionMenu
+                        // spread them into plain objects (losing prototype methods).
+                        const asTrackModels = updatedTracks.map((t: any) =>
+                          t instanceof TrackModel ? t : new TrackModel(t),
+                        );
+                        trackManagerState.current.tracks = asTrackModels;
+                        onTracksChange(asTrackModels);
+                        addTermToMetaSets(asTrackModels);
+                        // Sync trackComponents so each track re-renders with updated metadata
+                        setTrackComponents((prev) =>
+                          prev.map((component) => ({
+                            ...component,
+                            trackModel:
+                              asTrackModels.find(
+                                (t: any) => t.id === component.trackModel.id,
+                              ) ?? component.trackModel,
+                          })),
+                        );
+                      }}
                     />
                   </div>
                 </div>
@@ -4375,6 +4414,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 windowWidth={windowWidth}
                 fontSize={Math.max(14, fontSize)}
                 padding={padding}
+                tracks={trackManagerState.current.tracks}
+                termValues={metaSets.termValues}
+                onTermValueClick={onColorBoxClick}
               />
             </div>
           </div>
