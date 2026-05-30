@@ -251,8 +251,14 @@ export default function NavBar(props) {
         {/* Back button */}
         {currentSession ? (
           <BackspaceIcon
-            className="size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary cursor-pointer transition-colors duration-150 hover:text-red-500 dark:hover:text-red-400"
+            className={classNames(
+              "size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary transition-colors duration-150",
+              props.isPackageMode
+                ? "cursor-default opacity-30"
+                : "cursor-pointer hover:text-red-500 dark:hover:text-red-400",
+            )}
             onClick={() => {
+              if (props.isPackageMode) return;
               dispatch(setSessionPanelOpen(false));
               dispatch(setCurrentSession(null));
             }}
@@ -307,12 +313,14 @@ export default function NavBar(props) {
               >
                 {_genomeConfig?.name && (
                   <Button
-                    onClick={(e) => openTab("tab-genome-picker", e)}
+                    onClick={(e) => {
+                      if (!props.isPackageMode) openTab("tab-genome-picker", e);
+                    }}
                     active={currentTab === "tab-genome-picker"}
                     style={{
                       backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
                       color: "#0f172a",
-
+                      cursor: props.isPackageMode ? "default" : undefined,
                       display: "flex",
                       alignItems: "center",
                       width: "fit-content",
@@ -502,7 +510,10 @@ export default function NavBar(props) {
                   >
                     {_genomeConfig?.name && (
                       <Button
-                        onClick={(e) => openTab("tab-genome-picker", e)}
+                        onClick={(e) => {
+                          if (!props.isPackageMode)
+                            openTab("tab-genome-picker", e);
+                        }}
                         active={currentTab === "tab-genome-picker"}
                         style={{
                           backgroundColor: sessionPanelOpen
