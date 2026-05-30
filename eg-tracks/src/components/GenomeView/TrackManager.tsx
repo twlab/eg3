@@ -3958,7 +3958,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         trackManagerState.current.tracks = filteredTracks;
-
+        // Reset completed fetch tracking so stale group entries from the
+        // previous track set don't block new grouped tracks from drawing.
+        completedFetchedRegion.current = {
+          key: null,
+          done: {},
+          groups: {},
+          selected: {},
+        };
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
         onTracksChange(filteredTracks);
