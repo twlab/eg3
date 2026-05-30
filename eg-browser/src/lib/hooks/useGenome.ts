@@ -7,7 +7,10 @@ import {
   getGenomeConfig,
 } from "wuepgg3-track";
 
-export default function useGenome(genomeId: string) {
+export default function useGenome(
+  genomeId: string,
+  customGenome: boolean = false,
+) {
   const [genome, setGenome] = useState<IGenome | null>(() => {
     if (!genomeId) {
       return null;
@@ -29,13 +32,12 @@ export default function useGenome(genomeId: string) {
 
     const defaultGenome = getGenomeConfig(genomeId);
 
-    if (defaultGenome && defaultGenome.genome) {
+    if (defaultGenome && defaultGenome.genome && !customGenome) {
       setGenome(GenomeSerializer.serialize(defaultGenome));
     } else {
       GenomeHubManager.getInstance()
         .getGenomeById(genomeId)
         .then((genome) => {
-
           setGenome(genome);
         })
         .catch((error) => {

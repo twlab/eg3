@@ -107,7 +107,7 @@ function InlineEditable(props: InlineEditableProps) {
           style={commonStyle}
         />
         <div className="absolute top-full right-0 mt-3 z-50 bg-white border border-gray-200 shadow-lg rounded origin-top-right">
-          <Session />
+          <Session tab={true}/>
         </div>
       </div>
     );

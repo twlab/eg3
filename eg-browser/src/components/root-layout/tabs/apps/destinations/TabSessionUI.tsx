@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-
   ArrowPathIcon,
   ArrowTurnDownLeftIcon,
 } from "@heroicons/react/24/outline";
@@ -13,17 +12,13 @@ import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import {
   AppStateSaver,
   ITrackModel,
-
   HELP_LINKS,
   TrackModel,
   RegionSet,
 } from "wuepgg3-track";
-// Using shared Tailwind classes instead of a separate CSS file
-import { getFunName } from "./SessionUI";
+
 import Button from "../../../../ui/button/Button";
 import FileInput from "@/components/ui/input/FileInput";
-
-
 export interface BundleProps {
   bundleId: string | null;
   customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
@@ -44,12 +39,25 @@ export interface BundleProps {
   viewInterval: { start: number; end: number } | null;
   title?: string;
 }
-
-interface Session {
-  // (serialized)
-  label: string;
-  date: number;
-  state: object;
+export interface BundleProps {
+  bundleId: string | null;
+  customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
+  darkTheme: boolean;
+  genomeName: string;
+  highlights: Array<any>;
+  isShowingNavigator: boolean;
+  layout: any;
+  metadataTerms: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
+  regionSetView: any | null; // use appropriate type if you know it
+  regionSets: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
+  viewRegion: GenomeCoordinate | null;
+  trackLegendWidth: number;
+  tracks: Array<TrackModel> | Array<ITrackModel>;
+  chromosomes: Array<any> | null;
+  customGenome: any | null;
+  genomeId: string | null;
+  viewInterval: { start: number; end: number } | null;
+  title?: string;
 }
 
 interface HasBundleId {
@@ -84,7 +92,11 @@ export const onRetrieveSession = async (retrieveId: string) => {
           const regionSets = object.regionSets
             ? object.regionSets.map(RegionSet.deserialize)
             : [];
-          const regionSetView = object?.regionSetView ? object.regionSetView : object?.regionSets && object.regionSets.length > 0 ? regionSets[0] : null;
+          const regionSetView = object?.regionSetView
+            ? object.regionSetView
+            : object?.regionSets && object.regionSets.length > 0
+              ? regionSets[0]
+              : null;
 
           // Create the newBundle object based on the existing object.
 
@@ -215,8 +227,6 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       },
     };
 
-
-
     try {
       const db = getDatabase();
       // Get all existing sessions before setting the new one
@@ -318,7 +328,9 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       setTimeout(() => setSaveCurveActive(false), 800);
     } else {
       console.log("Failed to save session", "error", 2000);
-      setSaveError("Failed to save session. Please check your connection and try again.");
+      setSaveError(
+        "Failed to save session. Please check your connection and try again.",
+      );
       setTimeout(() => setSaveError(null), 4000);
     }
   };
@@ -416,7 +428,9 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       } catch (error) {
         console.error(error);
         console.log("Error while restoring session", "error", 2000);
-        setRestoreError("Failed to restore session. Please check your connection and try again.");
+        setRestoreError(
+          "Failed to restore session. Please check your connection and try again.",
+        );
         setTimeout(() => setRestoreError(null), 4000);
       }
     }
@@ -492,10 +506,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       }
       const buttons = sessions.map(([id, session]: any, index: number) => (
         <li key={id} className={classes.sessionItem}>
-          <span className="text-sm font-medium text-primary dark:text-dark-primary ml-4 shrink-0">{index + 1}.</span>
+          <span className="text-sm font-medium text-primary dark:text-dark-primary ml-4 shrink-0">
+            {index + 1}.
+          </span>
           <span className="flex-1 text-sm text-primary dark:text-dark-primary">
-            <>{session.label}</> -{" "}
-            {new Date(session.date).toLocaleString()}
+            <>{session.label}</> - {new Date(session.date).toLocaleString()}
           </span>
           <div className="flex gap-2">
             {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
@@ -506,7 +521,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   padding: "4px 6px",
                   backgroundColor: "#E5E7EB",
                   color: "#6B7280",
-                  borderRadius: "6px", fontSize: "16px",
+                  borderRadius: "6px",
+                  fontSize: "16px",
                 }}
               >
                 Restored
@@ -519,7 +535,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   padding: "4px 6px",
                   backgroundColor: "#E6F7EA",
                   color: "#1F6E3A",
-                  borderRadius: "6px", fontSize: "16px",
+                  borderRadius: "6px",
+                  fontSize: "16px",
                 }}
               >
                 Restore
@@ -546,10 +563,14 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
         <div>
           {/* Table Header */}
           <div className="grid grid-cols-[1fr_auto_auto] gap-3 mt-3">
-            <h1 className="text-md text-primary dark:text-dark-primary">Sessions In Bundle ({sessions.length}) </h1>
+            <h1 className="text-md text-primary dark:text-dark-primary">
+              Sessions In Bundle ({sessions.length}){" "}
+            </h1>
 
             <div className="flex items-center gap-3">
-              <span className="text-sm text-primary dark:text-dark-primary">Sort by:</span>
+              <span className="text-sm text-primary dark:text-dark-primary">
+                Sort by:
+              </span>
               <label className="flex items-center gap-1 cursor-pointer text-sm">
                 <input
                   type="radio"
@@ -582,24 +603,19 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
           </div>
 
           {/* Table Body */}
-          <ol className=" flex flex-col">
-            {buttons}
-          </ol>
+          <ol className=" flex flex-col">{buttons}</ol>
         </div>
       );
     }
   };
 
   const handleUploadFile = async (file: File | null) => {
-
     if (!file) return;
     try {
       const text = await file.text();
       const bundleSession = JSON.parse(text);
 
-
       if (bundleSession.bundleId) {
-
         try {
           const bundleRes = await onRetrieveSession(bundleSession.bundleId);
 
@@ -613,9 +629,7 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
         } catch (error) {
           // ignore retrieval errors
         }
-      }
-      else {
-
+      } else {
         const object = bundleSession;
 
         let viewInterval;
@@ -650,14 +664,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
           darkTheme: object.darkTheme || false,
           viewRegion: object.viewRegion,
           title: object.title ? object.title : "Untitled Session",
-
         };
 
         onRestoreSession(newBundle);
       }
-
-
-
     } catch (err) {
       console.error("Failed to upload session file", err);
     }
@@ -674,7 +684,6 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
     }
   };
   const classes: any = {
-
     emptyState:
       "border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary mt-2",
     sessionItem:
@@ -707,7 +716,12 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               type="button"
               onClick={() => setRestoreError(null)}
               className="shrink-0 font-bold hover:opacity-60"
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#8B1C1C" }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#8B1C1C",
+              }}
             >
               ✕
             </button>
@@ -728,7 +742,12 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               type="button"
               onClick={() => setSaveError(null)}
               className="shrink-0 font-bold hover:opacity-60"
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#8B1C1C" }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#8B1C1C",
+              }}
             >
               ✕
             </button>
@@ -741,21 +760,22 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <input
                 type="text"
-
                 className="w-70 h-7 px-2 outline outline-gray-300 dark:outline-gray-600 rounded-md bg-secondary dark:bg-dark-secondary dark:text-dark-primary text-primary text-sm truncate"
                 placeholder="Session Bundle ID"
                 value={retrieveId}
                 onChange={(e) => setRetrieveId(e.target.value.trim())}
               />
-              <Button style={{
-                width: "fit-content", padding: "4px 6px", fontSize: "16px",
-                backgroundColor: "#5E7AC4",
-                color: "white",
-                borderRadius: "6px",
-
-
-
-              }} onClick={() => retrieveBundle(retrieveId)}>
+              <Button
+                style={{
+                  width: "fit-content",
+                  padding: "4px 6px",
+                  fontSize: "16px",
+                  backgroundColor: "#5E7AC4",
+                  color: "white",
+                  borderRadius: "6px",
+                }}
+                onClick={() => retrieveBundle(retrieveId)}
+              >
                 Retrieve
               </Button>
               <FileInput
@@ -768,7 +788,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 className="!h-8 px-3 border border-gray-300 rounded-lg text-sm whitespace-nowrap w-auto"
               />
             </div>
-            <div className="w-full dark:bg-white bg-black" style={{ height: "1px" }} />
+            <div
+              className="w-full dark:bg-white bg-black"
+              style={{ height: "1px" }}
+            />
             <AnimatePresence initial={false}>
               {showFullUI ? (
                 <motion.div
@@ -790,10 +813,12 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                             columnGap: "12px",
                             rowGap: "0px",
                             width: "100%",
-                            marginTop: "10px"
+                            marginTop: "10px",
                           }}
                         >
-                          <h1 className="text-md shrink-0 text-primary dark:text-dark-primary">Add New Session To Bundle</h1>
+                          <h1 className="text-md shrink-0 text-primary dark:text-dark-primary">
+                            Add New Session To Bundle
+                          </h1>
 
                           <div className="flex items-center p-0.5 bg-[#f8f9fa] dark:bg-dark-secondary rounded">
                             <code
@@ -930,7 +955,9 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                           <Button
                             onClick={saveSession}
                             style={{
-                              width: "fit-content", padding: "4px 6px", fontSize: "16px",
+                              width: "fit-content",
+                              padding: "4px 6px",
+                              fontSize: "16px",
                               backgroundColor: "#5E7AC4",
                               color: "white",
                               borderRadius: "6px",
@@ -948,7 +975,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadAsSession}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
+                        style={{
+                          width: "fit-content",
+                          padding: "4px 6px",
+                          fontSize: "16px",
+                        }}
                       >
                         Download current session
                       </Button>
@@ -956,7 +987,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadAsHub}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
+                        style={{
+                          width: "fit-content",
+                          padding: "4px 6px",
+                          fontSize: "16px",
+                        }}
                       >
                         Download as datahub
                       </Button>
@@ -964,7 +999,11 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadWholeBundle}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
+                        style={{
+                          width: "fit-content",
+                          padding: "4px 6px",
+                          fontSize: "16px",
+                        }}
                       >
                         Download whole bundle
                       </Button>
@@ -979,7 +1018,14 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.22 }}
                 >
-                  <div className="mt-4" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div
+                    className="mt-4"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
                     <AnimatePresence initial={false} mode="wait">
                       {!showCreateInput ? (
                         <motion.div
@@ -1003,19 +1049,16 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                               );
                             }}
                             style={{
-
-
                               backgroundColor: "#5E7AC4",
                               color: "white",
                               fontSize: "16px",
-                              width: "fit-content", padding: "4px 6px",
+                              width: "fit-content",
+                              padding: "4px 6px",
                               borderRadius: "6px",
                             }}
                           >
                             Create remote bundle and save session
                           </Button>
-
-
                         </motion.div>
                       ) : (
                         <motion.div
@@ -1090,14 +1133,10 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                               }}
                               outlined
                               style={{
-
                                 padding: "4px 6px",
                                 width: "fit-content",
 
-
                                 borderRadius: "6px",
-
-
                               }}
                             >
                               Cancel
@@ -1106,11 +1145,18 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                         </motion.div>
                       )}
                     </AnimatePresence>
-                    <div className={classes.additionalActions} style={{ marginTop: "12px" }}>
+                    <div
+                      className={classes.additionalActions}
+                      style={{ marginTop: "12px" }}
+                    >
                       <Button
                         onClick={downloadAsSession}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
+                        style={{
+                          width: "fit-content",
+                          padding: "4px 6px",
+                          fontSize: "16px",
+                        }}
                       >
                         Download current session
                       </Button>
@@ -1118,12 +1164,14 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                       <Button
                         onClick={downloadAsHub}
                         backgroundColor="tint"
-                        style={{ width: "fit-content", padding: "4px 6px", fontSize: "16px" }}
+                        style={{
+                          width: "fit-content",
+                          padding: "4px 6px",
+                          fontSize: "16px",
+                        }}
                       >
                         Download as datahub
                       </Button>
-
-
                     </div>
                   </div>
                 </motion.div>
@@ -1154,4 +1202,241 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
 };
 
 export default TabSessionUI;
+export function getFunName() {
+  const adjectives = [
+    "Crazy",
+    "Excited",
+    "Amazing",
+    "Adventurous",
+    "Acrobatic",
+    "Adorable",
+    "Arctic",
+    "Astonished",
+    "Awkward",
+    "Awesome",
+    "Beautiful",
+    "Boring",
+    "Bossy",
+    "Bright",
+    "Clever",
+    "Confused",
+    "Crafty",
+    "Enchanted",
+    "Evil",
+    "Exhausted",
+    "Small",
+    "Large",
+    "Fabulous",
+    "Funny",
+    "Glamorous",
+    "Glistening",
+    "Glittering",
+    "Great",
+    "Handsome",
+    "Happy",
+    "Honest",
+    "Humongous",
+    "Hungry",
+    "Incredible",
+    "Intelligent",
+    "Jumbo",
+    "Lazy",
+    "Lonely",
+    "Lucky",
+    "Magnificent",
+    "Majestic",
+    "Marvelous",
+    "Memorable",
+    "Mysterious",
+    "Nervous",
+    "Outstanding",
+    "Peaceful",
+    "Perfect",
+    "Pesky",
+    "Playful",
+    "Powerful",
+    "Quarrelsome",
+    "Radiant",
+    "Scholarly",
+    "Scientific",
+    "Silly",
+    "Smart",
+    "Splendid",
+    "Spotted",
+    "Strange",
+    "Terrific",
+    "Unlucky",
+    "Vibrant",
+    "Whimsical",
+  ];
 
+  const colors = [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "indigo",
+    "violet",
+    "brown",
+    "gray",
+    "black",
+    "white",
+    "turquiose",
+    "amber",
+    "apricot",
+    "aquamarine",
+    "beige",
+    "bronze",
+    "silver",
+    "gold",
+    "carmine",
+    "charcoal",
+    "chartreuse",
+    "copper",
+    "cyan",
+    "eggplant",
+    "emerald",
+    "pink",
+    "lavendar",
+    "lilac",
+    "lime",
+    "lemon",
+    "peach",
+    "periwinkle",
+    "rose",
+    "rainbow",
+    "magenta",
+    "salmon",
+    "sapphire",
+    "scarlet",
+    "slate",
+    "tangerine",
+    "teal",
+    "topaz",
+  ];
+
+  const nouns = [
+    "elephant",
+    "buffalo",
+    "squirrel",
+    "otter",
+    "dragon",
+    "unicorn",
+    "hippo",
+    "hippogriff",
+    "phoenix",
+    "centaur",
+    "octopus",
+    "squid",
+    "platypus",
+    "niffler",
+    "troll",
+    "griffin",
+    "slug",
+    "eagle",
+    "owl",
+    "horse",
+    "rhino",
+    "lion",
+    "lynx",
+    "porcupine",
+    "snake",
+    "bull",
+    "dog",
+    "wolf",
+    "lizard",
+    "wallaby",
+    "opossum",
+    "alligator",
+    "badger",
+    "beaver",
+    "bison",
+    "goose",
+    "turtle",
+    "turtoise",
+    "turkey",
+    "pelican",
+    "walrus",
+    "anteater",
+    "bandicoot",
+    "fox",
+    "whale",
+    "dolphin",
+    "bat",
+    "dog",
+    "cat",
+    "bear",
+    "moose",
+    "swan",
+    "spider",
+    "monkey",
+    "lemur",
+    "marmoset",
+    "kangaroo",
+    "deer",
+    "flamingo",
+    "ferret",
+    "stork",
+    "deer",
+    "macaw",
+    "duck",
+    "shark",
+    "chinchilla",
+    "python",
+    "aardvark",
+    "toad",
+    "frog",
+    "lizard",
+    "ant",
+    "bear",
+    "buffalo",
+    "caterpillar",
+    "dingo",
+    "mouse",
+    "rat",
+    "donkey",
+    "dragonfly",
+    "duck",
+    "crocodile",
+    "penguin",
+    "leopard",
+    "tiger",
+    "jaguar",
+    "coyote",
+    "crab",
+    "eel",
+    "tamarin",
+    "seal",
+    "gharial",
+    "clam",
+    "panda",
+    "beetle",
+    "goat",
+    "hyena",
+    "jellyfish",
+    "iguana",
+    "liger",
+    "tigon",
+    "llama",
+    "lobster",
+    "lynx",
+    "manatee",
+    "newt",
+    "ostrich",
+    "oyster",
+    "puma",
+    "rabbit",
+    "scorpion",
+    "sloth",
+    "stingray",
+    "zonkey",
+  ];
+
+  const getRandomElement = (array: string[]) =>
+    array[Math.floor(Math.random() * array.length)];
+
+  return `${getRandomElement(adjectives)}-${getRandomElement(
+    colors,
+  )}-${getRandomElement(nouns)}`;
+}

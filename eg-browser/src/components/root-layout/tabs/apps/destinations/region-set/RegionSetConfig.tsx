@@ -110,7 +110,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
             const displayName = symbol.replace(/[:\-]/g, " ");
             return new Feature(displayName, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) { }
+        } catch (error) {}
         return getSymbolRegions(genome.getName(), symbol);
       }),
     );
@@ -124,10 +124,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                gene.name,
-                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                gene.strand,
-              )
+                  gene.name,
+                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                  gene.strand,
+                )
               : null,
           )
           .filter((hit) => hit);
@@ -157,6 +157,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
         parsed2.filter((item) => item !== null) as Feature[],
         genome!,
         new FlankingStrategy(),
+        genome._name,
       );
       setRegionSet(newSet);
     }
@@ -224,7 +225,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
     setBulkLoadingMsg("loading");
     const inputListRaw = bulkList.trim().split("\n");
     const inputList = inputListRaw.map((i) => i.trim()).filter((i) => i !== "");
-    if (inputList.length === 0) { setBulkLoadingMsg(""); return; }
+    if (inputList.length === 0) {
+      setBulkLoadingMsg("");
+      return;
+    }
 
     const parsed = await Promise.all(
       inputList.map(async (symbol) => {
@@ -233,7 +237,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           if (locus) {
             return new Feature(symbol.replace(/[:\-]/g, " "), locus, "+");
           }
-        } catch (_) { }
+        } catch (_) {}
         return getSymbolRegions(genome.getName(), symbol);
       }),
     );
@@ -341,8 +345,8 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
       {!regionSet && (
         <div className="flex flex-col gap-1">
           <p className="text-sm text-primary/70 dark:text-dark-primary/70 leading-relaxed">
-            Input gene names or coordinates, one per line. Coordinates must be in the form{" "}
-
+            Input gene names or coordinates, one per line. Coordinates must be
+            in the form{" "}
             <code className="bg-gray-100 dark:bg-dark-surface px-1 rounded text-sm">
               chr1:345-678
             </code>
@@ -357,8 +361,12 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
             />
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => { }}
-                style={{ backgroundColor: "#5E7AC4", color: "#fff", padding: "4px 6px" }}
+                onClick={() => {}}
+                style={{
+                  backgroundColor: "#5E7AC4",
+                  color: "#fff",
+                  padding: "4px 6px",
+                }}
               >
                 <input
                   type="submit"
@@ -368,7 +376,11 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
               </Button>
               <Button
                 onClick={resetList}
-                style={{ backgroundColor: "#6c757d", color: "#fff", padding: "4px 6px" }}
+                style={{
+                  backgroundColor: "#6c757d",
+                  color: "#fff",
+                  padding: "4px 6px",
+                }}
               >
                 Clear
               </Button>
@@ -422,13 +434,21 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                   className={`w-52 ${inputCls}`}
                 />
               </label>
-              <Button onClick={addRegion} style={{ width: "fit-content", padding: "4px 6px" }} leftIcon={<PlusIcon className="w-4 h-4" />}>
+              <Button
+                onClick={addRegion}
+                style={{ width: "fit-content", padding: "4px 6px" }}
+                leftIcon={<PlusIcon className="w-4 h-4" />}
+              >
                 Add
               </Button>
               <Button
                 onClick={() => setShowBulkAdd((v) => !v)}
-                leftIcon={<div style={{ display: "flex", flexDirection: "row" }}><PlusIcon className="w-4 h-4" /><PlusIcon className="w-4 h-4" /></div>}
-
+                leftIcon={
+                  <div style={{ display: "flex", flexDirection: "row" }}>
+                    <PlusIcon className="w-4 h-4" />
+                    <PlusIcon className="w-4 h-4" />
+                  </div>
+                }
                 style={{ width: "fit-content", padding: "4px 6px" }}
               >
                 Add Multiple
@@ -454,7 +474,8 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                   <div className="flex flex-col pt-2 border-t border-gray-200 dark:border-gray-700 mt-1">
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-primary/70 dark:text-dark-primary/70">
-                        Input gene names or coordinates, one per line. Coordinates must be in the form{" "}
+                        Input gene names or coordinates, one per line.
+                        Coordinates must be in the form{" "}
                         <code className="bg-gray-100 dark:bg-dark-surface px-1 rounded">
                           chr1:345-678
                         </code>
@@ -475,12 +496,15 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                         rows={6}
                         placeholder={`CYP4A22\nchr10:96796528-96829254\nBRCA1`}
                         className={`w-full ${inputCls} font-mono resize-y text-sm`}
-
                       />
                       <div className="flex items-center gap-2">
                         <Button
-                          onClick={() => { }}
-                          style={{ backgroundColor: "#5E7AC4", color: "#fff", padding: "4px 6px" }}
+                          onClick={() => {}}
+                          style={{
+                            backgroundColor: "#5E7AC4",
+                            color: "#fff",
+                            padding: "4px 6px",
+                          }}
                         >
                           <input
                             type="submit"
@@ -490,12 +514,18 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                         </Button>
                         <Button
                           onClick={() => setBulkList("")}
-                          style={{ backgroundColor: "#6c757d", color: "#fff", padding: "4px 6px" }}
+                          style={{
+                            backgroundColor: "#6c757d",
+                            color: "#fff",
+                            padding: "4px 6px",
+                          }}
                         >
                           Clear
                         </Button>
                         {bulkLoadingMsg && (
-                          <span className="text-base italic text-red-500">{bulkLoadingMsg}</span>
+                          <span className="text-base italic text-red-500">
+                            {bulkLoadingMsg}
+                          </span>
                         )}
                       </div>
                     </form>
@@ -512,7 +542,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
             >
               <thead>
                 {headerGroups.map((headerGroup) => (
-                  <tr key={headerGroup.getHeaderGroupProps().key} {...headerGroup.getHeaderGroupProps()}>
+                  <tr
+                    key={headerGroup.getHeaderGroupProps().key}
+                    {...headerGroup.getHeaderGroupProps()}
+                  >
                     {headerGroup.headers.map((column) => (
                       <th
                         {...column.getHeaderProps(
@@ -578,7 +611,12 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                 onSetConfigured?.(regionSet);
                 onClose?.();
               }}
-              style={{ backgroundColor: "#5E7AC4", color: "#fff", width: "fit-content", padding: "4px 6px" }}
+              style={{
+                backgroundColor: "#5E7AC4",
+                color: "#fff",
+                width: "fit-content",
+                padding: "4px 6px",
+              }}
             >
               Save changes
             </Button>
@@ -587,7 +625,12 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                 cancelPressed();
                 onClose?.();
               }}
-              style={{ backgroundColor: "#6c757d", color: "#fff", width: "fit-content", padding: "4px 6px" }}
+              style={{
+                backgroundColor: "#6c757d",
+                color: "#fff",
+                width: "fit-content",
+                padding: "4px 6px",
+              }}
             >
               Cancel
             </Button>

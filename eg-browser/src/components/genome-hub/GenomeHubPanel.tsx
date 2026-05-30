@@ -10,15 +10,13 @@ import {
   deleteCustomGenome,
 } from "@/lib/redux/thunk/genome-hub";
 import { IGenome } from "wuepgg3-track";
-import { ChevronRightIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronRightIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/16/solid";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-
-
-
-import Button from "../ui/button/Button";
 import ClearAllButton from "../sessions/ClearAllButton";
 import EmptyView from "../ui/empty/EmptyView";
 import Progress from "../ui/progress/Progress";
@@ -34,10 +32,9 @@ export default function GenomeHubPanel() {
   const customGenomes = useAppSelector(selectCustomGenomes);
   const customGenomesLoadStatus = useAppSelector(selectCustomGenomesLoadStatus);
 
-
   const { hasGroups, groupedGenomes } = useMemo(() => {
     const hasGroups = customGenomes.some(
-      (genome) => genome.group !== undefined
+      (genome) => genome.group !== undefined,
     );
 
     if (!hasGroups) {
@@ -72,14 +69,15 @@ export default function GenomeHubPanel() {
     }
   }, [dispatch, customGenomesLoadStatus]);
 
-
-
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl">Custom Genomes available</h1>
         <div>
-          <ClearAllButton onClearAll={() => dispatch(clearAllGenomes())} compact title={"Clear All Custom Genomes"} />
+          <ClearAllButton
+            onClearAll={() => dispatch(clearAllGenomes())}
+            compact
+            title={"Clear All Custom Genomes"}
+          />
         </div>
       </div>
       {customGenomes.length === 0 ? (
@@ -170,12 +168,12 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             Chromosomes:{" "}
             {genome.chromosomes.length > 0
               ? genome.chromosomes
-                .slice(0, 3)
-                .map((chr) => chr.name)
-                .join(", ") +
-              (genome.chromosomes.length > 3
-                ? ` +${genome.chromosomes.length - 3} more`
-                : "")
+                  .slice(0, 3)
+                  .map((chr) => chr.name)
+                  .join(", ") +
+                (genome.chromosomes.length > 3
+                  ? ` +${genome.chromosomes.length - 3} more`
+                  : "")
               : "None"}
           </p>
         </div>
@@ -190,7 +188,11 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
               onMouseDown={(e) => e.stopPropagation()}
               className={`p-1 rounded-md text-red-600 transition-colors duration-150 ${isConfirmingDelete ? "bg-alert text-white" : "hover:bg-red-100 dark:hover:bg-red-700"}`}
               aria-label={`Delete ${genome.name}`}
-              title={isConfirmingDelete ? `Confirm delete ${genome.name}` : `Delete ${genome.name}`}
+              title={
+                isConfirmingDelete
+                  ? `Confirm delete ${genome.name}`
+                  : `Delete ${genome.name}`
+              }
             >
               {isConfirmingDelete ? (
                 <ExclamationTriangleIcon className="w-5 h-5" />
@@ -244,7 +246,6 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
           )}
           <p>Unique ID:</p>
           <p>{genome.id}</p>
-
         </div>
       </motion.div>
     </motion.div>

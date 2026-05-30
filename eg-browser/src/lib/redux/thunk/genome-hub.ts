@@ -19,21 +19,18 @@ export const refreshLocalGenomes = createAsyncThunk(
     } catch (error) {
       thunkApi.dispatch(setCustomGenomesLoadStatus("failed"));
     }
-  }
+  },
 );
 
 export const addCustomGenome = createAsyncThunk(
   "genome-hub/add",
-  async (file: File, thunkApi) => {
+  async (genomes: IGenome[], thunkApi) => {
     const genomeHubManager = GenomeHubManager.getInstance();
-
-    const jsonFile = await file.text();
-    const genomeData = JSON.parse(jsonFile);
-
-    await genomeHubManager.putGenome(genomeData);
-
+    await Promise.all(
+      genomes.map((genome) => genomeHubManager.putGenome(genome)),
+    );
     thunkApi.dispatch(refreshLocalGenomes());
-  }
+  },
 );
 
 export const addCustomGenomeRemote = createAsyncThunk(
@@ -45,7 +42,7 @@ export const addCustomGenomeRemote = createAsyncThunk(
     await genomeHubManager.putGenome(genomeData);
 
     thunkApi.dispatch(refreshLocalGenomes());
-  }
+  },
 );
 export const clearAllGenomes = createAsyncThunk(
   "genome-hub/clear-all",
@@ -54,7 +51,7 @@ export const clearAllGenomes = createAsyncThunk(
     await genomeHubManager.deleteAllGenomes();
 
     thunkApi.dispatch(refreshLocalGenomes());
-  }
+  },
 );
 
 export const getBundle = createAsyncThunk(
@@ -64,7 +61,7 @@ export const getBundle = createAsyncThunk(
     await genomeHubManager.deleteAllGenomes();
 
     thunkApi.dispatch(refreshLocalGenomes());
-  }
+  },
 );
 
 export const deleteCustomGenome = createAsyncThunk(
@@ -73,5 +70,5 @@ export const deleteCustomGenome = createAsyncThunk(
     const genomeHubManager = GenomeHubManager.getInstance();
     await genomeHubManager.deleteGenome(genomeId);
     thunkApi.dispatch(refreshLocalGenomes());
-  }
+  },
 );

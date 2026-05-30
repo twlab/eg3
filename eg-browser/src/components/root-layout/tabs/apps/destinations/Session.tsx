@@ -10,7 +10,7 @@ import {
 } from "../../../../../lib/redux/slices/hubSlice";
 
 import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settingsSlice";
-import { BundleProps } from "./SessionUI";
+
 import { addCustomGenomeRemote } from "../../../../../lib/redux/thunk/genome-hub";
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
 import {
@@ -18,16 +18,43 @@ import {
   GenomeCoordinate,
   GenomeSerializer,
   getGenomeConfig,
+  ITrackModel,
   RegionSet,
+  TrackModel,
 } from "wuepgg3-track";
 
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import TabSessionUI from "./TabSessionUI";
 import { GenomeHubManager } from "wuepgg3-track";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
-const Session: React.FC<{ tab?: boolean }> = () => {
-  // useExpandedNavigationTab();
+export interface BundleProps {
+  bundleId: string | null;
+  customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
+  darkTheme: boolean;
+  genomeName: string;
+  highlights: Array<any>;
+  isShowingNavigator: boolean;
+  layout: any;
+  metadataTerms: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
+  regionSetView: any | null; // use appropriate type if you know it
+  regionSets: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
+  viewRegion: GenomeCoordinate | null;
+  trackLegendWidth: number;
+  tracks: Array<TrackModel> | Array<ITrackModel>;
+  chromosomes: Array<any> | null;
+  customGenome: any | null;
+  genomeId: string | null;
+  viewInterval: { start: number; end: number } | null;
+  title?: string;
+}
+
+const Session: React.FC<{ tab?: boolean }> = ({ tab }) => {
+  if (tab) {
+    useExpandedNavigationTab();
+  }
+
   const dispatch = useAppDispatch();
 
   const customTracksPool = useAppSelector(selectCustomTracksPool);
@@ -108,7 +135,17 @@ const Session: React.FC<{ tab?: boolean }> = () => {
     let newGenomeConfig: GenomeConfig | null = null;
     let coordinate: GenomeCoordinate | null = null;
 
-    if (sessionBundle.chromosomes && sessionBundle.chromosomes.length > 0) {
+    if (
+      !GenomeHubManager.getInstance().getGenomeFromCache(
+        sessionBundle.genomeId,
+      ) &&
+      sessionBundle.chromosomes &&
+      sessionBundle.chromosomes.length > 0
+    ) {
+      let defaultRegion;
+      if (sessionBundle.viewRegion !== undefined) {
+        defaultRegion = sessionBundle.viewRegion;
+      }
       const _newGenomeConfig = {
         id: sessionBundle.genomeId,
         name: sessionBundle.genomeId,
@@ -117,10 +154,20 @@ const Session: React.FC<{ tab?: boolean }> = () => {
           ...item,
           waitToUpdate: true,
         })),
+        defaultRegion,
       };
 
       dispatch(addCustomGenomeRemote(_newGenomeConfig));
       newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
+    } else if (
+      GenomeHubManager.getInstance().getGenomeFromCache(sessionBundle.genomeId)
+    ) {
+      const _newGenomeConfig =
+        GenomeHubManager.getInstance().getGenomeFromCache(
+          sessionBundle.genomeId,
+        );
+      if (_newGenomeConfig)
+        newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
     } else if (getGenomeConfig(sessionBundle.genomeId)) {
       newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
     } else {
@@ -220,19 +267,6 @@ const Session: React.FC<{ tab?: boolean }> = () => {
       state={curUserState}
     />
   );
-
-  // tab ? (
-  //   <SessionUI
-  //     onRestoreSession={onRestoreSession}
-  //     onRetrieveBundle={onRetrieveBundle}
-  //     updateBundle={onUpdateBundle}
-  //     bundleId={bundle.bundleId ? bundle.bundleId : ""}
-  //     curBundle={bundle}
-  //     state={curUserState}
-  //   />
-  // ) : (
-
-  // );
 };
 
 export default Session;
