@@ -24,10 +24,16 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
 
   render() {
     const { feature, category, queryEndpoint } = this.props;
+    const name = feature.getName()
+      ? feature.getName()
+      : feature?.name
+        ? feature.name
+        : "";
 
-    const featureName = category
-      ? category[feature.getName()]
-      : feature.getName();
+    const featureName =
+      category && category[name] && category[name].name
+        ? category[name].name
+        : name;
     let linkOut;
     if (feature.id) {
       if (_.isEmpty(queryEndpoint)) {

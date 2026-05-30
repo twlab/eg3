@@ -25,7 +25,7 @@ export const initialLayout = {
     children: [
       {
         type: "tabset",
-        weight: 50,
+        weight: 250,
         children: [
           {
             config: { trackModel: null },

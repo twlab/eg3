@@ -3,9 +3,9 @@ import { ResizeObserver } from "@juggle/resize-observer";
 import { debounce } from "lodash";
 
 const useResizeObserver = () => {
-  const [size, setSize] = useState({ width: window.innerWidth, height: 0 });
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const ref = useRef<HTMLDivElement | null>(null);
-  const prevSize = useRef({ width: window.innerWidth, height: 0 });
+  const prevSize = useRef({ width: 0, height: 0 });
 
   useEffect(() => {
     const handleResize = debounce((entries: ResizeObserverEntry[]) => {

@@ -2,6 +2,12 @@ import { SequenceData } from "../models/SequenceData";
 import { TwoBitFile } from "@gmod/twobit";
 import { RemoteFile } from "generic-filehandle";
 
+const CORS_PROXY = "https://epigenome.wustl.edu/cors";
+
+function proxiedUrl(url: string): string {
+  return `${CORS_PROXY}/${url.replace(/^https?:\/\//, "")}`;
+}
+
 /**
  * Reads and gets data from remotely-hosted .2bit files.
  *
@@ -10,6 +16,8 @@ import { RemoteFile } from "generic-filehandle";
 class TwoBitSource {
   twobit: TwoBitFile;
   url: any;
+  private usingProxy: boolean = false;
+
   /**
    * Prepares to fetch .2bit data from a URL.
    *
@@ -22,6 +30,13 @@ class TwoBitSource {
     });
   }
 
+  private switchToProxy() {
+    this.usingProxy = true;
+    this.twobit = new TwoBitFile({
+      filehandle: new RemoteFile(proxiedUrl(this.url)),
+    });
+  }
+
   /**
    * Gets the sequence that covers the region.
    *
@@ -29,11 +44,21 @@ class TwoBitSource {
    * @return {Promise<SequenceData[]>} - sequence in the region
    */
   async getData(region) {
-    const promises = region.getGenomeIntervals().map(async (locus) => {
-      const sequence = await this.getSequenceInInterval(locus);
-      return new SequenceData(locus, sequence!);
-    });
-    return Promise.all(promises);
+    const fetchForRegion = () =>
+      region.getGenomeIntervals().map(async (locus) => {
+        const sequence = await this.getSequenceInInterval(locus);
+        return new SequenceData(locus, sequence!);
+      });
+
+    try {
+      return await Promise.all(fetchForRegion());
+    } catch (error) {
+      if (!this.usingProxy) {
+        this.switchToProxy();
+        return await Promise.all(fetchForRegion());
+      }
+      throw error;
+    }
   }
 
   /**
@@ -46,7 +71,7 @@ class TwoBitSource {
     const seq = await this.twobit.getSequence(
       interval.chr,
       interval.start,
-      interval.end
+      interval.end,
     );
     return seq;
   }

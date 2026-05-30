@@ -30,6 +30,7 @@ export class Feature {
   sequence: any;
   variant?: any;
   value?: any;
+  color?: string;
   /**
    * Makes a new instance with specified name and locus.  Empty names are valid.  If given `undefined` or `null`, it
    * defaults to the locus as a string.
@@ -42,12 +43,14 @@ export class Feature {
     name: string | undefined,
     public locus: ChromosomeInterval,
     public strand: Strand = "",
-    value: any = null
+    value: any = null,
+    color: string | undefined = undefined,
   ) {
     this.name = name === undefined ? locus.toString() : name; // eslint-disable-line eqeqeq
     this.locus = locus;
     this.strand = strand;
     this.value = value;
+    this.color = color;
   }
 
   serialize(): IFeature {
@@ -62,7 +65,7 @@ export class Feature {
     return new Feature(
       object.name,
       ChromosomeInterval.deserialize(object.locus),
-      object.strand
+      object.strand,
     );
   }
 

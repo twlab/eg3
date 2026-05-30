@@ -2,6 +2,7 @@ import _ from "lodash";
 import { BigWigZoomLevels } from "../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { makeBwg } from "../getRemoteData/vendor/bbi-js/main/bigwig";
 import { BlobFetchable } from "../getRemoteData/vendor/bbi-js/utils/bin";
+import { chromAlias } from "../getRemoteData/fetchFunctions";
 
 /**
  * Reads and gets data from bigwig or bigbed files in local.  Gets DASFeature records, which vary in schema
@@ -12,6 +13,8 @@ import { BlobFetchable } from "../getRemoteData/vendor/bbi-js/utils/bin";
 class LocalBigSource {
   file: any;
   bigWigPromise: Promise<any>;
+  private chromNamingCache: boolean | null = null;
+
   /**
    * Prepares to fetch bigwig or bigbed data a file blob.
    *
@@ -20,6 +23,27 @@ class LocalBigSource {
   constructor(file) {
     this.file = file;
     this.bigWigPromise = this.loadBigWig(file);
+  }
+
+  async detectChromosomeNaming(): Promise<boolean | null> {
+    if (this.chromNamingCache !== null) {
+      return this.chromNamingCache;
+    }
+    try {
+      const bigWigObj = await this.bigWigPromise;
+      const firstChrom = Object.keys(bigWigObj.chromsToIDs || {})[0];
+      if (!firstChrom) {
+        this.chromNamingCache = false;
+        return false;
+      }
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error("Error detecting chromosome naming. Check file format.");
+      return null;
+    }
   }
 
   // Function to handle the dynamic loading of the BigWig data
@@ -48,17 +72,30 @@ class LocalBigSource {
    * @return {Promise<DASFeature[]>} a Promise for the data
    * @override
    */
-  async getData(loci, basesPerPixel) {
+  async getData(loci, basesPerPixel, options: any = {}) {
+    const isEnsembl =
+      options.ensemblStyle ?? (await this.detectChromosomeNaming());
     const bigWigObj = await this.bigWigPromise;
     const zoomLevel = this._getMatchingZoomLevel(bigWigObj, basesPerPixel);
 
-    let promises = loci.map((locus) =>
-      this._getDataForChromosome(locus, bigWigObj, zoomLevel)
-    );
+    const promises = loci.map((locus) => {
+      let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
+      if (chrom === "M") chrom = "MT";
+      return this._getDataForChromosome(
+        { ...locus, chr: chrom },
+        bigWigObj,
+        zoomLevel,
+      );
+    });
     const dataForEachLocus = await Promise.all(promises);
     const combinedData = _.flatten(dataForEachLocus);
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // bbi-js returns 1-indexed features; -1 to compensate.
+    }
+    if (isEnsembl) {
+      loci.forEach((locus, index) => {
+        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+      });
     }
     return combinedData;
   }
@@ -82,10 +119,10 @@ class LocalBigSource {
       .slice()
       .sort((levelA, levelB) => levelB.reduction - levelA.reduction);
     let desiredZoom = sortedZoomLevels.find(
-      (zoomLevel) => zoomLevel.reduction < basesPerPixel
+      (zoomLevel) => zoomLevel.reduction < basesPerPixel,
     );
     return bigWigObj.zoomLevels.findIndex(
-      (zoomLevel) => zoomLevel === desiredZoom
+      (zoomLevel) => zoomLevel === desiredZoom,
     );
   }
 

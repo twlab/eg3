@@ -17,7 +17,7 @@ export { default as DisplayedRegionModel } from "./DisplayedRegionModel";
 
 export * from "./AppSaveLoad";
 export * from "../components/GenomeView/TrackComponents/displayModeComponentMap";
-export * from "../getRemoteData/fetchTrackData";
+export * from "../getRemoteData/fetchTypeMap";
 export * from "../util";
 export { default as Genome } from "./Genome";
 export { default as OpenInterval } from "./OpenInterval";
@@ -31,4 +31,4 @@ export { default as IsoformSelection } from "../components/GenomeView/genomeNavi
 export { default as OutsideClickDetector } from "../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 export { default as TwoBitSource } from "../getRemoteData/TwoBitSource";
 export * from "./genomes/GenomeConfig";
-export * from "../components"
+export * from "../components";

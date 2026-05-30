@@ -22,7 +22,7 @@ export const HoverInfo = ({
   const locus = new ChromosomeInterval(
     atom.chain,
     atom.properties.start,
-    atom.properties.start + resolution
+    atom.properties.start + resolution,
   );
 
   const jumpToAtom = () => {
@@ -38,7 +38,14 @@ export const HoverInfo = ({
     const atomFeature = new Feature(undefined, locus);
     let newSet;
     if (selectedSet) {
-      newSet = selectedSet.cloneAndAddFeature(atomFeature);
+      let useSelectedSet;
+
+      if (typeof selectedSet === "object") {
+        useSelectedSet = RegionSet.deserialize(selectedSet);
+      } else {
+        useSelectedSet = selectedSet;
+      }
+      newSet = useSelectedSet.cloneAndAddFeature(atomFeature);
     } else {
       const currentChrInterval = viewRegion.getGenomeIntervals()[0];
       const currentFeature = new Feature(undefined, currentChrInterval);
@@ -46,7 +53,7 @@ export const HoverInfo = ({
         "3D set",
         [currentFeature, atomFeature],
         genomeConfig.genome,
-        new FlankingStrategy()
+        new FlankingStrategy(),
       );
     }
     onSetSelected(newSet);

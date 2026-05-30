@@ -97,7 +97,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     return (
       interactions: GenomeInteraction[],
       region: DisplayedRegionModel,
-      width: number
+      width: number,
     ) => {
       return featurePlacer.placeInteractions(interactions, region, width);
     };
@@ -113,7 +113,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
         const item = percentile(
           scalePercentile!,
           safeData,
-          (item) => item.score
+          (item) => item.score,
         );
         const maxScore =
           safeData.length > 0 ? (item as GenomeInteraction).score : 10;
@@ -207,7 +207,9 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     getBeamRefs,
     onSetAnchors3d,
     isThereG3dTrack,
-    updatedLegend, dataIdx, initialLoad
+    updatedLegend,
+    dataIdx,
+    initialLoad,
   } = props;
 
   const filteredData = filterData(data, options);
@@ -224,7 +226,6 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     !_.isEqual(options, currentViewOptions.current) ||
     dataIdx !== currentViewDataIdx.current
   ) {
-
     const visualizerProps = {
       placedInteractions: interactionData,
       viewWindow,
@@ -262,7 +263,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     if (updatedLegend) {
       updatedLegend.current = legend;
     }
-
+   
     switch (options.displayMode) {
       case InteractionDisplayMode.HEATMAP:
         visualizer = (
@@ -290,11 +291,9 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
 
     currentScale.current = scales;
     currentViewOptions.current = { ...options };
-
   } else {
     visualizer = currentVisualizer.current;
   }
-
 
   return visualizer;
 };

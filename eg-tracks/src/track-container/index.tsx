@@ -70,6 +70,7 @@ export function TrackContainerRepresentable({
       fileObj: track.fileObj,
       files: track.files,
       changeConfigInitial: track.changeConfigInitial,
+      isText: track.isText,
     }),
     [],
   );
@@ -252,7 +253,6 @@ export function TrackContainerRepresentable({
   }
   const handleNewRegion = useCallback(
     (startbase: number, endbase: number) => {
-
       let newCoordinate;
       if (selectedRegionSet) {
         let setNavContext;
@@ -355,11 +355,11 @@ export function TrackContainerRepresentable({
       legendWidth={legendWidth}
       showGenomeNav={showGenomeNav}
       showToolBar={showToolBar}
-      onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
-      onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
-      onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
-      onNewRegionSelect={!onNewRegionSelect ? () => { } : handleNewRegionSelect}
-      onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
+      onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
+      onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
+      onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
+      onNewRegionSelect={!onNewRegionSelect ? () => {} : handleNewRegionSelect}
+      onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
       viewRegion={convertedViewRegion}
       userViewRegion={
         convertedUserViewRegion ? convertedUserViewRegion : convertedViewRegion

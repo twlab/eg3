@@ -80,6 +80,7 @@ interface MethylCTrackProps {
   xvaluesData?: any;
   initialLoad: boolean;
   dataIdx: number;
+  windowWidth?: number;
 }
 
 const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
@@ -89,13 +90,14 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
   const currentViewOptions = useRef({});
+  const currentWindowWidth = useRef(0);
   const {
     data,
     trackModel,
     viewRegion,
     width,
     options,
-
+    windowWidth,
     xvaluesData,
     forceSvg,
     viewWindow,
@@ -211,7 +213,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     ? {
         position: "relative",
         overflow: "hidden",
-        width: width / 3 + 120,
+        width: windowWidth,
       }
     : {};
   let curEleStyle: any = forceSvg
@@ -232,7 +234,8 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
         !(scales.maxMethyl === currentScale.current?.maxMethyl))) ||
     dataIdx !== currentViewDataIdx.current ||
     !_.isEqual(options, currentViewOptions.current) ||
-    !options.usePrimaryNav
+    !options.usePrimaryNav ||
+    windowWidth !== currentWindowWidth.current
   ) {
     if (isCombineStrands) {
       strandRenderers = (
@@ -312,6 +315,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
 
   currentScale.current = scales;
   currentViewOptions.current = options;
+  currentWindowWidth.current = windowWidth;
   return visualizer;
 };
 

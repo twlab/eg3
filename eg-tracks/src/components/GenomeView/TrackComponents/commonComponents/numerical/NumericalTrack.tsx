@@ -65,6 +65,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const currentViewWindow = useRef({ start: 0, end: 1 });
   const currentVisualizer = useRef(null);
   const currentViewOptions = useRef({});
+  const currentWindowWidth = useRef(0);
   const {
     data,
     viewRegion,
@@ -79,7 +80,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     viewWindow,
     dataIdx,
     initialLoad,
+    windowWidth,
   } = props;
+
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
@@ -95,12 +98,13 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
       const { yScale, yMin, yMax } = options;
       if (yMin >= yMax) {
+        console.log("Y-axis min must less than max", "error", 2000);
       }
-      const { trackModel, groupScale } = props;
-      let gscale = {},
+
+      let gscale: any = {},
         min,
         max,
-        xValues2 = [];
+        xValues2: Array<any> = [];
       if (groupScale) {
         if (trackModel.options.hasOwnProperty("group")) {
           gscale = groupScale[trackModel.options.group];
@@ -114,7 +118,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           props.viewWindow.start,
           props.viewWindow.end,
         );
-        max = _.max(visibleValues) || 1; // in case undefined returned here, cause maxboth be undefined too
+
+        max = _.max(visibleValues) || 1;
+
         xValues2 = xToValue2.filter((x) => x);
         min =
           (xValues2.length
@@ -126,23 +132,24 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         max = maxBoth;
         min = xValues2.length ? -maxBoth : 0;
         if (yScale === ScaleChoices.FIXED) {
-          max = yMax !== undefined ? yMax : max;
+          max = yMax ? yMax : max;
           min = yMin !== undefined ? yMin : min;
-          // if (xValues2.length && yMin > 0) {
-          //     notify.show("Please set Y-axis min <=0 when there are negative values", "warning", 5000);
-          //     min = 0;
-          // }
         }
       }
       if (min > max) {
+        console.log("Y-axis min should less than Y-axis max", "warning", 5000);
         min = 0;
       }
 
-      // determines the distance of y=0 from the top, also the height of positive part
       const zeroLine =
-        min < 0
+        min < 0 && hasForward
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : height;
+          : hasForward
+            ? height
+            : 0;
+      if (!hasForward && hasReverse) {
+        max = 0;
+      }
 
       if (
         xValues2.length &&
@@ -188,7 +195,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             .domain([min, max])
             .range([0, 1])
             .clamp(true),
-          // for group feature when there is only nagetiva data, to be fixed
           valueToYReverse: scaleLinear()
             .domain([0, min])
             .range([0, height - zeroLine - TOP_PADDING])
@@ -248,7 +254,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         position: "relative",
 
         overflow: "hidden",
-        width: width / 3 + 120,
+        width: windowWidth,
       }
     : {};
   let curEleStyle: any = forceSvg
@@ -268,7 +274,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     scales.zeroLine !== currentScale.current?.zeroLine ||
     dataIdx !== currentViewDataIdx.current ||
     !_.isEqual(options, currentViewOptions.current) ||
-    !options.usePrimaryNav
+    windowWidth !== currentWindowWidth.current
+
+    // ||
+    // !options.usePrimaryNav
   ) {
     visualizer = hasReverse ? (
       <React.Fragment>
@@ -313,7 +322,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
                 <ValuePlot
                   xToValue={xToValue}
                   scales={scales}
-                  height={scales.zeroLine ? scales.zeroLine : height}
+                  height={scales.zeroLine}
                   color={color}
                   colorOut={colorAboveMax}
                   isDrawingBars={isDrawingBars}
@@ -379,7 +388,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             <ValuePlot
               xToValue={xToValue}
               scales={scales}
-              height={scales.zeroLine ? scales.zeroLine : height}
+              height={scales.zeroLine}
               color={color}
               colorOut={colorAboveMax}
               isDrawingBars={isDrawingBars}
@@ -394,6 +403,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   } else {
     visualizer = currentVisualizer.current;
   }
+  currentWindowWidth.current = windowWidth;
   currentVisualizer.current = visualizer;
   currentViewDataIdx.current = dataIdx;
   currentViewWindow.current = viewWindow;

@@ -88,10 +88,12 @@ class CategoricalAnnotation extends React.Component<CategoricalAnnotationProps> 
     }
 
     let label;
+    const name = feature.getName() ? feature.getName() : feature.name;
     const labelText =
-      category && category[feature.getName()]
-        ? category[feature.getName()].name
-        : feature.getName();
+    
+      category && category[name]
+        ? category[name].name
+        : name;
     if (labelText) {
       const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
       const centerX = startX + 0.5 * width;

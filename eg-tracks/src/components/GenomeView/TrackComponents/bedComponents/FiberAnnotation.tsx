@@ -64,6 +64,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
       return null;
     }
     if (isMinimal) {
+
       if (hideMinimalItems) {
         return null;
       }
@@ -71,7 +72,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
         <TranslatableG
           y={y}
           onMouseEnter={(event) => renderTooltip(event, feature, 0)}
-          onMouseOut={onHideTooltip}
+          onMouseOut={() => onHideTooltip()}
         >
           <rect
             x={startX}
@@ -171,7 +172,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                     totals[idx],
                   )
                 }
-                onMouseOut={onHideTooltip}
+                onMouseOut={() => onHideTooltip()}
               />,
             );
           } else {
@@ -196,7 +197,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                     totals[idx],
                   )
                 }
-                onMouseOut={onHideTooltip}
+                onMouseOut={() => onHideTooltip()}
               />,
             );
           }
@@ -261,7 +262,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                 onMouseEnter={(event) =>
                   renderTooltip(event, feature, bs, "norm")
                 }
-                onMouseOut={onHideTooltip}
+                onMouseOut={() => onHideTooltip()}
               />,
             );
           } else {
@@ -281,7 +282,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                 onMouseEnter={(event) =>
                   renderTooltip(event, feature, bs, "norm")
                 }
-                onMouseOut={onHideTooltip}
+                onMouseOut={() => onHideTooltip()}
               />,
             );
           }
@@ -316,7 +317,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                 onMouseEnter={(event) =>
                   renderTooltip(event, feature, bs, "norm")
                 }
-                onMouseOut={onHideTooltip}
+                onMouseOut={() => onHideTooltip()}
               />,
             );
           } else {
@@ -336,7 +337,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
                 onMouseEnter={(event) =>
                   renderTooltip(event, feature, bs, "norm")
                 }
-                onMouseOut={onHideTooltip}
+                onMouseOut={() => onHideTooltip()}
               />,
             );
           }

@@ -130,6 +130,7 @@ export const Tool = {
   highlightMenu: "highlightMenu",
   ReorderMany: "ReorderMany",
   History: "History",
+  SelectAll: "SelectAll",
 } as const;
 
 export type Tool = (typeof Tool)[keyof typeof Tool];
@@ -153,6 +154,7 @@ export const ACTION_TOOLS: ReadonlySet<string> = new Set([
   Tool.ZoomInOneThirdFold,
   Tool.ZoomInOneFold,
   Tool.ZoomInFiveFold,
+  Tool.SelectAll
 ]);
 
 export interface ToolState {

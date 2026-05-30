@@ -141,15 +141,22 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
 
   render() {
     this.hmData = [];
-    const { placedInteractions, width, forceSvg, height, viewWindow, options , legend} =
-      this.props;
-        
-      let curParentStyle: any = forceSvg
+    const {
+      placedInteractions,
+      width,
+      forceSvg,
+      height,
+      viewWindow,
+      options,
+      legend,
+    } = this.props;
+
+    let curParentStyle: any = forceSvg
       ? {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth / 3,
         }
       : {};
     let curEleStyle: any = forceSvg
@@ -159,9 +166,10 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
         }
       : {};
     let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
-      return (
-       <React.Fragment>
-         {!forceSvg ? ( <div
+    return (
+      <React.Fragment>
+        {!forceSvg ? (
+          <div
             style={{
               display: "flex",
               flexDirection: "row",
@@ -170,28 +178,39 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
               zIndex: 3,
             }}
           >
-          <HoverToolTip
-            data={this.hmData}
-            windowWidth={width}
-            viewWindow={viewWindow}
-            trackType={"interactionSquareDisplay"}
-            height={height}
-            hasReverse={true}
-            options={this.props.options}
-          />
-        </div>) : (
+            <HoverToolTip
+              data={this.hmData}
+              windowWidth={width}
+              viewWindow={viewWindow}
+              trackType={"interactionSquareDisplay"}
+              height={height}
+              hasReverse={true}
+              options={this.props.options}
+            />
+          </div>
+        ) : (
           ""
         )}
         {placedInteractions.length === 0 ? (
           <div
             style={{
+              display: "flex",
+              ...curParentStyle,
               width: width,
               height: height,
             }}
-          ></div>
+          >
+            {forceSvg || options.packageVersion ? legend : ""}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            ></div>
+          </div>
         ) : (
-
-           <div style={{ display: "flex", ...curParentStyle }}>
+          <div style={{ display: "flex", ...curParentStyle }}>
             {forceSvg || options.packageVersion ? legend : ""}
             <div
               style={{
@@ -200,13 +219,14 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
                 ...curEleStyle,
               }}
             >
-          <DesignRenderer
-            type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-            width={width}
-            height={height}
-          >
-            {placedInteractions.map(this.renderRect)}
-          </DesignRenderer></div>
+              <DesignRenderer
+                type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+                width={width}
+                height={height}
+              >
+                {placedInteractions.map(this.renderRect)}
+              </DesignRenderer>
+            </div>
           </div>
         )}
       </React.Fragment>

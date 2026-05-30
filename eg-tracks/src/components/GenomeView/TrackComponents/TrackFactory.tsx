@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, startTransition } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
@@ -75,7 +75,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
       : { ...trackOptionMap["error"].defaultOptions };
   }
-  const initTrackStart = useRef(true);
+
   const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
@@ -84,14 +84,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const caches = trackManagerState.current.caches;
 
   const xPos = useRef(0);
-
+  const [legend, setLegend] = useState<any>(null);
   const [viewComponent, setViewComponent] = useState<{
     [key: string]: any;
   } | null>(null);
 
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-  const [legend, setLegend] = useState<any>(null);
 
   function getHeight(numRows: number): number {
     let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
@@ -147,9 +146,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       initialLoad: initialLoad.current,
       placeFeature,
     };
-    let res;
+
     // try {
-    res = getDisplayModeFunction(displayArgs);
+    const res = getDisplayModeFunction(displayArgs);
     // }
     // catch (e) {
     //   fetchError.current = "error when creating drawData";
@@ -177,7 +176,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // inside the display components don't crash the whole app.
       try {
         result = (
-          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError }>
+          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
             {result as any}
           </ErrorBoundary>
         );
@@ -186,18 +185,21 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       xPos.current = curXPos;
-      // startTransition(() =>
-      setViewComponent({
-        component: result,
-        dataIdx: cacheDataIdx,
-        numHidden: numHidden,
-        visData: trackState.visData,
-        xPos: curXPos,
-      });
-      // )
+
+      startTransition(() =>
+        setViewComponent({
+          component: result,
+          dataIdx: cacheDataIdx,
+          numHidden: numHidden,
+          visData: trackState.visData,
+          xPos: curXPos,
+          viewWindow: trackState.viewWindow,
+        }),
+      );
     }
   }
   function onClose() {
+    setToolTipVisible(false);
     setToolTip(null);
   }
   // MARK: clickTool
@@ -306,7 +308,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
-
   // MARK:[newDrawDat
   // Helper function to handle track drawing logic for newDrawData, viewWindowConfigChange, and configChange
   function handleTrackDraw({
@@ -466,11 +467,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
       let cacheTrackData = caches[`${id}`];
+      const xDiff =
+        viewWindowConfigChange.viewWindow.start -
+        trackState?.visData?.viewWindow.start;
+      const sameRegionViewWindow = {
+        start:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.start + xDiff,
+        end:
+          trackState?.genomicFetchCoord[trackState.primaryGenName]
+            ?.primaryVisData?.viewWindow?.end + xDiff,
+      };
 
       handleTrackDraw({
         cacheTrackData,
         trackState,
-        viewWindow: viewWindowConfigChange.viewWindow,
+        viewWindow: sameRegionViewWindow,
         groupScale:
           globalTrackState.current.trackStates[dataIdx].trackState[
             "groupScale"
@@ -486,6 +498,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     if (isScreenShotOpen) {
       async function handle() {
+        if (!viewComponent) {
+          return;
+        }
         let cacheDataIdx = dataIdx;
 
         let cacheTrackData = caches[`${id}`];
@@ -494,14 +509,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState,
         );
         if (cacheTrackData["error"]) {
-             sentScreenshotData({
-      
-              isError: fetchError.current,        
-              trackId: id,
-            
-  
+          sentScreenshotData({
+            isError: fetchError.current,
+            trackId: id,
           });
-          return ;
+          return;
         } else if (
           !cacheTrackData.useExpandedLoci &&
           cacheTrackData.usePrimaryNav
@@ -523,9 +535,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
 
           if (!noData) {
-            if (newDrawData.viewWindow) {
-              trackState["viewWindow"] = newDrawData.viewWindow;
-            }
             trackState["groupScale"] =
               globalTrackState.current.trackStates[dataIdx].trackState[
                 "groupScale"
@@ -535,13 +544,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData = cacheTrackData[dataIdx]
             ? _.clone(cacheTrackData[dataIdx].dataCache)
             : null;
-
-          if (combinedData) {
-            if (newDrawData.viewWindow) {
-              trackState["viewWindow"] = newDrawData.viewWindow;
-            }
-          }
         }
+
         const primaryVisData =
           trackState.genomicFetchCoord[trackState.primaryGenName]
             .primaryVisData;
@@ -551,28 +555,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           : primaryVisData.visRegion;
         // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
         trackState["visRegion"] = visRegion;
-
-        const width = primaryVisData.visWidth
-          ? primaryVisData.visWidth
-          : windowWidth * 3;
-
-        const expandedViewWindow =
-          updateSide.current === "right"
-            ? new OpenInterval(
-                -(dragX! + (xPos.current + windowWidth)),
-                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth)),
-              )
-            : new OpenInterval(
-                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-                windowWidth * 3 -
-                  (dragX! - (xPos.current + windowWidth)) +
-                  windowWidth,
-              );
-        let start = expandedViewWindow.start + width / 3;
-
-        let end = expandedViewWindow.end - width / 3;
-
-        trackState["viewWindow"] = new OpenInterval(start, end);
+        trackState["viewWindow"] = viewComponent.viewWindow;
         let drawOptions = { ...getConfigOptions() };
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
@@ -582,25 +565,24 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         if (combinedData) {
           sentScreenshotData({
-      
-              genomeName: genomeConfig.genome.getName(),
-              genesArr: combinedData,
-              trackState,
-              windowWidth,
-              configOptions: drawOptions,
-              svgHeight:
-                getConfigOptions().displayMode === "full"
-                  ? svgHeight.current
-                  : getConfigOptions().height,
-              trackModel,
-              basesByPixel: basePerPixel,
-              genomeConfig,
-              xvaluesData: cacheTrackData[dataIdx].xvalues
-                ? cacheTrackData[dataIdx].xvalues
-                : null,
-              isError: fetchError.current,        trackId: id,
-            
-  
+            genomeName: genomeConfig.genome.getName(),
+            genesArr: combinedData,
+            trackState,
+            windowWidth,
+            configOptions: drawOptions,
+            svgHeight: svgHeight.current
+              ? svgHeight.current
+              : getConfigOptions().height,
+            trackModel,
+            basesByPixel: basePerPixel,
+            genomeConfig,
+            xvaluesData: cacheTrackData[dataIdx].xvalues
+              ? cacheTrackData[dataIdx].xvalues
+              : null,
+            isError: fetchError.current,
+            trackId: id,
+
+            placeFeature: cacheTrackData[dataIdx]?.placeFeature,
           });
         }
       }
@@ -757,7 +739,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             height={
               fetchError.current
                 ? 40
-                : getConfigOptions().displayMode === "full"
+                : svgHeight.current
                   ? svgHeight.current
                   : !getConfigOptions().isCombineStrands &&
                       trackModel.type === "methylc"
@@ -773,7 +755,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           display: "flex",
           height: fetchError.current
             ? 40
-            : getConfigOptions().displayMode === "full"
+            : getConfigOptions().displayMode === "full" ||
+                getConfigOptions().displayMode === "detail" ||
+                (svgHeight.current && getConfigOptions().displayMode === "auto")
               ? svgHeight.current
               : !getConfigOptions().isCombineStrands &&
                   trackModel.type === "methylc"
@@ -783,6 +767,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           position: "relative",
           willChange: "transform",
           left: 120,
+          //  + viewComponent?.xOffset || 0,
         }}
       >
         <div
@@ -816,41 +801,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
-
-        {
-          // highlight element is inside the track component because it has pixel relative to bp location, so we have to set them within the
-          // track
-          highlightElements.length > 0
-            ? highlightElements.map((item, index) => {
-                if (item.display) {
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        display: "flex",
-                        position: "relative",
-                        height: "100%",
-                      }}
-                    >
-                      <div
-                        key={index}
-                        style={{
-                          position: "absolute",
-                          backgroundColor: item.color,
-                          top: "0",
-                          height: "100%",
-                          left: item.side === "right" ? `${item.xPos}px` : "",
-                          right: item.side === "left" ? `${item.xPos}px` : "",
-                          width: item.width,
-                          pointerEvents: "none", // This makes the highlighted area non-interactive
-                        }}
-                      ></div>
-                    </div>
-                  );
-                }
-              })
-            : ""
-        }
       </div>
     </div>
   );

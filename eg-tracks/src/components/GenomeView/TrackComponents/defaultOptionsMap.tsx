@@ -13,7 +13,7 @@ import { DEFAULT_OPTIONS as defaultGenomeAlignTrack } from "./GenomeAlignCompone
 import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/DynamicplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
-import { DEFAULT_OPTIONS as defaultVcfTrack } from "./VcfComponents/VcfTrack";
+
 import { DEFAULT_OPTIONS as defaultDynamicInteraction } from "./InteractionComponents/DynamicInteractionTrackComponents";
 // import { DEFAULT_OPTIONS as defaultBedcolorTrack } from "./bedComponents/BedcolorTrack";
 
@@ -26,6 +26,8 @@ import OpenInterval from "../../../models/OpenInterval";
 import {
   AnnotationDisplayModes,
   NumericalDisplayModes,
+  VcfColorScaleKeys,
+  VcfDisplayModes,
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import Feature from "../../../models/Feature";
 import { DefaultAggregators } from "../../../models/FeatureAggregator";
@@ -59,6 +61,25 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultBigBedTrack,
       ...defaultNumericalTrack,
       ...defaultAnnotationTrack,
+    },
+    getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
+    },
+    ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
+  },
+
+  bigbedcolor: {
+    defaultOptions: {
+      ...defaultBigBedTrack,
+      ...defaultNumericalTrack,
+      ...defaultAnnotationTrack,
+      maxRows: 1,
     },
     getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
       const width = xSpan.end - xSpan.start;
@@ -105,8 +126,18 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultAnnotationTrack,
     },
-    getGenePadding: function getGenePadding(gene) {
-      return gene.getName().length * 9;
+    getGenePadding: function getGenePadding(
+      feature: Feature,
+      xSpan: OpenInterval,
+    ) {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
@@ -175,8 +206,15 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
 
-      ...defaultVcfTrack,
-      displayMode: NumericalDisplayModes.AUTO,
+      highValueColor: "blue",
+      lowValueColor: "red",
+      maxRows: 10,
+      rowHeight: 20,
+      hiddenPixels: 0,
+      colorScaleKey: VcfColorScaleKeys.AF,
+      displayMode: VcfDisplayModes.AUTO,
+      ensemblStyle: false,
+
       aggregateMethod: DefaultAggregators.types.COUNT,
     },
     getGenePadding: function paddingFunc(vcf: Vcf, xSpan: OpenInterval) {
@@ -253,12 +291,12 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultAnnotationTrack,
       ...defaultCategorical,
-      height: 20,
+      rowHeight: 20,
       color: "blue",
       maxRows: 1,
       hiddenPixels: 0.5,
       backgroundColor: "var(--bg-color)",
-      alwaysDrawLabel: true,
+      alwaysDrawLabel: false,
       category: {},
     },
     getGenePadding: function getGenePadding(

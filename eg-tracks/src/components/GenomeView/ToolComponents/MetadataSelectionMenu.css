@@ -1,22 +1,37 @@
-.MetadataSelectionMenu ul {
-  list-style-type: none;
-}
 .MetadataSelectionMenu {
   position: absolute;
   background: var(--bg-color);
-  padding: 5px;
-  /* right: 60px; */
-  /* top: 40px; */
+  padding: 8px 10px;
   min-width: 240px;
   z-index: 9;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--border-color, #e5e7eb);
 }
 
 .MetadataSelectionMenu button {
-  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
 }
-.MetadataSelectionMenu input {
-      border: #409393 1px solid;
-    padding: 2px;
-    margin-right: 4px;
-    border-radius: 4px;
+
+.MetadataSelectionMenu input[type="text"] {
+  border: 1px solid var(--border-color, #d1d5db);
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--font-color);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.MetadataSelectionMenu input[type="text"]:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.MetadataSelectionMenu input[type="checkbox"] {
+  flex-shrink: 0;
 }

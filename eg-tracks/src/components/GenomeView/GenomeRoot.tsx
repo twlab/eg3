@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
-import _, { has } from "lodash";
+import _ from "lodash";
 import { ITrackContainerState } from "../../types";
 import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
@@ -17,9 +17,9 @@ const MAX_WORKERS = 6;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
-import FetchDataWorker from "../../getRemoteData/fetchDataWorker.ts?worker&inline";
+import FetchDataWorker from "../../getRemoteData/createFetchWorker.ts?worker&inline";
 // @ts-ignore
-import FetchGenomeAlignWorker from "../../getRemoteData/fetchGenomeAlignWorker.ts?worker&inline";
+import FetchGenomeAlignWorker from "../../getRemoteData/createFetchGenomeAlignWorker.ts?worker&inline";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
@@ -47,7 +47,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   width,
   height,
 }) {
-
   const [resizeRef, size] = useResizeObserver();
 
   const infiniteScrollWorkers = useRef<{
@@ -85,6 +84,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         for (let track of newG3dTracks) {
           const newLayout = {
             type: "tabset",
+            weight: 100,
             children: [
               {
                 type: "tab",
@@ -102,16 +102,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         setModel(FlexLayout.Model.fromJson(layout.current));
       }
     }
-      if (
-    tracks.some((t) => t.type === "genomealign") &&
-    !fetchGenomeAlignWorker.current
-  ) {
 
-    fetchGenomeAlignWorker.current = {
-      fetchWorker: new FetchGenomeAlignWorker(),
-      hasOnMessage: false,
-    };
-  }
     genomeConfig.defaultTracks = tracks;
   }, [tracks]);
 
@@ -243,7 +234,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     tracks.some((t) => t.type === "genomealign") &&
     !fetchGenomeAlignWorker.current
   ) {
-
     fetchGenomeAlignWorker.current = {
       fetchWorker: new FetchGenomeAlignWorker(),
       hasOnMessage: false,
@@ -296,8 +286,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks ? (
-        <div style={{ ...(height && { height }),overflowX: "hidden"}}>
+      {!has3dTracks && size.width > 0 ? (
+        <div style={{ ...(height && { height }), overflowX: "hidden" }}>
           <TrackManager
             tracks={tracks}
             legendWidth={legendWidth}
@@ -327,10 +317,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             darkTheme={darkTheme}
           />
         </div>
-      ) : (
-        <div style={{ width: size.width, height: 900 }}>
+      ) : size.width > 0 ? (
+        <div
+          style={{ width: size.width - 20, height: window.innerHeight - 45 }}
+        >
           <FlexLayout.Layout model={model} factory={factory} />
         </div>
+      ) : (
+        ""
       )}
     </div>
   );

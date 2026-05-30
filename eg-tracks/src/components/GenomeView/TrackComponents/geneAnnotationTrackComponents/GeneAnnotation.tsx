@@ -22,7 +22,7 @@ export const DEFAULT_OPTIONS = {
     pseudo: "rgb(230,0,172)",
     problem: "rgb(224,2,2)",
     polyA: "rgb(237,127,2)",
-    other: "rgb(128,128,128)",
+    other: "#0c54b8",
   },
   hiddenPixels: 0.5,
   italicizeText: false,
@@ -46,7 +46,7 @@ const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
     placedSegments: PlacedSegment[],
     height: number,
     color: string,
-    opacity: number = 1
+    opacity: number = 1,
   ) {
     return placedSegments.map((placedSegment, index) => {
       const x = placedSegment.xSpan.start;
@@ -85,7 +85,7 @@ const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
   const { translated, utrs } = gene.getExonsAsFeatureSegments();
   const placedTranslated = FEATURE_PLACER.placeFeatureSegments(
     placedGene,
-    translated
+    translated,
   );
   const placedUtrs = FEATURE_PLACER.placeFeatureSegments(placedGene, utrs);
   const exonRects = _renderCenteredRects(placedTranslated, HEIGHT, color);
@@ -117,7 +117,7 @@ const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
     placedUtrs,
     HEIGHT,
     backgroundColor,
-    0
+    0,
   );
 
   const utrRects = _renderCenteredRects(placedUtrs, UTR_HEIGHT, color);

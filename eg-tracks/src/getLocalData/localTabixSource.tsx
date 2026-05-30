@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { TabixIndexedFile } from "@gmod/tabix";
 import { BlobFile } from "generic-filehandle";
+import { chromAlias } from "../getRemoteData/fetchFunctions";
 
 import { ensureMaxListLength } from "../models/util";
 // import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
@@ -17,6 +18,7 @@ class LocalTabixSource {
   indexBlob?: any;
   dataLimit: number;
   tabix: TabixIndexedFile;
+  private chromNamingCache: boolean | null = null;
   /**
    * Prepares to fetch data from a bed file located at the input url.  Assumes the index is located at the same url,
    * plus a file extension of ".tbi".  This method will request and store the tabix index from this url immediately.
@@ -40,6 +42,27 @@ class LocalTabixSource {
     });
   }
 
+  async detectChromosomeNaming(): Promise<boolean | null> {
+    if (this.chromNamingCache !== null) {
+      return this.chromNamingCache;
+    }
+    try {
+      const names = await this.tabix.getReferenceSequenceNames();
+      const firstChrom = names[0];
+      if (!firstChrom) {
+        this.chromNamingCache = false;
+        return false;
+      }
+      this.chromNamingCache =
+        !chromAlias[firstChrom] &&
+        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
+      return this.chromNamingCache;
+    } catch (error) {
+      console.error("Error detecting chromosome naming. Check file format.");
+      return null;
+    }
+  }
+
   /**
    * Gets data for a list of chromosome intervals.
    *
@@ -47,22 +70,19 @@ class LocalTabixSource {
    * @return {Promise<BedRecord[]>} Promise for the data
    */
   getData = async (loci, options) => {
-    // let promises = loci.map(this.getDataForLocus);
     try {
+      const isEnsembl =
+        options?.ensemblStyle ?? (await this.detectChromosomeNaming());
+
       const promises = loci.map((locus) => {
         // graph container uses this source directly w/o initial track, so options is null
-        let chrom =
-          options && options.ensemblStyle
-            ? locus.chr.replace("chr", "")
-            : locus.chr;
-        if (chrom === "M") {
-          chrom = "MT";
-        }
+        let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
+        if (chrom === "M") chrom = "MT";
         return this.getDataForLocus(chrom, locus.start, locus.end);
       });
 
       const dataForEachLocus = await Promise.all(promises);
-      if (options && options.ensemblStyle) {
+      if (isEnsembl) {
         loci.forEach((locus, index) => {
           dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
         });

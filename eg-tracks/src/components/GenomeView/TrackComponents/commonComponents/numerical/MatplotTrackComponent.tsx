@@ -181,8 +181,9 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       updatedLegend,
       viewWindow,
       xvaluesData,
+      windowWidth
     } = this.props;
-
+   
     const { height, smooth, lineWidth } = options;
 
     this.xToValue = xvaluesData
@@ -223,7 +224,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
           position: "relative",
 
           overflow: "hidden",
-          width: width / 3 + 120,
+          width: windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg
