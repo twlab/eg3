@@ -128,7 +128,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         }),
       );
     });
-    console.log(width, height);
+
     return (
       <ThreedmolContainer
         key={g3dtrack.id}
@@ -286,7 +286,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {!has3dTracks ? (
+      {!has3dTracks && size.width > 0 ? (
         <div style={{ ...(height && { height }), overflowX: "hidden" }}>
           <TrackManager
             tracks={tracks}
@@ -317,12 +317,12 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             darkTheme={darkTheme}
           />
         </div>
-      ) : (
-        <div
-          style={{ width: size.width - 20, height: window.innerHeight - 45 }}
-        >
+      ) : size.width > 0 ? (
+        <div style={{ width: size.width - 20, height: size.height - 45 }}>
           <FlexLayout.Layout model={model} factory={factory} />
         </div>
+      ) : (
+        ""
       )}
     </div>
   );

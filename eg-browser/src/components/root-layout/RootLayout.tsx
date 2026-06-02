@@ -49,7 +49,7 @@ import {
   escapeTools,
   resetUtility,
 } from "@/lib/redux/slices/utilitySlice";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -97,6 +97,9 @@ export default function RootLayout(props: AppProps) {
   const navSearchOpen = useAppSelector(selectNavSearchOpen);
   const genomePickerTab = useAppSelector(selectGenomePickerTab);
   const initialState = useRef(true);
+  const handlePortalRef = useCallback((el: HTMLDivElement | null) => {
+    setPortalContainer(el);
+  }, []);
   const year = useMemo(() => new Date().getFullYear(), []);
   useEffect(() => {
     const el = navBarRef.current;
@@ -506,7 +509,7 @@ export default function RootLayout(props: AppProps) {
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
                       <GenomeView />
                       <div
-                        ref={(el) => setPortalContainer(el as HTMLDivElement)}
+                        ref={handlePortalRef}
                         style={{
                           position: "absolute",
                           inset: 0,
