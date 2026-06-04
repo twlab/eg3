@@ -294,17 +294,23 @@ function Legend() {
 const EXAMPLE = [
   {
     name: "hg19",
-    id: "6d73be1a-e8e0-4969-8770-0be2df703bc0",
+    id: "hg19_custom",
     chromosomes: [
       { name: "chr1", length: 249250621 },
       { name: "chrX", length: 155270560 },
     ],
-    defaultRegion: { chr: "chr1", start: 0, end: 100000 },
+    defaultRegion: { chr: "chr1", start: 100000, end: 200000 },
+    defaultTracks: [
+      {
+        type: "ruler",
+        name: "Ruler",
+      },
+    ],
   },
 ];
 
 export default function GenomeSchemaView() {
-  const [showExample, setShowExample] = useState(false);
+  const [showExample, setShowExample] = useState(true);
 
   return (
     <div className="max-w-3xl mx-auto text-sm">

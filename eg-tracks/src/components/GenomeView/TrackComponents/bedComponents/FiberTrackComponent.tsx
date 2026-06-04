@@ -105,7 +105,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     xvaluesData,
     updatedLegend,
     viewWindow,
-    windowWidth
+    windowWidth,
   } = props;
 
   /**
@@ -269,29 +269,30 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
       );
     }
 
-    const legend = (
-      <div
-        style={{
-          display: "flex",
-        }}
-      >
-        <TrackLegend
-          trackModel={trackModel}
-          height={height}
-          forceSvg={forceSvg}
-          axisScale={
-            (trackState.visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
-              options.displayMode === FiberDisplayModes.AUTO) ||
-            options.displayMode === FiberDisplayModes.SUMMARY
-              ? scales.pctToY
-              : scales.countToY
-          }
-        />
-      </div>
-    );
+    const legendProps = {
+      trackModel,
+      height,
+      forceSvg,
+      axisScale:
+        (trackState.visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH &&
+          options.displayMode === FiberDisplayModes.AUTO) ||
+        options.displayMode === FiberDisplayModes.SUMMARY
+          ? scales.pctToY
+          : scales.countToY,
+    };
     if (updatedLegend) {
-      updatedLegend.current = legend;
+      updatedLegend.current = legendProps;
     }
+    const legend =
+      forceSvg || options.packageVersion ? (
+        <div
+          style={{
+            display: "flex",
+          }}
+        >
+          <TrackLegend {...legendProps} />
+        </div>
+      ) : null;
     let curParentStyle: any = forceSvg
       ? {
           position: "relative",

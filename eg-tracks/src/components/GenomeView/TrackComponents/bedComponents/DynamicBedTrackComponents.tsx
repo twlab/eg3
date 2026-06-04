@@ -67,10 +67,10 @@ const DynamicBedTrackComponents: React.FC<DynamicBedTrackProps> = ({
           (bed: any) => getBedPadding(bed, options.rowHeight),
           options.hiddenPixels,
           undefined,
-          viewWindow
-        )
+          viewWindow,
+        ),
       ),
-    [data, visRegion, width, options]
+    [data, visRegion, width, options],
   );
 
   const height = getHeight(arrangeResults, options.rowHeight, options.maxRows);
@@ -78,9 +78,7 @@ const DynamicBedTrackComponents: React.FC<DynamicBedTrackProps> = ({
     svgHeight.current = height;
   }
   if (updatedLegend) {
-    updatedLegend.current = (
-      <TrackLegend height={height} trackModel={trackModel} />
-    );
+    updatedLegend.current = { height, trackModel };
   }
 
   return (

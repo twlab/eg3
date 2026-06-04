@@ -97,19 +97,21 @@ interface RulerComponentProps {
 }
 class RulerComponent extends React.Component<RulerComponentProps> {
   render() {
-    let legend = (
-      <TrackLegend
-        height={HEIGHT}
-        trackModel={this.props.trackModel}
-        trackViewRegion={this.props.viewRegion}
-        selectedRegion={this.props.selectedRegion}
-        trackWidth={this.props.width}
-        forceSvg={this.props.options.forceSvg}
-      />
-    );
+    const legendProps = {
+      height: HEIGHT,
+      trackModel: this.props.trackModel,
+      trackViewRegion: this.props.viewRegion,
+      selectedRegion: this.props.selectedRegion,
+      trackWidth: this.props.width,
+      forceSvg: this.props.options.forceSvg,
+    };
     if (this.props.updatedLegend) {
-      this.props.updatedLegend.current = legend;
+      this.props.updatedLegend.current = legendProps;
     }
+    const legend =
+      this.props.options.forceSvg || this.props.options.packageVersion ? (
+        <TrackLegend {...legendProps} />
+      ) : null;
     const forceSvg = this.props.options.forceSvg;
 
     let curParentStyle: any = forceSvg
@@ -117,7 +119,7 @@ class RulerComponent extends React.Component<RulerComponentProps> {
           position: "relative",
 
           overflow: "hidden",
-            width: this.props.windowWidth,
+          width: this.props.windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg

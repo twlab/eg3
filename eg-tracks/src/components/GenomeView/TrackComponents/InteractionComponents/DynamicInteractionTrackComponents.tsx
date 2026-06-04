@@ -31,7 +31,8 @@ interface DynamicInteractionTrackComponentsProps {
   trackModel: any;
   visRegion: any;
   width: number;
-  viewWindow: any; updatedLegend?: any
+  viewWindow: any;
+  updatedLegend?: any;
   dataIdx: number;
 }
 
@@ -133,7 +134,7 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
 
     const visualizerProps = {
       placedInteractionsArray: data.map((d: any) =>
-        this.featurePlacer.placeInteractions(d, visRegion, width)
+        this.featurePlacer.placeInteractions(d, visRegion, width),
       ),
       viewWindow,
       width,
@@ -143,7 +144,6 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       color2: options.color2,
       backgroundColor: options.backgroundColor,
       binSize: options.binSize,
-
 
       playing: options.playing,
       speed: options.speed,
@@ -155,14 +155,11 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
     };
     let visualizer;
     if (updatedLegend) {
-      updatedLegend.current = (
-        <TrackLegend trackModel={trackModel} height={options.height} />
-      );
+      updatedLegend.current = { trackModel, height: options.height };
     }
 
     if (options.displayMode === DynamicInteractionDisplayMode.ARC) {
-      visualizer =
-        <PixiArc {...visualizerProps} />;
+      visualizer = <PixiArc {...visualizerProps} />;
     } else {
       visualizer = <PixiHeatmap {...visualizerProps} />;
     }

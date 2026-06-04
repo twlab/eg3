@@ -367,7 +367,11 @@ class TrackLegend extends React.PureComponent<
             className="TrackLegend-label"
             style={{ ...pStyle, wordWrap: "break-word", whiteSpace: "normal" }}
           >
-            {label ? label : trackModel.options ? trackModel.options.label : ""}
+            {trackModel?.options?.label
+              ? trackModel?.options?.label
+              : label
+                ? label
+                : ""}
           </p>
           <div
             style={{ display: "flex", alignItems: "center", fontSize: "12px" }}

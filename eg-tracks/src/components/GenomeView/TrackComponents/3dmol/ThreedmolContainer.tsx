@@ -734,31 +734,32 @@ class ThreedmolContainer extends React.Component<
     //     });
     //   }
     // }
-    // if (width !== prevProps.width || height !== prevProps.height) {
-    //   // this.setState({ mainBoxHeight: height, mainBoxWidth: width });
-    //   if (layout === "side" && thumbStyle !== "hide") {
-    //     this.setState({
-    //       mainBoxHeight: height,
-    //       mainBoxWidth: halftWidth,
-    //       thumbBoxHeight: height,
-    //       thumbBoxWidth: halftWidth,
-    //     });
-    //   } else {
-    //     this.setState({
-    //       mainBoxHeight: height,
-    //       mainBoxWidth: width,
-    //       thumbBoxHeight: 240,
-    //       thumbBoxWidth: 300,
-    //     });
-    //   }
-    // }
-    // if (
-    //   mainBoxHeight !== prevState.mainBoxHeight ||
-    //   mainBoxWidth !== prevState.mainBoxWidth
-    // ) {
-    //   this.viewer.render();
-    //   this.viewer2.render();
-    // }
+    if (width !== prevProps.width || height !== prevProps.height) {
+      if (layout === "side" && thumbStyle !== "hide") {
+        this.setState({
+          mainBoxHeight: height,
+          mainBoxWidth: halftWidth,
+          thumbBoxHeight: height,
+          thumbBoxWidth: halftWidth,
+        });
+      } else {
+        this.setState({
+          mainBoxHeight: height,
+          mainBoxWidth: width,
+          thumbBoxHeight: 240,
+          thumbBoxWidth: 300,
+        });
+      }
+      // Tell 3Dmol to recalculate its WebGL viewport to match the new canvas size
+      if (this.viewer) {
+        this.viewer.resize();
+        this.viewer.render();
+      }
+      if (this.viewer2) {
+        this.viewer2.resize();
+        this.viewer2.render();
+      }
+    }
     if (highlightingColor !== prevState.highlightingColor) {
       this.setState({ highlightingColorChanged: true });
     }

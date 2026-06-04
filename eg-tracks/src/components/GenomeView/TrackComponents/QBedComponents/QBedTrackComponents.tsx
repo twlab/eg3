@@ -191,24 +191,23 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     xToValue = downSample(xToValue, sampleSize);
   }
 
-  const legend = (
-    <div
-      style={{
-        display: "flex",
-      }}
-    >
-      <TrackLegend
-        trackModel={trackModel}
-        height={height}
-        axisScale={scalesRef.current.valueToY}
-        label={options.label}
-        forceSvg={forceSvg}
-      />
-    </div>
-  );
+  const legendProps = {
+    trackModel,
+    height,
+    axisScale: scalesRef.current.valueToY,
+    label: options.label,
+    forceSvg,
+  };
   if (updatedLegend) {
-    updatedLegend.current = legend;
+    updatedLegend.current = legendProps;
   }
+
+  const legend =
+    forceSvg || options.packageVersion ? (
+      <div style={{ display: "flex" }}>
+        <TrackLegend {...legendProps} />
+      </div>
+    ) : null;
 
   let curParentStyle: any = forceSvg
     ? {

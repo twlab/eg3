@@ -176,7 +176,18 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     viewWindow: viewWindow,
   };
 
-  let legend = (
+  const legendProps = {
+    trackModel,
+    height: options.height,
+    axisScale: scales.methylToY,
+    noShiftFirstAxisLabel: !options.isCombineStrands,
+    forceSvg,
+  };
+  if (updatedLegend) {
+    updatedLegend.current = legendProps;
+  }
+
+  const legend = forceSvg ? (
     <div
       style={{
         position: "relative",
@@ -184,13 +195,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
         flexDirection: "column",
       }}
     >
-      <TrackLegend
-        trackModel={trackModel}
-        height={options.height}
-        axisScale={scales.methylToY}
-        noShiftFirstAxisLabel={!options.isCombineStrands}
-        forceSvg={forceSvg}
-      />
+      <TrackLegend {...legendProps} />
 
       {!options.isCombineStrands && (
         <ReverseStrandLegend
@@ -201,11 +206,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
         />
       )}
     </div>
-  );
-
-  if (updatedLegend) {
-    updatedLegend.current = legend;
-  }
+  ) : null;
 
   let strandRenderers, tooltipY;
 

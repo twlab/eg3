@@ -1,4 +1,3 @@
-import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import Feature, {
   ColoredFeature,
@@ -83,6 +82,7 @@ const simpleTracks = new Set(["qbed", "dbedgraph", "boxplot"]);
 enum BedColumnIndex {
   CATEGORY = 3,
 }
+const BED_ROW_ELEMENT_HEIGHT = 9;
 const TOP_PADDING = 2;
 export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
 // Extracted FullVisualizer component moved outside of the displayModeComponentMap
@@ -95,6 +95,7 @@ function makeAnnotationElementMap(context: any) {
     scales,
     onClose,
     onHideTooltip,
+    trackModel,
   } = context;
 
   function getAnnotationElement(
@@ -144,11 +145,42 @@ function makeAnnotationElementMap(context: any) {
         onClick={renderTooltip ? renderTooltip : () => {}}
         alwaysDrawLabel={configOptions.alwaysDrawLabel}
         hiddenPixels={configOptions.hiddenPixels}
-        height={configOptions.height}
+        height={BED_ROW_ELEMENT_HEIGHT}
       />
     ));
   }
 
+  function getBedColorAnnotationElement(
+    placedGroup: any,
+    y: number,
+    isLastRow: boolean,
+    index: number,
+  ) {
+    return placedGroup.placedFeatures.map((placement: any, i: number) => (
+      <BedAnnotation
+        key={i}
+        feature={placement.feature}
+        xSpan={placement.xSpan}
+        y={y}
+        isMinimal={isLastRow}
+        color={
+          placement?.feature?.color
+            ? placement.feature.color
+            : configOptions.color
+        }
+        reverseStrandColor={
+          placement?.feature?.color
+            ? placement.feature.color
+            : configOptions.color2
+        }
+        isInvertArrowDirection={placement.isReverse}
+        onClick={renderTooltip ? renderTooltip : () => {}}
+        alwaysDrawLabel={configOptions.alwaysDrawLabel}
+        hiddenPixels={configOptions.hiddenPixels}
+        height={configOptions.height}
+      />
+    ));
+  }
   return {
     geneannotation: (
       placedGroup: any,
@@ -233,7 +265,7 @@ function makeAnnotationElementMap(context: any) {
       y: number,
       isLastRow: boolean,
       index: number,
-    ) => getBedAnnotationElement(placedGroup, y, isLastRow, index),
+    ) => getBedColorAnnotationElement(placedGroup, y, isLastRow, index),
     modbed: function getAnnotationElement(
       placedGroup: any,
       y: number,
@@ -465,7 +497,7 @@ function makeAnnotationElementMap(context: any) {
             feature={placement.feature}
             xSpan={placement.xSpan}
             y={y}
-            isMinimal={false}
+            isMinimal={isLastRow}
             color={color}
             onClick={renderTooltip ? renderTooltip : () => {}}
             category={configOptions.category}
@@ -539,6 +571,7 @@ const FullVisualizer: React.FC<any> = ({
     renderTooltip,
     scales,
     onClose,
+    trackModel,
   });
 
   function renderAnnotation(placedGroup: any, i: number) {
@@ -678,19 +711,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       if (updatedLegend) {
-        updatedLegend.current = (
-          <TrackLegend
-            height={svgHeight.current}
-            trackModel={trackModel}
-            label={
-              configOptions.label
-                ? configOptions.label
-                : trackModel.options.label
-                  ? trackModel.options.label
-                  : ""
-            }
-          />
-        );
+        updatedLegend.current = {
+          height: svgHeight.current,
+          trackModel,
+          label: configOptions.label
+            ? configOptions.label
+            : trackModel.options.label
+              ? trackModel.options.label
+              : "",
+        };
       }
 
       return (
@@ -760,26 +789,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
       height = placeFeature.height;
       numHidden = placeFeature.numHidden;
     }
-    const legend = (
-      <TrackLegend
-        height={height}
-        trackModel={trackModel}
-        label={
-          configOptions.label
-            ? configOptions.label
-            : trackModel.options.label
-              ? trackModel.options.label
-              : ""
-        }
-        forceSvg={configOptions.forceSvg}
-      />
-    );
+    const legendProps = {
+      height,
+      trackModel,
+      label: configOptions.label
+        ? configOptions.label
+        : trackModel.options.label
+          ? trackModel.options.label
+          : "",
+      forceSvg: configOptions.forceSvg,
+    };
     if (updatedLegend) {
-      updatedLegend.current = legend;
+      updatedLegend.current = legendProps;
     }
     if (svgHeight) {
       svgHeight.current = height;
     }
+    const legend = configOptions.forceSvg ? (
+      <TrackLegend {...legendProps} />
+    ) : null;
     const svgDATA = (
       <FullVisualizer
         placements={placeFeatureData.placements}
@@ -1225,25 +1253,24 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (drawData.svgHeight) {
       drawData.svgHeight.current = drawData.configOptions.height;
     }
-    let legend = (
-      <TrackLegend
-        height={drawData.configOptions.height}
-        trackModel={drawData.trackModel}
-        label={
-          drawData.configOptions.label
-            ? drawData.configOptions.label
-            : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
-        }
-        forceSvg={drawData.configOptions.forceSvg}
-      />
-    );
+    const legendProps = {
+      height: drawData.configOptions.height,
+      trackModel: drawData.trackModel,
+      label: drawData.configOptions.label
+        ? drawData.configOptions.label
+        : drawData.trackModel.options.label
+          ? drawData.trackModel.options.label
+          : "",
+      forceSvg: drawData.configOptions.forceSvg,
+    };
+    const legend = drawData.configOptions.forceSvg ? (
+      <TrackLegend {...legendProps} />
+    ) : null;
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
 
       if (drawData.updatedLegend) {
-        drawData.updatedLegend.current = legend;
+        drawData.updatedLegend.current = legendProps;
       }
       svgElements = drawDatas.map((item, index) =>
         renderFineAlignment(item, index, drawData.configOptions),
@@ -1326,7 +1353,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
 
       if (drawData.updatedLegend) {
-        drawData.updatedLegend.current = legend;
+        drawData.updatedLegend.current = legendProps;
       }
       const strand = result.plotStrand;
       const targetGenome = result.primaryGenome;
@@ -1445,27 +1472,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
     errorInfo,
     handleRetryFetchTrack,
   }) {
-    function getErrorLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
+    const legendProps = {
+      height: 40,
+      trackModel,
+      label: configOptions.label
+        ? configOptions.label
+        : trackModel.options.label
+          ? trackModel.options.label
+          : "",
+    };
+    if (updatedLegend) {
+      updatedLegend.current = legendProps;
     }
-
-    const legend = (
-      <TrackLegend
-        height={40}
-        trackModel={trackModel}
-        label={
-          configOptions.label
-            ? configOptions.label
-            : trackModel.options.label
-              ? trackModel.options.label
-              : ""
-        }
-      />
-    );
-
-    getErrorLegend(legend);
+    const legend = configOptions.forceSvg ? (
+      <TrackLegend {...legendProps} />
+    ) : null;
 
     return errorInfo && errorInfo === "Please zoom in to see content. " ? (
       <div
