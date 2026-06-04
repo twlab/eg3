@@ -104,6 +104,17 @@ export const browserSlice = createSlice({
         height: height,
       };
 
+      const MAX_SESSIONS = 50;
+      const allIds = state.sessions.ids;
+      if (allIds.length >= MAX_SESSIONS) {
+        // Remove the oldest session (adapter is sorted by createdAt ascending)
+        const oldestId = allIds[0];
+        if (state.currentSession === oldestId) {
+          state.currentSession = allIds.length > 1 ? (allIds[1] as uuid) : null;
+        }
+        browserSessionAdapter.removeOne(state.sessions, oldestId);
+      }
+
       browserSessionAdapter.addOne(state.sessions, nextSession);
       state.currentSession = nextSession.id;
     },
@@ -227,9 +238,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-      state,
-      state.browser.present.currentSession,
-    )
+        state,
+        state.browser.present.currentSession,
+      )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

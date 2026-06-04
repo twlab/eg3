@@ -85,17 +85,17 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
 
     const visibleValues = xToValue.slice(
       this.props.viewWindow.start,
-      this.props.viewWindow.end
+      this.props.viewWindow.end,
     );
     let max = _.max(visibleValues) || 0;
     let min =
       (xToValue2.length > 0
         ? _.min(
-          xToValue2.slice(
-            this.props.viewWindow.start,
-            this.props.viewWindow.end
+            xToValue2.slice(
+              this.props.viewWindow.start,
+              this.props.viewWindow.end,
+            ),
           )
-        )
         : 0) || 0;
 
     if (yScale === ScaleChoices.FIXED) {
@@ -190,7 +190,7 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
         data,
         viewRegion,
         width,
-        options
+        options,
       );
     } else {
       [xToValue, xToValue2, hasReverse, hasForward] = xvaluesData;
@@ -202,28 +202,26 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
 
     if (xToValue2.length > 0) {
       const negHeights = xToValue2.map(
-        (x) => this.scales.valueToHeight(x) || 0
+        (x) => this.scales.valueToHeight(x) || 0,
       );
       this.drawHeights = this.drawHeights.map(
-        (num, idx) => num + negHeights[idx]
+        (num, idx) => num + negHeights[idx],
       );
       this.allValues = this.allValues.map(
-        (num, idx) => num + (xToValue2[idx] || 0)
+        (num, idx) => num + (xToValue2[idx] || 0),
       );
     }
 
     if (basesByPixel <= MAX_PIXELS_PER_BASE_NUMERIC) {
-      const legend = (
-        <TrackLegend
-          trackModel={trackModel}
-          height={height}
-          axisScale={this.scales.axisScale}
-          axisLegend={unit}
-        />
-      );
+      const legendProps = {
+        trackModel,
+        height,
+        axisScale: this.scales.axisScale,
+        axisLegend: unit,
+      };
 
       if (this.props.updatedLegend) {
-        this.props.updatedLegend.current = legend;
+        this.props.updatedLegend.current = legendProps;
       }
 
       const visualizer = (

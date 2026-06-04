@@ -25,8 +25,7 @@ import tabPanelReducer from "./slices/tabPanelSlice";
 // the user opened a brand-new window/tab.
 const SESSION_ACTIVE_FLAG = "eg-browser-tab-active";
 const isFreshBrowserStart =
-  typeof window !== "undefined" &&
-  !sessionStorage.getItem(SESSION_ACTIVE_FLAG);
+  typeof window !== "undefined" && !sessionStorage.getItem(SESSION_ACTIVE_FLAG);
 if (typeof window !== "undefined") {
   sessionStorage.setItem(SESSION_ACTIVE_FLAG, "true");
 }

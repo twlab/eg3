@@ -44,13 +44,21 @@ interface DynamicNumericalTrackProps {
   viewRegion: any;
   width: number;
   viewWindow: { start: number; end: number };
-  updatedLegend?: any
+  updatedLegend?: any;
   dataIdx: number;
 }
 
 const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
-  const { data, unit, options, trackModel, viewRegion, width, viewWindow, updatedLegend } =
-    props;
+  const {
+    data,
+    unit,
+    options,
+    trackModel,
+    viewRegion,
+    width,
+    viewWindow,
+    updatedLegend,
+  } = props;
 
   const {
     height,
@@ -61,17 +69,20 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
     speed,
     dynamicColors,
     useDynamicColors,
-
   } = options;
 
   const aggregateFeatures = useCallback(
     memoizeOne((data, viewRegion, width, aggregatorId) => {
       const aggregator = new FeatureAggregator();
       const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
-      if (xToFeatures && xToFeatures.xToFeaturesForward) { return xToFeatures.xToFeaturesForward.map(DefaultArrayAggregators.fromId(aggregatorId)); }
-      return []
+      if (xToFeatures && xToFeatures.xToFeaturesForward) {
+        return xToFeatures.xToFeaturesForward.map(
+          DefaultArrayAggregators.fromId(aggregatorId),
+        );
+      }
+      return [];
     }),
-    []
+    [],
   );
 
   const computeScales = useCallback(
@@ -91,23 +102,25 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
         max,
       };
     }),
-    [viewWindow.start, viewWindow.end]
+    [viewWindow.start, viewWindow.end],
   );
 
   const xToValue = useMemo(
     () => aggregateFeatures(data, viewRegion, width, arrayAggregateMethod),
-    [data, viewRegion, width, arrayAggregateMethod]
+    [data, viewRegion, width, arrayAggregateMethod],
   );
   const scales = useMemo(
     () => computeScales(xToValue, height),
-    [xToValue, height]
+    [xToValue, height],
   );
 
-
   if (updatedLegend) {
-    updatedLegend.current = (
-      <TrackLegend trackModel={trackModel} height={height} axisScale={scales.valueToY} axisLegend={unit} />
-    );
+    updatedLegend.current = {
+      trackModel,
+      height,
+      axisScale: scales.valueToY,
+      axisLegend: unit,
+    };
   }
   const visualizer = (
     <React.Fragment>
@@ -119,7 +132,6 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
           zIndex: 3,
         }}
       >
-
         <HoverToolTip
           data={xToValue}
           windowWidth={width}
@@ -131,7 +143,6 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
           hasReverse={true}
           options={options}
         />
-
       </div>
       <PixiScene
         xToValue={xToValue}

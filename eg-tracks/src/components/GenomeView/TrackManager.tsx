@@ -409,7 +409,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const primaryVisData =
         globalTrackState.current.trackStates?.[
           draw.completedFetchedRegion?.current.key
-        ]?.trackState?.genomicFetchCoord[genomeConfig.genome.getName()]
+        ]?.trackState?.genomicFetchCoord?.[genomeConfig.genome.getName()]
           ?.primaryVisData;
       if (!primaryVisData) {
         return userViewRegion;
@@ -1318,7 +1318,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
-    } else if (key !== "legendFontColor") {
+    } else if (key !== "legendFontColor" && key !== "label") {
       tempViewWindowConfig["tracksToDrawId"] = newSelected;
 
       if (reCalcAgg.has(key) || groupChange) {
@@ -2543,18 +2543,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       let formattedData;
       try {
+        let regionArray: any = [];
+        for (let idx of initialIdx) {
+          if (
+            !globalTrackState.current?.trackStates?.[idx]?.trackState
+              ?.regionLoci
+          ) {
+            regionArray = [];
+            break;
+          } else {
+            regionArray.push(
+              globalTrackState.current.trackStates[idx].trackState.regionLoci,
+            );
+          }
+        }
+
         formattedData = formatDataByType(
           result,
           fetchRes.trackType,
           fetchRes.trackModel.shouldPlaceRegion,
-          [
-            globalTrackState.current.trackStates[currDataIdx + 1].trackState
-              .regionLoci,
-            globalTrackState.current.trackStates[currDataIdx].trackState
-              .regionLoci,
-            globalTrackState.current.trackStates[currDataIdx - 1].trackState
-              .regionLoci,
-          ],
+          regionArray,
         );
       } catch (e) {
         formattedData = [];
@@ -3448,6 +3456,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   function trackSizeChange() {
     if (!curGenomeConfig.current) return;
+
+    const currDataIdx = dataIdx.current;
+    const regionIdx = [currDataIdx + 1, currDataIdx, currDataIdx - 1];
+    for (let idx of regionIdx) {
+      if (!globalTrackState.current?.trackStates?.[idx]) {
+        return;
+      }
+    }
     if (selectedRegionSet) {
       const updatedGenomeConfig = _.cloneDeep(curGenomeConfig.current);
       if (userViewRegion) {
@@ -3466,7 +3482,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curGenomeConfig.current = updatedGenomeConfig;
 
       preload.current = true;
-      console.log("WUITUSAOHNDIO@2");
+
       refreshState();
       initializeTracks();
     } else {
@@ -3974,7 +3990,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         selectedTracks.current = {};
         // for options that don't need to redraw tracks, select, legend font color, reorder
         const newTrackComponents: Array<any> = [];
-
+        console.log(filteredTracks, trackComponents);
         let needToToUpdate = false;
 
         for (let i = 0; i < filteredTracks.length; i++) {
@@ -3990,16 +4006,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             needToToUpdate = true;
           }
           // find tracks already in view
+
           for (let j = 0; j < trackComponents.length; j++) {
             const trackComponent = trackComponents[j];
+
             if (trackComponent.trackModel.id === curTrackModel.id) {
               if (
                 trackComponent.trackModel.isSelected !==
                   curTrackModel.isSelected ||
                 trackComponent.trackModel?.options?.legendFontColor !==
                   curTrackModel.options?.legendFontColor ||
+                trackComponent.trackModel?.options?.label !==
+                  curTrackModel.options?.label ||
                 i !== j
               ) {
+                console.log(curTrackModel, trackComponent.trackModel);
                 trackComponent.trackModel = curTrackModel;
 
                 needToToUpdate = true;

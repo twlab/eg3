@@ -95,6 +95,7 @@ function makeAnnotationElementMap(context: any) {
     scales,
     onClose,
     onHideTooltip,
+    trackModel,
   } = context;
 
   function getAnnotationElement(
@@ -539,6 +540,7 @@ const FullVisualizer: React.FC<any> = ({
     renderTooltip,
     scales,
     onClose,
+    trackModel,
   });
 
   function renderAnnotation(placedGroup: any, i: number) {
@@ -678,19 +680,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       if (updatedLegend) {
-        updatedLegend.current = (
-          <TrackLegend
-            height={svgHeight.current}
-            trackModel={trackModel}
-            label={
-              configOptions.label
-                ? configOptions.label
-                : trackModel.options.label
-                  ? trackModel.options.label
-                  : ""
-            }
-          />
-        );
+        updatedLegend.current = {
+          height: svgHeight.current,
+          trackModel,
+          label: configOptions.label
+            ? configOptions.label
+            : trackModel.options.label
+              ? trackModel.options.label
+              : "",
+        };
       }
 
       return (
@@ -760,26 +758,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
       height = placeFeature.height;
       numHidden = placeFeature.numHidden;
     }
-    const legend = (
-      <TrackLegend
-        height={height}
-        trackModel={trackModel}
-        label={
-          configOptions.label
-            ? configOptions.label
-            : trackModel.options.label
-              ? trackModel.options.label
-              : ""
-        }
-        forceSvg={configOptions.forceSvg}
-      />
-    );
+    const legendProps = {
+      height,
+      trackModel,
+      label: configOptions.label
+        ? configOptions.label
+        : trackModel.options.label
+          ? trackModel.options.label
+          : "",
+      forceSvg: configOptions.forceSvg,
+    };
     if (updatedLegend) {
-      updatedLegend.current = legend;
+      updatedLegend.current = legendProps;
     }
     if (svgHeight) {
       svgHeight.current = height;
     }
+    const legend = configOptions.forceSvg ? (
+      <TrackLegend {...legendProps} />
+    ) : null;
     const svgDATA = (
       <FullVisualizer
         placements={placeFeatureData.placements}
@@ -1225,25 +1222,24 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (drawData.svgHeight) {
       drawData.svgHeight.current = drawData.configOptions.height;
     }
-    let legend = (
-      <TrackLegend
-        height={drawData.configOptions.height}
-        trackModel={drawData.trackModel}
-        label={
-          drawData.configOptions.label
-            ? drawData.configOptions.label
-            : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
-        }
-        forceSvg={drawData.configOptions.forceSvg}
-      />
-    );
+    const legendProps = {
+      height: drawData.configOptions.height,
+      trackModel: drawData.trackModel,
+      label: drawData.configOptions.label
+        ? drawData.configOptions.label
+        : drawData.trackModel.options.label
+          ? drawData.trackModel.options.label
+          : "",
+      forceSvg: drawData.configOptions.forceSvg,
+    };
+    const legend = drawData.configOptions.forceSvg ? (
+      <TrackLegend {...legendProps} />
+    ) : null;
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
 
       if (drawData.updatedLegend) {
-        drawData.updatedLegend.current = legend;
+        drawData.updatedLegend.current = legendProps;
       }
       svgElements = drawDatas.map((item, index) =>
         renderFineAlignment(item, index, drawData.configOptions),
@@ -1326,7 +1322,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
 
       if (drawData.updatedLegend) {
-        drawData.updatedLegend.current = legend;
+        drawData.updatedLegend.current = legendProps;
       }
       const strand = result.plotStrand;
       const targetGenome = result.primaryGenome;
@@ -1445,27 +1441,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
     errorInfo,
     handleRetryFetchTrack,
   }) {
-    function getErrorLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
+    const legendProps = {
+      height: 40,
+      trackModel,
+      label: configOptions.label
+        ? configOptions.label
+        : trackModel.options.label
+          ? trackModel.options.label
+          : "",
+    };
+    if (updatedLegend) {
+      updatedLegend.current = legendProps;
     }
-
-    const legend = (
-      <TrackLegend
-        height={40}
-        trackModel={trackModel}
-        label={
-          configOptions.label
-            ? configOptions.label
-            : trackModel.options.label
-              ? trackModel.options.label
-              : ""
-        }
-      />
-    );
-
-    getErrorLegend(legend);
+    const legend = configOptions.forceSvg ? (
+      <TrackLegend {...legendProps} />
+    ) : null;
 
     return errorInfo && errorInfo === "Please zoom in to see content. " ? (
       <div
