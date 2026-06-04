@@ -615,6 +615,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         <div
           style={{
             width: 120,
+            display: "flex",
+            flexDirection: "column",
             backgroundColor: trackModel.isSelected
               ? "yellow"
               : "var(--bg-color)",
@@ -643,13 +645,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackModel={trackModel}
             height={
               legend?.height ??
-              (getConfigOptions().displayMode === "full"
-                ? !fetchError.current
+              (fetchError.current
+                ? 40
+                : getConfigOptions().displayMode === "full" ||
+                    getConfigOptions().displayMode === "detail" ||
+                    (svgHeight.current &&
+                      getConfigOptions().displayMode === "auto")
                   ? svgHeight.current
-                  : 40
-                : !fetchError.current
-                  ? getConfigOptions().height
-                  : 40)
+                  : getConfigOptions().height)
             }
             axisScale={legend?.axisScale}
             axisLegend={legend?.axisLegend}
@@ -660,6 +663,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackWidth={legend?.trackWidth}
             noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
           />
+          {legend?.reverseStrandLegendProps && (
+            <TrackLegend {...legend.reverseStrandLegendProps} />
+          )}
         </div>
         {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
         <Loading

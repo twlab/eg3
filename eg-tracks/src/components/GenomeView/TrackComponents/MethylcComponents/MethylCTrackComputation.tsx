@@ -180,8 +180,25 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     trackModel,
     height: options.height,
     axisScale: scales.methylToY,
+
     noShiftFirstAxisLabel: !options.isCombineStrands,
     forceSvg,
+    reverseStrandLegendProps: !options.isCombineStrands
+      ? {
+          trackModel: new TrackModel({
+            name: " ",
+            isSelected: trackModel.isSelected,
+            id: "mock-id",
+            options: {},
+          }),
+          height: options.height,
+          hideFirstAxisLabel: true,
+          axisScale: scaleLinear()
+            .domain([0, options.maxMethyl])
+            .range([0, options.height - VERTICAL_PADDING]),
+          forceSvg,
+        }
+      : undefined,
   };
   if (updatedLegend) {
     updatedLegend.current = legendProps;
@@ -196,7 +213,6 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
       }}
     >
       <TrackLegend {...legendProps} />
-
       {!options.isCombineStrands && (
         <ReverseStrandLegend
           trackModel={trackModel}

@@ -224,6 +224,12 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
         this.props.updatedLegend.current = legendProps;
       }
 
+      const legend = forceSvg ? (
+        <div style={{ display: "flex" }}>
+          <TrackLegend {...legendProps} />
+        </div>
+      ) : null;
+
       const visualizer = (
         <React.Fragment>
           {forceSvg === false ? (
