@@ -1,7 +1,7 @@
 {
   "name": "eg-next",
   "private": true,
-  "version": "61.0.0",
+  "version": "61.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite",

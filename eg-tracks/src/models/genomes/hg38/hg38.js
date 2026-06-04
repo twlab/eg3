@@ -126,11 +126,11 @@ const defaultTracks = [
   //   url: "https://hprc-epigenome.s3.us-east-2.amazonaws.com/samples/HG00097/hap1_vs_hg38.gz",
   // }),
 
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-  }),
+  //   new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+  // }),
 
   // new TrackModel({
 
@@ -139,11 +139,11 @@ const defaultTracks = [
   //   url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb"
   // }),
 
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
