@@ -3637,7 +3637,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const tmpArr = [...trackComponents];
         setTrackComponents(tmpArr);
       } else {
-        console.log("huhuh", trackManagerState.current);
         for (const key in trackManagerState.current.caches) {
           const curTrack = trackManagerState.current.caches[key];
           trackToDrawId[key] = false;
@@ -3660,7 +3659,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         const tmpArr = [...trackComponents];
-        console.log(trackToDrawId);
+
         setTrackComponents(tmpArr);
         checkDrawData({
           curDataIdx: dataIdx.current,
@@ -4006,7 +4005,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         selectedTracks.current = {};
         // for options that don't need to redraw tracks, select, legend font color, reorder
         const newTrackComponents: Array<any> = [];
-        console.log(filteredTracks, trackComponents);
+
         let needToToUpdate = false;
 
         for (let i = 0; i < filteredTracks.length; i++) {
@@ -4036,7 +4035,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   curTrackModel.options?.label ||
                 i !== j
               ) {
-                console.log(curTrackModel, trackComponent.trackModel);
                 trackComponent.trackModel = curTrackModel;
 
                 needToToUpdate = true;
