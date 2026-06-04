@@ -201,7 +201,7 @@ interface TrackManagerProps {
   selectedRegionSet: any;
   setShow3dGene: any;
   infiniteScrollWorkers: React.MutableRefObject<{
-    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: { fetchWorker: Worker; hasOnMessage: boolean; isBusy: boolean }[];
   } | null>;
   fetchGenomeAlignWorker: React.MutableRefObject<{
     fetchWorker: Worker;
@@ -650,11 +650,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           messagesForWorker[0].trackDataIdx === dataIdx.current
         ) {
           if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
+            const workerIdx = i;
             infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-              createInfiniteOnMessage;
+              async (event) => {
+                await createInfiniteOnMessage(event);
+                if (infiniteScrollWorkers.current) {
+                  infiniteScrollWorkers.current.worker[workerIdx].isBusy =
+                    false;
+
+                  processQueue();
+                  console.log(
+                    `[Worker ${workerIdx}] finished — status:`,
+                    infiniteScrollWorkers.current.worker.map((w, idx) => ({
+                      index: idx,
+                      isBusy: w.isBusy,
+                    })),
+                  );
+                }
+              };
             infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
           }
 
+          infiniteScrollWorkers.current.worker[i].isBusy = true;
           infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
             messagesForWorker,
           );
@@ -2004,8 +2021,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             missingIdx: dataItem.missingIdx,
             curDataIdx: dataItem.trackDataIdx,
           });
-
-          processQueue();
         }
       }),
     );
@@ -3333,6 +3348,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (infiniteScrollWorkers.current) {
         infiniteScrollWorkers.current.worker.forEach((workerObj) => {
           workerObj.hasOnMessage = false;
+          workerObj.isBusy = false;
         });
       }
       if (fetchGenomeAlignWorker.current) {

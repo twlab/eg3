@@ -50,7 +50,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
 
   const infiniteScrollWorkers = useRef<{
-    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: { fetchWorker: Worker; hasOnMessage: boolean; isBusy: boolean }[];
   }>({
     worker: [],
   });
@@ -246,6 +246,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       infiniteScrollWorkers.current.worker.push({
         fetchWorker: new FetchDataWorker(),
         hasOnMessage: false,
+        isBusy: false,
       });
     }
   }
