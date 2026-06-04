@@ -1,4 +1,3 @@
-import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import Feature, {
   ColoredFeature,
@@ -83,6 +82,7 @@ const simpleTracks = new Set(["qbed", "dbedgraph", "boxplot"]);
 enum BedColumnIndex {
   CATEGORY = 3,
 }
+const BED_ROW_ELEMENT_HEIGHT = 9;
 const TOP_PADDING = 2;
 export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
 // Extracted FullVisualizer component moved outside of the displayModeComponentMap
@@ -145,11 +145,42 @@ function makeAnnotationElementMap(context: any) {
         onClick={renderTooltip ? renderTooltip : () => {}}
         alwaysDrawLabel={configOptions.alwaysDrawLabel}
         hiddenPixels={configOptions.hiddenPixels}
-        height={configOptions.height}
+        height={BED_ROW_ELEMENT_HEIGHT}
       />
     ));
   }
 
+  function getBedColorAnnotationElement(
+    placedGroup: any,
+    y: number,
+    isLastRow: boolean,
+    index: number,
+  ) {
+    return placedGroup.placedFeatures.map((placement: any, i: number) => (
+      <BedAnnotation
+        key={i}
+        feature={placement.feature}
+        xSpan={placement.xSpan}
+        y={y}
+        isMinimal={isLastRow}
+        color={
+          placement?.feature?.color
+            ? placement.feature.color
+            : configOptions.color
+        }
+        reverseStrandColor={
+          placement?.feature?.color
+            ? placement.feature.color
+            : configOptions.color2
+        }
+        isInvertArrowDirection={placement.isReverse}
+        onClick={renderTooltip ? renderTooltip : () => {}}
+        alwaysDrawLabel={configOptions.alwaysDrawLabel}
+        hiddenPixels={configOptions.hiddenPixels}
+        height={configOptions.height}
+      />
+    ));
+  }
   return {
     geneannotation: (
       placedGroup: any,
@@ -234,7 +265,7 @@ function makeAnnotationElementMap(context: any) {
       y: number,
       isLastRow: boolean,
       index: number,
-    ) => getBedAnnotationElement(placedGroup, y, isLastRow, index),
+    ) => getBedColorAnnotationElement(placedGroup, y, isLastRow, index),
     modbed: function getAnnotationElement(
       placedGroup: any,
       y: number,
@@ -466,7 +497,7 @@ function makeAnnotationElementMap(context: any) {
             feature={placement.feature}
             xSpan={placement.xSpan}
             y={y}
-            isMinimal={false}
+            isMinimal={isLastRow}
             color={color}
             onClick={renderTooltip ? renderTooltip : () => {}}
             category={configOptions.category}

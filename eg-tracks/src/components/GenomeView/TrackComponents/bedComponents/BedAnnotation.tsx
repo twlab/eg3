@@ -62,12 +62,10 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
       height = undefined,
     } = this.props;
 
-    const colorToUse = feature.color
-      ? feature.color
-      : feature.getIsReverseStrand()
-        ? reverseStrandColor
-        : color;
-    const drawHeight = feature.color && height ? height : HEIGHT;
+    const colorToUse = feature.getIsReverseStrand()
+      ? reverseStrandColor
+      : color;
+    const drawHeight = height ? height : HEIGHT;
     const contrastColor = getContrastingColor(colorToUse);
     const [startX, endX] = xSpan;
     const width2 = endX - startX;
