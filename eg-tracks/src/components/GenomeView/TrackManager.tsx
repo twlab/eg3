@@ -206,6 +206,7 @@ interface TrackManagerProps {
   fetchGenomeAlignWorker: React.MutableRefObject<{
     fetchWorker: Worker;
     hasOnMessage: boolean;
+    isBusy: boolean;
   } | null>;
   isThereG3dTrack: boolean;
   currentState?: any;
@@ -596,6 +597,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //     }
   //   }
   // };
+  function areAllWorkersIdle(): boolean {
+    if (
+      !infiniteScrollWorkers.current ||
+      infiniteScrollWorkers.current.worker.length === 0
+    ) {
+      return true;
+    }
+    return infiniteScrollWorkers.current.worker.every((w) => !w.isBusy);
+  }
+
   const processQueue = async () => {
     if (messageQueue.current.length === 0) {
       setMessageData({});
@@ -657,15 +668,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 if (infiniteScrollWorkers.current) {
                   infiniteScrollWorkers.current.worker[workerIdx].isBusy =
                     false;
-
-                  processQueue();
-                  console.log(
-                    `[Worker ${workerIdx}] finished — status:`,
-                    infiniteScrollWorkers.current.worker.map((w, idx) => ({
-                      index: idx,
-                      isBusy: w.isBusy,
-                    })),
-                  );
+                  if (areAllWorkersIdle()) {
+                    queueRegionToFetch(dataIdx.current);
+                  }
                 }
               };
             infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
@@ -712,11 +717,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const message = genomeAlignMessageQueue.current.pop();
     if (fetchGenomeAlignWorker.current) {
       if (fetchGenomeAlignWorker.current.hasOnMessage === false) {
-        fetchGenomeAlignWorker.current.fetchWorker.onmessage =
-          createGenomeAlignOnMessage;
+        fetchGenomeAlignWorker.current.fetchWorker.onmessage = async (
+          event,
+        ) => {
+          try {
+            await createGenomeAlignOnMessage(event);
+          } catch (e) {
+            console.error("[GenomeAlignWorker] error:", e);
+          } finally {
+            if (fetchGenomeAlignWorker.current) {
+              fetchGenomeAlignWorker.current.isBusy = false;
+            }
+          }
+        };
         fetchGenomeAlignWorker.current.hasOnMessage = true;
       }
-      fetchGenomeAlignWorker.current!.fetchWorker.postMessage(message);
+      fetchGenomeAlignWorker.current.isBusy = true;
+      fetchGenomeAlignWorker.current.fetchWorker.postMessage(message);
     }
   };
 
@@ -984,7 +1001,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (
         globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
       ) {
-        queueRegionToFetch(curDataIdx);
+        if (areAllWorkersIdle()) {
+          queueRegionToFetch(curDataIdx);
+        }
       }
     }
   }
@@ -3353,6 +3372,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       if (fetchGenomeAlignWorker.current) {
         fetchGenomeAlignWorker.current.hasOnMessage = false;
+        fetchGenomeAlignWorker.current.isBusy = false;
       }
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);

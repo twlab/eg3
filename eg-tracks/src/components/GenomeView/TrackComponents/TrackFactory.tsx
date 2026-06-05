@@ -455,44 +455,44 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK: [viewWindowConfigChange]
 
-  useEffect(() => {
-    if (
-      viewWindowConfigChange &&
-      id in viewWindowConfigChange.trackToDrawId
-      // &&
-      // (trackModel.type in numericalTracks ||
-      //   getConfigOptions().displayMode === "density")
-    ) {
-      let trackState = _.cloneDeep(
-        globalTrackState.current.trackStates[dataIdx].trackState,
-      );
-      let cacheTrackData = caches[`${id}`];
-      const xDiff =
-        viewWindowConfigChange.viewWindow.start -
-        trackState?.visData?.viewWindow.start;
-      const sameRegionViewWindow = {
-        start:
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.start + xDiff,
-        end:
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.end + xDiff,
-      };
+  // useEffect(() => {
+  //   if (
+  //     viewWindowConfigChange &&
+  //     id in viewWindowConfigChange.trackToDrawId
+  //     // &&
+  //     // (trackModel.type in numericalTracks ||
+  //     //   getConfigOptions().displayMode === "density")
+  //   ) {
+  //     let trackState = _.cloneDeep(
+  //       globalTrackState.current.trackStates[dataIdx].trackState,
+  //     );
+  //     let cacheTrackData = caches[`${id}`];
+  //     const xDiff =
+  //       viewWindowConfigChange.viewWindow.start -
+  //       trackState?.visData?.viewWindow.start;
+  //     const sameRegionViewWindow = {
+  //       start:
+  //         trackState?.genomicFetchCoord[trackState.primaryGenName]
+  //           ?.primaryVisData?.viewWindow?.start + xDiff,
+  //       end:
+  //         trackState?.genomicFetchCoord[trackState.primaryGenName]
+  //           ?.primaryVisData?.viewWindow?.end + xDiff,
+  //     };
 
-      handleTrackDraw({
-        cacheTrackData,
-        trackState,
-        viewWindow: sameRegionViewWindow,
-        groupScale:
-          globalTrackState.current.trackStates[dataIdx].trackState[
-            "groupScale"
-          ],
-        xvalues: cacheTrackData[dataIdx]?.xvalues,
-        placeFeature: cacheTrackData[dataIdx]?.placeFeature,
-        isInit: false,
-      });
-    }
-  }, [viewWindowConfigChange]);
+  //     handleTrackDraw({
+  //       cacheTrackData,
+  //       trackState,
+  //       viewWindow: sameRegionViewWindow,
+  //       groupScale:
+  //         globalTrackState.current.trackStates[dataIdx].trackState[
+  //           "groupScale"
+  //         ],
+  //       xvalues: cacheTrackData[dataIdx]?.xvalues,
+  //       placeFeature: cacheTrackData[dataIdx]?.placeFeature,
+  //       isInit: false,
+  //     });
+  //   }
+  // }, [viewWindowConfigChange]);
 
   // MARK: Screenshot
   useEffect(() => {
