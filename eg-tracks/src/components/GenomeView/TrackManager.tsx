@@ -487,7 +487,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onNewRegionSelectRef.current(startbase, endbase, highlightSearch);
     }, 150),
   );
-
+  function areAllWorkersIdle(): boolean {
+    if (
+      !infiniteScrollWorkers.current ||
+      infiniteScrollWorkers.current.worker.length === 0
+    ) {
+      return true;
+    }
+    return infiniteScrollWorkers.current.worker.every((w) => !w.isBusy);
+  }
   function getMessageData() {
     const lociMap: {
       [trackId: string]: Array<{
@@ -535,77 +543,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     processGenomeAlignQueue();
   };
-  // const processQueue = async () => {
-  //   if (messageQueue.current.length === 0) {
-  //     setMessageData({});
-  //     return;
-  //   }
-
-  //   setMessageData(getMessageData());
-
-  //   const message = messageQueue.current.pop();
-
-  //   // split an array into N contiguous chunks
-  //   function splitArrayIntoChunks(arr, numChunks) {
-  //     const chunkSize = Math.ceil(arr.length / numChunks);
-  //     const chunks: Array<any> = [];
-  //     for (let i = 0; i < numChunks; i++) {
-  //       const start = i * chunkSize;
-  //       const end = start + chunkSize;
-  //       chunks.push(arr.slice(start, end));
-  //     }
-  //     return chunks;
-  //   }
-
-  //   // Send messages to worker workers
-  //   if (
-  //     infiniteScrollWorkers.current &&
-  //     infiniteScrollWorkers.current.worker.length > 0
-  //   ) {
-  //     const numWorkers = infiniteScrollWorkers.current.worker.length;
-
-  //     for (let i = 0; i < numWorkers; i++) {
-  //       const messagesForWorker: Array<any> = [];
-  //       for (const msgObj of message) {
-  //         if (
-  //           Array.isArray(msgObj.trackModelArr) &&
-  //           msgObj.trackModelArr.length > 0
-  //         ) {
-  //           const chunks = splitArrayIntoChunks(
-  //             msgObj.trackModelArr,
-  //             numWorkers,
-  //           );
-  //           if (chunks[i].length > 0) {
-  //             messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-  //           }
-  //         }
-  //       }
-
-  //       if (
-  //         messagesForWorker.length > 0 &&
-  //         messagesForWorker[0].trackDataIdx === dataIdx.current
-  //       ) {
-  //         if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
-  //           infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-  //             createInfiniteOnMessage;
-  //           infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
-  //         }
-  //         infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-  //           messagesForWorker,
-  //         );
-  //       }
-  //     }
-  //   }
-  // };
-  function areAllWorkersIdle(): boolean {
-    if (
-      !infiniteScrollWorkers.current ||
-      infiniteScrollWorkers.current.worker.length === 0
-    ) {
-      return true;
-    }
-    return infiniteScrollWorkers.current.worker.every((w) => !w.isBusy);
-  }
 
   const processQueue = async () => {
     if (messageQueue.current.length === 0) {
@@ -669,6 +606,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   infiniteScrollWorkers.current.worker[workerIdx].isBusy =
                     false;
                   if (areAllWorkersIdle()) {
+                    console.log(trackManagerState.current, "cacheState");
                     queueRegionToFetch(dataIdx.current);
                   }
                 }
