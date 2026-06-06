@@ -487,7 +487,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onNewRegionSelectRef.current(startbase, endbase, highlightSearch);
     }, 150),
   );
-  function areAllWorkersIdle(): boolean {
+  function areWorkersIdle(): boolean {
     if (
       !infiniteScrollWorkers.current ||
       infiniteScrollWorkers.current.worker.length === 0
@@ -495,6 +495,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return true;
     }
     return infiniteScrollWorkers.current.worker.every((w) => !w.isBusy);
+  }
+  function areGenomeAlignWorkerIdle(): boolean {
+    if (hasGenomeAlign.current && !fetchGenomeAlignWorker.current) {
+      return true;
+    }
+    return fetchGenomeAlignWorker?.current?.isBusy === false;
   }
   function getMessageData() {
     const lociMap: {
@@ -532,16 +538,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const enqueueMessage = (message: Array<any>) => {
     messageQueue.current.push(message);
 
-    processQueue();
+    // processQueue();
   };
   const enqueueGenomeAlignMessage = (message: { [key: string]: any }) => {
-    if (hasGenomeAlign.current && !useFineModeNav.current) {
-      genomeAlignMessageQueue.current = [message];
-    } else {
-      genomeAlignMessageQueue.current.push(message);
-    }
+    // if (hasGenomeAlign.current && !useFineModeNav.current) {
+    //   genomeAlignMessageQueue.current = [message];
+    // } else {
+    genomeAlignMessageQueue.current.push(message);
+    // }
 
-    processGenomeAlignQueue();
+    // processGenomeAlignQueue();
   };
 
   const processQueue = async () => {
@@ -605,9 +611,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 if (infiniteScrollWorkers.current) {
                   infiniteScrollWorkers.current.worker[workerIdx].isBusy =
                     false;
-                  if (areAllWorkersIdle()) {
-                    console.log(trackManagerState.current, "cacheState");
+                  // TO DO: NEED TO CONSIDER WHEN GENOMEALIGN BECAUSE GENOMEALIGN ALWAYS ADD A MESSAGE IN SAME DATAIDX
+
+                  if (areWorkersIdle()) {
+                    console.log(
+                      _.cloneDeep(messageQueue.current),
+                      "messages left in queue after worker",
+                      dataIdx.current,
+                      trackManagerState.current,
+                    );
                     queueRegionToFetch(dataIdx.current);
+                    processQueue();
                   }
                 }
               };
@@ -665,6 +679,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           } finally {
             if (fetchGenomeAlignWorker.current) {
               fetchGenomeAlignWorker.current.isBusy = false;
+            }
+            if (genomeAlignMessageQueue.current.length > 0) {
+              console.log(
+                genomeAlignMessageQueue.current,
+                "messages left in genome align queue",
+                dataIdx.current,
+              );
             }
           }
         };
@@ -939,8 +960,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (
         globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
       ) {
-        if (areAllWorkersIdle()) {
-          queueRegionToFetch(curDataIdx);
+        if (!hasGenomeAlign.current) {
+          if (areWorkersIdle()) {
+            queueRegionToFetch(curDataIdx);
+            processQueue();
+          }
+
+          // else {
+          //   queueRegionToFetch(curDataIdx);
+          // }
+        } else if (hasGenomeAlign.current) {
+          if (areGenomeAlignWorkerIdle()) {
+            queueRegionToFetch(curDataIdx);
+            processGenomeAlignQueue();
+          }
+          // else {
+          //   queueRegionToFetch(curDataIdx);
+          // }
         }
       }
     }
@@ -1292,6 +1328,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
+      if (hasGenomeAlign.current) {
+        processGenomeAlignQueue();
+      } else {
+        processQueue();
+      }
     } else if (key !== "legendFontColor" && key !== "label") {
       tempViewWindowConfig["tracksToDrawId"] = newSelected;
 
@@ -2085,7 +2126,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       //   enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
       // }
 
-      processGenomeAlignQueue();
+      // processGenomeAlignQueue();
     } catch (error) {
       if (completedFetchedRegion.current.key !== curTrackState.trackDataIdx) {
         completedFetchedRegion.current.key = curTrackState.trackDataIdx;
@@ -2330,31 +2371,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: checkDrawData
   function checkDrawData(newDrawData) {
-    for (const key in trackManagerState.current.caches) {
-      const curTrack = trackManagerState.current.caches[key];
-      const cacheKeys = Object.keys(curTrack)
-        .filter((k) => isInteger(k))
-        .map(Number)
-        .sort((a, b) => a - b);
-      let minIdx, maxIdx;
-      if (
-        curTrack.trackType in trackUsingExpandedLoci ||
-        !curTrack.usePrimaryNav
-      ) {
-        minIdx = dataIdx.current - 2;
-        maxIdx = dataIdx.current + 2;
-      } else {
-        minIdx = dataIdx.current - 3;
-        maxIdx = dataIdx.current + 3;
-      }
-      for (const cacheDataIdx of cacheKeys) {
-        if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
-          if (trackManagerState.current.caches[key][cacheDataIdx]) {
-            trackManagerState.current.caches[key][cacheDataIdx] = {};
-          }
-        }
-      }
-    }
+    // for (const key in trackManagerState.current.caches) {
+    //   const curTrack = trackManagerState.current.caches[key];
+    //   const cacheKeys = Object.keys(curTrack)
+    //     .filter((k) => isInteger(k))
+    //     .map(Number)
+    //     .sort((a, b) => a - b);
+    //   let minIdx, maxIdx;
+    //   if (
+    //     curTrack.trackType in trackUsingExpandedLoci ||
+    //     !curTrack.usePrimaryNav
+    //   ) {
+    //     minIdx = dataIdx.current - 2;
+    //     maxIdx = dataIdx.current + 2;
+    //   } else {
+    //     minIdx = dataIdx.current - 3;
+    //     maxIdx = dataIdx.current + 3;
+    //   }
+    //   for (const cacheDataIdx of cacheKeys) {
+    //     if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
+    //       if (trackManagerState.current.caches[key][cacheDataIdx]) {
+    //         trackManagerState.current.caches[key][cacheDataIdx] = {};
+    //       }
+    //     }
+    //   }
+    // }
 
     if (newDrawData && Object.keys(newDrawData.trackToDrawId).length > 0) {
       let curViewWindow;
@@ -2968,7 +3009,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     );
 
     queueRegionToFetch(0);
-
+    if (hasGenomeAlign.current) {
+      processGenomeAlignQueue();
+    } else {
+      processQueue();
+    }
     setTrackComponents(newTrackComponents);
   }
   // MARK: sigTrackLoad
