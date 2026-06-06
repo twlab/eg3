@@ -742,10 +742,20 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
     const successFetch = Object.values(fetchResults).filter(
       (result: any) => !result.errorType,
     );
+    console.log(successFetch);
 
+    // for (let genomeObj of successFetch) {
+    //   console.log(genomeObj);
+    //   console.log(
+    //     genomeObj.records.queryRegion
+    //       .getGenomeIntervals()
+    //       .map((locus) => locus.serialize()),
+    //     "genomeObj",
+    //   );
+    // }
     const multiCalInstance = new MultiAlignmentViewCalculator(primaryGenName);
     const alignment = multiCalInstance.multiAlign(viewExpansion, successFetch);
-
+    console.log(alignment);
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
@@ -833,7 +843,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
   if (trackToFetch.length > 0) {
     await getGenomeAlignment(visData.visRegion, trackToFetch);
   }
-
+  console.log(genomicFetchCoord, "genomicFetchCoord");
   return {
     fetchResults,
     navData: {

@@ -1,3 +1,13 @@
+6/06/2026
+- separate fetching and format from genomealign
+- find the queryGenome genomicFetchCoord from record alignment data, (find overlap for same chr, if not overlapp then another fetch coord, and difF chr)
+
+- separating allows us to store fetchData in region, so when we add/delete genomealign tracks 
+   we don't need to refetch for current or remaining genomealign and only the added genomealign
+   / also allows us to use queueRegionToFetch to check for regions that needs data like normals tracks / example:
+   queueRegionToFetch (mark dataCache for ONLY GENOME align tracks and sent only genome align trackmodel)-> finish formatting genomealign data -> store genomicFetchCoord trackstate -> queueRegionToFetch(now to fetch normal tracks using genomicCoord from align ) to now fetch normal tracks 
+- change genomealign to not useExpand region,
+
 5/18/2026
 change examples and schema     (done)
 change prop names for custom genomes (done)
