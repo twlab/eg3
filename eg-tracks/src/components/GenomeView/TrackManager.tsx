@@ -201,7 +201,11 @@ interface TrackManagerProps {
   selectedRegionSet: any;
   setShow3dGene: any;
   infiniteScrollWorkers: React.MutableRefObject<{
-    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: {
+      fetchWorker: Worker;
+      hasOnMessage: boolean;
+      processingCount: number;
+    }[];
   } | null>;
   fetchGenomeAlignWorker: React.MutableRefObject<{
     fetchWorker: Worker;
@@ -606,105 +610,62 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const message = messageQueue.current.pop();
 
-    // Group trackModelArr by type and distribute to workers
-    function splitArrayIntoChunks(arr, numChunks) {
-      // Group tracks by type
-      const typeGroups: { [key: string]: any[] } = {};
-      for (const item of arr) {
-        const type = item.type || "unknown";
-        if (!typeGroups[type]) {
-          typeGroups[type] = [];
-        }
-        typeGroups[type].push(item);
-      }
-
-      // Initialize chunks for each worker
-      const chunks: Array<any> = Array.from({ length: numChunks }, () => []);
-
-      // Distribute type groups to workers in round-robin fashion
-      let workerIdx = 0;
-      for (const type in typeGroups) {
-        chunks[workerIdx].push(...typeGroups[type]);
-        workerIdx = (workerIdx + 1) % numChunks;
-      }
-
-      return chunks;
-    }
-
-    // Send messages to worker workers
+    // Send each track to the worker with the least active processes
     if (
       infiniteScrollWorkers.current &&
-      infiniteScrollWorkers.current.worker.length > 0
+      infiniteScrollWorkers.current.worker.length > 0 &&
+      message.length > 0 &&
+      message[0].trackDataIdx === dataIdx.current
     ) {
-      const numWorkers = infiniteScrollWorkers.current.worker.length;
+      // Ensure all workers have onmessage set
+      for (const workerObj of infiniteScrollWorkers.current.worker) {
+        if (workerObj.hasOnMessage === false) {
+          // workerObj.fetchWorker.onmessage = async (event) => {
+          //   await createInfiniteOnMessage(event);
+          //   if (infiniteScrollWorkers.current) {
 
-      for (let i = 0; i < numWorkers; i++) {
-        const messagesForWorker: Array<any> = [];
+          //     if (areAllWorkersIdle()) {
+          //       queueRegionToFetch(dataIdx.current);
+          //     }
+          //   }
+          // };
+          workerObj.fetchWorker.onmessage = createInfiniteOnMessage;
 
-        for (const msgObj of message) {
-          if (
-            Array.isArray(msgObj.trackModelArr) &&
-            msgObj.trackModelArr.length > 0
-          ) {
-            if (msgObj.trackModelArr.length > 0) {
-              const chunks = splitArrayIntoChunks(
-                msgObj.trackModelArr,
-                numWorkers,
-              );
-              if (chunks[i] && chunks[i].length > 0) {
-                messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-              }
-            }
-          }
-        }
-
-        console.log(messagesForWorker);
-        if (
-          messagesForWorker.length > 0 &&
-          messagesForWorker[0].trackDataIdx === dataIdx.current
-        ) {
-          if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
-            infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-              createInfiniteOnMessage;
-            infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
-          }
-
-          for (let j = 0; j < messagesForWorker.length; j++) {
-            const newMessage = _.cloneDeep(messagesForWorker[j]);
-
-            for (let track of messagesForWorker[j].trackModelArr) {
-              infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage([
-                { ...newMessage, trackModelArr: [track] },
-              ]);
-            }
-          }
+          workerObj.hasOnMessage = true;
         }
       }
-      // const nonWorkerMessage: Array<any> = [];
-      // for (let i = 0; i < message.length; i++) {
-      //   const nonWorkerItems = message[i].trackModelArr.filter(
-      //     (tm: any) => tm && nonWorkerTracks.has(tm.type),
-      //   );
-      //   nonWorkerMessage.push({ ...message[i], trackModelArr: nonWorkerItems });
-      // }
 
-      // // tracks like vcf don't retain all their data when returning to onmessage
-      // if (nonWorkerMessage.length > 0) {
-      //   fetchGenomicData(nonWorkerMessage)
-      //     .then((nonWorkerData) => {
-      //       try {
-      //         createInfiniteOnMessage({ data: nonWorkerData });
-      //       } catch (e) {
-      //         console.error(
-      //           "Error processing non-worker data in createInfiniteOnMessage:",
-      //           e,
-      //         );
-      //       }
-      //     })
-      //     .catch((err) => {
-      //       console.error("Error fetching non-worker data:", err);
-      //     });
-      // }
+      // Loop through each track and assign to least-busy worker
+      for (let j = 0; j < message.length; j++) {
+        const newMessage = _.cloneDeep(message[j]);
+
+        for (const track of message[j].trackModelArr) {
+          // Find the worker with the fewest active processes
+          let leastBusyIdx = 0;
+          let minCount =
+            infiniteScrollWorkers.current.worker[0].processingCount;
+          for (
+            let i = 1;
+            i < infiniteScrollWorkers.current.worker.length;
+            i++
+          ) {
+            if (
+              infiniteScrollWorkers.current.worker[i].processingCount < minCount
+            ) {
+              minCount =
+                infiniteScrollWorkers.current.worker[i].processingCount;
+              leastBusyIdx = i;
+            }
+          }
+
+          infiniteScrollWorkers.current.worker[leastBusyIdx].processingCount++;
+          infiniteScrollWorkers.current.worker[
+            leastBusyIdx
+          ].fetchWorker.postMessage([
+            { ...newMessage, trackModelArr: [track], _workerIdx: leastBusyIdx },
+          ]);
+        }
+      }
     }
   };
   const processGenomeAlignQueue = () => {
@@ -878,6 +839,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return first.toStringWithOther(last);
     }
   }
+  // function areAllWorkersIdle(): boolean {
+  //   if (
+  //     !infiniteScrollWorkers.current ||
+  //     infiniteScrollWorkers.current.worker.length === 0
+  //   ) {
+  //     return true;
+  //   }
+
+  //   return infiniteScrollWorkers.current.worker.every(
+  //     (w) => w.processingCount === 0,
+  //   );
+  // }
   function handleMouseUp() {
     isDragging.current = false;
     if (horizontalLineRef.current && verticalLineRef.current) {
@@ -984,10 +957,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     } else {
       dataIdx.current = curDataIdx;
+
       if (
         globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
       ) {
         queueRegionToFetch(curDataIdx);
+        // if (!hasGenomeAlign.current && areAllWorkersIdle()) {
+        //   queueRegionToFetch(curDataIdx);
+        // } else if (hasGenomeAlign.current) {
+        //   queueRegionToFetch(curDataIdx);
+        // }
       }
     }
   }
@@ -1917,11 +1896,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   // MARK: onmessInfin
-  const createInfiniteOnMessage = (
+  const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
-    Promise.all(
-      event.data.map((dataItem: any) => {
+    await Promise.all(
+      event.data.map(async (dataItem: any) => {
         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
           ? dataItem.trackToDrawId
           : {};
@@ -1934,9 +1913,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           primaryGenName: curGenomeConfig.current?.genome.getName(),
         };
 
-        return Promise.all(
+        await Promise.all(
           dataItem.fetchResults.map(
-            (item: {
+            async (item: {
               id: any;
               name: string;
               result: any;
@@ -1947,7 +1926,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               errorType: any;
             }) => {
               trackToDrawId[`${item.id}`] = "";
-              return createCache({
+              await createCache({
                 trackState: curTrackState,
                 result: item.result,
                 id: item.id,
@@ -2033,9 +2012,38 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         });
       }),
-    ).catch((error) => {
-      console.error("Error in createInfiniteOnMessage:", error);
-    });
+    )
+      .then(() => {
+        // Decrement the processing count for this worker after all items complete
+        const workers = infiniteScrollWorkers.current?.worker;
+        if (workers) {
+          // Find the worker that posted this message by matching the source
+          // We decrement the least-count worker that is > 0 as a proxy,
+          // but since event.source is not available in onmessage we track via
+          // a workerIndex embedded in the message data.
+          const workerIdx = event.data[0]?._workerIdx;
+          if (workerIdx !== undefined && workers[workerIdx]) {
+            workers[workerIdx].processingCount = Math.max(
+              0,
+              workers[workerIdx].processingCount - 1,
+            );
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error in createInfiniteOnMessage:", error);
+        // Decrement on error too
+        const workers = infiniteScrollWorkers.current?.worker;
+        if (workers) {
+          const workerIdx = event.data[0]?._workerIdx;
+          if (workerIdx !== undefined && workers[workerIdx]) {
+            workers[workerIdx].processingCount = Math.max(
+              0,
+              workers[workerIdx].processingCount - 1,
+            );
+          }
+        }
+      });
   };
 
   //MARK: onmessGenAl;
@@ -2301,6 +2309,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 null;
               const tempTrackModel = _.cloneDeep(curTrackModel);
               tempTrackModel["error"] = curTrackCache.error;
+
               tempTrackModel["shouldPlaceRegion"] =
                 curTrackCache.firstLoad &&
                 curTrackCache.usePrimaryNav &&
@@ -2419,6 +2428,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // another track updates and the current track is already drawn we ignore it .
 
   // MARK: checkDrawData
+
+  function isMemoryOver2GB(): boolean {
+    const memory = (performance as any).memory;
+    if (!memory) return false; // Not supported (non-Chromium browsers)
+
+    const usedMB = memory.usedJSHeapSize / (1024 * 1024);
+    return usedMB > 2000;
+  }
   function checkDrawData(newDrawData) {
     for (const key in trackManagerState.current.caches) {
       const curTrack = trackManagerState.current.caches[key];
@@ -2431,11 +2448,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curTrack.trackType in trackUsingExpandedLoci ||
         !curTrack.usePrimaryNav
       ) {
-        minIdx = dataIdx.current - 2;
-        maxIdx = dataIdx.current + 2;
+        minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 2);
+        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 2);
       } else {
-        minIdx = dataIdx.current - 3;
-        maxIdx = dataIdx.current + 3;
+        minIdx = dataIdx.current - (isMemoryOver2GB() ? 2 : 3);
+        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 2 : 3);
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
@@ -2585,7 +2602,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
         }
       }
-      console.log(completedFetchedRegion.current);
+
       startTransition(() =>
         setDraw({
           trackToDrawId: { ...completedFetchedRegion.current.done },
@@ -2681,12 +2698,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     highlightSearch: boolean = false,
   ) {
     // console.log(startbase, endbase, "SELECT REGION");
-    const genomeFeatureSegment: Array<FeatureSegment> =
-      genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
+    // const genomeFeatureSegment: Array<FeatureSegment> =
+    //   genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
 
-    const newCoordinate = currentRegionAsString(
-      genomeFeatureSegment,
-    ) as GenomeCoordinate;
+    // const newCoordinate = currentRegionAsString(
+    //   genomeFeatureSegment,
+    // ) as GenomeCoordinate;
     // console.log(newCoordinate, "SELECT");
 
     const newLength = endbase - startbase;
@@ -3888,7 +3905,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         dataIdx,
         trackManagerState,
       );
-      console.log(_.cloneDeep(groupScale));
+
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
         globalTrackState.current.trackStates[dataIdx].trackState["groupScale"]
           ? {

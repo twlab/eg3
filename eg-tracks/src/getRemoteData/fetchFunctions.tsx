@@ -487,10 +487,10 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       genomicFetchCoord,
       trackToDrawId,
       missingIdx,
+      _workerIdx: dataItem._workerIdx,
     }));
 
-    async function fetchData(trackModel): Promise<Array<any>> {
-      let responses: any = null;
+    function fetchData(trackModel): Promise<Array<any>> {
       let curFetchNav;
       let visRegion =
         genomicFetchCoord[primaryGenName].primaryVisData.visRegion;
@@ -526,40 +526,42 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
 
       const isLocalFetch = trackModel.fileObj instanceof File;
 
-      try {
-        if (isLocalFetch && trackModel.url === "") {
-          responses = trackModel.isText
-            ? await textFetchTypeMap[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-              })
-            : await localFetchTypeMap[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav,
-                trackModel,
-                visRegion: visRegion,
-              });
-        } else if (!isLocalFetch) {
-          if (trackModel.type in { geneannotation: "", snp: "" }) {
-            responses = await fetchTypeMap[trackModel.type]({
-              genomeName:
-                "genome" in trackModel.metadata
-                  ? trackModel.metadata.genome
-                  : trackModel.genome
-                    ? trackModel.genome
-                    : primaryGenName,
-              name: trackModel.name,
+      let fetchPromise: Promise<any>;
 
+      if (isLocalFetch && trackModel.url === "") {
+        fetchPromise = trackModel.isText
+          ? textFetchTypeMap[trackModel.type]({
+              basesPerPixel: bpRegionSize / windowWidth,
               nav: curFetchNav,
               trackModel,
-              trackType: trackModel.type,
+            })
+          : localFetchTypeMap[trackModel.type]({
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav,
+              trackModel,
+              visRegion: visRegion,
             });
+      } else if (!isLocalFetch) {
+        if (trackModel.type in { geneannotation: "", snp: "" }) {
+          fetchPromise = fetchTypeMap[trackModel.type]({
+            genomeName:
+              "genome" in trackModel.metadata
+                ? trackModel.metadata.genome
+                : trackModel.genome
+                  ? trackModel.genome
+                  : primaryGenName,
+            name: trackModel.name,
+            nav: curFetchNav,
+            trackModel,
+            trackType: trackModel.type,
+          });
+        } else {
+          if (!trackModel.url) {
+            fetchPromise = Promise.reject(
+              new Error(`No URL provided for track ${trackModel.name}`),
+            );
           } else {
-            if (!trackModel.url) {
-              throw new Error(`No URL provided for track ${trackModel.name}`);
-            }
-            responses = await fetchTypeMap[trackModel.type]({
+            fetchPromise = fetchTypeMap[trackModel.type]({
               basesPerPixel: bpRegionSize / windowWidth,
               nav: curFetchNav,
               trackModel,
@@ -567,15 +569,16 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             });
           }
         }
-      } catch (error) {
-        responses = {
-          error:
-            error instanceof Error
-              ? error.message
-              : `Error fetching data for track ${trackModel.name}`,
-        };
+      } else {
+        fetchPromise = Promise.resolve(null);
       }
-      return responses;
+
+      return fetchPromise.catch((error) => ({
+        error:
+          error instanceof Error
+            ? error.message
+            : `Error fetching data for track ${trackModel.name}`,
+      }));
     }
   });
 

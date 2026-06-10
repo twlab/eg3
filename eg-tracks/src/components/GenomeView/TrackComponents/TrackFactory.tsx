@@ -355,8 +355,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let noData = false;
 
       if (
-        cacheTrackData[`${dataIdx}`]["xvalues"] ||
-        cacheTrackData[`${dataIdx}`]["placeFeature"]
+        cacheTrackData[`${dataIdx}`]?.["xvalues"] ||
+        cacheTrackData[`${dataIdx}`]?.["placeFeature"]
       ) {
         combinedData = [];
       } else if (dynamicMatplotTracks.has(trackModel.type)) {

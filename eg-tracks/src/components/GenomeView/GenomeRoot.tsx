@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 26;
+const MAX_WORKERS = 3;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -50,7 +50,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
 
   const infiniteScrollWorkers = useRef<{
-    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: {
+      fetchWorker: Worker;
+      hasOnMessage: boolean;
+      processingCount: number;
+    }[];
   }>({
     worker: [],
   });
@@ -246,6 +250,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       infiniteScrollWorkers.current.worker.push({
         fetchWorker: new FetchDataWorker(),
         hasOnMessage: false,
+        processingCount: 0,
       });
     }
   }
