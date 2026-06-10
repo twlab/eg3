@@ -159,13 +159,18 @@ export class FeaturePlacer {
         }
 
         // Check size for ANNOTATION mode
-        if (isAnnotationMode && drawModel.basesToXWidth(feature.getLength()) < hiddenPixels) {
+        if (
+          isAnnotationMode &&
+          drawModel.basesToXWidth(feature.locus.end - feature.locus.start) <
+            hiddenPixels
+        ) {
           numHidden++;
           continue;
         }
 
         // Generate locusId and check for duplicates
-        const locusId = feature.id ?? `${feature.locus.start}-${feature.locus.end}`;
+        const locusId =
+          feature.id ?? `${feature.locus.start}-${feature.locus.end}`;
         if (seenLoci.has(locusId)) {
           continue;
         }
@@ -174,8 +179,10 @@ export class FeaturePlacer {
         // Collect placements for this feature
         const tmpPlacementForward: PlacedFeature[] = [];
         const tmpPlacementReverse: PlacedFeature[] = [];
-
-        for (let contextLocation of feature.computeNavContextCoordinates(navContext)) {
+        const contextLocations = navContext.convertGenomeIntervalToBases(
+          feature.locus,
+        );
+        for (let contextLocation of contextLocations) {
           contextLocation = contextLocation.getOverlap(viewRegionBounds);
           if (!contextLocation) {
             continue;
@@ -206,13 +213,16 @@ export class FeaturePlacer {
           }
         }
 
-
         if (isAnnotationMode) {
           if (tmpPlacementForward.length > 0) {
-            placementsForward.push(...this._combineAdjacent(tmpPlacementForward));
+            placementsForward.push(
+              ...this._combineAdjacent(tmpPlacementForward),
+            );
           }
           if (tmpPlacementReverse.length > 0) {
-            placementsReverse.push(...this._combineAdjacent(tmpPlacementReverse));
+            placementsReverse.push(
+              ...this._combineAdjacent(tmpPlacementReverse),
+            );
           }
         } else {
           if (tmpPlacementForward.length > 0) {
@@ -225,8 +235,6 @@ export class FeaturePlacer {
       }
     }
 
-
-
     return {
       placements: placementsForward,
       placementsForward,
@@ -234,7 +242,6 @@ export class FeaturePlacer {
       numHidden: numHidden,
     };
   }
-
 
   _combineAdjacent(placements: PlacedFeature[]): PlacedFeatureGroup[] {
     if (placements.length === 0) {
@@ -246,7 +253,6 @@ export class FeaturePlacer {
 
     while (i < placements.length) {
       let j = i + 1;
-
 
       while (j < placements.length) {
         const locusA = placements[j - 1].visiblePart.getLocus();
@@ -266,7 +272,7 @@ export class FeaturePlacer {
         row: -1,
         xSpan: new OpenInterval(
           firstPlacement.xSpan.start,
-          lastPlacement.xSpan.end
+          lastPlacement.xSpan.end,
         ),
         placedFeatures: placementsInGroup,
       });
@@ -289,11 +295,11 @@ export class FeaturePlacer {
   _locatePlacement(
     feature: Feature,
     navContext: NavigationContext,
-    contextLocation: OpenInterval
+    contextLocation: OpenInterval,
   ) {
     // First, get the genomic coordinates of the context location, i.e. the "context locus"
     const contextFeatureCoord = navContext.convertBaseToFeatureCoordinate(
-      contextLocation.start
+      contextLocation.start,
     );
     const placedBase = contextFeatureCoord.getLocus().start;
     const isReverse = contextFeatureCoord.feature.getIsReverseStrand();
@@ -308,13 +314,13 @@ export class FeaturePlacer {
     }
 
     // Now, we can compare the context location locus to the feature's locus.
-    const distFromFeatureLocus = contextLocusStart - feature.getLocus().start;
+    const distFromFeatureLocus = contextLocusStart - feature.locus.start;
     const relativeStart = Math.max(0, distFromFeatureLocus);
     return {
       visiblePart: new FeatureSegment(
         feature,
         relativeStart,
-        relativeStart + contextLocation.getLength()
+        relativeStart + contextLocation.getLength(),
       ),
       isReverse,
     };

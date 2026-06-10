@@ -169,7 +169,7 @@ export class MultiAlignmentViewCalculator {
       //   return { query: fetcher.queryGenome, records: records };
       // });
       recordsArray = rawRecords;
-      console.log(recordsArray);
+
       // Don't need to change each records for rough alignment, directly loop through them:
       const multiAlign: MultiAlignment = {};
       for (const records of recordsArray) {
@@ -365,6 +365,7 @@ export class MultiAlignmentViewCalculator {
     navContextBuilder.setGaps(allGaps); // Use allGaps instead of primaryGaps here so gaps between placements were also included here.
     // With the draw model, we can set x spans for each placed alignment
     // Adjust contextSpan and xSpan in placements using visData:
+    console.log(placements);
     for (const placement of placements) {
       const oldContextSpan = placement.contextSpan;
       const visiblePart = placement.visiblePart;
@@ -528,9 +529,9 @@ export class MultiAlignmentViewCalculator {
     const aggregateStrandsNumber = alignmentRecords.reduce(
       (aggregateStrand, record) =>
         aggregateStrand +
-        (record.getIsReverseStrandQuery()
-          ? -1 * record.getLength()
-          : record.getLength()),
+        (record.queryStrand === "-"
+          ? -1 * (record.locus.end - record.locus.start)
+          : record.locus.end - record.locus.start),
       0,
     );
     const plotStrand = aggregateStrandsNumber < 0 ? "-" : "+";
@@ -640,7 +641,7 @@ export class MultiAlignmentViewCalculator {
     if (!result.placements) {
       return [];
     }
-    console.log(result);
+
     return result.placements.map((placement: any) => {
       return {
         record: placement.feature as AlignmentRecord,
@@ -781,6 +782,7 @@ export class MultiAlignmentViewCalculator {
     const features: Array<any> = [];
 
     let x = 0;
+
     let prevLocus = new ChromosomeInterval("", -1, -1); // Placeholder
     for (const piece of sortedPieces) {
       const { queryXSpan, queryFeature } = piece;
@@ -822,7 +824,7 @@ export class MultiAlignmentViewCalculator {
         const distanceFromParent = locus.start - parentLocus.start;
         const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
         const locusXEnd = parentXSpan.end - xDistanceFromParent;
-        const xWidth = drawModel.basesToXWidth(locus.getLength());
+        const xWidth = drawModel.basesToXWidth(locus.end - locus.start);
         const xEnd = locusXEnd < parentXSpan.end ? locusXEnd : parentXSpan.end;
         const xStart =
           locusXEnd - xWidth > parentXSpan.start
@@ -835,7 +837,7 @@ export class MultiAlignmentViewCalculator {
         const distanceFromParent = locus.start - parentLocus.start;
         const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
         const locusXStart = parentXSpan.start + xDistanceFromParent;
-        const xWidth = drawModel.basesToXWidth(locus.getLength());
+        const xWidth = drawModel.basesToXWidth(locus.end - locus.start);
         const xStart =
           locusXStart > parentXSpan.start ? locusXStart : parentXSpan.start;
         const xEnd =

@@ -60,6 +60,7 @@ import { ChevronRightIcon } from "@primer/octicons-react";
 import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
 import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
 import { LinearDrawingModel } from "../../models";
+import { MultiAlignmentViewCalculator } from "./TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
@@ -540,7 +541,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     // processQueue();
   };
-  const enqueueGenomeAlignMessage = (message: { [key: string]: any }) => {
+  const enqueueGenomeAlignMessage = (message: Array<any>) => {
     // if (hasGenomeAlign.current && !useFineModeNav.current) {
     //   genomeAlignMessageQueue.current = [message];
     // } else {
@@ -670,7 +671,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (
       fetchGenomeAlignWorker.current &&
-      message.trackDataIdx === dataIdx.current
+      message[0].trackDataIdx === dataIdx.current
     ) {
       if (fetchGenomeAlignWorker.current.hasOnMessage === false) {
         fetchGenomeAlignWorker.current.fetchWorker.onmessage = async (
@@ -2034,133 +2035,248 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createGenomeAlignOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
-    const regionDrawIdx = event.data.navData.trackDataIdx;
+    // const regionDrawIdx = event.data.navData.trackDataIdx;
 
-    const curTrackState = {
-      ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
-      primaryGenName: curGenomeConfig.current?.genome.getName(),
-      ...event.data.navData,
-    };
-    const fetchNewRegion = event.data.navData.fetchNewRegion;
-    const fetchedDragX = event.data.navData.dragX;
-    // Process all fetch results with promises
-    await Promise.all(
-      Object.values(event.data.fetchResults).map((item: any) =>
+    // const curTrackState = {
+    //   ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
+    //   primaryGenName: curGenomeConfig.current?.genome.getName(),
+    //   ...event.data.navData,
+    // };
+
+    // const fetchNewRegion = event.data.navData.fetchNewRegion;
+    // const fetchedDragX = event.data.navData.dragX;
+    // // Process all fetch results with promises
+
+    // const successFetch = Object.values(event.data.fetchResults).filter(
+    //   (result: any) => !result.errorType,
+    // );
+
+    // const multiCalInstance = new MultiAlignmentViewCalculator(
+    //   curGenomeConfig.current?.genome?.getName(),
+    // );
+
+    // const trackState =
+    //   event.data.navData.missingIdx in globalTrackState.current.trackStates
+    //     ? globalTrackState.current.trackStates[event.data.navData.missingIdx]
+    //         ?.trackState
+    //     : "";
+    console.log(event.data);
+    // const alignment = multiCalInstance.multiAlign(
+    //   trackState.visData,
+    //   successFetch,
+    // );
+
+    // for (let key in alignment) {
+    //   const queryAlignment = alignment[key];
+    //   curTrackState.genomicFetchCoord[`${key}`] = {
+    //     queryGenomicCoord: queryAlignment.queryRegion
+    //       .getGenomeIntervals()
+    //       .map((locus) => locus.serialize()),
+    //     id: queryAlignment.id,
+    //     queryRegion: queryAlignment.queryRegion,
+    //   };
+
+    //   curTrackState.genomicFetchCoord[
+    //     curGenomeConfig.current.genome.getName()
+    //   ].primaryVisData = queryAlignment.primaryVisData;
+    //   curTrackState.genomicFetchCoord[
+    //     curGenomeConfig.current.genome.getName()
+    //   ].navContextBuilder = queryAlignment?.navContextBuilder;
+    //  createCache({
+    //     trackState: curTrackState,
+    //     result: queryAlignment,
+    //     id: queryAlignment.id,
+    //     trackType: event.data.fetchResults[queryAlignment.id].trackModel.type,
+    //     metadata: event.data.fetchResults[queryAlignment.id].metadata,
+    //     trackModel: event.data.fetchResults[queryAlignment.id].trackModel,
+    //     missingIdx: curTrackState.missingIdx,
+    //     trackDataIdx: event.data.navData.trackDataIdx,
+    //     queryGenome: event.data.fetchResults[queryAlignment.id].query,
+    //   });
+    // }
+    for (let res of event.data) {
+      const regionDrawIdx = res.trackDataIdx;
+
+      const curTrackState = {
+        ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
+        primaryGenName: curGenomeConfig.current?.genome.getName(),
+        genomicFetchCoord: res.genomicFetchCoord,
+        trackDataIdx: res.trackDataIdx,
+        missingIdx: res.missingIdx,
+      };
+
+      // const fetchNewRegion = event.data.navData.fetchNewRegion;
+      // const fetchedDragX = event.data.navData.dragX;
+      // Process all fetch results with promises
+
+      // const successFetch = Object.values(event.data.fetchResults).filter(
+      //   (result: any) => !result.errorType,
+      // );
+
+      // const multiCalInstance = new MultiAlignmentViewCalculator(
+      //   curGenomeConfig.current?.genome?.getName(),
+      // );
+
+      for (let key in res.fetchResults) {
+        const resRecord = res.fetchResults[key];
+        console.log(resRecord);
         createCache({
           trackState: curTrackState,
-          result: item.records,
-          id: item.id,
-          trackType: item.trackModel.type,
-          metadata: item.metadata,
-          trackModel: item.trackModel,
-          curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-          missingIdx: curTrackState.missingIdx,
-          trackDataIdx: event.data.navData.trackDataIdx,
-          queryGenome: item.query,
-          errorType: item.errorType,
-        }),
-      ),
-    );
+          result: resRecord.records,
+          id: resRecord.id,
+          trackType: resRecord.trackModel.type,
+          metadata: resRecord.metadata,
+          trackModel: resRecord.trackModel,
+          missingIdx: res.missingIdx,
+          trackDataIdx: res.trackDataIdx,
+          queryGenome: resRecord.query,
+        });
 
-    try {
-      globalTrackState.current.trackStates[
-        curTrackState.missingIdx
-          ? curTrackState.missingIdx
-          : curTrackState.trackDataIdx
-      ].trackState["startWindow"] =
-        event.data.navData.regionSetStartBp !== 0
-          ? curTrackState.genomicFetchCoord[
-              curGenomeConfig.current?.genome.getName()
-            ].primaryVisData.viewWindow.start
-          : 0;
+        const currentDataIdx = dataIdx.current;
+        const idxArr = [currentDataIdx - 1, currentDataIdx, currentDataIdx + 1];
 
-      globalTrackState.current.trackStates[
-        curTrackState.missingIdx
-          ? curTrackState.missingIdx
-          : curTrackState.trackDataIdx
-      ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
-      globalTrackState.current.trackStates[
-        curTrackState.missingIdx
-          ? curTrackState.missingIdx
-          : curTrackState.trackDataIdx
-      ].trackState["visWidth"] =
-        curTrackState.genomicFetchCoord[
-          curGenomeConfig.current?.genome.getName()
-        ].primaryVisData.visWidth;
+        const cacheKeysWithData: { [key: string]: boolean } = {};
 
-      if (isInteger(curTrackState.missingIdx)) {
-        const trackToDrawId: { [key: string]: any } = {};
-        for (const track of trackManagerState.current.tracks) {
-          if (track.type === "genomealign") {
-            trackToDrawId[track.id] = false;
+        for (let trackToDrawKey in res.trackToDrawId) {
+          const cache = trackManagerState.current.caches[trackToDrawKey];
+
+          if (cache) {
+            if (cache["error"]) {
+              cacheKeysWithData[trackToDrawKey] = false;
+            } else {
+              //  normal mode check all three indices
+              let hasAllRegionData = true;
+              for (let idx of idxArr) {
+                if (!cache[idx] || !cache[idx].dataCache) {
+                  hasAllRegionData = false;
+                  break;
+                }
+              }
+              if (hasAllRegionData) {
+                cacheKeysWithData[trackToDrawKey] = false;
+              }
+            }
           }
         }
 
-        if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
-          for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
-            dataForFetch["genomicFetchCoord"] = curTrackState.genomicFetchCoord;
-          }
-          if (
-            completedFetchedRegion.current.key !== curTrackState.trackDataIdx
-          ) {
-            completedFetchedRegion.current.key = curTrackState.trackDataIdx;
+        // if we have valid cached data
+
+        if (Object.keys(cacheKeysWithData).length > 0) {
+          if (completedFetchedRegion.current.key !== currentDataIdx) {
+            completedFetchedRegion.current.key = currentDataIdx;
             completedFetchedRegion.current.done = {};
             completedFetchedRegion.current.groups = {};
           }
-          if (fetchNewRegion || fetchedDragX === dragX.current) {
-            checkDrawData({
-              curDataIdx: curTrackState.trackDataIdx,
-              isInitial: undefined,
-              trackToDrawId,
-              missingIdx: curTrackState.missingIdx,
-              trackDataIdx: curTrackState.trackDataIdx,
-            });
-            console.log(curTrackState);
-            enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
-            processQueue();
-          }
-        } else {
-          checkDrawData({
-            curDataIdx: curTrackState.trackDataIdx,
-            isInitial: 0,
-            trackToDrawId,
-            missingIdx: curTrackState.missingIdx,
-          });
+          console.log(cacheKeysWithData);
+          // checkDrawData({
+          //   trackDataIdx: dataItem.trackDataIdx,
+          //   initial: dataItem.initial,
+          //   trackToDrawId: cacheKeysWithData,
+          //   missingIdx: dataItem.missingIdx,
+          //   curDataIdx: dataItem.trackDataIdx,
+          // });
         }
       }
-      // else {
-      //   enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
-      // }
-
-      // processGenomeAlignQueue();
-    } catch (error) {
-      if (completedFetchedRegion.current.key !== curTrackState.trackDataIdx) {
-        completedFetchedRegion.current.key = curTrackState.trackDataIdx;
-        completedFetchedRegion.current.done = {};
-        completedFetchedRegion.current.groups = {};
-      }
-      const trackToDrawId: { [key: string]: any } = {};
-      for (const key in trackManagerState.current.caches) {
-        if (
-          trackManagerState.current.caches[key].trackType === "genomealign" &&
-          trackManagerState.current.caches[key].error
-        ) {
-          trackToDrawId[key] = false;
-        }
-      }
-
-      if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
-        curTrackState["genomicFetchCoord"] = null;
-
-        enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
-      }
-      checkDrawData({
-        curDataIdx: curTrackState.trackDataIdx,
-        isInitial: 0,
-        trackToDrawId,
-        missingIdx: curTrackState.missingIdx,
-      });
     }
+    // try {
+    //   globalTrackState.current.trackStates[
+    //     curTrackState.missingIdx
+    //       ? curTrackState.missingIdx
+    //       : curTrackState.trackDataIdx
+    //   ].trackState["startWindow"] =
+    //     event.data.navData.regionSetStartBp !== 0
+    //       ? curTrackState.genomicFetchCoord[
+    //           curGenomeConfig.current?.genome.getName()
+    //         ].primaryVisData.viewWindow.start
+    //       : 0;
+
+    //   globalTrackState.current.trackStates[
+    //     curTrackState.missingIdx
+    //       ? curTrackState.missingIdx
+    //       : curTrackState.trackDataIdx
+    //   ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
+    //   globalTrackState.current.trackStates[
+    //     curTrackState.missingIdx
+    //       ? curTrackState.missingIdx
+    //       : curTrackState.trackDataIdx
+    //   ].trackState["visWidth"] =
+    //     curTrackState.genomicFetchCoord[
+    //       curGenomeConfig.current?.genome.getName()
+    //     ].primaryVisData.visWidth;
+
+    //   if (isInteger(curTrackState.missingIdx)) {
+    //     const trackToDrawId: { [key: string]: any } = {};
+    //     for (const track of trackManagerState.current.tracks) {
+    //       if (track.type === "genomealign") {
+    //         trackToDrawId[track.id] = false;
+    //       }
+    //     }
+
+    //     if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
+    //       for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
+    //         dataForFetch["genomicFetchCoord"] = curTrackState.genomicFetchCoord;
+    //       }
+    //       if (
+    //         completedFetchedRegion.current.key !== curTrackState.trackDataIdx
+    //       ) {
+    //         completedFetchedRegion.current.key = curTrackState.trackDataIdx;
+    //         completedFetchedRegion.current.done = {};
+    //         completedFetchedRegion.current.groups = {};
+    //       }
+    //       if (fetchNewRegion || fetchedDragX === dragX.current) {
+    //         checkDrawData({
+    //           curDataIdx: curTrackState.trackDataIdx,
+    //           isInitial: undefined,
+    //           trackToDrawId,
+    //           missingIdx: curTrackState.missingIdx,
+    //           trackDataIdx: curTrackState.trackDataIdx,
+    //         });
+
+    //         enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+    //         processQueue();
+    //       }
+    //     } else {
+    //       checkDrawData({
+    //         curDataIdx: curTrackState.trackDataIdx,
+    //         isInitial: 0,
+    //         trackToDrawId,
+    //         missingIdx: curTrackState.missingIdx,
+    //       });
+    //     }
+    //   }
+    //   // else {
+    //   //   enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+    //   // }
+
+    //   // processGenomeAlignQueue();
+    // } catch (error) {
+    //   if (completedFetchedRegion.current.key !== curTrackState.trackDataIdx) {
+    //     completedFetchedRegion.current.key = curTrackState.trackDataIdx;
+    //     completedFetchedRegion.current.done = {};
+    //     completedFetchedRegion.current.groups = {};
+    //   }
+    //   const trackToDrawId: { [key: string]: any } = {};
+    //   for (const key in trackManagerState.current.caches) {
+    //     if (
+    //       trackManagerState.current.caches[key].trackType === "genomealign" &&
+    //       trackManagerState.current.caches[key].error
+    //     ) {
+    //       trackToDrawId[key] = false;
+    //     }
+    //   }
+
+    //   if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
+    //     curTrackState["genomicFetchCoord"] = null;
+
+    //     enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+    //   }
+    //   checkDrawData({
+    //     curDataIdx: curTrackState.trackDataIdx,
+    //     isInitial: 0,
+    //     trackToDrawId,
+    //     missingIdx: curTrackState.missingIdx,
+    //   });
+    // }
   };
   // MARK: queueRegion
 
@@ -2183,18 +2299,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       for (const idx of idxArr) {
         if (!(idx in curTrackCache)) {
-          if (
-            (curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
-            idx !== curIdx
-          ) {
-          } else {
-            trackManagerState.current.caches[key][idx] = {};
-          }
+          // if (
+          //   // (curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
+          //   idx !== curIdx
+          // ) {
+          // } else {
+          trackManagerState.current.caches[key][idx] = {};
+          // }
         }
 
         if (idx in curTrackCache) {
           if (
-            (curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
+            // (curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
             idx !== curIdx
           ) {
             continue;
@@ -2202,10 +2318,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           const isGenomeAlignTrack = curTrackCache.trackType === "genomealign";
 
-          const dataCacheKeyMissing =
-            !("dataCache" in curTrackCache[idx]) ||
-            ((isGenomeAlignTrack || !curTrackCache.usePrimaryNav) &&
-              !useFineModeNav.current);
+          const dataCacheKeyMissing = !("dataCache" in curTrackCache[idx]);
 
           if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
             needToFetchGenAlign = true;
@@ -2225,8 +2338,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (needToFetch) {
       const dataToFetchArr: Array<any> = [];
+      let genomeAlignDataToFetchArr: Array<any> = [];
       for (const curDataIdx of idxArr) {
         let trackToFetch: Array<TrackModel> = [];
+        let genomeAlignTrackToFetch: Array<TrackModel> = [];
         let trackState =
           curDataIdx in globalTrackState.current.trackStates
             ? globalTrackState.current.trackStates[curDataIdx]?.trackState
@@ -2235,18 +2350,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         for (const key in trackManagerState.current.caches) {
           const curTrackCache = trackManagerState.current.caches[key];
 
-          if (
-            ((curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
-              curDataIdx !== curIdx) ||
-            curTrackCache.trackType === "genomealign"
-          ) {
-            continue;
-          }
+          // if (
+          //   ((curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
+          //     curDataIdx !== curIdx)
+          //      ||
+          //   curTrackCache.trackType === "genomealign"
+          // ) {
+          //   continue;
+          // }
 
           if (
             curDataIdx in curTrackCache &&
-            (!("dataCache" in curTrackCache[curDataIdx]) ||
-              (!curTrackCache.usePrimaryNav && !useFineModeNav.current))
+            !("dataCache" in curTrackCache[curDataIdx])
+            // ||
+            //   (!curTrackCache.usePrimaryNav && !useFineModeNav.current)
           ) {
             let curTrackModel: any = trackManagerState.current.tracks.find(
               (trackModel: any) =>
@@ -2258,10 +2375,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 null;
               const tempTrackModel = _.cloneDeep(curTrackModel);
               tempTrackModel["error"] = curTrackCache.error;
-              tempTrackModel["shouldPlaceRegion"] =
-                curTrackCache.firstLoad &&
-                curTrackCache.usePrimaryNav &&
-                !curTrackCache.useExpandedLoci;
+              tempTrackModel["shouldPlaceRegion"] = curTrackCache.firstLoad;
+              // &&
+              // curTrackCache.usePrimaryNav &&
+              // !curTrackCache.useExpandedLoci;
 
               if (
                 tempTrackModel["shouldPlaceRegion"] &&
@@ -2269,8 +2386,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               ) {
                 continue;
               }
-
-              trackToFetch.push(tempTrackModel);
+              if (tempTrackModel["type"] === "genomealign") {
+                genomeAlignTrackToFetch.push(tempTrackModel);
+              } else {
+                trackToFetch.push(tempTrackModel);
+              }
             }
           }
         }
@@ -2301,6 +2421,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             genomicFetchCoord: trackState?.genomicFetchCoord,
           });
         }
+        if (genomeAlignTrackToFetch.length > 0) {
+          genomeAlignDataToFetchArr.push({
+            trackToFetch: genomeAlignTrackToFetch,
+            visData: trackState,
+            genomicLoci: trackState.regionLoci,
+            viewWindowGenomicLoci: trackState.regionLoci,
+            primaryGenName: curGenomeConfig.current.genome.getName(),
+            trackModelArr: genomeAlignTrackToFetch,
+            regionExpandLoci: trackState.regionExpandLoci,
+            useFineModeNav: useFineModeNav.current,
+            windowWidth: windowWidthRef.current,
+            bpRegionSize: bpRegionSize.current,
+            fetchAfterGenAlignTracks: dataToFetchArr,
+            trackDataIdx: curIdx,
+            missingIdx: curIdx,
+            fetchNewRegion: true,
+          });
+        }
       }
 
       for (const key in trackManagerState.current.caches) {
@@ -2308,42 +2446,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       if (hasGenomeAlign.current && needToFetchGenAlign) {
-        const genomeAlignTracks = trackManagerState.current.tracks.filter(
-          (items, _index) => {
-            return items.type === "genomealign";
-          },
-        );
-
-        // MARK: addGenAlign
-        const curTrackState =
-          globalTrackState.current.trackStates[curIdx].trackState;
-
-        let genomeFeatureSegment: Array<FeatureSegment> =
-          curGenomeConfig.current.navContext.getFeaturesInInterval(
-            bpX.current,
-            bpX.current + bpRegionSize.current,
-          );
-
-        const regionLoci = genomeFeatureSegment.map((item, _index) =>
-          item.getLocus(),
-        );
-
-        enqueueGenomeAlignMessage({
-          trackToFetch: genomeAlignTracks,
-          visData: curTrackState.visData,
-          genomicLoci: curTrackState.regionLoci,
-          viewWindowGenomicLoci: regionLoci,
-          primaryGenName: curGenomeConfig.current.genome.getName(),
-          trackModelArr: genomeAlignTracks,
-          regionExpandLoci: curTrackState.regionExpandLoci,
-          useFineModeNav: useFineModeNav.current,
-          windowWidth: windowWidthRef.current,
-          bpRegionSize: bpRegionSize.current,
-          fetchAfterGenAlignTracks: dataToFetchArr,
-          trackDataIdx: curIdx,
-          missingIdx: curIdx,
-          fetchNewRegion: true,
-        });
+        console.log(genomeAlignDataToFetchArr);
+        enqueueGenomeAlignMessage(genomeAlignDataToFetchArr);
+        console.log(genomeAlignMessageQueue.current);
       } else {
         enqueueMessage(dataToFetchArr);
       }
@@ -2595,6 +2700,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackManagerState.current.caches[`${fetchRes.id}`]["error"] =
           fetchRes?.errorType;
       } else {
+        console.log(formattedData, trackManagerState.current);
         if (fetchRes.trackModel.shouldPlaceRegion) {
           for (let i = 0; i < 3; i++) {
             trackManagerState.current.caches[`${fetchRes.id}`][initialIdx[i]][

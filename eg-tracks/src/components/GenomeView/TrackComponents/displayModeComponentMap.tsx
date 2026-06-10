@@ -67,6 +67,7 @@ import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 import Bedcolor from "./bedComponents/Bedcolor";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import AlignmentRecord from "../../../models/AlignmentRecord";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 
 export const dynamicMatplotTracks = new Set([
@@ -1454,7 +1455,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
             >
-              {svgElements}
+              {svgElements}``
             </svg>
           </React.Fragment>
         );
@@ -2816,6 +2817,35 @@ function formatLongRange(genesArr: any[]) {
     })
     .filter(Boolean);
 }
+function formatGenomeAlign(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  console.log(genesArr, initialLoad, regionLoci);
+  if (initialLoad && regionLoci && regionLoci.length > 0) {
+    const regionGroups: any[][] = regionLoci.map(() => []);
+
+    for (const record of genesArr) {
+      const alignment = record;
+      for (let i = 0; i < regionLoci.length; i++) {
+        if (
+          checkOverlapWithRegionGroup(
+            alignment.locus.chr,
+            alignment.locus.start,
+            alignment.locus.end,
+            regionLoci[i],
+          )
+        ) {
+          regionGroups[i].push(alignment);
+        }
+      }
+    }
+    return regionGroups;
+  }
+
+  return genesArr;
+}
 
 const formatFunctions: {
   [key: string]: (
@@ -2852,6 +2882,7 @@ const formatFunctions: {
   biginteract: formatBigInteract,
   vcf: formatVcf,
   longrange: formatLongRange,
+  genomealign: formatGenomeAlign,
 };
 export function formatDataByType(
   genesArr: any[],
