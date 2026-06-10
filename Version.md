@@ -1,14 +1,43 @@
 # Version history
 
+## 61.0.5
+
+- reworked fetch function, queue individual track, and return when finish
+- fixed bug with initial load when there are more than one group
+- change local cache for data
+
 ## 61.0.3
+
+- fixed bigbed, bed, bedcolor configOptions
+- fixed g3d tracks, sizing
+- fixed g3d adding regionset
+- fixed meta term values
+- fixed methlc legend height bug
+- added download pdf to screenshot
 
 ## 61.0.0
 
-- to be added
+- added new feature, collections
+- reworked custom genome
+- custom and default genome can be added to create a new collection
+- fixed highlight flicker when updating region data
+- schema rework for custom genome, and session
+- added chrom alias check to fetching
+- screenshot postioning fix, for genomealign and its highlight
+- added bigbedColor track
+- added new default collection to home
+- refactor default genomes
 
 ## 60.0.8
 
-- to be added
+- fixed genomealign x windowView positioning after loading for fine and rough mode
+- fixed highlight position for fine mode and to account for gaps.
+- fixed vcf fetching too much data
+- added visual for contents that are too small
+- session now default to home screen when tab is closed, previous can still be loaded
+- fixed genomealign parsing when remote session
+- reworked aggregate for viewWindow grouping. group will adjust on new group track add and doesn't recalculate every worker finish
+- home css adjustment to look in sizing
 
 ## 60.0.6
 
@@ -33,14 +62,34 @@
 
 - fixed grouping
 - fixed sessions upload for genomealign
+- refactor trackmanager global config
+- refactor aggregation code
+- fixed grouping
+- allow redux state persist for package version
 
 ## 60.0.1
 
 - fixed longrange and hic
+- fixed parse strand bug for + and -
+- UI sizing adjustment for new resizeable/positional tabs
+- reworked ui for regionset, geneplot, scatterplot
+- reworked ui for all hubs tabs
+- added darkmode to new tabs
 
 ## 60.0.0
 
-- to be added
+- reduced memory usage and increase fps
+- improve performance when graphic acceleration is turned off
+- new tab UI for navbar and tools, allow resizing and changing position
+- new designed for navbar, toolbar, and home
+- reworked home sesssion ui
+- fixed region parsing issue, for regionset, sessionfiles, and remote session
+- added back regionset divider
+- session works with regionset
+- sessions backward compatible with eg2
+- implement check for negative only, positive only , or both display for numerical tracks
+  to adjust track display
+- tool structure rework, behaves like eg2
 
 ## 59.4.1
 
