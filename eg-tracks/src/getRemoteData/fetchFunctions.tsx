@@ -369,12 +369,12 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
     );
 
     return Promise.all(
-      leftOverTrackModels.map(async (item) => {
+      leftOverTrackModels.map((item) => {
         const trackType = item?.type || item?.metadata["Track type"];
         const id = item.id;
 
         if (!(item.type in componentMap)) {
-          fetchResults.push({
+          return Promise.resolve({
             name: trackType,
             id: id,
             metadata: item.metadata,
@@ -386,7 +386,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           item.metadata.genome &&
           !(item.metadata.genome in genomicFetchCoord)
         ) {
-          fetchResults.push({
+          return Promise.resolve({
             name: trackType,
             id: id,
             metadata: item.metadata,
@@ -395,7 +395,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             errorType: `genomealign track with query genome "${item.metadata.genome}" is not found`,
           });
         } else if (item.error) {
-          fetchResults.push({
+          return Promise.resolve({
             name: trackType,
             id: id,
             metadata: item.metadata,
@@ -404,27 +404,14 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             errorType: item.error,
           });
         } else if (trackType === "ruler") {
-          fetchResults.push({
+          return Promise.resolve({
             name: trackType,
             id: id,
             metadata: item.metadata,
             trackModel: item,
             result: [],
           });
-        }
-        // else if (trackType === "geneannotation") {
-        //   // Only await here, not in the map above
-        //   const genRefResponses = await fetchData(item);
-
-        //   fetchResults.push({
-        //     name: trackType,
-        //     result: genRefResponses,
-        //     id: id,
-        //     metadata: item.metadata,
-        //     trackModel: item,
-        //   });
-        // }
-        else if (
+        } else if (
           trackType in
           {
             matplot: "",
@@ -434,66 +421,68 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             dynamichic: "",
           }
         ) {
-          let responses: Array<any> | { [key: string]: any } = [];
-          let error: any = null;
-          const subTrackResults = await Promise.all(
+          return Promise.all(
             item.tracks.map((trackItem) => {
               trackItem["shouldPlaceRegion"] = item.shouldPlaceRegion;
               return fetchData(trackItem);
             }),
-          );
-          for (const response of subTrackResults) {
-            if (isFetchError(response)) {
-              error = response.error;
-              responses = [];
-              break;
+          ).then((subTrackResults) => {
+            let responses: Array<any> | { [key: string]: any } = [];
+            let error: any = null;
+            for (const response of subTrackResults) {
+              if (isFetchError(response)) {
+                error = response.error;
+                responses = [];
+                break;
+              }
+              responses.push(response);
             }
-            responses.push(response);
-          }
 
-          fetchResults.push({
-            name: trackType,
-            result: responses,
-            id: id,
-            metadata: item.metadata,
-            trackModel: item,
-            errorType: error,
+            return {
+              name: trackType,
+              result: responses,
+              id: id,
+              metadata: item.metadata,
+              trackModel: item,
+              errorType: error,
+            };
           });
         } else {
-          const responses: any = await fetchData(item);
-          let result;
-          let error: any = null;
-          if (isFetchError(responses)) {
-            result = [];
-            error = responses.error;
-          } else {
-            result =
-              item.type === "hic" &&
-              typeof responses === "object" &&
-              !Array.isArray(responses) &&
-              "data" in responses
-                ? responses.data
-                : responses;
-          }
+          return fetchData(item).then((responses: any) => {
+            let result;
+            let error: any = null;
+            if (isFetchError(responses)) {
+              result = [];
+              error = responses.error;
+            } else {
+              result =
+                item.type === "hic" &&
+                typeof responses === "object" &&
+                !Array.isArray(responses) &&
+                "data" in responses
+                  ? responses.data
+                  : responses;
+            }
 
-          fetchResults.push({
-            name: trackType,
-            result: Array.isArray(result) ? result : [],
-            fileInfos:
-              typeof responses === "object" &&
-              !Array.isArray(responses) &&
-              "fileInfos" in responses
-                ? responses.fileInfos
-                : null,
-            id: id,
-            metadata: item.metadata,
-            trackModel: item,
-            errorType: error,
+            return {
+              name: trackType,
+              result: Array.isArray(result) ? result : [],
+              fileInfos:
+                typeof responses === "object" &&
+                !Array.isArray(responses) &&
+                "fileInfos" in responses
+                  ? responses.fileInfos
+                  : null,
+              id: id,
+              metadata: item.metadata,
+              trackModel: item,
+              errorType: error,
+            };
           });
         }
       }),
-    ).then(() => ({
-      fetchResults,
+    ).then((resultsArray) => ({
+      fetchResults: resultsArray,
       trackDataIdx,
       genomicFetchCoord,
       trackToDrawId,
@@ -590,9 +579,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
     }
   });
 
-  const results = await Promise.all(objectPromises);
-
-  return results;
+  return Promise.all(objectPromises);
 }
 
 export async function fetchGenomeAlignData(data: any): Promise<any> {
