@@ -241,7 +241,7 @@ export const fetchTypeMap: { [key: string]: any } = {
 async function getRemoteData(regionData: any, trackType: string) {
   const indexUrl = regionData.trackModel.indexUrl || null;
   let fetchInstance: any = null;
-  cachedFetchInstance[regionData.trackModel.url] = null;
+  // cachedFetchInstance[regionData.trackModel.url] = null;
   if (!cachedFetchInstance[regionData.trackModel.url]) {
     if (trackType === "bedOrTabix") {
       cachedFetchInstance[regionData.trackModel.url] = new TabixSource(
@@ -322,7 +322,7 @@ async function getRemoteData(regionData: any, trackType: string) {
             regionData.trackModel.options,
           )
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
             const fileInfos =
               cachedFetchInstance[regionData.trackModel.url].getFileInfo();
             const result = { data, fileInfos };

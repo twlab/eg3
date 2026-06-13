@@ -1,5 +1,9 @@
 # Version history
 
+## 61.0.6
+
+- fixed hic fetch error
+
 ## 61.0.5
 
 - reworked fetch function, queue individual track, and return when finish

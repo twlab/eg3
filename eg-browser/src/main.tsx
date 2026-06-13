@@ -2,22 +2,16 @@ import { createRoot } from "react-dom/client";
 import { useState } from "react";
 import "./index.css";
 import App from "./App.tsx";
+import { startVersionCheck } from "./versionCheck";
 
-// Reload the page when the service worker requests an update (fallback path)
-if (
-  typeof navigator !== "undefined" &&
-  navigator.serviceWorker?.addEventListener
-) {
-  navigator.serviceWorker.addEventListener("message", (e) => {
-    if (e.data?.type === "SERVICE_WORKER_UPDATE") {
-      try {
-        location.reload();
-      } catch (err) {
-        /* ignore */
-      }
-    }
-  });
-}
+// Remove service workers left behind by older deployments so they can't
+// serve stale cached builds. Version updates are handled by polling instead.
+navigator.serviceWorker
+  ?.getRegistrations()
+  .then((registrations) => registrations.forEach((r) => r.unregister()))
+  .catch(() => {});
+
+startVersionCheck();
 
 const testTracks1 = [
   {
