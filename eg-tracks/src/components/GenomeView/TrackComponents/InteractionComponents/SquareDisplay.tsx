@@ -39,7 +39,7 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
       height,
       bothAnchorsInView,
     } = this.props;
-    const drawWidth = viewWindow.getLength();
+    const drawWidth = viewWindow.end - viewWindow.start;
     const angle = height / drawWidth;
     const score = placedInteraction.interaction.score;
     if (!score) {
