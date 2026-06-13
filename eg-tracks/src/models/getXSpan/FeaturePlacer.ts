@@ -138,9 +138,97 @@ export class FeaturePlacer {
     const seenLoci = new Set<string>();
     const isAnnotationMode = mode === PlacementMode.ANNOTATION;
 
+    // Place a single feature, accumulating into the shared placement arrays.
+    const processFeature = (feature: any) => {
+      if (!feature) {
+        return;
+      }
+
+      // Check size for ANNOTATION mode
+      if (isAnnotationMode && drawModel.basesToXWidth(feature.getLength()) < hiddenPixels) {
+        numHidden++;
+        return;
+      }
+
+      // Generate locusId and check for duplicates
+      const locusId = feature.id ?? `${feature.locus.start}-${feature.locus.end}`;
+      if (seenLoci.has(locusId)) {
+        return;
+      }
+      seenLoci.add(locusId);
+
+      // Collect placements for this feature
+      const tmpPlacementForward: PlacedFeature[] = [];
+      const tmpPlacementReverse: PlacedFeature[] = [];
+
+      for (let contextLocation of feature.computeNavContextCoordinates(navContext)) {
+        contextLocation = contextLocation.getOverlap(viewRegionBounds);
+        if (!contextLocation) {
+          continue;
+        }
+
+        const xSpan = useCenter
+          ? drawModel.baseSpanToXCenter(contextLocation)
+          : drawModel.baseSpanToXSpan(contextLocation);
+
+        const { visiblePart, isReverse } = this._locatePlacement(
+          feature,
+          navContext,
+          contextLocation,
+        );
+
+        const placement: PlacedFeature = {
+          feature,
+          visiblePart,
+          contextLocation,
+          xSpan,
+          isReverse,
+        };
+
+        if (feature.value === undefined || feature.value >= 0) {
+          tmpPlacementForward.push(placement);
+        } else {
+          tmpPlacementReverse.push(placement);
+        }
+      }
+
+
+      if (isAnnotationMode) {
+        if (tmpPlacementForward.length > 0) {
+          placementsForward.push(...this._combineAdjacent(tmpPlacementForward));
+        }
+        if (tmpPlacementReverse.length > 0) {
+          placementsReverse.push(...this._combineAdjacent(tmpPlacementReverse));
+        }
+      } else {
+        if (tmpPlacementForward.length > 0) {
+          placementsForward.push(...tmpPlacementForward);
+        }
+        if (tmpPlacementReverse.length > 0) {
+          placementsReverse.push(...tmpPlacementReverse);
+        }
+      }
+    };
+
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
-      const item = features[regionIndex];
+      const item: any = features[regionIndex];
+
+      // Flat-cache range descriptor: read the region's slice of the shared
+      // dataCache directly, without copying it into a new array.
+      if (
+        item &&
+        typeof item.start === "number" &&
+        typeof item.end === "number" &&
+        Array.isArray(item.dataCache)
+      ) {
+        const dc = item.dataCache;
+        const end = Math.min(item.end, dc.length);
+        for (let i = item.start; i < end; i++) {
+          processFeature(dc[i]);
+        }
+        continue;
+      }
 
       // check: array, has dataCache property, or is a single feature
       const featureArray = Array.isArray(item)
@@ -154,74 +242,7 @@ export class FeaturePlacer {
       }
 
       for (const feature of featureArray) {
-        if (!feature) {
-          continue;
-        }
-
-        // Check size for ANNOTATION mode
-        if (isAnnotationMode && drawModel.basesToXWidth(feature.getLength()) < hiddenPixels) {
-          numHidden++;
-          continue;
-        }
-
-        // Generate locusId and check for duplicates
-        const locusId = feature.id ?? `${feature.locus.start}-${feature.locus.end}`;
-        if (seenLoci.has(locusId)) {
-          continue;
-        }
-        seenLoci.add(locusId);
-
-        // Collect placements for this feature
-        const tmpPlacementForward: PlacedFeature[] = [];
-        const tmpPlacementReverse: PlacedFeature[] = [];
-
-        for (let contextLocation of feature.computeNavContextCoordinates(navContext)) {
-          contextLocation = contextLocation.getOverlap(viewRegionBounds);
-          if (!contextLocation) {
-            continue;
-          }
-
-          const xSpan = useCenter
-            ? drawModel.baseSpanToXCenter(contextLocation)
-            : drawModel.baseSpanToXSpan(contextLocation);
-
-          const { visiblePart, isReverse } = this._locatePlacement(
-            feature,
-            navContext,
-            contextLocation,
-          );
-
-          const placement: PlacedFeature = {
-            feature,
-            visiblePart,
-            contextLocation,
-            xSpan,
-            isReverse,
-          };
-
-          if (feature.value === undefined || feature.value >= 0) {
-            tmpPlacementForward.push(placement);
-          } else {
-            tmpPlacementReverse.push(placement);
-          }
-        }
-
-
-        if (isAnnotationMode) {
-          if (tmpPlacementForward.length > 0) {
-            placementsForward.push(...this._combineAdjacent(tmpPlacementForward));
-          }
-          if (tmpPlacementReverse.length > 0) {
-            placementsReverse.push(...this._combineAdjacent(tmpPlacementReverse));
-          }
-        } else {
-          if (tmpPlacementForward.length > 0) {
-            placementsForward.push(...tmpPlacementForward);
-          }
-          if (tmpPlacementReverse.length > 0) {
-            placementsReverse.push(...tmpPlacementReverse);
-          }
-        }
+        processFeature(feature);
       }
     }
 

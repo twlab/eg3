@@ -19,6 +19,10 @@ import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
 import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import {
+  usesFlatCache,
+  flatRegionDescriptors,
+} from "./CommonTrackStateChangeFunctions.tsx/flatCache";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
 
@@ -368,6 +372,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         } else {
           combinedData = groupTracksArrMatPlot(combinedData);
         }
+      } else if (usesFlatCache(cacheTrackData)) {
+        const descriptors = flatRegionDescriptors(cacheTrackData, [
+          dataIdx + 1,
+          dataIdx,
+          dataIdx - 1,
+        ]);
+        if (descriptors.length === 3) {
+          combinedData = descriptors;
+        } else {
+          noData = true;
+        }
       } else {
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
@@ -520,18 +535,31 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         ) {
           let currIdx = dataIdx + 1;
           var noData = false;
-          for (let i = 0; i < 3; i++) {
-            if (
-              !cacheTrackData[currIdx] ||
-              !cacheTrackData[currIdx].dataCache
-            ) {
+          if (usesFlatCache(cacheTrackData)) {
+            const descriptors = flatRegionDescriptors(cacheTrackData, [
+              dataIdx + 1,
+              dataIdx,
+              dataIdx - 1,
+            ]);
+            if (descriptors.length === 3) {
+              combinedData = descriptors;
+            } else {
               noData = true;
-              continue;
             }
+          } else {
+            for (let i = 0; i < 3; i++) {
+              if (
+                !cacheTrackData[currIdx] ||
+                !cacheTrackData[currIdx].dataCache
+              ) {
+                noData = true;
+                continue;
+              }
 
-            combinedData.push(_.clone(cacheTrackData[currIdx]));
+              combinedData.push(_.clone(cacheTrackData[currIdx]));
 
-            currIdx--;
+              currIdx--;
+            }
           }
 
           if (!noData) {

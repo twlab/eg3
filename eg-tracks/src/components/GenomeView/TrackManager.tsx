@@ -31,6 +31,15 @@ import {
   groupTracksArrMatPlot,
   trackUsingExpandedLoci,
 } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import {
+  usesFlatCache,
+  flatHasRegion,
+  regionHasData,
+  flatSetRegion,
+  flatClearRegion,
+  flatClearAll,
+  flatRegionDescriptors,
+} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/flatCache";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
@@ -982,6 +991,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function handleRetryFetchTrack(id: string) {
     const curTrack = trackManagerState.current.caches[id];
 
+    if (usesFlatCache(curTrack)) {
+      flatClearAll(curTrack);
+    }
     for (const cacheDataIdx in curTrack) {
       if (isInteger(cacheDataIdx)) {
         if ("dataCache" in trackManagerState.current.caches[id][cacheDataIdx]) {
@@ -1134,11 +1146,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             });
 
             const curCacheTrack = trackManagerState.current.caches[item.id];
+            const isFlatCacheTrack = usesFlatCache(curCacheTrack);
+            if (isFlatCacheTrack) {
+              flatClearAll(curCacheTrack);
+            }
             for (const cacheDataIdx in curCacheTrack) {
               if (isInteger(cacheDataIdx)) {
                 if (
+                  isFlatCacheTrack ||
                   "dataCache" in
-                  trackManagerState.current.caches[item.id][cacheDataIdx]
+                    trackManagerState.current.caches[item.id][cacheDataIdx]
                 ) {
                   completedFetchedRegion.current.done[key] = false;
                   trackManagerState.current.caches[item.id][cacheDataIdx] = {};
@@ -1969,8 +1986,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 // For fine mode or expanded loci, only check current index
 
                 if (
-                  (cache[currentDataIdx] &&
-                    cache[currentDataIdx]["dataCache"]) ||
+                  regionHasData(cache, currentDataIdx) ||
                   !cache.usePrimaryNav
                 ) {
                   cacheKeysWithData[trackToDrawKey] = false;
@@ -1979,7 +1995,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 //  normal mode check all three indices
                 let hasAllRegionData = true;
                 for (let idx of idxArr) {
-                  if (!cache[idx] || !cache[idx].dataCache) {
+                  if (!regionHasData(cache, idx)) {
                     hasAllRegionData = false;
                     break;
                   }
@@ -2253,10 +2269,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           const isGenomeAlignTrack = curTrackCache.trackType === "genomealign";
 
-          const dataCacheKeyMissing =
-            !("dataCache" in curTrackCache[idx]) ||
-            ((isGenomeAlignTrack || !curTrackCache.usePrimaryNav) &&
-              !useFineModeNav.current);
+          // A flat-cache region is "missing" when it has no recorded range and
+          // is not already in-flight (slot.dataCache === null marks a pending
+          // fetch). Legacy tracks keep the original slot-based check.
+          const slotPending =
+            "dataCache" in curTrackCache[idx] &&
+            curTrackCache[idx].dataCache === null;
+          const dataCacheKeyMissing = usesFlatCache(curTrackCache)
+            ? !flatHasRegion(curTrackCache, idx) && !slotPending
+            : !("dataCache" in curTrackCache[idx]) ||
+              ((isGenomeAlignTrack || !curTrackCache.usePrimaryNav) &&
+                !useFineModeNav.current);
 
           if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
             needToFetchGenAlign = true;
@@ -2296,8 +2319,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           if (
             curDataIdx in curTrackCache &&
-            (!("dataCache" in curTrackCache[curDataIdx]) ||
-              (!curTrackCache.usePrimaryNav && !useFineModeNav.current))
+            (usesFlatCache(curTrackCache)
+              ? !flatHasRegion(curTrackCache, curDataIdx) &&
+                curTrackCache[curDataIdx].dataCache !== null
+              : !("dataCache" in curTrackCache[curDataIdx]) ||
+                (!curTrackCache.usePrimaryNav && !useFineModeNav.current))
           ) {
             let curTrackModel: any = trackManagerState.current.tracks.find(
               (trackModel: any) =>
@@ -2428,7 +2454,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // another track updates and the current track is already drawn we ignore it .
 
   // MARK: checkDrawData
-
+  console.log(trackManagerState.current.caches);
   function isMemoryOver2GB(): boolean {
     const memory = (performance as any).memory;
     if (!memory) return false; // Not supported (non-Chromium browsers)
@@ -2457,6 +2483,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
           if (trackManagerState.current.caches[key][cacheDataIdx]) {
+            // For flat caches the region's features live in curTrack.dataCache,
+            // not in the slot, so drop the recorded range too or it leaks.
+            if (usesFlatCache(curTrack)) {
+              flatClearRegion(curTrack, cacheDataIdx);
+            }
             trackManagerState.current.caches[key][cacheDataIdx] = {};
           }
         }
@@ -2670,16 +2701,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackManagerState.current.caches[`${fetchRes.id}`]["error"] =
           fetchRes?.errorType;
       } else {
+        const cache = trackManagerState.current.caches[`${fetchRes.id}`];
+        const isFlat = usesFlatCache(cache);
         if (fetchRes.trackModel.shouldPlaceRegion) {
           for (let i = 0; i < 3; i++) {
-            trackManagerState.current.caches[`${fetchRes.id}`][initialIdx[i]][
-              "dataCache"
-            ] = formattedData[i];
+            if (isFlat) {
+              flatSetRegion(cache, initialIdx[i], formattedData[i]);
+            } else {
+              cache[initialIdx[i]]["dataCache"] = formattedData[i];
+            }
           }
         } else {
-          trackManagerState.current.caches[`${fetchRes.id}`][
-            fetchRes.missingIdx
-          ]["dataCache"] = formattedData;
+          if (isFlat) {
+            flatSetRegion(cache, fetchRes.missingIdx, formattedData);
+          } else {
+            cache[fetchRes.missingIdx]["dataCache"] = formattedData;
+          }
         }
       }
     }
@@ -3515,6 +3552,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     for (const key in trackManagerState.current.caches) {
       const trackCache = trackManagerState.current.caches[key];
 
+      if (usesFlatCache(trackCache)) {
+        flatClearAll(trackCache);
+      }
       // if (trackCache.trackType === "genomealign") {
       for (const dataKey in trackCache) {
         if (isInteger(dataKey)) {
@@ -3828,6 +3868,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (configOptions?.group && !cacheTrackData?.usePrimaryNav) {
           if (cacheTrackData[dataIdx]?.dataCache) {
             combinedData.push(cacheTrackData[dataIdx]);
+          } else {
+            hasData = false;
+          }
+        } else if (usesFlatCache(cacheTrackData)) {
+          // Flat model: the 3 regions are index ranges into the shared
+          // dataCache, passed as descriptors so nothing is copied or combined.
+          const descriptors = flatRegionDescriptors(cacheTrackData, [
+            dataIdx + 1,
+            dataIdx,
+            dataIdx - 1,
+          ]);
+          if (descriptors.length === 3) {
+            combinedData = descriptors;
           } else {
             hasData = false;
           }
