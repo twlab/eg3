@@ -1,8 +1,15 @@
 import AlwaysDrawLabelConfig from "../config-menu-components.tsx/AlwaysDrawLabelConfig";
+import {
+  BackgroundColorConfig,
+  PrimaryColorConfig,
+  SecondaryColorConfig,
+} from "../config-menu-components.tsx/ColorConfig";
+import { AnnotationDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";
 import HeightConfig from "../config-menu-components.tsx/HeightConfig";
 import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
 import { AnnotationTrackConfig } from "./AnnotationTrackConfig";
 import { AnnotationDisplayModes } from "./DisplayModes";
+import { TrackConfig } from "./TrackConfig";
 
 /*
 Example record from the data source
@@ -18,9 +25,15 @@ DASFeature {
 }
 */
 
-export class BigBedTrackColorConfig extends AnnotationTrackConfig {
+export class BigBedTrackColorConfig extends TrackConfig {
   getMenuComponents() {
-    const items = [...super.getMenuComponents(), HeightConfig];
+    const items = [
+      ...super.getMenuComponents(),
+      AnnotationDisplayModeConfig,
+      HeightConfig,
+      BackgroundColorConfig,
+      HeightConfig,
+    ];
     if (this.getOptions().displayMode === AnnotationDisplayModes.DENSITY) {
       items.push(YscaleConfig);
     }

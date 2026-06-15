@@ -247,23 +247,22 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
       clampHeight: options.clampHeight,
     };
 
-    const legend = (
-      <TrackLegend
-        trackModel={trackModel}
-        height={options.height}
-        axisScale={
-          options.displayMode === InteractionDisplayMode.FLATARC
-            ? scales.heightScale
-            : undefined
-        }
-        forceSvg={forceSvg}
-      />
-    );
+    const legendProps = {
+      trackModel,
+      height: options.height,
+      axisScale:
+        options.displayMode === InteractionDisplayMode.FLATARC
+          ? scales.heightScale
+          : undefined,
+      forceSvg,
+    };
 
     if (updatedLegend) {
-      updatedLegend.current = legend;
+      updatedLegend.current = legendProps;
     }
-   
+
+    const legend = forceSvg ? <TrackLegend {...legendProps} /> : null;
+
     switch (options.displayMode) {
       case InteractionDisplayMode.HEATMAP:
         visualizer = (

@@ -355,8 +355,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let noData = false;
 
       if (
-        cacheTrackData[`${dataIdx}`]["xvalues"] ||
-        cacheTrackData[`${dataIdx}`]["placeFeature"]
+        cacheTrackData[`${dataIdx}`]?.["xvalues"] ||
+        cacheTrackData[`${dataIdx}`]?.["placeFeature"]
       ) {
         combinedData = [];
       } else if (dynamicMatplotTracks.has(trackModel.type)) {
@@ -615,6 +615,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         <div
           style={{
             width: 120,
+            display: "flex",
+            flexDirection: "column",
             backgroundColor: trackModel.isSelected
               ? "yellow"
               : "var(--bg-color)",
@@ -627,19 +629,42 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             pointerEvents: "auto",
           }}
         >
-          {legend ?? (
-            <TrackLegend
-              trackModel={trackModel}
-              height={
-                getConfigOptions().displayMode === "full"
-                  ? !fetchError.current
-                    ? svgHeight.current
-                    : 40
-                  : !fetchError.current
-                    ? getConfigOptions().height
-                    : 40
-              }
-            />
+          {/* <p
+            className="TrackLegend-label"
+            style={{
+              position: "absolute",
+              wordWrap: "break-word",
+              whiteSpace: "normal",
+              margin: 0,
+              zIndex: 1,
+            }}
+          >
+            {trackModel.options?.label ?? legend?.label ?? ""}
+          </p> */}
+          <TrackLegend
+            trackModel={trackModel}
+            height={
+              legend?.height ??
+              (fetchError.current
+                ? 40
+                : getConfigOptions().displayMode === "full" ||
+                    getConfigOptions().displayMode === "detail" ||
+                    (svgHeight.current &&
+                      getConfigOptions().displayMode === "auto")
+                  ? svgHeight.current
+                  : getConfigOptions().height)
+            }
+            axisScale={legend?.axisScale}
+            axisLegend={legend?.axisLegend}
+            label={trackModel.options?.label ?? legend?.label ?? ""}
+            forceSvg={legend?.forceSvg}
+            trackViewRegion={legend?.trackViewRegion}
+            selectedRegion={legend?.selectedRegion}
+            trackWidth={legend?.trackWidth}
+            noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
+          />
+          {legend?.reverseStrandLegendProps && (
+            <TrackLegend {...legend.reverseStrandLegendProps} />
           )}
         </div>
         {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}

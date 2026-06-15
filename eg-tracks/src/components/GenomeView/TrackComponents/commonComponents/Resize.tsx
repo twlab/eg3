@@ -3,9 +3,15 @@ import { ResizeObserver } from "@juggle/resize-observer";
 import { debounce } from "lodash";
 
 const useResizeObserver = () => {
-  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [size, setSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
   const ref = useRef<HTMLDivElement | null>(null);
-  const prevSize = useRef({ width: 0, height: 0 });
+  const prevSize = useRef({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
 
   useEffect(() => {
     const handleResize = debounce((entries: ResizeObserverEntry[]) => {
@@ -13,12 +19,12 @@ const useResizeObserver = () => {
         const { width, height } = entry.contentRect;
 
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
-        if (Math.abs(width - prevSize.current.width) > 50) {
+        if (Math.abs(width - prevSize.current.width) > 120) {
           setSize({ width: width, height: prevSize.current.height });
           prevSize.current = { width: width, height: prevSize.current.height };
         }
 
-        if (Math.abs(height - prevSize.current.height) > 10) {
+        if (Math.abs(height - prevSize.current.height) > 30) {
           setSize({ width: prevSize.current.width, height: height });
           prevSize.current = { width: prevSize.current.width, height: height };
         }

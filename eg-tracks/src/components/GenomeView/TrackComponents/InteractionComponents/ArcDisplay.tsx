@@ -271,7 +271,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
-        ? 0.5 * viewWindow.getLength()
+        ? 0.5 * (viewWindow.end - viewWindow.start)
         : 0.5 * width;
     this.clampScale = scaleLinear()
       .domain([0, heightStandard])

@@ -229,26 +229,25 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
-  const legend = (
-    <div
-      style={{
-        display: "flex",
-      }}
-    >
-      <TrackLegend
-        trackModel={trackModel}
-        height={height}
-        axisScale={scales.axisScale}
-        axisLegend={unit}
-        label={options.label}
-        forceSvg={forceSvg}
-      />
-    </div>
-  );
+  const legendProps = {
+    trackModel,
+    height,
+    axisScale: scales.axisScale,
+    axisLegend: unit,
+    label: options.label,
+    forceSvg,
+  };
 
   if (updatedLegend) {
-    updatedLegend.current = legend;
+    updatedLegend.current = legendProps;
   }
+
+  const legend =
+    forceSvg || options.packageVersion ? (
+      <div style={{ display: "flex" }}>
+        <TrackLegend {...legendProps} />
+      </div>
+    ) : null;
   let curParentStyle: any = forceSvg
     ? {
         position: "relative",

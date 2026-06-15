@@ -181,9 +181,9 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       updatedLegend,
       viewWindow,
       xvaluesData,
-      windowWidth
+      windowWidth,
     } = this.props;
-   
+
     const { height, smooth, lineWidth } = options;
 
     this.xToValue = xvaluesData
@@ -201,24 +201,26 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
             smooth,
           );
     this.scales = this.computeScales(this.xToValue, height);
-    const legend = (
-      <div
-        style={{
-          display: "flex",
-        }}
-      >
-        <TrackLegend
-          trackModel={trackModel}
-          height={height}
-          axisScale={this.scales.valueToY}
-          axisLegend={unit}
-          forceSvg={forceSvg}
-        />
-      </div>
-    );
+    const legendProps = {
+      trackModel,
+      height,
+      axisScale: this.scales.valueToY,
+      axisLegend: unit,
+      forceSvg,
+    };
     if (updatedLegend) {
-      updatedLegend.current = legend;
+      updatedLegend.current = legendProps;
     }
+    const legend =
+      forceSvg || options.packageVersion ? (
+        <div
+          style={{
+            display: "flex",
+          }}
+        >
+          <TrackLegend {...legendProps} />
+        </div>
+      ) : null;
     let curParentStyle: any = forceSvg
       ? {
           position: "relative",

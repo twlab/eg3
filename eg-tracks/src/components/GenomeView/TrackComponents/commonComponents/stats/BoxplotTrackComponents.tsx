@@ -188,19 +188,16 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     !options.usePrimaryNav ||
     windowWidth !== currentWindowWidth.current
   ) {
-    const legend = (
-      <TrackLegend
-        trackModel={trackModel}
-        height={height}
-        axisScale={scales.valueToY}
-        axisLegend={unit}
-        label={options.label}
-        forceSvg={forceSvg}
-      />
-    );
-
+    const legendProps = {
+      trackModel,
+      height,
+      axisScale: scales.valueToY,
+      axisLegend: unit,
+      label: options.label,
+      forceSvg,
+    };
     if (updatedLegend) {
-      updatedLegend.current = legend;
+      updatedLegend.current = legendProps;
     }
 
     let curParentStyle: any = forceSvg

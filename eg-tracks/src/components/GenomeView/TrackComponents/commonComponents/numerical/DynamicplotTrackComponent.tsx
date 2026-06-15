@@ -119,7 +119,7 @@ class DynamicplotTrackComponent extends React.PureComponent<
     data: any[],
     viewRegion: any,
     width: number,
-    aggregatorId: string
+    aggregatorId: string,
   ) {
     const aggregator = new NumericalAggregator();
 
@@ -127,8 +127,7 @@ class DynamicplotTrackComponent extends React.PureComponent<
       data,
       viewRegion,
       width,
-      this.props.options
-
+      this.props.options,
     )[0];
   }
 
@@ -140,8 +139,8 @@ class DynamicplotTrackComponent extends React.PureComponent<
 
     const visibleValues = _.flatten(
       xToValue.map((d) =>
-        d.slice(this.props.viewWindow.start, this.props.viewWindow.end)
-      )
+        d.slice(this.props.viewWindow.start, this.props.viewWindow.end),
+      ),
     );
 
     let max = _.max(visibleValues) || 0;
@@ -233,7 +232,7 @@ class DynamicplotTrackComponent extends React.PureComponent<
       useDynamicColors,
     } = options;
     const aggregatedData = data.map((d) =>
-      this.aggregateFeatures(d, viewRegion, width, aggregateMethod)
+      this.aggregateFeatures(d, viewRegion, width, aggregateMethod),
     );
     this.xToValue =
       smooth === 0
@@ -242,14 +241,12 @@ class DynamicplotTrackComponent extends React.PureComponent<
     this.scales = this.computeScales(this.xToValue, height);
     const xToValueZipped = _.zip(...this.xToValue);
     if (updatedLegend) {
-      updatedLegend.current = (
-        <TrackLegend
-          trackModel={trackModel}
-          height={height}
-          axisScale={this.scales.valueToY as any}
-          axisLegend={unit}
-        />
-      );
+      updatedLegend.current = {
+        trackModel,
+        height,
+        axisScale: this.scales.valueToY as any,
+        axisLegend: unit,
+      };
     }
 
     const visualizer = (
