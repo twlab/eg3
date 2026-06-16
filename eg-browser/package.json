@@ -1,7 +1,7 @@
 {
   "name": "eg-next",
   "private": true,
-  "version": "61.0.6",
+  "version": "61.0.92",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,6 +33,7 @@
     "react-table": "^7.8.0",
     "redux-persist": "^6.0.0",
     "redux-undo": "^1.1.0",
+    "svg2pdf.js": "^2.7.0",
     "tailwind-merge": "^3.3.1",
     "wuepgg3-track": "^0.0.0"
   },
