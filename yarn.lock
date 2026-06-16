@@ -6532,8 +6532,8 @@ ee-first@1.1.1:
   resolved "https://registry.npmjs.org/ee-first/-/ee-first-1.1.1.tgz"
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
-"eg-next@file:C:\\Users\\chanr\\development\\eg-browser":
-  version "60.0.8"
+"eg-next@file:C:\\Users\\chanr\\eg3\\eg-browser":
+  version "61.0.6"
   resolved "file:eg-browser"
   dependencies:
     "@heroicons/react" "^2.2.0"
@@ -6543,6 +6543,7 @@ ee-first@1.1.1:
     firebase "^11.5.0"
     framer-motion "^12.12.1"
     fuse.js "^7.0.0"
+    jspdf "^4.2.1"
     jszip "^3.10.1"
     lodash "^4.17.21"
     plotly.js "^3.0.3"
@@ -6558,7 +6559,7 @@ ee-first@1.1.1:
     tailwind-merge "^3.3.1"
     wuepgg3-track "^0.0.0"
 
-"eg3-docs@file:C:\\Users\\chanr\\development\\docs":
+"eg3-docs@file:C:\\Users\\chanr\\eg3\\docs":
   version "0.0.1"
   resolved "file:docs"
   dependencies:
@@ -6633,11 +6634,17 @@ end-of-stream@^1.0.0:
   dependencies:
     once "^1.4.0"
 
-enhanced-resolve@^5.18.3, enhanced-resolve@^5.20.0:
+enhanced-resolve@^5.18.3:
   version "5.18.4"
   dependencies:
     graceful-fs "^4.2.4"
     tapable "^2.2.0"
+
+enhanced-resolve@^5.20.0:
+  version "5.24.0"
+  dependencies:
+    graceful-fs "^4.2.4"
+    tapable "^2.3.3"
 
 entities@^2.0.0:
   version "2.2.0"
@@ -7493,6 +7500,11 @@ font-atlas@^2.1.0:
   integrity sha512-kP3AmvX+HJpW4w3d+PiPR2X6E1yvsBXt2yhuCw+yReO9F1WYhvZwx3c95DGZGwg9xYzDGrgJYa885xmVA+28Cg==
   dependencies:
     css-font "^1.0.0"
+
+font-family-papandreou@^0.2.0-patch1:
+  version "0.2.0-patch2"
+  resolved "https://registry.npmjs.org/font-family-papandreou/-/font-family-papandreou-0.2.0-patch2.tgz"
+  integrity sha512-l/YiRdBSH/eWv6OF3sLGkwErL+n0MqCICi9mppTZBOCL5vixWGDqCYvRcuxB2h7RGCTzaTKOHT2caHvCXQPRlw==
 
 font-measure@^1.2.2:
   version "1.2.2"
@@ -9035,7 +9047,7 @@ jsonfile@^6.0.1:
   optionalDependencies:
     graceful-fs "^4.1.6"
 
-jspdf@^4.2.1:
+"jspdf@^4.0.0 || ^3.0.0 || ^2.0.0", jspdf@^4.2.1:
   version "4.2.1"
   resolved "https://registry.npmjs.org/jspdf/-/jspdf-4.2.1.tgz"
   integrity sha512-YyAXyvnmjTbR4bHQRLzex3CuINCDlQnBqoSYyjJwTP2x9jDLuKDzy7aKUl0hgx3uhcl7xzg32agn5vlie6HIlQ==
@@ -10055,7 +10067,10 @@ miller-rabin@^4.0.0:
     bn.js "^4.0.0"
     brorand "^1.0.1"
 
-mime-db@^1.54.0, "mime-db@>= 1.43.0 < 2", mime-db@1.52.0:
+mime-db@^1.54.0:
+  version "1.54.0"
+
+"mime-db@>= 1.43.0 < 2", mime-db@1.52.0:
   version "1.52.0"
   resolved "https://registry.npmjs.org/mime-db/-/mime-db-1.52.0.tgz"
   integrity sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==
@@ -12915,6 +12930,11 @@ spdy@^4.0.2:
     select-hose "^2.0.0"
     spdy-transport "^3.0.0"
 
+specificity@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.npmjs.org/specificity/-/specificity-0.4.1.tgz"
+  integrity sha512-1klA3Gi5PD1Wv9Q0wUoOQN1IWAuPu0D1U03ThXTr0cJ20+/iq2tHSDnK7Kk/0LXJ1ztUB2/1Os0wKmfyNgUQfg==
+
 sprintf-js@~1.0.2:
   version "1.0.3"
   resolved "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.0.3.tgz"
@@ -13183,6 +13203,16 @@ svg-pathdata@^6.0.3:
   resolved "https://registry.npmjs.org/svg-pathdata/-/svg-pathdata-6.0.3.tgz"
   integrity sha512-qsjeeq5YjBZ5eMdFuUa4ZosMLxgr5RZ+F+Y1OrDhuOCEInRMA3x74XdBtggJcj9kOeInz0WE+LgCPDkZFlBYJw==
 
+svg2pdf.js@^2.7.0:
+  version "2.7.0"
+  resolved "https://registry.npmjs.org/svg2pdf.js/-/svg2pdf.js-2.7.0.tgz"
+  integrity sha512-nXK4Wx28H0KtOktanm5nsphl1KMEoLNMelAT/776qxPAj9DshwYcqgdpKuBnY1nrcYOriQFHVQLE4tIag+aDJA==
+  dependencies:
+    cssesc "^3.0.0"
+    font-family-papandreou "^0.2.0-patch1"
+    specificity "^0.4.1"
+    svgpath "^2.3.0"
+
 svgo@^3.0.2, svgo@^3.2.0:
   version "3.3.3"
   resolved "https://registry.npmjs.org/svgo/-/svgo-3.3.3.tgz"
@@ -13196,6 +13226,11 @@ svgo@^3.0.2, svgo@^3.2.0:
     picocolors "^1.0.0"
     sax "^1.5.0"
 
+svgpath@^2.3.0:
+  version "2.6.0"
+  resolved "https://registry.npmjs.org/svgpath/-/svgpath-2.6.0.tgz"
+  integrity sha512-OIWR6bKzXvdXYyO4DK/UWa1VA1JeKq8E+0ug2DG98Y/vOmMpfZNj+TIG988HjfYSqtcy/hFOtZq/n/j5GSESNg==
+
 tailwind-merge@^3.3.1:
   version "3.4.0"
 
@@ -13207,7 +13242,7 @@ tapable@^1.0.0:
   resolved "https://registry.npmjs.org/tapable/-/tapable-1.1.3.tgz"
   integrity sha512-4WK/bYZmj8xLr+HUCODHGF1ZFzsYffasLUgEiMBY4fgtltdO6B4WJtlSbPaDTLpYTcGVwM2qLnFTICEcNxs3kA==
 
-tapable@^2.0.0, tapable@^2.2.0, tapable@^2.2.1, tapable@^2.3.0:
+tapable@^2.0.0, tapable@^2.2.0, tapable@^2.2.1, tapable@^2.3.0, tapable@^2.3.3:
   version "2.3.0"
 
 terser-webpack-plugin@^5.3.17, terser-webpack-plugin@^5.3.9:
@@ -14085,7 +14120,7 @@ ws@^8.13.0:
   resolved "https://registry.npmjs.org/ws/-/ws-8.20.0.tgz"
   integrity sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==
 
-wuepgg3-track@^0.0.0, "wuepgg3-track@file:C:\\Users\\chanr\\development\\eg-tracks":
+wuepgg3-track@^0.0.0, "wuepgg3-track@file:C:\\Users\\chanr\\eg3\\eg-tracks":
   version "0.0.0"
   resolved "file:eg-tracks"
   dependencies:
@@ -14118,7 +14153,6 @@ wuepgg3-track@^0.0.0, "wuepgg3-track@file:C:\\Users\\chanr\\development\\eg-trac
     json5 "^2.2.3"
     lodash "^4.17.21"
     memoize-one "^6.0.0"
-    node-fetch "^2.6.1"
     pako "^2.1.0"
     papaparse "^5.4.1"
     parse-color "^1.0.0"

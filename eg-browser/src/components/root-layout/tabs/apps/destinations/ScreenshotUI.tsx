@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import _, { create } from "lodash";
 import { jsPDF } from "jspdf";
+import "svg2pdf.js"; // augments jsPDF instances with the .svg() method
 import Button from "../../../../ui/button/Button";
 import {
   ArrowDownTrayIcon,
@@ -332,11 +333,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     dl.click();
   };
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     const svgContent = prepareSvg();
 
-    // foreignObject containing HTML taints the canvas and blocks toDataURL.
-    // Replace each foreignObject with a native SVG <text> element instead.
+    // foreignObject containing HTML can't be rendered by svg2pdf (and taints
+    // canvases). Replace each foreignObject with a native SVG <text> element.
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
     svgDoc.querySelectorAll("foreignObject").forEach((fo) => {
@@ -353,9 +354,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         label.length > 20 ? label.slice(0, 18) + "\u2026" : label;
       fo.parentNode?.replaceChild(text, fo);
     });
-    const cleanedSvg = new XMLSerializer().serializeToString(
-      svgDoc.documentElement,
-    );
 
     const tracks = Array.from(
       document
@@ -368,35 +366,35 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     );
     const boxWidth = props.windowWidth + 120 + 1;
 
-    const scale = 4;
-    const svgBlob = new Blob([cleanedSvg], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const svgUrl = URL.createObjectURL(svgBlob);
-    const img = new Image();
-    img.width = boxWidth * scale;
-    img.height = boxHeight * scale;
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = boxWidth * scale;
-      canvas.height = boxHeight * scale;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, 0, 0, boxWidth, boxHeight);
-      URL.revokeObjectURL(svgUrl);
+    // svg2pdf renders the SVG into the PDF as native vector shapes and
+    // selectable/editable text (instead of a flattened raster image). It reads
+    // computed styles, so the SVG must be attached to the live DOM for its
+    // <style> rules (.svg-text-bg, --font-color, etc.) to resolve.
+    const svgEl = svgDoc.documentElement as unknown as SVGSVGElement;
+    const holder = document.createElement("div");
+    holder.style.cssText = "position:fixed;left:-99999px;top:0;";
+    holder.appendChild(svgEl);
+    document.body.appendChild(holder);
 
+    try {
       const orientation = boxWidth > boxHeight ? "landscape" : "portrait";
       const pdf = new jsPDF({
         orientation,
         unit: "px",
         format: [boxWidth, boxHeight],
       });
-      const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 0, 0, boxWidth, boxHeight);
+      await pdf.svg(svgEl, {
+        x: 0,
+        y: 0,
+        width: boxWidth,
+        height: boxHeight,
+      });
       pdf.save(new Date().toISOString() + "_eg.pdf");
-    };
-    img.src = svgUrl;
+    } catch (err) {
+      console.error("Failed to generate editable PDF", err);
+    } finally {
+      document.body.removeChild(holder);
+    }
   };
   const styles = {
     container: {

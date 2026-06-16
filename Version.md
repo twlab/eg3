@@ -1,5 +1,9 @@
 # Version history
 
+## 61.0.92
+
+- pdf screenshots are now editable
+
 ## 61.0.6
 
 - fixed hic fetch error
