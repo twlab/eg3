@@ -1,5 +1,10 @@
 # Version history
 
+## 61.1.0
+
+- fixed bug where pdf screenshot doesn't show tracklegend
+- reverted hic fetch changes and fixed 403 error bug
+
 ## 61.0.92
 
 - pdf screenshots are now editable
