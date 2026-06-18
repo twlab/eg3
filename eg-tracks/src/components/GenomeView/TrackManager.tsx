@@ -640,6 +640,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const newMessage = _.cloneDeep(message[j]);
 
         for (const track of message[j].trackModelArr) {
+          // hic tracks are fetched on the main thread (no worker) and the
+          // results are handed directly to createInfiniteOnMessage.
+
+          if (track.type === "hic") {
+            fetchGenomicData([{ ...newMessage, trackModelArr: [track] }])
+              .then((results) => {
+                if (results) {
+                  createInfiniteOnMessage({ data: results });
+                }
+              })
+              .catch((error) => {
+                console.error("Error fetching hic data:", error);
+              });
+            continue;
+          }
+
           // Find the worker with the fewest active processes
           let leastBusyIdx = 0;
           let minCount =

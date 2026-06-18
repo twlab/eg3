@@ -35,12 +35,6 @@ import { findClosestNumber } from "../models/util";
 
 const MIN_BINS_PER_REGION = 50;
 
-const CORS_PROXY = "https://epigenome.wustl.edu/cors";
-
-function proxiedUrl(url: string): string {
-  return `${CORS_PROXY}/${url.replace(/^https?:\/\//, "")}`;
-}
-
 /**
  * Data source that fetches data from .hic files.
  *
@@ -51,49 +45,29 @@ export class HicSource {
   normOptions: any;
   metadata: any;
   straw: any;
-  url: any;
-  private isBlob: boolean;
-  private usingProxy: boolean = false;
   /**
    * Makes a new instance specialized in serving data from one URL
    *
    * @param {string} url - the URL to fetch data from
    */
   constructor(url) {
-    this.url = url;
-    this.isBlob = typeof url !== "string";
-    this.straw = new HicStraw(this.makeConfig(url));
+    let config;
+    if (typeof url === "string") {
+      config = { url };
+      // if(url.includes('4dnucleome')) {
+      //     config = {url, headers: {Authorization : process.env.REACT_APP_4DN_KEY}}
+      // }
+    } else {
+      config = { blob: url };
+    }
+    // console.log(config)
+    this.straw = new HicStraw(config);
     // this.datasetPromise = this.straw.reader.loadDataset({});
     // this.metadataPromise = null;
     // this.normVectorsPromise = null;
     this.metadata = null;
     this.normOptions = null;
     this.currentBinSize = 0;
-  }
-
-  private makeConfig(url) {
-    if (typeof url === "string") {
-      return { url };
-      // if(url.includes('4dnucleome')) {
-      //     return {url, headers: {Authorization : process.env.REACT_APP_4DN_KEY}}
-      // }
-    }
-    return { blob: url };
-  }
-
-  /**
-   * Re-points straw at the WashU CORS proxy and clears cached metadata.  Some hosts (e.g. the public
-   * hicfiles S3 bucket) return 403 for cross-origin requests from a deployed domain even though they work from
-   * localhost; routing through the proxy makes the request originate from an allowed origin.
-   */
-  private switchToProxy() {
-    if (this.isBlob) {
-      return;
-    }
-    this.usingProxy = true;
-    this.metadata = null;
-    this.normOptions = null;
-    this.straw = new HicStraw({ url: proxiedUrl(this.url) });
   }
 
   /**
@@ -164,7 +138,7 @@ export class HicSource {
     queryLocus2,
     binSize,
     normalization = NormalizationMode.NONE,
-    region
+    region,
   ) {
     if (!this.normOptions.includes(normalization)) {
       return [];
@@ -177,7 +151,7 @@ export class HicSource {
         queryLocus1,
         queryLocus2,
         "BP",
-        binSize
+        binSize,
       );
     } catch (error) {
       console.error("Failed to fetch contact records:", error);
@@ -189,12 +163,12 @@ export class HicSource {
       const recordLocus1 = new ChromosomeInterval(
         queryLocus1.chr,
         record.bin1 * binSize,
-        (record.bin1 + 1) * binSize
+        (record.bin1 + 1) * binSize,
       );
       const recordLocus2 = new ChromosomeInterval(
         queryLocus2.chr,
         record.bin2 * binSize,
-        (record.bin2 + 1) * binSize
+        (record.bin2 + 1) * binSize,
       );
       interactions.push(
         new GenomeInteraction(
@@ -205,8 +179,8 @@ export class HicSource {
           "",
           recordLocus1.toString() + recordLocus2.toString(),
           region._navContext.convertGenomeIntervalToBases(recordLocus1),
-          region._navContext.convertGenomeIntervalToBases(recordLocus2)
-        )
+          region._navContext.convertGenomeIntervalToBases(recordLocus2),
+        ),
       );
     }
 
@@ -222,18 +196,6 @@ export class HicSource {
    * @return {Promise<GenomeInteraction[]>} a Promise for the data
    */
   async getData(region, basesPerPixel, options) {
-    try {
-      return await this.fetchData(region, options);
-    } catch (error) {
-      if (!this.usingProxy && !this.isBlob) {
-        this.switchToProxy();
-        return await this.fetchData(region, options);
-      }
-      throw error;
-    }
-  }
-
-  private async fetchData(region, options) {
     this.metadata = await this.straw.getMetaData();
     this.normOptions = await this.straw.getNormalizationOptions();
     // console.log(this.metadata, this.normOptions);
@@ -251,8 +213,8 @@ export class HicSource {
             loci[j],
             binSize,
             options.normalization,
-            region
-          )
+            region,
+          ),
         );
       }
     }
@@ -291,18 +253,6 @@ export class HicSource {
    * @return {Promise<GenomeInteraction[]>} a Promise for the data
    */
   async getDataAll(genome) {
-    try {
-      return await this.fetchDataAll(genome);
-    } catch (error) {
-      if (!this.usingProxy && !this.isBlob) {
-        this.switchToProxy();
-        return await this.fetchDataAll(genome);
-      }
-      throw error;
-    }
-  }
-
-  private async fetchDataAll(genome) {
     if (!this.metadata) {
       this.metadata = await this.straw.getMetaData();
     }
@@ -311,7 +261,7 @@ export class HicSource {
       NormalizationMode.NONE,
       { chr: "ALL" },
       { chr: "ALL" },
-      "BP"
+      "BP",
     );
     const interactions: Array<any> = [];
     for (const record of allRecords) {

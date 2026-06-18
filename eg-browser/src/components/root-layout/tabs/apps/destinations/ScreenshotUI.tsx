@@ -336,23 +336,108 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   const downloadPdf = async () => {
     const svgContent = prepareSvg();
 
-    // foreignObject containing HTML can't be rendered by svg2pdf (and taints
-    // canvases). Replace each foreignObject with a native SVG <text> element.
+    const fg = props.darkTheme ? "white" : "#222";
+    const bg = props.darkTheme ? "#222" : "white";
+
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
+
+    // svg2pdf does not resolve CSS custom properties: it reads the <style>
+    // rule (e.g. `.svg-text-bg { fill: var(--font-color) }`) literally and its
+    // color parser chokes on `var(...)`, leaving all legend/axis text and the
+    // axis lines with no valid fill/stroke (invisible). Bake the variables down
+    // to concrete colors so svg2pdf can parse them.
+    svgDoc.querySelectorAll("style").forEach((styleEl) => {
+      styleEl.textContent = (styleEl.textContent || "")
+        .replace(/var\(--font-color\)/g, fg)
+        .replace(/var\(--bg-color\)/g, bg);
+    });
+
+    const SVG_NS = "http://www.w3.org/2000/svg";
+
+    // d3 formats negative ticks with the Unicode minus sign (U+2212), which is
+    // not in jsPDF's standard font encoding, so axis labels like "-2.8" lose
+    // the sign (and shift) in the PDF. Normalize to an ASCII hyphen-minus.
+    svgDoc.querySelectorAll("text, tspan").forEach((el) => {
+      if (el.children.length === 0 && el.textContent?.includes("\u2212")) {
+        el.textContent = el.textContent.replace(/\u2212/g, "-");
+      }
+    });
+
+    // Measure with the same font the labels render in, so we can wrap to width.
+    const measureCtx = document.createElement("canvas").getContext("2d");
+    if (measureCtx) measureCtx.font = "9px Arial, Helvetica, sans-serif";
+    const measure = (s: string) =>
+      measureCtx ? measureCtx.measureText(s).width : s.length * 5;
+
+    const wrapLabel = (label: string, maxWidth: number): string[] => {
+      const lines: string[] = [];
+      let line = "";
+      const commit = () => {
+        if (line) lines.push(line);
+        line = "";
+      };
+      for (const token of label.split(/(\s+)/)) {
+        if (token === "") continue;
+        if (/^\s+$/.test(token)) {
+          if (measure(line + token) <= maxWidth) line += token;
+          else commit();
+          continue;
+        }
+        let word = token;
+        while (word) {
+          if (measure(line + word) <= maxWidth) {
+            line += word;
+            break;
+          }
+          if (!line) {
+            // single word wider than the column: hard-break it
+            let i = word.length;
+            while (i > 1 && measure(word.slice(0, i)) > maxWidth) i--;
+            lines.push(word.slice(0, i));
+            word = word.slice(i);
+          } else {
+            commit();
+          }
+        }
+      }
+      commit();
+      return lines.map((l) => l.trim());
+    };
+
+    // foreignObject containing HTML can't be rendered by svg2pdf (and taints
+    // canvases). Replace each one with native SVG <text> lines, wrapping the
+    // label to the legend column width instead of truncating with an ellipsis.
+    // Color via inline style, which outranks the stylesheet rule in svg2pdf's
+    // attribute resolution, so the label is guaranteed to be colored. Cap the
+    // line count to the track height so the label can't overlap the next track.
+    const LINE_HEIGHT = 10;
     svgDoc.querySelectorAll("foreignObject").forEach((fo) => {
       const x = parseFloat(fo.getAttribute("x") || "0");
       const y = parseFloat(fo.getAttribute("y") || "0");
       const height = parseFloat(fo.getAttribute("height") || "20");
+      const width = parseFloat(fo.getAttribute("width") || "80");
       const label = fo.textContent?.trim() || "";
-      const text = svgDoc.createElementNS("http://www.w3.org/2000/svg", "text");
-      text.setAttribute("x", String(x + 2));
-      text.setAttribute("y", String(y + Math.min(height * 0.4, 12)));
-      text.setAttribute("font-size", "9px");
-      text.setAttribute("class", "svg-text-bg");
-      text.textContent =
-        label.length > 20 ? label.slice(0, 18) + "\u2026" : label;
-      fo.parentNode?.replaceChild(text, fo);
+
+      const maxLines = Math.max(1, Math.floor((height - 2) / LINE_HEIGHT));
+      let lines = wrapLabel(label, width - 4);
+      if (lines.length > maxLines) {
+        lines = lines.slice(0, maxLines);
+        const last = lines[maxLines - 1];
+        lines[maxLines - 1] = last.replace(/.$/, "") + "\u2026";
+      }
+
+      const g = svgDoc.createElementNS(SVG_NS, "g");
+      lines.forEach((ln, i) => {
+        const text = svgDoc.createElementNS(SVG_NS, "text");
+        text.setAttribute("x", String(x + 2));
+        text.setAttribute("y", String(y + 9 + i * LINE_HEIGHT));
+        text.setAttribute("font-size", "9px");
+        text.style.fill = fg;
+        text.textContent = ln;
+        g.appendChild(text);
+      });
+      fo.parentNode?.replaceChild(g, fo);
     });
 
     const tracks = Array.from(
