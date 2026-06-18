@@ -389,7 +389,7 @@ export default function RootLayout(props: AppProps) {
       if (currentSession) {
         dispatch(
           updateCurrentSession({
-            tracks: props.tracks.map(({ id: _id, ...rest }: any) => rest),
+            tracks: props?.tracks ? props.tracks : [],
           }),
         );
       }
@@ -416,7 +416,6 @@ export default function RootLayout(props: AppProps) {
                   sessionId={sessionId}
                   sessions={sessions}
                   currentSession={currentSession}
-                  isPackageMode={!!isPackageMode}
                 />
               </div>
             )}
