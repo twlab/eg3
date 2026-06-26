@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAppDispatch } from "@/lib/redux/hooks";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import {
   setCurrentSession,
   upsertSession,
@@ -8,10 +7,7 @@ import {
 import Button from "../ui/button/Button";
 import FileInput from "../ui/input/FileInput";
 
-import {
-  addSessionsFromBundleId,
-  convertSession,
-} from "@/lib/redux/thunk/session";
+import { convertSession } from "@/lib/redux/thunk/session";
 import { importOneSession } from "@/lib/redux/thunk/session";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
 import { getDatabase, ref, remove } from "firebase/database";
@@ -241,6 +237,8 @@ export default function ImportSession() {
                             try {
                               const sess = session.state;
                               sess["bundleId"] = bundle?.bundleId;
+                              sess["title"] = session?.label;
+
                               await dispatch(
                                 importOneSession({
                                   session: sess,
