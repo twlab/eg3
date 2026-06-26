@@ -1,5 +1,9 @@
 # Version history
 
+## 61.1.1
+
+- fixed home screen session load, bundleId is checked first before loading session so user can choose
+
 ## 61.1.0
 
 - fixed bug where pdf screenshot doesn't show tracklegend

@@ -30,9 +30,28 @@ export default function ImportSession() {
 
     if (!file) return;
 
+    let session: any;
     try {
       const content = await file.text();
-      let session = JSON.parse(content);
+      session = JSON.parse(content);
+    } catch (e) {
+      setError("Invalid session file. Please check the file format.");
+      return;
+    }
+
+    if (session?.bundleId) {
+      try {
+        const res = await onRetrieveSession(session.bundleId);
+        if (res) {
+          setBundle(res);
+        }
+        return;
+      } catch (e) {
+        // fall through to the standard single-session import logic
+      }
+    }
+
+    try {
       session = convertSession(session, dispatch);
 
       if (!session.id || !session.genomeId || !session.viewRegion) {
@@ -75,7 +94,7 @@ export default function ImportSession() {
               setError(null);
               setIsLoading(true);
               try {
-                await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
+                // await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
                 // retrieve bundle to display sessions below
                 try {
                   const res = await onRetrieveSession(bundleId);
@@ -221,14 +240,14 @@ export default function ImportSession() {
                             // restore this session into the browser
                             try {
                               const sess = session.state;
-
+                              sess["bundleId"] = bundle?.bundleId;
                               await dispatch(
                                 importOneSession({
                                   session: sess,
                                   navigatingToSession: true,
                                 }) as any,
                               ).unwrap();
-                              console.log("Session restored.");
+                              // console.log("Session restored.");
                             } catch (e) {
                               console.error(e);
                             }
@@ -258,7 +277,7 @@ export default function ImportSession() {
                               const newBundle = { ...bundle };
                               delete newBundle.sessionsInBundle[id];
 
-                              console.log("Session deleted.");
+                              // console.log("Session deleted.");
                             } catch (e) {
                               console.error(e);
                             }

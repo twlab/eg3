@@ -1,3 +1,8 @@
+6/24/2026
+package version footer hidden 
+update https://epgg.github.io/ docunmentation
+update eg3 readme 
+
 5/18/2026
 change examples and schema     (done)
 change prop names for custom genomes (done)
