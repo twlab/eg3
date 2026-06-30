@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import _, { create } from "lodash";
+import _ from "lodash";
 import { jsPDF } from "jspdf";
 import "svg2pdf.js"; // augments jsPDF instances with the .svg() method
 import Button from "../../../../ui/button/Button";
@@ -10,14 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ClipLoader } from "react-spinners";
-import {
-  ViewExpansion,
-  TrackModel,
-  LinearDrawingModel,
-  trackOptionMap,
-  getDisplayModeFunction,
-  OpenInterval,
-} from "wuepgg3-track";
+import { trackOptionMap, getDisplayModeFunction } from "wuepgg3-track";
 
 interface Highlight {
   start: number;
