@@ -249,7 +249,7 @@ export default function NavBar(props) {
         className="flex flex-row py-1 items-center outline outline-gray-300 bg-white dark:bg-dark-secondary border-b border-gray-300 dark:border-gray-600 px-4 relative  gap-2"
       >
         {/* Back button */}
-        {currentSession ? (
+        {currentSession && !props.isPackageMode ? (
           <BackspaceIcon
             className="size-5 flex-shrink-0 text-gray-600 dark:text-dark-primary cursor-pointer transition-colors duration-150 hover:text-red-500 dark:hover:text-red-400"
             onClick={() => {
@@ -307,12 +307,12 @@ export default function NavBar(props) {
               >
                 {_genomeConfig?.name && (
                   <Button
-                    onClick={(e) => openTab("tab-genome-picker", e)}
+                    onClick={!props.isPackageMode ? (e) => openTab("tab-genome-picker", e) : undefined}
                     active={currentTab === "tab-genome-picker"}
                     style={{
                       backgroundColor: sessionPanelOpen ? "#e6eef9" : "#f3f4f6",
                       color: "#0f172a",
-
+                      cursor: props.isPackageMode ? "default" : undefined,
                       display: "flex",
                       alignItems: "center",
                       width: "fit-content",
@@ -502,14 +502,14 @@ export default function NavBar(props) {
                   >
                     {_genomeConfig?.name && (
                       <Button
-                        onClick={(e) => openTab("tab-genome-picker", e)}
+                        onClick={!props.isPackageMode ? (e) => openTab("tab-genome-picker", e) : undefined}
                         active={currentTab === "tab-genome-picker"}
                         style={{
                           backgroundColor: sessionPanelOpen
                             ? "#e6eef9"
                             : "#f3f4f6",
                           color: "#0f172a",
-
+                          cursor: props.isPackageMode ? "default" : undefined,
                           display: "flex",
                           alignItems: "center",
                           width: "fit-content",
@@ -624,19 +624,21 @@ export default function NavBar(props) {
                     >
                       Apps
                     </Button>
-                    <Button
-                      onClick={(e) => openTab("share", e)}
-                      active={currentTab === "share"}
-                      style={{
-                        backgroundColor: "#e6f9d2",
-                        color: "#14532d",
-                        width: "fit-content",
-                        padding: "4px 6px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Share
-                    </Button>
+                    {!props.isPackageMode && (
+                      <Button
+                        onClick={(e) => openTab("share", e)}
+                        active={currentTab === "share"}
+                        style={{
+                          backgroundColor: "#e6f9d2",
+                          color: "#14532d",
+                          width: "fit-content",
+                          padding: "4px 6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Share
+                      </Button>
+                    )}
                     <Button
                       onClick={(e) => openTab("settings", e)}
                       active={currentTab === "settings"}
@@ -862,20 +864,22 @@ export default function NavBar(props) {
                     >
                       Apps
                     </Button>
-                    <Button
-                      onClick={() => {
-                        dispatch(
-                          setNavigationTab(
-                            currentTab === "share" ? null : "share",
-                          ),
-                        );
-                        setMobileMenuOpen(false);
-                      }}
-                      active={currentTab === "share"}
-                      style={{ width: "100%", justifyContent: "center" }}
-                    >
-                      Share
-                    </Button>
+                    {!props.isPackageMode && (
+                      <Button
+                        onClick={() => {
+                          dispatch(
+                            setNavigationTab(
+                              currentTab === "share" ? null : "share",
+                            ),
+                          );
+                          setMobileMenuOpen(false);
+                        }}
+                        active={currentTab === "share"}
+                        style={{ width: "100%", justifyContent: "center" }}
+                      >
+                        Share
+                      </Button>
+                    )}
                     <Button
                       onClick={() => {
                         dispatch(
