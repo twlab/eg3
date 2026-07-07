@@ -446,7 +446,7 @@ const ScatterPlot: React.FC = () => {
               )}
             </div>
           </div>
-          <div style={{ marginLeft: "-150px" }}>
+          <div>
             <Plot data={[data]} layout={layout} />
           </div>
         </>

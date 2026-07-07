@@ -1,7 +1,7 @@
 {
   "name": "wuepgg",
   "private": false,
-  "version": "61.1.1",
+  "version": "61.1.2",
   "license": "SEE LICENSE IN LICENSE.txt",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
@@ -60,7 +60,7 @@
     "svg2pdf.js": "^2.7.0",
     "tailwind-merge": "^3.3.1",
     "vite-plugin-dts": "^4.5.4",
-    "wuepgg3-track": "^7.0.4"
+    "wuepgg3-track": "^7.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
