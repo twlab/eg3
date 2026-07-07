@@ -1,9 +1,9 @@
-import React, { memo, startTransition } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
-import OpenInterval from "../../../models/OpenInterval";
+
 import ErrorBoundary from "./commonComponents/ErrorBoundary";
 
 import {
@@ -186,16 +186,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
       xPos.current = curXPos;
 
-      startTransition(() =>
-        setViewComponent({
-          component: result,
-          dataIdx: cacheDataIdx,
-          numHidden: numHidden,
-          visData: trackState.visData,
-          xPos: curXPos,
-          viewWindow: trackState.viewWindow,
-        }),
-      );
+      // startTransition(() =>
+      setViewComponent({
+        component: result,
+        dataIdx: cacheDataIdx,
+        numHidden: numHidden,
+        visData: trackState.visData,
+        xPos: curXPos,
+        viewWindow: trackState.viewWindow,
+      });
+      // ,
+      // );
     }
   }
   function onClose() {
