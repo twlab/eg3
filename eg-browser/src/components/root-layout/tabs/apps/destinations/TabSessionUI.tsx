@@ -615,6 +615,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       const text = await file.text();
       const bundleSession = JSON.parse(text);
 
+      let useFallback = !bundleSession.bundleId;
+
       if (bundleSession.bundleId) {
         try {
           const bundleRes = await onRetrieveSession(bundleSession.bundleId);
@@ -625,11 +627,15 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
             setBundle(bundleRes);
             onRetrieveBundle(bundleRes);
             setShowFullUI(true);
+          } else {
+            useFallback = true;
           }
         } catch (error) {
-          // ignore retrieval errors
+          useFallback = true;
         }
-      } else {
+      }
+
+      if (useFallback) {
         const object = bundleSession;
 
         let viewInterval;

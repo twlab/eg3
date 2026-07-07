@@ -1,5 +1,14 @@
 # Version history
 
+## 61.2.0
+- fixed geneplot and scatterplot fetch error
+- fixed sesssion load from home screen, when sessionId is invalid 
+- added more workers, delete delay of startTransition 
+
+## 61.1.1
+
+- fixed home screen session load, bundleId is checked first before loading session so user can choose
+
 ## 61.1.0
 
 - fixed bug where pdf screenshot doesn't show tracklegend

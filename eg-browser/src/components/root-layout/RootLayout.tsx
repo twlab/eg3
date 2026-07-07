@@ -416,6 +416,7 @@ export default function RootLayout(props: AppProps) {
                   sessionId={sessionId}
                   sessions={sessions}
                   currentSession={currentSession}
+                  isPackageMode={!!isPackageMode}
                 />
               </div>
             )}
