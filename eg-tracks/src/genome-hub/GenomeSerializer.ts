@@ -1,5 +1,5 @@
 import Chromosome from "../models/Chromosome";
-import DisplayedRegionModel from "../models/DisplayedRegionModel";
+
 import Genome from "../models/Genome";
 import { GenomeConfig } from "../models/genomes/GenomeConfig";
 import TrackModel from "../models/TrackModel";
