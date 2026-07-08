@@ -52,34 +52,44 @@ class TrackLegend extends React.PureComponent<
   private gNode: any;
   private containerRef = React.createRef<HTMLDivElement>();
   private popupRef = React.createRef<HTMLDivElement>();
+  private hoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: TrackLegendProps) {
     super(props);
     this.gNode = null;
     this.handleRef = this.handleRef.bind(this);
     this.plotATCGLegend = this.plotATCGLegend.bind(this);
-    this.handleDocumentMouseDown = this.handleDocumentMouseDown.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
   }
 
   componentDidMount() {
     this.drawAxis();
-    document.addEventListener("mousedown", this.handleDocumentMouseDown);
   }
 
   componentWillUnmount() {
-    document.removeEventListener("mousedown", this.handleDocumentMouseDown);
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
   }
 
-  handleDocumentMouseDown(e: MouseEvent) {
-    if (
-      this.state.showFull &&
-      this.popupRef.current &&
-      !this.popupRef.current.contains(e.target as Node) &&
-      this.containerRef.current &&
-      !this.containerRef.current.contains(e.target as Node)
-    ) {
-      this.setState({ showFull: false });
+  handleMouseEnter(e: React.MouseEvent) {
+    const clickX = e.clientX;
+    const clickY = e.clientY;
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
     }
+    this.hoverTimeout = setTimeout(() => {
+      this.setState({ showFull: true, clickX, clickY });
+    }, 1000);
+  }
+
+  handleMouseLeave() {
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = null;
+    }
+    this.setState({ showFull: false });
   }
 
   componentDidUpdate(nextProps: TrackLegendProps) {
@@ -298,66 +308,13 @@ class TrackLegend extends React.PureComponent<
         </div>
       );
     }
-    const rect = this.containerRef.current?.getBoundingClientRect();
-    const { clickX, clickY } = this.state;
-    const popup = showFull
-      ? ReactDOM.createPortal(
-          <div
-            ref={this.popupRef}
-            style={{
-              position: "fixed",
-              top: clickY,
-              left: clickX,
-              minWidth: rect ? rect.width : 120,
-              maxWidth: 240,
-              zIndex: 9999,
-              backgroundColor: "#fff",
-              color: "#000",
-              border: "1px solid rgba(0,0,0,0.15)",
-              borderRadius: 6,
-              padding: "8px 10px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-              fontSize: "x-small",
-              lineHeight: 1.4,
-              wordWrap: "break-word",
-              wordBreak: "break-all",
-              whiteSpace: "normal",
-            }}
-          >
-            <p style={{ margin: 0 }}>
-              {label
-                ? label
-                : trackModel.options
-                  ? trackModel.options.label
-                  : ""}
-            </p>
-            {labelList}
-            {chromLabel ? (
-              <div
-                style={{ fontSize: "11px", marginTop: 4 }}
-                className="TrackLegend-chrLabel"
-              >
-                {chromLabel}
-              </div>
-            ) : (
-              ""
-            )}
-          </div>,
-          document.body,
-        )
-      : null;
 
     return (
       <div
         ref={this.containerRef}
         style={{ ...divStyle, cursor: "pointer" }}
-        onClick={(e) =>
-          this.setState((s) => ({
-            showFull: !s.showFull,
-            clickX: e.clientX,
-            clickY: e.clientY,
-          }))
-        }
+        onMouseEnter={this.handleMouseEnter}
+        onMouseLeave={this.handleMouseLeave}
       >
         <div
           className="TrackLegend-wrap"
@@ -392,7 +349,6 @@ class TrackLegend extends React.PureComponent<
           )}
         </div>
         {axis}
-        {popup}
       </div>
     );
   }

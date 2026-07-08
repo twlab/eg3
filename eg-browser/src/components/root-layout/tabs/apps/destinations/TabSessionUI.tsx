@@ -120,6 +120,15 @@ export const onRetrieveSession = async (retrieveId: string) => {
                   : object.id
                     ? object.id
                     : null,
+            genomeName: object.genomeId
+              ? object.genomeId
+              : object.genomeName
+                ? object.genomeName
+                : object.name
+                  ? object.name
+                  : object.id
+                    ? object.id
+                    : null,
             viewInterval,
             chromosomes: object.chromosomes || null,
             tracks: object.tracks,
@@ -130,7 +139,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
             bundleId: object.bundleId,
             isShowingNavigator: object.isShowingNavigator,
             isShowingVR: object.isShowingVR,
-            layout: object.layout || {},
+            layout: {},
             highlights: object.highlights || [],
             darkTheme: object.darkTheme || false,
             viewRegion: object.viewRegion,
@@ -140,6 +149,21 @@ export const onRetrieveSession = async (retrieveId: string) => {
           // Replace the state key with the newBundle in the session.
           res.sessionsInBundle[curId].state = newBundle;
         }
+      }
+
+      // Persist the cleared layout (and rebuilt state) back to the DB.
+      try {
+        await set(
+          ref(getDatabase(), `sessions/${retrieveId}`),
+          JSON.parse(JSON.stringify(res)),
+        );
+        const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
+        if (snapshot.exists()) {
+          const res = snapshot.val();
+          console.log(res);
+        }
+      } catch (error) {
+        console.error("Failed to update session bundle in DB", error);
       }
 
       return res;
