@@ -2,7 +2,7 @@
   "name": "wuepgg",
   "private": false,
   "version": "61.1.4",
-  "license": "SEE LICENSE IN LICENSE.txt",
+  "license": "LICENSE.txt",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
