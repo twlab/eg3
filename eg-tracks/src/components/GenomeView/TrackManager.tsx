@@ -280,6 +280,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const stateIdx = useRef(currentState.index);
   const padding = Math.max(8, Math.min(12, windowWidthRef.current * 0.008));
   const fontSize = Math.max(12, Math.min(12, windowWidthRef.current * 0.009));
+
   const trackManagerState = useRef<any>({
     bundleId: "",
     customTracksPool: [],
@@ -309,7 +310,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackLegendWidth: legendWidth,
     tracks: [],
   });
-
+  console.log(trackManagerState.current);
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const lastDragX = useRef(0);
 

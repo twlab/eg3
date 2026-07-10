@@ -119,16 +119,18 @@ class BigSourceWorker {
       }
     }
 
-    const combinedData = dataForEachLocus.flat();
-    for (let dasFeature of combinedData) {
-      dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
+    for (const locusData of dataForEachLocus) {
+      for (let dasFeature of locusData) {
+        dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
+      }
     }
-    // if (isEnsembl) {
-    //   loci.forEach((locus: any, index: number) => {
-    //     dataForEachLocus[index].forEach((f: any) => (f.chr = locus.chr));
-    //   });
-    // }
-    return combinedData;
+
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping chr onto every feature. The chr is reattached when formatting.
+    return loci.map((locus: any, index: number) => ({
+      chr: locus.chr,
+      data: dataForEachLocus[index],
+    }));
   }
 
   /**

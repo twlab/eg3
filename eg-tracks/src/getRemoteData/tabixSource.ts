@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
 import { chromAlias } from "./fetchFunctions";
@@ -104,12 +103,12 @@ class TabixSource {
       }
     }
 
-    if (isEnsembl) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
-    return _.flatten(dataForEachLocus);
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping chr onto every feature. The chr is reattached when formatting.
+    return loci.map((locus, index) => ({
+      chr: locus.chr,
+      data: dataForEachLocus[index],
+    }));
   };
 
   /**

@@ -97,9 +97,13 @@ class VcfSource {
       this._getDataInLocus(locus, isEnsembl),
     );
     const dataForEachSegment = await Promise.all(promises);
-    const flattened = dataForEachSegment.flat();
 
-    return flattened;
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping CHROM onto every variant. The chr is reattached when formatting.
+    return region.map((locus, index) => ({
+      chr: locus.chr,
+      data: dataForEachSegment[index],
+    }));
   }
 
   async getData(region, basesPerPixel, options) {
@@ -128,11 +132,8 @@ class VcfSource {
     await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) =>
       variants.push(this.parser.parseLine(line)),
     );
-    if (options.ensemblStyle || this.chromNamingCache) {
-      for (let variant of variants) {
-        variant.CHROM = locus.chr;
-      }
-    }
+    // CHROM is stamped from the locus group when formatting (see
+    // normalizeLocusGroupedData), so it always matches the browser's naming.
 
     return variants;
   }

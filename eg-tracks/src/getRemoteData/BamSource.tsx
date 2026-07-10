@@ -60,10 +60,17 @@ class BamSource {
         this.bam.getRecordsForRange(locus.chr, locus.start, locus.end),
       );
       const dataForEachSegment = await Promise.all(promises);
-      const flattened = dataForEachSegment.flat();
-      return flattened.map((r) =>
-        Object.assign(r, { ref: this.bam.indexToChr[r.get("seq_id")].refName }),
-      );
+
+      // Return one group per locus carrying the locus chr once, instead of
+      // stamping chr onto every record. The chr is reattached when formatting.
+      return locusArr.map((locus, index) => ({
+        chr: locus.chr,
+        data: dataForEachSegment[index].map((r: any) =>
+          Object.assign(r, {
+            ref: this.bam.indexToChr[r.get("seq_id")].refName,
+          }),
+        ),
+      }));
     };
 
     try {

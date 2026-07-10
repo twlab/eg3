@@ -1952,7 +1952,11 @@ function formatBedColorData(
     for (const record of genesArr) {
       const feature = new ColoredFeature(
         "",
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         "+",
       ).withColor(record[3]);
 
@@ -1975,7 +1979,11 @@ function formatBedColorData(
   return genesArr.map((record) =>
     new ColoredFeature(
       "",
-      new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       "+",
     ).withColor(record[3]),
   );
@@ -1992,7 +2000,11 @@ function formatBedData(
     for (const record of genesArr) {
       const feature = new ColoredFeature(
         record[3],
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         record[5],
       ).withColor(record[3]);
 
@@ -2015,7 +2027,11 @@ function formatBedData(
   return genesArr.map((record) =>
     new ColoredFeature(
       "",
-      new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       "+",
     ).withColor(record[3]),
   );
@@ -2275,7 +2291,11 @@ function formatCategoricalData(
     for (const record of genesArr) {
       const feature = new Feature(
         record[BedColumnIndex.CATEGORY],
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       );
 
       for (let i = 0; i < regionLoci.length; i++) {
@@ -2298,7 +2318,11 @@ function formatCategoricalData(
     (record) =>
       new Feature(
         record[BedColumnIndex.CATEGORY],
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ),
   );
 }
@@ -2314,7 +2338,11 @@ function formatJasper(
       const rest = record.rest.split("\t");
       const feature = new JasparFeature(
         rest[3],
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         rest[2],
       ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
 
@@ -2338,7 +2366,11 @@ function formatJasper(
     const rest = record.rest.split("\t");
     return new JasparFeature(
       rest[3],
-      new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       rest[2],
     ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
   });
@@ -2354,7 +2386,11 @@ function formatModBedData(
     for (const record of genesArr) {
       const fiber = new Fiber(
         record[3],
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         record[5],
       ).withFiber(parseNumberString(record[4]), record[6], record[7]);
 
@@ -2377,7 +2413,11 @@ function formatModBedData(
   return genesArr.map((record) =>
     new Fiber(
       record[3],
-      new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       record[5],
     ).withFiber(parseNumberString(record[4]), record[6], record[7]),
   );
@@ -2407,13 +2447,19 @@ function formatBigWigData(
   regionLoci?: Array<any>,
 ) {
   //dynseq, boxplot track also
+  // record.chr is stamped from the fetched locus group (see
+  // normalizeLocusGroupedData); the raw bigwig features carry no chr of their own.
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 
     for (const record of genesArr) {
       const feature = new NumericalFeature(
         "",
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ).withValue(record.score);
 
       for (let i = 0; i < regionLoci.length; i++) {
@@ -2435,7 +2481,11 @@ function formatBigWigData(
   return genesArr.map((record) =>
     new NumericalFeature(
       "",
-      new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
     ).withValue(record.score),
   );
 }
@@ -2459,7 +2509,11 @@ function formatMatplotData(
             : 0;
         const feature = new NumericalFeature(
           "",
-          new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+          new ChromosomeInterval(
+            normalizeChrName(record.chr),
+            record.start,
+            record.end,
+          ),
         ).withValue(value);
 
         regionLoci.forEach((region, index) => {
@@ -2495,7 +2549,11 @@ function formatMatplotData(
 
       return new NumericalFeature(
         "",
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ).withValue(value);
     }),
   );
@@ -2546,7 +2604,11 @@ function formatDynamicBed(
       for (const record of geneArr) {
         const feature = new Feature(
           record[3],
-          new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+          new ChromosomeInterval(
+            normalizeChrName(record.chr),
+            record.start,
+            record.end,
+          ),
         );
 
         for (let i = 0; i < regionLoci.length; i++) {
@@ -2571,7 +2633,11 @@ function formatDynamicBed(
       (record) =>
         new Feature(
           record[3],
-          new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+          new ChromosomeInterval(
+            normalizeChrName(record.chr),
+            record.start,
+            record.end,
+          ),
         ),
     ),
   );
@@ -2588,7 +2654,11 @@ function formatDynamicLongRange(genesArr: any[]) {
           const end = Number.parseInt(regexMatch[3], 10);
           const score = Number.parseFloat(record[3].split(",")[1]);
           return new GenomeInteraction(
-            new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+            new ChromosomeInterval(
+              normalizeChrName(record.chr),
+              record.start,
+              record.end,
+            ),
             new ChromosomeInterval(chr, start, end),
             score,
           );
@@ -2647,7 +2717,11 @@ function formatDynamic(
       for (const record of geneArr) {
         const feature = new NumericalFeature(
           "",
-          new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+          new ChromosomeInterval(
+            normalizeChrName(record.chr),
+            record.start,
+            record.end,
+          ),
         ).withValue(record.score);
 
         for (let i = 0; i < regionLoci.length; i++) {
@@ -2671,7 +2745,11 @@ function formatDynamic(
     geneArr.map((record) =>
       new NumericalFeature(
         "",
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ).withValue(record.score),
     ),
   );
@@ -2689,7 +2767,11 @@ function formatBedgraph(
     const value = Number.isFinite(unsafeValue) ? unsafeValue : 0;
     return new NumericalFeature(
       "",
-      new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
     ).withValue(value);
   });
 
@@ -2731,7 +2813,11 @@ function formatdBedGraph(
       }
       const feature = new NumericalArrayFeature(
         "",
-        new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ).withValues(parsedValue);
 
       for (let i = 0; i < regionLoci.length; i++) {
@@ -2760,7 +2846,11 @@ function formatdBedGraph(
     }
     return new NumericalArrayFeature(
       "",
-      new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
     ).withValues(parsedValue);
   });
 }
@@ -2833,7 +2923,11 @@ function formatLongRange(genesArr: any[]) {
         const end = Number.parseInt(regexMatch[3], 10);
         const score = Number.parseFloat(record[3].split(",")[1]);
         return new GenomeInteraction(
-          new ChromosomeInterval(normalizeChrName(record.chr), record.start, record.end),
+          new ChromosomeInterval(
+            normalizeChrName(record.chr),
+            record.start,
+            record.end,
+          ),
           new ChromosomeInterval(chr, start, end),
           score,
         );
@@ -2881,6 +2975,60 @@ const formatFunctions: {
   vcf: formatVcf,
   longrange: formatLongRange,
 };
+// A per-locus source returns its data grouped as `{ chr, data }[]` (one group
+// per requested locus) instead of stamping every feature with `chr`. That keeps
+// the chromosome name out of every feature as the data crosses the worker
+// boundary. Here we flatten those groups back into plain records, stamping each
+// record with its group's chr, so the existing per-type formatters (which read
+// `record.chr` / `record.CHROM`) work unchanged.
+function isLocusGroup(x: any): boolean {
+  return (
+    x !== null &&
+    typeof x === "object" &&
+    !Array.isArray(x) &&
+    Array.isArray(x.data) &&
+    "chr" in x
+  );
+}
+
+function flattenLocusGroups(groups: any[]): any[] {
+  const flat: any[] = [];
+  for (const group of groups) {
+    if (isLocusGroup(group)) {
+      for (const record of group.data) {
+        record.chr = group.chr;
+        if (record.CHROM !== undefined) {
+          record.CHROM = group.chr;
+        }
+        flat.push(record);
+      }
+    } else {
+      flat.push(group);
+    }
+  }
+  return flat;
+}
+
+// Normalizes raw source data (which may be grouped by locus) into the flat
+// record shape the formatters expect. Handles single-file tracks (a flat list
+// of groups) and multi-file tracks such as matplot/dynamic (a list of per-file
+// group lists). Legacy flat data passes through untouched.
+function normalizeLocusGroupedData(genesArr: any[]): any[] {
+  if (!Array.isArray(genesArr) || genesArr.length === 0) {
+    return genesArr;
+  }
+  const first = genesArr[0];
+  if (isLocusGroup(first)) {
+    return flattenLocusGroups(genesArr);
+  }
+  if (Array.isArray(first)) {
+    return genesArr.map((subTrack) =>
+      Array.isArray(subTrack) ? flattenLocusGroups(subTrack) : subTrack,
+    );
+  }
+  return genesArr;
+}
+
 export function formatDataByType(
   genesArr: any[],
   type: string,
@@ -2906,10 +3054,12 @@ export function formatDataByType(
       }
     }
   }
+  const normalizedData = normalizeLocusGroupedData(genesArr);
+
   const formatter = formatFunctions[type];
 
   if (formatter) {
-    return formatter(genesArr, initialLoad, regionLoci);
+    return formatter(normalizedData, initialLoad, regionLoci);
   } else {
     return initialLoad ? [[], [], []] : genesArr; //fallback if no formatter is found
   }
