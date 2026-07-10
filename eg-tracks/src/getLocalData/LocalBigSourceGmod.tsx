@@ -64,14 +64,18 @@ class LocalBigSourceGmod {
         if (chrom === "M") {
           chrom = "MT";
         }
-        return this.bw.getFeatures(chrom, locus.start, locus.end);
+        return this.bw.getFeatures(chrom, locus.start, locus.end).then(
+          (features) => {
+            // @gmod/bbi features don't carry a chromosome name; attach the
+            // file's native name so the display layer can normalize it back to
+            // the browser's naming via chromAlias when formatting the data.
+            features.forEach((f: any) => (f.chr = chrom));
+            return features;
+          },
+        );
       });
 
       const dataForEachLocus = await Promise.all(promises);
-
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
 
       const combinedData = _.flatten(dataForEachLocus);
 

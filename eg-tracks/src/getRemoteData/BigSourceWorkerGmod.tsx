@@ -94,9 +94,10 @@ class BigSourceWorkerGmod {
       }
     }
 
-    loci.forEach((locus, index) => {
-      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-    });
+    // loci.forEach((locus, index) => {
+    //   console.log(dataForEachLocus[index]);
+    //   dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+    // });
 
     return dataForEachLocus.flat();
   }

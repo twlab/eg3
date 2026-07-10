@@ -82,11 +82,11 @@ class LocalTabixSource {
       });
 
       const dataForEachLocus = await Promise.all(promises);
-      if (isEnsembl) {
-        loci.forEach((locus, index) => {
-          dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-        });
-      }
+      // if (isEnsembl) {
+      //   loci.forEach((locus, index) => {
+      //     dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+      //   });
+      // }
 
       return _.flatten(dataForEachLocus);
     } catch (error) {

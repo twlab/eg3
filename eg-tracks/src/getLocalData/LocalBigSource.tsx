@@ -92,11 +92,11 @@ class LocalBigSource {
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // bbi-js returns 1-indexed features; -1 to compensate.
     }
-    if (isEnsembl) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
+    // if (isEnsembl) {
+    //   loci.forEach((locus, index) => {
+    //     dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+    //   });
+    // }
     return combinedData;
   }
 

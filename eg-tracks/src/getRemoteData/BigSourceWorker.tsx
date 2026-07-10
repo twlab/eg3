@@ -123,11 +123,11 @@ class BigSourceWorker {
     for (let dasFeature of combinedData) {
       dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
     }
-    if (isEnsembl) {
-      loci.forEach((locus: any, index: number) => {
-        dataForEachLocus[index].forEach((f: any) => (f.chr = locus.chr));
-      });
-    }
+    // if (isEnsembl) {
+    //   loci.forEach((locus: any, index: number) => {
+    //     dataForEachLocus[index].forEach((f: any) => (f.chr = locus.chr));
+    //   });
+    // }
     return combinedData;
   }
 

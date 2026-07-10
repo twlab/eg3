@@ -254,7 +254,7 @@ export const chromAlias: Record<string, Set<string>> = {
     "CM000686.2",
     "NC_000024.10",
   ]),
-  chrM: new Set(["M", "NC_001807.4", "J01415.2", "NC_012920.1"]),
+  chrM: new Set(["M", "MT", "NC_001807.4", "J01415.2", "NC_012920.1"]),
 };
 const componentMap: { [key: string]: any } = {
   geneannotation: "",
