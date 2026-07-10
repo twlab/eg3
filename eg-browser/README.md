@@ -20,12 +20,16 @@ Import GenomeHub component and its stylesheet, and render it in your app:
 import { GenomeHub } from "wuepgg";
 import "wuepgg/style.css";
 
+const viewRegion = { genomeCoordinate: "chr7:27053397-27373765" };
+const genomeName = "hg19";
+const storeConfig = { storeId: "genome-1" };
+
 export default function App() {
   return (
     <GenomeHub
-      storeConfig={{ storeId: "genome-1" }}
-      genomeName="hg38"
-      viewRegion={{ genomeCoordinate: "chr7:27053397-27373765" }}
+      storeConfig={storeConfig}
+      viewRegion={viewRegion}
+      genomeName={genomeName}
     />
   );
 }
