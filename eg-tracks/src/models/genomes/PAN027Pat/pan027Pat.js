@@ -55,12 +55,23 @@ const defaultTracks = [
   }),
 ];
 
-const publicHubData = {};
+const publicHubList = [
+  {
+    collection: "PAN027_Pat_Methylation_FIRE",
+    name: "PAN027_Pat_Methylation_FIRE",
+    numTracks: 12,
+    oldHubFormat: false,
+    url: "https://wangcluster.wustl.edu/~sdong/sdong/washu_epi_browser/washu_t2t_browser/pan027pat/PAN027_Pat_Methylation_FIRE.json",
+    description: "test",
+  },
+];
+
 const PAN027Pat = {
   genome: genome,
   navContext: navContext,
   defaultRegion: defaultRegion,
   defaultTracks: defaultTracks,
+  publicHubList,
   twoBitURL:
     "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN027Pat/PAN027Pat.2bit",
 };
