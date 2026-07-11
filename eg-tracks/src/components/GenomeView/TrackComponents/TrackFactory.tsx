@@ -21,6 +21,7 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
+import { fetchGenomicData } from "../../../getRemoteData/fetchFunctions";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -39,6 +40,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   sentScreenshotData,
   dragX,
   newDrawData,
+  selfFetchTrigger,
+  selfFetchApi,
   trackManagerState,
   globalTrackState,
   isScreenShotOpen,
@@ -453,6 +456,83 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       });
     }
   }, [newDrawData]);
+
+  // MARK: [selfFetch]
+  // Fetch this track's own data (on the main thread) and draw it as soon as the
+  // fetch resolves, instead of waiting for the centralized queue + shared
+  // setDraw broadcast. Only eligible tracks get a non-null plan; coordinated
+  // tracks (genomealign views, grouped scale, query-aligned, interaction) return
+  // null here and keep drawing through the newDrawData path above.
+  function drawFromCache(viewWindow, groupScale) {
+    if (
+      !caches[`${id}`] ||
+      !globalTrackState.current.trackStates[dataIdx] ||
+      !globalTrackState.current.trackStates[dataIdx].trackState.genomicFetchCoord
+    ) {
+      return;
+    }
+    const cacheTrackData = caches[`${id}`];
+    const trackState = {
+      ...globalTrackState.current.trackStates[dataIdx].trackState,
+    };
+    handleTrackDraw({
+      cacheTrackData,
+      trackState,
+      viewWindow,
+      groupScale,
+      xvalues: cacheTrackData[dataIdx]?.xvalues,
+      placeFeature: cacheTrackData[dataIdx]?.placeFeature,
+      isInit: true,
+    });
+  }
+
+  useEffect(() => {
+    if (!selfFetchTrigger || !selfFetchApi?.current) {
+      return;
+    }
+    const api = selfFetchApi.current;
+    const curDataIdx = dataIdx;
+    const plan = api.getTrackFetchPlan(id, curDataIdx);
+    if (!plan) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        if (plan.drawNow) {
+          const commit = await api.commitTrackFetch(id, [], curDataIdx);
+          if (!cancelled && commit.ready) {
+            drawFromCache(commit.viewWindow, commit.groupScale);
+          }
+          return;
+        }
+
+        const resultsNested = await Promise.all(
+          plan.argsArr.map((arg: any) => fetchGenomicData([arg])),
+        );
+        // Always commit the fetched data to the cache (even if this effect was
+        // superseded by a newer region) so the cache slot isn't left stuck as
+        // in-flight. commitTrackFetch itself no-ops the shared draw bookkeeping
+        // when the region is stale; we additionally gate the draw on cancelled.
+        const flatResults = resultsNested.flat();
+        const commit = await api.commitTrackFetch(id, flatResults, curDataIdx);
+        if (cancelled) {
+          return;
+        }
+        if (commit.ready) {
+          drawFromCache(commit.viewWindow, commit.groupScale);
+        }
+      } catch (e) {
+        console.error("Error in self-fetch for track", id, e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selfFetchTrigger]);
 
   // MARK: [viewWindowConfigChange]
 

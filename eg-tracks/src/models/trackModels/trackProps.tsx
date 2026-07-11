@@ -22,6 +22,8 @@ export interface TrackProps {
   trackComponents: any;
   isScreenShotOpen: boolean;
   newDrawData: any;
+  selfFetchTrigger?: any;
+  selfFetchApi?: any;
   trackModel?: any;
   dataIdx: number;
   getConfigMenu: any;

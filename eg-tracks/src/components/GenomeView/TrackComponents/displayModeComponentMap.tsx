@@ -1579,9 +1579,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
 };
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
-  const { trackModel, configOptions, genesArr, trackState } = drawData;
+  const { trackModel, configOptions, trackState } = drawData;
 
   const trackType = trackModel.type;
+
+  // The cache holds raw fetched data; when a view draws straight from it (no
+  // precomputed placeFeature/xvalues), format it into model objects here,
+  // lazily. Raw numerical tracks are left untouched.
+  let genesArr = drawData.genesArr;
+  if (Array.isArray(genesArr) && genesArr.length > 0) {
+    genesArr =
+      genesArr[0] && genesArr[0].dataCache !== undefined
+        ? formatCombinedData(genesArr, trackType)
+        : getFormattedFromCache(genesArr, trackType);
+    drawData.genesArr = genesArr;
+  }
 
   if (trackState?.visRegion)
     trackState["visRegion"] = objToInstanceAlign(trackState.visRegion);
@@ -3064,3 +3076,60 @@ export function formatDataByType(
     return initialLoad ? [[], [], []] : genesArr; //fallback if no formatter is found
   }
 }
+
+// Track types whose aggregation only needs a record's chr/start/end/value, so
+// they can be cached as raw records and aggregated straight from the cache
+// (via the getFeature* accessors) without ever building Feature objects. These
+// are the dense numerical density tracks — the biggest memory savers.
+export const rawAggregatableTracks: { [type: string]: string } = {
+  bigwig: "",
+  bedgraph: "",
+  dynseq: "",
+};
+
+// All track types now cache their raw fetched data (see createCache); the
+// formatted model objects are built lazily, only when a view actually consumes
+// them, and memoized by the raw group array so the same fetch formats at most
+// once (and only for tracks that are actually drawn) — instead of formatting
+// every fetched region up front, which spiked memory right after each fetch.
+const formattedByRawData = new WeakMap<object, any[]>();
+
+/**
+ * Lazily formats a cache entry's raw data into model objects, memoized by the
+ * raw array. Numerical raw-aggregatable tracks (bigwig/bedgraph/dynseq) never
+ * need models and are returned untouched.
+ */
+export function getFormattedFromCache(rawData: any, type: string): any {
+  if (
+    type in rawAggregatableTracks ||
+    !rawData ||
+    typeof rawData !== "object"
+  ) {
+    return rawData;
+  }
+  let formatted = formattedByRawData.get(rawData);
+  if (!formatted) {
+    const result = formatDataByType(rawData, type);
+    formatted = Array.isArray(result) ? result : [];
+    formattedByRawData.set(rawData, formatted);
+  }
+  return formatted;
+}
+
+/**
+ * Formats the per-region cache entries a track hands to the aggregator/draw.
+ * `combinedData` is an array of cache entries shaped `{ dataCache, ... }`; each
+ * entry's raw `dataCache` is replaced with its lazily-formatted models. Raw
+ * numerical tracks pass through unchanged.
+ */
+export function formatCombinedData(combinedData: any, type: string): any {
+  if (type in rawAggregatableTracks || !Array.isArray(combinedData)) {
+    return combinedData;
+  }
+  return combinedData.map((entry: any) =>
+    entry && entry.dataCache
+      ? { ...entry, dataCache: getFormattedFromCache(entry.dataCache, type) }
+      : entry,
+  );
+}
+

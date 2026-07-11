@@ -1,6 +1,11 @@
 import { GraphNode } from "../GraphNode";
 import DisplayedRegionModel from "../DisplayedRegionModel";
-import Feature from "../Feature";
+import Feature, {
+  computeNavContextCoordinates,
+  getFeatureLength,
+  getFeatureLocus,
+  getFeatureValue,
+} from "../Feature";
 import OpenInterval from "../OpenInterval";
 import LinearDrawingModel from "../LinearDrawingModel";
 import NavigationContext from "../NavigationContext";
@@ -103,6 +108,49 @@ export interface PlaceFeaturesOptions {
   xToWindowMap?: { [x: number]: Feature[] }; // Output map for boxplot
 }
 
+// Lazily yields the individual records to place from one region entry, without
+// building an intermediate array. An entry may be a plain array, a cache entry
+// with `dataCache`, a single feature, or a `{ chr, data }` group cached as raw
+// data. Raw grouped records carry no chr of their own, so we stamp it from the
+// group in place (once) — the numerical aggregators read chr/start/end/value
+// straight off these records via the getFeature* accessors.
+function* expandFeatureRecords(item: any): Generator<any> {
+  const entries = Array.isArray(item)
+    ? item
+    : item?.dataCache
+      ? item.dataCache
+      : [item];
+
+  if (!Array.isArray(entries)) {
+    return;
+  }
+
+  for (const entry of entries) {
+    if (!entry) {
+      continue;
+    }
+    if (
+      typeof entry === "object" &&
+      !Array.isArray(entry) &&
+      Array.isArray(entry.data) &&
+      "chr" in entry
+    ) {
+      const groupChr = entry.chr;
+      for (const record of entry.data) {
+        if (!record) {
+          continue;
+        }
+        if (record.chr === undefined) {
+          record.chr = groupChr;
+        }
+        yield record;
+      }
+    } else {
+      yield entry;
+    }
+  }
+}
+
 export class FeaturePlacer {
   /**
    * Computes context and draw locations for a list of features.
@@ -135,48 +183,55 @@ export class FeaturePlacer {
     const placementsForward: PlacedFeature[] | PlacedFeatureGroup[] = [];
     const placementsReverse: PlacedFeature[] | PlacedFeatureGroup[] = [];
     let numHidden = 0;
-    const seenLoci = new Set<string>();
     const isAnnotationMode = mode === PlacementMode.ANNOTATION;
+
+    // The 3 stitched region entries can point to the *same* underlying data
+    // array (raw tracks cache one fetch across all 3 dataIdx slots). Skip an
+    // entry whose data array we've already placed so identical regions aren't
+    // walked (and rendered) 3×. Genuinely different regions have different refs
+    // and are all processed.
+    const seenDataRefs = new Set<any>();
 
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
 
-      // check: array, has dataCache property, or is a single feature
-      const featureArray = Array.isArray(item)
+      const dataRef = Array.isArray(item)
         ? item
         : item?.dataCache
           ? item.dataCache
-          : [item];
-
-      if (!Array.isArray(featureArray)) {
-        continue;
+          : undefined;
+      if (dataRef !== undefined) {
+        if (seenDataRefs.has(dataRef)) {
+          continue;
+        }
+        seenDataRefs.add(dataRef);
       }
 
-      for (const feature of featureArray) {
+      // Unwraps arrays / dataCache entries / raw { chr, data } groups in place.
+      for (const feature of expandFeatureRecords(item)) {
         if (!feature) {
           continue;
         }
 
         // Check size for ANNOTATION mode
-        if (isAnnotationMode && drawModel.basesToXWidth(feature.getLength()) < hiddenPixels) {
+        if (
+          isAnnotationMode &&
+          drawModel.basesToXWidth(getFeatureLength(feature)) < hiddenPixels
+        ) {
           numHidden++;
           continue;
         }
-
-        // Generate locusId and check for duplicates
-        const locusId = feature.id ?? `${feature.locus.start}-${feature.locus.end}`;
-        if (seenLoci.has(locusId)) {
-          continue;
-        }
-        seenLoci.add(locusId);
 
         // Collect placements for this feature
         const tmpPlacementForward: PlacedFeature[] = [];
         const tmpPlacementReverse: PlacedFeature[] = [];
 
-        for (let contextLocation of feature.computeNavContextCoordinates(navContext)) {
-          contextLocation = contextLocation.getOverlap(viewRegionBounds);
+        for (const baseInterval of computeNavContextCoordinates(
+          feature,
+          navContext,
+        )) {
+          const contextLocation = baseInterval.getOverlap(viewRegionBounds);
           if (!contextLocation) {
             continue;
           }
@@ -199,20 +254,24 @@ export class FeaturePlacer {
             isReverse,
           };
 
-          if (feature.value === undefined || feature.value >= 0) {
+          const featureValue = getFeatureValue(feature);
+          if (featureValue === undefined || featureValue >= 0) {
             tmpPlacementForward.push(placement);
           } else {
             tmpPlacementReverse.push(placement);
           }
         }
 
-
         if (isAnnotationMode) {
           if (tmpPlacementForward.length > 0) {
-            placementsForward.push(...this._combineAdjacent(tmpPlacementForward));
+            placementsForward.push(
+              ...this._combineAdjacent(tmpPlacementForward),
+            );
           }
           if (tmpPlacementReverse.length > 0) {
-            placementsReverse.push(...this._combineAdjacent(tmpPlacementReverse));
+            placementsReverse.push(
+              ...this._combineAdjacent(tmpPlacementReverse),
+            );
           }
         } else {
           if (tmpPlacementForward.length > 0) {
@@ -225,8 +284,6 @@ export class FeaturePlacer {
       }
     }
 
-
-
     return {
       placements: placementsForward,
       placementsForward,
@@ -234,7 +291,6 @@ export class FeaturePlacer {
       numHidden: numHidden,
     };
   }
-
 
   _combineAdjacent(placements: PlacedFeature[]): PlacedFeatureGroup[] {
     if (placements.length === 0) {
@@ -246,7 +302,6 @@ export class FeaturePlacer {
 
     while (i < placements.length) {
       let j = i + 1;
-
 
       while (j < placements.length) {
         const locusA = placements[j - 1].visiblePart.getLocus();
@@ -266,7 +321,7 @@ export class FeaturePlacer {
         row: -1,
         xSpan: new OpenInterval(
           firstPlacement.xSpan.start,
-          lastPlacement.xSpan.end
+          lastPlacement.xSpan.end,
         ),
         placedFeatures: placementsInGroup,
       });
@@ -289,11 +344,11 @@ export class FeaturePlacer {
   _locatePlacement(
     feature: Feature,
     navContext: NavigationContext,
-    contextLocation: OpenInterval
+    contextLocation: OpenInterval,
   ) {
     // First, get the genomic coordinates of the context location, i.e. the "context locus"
     const contextFeatureCoord = navContext.convertBaseToFeatureCoordinate(
-      contextLocation.start
+      contextLocation.start,
     );
     const placedBase = contextFeatureCoord.getLocus().start;
     const isReverse = contextFeatureCoord.feature.getIsReverseStrand();
@@ -308,13 +363,14 @@ export class FeaturePlacer {
     }
 
     // Now, we can compare the context location locus to the feature's locus.
-    const distFromFeatureLocus = contextLocusStart - feature.getLocus().start;
+    const distFromFeatureLocus =
+      contextLocusStart - getFeatureLocus(feature).start;
     const relativeStart = Math.max(0, distFromFeatureLocus);
     return {
       visiblePart: new FeatureSegment(
         feature,
         relativeStart,
-        relativeStart + contextLocation.getLength()
+        relativeStart + contextLocation.getLength(),
       ),
       isReverse,
     };

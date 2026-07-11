@@ -17,6 +17,51 @@ export interface IFeature {
 export const FORWARD_STRAND_CHAR = "+";
 export const REVERSE_STRAND_CHAR = "-";
 
+// Standalone helpers so that a plain fetched record (not wrapped in a Feature)
+// can be measured and placed without constructing a Feature per record. Each
+// accepts either a Feature (locus under `.locus`) or a raw record whose
+// top-level fields are the locus (`chr`/`start`/`end`). This lets the numerical
+// aggregation path run straight off the raw cache and skip materializing the
+// formatted feature array.
+
+/** Resolves the genomic locus of a Feature or a raw record. */
+export function getFeatureLocus(featureOrLocus: any): any {
+  return featureOrLocus.locus ?? featureOrLocus;
+}
+
+/** Length of a Feature's or raw record's locus. */
+export function getFeatureLength(featureOrLocus: any): number {
+  const locus = getFeatureLocus(featureOrLocus);
+  return locus.end - locus.start;
+}
+
+/**
+ * Numeric value of a Feature (`value`) or a raw record. Raw numerical records
+ * carry their value differently by source: bigwig/dynseq use `score`, while
+ * bedgraph-style tabix records put it in column `[3]`. Feature instances always
+ * have `value` defined (possibly null), so they never fall through to the raw
+ * fallbacks.
+ */
+export function getFeatureValue(featureOrLocus: any): any {
+  if (featureOrLocus.value !== undefined) {
+    return featureOrLocus.value;
+  }
+  if (featureOrLocus.score !== undefined) {
+    return featureOrLocus.score;
+  }
+  return featureOrLocus[3] !== undefined ? Number(featureOrLocus[3]) : undefined;
+}
+
+/** Nav-context coordinates for a Feature's or raw record's locus. */
+export function computeNavContextCoordinates(
+  featureOrLocus: any,
+  navContext: NavigationContext,
+) {
+  return navContext.convertGenomeIntervalToBases(
+    getFeatureLocus(featureOrLocus),
+  );
+}
+
 /**
  * A feature, or annotation, in the genome.
  *
@@ -87,7 +132,7 @@ export class Feature {
    * @return {number} the length of this feature's locus
    */
   getLength(): number {
-    return this.locus.getLength();
+    return getFeatureLength(this);
   }
 
   /**
@@ -126,7 +171,7 @@ export class Feature {
    * @return {OpenInterval[]} coordinates in the navigation context
    */
   computeNavContextCoordinates(navContext: NavigationContext) {
-    return navContext.convertGenomeIntervalToBases(this.getLocus());
+    return computeNavContextCoordinates(this, navContext);
   }
 }
 

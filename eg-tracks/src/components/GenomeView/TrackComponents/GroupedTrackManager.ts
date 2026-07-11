@@ -18,7 +18,10 @@ import {
 } from "../../../models/getXSpan/FeaturePlacer";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { Fiber } from "../../../models/Feature";
-import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
+import {
+  FIBER_DENSITY_CUTOFF_LENGTH,
+  formatCombinedData,
+} from "./displayModeComponentMap";
 import {
   FiberDisplayModes,
   VcfColorScaleKeys,
@@ -189,6 +192,11 @@ export class GroupedTrackManager {
         // console.log(tracks[i]);
         const track = trackData[i];
 
+        // Raw cache data is formatted into model objects here, lazily and only
+        // for the track/view being aggregated (memoized by raw array). Raw
+        // numerical tracks pass through unformatted.
+        const data = formatCombinedData(track.data, track.trackModel?.type);
+
         if (
           track.configOptions.group &&
           track.trackModel.type in numericalTracksGroup
@@ -204,7 +212,6 @@ export class GroupedTrackManager {
             break;
           }
           if (track.data) {
-            const data = track.data;
             let xvalues;
 
             if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
@@ -271,7 +278,6 @@ export class GroupedTrackManager {
           const tid = track.id;
 
           if (track.data) {
-            const data = track.data;
             let xvalues;
             if (
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
@@ -334,7 +340,7 @@ export class GroupedTrackManager {
               configOptions.displayMode === FiberDisplayModes.SUMMARY
             ) {
               const xvalues = this.aggregateFibers(
-                track.data,
+                data,
                 track.visRegion,
                 width,
               );
@@ -354,7 +360,7 @@ export class GroupedTrackManager {
               configOptions.displayMode === "density"
             ) {
               const xvalues = this.aggregator.xToValueMaker(
-                track.data,
+                data,
                 track.visRegion,
                 width,
                 configOptions,
@@ -366,8 +372,6 @@ export class GroupedTrackManager {
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
                 xvalues;
             } else {
-              const data = track.data;
-
               const placeFeatureData = featureArrange.arrange(
                 data,
                 track.visRegion,

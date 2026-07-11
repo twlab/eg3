@@ -1,11 +1,9 @@
 import _ from "lodash";
-import { Feature } from "./Feature";
+import { Feature, getFeatureValue } from "./Feature";
 import DisplayedRegionModel from "./DisplayedRegionModel";
 import { FeaturePlacer, PlacementMode } from "./getXSpan/FeaturePlacer";
 import { FeaturePlacementResult } from "./FeatureArranger";
 import { mode } from "d3";
-
-const VALUE_PROP_NAME = "value";
 
 /**
  * Available aggregators.  Note: SUM, MEAN, MIN, and MAX requires each record to have a `value` prop.
@@ -21,19 +19,17 @@ export const AggregatorTypes = {
 
 const aggregateFunctions = {};
 aggregateFunctions[AggregatorTypes.COUNT] = (records: any[]) => records.length;
+// Read the value through getFeatureValue so both formatted Features (`value`)
+// and raw records (`score`) aggregate identically.
 aggregateFunctions[AggregatorTypes.SUM] = (records: any[]) =>
-  records.length > 0 ? _.sumBy(records, VALUE_PROP_NAME) : null;
+  records.length > 0 ? _.sumBy(records, getFeatureValue) : null;
 // For mean, min, and max; if passed an empty array, returns null
 aggregateFunctions[AggregatorTypes.MEAN] = (records: any[]) =>
-  records.length > 0 ? _.meanBy(records, VALUE_PROP_NAME) : null;
+  records.length > 0 ? _.meanBy(records, getFeatureValue) : null;
 aggregateFunctions[AggregatorTypes.MIN] = (records: any[]) =>
-  records.length > 0
-    ? _.minBy(records, VALUE_PROP_NAME)[VALUE_PROP_NAME]
-    : null;
+  records.length > 0 ? getFeatureValue(_.minBy(records, getFeatureValue)) : null;
 aggregateFunctions[AggregatorTypes.MAX] = (records: any[]) =>
-  records.length > 0
-    ? _.maxBy(records, VALUE_PROP_NAME)[VALUE_PROP_NAME]
-    : null;
+  records.length > 0 ? getFeatureValue(_.maxBy(records, getFeatureValue)) : null;
 
 // aggregateFunctions[AggregatorTypes.IMAGECOUNT] = (records: any[]) =>
 //   _.sum(records.map((x) => x.images.length));
