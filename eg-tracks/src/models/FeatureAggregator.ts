@@ -27,9 +27,13 @@ aggregateFunctions[AggregatorTypes.SUM] = (records: any[]) =>
 aggregateFunctions[AggregatorTypes.MEAN] = (records: any[]) =>
   records.length > 0 ? _.meanBy(records, getFeatureValue) : null;
 aggregateFunctions[AggregatorTypes.MIN] = (records: any[]) =>
-  records.length > 0 ? getFeatureValue(_.minBy(records, getFeatureValue)) : null;
+  records.length > 0
+    ? getFeatureValue(_.minBy(records, getFeatureValue))
+    : null;
 aggregateFunctions[AggregatorTypes.MAX] = (records: any[]) =>
-  records.length > 0 ? getFeatureValue(_.maxBy(records, getFeatureValue)) : null;
+  records.length > 0
+    ? getFeatureValue(_.maxBy(records, getFeatureValue))
+    : null;
 
 // aggregateFunctions[AggregatorTypes.IMAGECOUNT] = (records: any[]) =>
 //   _.sum(records.map((x) => x.images.length));
@@ -145,35 +149,15 @@ export class FeatureAggregator {
     }
 
     const placer = new FeaturePlacer();
-    const result: any = placer.placeFeatures({
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
       useCenter,
       mode: PlacementMode.NUMERICAL,
+      xToFeaturesForward,
+      xToFeaturesReverse,
     });
-
-    const resultLength = Math.max(
-      result.placementsForward ? result.placementsForward.length : 0,
-      result.placementsReverse ? result.placementsReverse.length : 0,
-    );
-
-    for (let i = 0; i < resultLength; i++) {
-      if (i < result.placementsForward.length) {
-        sortXSpan(result.placementsForward[i], xToFeaturesForward);
-      }
-      if (i < result.placementsReverse.length) {
-        sortXSpan(result.placementsReverse[i], xToFeaturesReverse);
-      }
-    }
-
-    function sortXSpan(placedFeature, xToFeatures) {
-      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        xToFeatures[x].push(placedFeature.feature);
-      }
-    }
 
     return { xToFeaturesForward, xToFeaturesReverse };
   }

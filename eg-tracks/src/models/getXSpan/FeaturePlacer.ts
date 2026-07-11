@@ -108,6 +108,18 @@ export interface PlaceFeaturesOptions {
   xToWindowMap?: { [x: number]: Feature[] }; // Output map for boxplot
 }
 
+function sortPlacedFeatureIntoXMap(
+  placedFeature: PlacedFeature,
+  xToFeatures: Feature[][],
+  width: number,
+) {
+  const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
+  const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+  for (let x = startX; x <= endX; x++) {
+    xToFeatures[x].push(placedFeature.feature);
+  }
+}
+
 // Lazily yields the individual records to place from one region entry, without
 // building an intermediate array. An entry may be a plain array, a cache entry
 // with `dataCache`, a single feature, or a `{ chr, data }` group cached as raw
@@ -129,25 +141,25 @@ function* expandFeatureRecords(item: any): Generator<any> {
     if (!entry) {
       continue;
     }
-    // if (
-    //   typeof entry === "object" &&
-    //   !Array.isArray(entry) &&
-    //   Array.isArray(entry.data) &&
-    //   "chr" in entry
-    // ) {
-    //   const groupChr = entry.chr;
-    //   for (const record of entry.data) {
-    //     if (!record) {
-    //       continue;
-    //     }
-    //     if (record.chr === undefined) {
-    //       record.chr = groupChr;
-    //     }
-    //     yield record;
-    //   }
-    // } else {
-    yield entry;
-    // }
+    if (
+      typeof entry === "object" &&
+      !Array.isArray(entry) &&
+      Array.isArray(entry.data) &&
+      "chr" in entry
+    ) {
+      const groupChr = entry.chr;
+      for (const record of entry.data) {
+        if (!record) {
+          continue;
+        }
+        if (record.chr === undefined) {
+          record.chr = groupChr;
+        }
+        yield record;
+      }
+    } else {
+      yield entry;
+    }
   }
 }
 
@@ -173,15 +185,16 @@ export class FeaturePlacer {
       width,
       useCenter = false,
       mode = PlacementMode.PLACEMENT,
-
+      xToFeaturesForward,
+      xToFeaturesReverse,
       hiddenPixels = 0.5,
     } = options;
 
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const navContext = viewRegion.getNavigationContext();
     const viewRegionBounds = viewRegion.getContextCoordinates();
-    const placementsForward: PlacedFeature[] | PlacedFeatureGroup[] = [];
-    const placementsReverse: PlacedFeature[] | PlacedFeatureGroup[] = [];
+    const placementsForward: Array<PlacedFeature | PlacedFeatureGroup> = [];
+    const placementsReverse: Array<PlacedFeature | PlacedFeatureGroup> = [];
     let numHidden = 0;
     const isAnnotationMode = mode === PlacementMode.ANNOTATION;
 
@@ -256,10 +269,22 @@ export class FeaturePlacer {
 
           const featureValue = getFeatureValue(feature);
           if (featureValue === undefined || featureValue >= 0) {
-            tmpPlacementForward.push(placement);
+            if (mode === PlacementMode.NUMERICAL && xToFeaturesForward) {
+              sortPlacedFeatureIntoXMap(placement, xToFeaturesForward, width);
+            } else {
+              tmpPlacementForward.push(placement);
+            }
           } else {
-            tmpPlacementReverse.push(placement);
+            if (mode === PlacementMode.NUMERICAL && xToFeaturesReverse) {
+              sortPlacedFeatureIntoXMap(placement, xToFeaturesReverse, width);
+            } else {
+              tmpPlacementReverse.push(placement);
+            }
           }
+        }
+
+        if (mode === PlacementMode.NUMERICAL) {
+          continue;
         }
 
         if (isAnnotationMode) {
@@ -284,10 +309,17 @@ export class FeaturePlacer {
       }
     }
 
+    const resultPlacements = isAnnotationMode
+      ? (placementsForward as PlacedFeatureGroup[])
+      : (placementsForward as PlacedFeature[]);
+    const resultPlacementsReverse = isAnnotationMode
+      ? (placementsReverse as PlacedFeatureGroup[])
+      : (placementsReverse as PlacedFeature[]);
+
     return {
-      placements: placementsForward,
-      placementsForward,
-      placementsReverse,
+      placements: resultPlacements,
+      placementsForward: resultPlacements,
+      placementsReverse: resultPlacementsReverse,
       numHidden: numHidden,
     };
   }
