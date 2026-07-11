@@ -694,7 +694,14 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
             trackModel: item,
           });
 
-          const records = responds.map((record) => {
+          // TabixSource now returns per-locus groups ({ chr, data }); flatten
+          // back to the flat record list the alignment parser expects (matches
+          // the old `_.flatten(dataForEachLocus)` shape).
+          const flatRecords = responds.flatMap((entry: any) =>
+            entry && Array.isArray(entry.data) ? entry.data : [entry],
+          );
+
+          const records = flatRecords.map((record) => {
             const parsedData = JSON5.parse("{" + record[3] + "}");
             if (!useFineModeNav) {
               parsedData.genomealign.targetseq = null;

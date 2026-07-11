@@ -308,7 +308,9 @@ export class FeaturePlacer {
         }
       }
     }
-    if (!isAnnotationMode) {
+    // NUMERICAL mode writes its results into the passed-in xToFeatures* maps and
+    // has nothing to return. PLACEMENT and ANNOTATION both return placements.
+    if (mode === PlacementMode.NUMERICAL) {
       return;
     }
     const resultPlacements = isAnnotationMode

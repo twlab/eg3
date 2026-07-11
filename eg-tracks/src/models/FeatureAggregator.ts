@@ -166,32 +166,31 @@ export class FeatureAggregator {
     useCenter: boolean = false,
     windowSize: number,
   ): { [x: number]: Feature[] } {
-    const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
-    for (let x = 0; x < width; x += windowSize) {
-      // Fill the array with empty arrays
-      // if (x < width) {
-      map[x] = [];
-      // }
+
+    // NUMERICAL mode writes each feature into every pixel bucket its span covers,
+    // so it needs a dense per-pixel array (sortPlacedFeatureIntoXMap pushes
+    // without a key-existence check).
+    const xToFeaturesForward = Array(width).fill(null);
+    for (let x = 0; x < width; x++) {
+      xToFeaturesForward[x] = [];
     }
+
     const placer = new FeaturePlacer();
-    const placement: any = placer.placeFeatures({
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
       useCenter: true,
       mode: PlacementMode.NUMERICAL,
+      xToFeaturesForward,
     });
-    if (placement && placement.placementsForward) {
-      for (const placedFeature of placement.placementsForward) {
-        const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-        const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-        for (let x = startX; x <= endX; x++) {
-          if (map.hasOwnProperty(x)) {
-            map[x].push(placedFeature.feature);
-          }
-        }
-      }
+
+    // Keep only the window-start buckets. xToFeaturesForward[w] already holds the
+    // features covering pixel w, which is exactly this window's bucket.
+    const map: { [x: number]: Feature[] } = {};
+    for (let x = 0; x < width; x += windowSize) {
+      map[x] = xToFeaturesForward[x];
     }
     return map;
   }
