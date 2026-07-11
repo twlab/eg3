@@ -129,25 +129,25 @@ function* expandFeatureRecords(item: any): Generator<any> {
     if (!entry) {
       continue;
     }
-    if (
-      typeof entry === "object" &&
-      !Array.isArray(entry) &&
-      Array.isArray(entry.data) &&
-      "chr" in entry
-    ) {
-      const groupChr = entry.chr;
-      for (const record of entry.data) {
-        if (!record) {
-          continue;
-        }
-        if (record.chr === undefined) {
-          record.chr = groupChr;
-        }
-        yield record;
-      }
-    } else {
-      yield entry;
-    }
+    // if (
+    //   typeof entry === "object" &&
+    //   !Array.isArray(entry) &&
+    //   Array.isArray(entry.data) &&
+    //   "chr" in entry
+    // ) {
+    //   const groupChr = entry.chr;
+    //   for (const record of entry.data) {
+    //     if (!record) {
+    //       continue;
+    //     }
+    //     if (record.chr === undefined) {
+    //       record.chr = groupChr;
+    //     }
+    //     yield record;
+    //   }
+    // } else {
+    yield entry;
+    // }
   }
 }
 

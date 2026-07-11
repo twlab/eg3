@@ -308,7 +308,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackLegendWidth: legendWidth,
     tracks: [],
   });
-  console.log(trackManagerState.current);
+
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const lastDragX = useRef(0);
 
@@ -2617,17 +2617,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      startTransition(() =>
-        setDraw({
-          trackToDrawId: { ...completedFetchedRegion.current.done },
-          viewWindow:
-            bpRegionSize.current ===
-            curGenomeConfig.current.navContext._totalBases
-              ? { start: 0, end: windowWidthRef.current }
-              : curViewWindow,
-          completedFetchedRegion,
-        }),
-      );
+      // startTransition(() =>
+      setDraw({
+        trackToDrawId: { ...completedFetchedRegion.current.done },
+        viewWindow:
+          bpRegionSize.current ===
+          curGenomeConfig.current.navContext._totalBases
+            ? { start: 0, end: windowWidthRef.current }
+            : curViewWindow,
+        completedFetchedRegion,
+      });
+      // ,
+      // );
     }
   }
 
