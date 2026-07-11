@@ -2,9 +2,6 @@ import _ from "lodash";
 import { Feature, getFeatureValue } from "./Feature";
 import DisplayedRegionModel from "./DisplayedRegionModel";
 import { FeaturePlacer, PlacementMode } from "./getXSpan/FeaturePlacer";
-import { FeaturePlacementResult } from "./FeatureArranger";
-import { mode } from "d3";
-
 /**
  * Available aggregators.  Note: SUM, MEAN, MIN, and MAX requires each record to have a `value` prop.
  */

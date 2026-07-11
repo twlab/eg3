@@ -308,7 +308,9 @@ export class FeaturePlacer {
         }
       }
     }
-
+    if (!isAnnotationMode) {
+      return;
+    }
     const resultPlacements = isAnnotationMode
       ? (placementsForward as PlacedFeatureGroup[])
       : (placementsForward as PlacedFeature[]);

@@ -73,44 +73,44 @@ const defaultTracks = [
   //   type: "ruler",
   //   name: "Ruler",
   // }),
-  // new TrackModel({
-  //   type: "ruler",
-  //   name: "Ruler",
-  // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "refGene",
-  //   genome: "hg38",
-  // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV47",
-  //   genome: "hg38",
-  // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "MANE_select_1.4",
-  //   label: "MANE selection v1.4",
-  //   genome: "hg38",
-  // }),
-  // new TrackModel({
-  //   type: "repeatmasker",
-  //   name: "rmsk_all",
-  //   options: { label: "RepeatMasker" },
-  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  // }),
+  new TrackModel({
+    type: "ruler",
+    name: "Ruler",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV47",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "MANE_select_1.4",
+    label: "MANE selection v1.4",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "repeatmasker",
+    name: "rmsk_all",
+    options: { label: "RepeatMasker" },
+    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig nochr",
   //   genome: "hg38",
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
   // }),
-  new TrackModel({
-    type: "bigwig",
-    name: "bigwig yeschr",
-    genome: "hg38",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig yeschr",
+  //   genome: "hg38",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM432686.bigWig",
+  // }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "bigwig yeschr",
@@ -125,20 +125,16 @@ const defaultTracks = [
   //   filetype: "genomealign",
   //   url: "https://hprc-epigenome.s3.us-east-2.amazonaws.com/samples/HG00097/hap1_vs_hg38.gz",
   // }),
-
   //   new TrackModel({
   //   type: "bed",
   //   name: "mm10 bed",
   //   url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
   // }),
-
   // new TrackModel({
-
   //   type:"jaspar",
   //   name: "test jaspar",
   //   url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb"
   // }),
-
   // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",
@@ -191,7 +187,6 @@ const defaultTracks = [
   //     },
   //   },
   // }),
-
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -203,13 +198,11 @@ const defaultTracks = [
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-
   // new TrackModel({
   //   type: "bigbed",
   //   name: "band2",
   //   url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
   // }),
-
   // new TrackModel({
   //   type: "g3d",
   //   url: "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
@@ -256,7 +249,6 @@ const defaultTracks = [
   //     name: "Test bam",
   //     url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
   //   }),
-
   //     new TrackModel({
   //   type: "refbed",
   //   name: "refbed",
@@ -371,7 +363,6 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-
   // new TrackModel({
   //   type: "qbed",
   //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
@@ -387,7 +378,6 @@ const defaultTracks = [
   //     opacity: [50],
   //   },
   // }),
-
   // new TrackModel({
   //   type: "qbed",
   //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
@@ -463,7 +453,6 @@ const defaultTracks = [
   //     depthColor: "#01E9FE",
   //   },
   // }),
-
   // new TrackModel({
   //   type: "methylc",
   //   name: "H1",
@@ -496,7 +485,6 @@ const defaultTracks = [
   //   name: "test bigInteract",
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-
   // new TrackModel({
   //   name: "dynamic hic",
   //   type: "dynamichic",
