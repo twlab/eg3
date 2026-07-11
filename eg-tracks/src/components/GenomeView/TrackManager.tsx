@@ -1,6 +1,7 @@
 import {
   createRef,
   memo,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -42,10 +43,7 @@ import {
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-import {
-  formatDataByType,
-  interactionTracks,
-} from "./TrackComponents/displayModeComponentMap";
+import { interactionTracks } from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
 // import { fetchGenomicData } from "../../getRemoteData/fetchData";
 // import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
@@ -379,22 +377,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [viewWindowConfigChange, setViewWindowConfigChange] = useState<null | {
     [key: string]: any;
   }>(null);
-
-  // Signal that tells self-fetch-eligible tracks to fetch their own data and
-  // draw independently (instead of going through the centralized worker queue +
-  // shared setDraw broadcast). Bumped whenever a region fetch is kicked off.
-  const [selfFetchTrigger, setSelfFetchTrigger] = useState<null | {
-    version: number;
-    dataIdx: number;
-  }>(null);
-  const selfFetchVersion = useRef(0);
-  function bumpSelfFetch(regionIdx: number) {
-    selfFetchVersion.current += 1;
-    setSelfFetchTrigger({
-      version: selfFetchVersion.current,
-      dataIdx: regionIdx,
-    });
-  }
 
   // MOUSE EVENTS FUNCTION HANDLER, HOW THE TRACK WILL CHANGE BASED ON WHAT THE USER DOES: DRAGGING, MOUSESCROLL, CLICK
   //_________________________________________________________________________________________________________________________________
@@ -2245,216 +2227,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       });
   };
-  // MARK: selfFetch
-  // A track is eligible to fetch its own data (and draw as soon as it finishes)
-  // when it does not depend on cross-track coordination:
-  //  - not a genomealign track, and no genomealign present in the view (in a
-  //    genomealign view every track's coords depend on the alignment finishing)
-  //  - uses the primary navigation (not aligned to a query genome)
-  //  - not an expanded-loci / interaction track (those need special region handling)
-  //  - not part of a numerical scale group (grouped scale needs all group members)
-  function isSelfFetchEligible(id: string | number): boolean {
-    const cache = trackManagerState.current.caches[`${id}`];
-    if (!cache) return false;
-    if (cache.trackType === "genomealign") return false;
-    if (hasGenomeAlign.current) return false;
-    if (!cache.usePrimaryNav) return false;
-    if (cache.useExpandedLoci) return false;
-    if (interactionTracks.has(cache.trackType)) return false;
-
-    const cfg =
-      trackManagerState.current.globalConfig &&
-      trackManagerState.current.globalConfig[`${id}`]
-        ? trackManagerState.current.globalConfig[`${id}`].configOptions
-        : null;
-    if (cfg && cfg.group && cache.trackType in numericalTracksGroup) {
-      return false;
-    }
-    return true;
-  }
-
-  // Whether a track already has enough cached data at curIdx to be drawn.
-  function isTrackCacheReady(id: string | number, curIdx: number): boolean {
-    const cache = trackManagerState.current.caches[`${id}`];
-    if (!cache) return false;
-    if (cache["error"]) return true;
-    if (useFineModeNav.current || cache.useExpandedLoci || !cache.usePrimaryNav) {
-      return !!(cache[curIdx] && cache[curIdx].dataCache);
-    }
-    for (const idx of [curIdx - 1, curIdx, curIdx + 1]) {
-      if (!cache[idx] || !cache[idx].dataCache) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // Build the list of per-region fetch arguments a single track needs for the
-  // current region. Marks the missing cache slots as in-flight so repeated
-  // triggers don't double fetch. Returns null when the track should stay on the
-  // centralized path, or { argsArr, drawNow } describing the self-fetch work.
-  function getTrackFetchPlan(
-    id: string | number,
-    curIdx: number,
-  ): { argsArr: Array<any>; drawNow: boolean } | null {
-    if (!curGenomeConfig.current) return null;
-    const cache = trackManagerState.current.caches[`${id}`];
-    if (!cache || !isSelfFetchEligible(id)) return null;
-
-    const curTrackModel = getTrackModelById(id);
-    if (!curTrackModel) return null;
-
-    const idxArr = [curIdx - 1, curIdx, curIdx + 1];
-    const shouldPlaceRegion =
-      cache.firstLoad && cache.usePrimaryNav && !cache.useExpandedLoci;
-
-    for (const idx of idxArr) {
-      if (!(idx in cache)) {
-        cache[idx] = {};
-      }
-    }
-
-    const argsArr: Array<any> = [];
-    const genName = curGenomeConfig.current.genome.getName();
-
-    for (const missingIdx of idxArr) {
-      if (shouldPlaceRegion && missingIdx !== curIdx) continue;
-      if (cache[missingIdx] && "dataCache" in cache[missingIdx]) continue;
-
-      const trackState =
-        globalTrackState.current.trackStates[missingIdx]?.trackState;
-      if (!trackState) continue;
-
-      // mark in-flight so a later trigger doesn't refetch the same region
-      cache[missingIdx]["dataCache"] = null;
-
-      const tempTrackModel = _.cloneDeep(curTrackModel);
-      tempTrackModel["error"] = cache.error;
-      tempTrackModel["shouldPlaceRegion"] = shouldPlaceRegion;
-
-      argsArr.push({
-        primaryGenName: genName,
-        trackModelArr: [tempTrackModel],
-        visData: trackState.visData
-          ? trackState.visData
-          : trackState.genomicFetchCoord
-            ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-            : "",
-        genomicLoci: trackState.regionLoci,
-        visRegion: trackState.visRegion
-          ? trackState.visRegion
-          : trackState.genomicFetchCoord
-            ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-                .visRegion
-            : "",
-        regionExpandLoci: trackState.regionExpandLoci,
-        useFineModeNav: useFineModeNav.current,
-        windowWidth: windowWidthRef.current,
-        bpRegionSize: bpRegionSize.current,
-        trackDataIdx: curIdx,
-        missingIdx: missingIdx,
-        genomicFetchCoord: trackState?.genomicFetchCoord,
-      });
-    }
-
-    cache.firstLoad = false;
-
-    if (argsArr.length === 0) {
-      return isTrackCacheReady(id, curIdx)
-        ? { argsArr: [], drawNow: true }
-        : null;
-    }
-    return { argsArr, drawNow: false };
-  }
-
-  // Write a single track's fetched results into the cache and run the shared
-  // draw bookkeeping (group aggregation, completedFetchedRegion). Returns the
-  // draw payload the track uses to render itself immediately.
-  async function commitTrackFetch(
-    id: string | number,
-    results: Array<any>,
-    curIdx: number,
-  ): Promise<{ ready: boolean; viewWindow?: any; groupScale?: any }> {
-    for (const dataItem of results) {
-      if (
-        globalTrackState.current.trackStates[dataItem.trackDataIdx] === undefined
-      ) {
-        continue;
-      }
-      const curTrackState = {
-        ...globalTrackState.current.trackStates[dataItem.trackDataIdx]
-          .trackState,
-        primaryGenName: curGenomeConfig.current?.genome.getName(),
-      };
-
-      await Promise.all(
-        dataItem.fetchResults.map((item: any) =>
-          createCache({
-            trackState: curTrackState,
-            result: item.result,
-            id: item.id,
-            trackType: item.trackModel.type
-              ? item.trackModel.type
-              : item.name
-                ? item.name
-                : "",
-            metadata: item.metadata,
-            trackModel: item.trackModel,
-            curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-            missingIdx: dataItem.missingIdx,
-            trackDataIdx: dataItem.trackDataIdx,
-            fileInfos: item.fileInfos,
-            errorType: item.errorType,
-          }),
-        ),
-      );
-    }
-
-    if (!isTrackCacheReady(id, curIdx)) {
-      return { ready: false };
-    }
-
-    // If navigation superseded this fetch, we've still written the cache above
-    // (so revisiting the region draws instantly) but must not disturb the
-    // current region's shared draw bookkeeping.
-    if (curIdx !== dataIdx.current) {
-      return { ready: false };
-    }
-
-    if (completedFetchedRegion.current.key !== curIdx) {
-      completedFetchedRegion.current.key = curIdx;
-      completedFetchedRegion.current.done = {};
-      completedFetchedRegion.current.groups = {};
-    }
-
-    const isFullGenome =
-      bpRegionSize.current === curGenomeConfig.current.navContext._totalBases;
-    const curViewWindow =
-      selectedRegionSet && isFullGenome
-        ? new OpenInterval(0, windowWidthRef.current)
-        : globalTrackState.current.viewWindow;
-
-    aggViewWindowData(curViewWindow, curIdx, { [`${id}`]: false });
-    completedFetchedRegion.current.done[`${id}`] = true;
-
-    const groupScale =
-      globalTrackState.current.trackStates[curIdx].trackState["groupScale"];
-
-    return {
-      ready: true,
-      viewWindow: isFullGenome
-        ? { start: 0, end: windowWidthRef.current }
-        : curViewWindow,
-      groupScale,
-    };
-  }
-
-  // Stable ref so the callbacks can be handed to memoized TrackFactory children
-  // without breaking memoization on every TrackManager render.
-  const selfFetchApi = useRef<{ [key: string]: any }>({});
-  selfFetchApi.current.getTrackFetchPlan = getTrackFetchPlan;
-  selfFetchApi.current.commitTrackFetch = commitTrackFetch;
-
   // MARK: queueRegion
 
   function queueRegionToFetch(regionIdx: number) {
@@ -2472,9 +2244,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     for (const [key, curTrackCache] of Object.entries(
       trackManagerState.current.caches,
     ) as [string, any][]) {
-      // Self-fetch tracks fetch + draw themselves via TrackFactory; keep them
-      // out of the centralized worker batch and the centralized cached-draw.
-      if (isSelfFetchEligible(key)) continue;
       let hasAllRegionData = true;
 
       for (const idx of idxArr) {
@@ -2530,8 +2299,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         for (const key in trackManagerState.current.caches) {
           const curTrackCache = trackManagerState.current.caches[key];
-
-          if (isSelfFetchEligible(key)) continue;
 
           if (
             ((curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
@@ -2603,8 +2370,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       for (const key in trackManagerState.current.caches) {
-        // self-fetch tracks manage their own firstLoad in getTrackFetchPlan
-        if (isSelfFetchEligible(key)) continue;
         trackManagerState.current.caches[key]["firstLoad"] = false;
       }
 
@@ -2668,11 +2433,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       }
     }
-
-    // Tell self-fetch-eligible tracks to (re)consider fetching/drawing for this
-    // region. Each such track fetches its own data and draws as soon as it is
-    // done, independent of the other tracks.
-    bumpSelfFetch(regionIdx);
   }
   // create a useRef object, that keep track of the current dataidx most current view
   // if data Idx from new fetch is diff then, go back to empty object.
@@ -2857,18 +2617,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      // startTransition(() =>
-      setDraw({
-        trackToDrawId: { ...completedFetchedRegion.current.done },
-        viewWindow:
-          bpRegionSize.current ===
-          curGenomeConfig.current.navContext._totalBases
-            ? { start: 0, end: windowWidthRef.current }
-            : curViewWindow,
-        completedFetchedRegion,
-      });
-      //   ,
-      // );
+      startTransition(() =>
+        setDraw({
+          trackToDrawId: { ...completedFetchedRegion.current.done },
+          viewWindow:
+            bpRegionSize.current ===
+            curGenomeConfig.current.navContext._totalBases
+              ? { start: 0, end: windowWidthRef.current }
+              : curViewWindow,
+          completedFetchedRegion,
+        }),
+      );
     }
   }
 
@@ -2890,36 +2649,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         : dataIdx.current;
       const initialIdx = [currDataIdx + 1, currDataIdx, currDataIdx - 1];
 
-      let formattedData;
-      try {
-        let regionArray: any = [];
-        for (let idx of initialIdx) {
-          if (
-            !globalTrackState.current?.trackStates?.[idx]?.trackState
-              ?.regionLoci
-          ) {
-            regionArray = [];
-            break;
-          } else {
-            regionArray.push(
-              globalTrackState.current.trackStates[idx].trackState.regionLoci,
-            );
-          }
-        }
-
-        formattedData = formatDataByType(
-          result,
-          fetchRes.trackType,
-          fetchRes.trackModel.shouldPlaceRegion,
-          regionArray,
-        );
-      } catch (e) {
-        formattedData = [];
-        // eslint-disable-next-line no-console
-        trackManagerState.current.caches[`${fetchRes.id}`]["error"] =
-          "data format error";
-        console.error("formatDataByType failed for track", fetchRes.id, e);
-      }
+      // Cache the RAW fetched data for every track type. Model objects are
+      // built lazily downstream (in getGroupScale / the draw path) only for the
+      // view that needs them, instead of formatting every fetched region up
+      // front, which spiked memory right after each fetch.
+      const formattedData = result;
 
       if (fetchRes?.errorType) {
         trackManagerState.current.caches[`${fetchRes.id}`]["error"] =
@@ -2927,9 +2661,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         if (fetchRes.trackModel.shouldPlaceRegion) {
           for (let i = 0; i < 3; i++) {
+            // Raw data isn't split per region; the aggregator clips to the view
+            // region and dedups, so all 3 indices share the same raw groups.
             trackManagerState.current.caches[`${fetchRes.id}`][initialIdx[i]][
               "dataCache"
-            ] = formattedData[i];
+            ] = formattedData;
           }
         } else {
           trackManagerState.current.caches[`${fetchRes.id}`][
@@ -4942,8 +4678,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             signalTrackLoadComplete={signalTrackLoadComplete}
                             sentScreenshotData={sentScreenshotData}
                             newDrawData={draw}
-                            selfFetchTrigger={selfFetchTrigger}
-                            selfFetchApi={selfFetchApi}
                             trackManagerState={trackManagerState}
                             globalTrackState={globalTrackState}
                             isScreenShotOpen={isScreenShotOpen}
