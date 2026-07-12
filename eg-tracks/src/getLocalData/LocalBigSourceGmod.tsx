@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
 import { BlobFile } from "generic-filehandle2";
 import { chromAlias } from "../getRemoteData/fetchFunctions";
@@ -64,22 +63,17 @@ class LocalBigSourceGmod {
         if (chrom === "M") {
           chrom = "MT";
         }
-        return this.bw.getFeatures(chrom, locus.start, locus.end).then(
-          (features) => {
-            // @gmod/bbi features don't carry a chromosome name; attach the
-            // file's native name so the display layer can normalize it back to
-            // the browser's naming via chromAlias when formatting the data.
-            features.forEach((f: any) => (f.chr = chrom));
-            return features;
-          },
-        );
+        return this.bw.getFeatures(chrom, locus.start, locus.end);
       });
 
       const dataForEachLocus = await Promise.all(promises);
 
-      const combinedData = _.flatten(dataForEachLocus);
-
-      return combinedData;
+      // Return one group per locus carrying the locus chr once, instead of
+      // stamping chr onto every feature. The chr is reattached when formatting.
+      return loci.map((locus, index) => ({
+        chr: locus.chr,
+        data: dataForEachLocus[index],
+      }));
     } catch (error) {
       return { error: true, message: `Failed to fetch data: ${error.message}` };
     }

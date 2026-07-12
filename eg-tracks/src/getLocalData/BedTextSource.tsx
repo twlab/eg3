@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 import TextSource from "./localTextSource";
 import BinIndexer from "../models/BinIndexer";
 import BedRecord from "../models/BedRecord";
@@ -139,16 +137,15 @@ class BedTextSource {
     const isEnsembl =
       options.ensemblStyle ?? (await this.detectChromosomeNaming());
 
-    const data = loci.map((locus) => {
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping chr onto every record. The chr is reattached when formatting.
+    return loci.map((locus) => {
       const chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
-      const records = this.indexer.get(chrom, locus.start, locus.end);
-      if (isEnsembl) {
-        records.forEach((r) => (r.chr = locus.chr));
-      }
-      return records;
+      return {
+        chr: locus.chr,
+        data: this.indexer.get(chrom, locus.start, locus.end),
+      };
     });
-
-    return _.flatten(data);
   }
 }
 
