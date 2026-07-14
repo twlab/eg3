@@ -304,7 +304,7 @@ export const trackOptionMap: { [key: string]: any } = {
       xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.getName().length * 9;
+      const estimatedLabelWidth = feature.name.length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {

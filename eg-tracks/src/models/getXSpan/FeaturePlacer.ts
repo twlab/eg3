@@ -120,12 +120,35 @@ function sortPlacedFeatureIntoXMap(
   }
 }
 
+// Raw grouped records carry no chr of their own — it lives on the enclosing
+// `{ chr, data }` group. The numerical/annotation placers read chr/start/end/
+// value straight off each record (see the getFeature* accessors), so we stamp
+// the group's chr onto the record. The cached records may be deep-frozen (e.g.
+// by an Immer-managed store), in which case we can't mutate them — so we return
+// a shallow copy that preserves array indices and named props with chr added.
+function stampGroupChr(record: any, chr: string): any {
+  if (record.chr !== undefined) {
+    return record;
+  }
+  if (Object.isExtensible(record)) {
+    record.chr = chr;
+    return record;
+  }
+  const copy: any = Array.isArray(record) ? [] : {};
+  for (const key in record) {
+    copy[key] = record[key];
+  }
+  copy.chr = chr;
+  return copy;
+}
+
 // Lazily yields the individual records to place from one region entry, without
 // building an intermediate array. An entry may be a plain array, a cache entry
 // with `dataCache`, a single feature, or a `{ chr, data }` group cached as raw
-// data. Raw grouped records carry no chr of their own, so we stamp it from the
-// group in place (once) — the numerical aggregators read chr/start/end/value
-// straight off these records via the getFeature* accessors.
+// data. Multi-file tracks (matplot/dynamic/dynamicbed) nest one level deeper
+// after `groupTracksArrMatPlot` re-buckets them by sub-track — a bucket is
+// `[region][ { chr, data } groups ]` — so we recurse into nested arrays /
+// dataCache entries and only yield leaf records.
 function* expandFeatureRecords(item: any): Generator<any> {
   const entries = Array.isArray(item)
     ? item
@@ -152,11 +175,13 @@ function* expandFeatureRecords(item: any): Generator<any> {
         if (!record) {
           continue;
         }
-        if (record.chr === undefined) {
-          record.chr = groupChr;
-        }
-        yield record;
+        yield stampGroupChr(record, groupChr);
       }
+    } else if (Array.isArray(entry) || entry?.dataCache) {
+      // Nested array (per-region groups within a sub-track bucket) or a further
+      // dataCache wrapper — unwrap it the same way rather than treating the
+      // whole array as a single record.
+      yield* expandFeatureRecords(entry);
     } else {
       yield entry;
     }
@@ -268,7 +293,11 @@ export class FeaturePlacer {
           };
 
           const featureValue = getFeatureValue(feature);
-          if (featureValue === undefined || featureValue >= 0) {
+          // Only genuinely negative values render on the reverse strand. undefined
+          // and NaN (e.g. raw bed annotation records whose column 3 is a name, not
+          // a number) must go forward — otherwise `arrange`, which returns only the
+          // forward placements, would drop every annotation.
+          if (!(featureValue < 0)) {
             if (mode === PlacementMode.NUMERICAL && xToFeaturesForward) {
               sortPlacedFeatureIntoXMap(placement, xToFeaturesForward, width);
             } else {

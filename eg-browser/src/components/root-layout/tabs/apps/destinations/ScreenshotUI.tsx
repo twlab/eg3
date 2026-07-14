@@ -10,7 +10,11 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ClipLoader } from "react-spinners";
-import { trackOptionMap, getDisplayModeFunction } from "wuepgg3-track";
+import {
+  trackOptionMap,
+  getDisplayModeFunction,
+  LinearDrawingModel,
+} from "wuepgg3-track";
 
 interface Highlight {
   start: number;
@@ -34,6 +38,7 @@ interface Props {
   retakeScreenshot: any;
   windowWidth: number;
   viewWindow: any;
+  selectedRegionSet?: boolean;
 }
 // export const getHighlightedXs = (
 //   interval: OpenInterval,
@@ -79,6 +84,36 @@ interface Props {
 //   }
 //   return new OpenInterval(start, end);
 // };
+
+// Mirrors VerticalDivider.tsx: computes the x positions (in the track's own
+// visRegion/viewWindowRegion pixel space) where a region-set track switches
+// from one feature segment to the next, so the same divider lines shown in
+// the live view can also be drawn into the screenshot preview and export.
+function getRegionSetDividerXs(visData: any): number[] {
+  if (!visData?.visRegion?.getFeatureSegments) {
+    return [];
+  }
+  const { visRegion, viewWindowRegion, viewWindow } = visData;
+  const drawModel = new LinearDrawingModel(
+    viewWindowRegion,
+    viewWindow.getLength(),
+  );
+  const xs: number[] = [];
+  let x = 0;
+  let featureSegments;
+  try {
+    featureSegments = visRegion.getFeatureSegments();
+  } catch {
+    return [];
+  }
+  for (const segment of featureSegments) {
+    if (x > 0) {
+      xs.push(x);
+    }
+    x += drawModel.basesToXWidth(segment.getLength());
+  }
+  return xs;
+}
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("");
@@ -262,6 +297,24 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           yoff += originalSvgs[idx2].clientHeight; // do this before appendChild
           trackG.appendChild(eleSvg);
         });
+
+        if (props.selectedRegionSet) {
+          const trackId = (props.tracks[idx] || {}).id;
+          const visData =
+            trackId !== undefined
+              ? props.trackData[trackId]?.visData
+              : undefined;
+          getRegionSetDividerXs(visData).forEach((dividerX, dividerIdx) => {
+            const dividerLine = document.createElementNS(xmlns, "line");
+            dividerLine.setAttribute("id", `regionDivider${idx}-${dividerIdx}`);
+            dividerLine.setAttribute("x1", x + dividerX + "");
+            dividerLine.setAttribute("x2", x + dividerX + "");
+            dividerLine.setAttribute("y1", y + "");
+            dividerLine.setAttribute("y2", y + trackHeight + "");
+            dividerLine.setAttribute("stroke", "gray");
+            trackG.appendChild(dividerLine);
+          });
+        }
       }
 
       trackG.setAttributeNS(null, "transform", `translate(${translateX})`);
@@ -529,6 +582,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       legendWidth,
       windowWidth,
       xOffset,
+      selectedRegionSet,
     } = props;
 
     // document.documentElement.style.setProperty("--bg-color", "white");
@@ -612,6 +666,23 @@ const ScreenshotUI: React.FC<Props> = (props) => {
                     </div>
                   );
                 })
+              : ""}
+            {selectedRegionSet
+              ? getRegionSetDividerXs(createSVGData.visData).map(
+                  (x, dividerIdx) => (
+                    <div
+                      key={"divider" + dividerIdx}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: legendWidth + x,
+                        height: "100%",
+                        borderRight: "1px solid gray",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  ),
+                )
               : ""}
           </div>
         );

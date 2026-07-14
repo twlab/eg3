@@ -43,7 +43,10 @@ import {
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-import { interactionTracks } from "./TrackComponents/displayModeComponentMap";
+import {
+  formatDataByType,
+  interactionTracks,
+} from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
 // import { fetchGenomicData } from "../../getRemoteData/fetchData";
 // import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
@@ -2473,8 +2476,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 2);
         maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 2);
       } else {
-        minIdx = dataIdx.current - (isMemoryOver2GB() ? 2 : 3);
-        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 2 : 3);
+        minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 3);
+        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 3);
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
@@ -2663,7 +2666,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // view that needs them, instead of formatting every fetched region up
       // front, which spiked memory right after each fetch.
       const formattedData = result;
-
+      // const formattedData = formatDataByType(
+      //   result, fetchRes.trackModel.type
+      // )
       if (fetchRes?.errorType) {
         trackManagerState.current.caches[`${fetchRes.id}`]["error"] =
           fetchRes?.errorType;
@@ -3253,22 +3258,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return true;
         })
         .map((item) => convertTrackModelToITrackModel(item));
-      const currViewWindow = globalTrackState.current.viewWindow;
+      const isRegionSetView =
+        selectedRegionSet &&
+        bpRegionSize.current ===
+          curGenomeConfig.current?.navContext._totalBases;
+
+      const currViewWindow = isRegionSetView
+        ? new OpenInterval(0, windowWidthRef.current)
+        : globalTrackState.current.viewWindow;
       let trackState = _.cloneDeep(
         globalTrackState.current?.trackStates?.[dataIdx.current]?.trackState,
       );
 
-      const xDiff =
-        currViewWindow.start - trackState?.visData?.viewWindow.start;
+      const xDiff = isRegionSetView
+        ? 0
+        : currViewWindow.start - trackState?.visData?.viewWindow.start;
 
-      const sameRegionViewWindow = {
-        start:
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.start + xDiff,
-        end:
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.end + xDiff,
-      };
+      const sameRegionViewWindow = isRegionSetView
+        ? { start: 0, end: windowWidthRef.current }
+        : {
+            start:
+              trackState?.genomicFetchCoord[trackState.primaryGenName]
+                ?.primaryVisData?.viewWindow?.start + xDiff,
+            end:
+              trackState?.genomicFetchCoord[trackState.primaryGenName]
+                ?.primaryVisData?.viewWindow?.end + xDiff,
+          };
       const newScreenShot = getHighlightedXs();
       setScreenshotData({
         tracks: convertedITrackModel,
@@ -3278,6 +3293,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         windowWidth: windowWidthRef.current,
         legendWidth,
         xOffset: xDiff,
+        selectedRegionSet: selectedRegionSet,
       });
       screenshotDataObj.current = {};
     }
@@ -3769,7 +3785,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   // MARK: viewWindowConfig
-
+  console.log(trackManagerState.current.caches);
   function aggViewWindowData(
     viewWindow,
     dataIdx,
@@ -3864,7 +3880,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             cacheTrackData.trackType in
             { matplot: "", dynamic: "", dynamicbed: "" }
           ) {
-            if (cacheTrackData[1]?.xvalues) {
+            if (
+              cacheTrackData[dataIdx]?.xvalues ||
+              cacheTrackData[dataIdx]?.placeFeature
+            ) {
               combinedData = [];
             } else {
               combinedData = groupTracksArrMatPlot(combinedData);
@@ -4206,6 +4225,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!initialLoad.current) {
+      console.log(genomeConfig);
       const updatedGenomeConfig = _.cloneDeep(genomeConfig);
       if (userViewRegion) {
         updatedGenomeConfig.defaultRegion = new OpenInterval(

@@ -64,6 +64,7 @@ export default function Screenshot() {
         retakeScreenshot={retakeScreenshot}
         windowWidth={screenShotData.windowWidth}
         xOffset={screenShotData.xOffset}
+        selectedRegionSet={screenShotData.selectedRegionSet}
       />
     </div>
   ) : (

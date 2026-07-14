@@ -50,7 +50,16 @@ class TabixSource {
       return this.chromNamingCache;
     }
     try {
-      const names = await this.tabix.getReferenceSequenceNames();
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Timeout fetching tabix index")),
+          3000,
+        ),
+      );
+      const names = await Promise.race([
+        this.tabix.getReferenceSequenceNames(),
+        timeout,
+      ]);
       const firstChrom = names[0];
       if (!firstChrom) {
         this.chromNamingCache = false;
@@ -68,7 +77,9 @@ class TabixSource {
       console.error(
         "Error detecting chromosome naming. Check URL and file format.",
       );
-      return null;
+      throw new Error(
+        "Error detecting chromosome naming. Check URL and file format. ",
+      );
     }
   }
 

@@ -2,6 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import * as PIXI from "pixi.js";
 import { colorString2number } from "../../../../../models/util";
+import {
+  getFeatureName,
+  getFeatureIsReverseStrand,
+} from "../../../../../models/Feature";
 
 export const TOP_PADDING = 2;
 export const ROW_VERTICAL_PADDING = 2;
@@ -291,7 +295,7 @@ export class PixiAnnotation extends React.PureComponent<
         const { xSpan, row, feature } = placement;
         const colorToUse =
           !(useDynamicColors && dynamicColors?.length) &&
-          feature.getIsReverseStrand()
+          getFeatureIsReverseStrand(feature)
             ? color2
             : colorEach;
 
@@ -307,7 +311,7 @@ export class PixiAnnotation extends React.PureComponent<
         const textStyle = { ...bedStyle, fill: colorEach };
 
         const st = new PIXI.Text({
-          text: feature.getName(),
+          text: getFeatureName(feature),
           style: textStyle,
         });
         st.position.set(xSpan.end + 2, itemY - TOP_PADDING);

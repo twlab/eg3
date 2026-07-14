@@ -49,7 +49,37 @@ export function getFeatureValue(featureOrLocus: any): any {
   if (featureOrLocus.score !== undefined) {
     return featureOrLocus.score;
   }
-  return featureOrLocus[3] !== undefined ? Number(featureOrLocus[3]) : undefined;
+  return featureOrLocus[3] !== undefined
+    ? Number(featureOrLocus[3])
+    : undefined;
+}
+
+/**
+ * Name of a Feature (`name`) or a raw record. Feature instances expose `name`
+ * directly, so we read it straight off; raw bed-like records keep the name in
+ * column `[3]`. Used so annotation tracks can render straight from raw records
+ * without building Feature objects.
+ */
+export function getFeatureName(featureOrRecord: any): string {
+  if (featureOrRecord.name !== undefined) {
+    return featureOrRecord.name;
+  }
+  if (typeof featureOrRecord.getName === "function") {
+    return featureOrRecord.getName();
+  }
+  return featureOrRecord[3] !== undefined ? String(featureOrRecord[3]) : "";
+}
+
+/**
+ * Whether a Feature or raw record is on the reverse strand. Feature instances
+ * carry `strand`; raw bed-like records keep the strand in column `[5]`.
+ */
+export function getFeatureIsReverseStrand(featureOrRecord: any): boolean {
+  if (typeof featureOrRecord.getIsReverseStrand === "function") {
+    return featureOrRecord.getIsReverseStrand();
+  }
+  const strand = featureOrRecord.strand ?? featureOrRecord[5];
+  return strand === "-";
 }
 
 /** Nav-context coordinates for a Feature's or raw record's locus. */

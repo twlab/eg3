@@ -355,20 +355,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let currIdx = dataIdx + 1;
       let noData = false;
 
-      if (
+      if (dynamicMatplotTracks.has(trackModel.type)) {
+        // matplot/dynamic use precomputed xvalues when available. dynamicbed is
+        // arranged in GroupedTrackManager (placeFeature), but we still always
+        // hand it the raw per-sub-track data as a fallback so it never renders
+        // empty on a draw where placeFeature isn't cached yet — its component
+        // prefers placeFeature and only arranges this data when it's absent.
+        // Gather the 3 stitched regions and bucket them by sub-track. This runs
+        // before the placeFeature/xvalues short-circuit below.
+        if (
+          trackModel.type !== "dynamicbed" &&
+          cacheTrackData[`${dataIdx}`]?.["xvalues"]
+        ) {
+          combinedData = [];
+        } else {
+          for (let i = 0; i < 3; i++) {
+            if (cacheTrackData[currIdx]?.dataCache) {
+              combinedData.push(cacheTrackData[currIdx]);
+            }
+            currIdx--;
+          }
+          combinedData = groupTracksArrMatPlot(combinedData);
+        }
+      } else if (
         cacheTrackData[`${dataIdx}`]?.["xvalues"] ||
         cacheTrackData[`${dataIdx}`]?.["placeFeature"]
       ) {
         combinedData = [];
-      } else if (dynamicMatplotTracks.has(trackModel.type)) {
-        if (
-          cacheTrackData[`${dataIdx}`] &&
-          cacheTrackData[`${dataIdx}`]["xvalues"]
-        ) {
-          combinedData = [];
-        } else {
-          combinedData = groupTracksArrMatPlot(combinedData);
-        }
       } else {
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
@@ -663,6 +676,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             legendWidth: legendWidth ? legendWidth : 120,
 
             placeFeature: cacheTrackData[dataIdx]?.placeFeature,
+            visData: viewComponent.visData,
           });
         }
       }

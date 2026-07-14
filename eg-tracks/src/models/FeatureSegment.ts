@@ -1,5 +1,10 @@
 import OpenInterval from "./OpenInterval";
 import ChromosomeInterval from "./ChromosomeInterval";
+import {
+  getFeatureLocus,
+  getFeatureName,
+  getFeatureIsReverseStrand,
+} from "./Feature";
 export function isGenomeCoordinate(str: string) {
   const singleRegionPattern = /^chr[\w.]+:\d+-\d+$/;
   const multiRegionPattern = /^chr[\w.]+:\d+-chr[\w.]+-\d+$/;
@@ -45,7 +50,8 @@ export class FeatureSegment {
     end?: number | undefined
   ) {
     if (end === undefined) {
-      end = feature.locus.end - feature.locus.start;
+      const featureLocus = getFeatureLocus(feature);
+      end = featureLocus.end - featureLocus.start;
     }
     if (end! < start) {
       throw new RangeError("End cannot be less than start");
@@ -88,7 +94,7 @@ export class FeatureSegment {
    * @return {string} the attached feature's name
    */
   getName(): string {
-    return this.feature.getName();
+    return getFeatureName(this.feature);
   }
 
   /**
@@ -102,7 +108,7 @@ export class FeatureSegment {
    * @return {ChromosomeInterval} the genomic location that this segment covers
    */
   getLocus(): ChromosomeInterval {
-    const featureLocus = this.feature.locus;
+    const featureLocus = getFeatureLocus(this.feature);
 
     return new ChromosomeInterval(
       featureLocus.chr,
@@ -137,7 +143,7 @@ export class FeatureSegment {
    * @return {FeatureSegment} intersection of this and the input genomic location
    */
   getGenomeOverlap(chrInterval: ChromosomeInterval): FeatureSegment | null {
-    const featureLocus = this.feature.getLocus();
+    const featureLocus = getFeatureLocus(this.feature);
     const genomeLocation = this.getLocus();
     const overlap = genomeLocation.getOverlap(chrInterval);
     if (!overlap) {
@@ -155,8 +161,9 @@ export class FeatureSegment {
     let name;
 
     name = this.getName();
-    const start = this.relativeStart + this.feature.locus.start;
-    const end = this.relativeEnd + this.feature.locus.start
+    const featureStart = getFeatureLocus(this.feature).start;
+    const start = this.relativeStart + featureStart;
+    const end = this.relativeEnd + featureStart;
     return `${name}:${start}-${end}`;
   }
 
@@ -175,8 +182,10 @@ export class FeatureSegment {
 
 
     name2 = other.getName();
-    let thisStart = this.feature.strand === "-" ? this.relativeEnd + this.feature.locus.start : this.relativeStart + this.feature.locus.start
-    let otherEnd = other.feature.strand === "-" ? other.relativeStart + other.feature.locus.start : other.relativeEnd + other.feature.locus.start
+    const thisFeatureStart = getFeatureLocus(this.feature).start;
+    const otherFeatureStart = getFeatureLocus(other.feature).start;
+    let thisStart = getFeatureIsReverseStrand(this.feature) ? this.relativeEnd + thisFeatureStart : this.relativeStart + thisFeatureStart
+    let otherEnd = getFeatureIsReverseStrand(other.feature) ? other.relativeStart + otherFeatureStart : other.relativeEnd + otherFeatureStart
 
 
     return `${name1}:${thisStart}-${name2}:${otherEnd}`;

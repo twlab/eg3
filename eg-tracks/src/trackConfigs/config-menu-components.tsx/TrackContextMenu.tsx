@@ -131,9 +131,10 @@ export function ObjectAsTable(props) {
   );
 }
 export function TrackMoreInfo(props) {
+  console.log(props.legendWidth);
   const track = props.track;
   const anchorPosition = props.anchorPosition;
-  const legendWidth = props.legendWidth;
+
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen(!isOpen);
   let info: Array<any> = [];
@@ -180,10 +181,7 @@ export function TrackMoreInfo(props) {
           const winW = typeof window !== "undefined" ? window.innerWidth : 1024;
           const calcLeft = Math.max(
             8,
-            Math.min(
-              anchorPosition.left + legendWidth ? legendWidth : 120,
-              winW - 320,
-            ),
+            Math.min(anchorPosition.left + props.legendWidth, winW - 320),
           );
           return (
             <OutsideClickDetector onOutsideClick={() => setIsOpen(false)}>

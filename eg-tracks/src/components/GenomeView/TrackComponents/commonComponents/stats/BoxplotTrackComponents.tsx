@@ -1,10 +1,8 @@
 import React, { useMemo, useRef, useCallback } from "react";
-import PropTypes from "prop-types";
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import * as d3 from "d3";
 import TrackLegend from "../TrackLegend";
-import GenomicCoordinates from "../HoverToolTips/GenomicCoordinates";
 
 import { RenderTypes, DesignRenderer } from "../art/DesignRenderer";
 import { FeatureAggregator } from "../../../../../models/FeatureAggregator";
@@ -39,6 +37,8 @@ interface BoxplotTrackProps {
   dataIdx?: number;
   initialLoad?: boolean;
   windowWidth?: number;
+  legendWidth?: number;
+  xvaluesData?: any;
 }
 
 const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
@@ -63,6 +63,8 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
     dataIdx = 0,
     initialLoad = false,
     windowWidth = 0,
+    legendWidth,
+    xvaluesData,
   } = props;
 
   const { height, boxColor, lineColor } = options;
@@ -164,15 +166,13 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
   }, []);
 
   const xAlias = makeXalias(width, options.windowSize);
-  const xMap = aggregateFeatures(
-    data,
-    viewRegion,
-    width,
-    false,
-    options.windowSize,
-  );
 
-  const scales = computeScales(xMap, xAlias, height, viewWindow);
+  let xvalues =
+    xvaluesData && options.usePrimaryNav
+      ? xvaluesData
+      : aggregateFeatures(data, viewRegion, width, false, options.windowSize);
+
+  const scales = computeScales(xvalues, xAlias, height, viewWindow);
 
   let visualizer;
 
@@ -195,11 +195,17 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
       axisLegend: unit,
       label: options.label,
       forceSvg,
+      legendWidth,
     };
     if (updatedLegend) {
       updatedLegend.current = legendProps;
     }
-
+    const legend =
+      forceSvg || options.packageVersion ? (
+        <div style={{ display: "flex" }}>
+          <TrackLegend {...legendProps} />
+        </div>
+      ) : null;
     let curParentStyle: any = forceSvg
       ? {
           position: "relative",
@@ -227,7 +233,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
           >
             {!forceSvg ? (
               <HoverToolTip
-                data={xMap}
+                data={xvalues}
                 scale={scales}
                 windowWidth={width}
                 trackType={"boxplot"}
@@ -251,7 +257,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
               }}
             >
               <Boxplot
-                xMap={xMap}
+                xMap={xvalues}
                 scales={scales}
                 height={height}
                 width={width}
@@ -290,17 +296,17 @@ interface BoxplotProps {
   forceSvg?: boolean; // Optional property
 }
 
-export class Boxplot extends React.PureComponent<BoxplotProps> {
-  static propTypes = {
-    xMap: PropTypes.object.isRequired,
-    scales: PropTypes.object.isRequired,
-    height: PropTypes.number.isRequired,
-    width: PropTypes.number.isRequired,
-    windowSize: PropTypes.number.isRequired,
-    boxColor: PropTypes.string,
-    lineColor: PropTypes.string,
-    forceSvg: PropTypes.bool,
-  };
+const Boxplot = (props: BoxplotProps) => {
+  const {
+    xMap,
+    scales,
+    height,
+    width,
+    windowSize,
+    boxColor,
+    lineColor,
+    forceSvg,
+  } = props;
 
   /**
    * Gets an element to draw for a data record.
@@ -309,59 +315,58 @@ export class Boxplot extends React.PureComponent<BoxplotProps> {
    * @param {number} x
    * @return {JSX.Element} bar element to render
    */
-  renderBox = (value, x1) => {
-    if (!value) {
-      return null;
-    }
-    const x = Number.parseInt(x1);
-    const { scales, boxColor, lineColor, windowSize } = this.props;
-    const lowY = scales.valueToY(value.min);
-    const highY = scales.valueToY(value.max);
-    const q1Y = scales.valueToY(value.q1);
-    const q3Y = scales.valueToY(value.q3);
-    const medianY = scales.valueToY(value.median);
-    return (
-      <g key={x}>
-        <line
-          key={x + "vline"}
-          x1={x + windowSize * 0.5}
-          y1={highY}
-          x2={x + windowSize * 0.5}
-          y2={lowY}
-          stroke={lineColor}
-        />
-        <rect
-          key={x + "box"}
-          x={x}
-          y={q3Y}
-          width={windowSize}
-          height={q1Y - q3Y}
-          fill={boxColor}
-        />
-        <line
-          key={x + "medianline"}
-          x1={x}
-          y1={medianY}
-          x2={x + windowSize}
-          y2={medianY}
-          stroke={lineColor}
-        />
-      </g>
-    );
-  };
+  const renderBox = useCallback(
+    (value: any, x1: string) => {
+      if (!value) {
+        return null;
+      }
+      const x = Number.parseInt(x1);
+      const lowY = scales.valueToY(value.min);
+      const highY = scales.valueToY(value.max);
+      const q1Y = scales.valueToY(value.q1);
+      const q3Y = scales.valueToY(value.q3);
+      const medianY = scales.valueToY(value.median);
+      return (
+        <g key={x}>
+          <line
+            key={x + "vline"}
+            x1={x + windowSize * 0.5}
+            y1={highY}
+            x2={x + windowSize * 0.5}
+            y2={lowY}
+            stroke={lineColor}
+          />
+          <rect
+            key={x + "box"}
+            x={x}
+            y={q3Y}
+            width={windowSize}
+            height={q1Y - q3Y}
+            fill={boxColor}
+          />
+          <line
+            key={x + "medianline"}
+            x1={x}
+            y1={medianY}
+            x2={x + windowSize}
+            y2={medianY}
+            stroke={lineColor}
+          />
+        </g>
+      );
+    },
+    [scales, boxColor, lineColor, windowSize],
+  );
 
-  render() {
-    const { xMap, height, width, forceSvg } = this.props;
-    return (
-      <DesignRenderer
-        type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-        width={width}
-        height={height}
-      >
-        {Object.keys(xMap).map((x) => this.renderBox(xMap[x], x))}
-      </DesignRenderer>
-    );
-  }
-}
+  return (
+    <DesignRenderer
+      type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+      width={width}
+      height={height}
+    >
+      {Object.keys(xMap).map((x) => renderBox(xMap[x], x))}
+    </DesignRenderer>
+  );
+};
 
 export default BoxplotTrackComponents;
