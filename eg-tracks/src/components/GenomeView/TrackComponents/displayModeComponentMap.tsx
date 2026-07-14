@@ -3012,11 +3012,22 @@ function flattenLocusGroups(groups: any[]): any[] {
   for (const group of groups) {
     if (isLocusGroup(group)) {
       for (const record of group.data) {
-        record.chr = group.chr;
-        if (record.CHROM !== undefined) {
-          record.CHROM = group.chr;
+        // Source records can be frozen — the screenshot path passes data
+        // through Redux/Immer, which deep-freezes state — so stamp onto a
+        // shallow copy in that case instead of mutating in place (which throws
+        // on a read-only property). Non-frozen records keep the cheap in-place
+        // path used during normal rendering.
+        const stamped =
+          record !== null &&
+          typeof record === "object" &&
+          Object.isFrozen(record)
+            ? { ...record }
+            : record;
+        stamped.chr = group.chr;
+        if (stamped.CHROM !== undefined) {
+          stamped.CHROM = group.chr;
         }
-        flat.push(record);
+        flat.push(stamped);
       }
     } else {
       flat.push(group);

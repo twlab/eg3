@@ -783,6 +783,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let tempDragX = dragX.current;
     tempDragX -= deltaX;
 
+    const totalBases = curGenomeConfig.current?.navContext?._totalBases;
+
+    // The whole data region already fits in the view, so there is nothing to
+    // scroll to — block all movement regardless of nav mode. This is the
+    // unified home for what used to be scattered `selectedRegionSet &&
+    // bpRegionSize === totalBases` special-cases: a region-set view loads the
+    // full region into the full window (bpRegionSize === totalBases), and full
+    // zoom-out does the same, so both are simply "whole region in view".
+    if (totalBases !== undefined && bpRegionSize.current >= totalBases) {
+      return;
+    }
+
     if (
       side.current === "right" &&
       -tempDragX >=
@@ -797,17 +809,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
 
-    // Stop at the actual data-region edges. The section-size checks above only
-    // cap how many fetched windows we've scrolled through, not where the
-    // underlying data ends, so without this you can keep dragging into empty
-    // space past the start (0) or end (totalBases) of the region — the drag
-    // updates even though handleMouseUp will refuse to commit it. Project the
-    // committed start bp for tempDragX using the same mapping handleMouseUp
-    // uses in coarse mode (leftStartCoord + -dragX * basePerPixel) and block
-    // once the view would run off either edge. Only applied in coarse mode:
-    // fine-mode commits use getRegionOffsetByX, which already clamps to
+    // Stop at the actual data-region edges for partial views. The section-size
+    // checks above only cap how many fetched windows we've scrolled through,
+    // not where the underlying data ends, so without this you can keep dragging
+    // into empty space past the start (0) or end (totalBases) of the region —
+    // the drag updates even though handleMouseUp will refuse to commit it.
+    // Project the committed start bp for tempDragX using the same mapping
+    // handleMouseUp uses in coarse mode (leftStartCoord + -dragX * basePerPixel)
+    // and block once the view would run off either edge. Only applied in coarse
+    // mode: fine-mode commits use getRegionOffsetByX, which already clamps to
     // [0, totalBases-1], and the linear projection is only approximate there.
-    const totalBases = curGenomeConfig.current?.navContext?._totalBases;
     if (
       !useFineModeNav.current &&
       totalBases !== undefined &&
@@ -3289,21 +3300,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return true;
         })
         .map((item) => convertTrackModelToITrackModel(item));
-      const isRegionSetView =
-        selectedRegionSet &&
-        bpRegionSize.current ===
-          curGenomeConfig.current?.navContext._totalBases;
-
       // When the view spans (or exceeds) the entire data region there is no
       // 3-window expansion to offset against: the data occupies a single
       // window anchored at x=0. Applying the usual windowWidth offset here
       // shifts the drawn content out of the clip region (translateX =
-      // -viewWindow.start in ScreenshotUI), producing a blank screenshot. Treat
-      // it like the region-set whole-view case: no offset, viewWindow at 0.
+      // -viewWindow.start in ScreenshotUI), producing a blank screenshot. Use
+      // no offset with the viewWindow anchored at 0. A region-set view is just
+      // a special case of this (it loads the full region into the full window,
+      // so bpRegionSize === totalBases), so it needs no separate condition.
       const totalBases = curGenomeConfig.current?.navContext?._totalBases;
-      const isWholeRegionView =
+      const noViewWindowOffset =
         totalBases !== undefined && bpRegionSize.current >= totalBases;
-      const noViewWindowOffset = isRegionSetView || isWholeRegionView;
 
       const currViewWindow = noViewWindowOffset
         ? new OpenInterval(0, windowWidthRef.current)

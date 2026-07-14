@@ -171,7 +171,9 @@ export class GroupedTrackManager {
           for (let x = startX; x <= endX; x++) {
             xToFibers[x].count += 1;
           }
-          (feature as Fiber).ons!.forEach((rbs) => {
+          // ons/offs can be absent on a malformed or partial fiber record
+          // (e.g. one with no methylation calls), so guard rather than assert.
+          (feature as Fiber).ons?.forEach((rbs) => {
             const bs = Math.abs(rbs);
             if (bs >= relativeStart && bs < relativeEnd) {
               const x =
@@ -182,7 +184,7 @@ export class GroupedTrackManager {
               xToFibers[x].on += 1;
             }
           });
-          (feature as Fiber).offs!.forEach((rbs) => {
+          (feature as Fiber).offs?.forEach((rbs) => {
             const bs = Math.abs(rbs);
             if (bs >= relativeStart && bs < relativeEnd) {
               const x =
