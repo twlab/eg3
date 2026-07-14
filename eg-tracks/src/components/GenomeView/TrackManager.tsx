@@ -3263,18 +3263,39 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         bpRegionSize.current ===
           curGenomeConfig.current?.navContext._totalBases;
 
-      const currViewWindow = isRegionSetView
+      // When the view spans (or exceeds) the entire data region there is no
+      // 3-window expansion to offset against: the data occupies a single
+      // window anchored at x=0. Applying the usual windowWidth offset here
+      // shifts the drawn content out of the clip region (translateX =
+      // -viewWindow.start in ScreenshotUI), producing a blank screenshot. Treat
+      // it like the region-set whole-view case: no offset, viewWindow at 0.
+      const totalBases = curGenomeConfig.current?.navContext?._totalBases;
+      const isWholeRegionView =
+        totalBases !== undefined && bpRegionSize.current >= totalBases;
+      const noViewWindowOffset = isRegionSetView || isWholeRegionView;
+
+      const currViewWindow = noViewWindowOffset
         ? new OpenInterval(0, windowWidthRef.current)
         : globalTrackState.current.viewWindow;
       let trackState = _.cloneDeep(
         globalTrackState.current?.trackStates?.[dataIdx.current]?.trackState,
       );
 
-      const xDiff = isRegionSetView
+      // xDiff is the scroll delta of the current window from the fetch's
+      // default (centered) position: globalTrackState.viewWindow.start sits at
+      // windowWidth when unscrolled and shifts as you drag, so subtracting
+      // windowWidth yields how far we've scrolled within the expanded region.
+      // Using windowWidth here (rather than visData.viewWindow.start) keeps this
+      // correct when the fetch expansion is clamped by the data edge — i.e. when
+      // the view spans a large fraction (~60%+) of the whole data region. There
+      // visData.viewWindow.start (leftExtraPixels) is < windowWidth, and the old
+      // formula over-shifted every feature/highlight by
+      // (windowWidth - visData.viewWindow.start).
+      const xDiff = noViewWindowOffset
         ? 0
-        : currViewWindow.start - trackState?.visData?.viewWindow.start;
+        : currViewWindow.start - windowWidthRef.current;
 
-      const sameRegionViewWindow = isRegionSetView
+      const sameRegionViewWindow = noViewWindowOffset
         ? { start: 0, end: windowWidthRef.current }
         : {
             start:
