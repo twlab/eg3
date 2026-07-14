@@ -228,7 +228,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     : {};
 
   let visualizer;
-  console.log(xToValue);
+
   if (
     initialLoad ||
     options.forceSvg ||

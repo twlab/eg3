@@ -193,19 +193,28 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     tracksData.forEach(({ clientHeight, clone: ele }, idx) => {
       const currLegendWidth = props.legendWidth + 1;
       let trackHeight = clientHeight + 1;
+      // Search the whole track clone (not just children[0].children[0]) since
+      // some track types (e.g. matplot/dynamicbed with subtrack labels) wrap
+      // the legend in an extra level of nesting. querySelector still finds it
+      // anywhere in the subtree; fall back to "" if it's genuinely missing
+      // (e.g. legend height was 0 for that render) instead of throwing.
       const trackLabelText =
-        ele.children[0].children[0].querySelector(
-          ".TrackLegend-label",
-        ).textContent;
+        ele.querySelector(".TrackLegend-label")?.textContent ?? "";
       const chrLabelText = ele.children[0].querySelector(
         ".TrackLegend-chrLabel",
       )
         ? ele.children[0].querySelector(".TrackLegend-chrLabel").textContent
         : null;
+      // Multi-label tracks (matplot/dynamic/dynamicbed) render a grid of
+      // per-subtrack labels, each with its own color. Grab the live node so
+      // those colors are preserved when cloned into the SVG below.
+      const subLabelsNode = (ele as Element).querySelector(
+        ".TrackLegend-subLabels",
+      );
       const trackLegendAxisSvgs =
-        ele.children[0].children[0].querySelectorAll("svg");
+        ele.children[0]?.children[0]?.querySelectorAll("svg") ?? [];
       const originalAxis =
-        tracks[idx].children[0].children[0].querySelectorAll("svg");
+        tracks[idx].children[0]?.children[0]?.querySelectorAll("svg") ?? [];
 
       let eleSvgs: Array<any> = [];
       let originalSvgs: any = [];
@@ -257,6 +266,39 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const textNode = document.createTextNode(chrLabelText);
         labelSvg.setAttribute("class", "svg-text-bg");
         labelSvg.appendChild(textNode);
+        svgElemg.appendChild(labelSvg);
+      }
+      if (subLabelsNode) {
+        // Rebuild the per-subtrack labels as explicit stacked block divs.
+        // (grid/flex layout isn't reliably honored in the SVG render path, so
+        // a cloned grid ends up on a single line.) Each label keeps its own
+        // color, read from the live node. Anchored to the bottom of the legend
+        // to match the in-app layout (the grid uses align-items: end).
+        const labelSvg = document.createElementNS(xmlns, "foreignObject");
+        labelSvg.setAttributeNS(null, "x", x + "");
+        labelSvg.setAttributeNS(null, "y", y + "");
+        labelSvg.setAttributeNS(null, "width", `${currLegendWidth - 32}`);
+        labelSvg.setAttributeNS(null, "height", `${trackHeight}`);
+
+        const wrap = document.createElement("div");
+        wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+        wrap.style.cssText = `display: flex; flex-direction: column; justify-content: flex-end; width: ${
+          currLegendWidth - 42
+        }px; height: ${trackHeight}px; font-size: 10px;`;
+
+        Array.from(subLabelsNode.children).forEach((child) => {
+          const text = child.textContent ?? "";
+          if (!text) {
+            return;
+          }
+          const color = (child as HTMLElement).style.color || fg;
+          const line = document.createElement("div");
+          line.style.cssText = `display: block; color: ${color}; white-space: normal; word-wrap: break-word;`;
+          line.textContent = text;
+          wrap.appendChild(line);
+        });
+
+        labelSvg.appendChild(wrap);
         svgElemg.appendChild(labelSvg);
       }
       if (trackLegendAxisSvgs.length > 0) {

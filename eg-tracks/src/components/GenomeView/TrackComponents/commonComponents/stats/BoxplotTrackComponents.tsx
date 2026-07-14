@@ -222,7 +222,7 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
 
     visualizer = (
       <React.Fragment>
-        <div style={{ display: "flex" }}>
+        {!forceSvg ? (
           <div
             style={{
               display: "flex",
@@ -231,43 +231,41 @@ const BoxplotTrackComponents: React.FC<BoxplotTrackProps> = (props) => {
               zIndex: 3,
             }}
           >
-            {!forceSvg ? (
-              <HoverToolTip
-                data={xvalues}
-                scale={scales}
-                windowWidth={width}
-                trackType={"boxplot"}
-                trackModel={trackModel}
-                height={height}
-                viewRegion={viewRegion}
-                unit={unit ? unit : ""}
-                hasReverse={true}
-                options={options}
-                xAlias={xAlias}
-              />
-            ) : (
-              ""
-            )}
+            <HoverToolTip
+              data={xvalues}
+              scale={scales}
+              windowWidth={width}
+              trackType={"boxplot"}
+              trackModel={trackModel}
+              height={height}
+              viewRegion={viewRegion}
+              unit={unit ? unit : ""}
+              hasReverse={true}
+              options={options}
+              xAlias={xAlias}
+            />
           </div>
-          <div style={{ display: "flex", ...curParentStyle }}>
-            {forceSvg || options.packageVersion ? legend : ""}{" "}
-            <div
-              style={{
-                ...curEleStyle,
-              }}
-            >
-              <Boxplot
-                xMap={xvalues}
-                scales={scales}
-                height={height}
-                width={width}
-                windowSize={options.windowSize}
-                boxColor={boxColor}
-                lineColor={lineColor}
-                forceSvg={forceSvg}
-              />
-            </div>
-          </div>{" "}
+        ) : (
+          ""
+        )}
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {forceSvg || options.packageVersion ? legend : ""}
+          <div
+            style={{
+              ...curEleStyle,
+            }}
+          >
+            <Boxplot
+              xMap={xvalues}
+              scales={scales}
+              height={height}
+              width={width}
+              windowSize={options.windowSize}
+              boxColor={boxColor}
+              lineColor={lineColor}
+              forceSvg={forceSvg}
+            />
+          </div>
         </div>
       </React.Fragment>
     );

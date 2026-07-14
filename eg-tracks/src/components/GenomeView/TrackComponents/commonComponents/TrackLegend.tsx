@@ -285,6 +285,7 @@ class TrackLegend extends React.PureComponent<
       });
       labelList = (
         <div
+          className="TrackLegend-subLabels"
           style={{
             display: "grid",
             gridTemplateColumns: "auto",
