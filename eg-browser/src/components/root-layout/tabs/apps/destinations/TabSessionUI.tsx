@@ -82,13 +82,16 @@ export const onRetrieveSession = async (retrieveId: string) => {
   const dbRef = ref(getDatabase());
   try {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
+    let hasGenomeName = true;
     if (snapshot.exists()) {
       let res = snapshot.val();
 
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
-
+          if (!object.genomeName) {
+            hasGenomeName = false;
+          }
           const regionSets = object.regionSets
             ? object.regionSets.map(RegionSet.deserialize)
             : [];
@@ -153,14 +156,11 @@ export const onRetrieveSession = async (retrieveId: string) => {
 
       // Persist the cleared layout (and rebuilt state) back to the DB.
       try {
-        await set(
-          ref(getDatabase(), `sessions/${retrieveId}`),
-          JSON.parse(JSON.stringify(res)),
-        );
-        const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
-        if (snapshot.exists()) {
-          const res = snapshot.val();
-          console.log(res);
+        if (!hasGenomeName && snapshot.exists() && res) {
+          await set(
+            ref(getDatabase(), `sessions/${retrieveId}`),
+            JSON.parse(JSON.stringify(res)),
+          );
         }
       } catch (error) {
         console.error("Failed to update session bundle in DB", error);

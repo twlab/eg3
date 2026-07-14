@@ -28,6 +28,7 @@ interface TrackLegendProps {
   selectedRegion?: DisplayedRegionModel; // the region for viewing, without expansion
   axisLegend?: any;
   label?: string;
+  legendWidth?: number;
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
@@ -59,8 +60,6 @@ class TrackLegend extends React.PureComponent<
     this.gNode = null;
     this.handleRef = this.handleRef.bind(this);
     this.plotATCGLegend = this.plotATCGLegend.bind(this);
-    this.handleMouseEnter = this.handleMouseEnter.bind(this);
-    this.handleMouseLeave = this.handleMouseLeave.bind(this);
   }
 
   componentDidMount() {
@@ -71,25 +70,6 @@ class TrackLegend extends React.PureComponent<
     if (this.hoverTimeout) {
       clearTimeout(this.hoverTimeout);
     }
-  }
-
-  handleMouseEnter(e: React.MouseEvent) {
-    const clickX = e.clientX;
-    const clickY = e.clientY;
-    if (this.hoverTimeout) {
-      clearTimeout(this.hoverTimeout);
-    }
-    this.hoverTimeout = setTimeout(() => {
-      this.setState({ showFull: true, clickX, clickY });
-    }, 1000);
-  }
-
-  handleMouseLeave() {
-    if (this.hoverTimeout) {
-      clearTimeout(this.hoverTimeout);
-      this.hoverTimeout = null;
-    }
-    this.setState({ showFull: false });
   }
 
   componentDidUpdate(nextProps: TrackLegendProps) {
@@ -176,9 +156,9 @@ class TrackLegend extends React.PureComponent<
 
   getLabelWidth() {
     if (this.props.axisScale) {
-      return this.props.trackModel.legendWidth
-        ? this.props.trackModel.legendWidth - AXIS_WIDTH
-        : this.props.width - AXIS_WIDTH;
+      return this.props.legendWidth
+        ? this.props.legendWidth - AXIS_WIDTH
+        : 120 - AXIS_WIDTH;
     } else {
       return undefined;
     }
@@ -274,12 +254,20 @@ class TrackLegend extends React.PureComponent<
       }
     }
     let labelList;
-    if (trackModel.type === "matplot" && trackModel.tracks) {
+    let subTrackLabels: string[] = [];
+
+    if (
+      trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" } &&
+      trackModel.tracks?.length
+    ) {
       const labels = trackModel.tracks.map((track, i) => {
         const color =
           track && track.options && track.options.color
             ? track.options.color
             : "blue";
+        const trackLabel =
+          track?.label || track?.options?.label || track?.name || "";
+        subTrackLabels.push(trackLabel);
         return (
           <div
             key={i}
@@ -291,7 +279,7 @@ class TrackLegend extends React.PureComponent<
               minWidth: 0,
             }}
           >
-            {track && track.label ? track.label : ""}
+            {trackLabel}
           </div>
         );
       });
@@ -310,15 +298,15 @@ class TrackLegend extends React.PureComponent<
     }
 
     return (
-      <div
-        ref={this.containerRef}
-        style={{ ...divStyle, cursor: "pointer" }}
-        onMouseEnter={this.handleMouseEnter}
-        onMouseLeave={this.handleMouseLeave}
-      >
+      <div ref={this.containerRef} style={{ ...divStyle, cursor: "pointer" }}>
         <div
           className="TrackLegend-wrap"
-          title={trackModel.options ? trackModel.options.label : ""}
+          title={[
+            trackModel.options ? trackModel.options.label : "",
+            ...subTrackLabels,
+          ]
+            .filter(Boolean)
+            .join("\n")}
         >
           <p
             className="TrackLegend-label"

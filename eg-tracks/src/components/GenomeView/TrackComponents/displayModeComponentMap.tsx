@@ -599,7 +599,7 @@ const FullVisualizer: React.FC<any> = ({
           transform: `translateX(${-trackState.viewWindow.start}px)`,
         }
       : {};
-
+    console.log(windowWidth);
     return (
       <React.Fragment>
         <div style={{ display: "flex", ...curParentStyle }}>
@@ -676,6 +676,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     onClose,
     scales,
     placeFeature,
+    legendWidth,
   }) {
     // Full visualizer is now extracted to `FullVisualizer` component above
 
@@ -799,6 +800,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           ? trackModel.options.label
           : "",
       forceSvg: configOptions.forceSvg,
+      legendWidth: legendWidth,
     };
     if (updatedLegend) {
       updatedLegend.current = legendProps;
@@ -840,6 +842,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <NumericalTrack
@@ -860,6 +863,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth ? legendWidth : 120}
       />
     );
     return canvasElements;
@@ -1072,6 +1076,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     onClose,
     xvaluesData,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <FiberTrackComponent
@@ -1099,6 +1104,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         windowWidth={windowWidth}
+        legendWidth={legendWidth ? legendWidth : 120}
       />
     );
 
@@ -1114,6 +1120,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <InteractionTrackComponent
@@ -1132,6 +1139,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth ? legendWidth : 120}
       />
     );
 
@@ -1290,7 +1298,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             style={{
               display: "flex",
               position: "relative",
-              width: drawData.windowWidth + 120,
+              width: drawData.windowWidth + drawData.legendWidth,
               overflow: "hidden",
             }}
           >
@@ -1392,7 +1400,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               position: "relative",
 
               overflow: "hidden",
-              width: drawData.trackState.visWidth / 3 + 120,
+              width: drawData.trackState.visWidth / 3 + drawData.legendWidth,
             }
           : {};
         let curEleStyle: any = drawData.configOptions.forceSvg
@@ -1472,6 +1480,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     errorInfo,
     handleRetryFetchTrack,
+    legendWidth,
   }) {
     const legendProps = {
       height: 40,
@@ -1481,6 +1490,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         : trackModel.options.label
           ? trackModel.options.label
           : "",
+      legendWidth: legendWidth ? legendWidth : 120,
     };
     if (updatedLegend) {
       updatedLegend.current = legendProps;
@@ -1579,7 +1589,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 };
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
-  const { trackModel, configOptions, trackState } = drawData;
+  const { trackModel, configOptions, trackState, legendWidth } = drawData;
 
   const trackType = trackModel.type;
 
@@ -1604,9 +1614,10 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     updatedLegend: drawData.updatedLegend,
     trackModel: drawData.trackModel,
     initialLoad: drawData.initialLoad,
+    legendWidth: drawData.legendWidth,
     windowWidth:
       configOptions.forceSvg || configOptions.packageVersion
-        ? 120 + drawData.windowWidth
+        ? legendWidth + drawData.windowWidth
         : drawData.windowWidth,
     ...extraParams,
   });
@@ -3132,4 +3143,3 @@ export function formatCombinedData(combinedData: any, type: string): any {
       : entry,
   );
 }
-

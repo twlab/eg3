@@ -47,5 +47,6 @@ export interface TrackProps {
   Toolbar: { [key: string]: any };
   handleRetryFetchTrack: (trackIdx: number) => void;
   initialLoad: any;
-  selectedRegionSet: any
+  selectedRegionSet: any;
+  legendWidth: number;
 }

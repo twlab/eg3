@@ -133,6 +133,7 @@ export function ObjectAsTable(props) {
 export function TrackMoreInfo(props) {
   const track = props.track;
   const anchorPosition = props.anchorPosition;
+  const legendWidth = props.legendWidth;
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen(!isOpen);
   let info: Array<any> = [];
@@ -172,13 +173,18 @@ export function TrackMoreInfo(props) {
   }
   return (
     <div>
-      <button className="collapsible" onClick={toggle}>
-        More information
-      </button>
-      {anchorPosition && isOpen && (
+      <button onClick={toggle}>More information</button>
+      {anchorPosition &&
+        isOpen &&
         (() => {
           const winW = typeof window !== "undefined" ? window.innerWidth : 1024;
-          const calcLeft = Math.max(8, Math.min(anchorPosition.left + 120, winW - 320));
+          const calcLeft = Math.max(
+            8,
+            Math.min(
+              anchorPosition.left + legendWidth ? legendWidth : 120,
+              winW - 320,
+            ),
+          );
           return (
             <OutsideClickDetector onOutsideClick={() => setIsOpen(false)}>
               <div
@@ -198,8 +204,7 @@ export function TrackMoreInfo(props) {
               </div>
             </OutsideClickDetector>
           );
-        })()
-      )}
+        })()}
     </div>
   );
 }

@@ -57,12 +57,9 @@ const defaultTracks = [
 
 const publicHubList = [
   {
-    collection: "PAN027_Pat_Methylation_FIRE",
-    name: "PAN027_Pat_Methylation_FIRE",
-    numTracks: 12,
-    oldHubFormat: false,
-    url: "https://wangcluster.wustl.edu/~sdong/sdong/washu_epi_browser/washu_t2t_browser/pan027pat/PAN027_Pat_Methylation_FIRE.json",
-    description: "test",
+    collection: "PAN027 Pat Methylation FIRE",
+    name: "PAN027 Pat Methylation FIRE",
+    url: "https://wangcluster.wustl.edu/~sdong/sdong/washu_epi_browser/washu_t2t_browser/important_json_fils/PAN027Pat_more_data_tracks.json",
   },
 ];
 

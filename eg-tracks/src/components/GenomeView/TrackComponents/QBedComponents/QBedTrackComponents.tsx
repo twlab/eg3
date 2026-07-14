@@ -56,7 +56,8 @@ type QBedTrackProps = {
   xvaluesData?: Array<any>;
   dataIdx: number;
   initialLoad: boolean;
-  windowWidth?: number;
+  windowWidth: number;
+  legendWidth: number;
 };
 
 export const DEFAULT_OPTIONS = {
@@ -159,6 +160,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     initialLoad,
     updatedLegend,
     windowWidth = 0,
+    legendWidth = 0,
   } = props;
   const {
     height,
@@ -197,6 +199,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     axisScale: scalesRef.current.valueToY,
     label: options.label,
     forceSvg,
+    legendWidth: legendWidth,
   };
   if (updatedLegend) {
     updatedLegend.current = legendProps;
@@ -214,7 +217,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
         position: "relative",
 
         overflow: "hidden",
-        width: windowWidth / 3 / 3 + 120,
+        width: windowWidth,
       }
     : {};
   let curEleStyle: any = forceSvg
@@ -223,7 +226,9 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
         transform: `translateX(${-viewWindow.start}px)`,
       }
     : {};
-  let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+  let hoverStyle: any = options.packageVersion
+    ? { marginLeft: legendWidth ? legendWidth : 120 }
+    : {};
 
   let visualizer;
 

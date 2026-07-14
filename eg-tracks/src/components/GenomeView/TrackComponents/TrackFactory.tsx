@@ -31,14 +31,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackModel,
   dataIdx,
   signalTrackLoadComplete,
-
   id,
   setShow3dGene,
   isThereG3dTrack,
   viewWindowConfigChange,
-
   sentScreenshotData,
-  dragX,
   newDrawData,
   selfFetchTrigger,
   selfFetchApi,
@@ -46,8 +43,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   globalTrackState,
   isScreenShotOpen,
   legendRef,
-  highlightElements,
-
   metaSets,
   onColorBoxClick,
   messageData,
@@ -55,6 +50,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   handleRetryFetchTrack,
   initialLoad,
   selectedRegionSet,
+  legendWidth,
 }) {
   function getConfigOptions() {
     try {
@@ -148,6 +144,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       handleRetryFetchTrack: handleRetryFetchTrack,
       initialLoad: initialLoad.current,
       placeFeature,
+      legendWidth: legendWidth ? legendWidth : 120,
     };
 
     // try {
@@ -467,7 +464,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (
       !caches[`${id}`] ||
       !globalTrackState.current.trackStates[dataIdx] ||
-      !globalTrackState.current.trackStates[dataIdx].trackState.genomicFetchCoord
+      !globalTrackState.current.trackStates[dataIdx].trackState
+        .genomicFetchCoord
     ) {
       return;
     }
@@ -662,6 +660,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : null,
             isError: fetchError.current,
             trackId: id,
+            legendWidth: legendWidth ? legendWidth : 120,
 
             placeFeature: cacheTrackData[dataIdx]?.placeFeature,
           });
@@ -695,7 +694,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       >
         <div
           style={{
-            width: 120,
+            width: legendWidth,
             display: "flex",
             flexDirection: "column",
             backgroundColor: trackModel.isSelected
@@ -743,6 +742,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             selectedRegion={legend?.selectedRegion}
             trackWidth={legend?.trackWidth}
             noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
+            legendWidth={legendWidth}
           />
           {legend?.reverseStrandLegendProps && (
             <TrackLegend {...legend.reverseStrandLegendProps} />
@@ -774,6 +774,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             !viewComponent ||
             (viewComponent && dataIdx !== viewComponent.dataIdx)
           }
+          legendWidth={legendWidth}
           // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
           // xOffset={0}
         >
@@ -808,7 +809,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? getConfigOptions().height
                 : 40
           }
-          xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
+          xOffset={
+            windowWidth / 2 + legendWidth - (15 * metaSets.terms.length - 1)
+          }
           // Control visibility - show when data is loaded and items are hidden, but not when loading
           isVisible={
             viewComponent &&
@@ -819,6 +822,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               (viewComponent && dataIdx !== viewComponent.dataIdx)
             )
           }
+          legendWidth={legendWidth}
         />
 
         <div
@@ -835,7 +839,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                     trackModel.type === "methylc"
                   ? getConfigOptions().height * 2
                   : getConfigOptions().height,
-            left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
+            left:
+              windowWidth + (legendWidth - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
           }}
         >
           <MetadataIndicator
@@ -872,7 +877,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           position: "relative",
           willChange: "transform",
-          left: 120,
+          left: legendWidth,
           //  + viewComponent?.xOffset || 0,
         }}
       >

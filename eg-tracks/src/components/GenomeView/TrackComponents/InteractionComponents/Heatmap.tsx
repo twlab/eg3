@@ -17,11 +17,9 @@ interface HeatmapProps {
   opacityScale: ScaleLinear<number, number>;
   color: any;
   color2: any;
-
   forceSvg?: boolean;
   bothAnchorsInView?: boolean;
   fetchViewWindowOnly?: boolean;
-  legendWidth?: number;
   getBeamRefs: any;
   onSetAnchors3d?: any;
   onShowTooltip?: any;
@@ -30,6 +28,8 @@ interface HeatmapProps {
   clampHeight?: boolean;
   options?: any;
   legend?: any;
+  windowWidth: number;
+  legendWidth: number;
 }
 
 class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
@@ -63,26 +63,17 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
     if (xSpan1.end < viewWindow.start && xSpan2.start > viewWindow.end) {
       return null;
     }
-    function isPartlyWithin(span, window) {
-      return !(span.end <= window.start || span.start >= window.end);
-    }
 
-    // Check if both anchors (xSpan1 and xSpan2) are partially within viewWindow
+    if (xSpan1.end < viewWindow.start && xSpan2.start > viewWindow.end) {
+      return null;
+    }
     if (bothAnchorsInView) {
-      if (
-        !isPartlyWithin(xSpan1, viewWindow) ||
-        !isPartlyWithin(xSpan2, viewWindow)
-      ) {
+      if (xSpan1.start < viewWindow.start || xSpan2.end > viewWindow.end) {
         return null;
       }
     }
-
-    // Check if either xSpan1 or xSpan2 is partially within the viewWindow for fetching action
     if (fetchViewWindowOnly) {
-      if (
-        !isPartlyWithin(xSpan1, viewWindow) &&
-        !isPartlyWithin(xSpan2, viewWindow)
-      ) {
+      if (xSpan1.start < viewWindow.start || xSpan2.start > viewWindow.end) {
         return null;
       }
     }
@@ -170,11 +161,12 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       legend,
       options,
       windowWidth,
+      legendWidth,
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
-        ? 0.5 * (windowWidth / 3)
-        : 0.5 * windowWidth;
+        ? 0.5 * windowWidth
+        : 0.5 * width;
 
     this.clampScale = scaleLinear()
       .domain([0, heightStandard])
@@ -194,7 +186,9 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
           transform: `translateX(${-viewWindow.start}px)`,
         }
       : {};
-    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+    let hoverStyle: any = options.packageVersion
+      ? { marginLeft: legendWidth ? legendWidth : 120 }
+      : {};
 
     return (
       <React.Fragment>

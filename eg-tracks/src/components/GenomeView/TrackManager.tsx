@@ -83,7 +83,7 @@ export const convertTrackModelToITrackModel = (
   tracks: track.tracks,
 });
 const groupManager = new GroupedTrackManager();
-const nonWorkerTracks = new Set(["vcf", "repeatmasker", "rmskv2", "jaspar"]);
+
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
   [Tool.ZoomOutOneThirdFold]: {
     factor: 4 / 3,
@@ -265,6 +265,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const maxBp = useRef(0);
   const minBp = useRef(0);
   const selectedTracks = useRef<{ [key: string]: any }>({});
+  // Tracks the metadata term/value whose tracks are currently highlighted via
+  // the MetadataHeader, so clicking the same value again toggles the highlight off.
+  const activeColorSelection = useRef<{
+    metaDataKey: string;
+    value: string;
+  } | null>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
   // const mouseGenomicPositionRef = useRef({ basePair: 0, chromosome: "" });
   const mouseRelativePositionRef = useRef({ x: 0, y: 0 });
@@ -1509,6 +1515,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       selectedTracks.current = {};
     }
+    // The metadata-value highlight is no longer active once tracks are cleared.
+    activeColorSelection.current = null;
   }, [onTracksChange]);
 
   const handleDelete = useCallback(
@@ -3318,30 +3326,48 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
   async function onColorBoxClick(metaDataKey, value) {
-    await onTrackUnSelect();
     await onConfigMenuClose();
     const stringValue = value;
+
+    // Clicking the value that's already highlighting tracks toggles it back off,
+    // deselecting/unhighlighting every track.
+    const isSameSelection =
+      activeColorSelection.current !== null &&
+      activeColorSelection.current.metaDataKey === metaDataKey &&
+      activeColorSelection.current.value === stringValue;
+
     const newSelectedTracks: { [key: string]: any } = {};
-    const newTrackModelArr: Array<any> = [];
-    for (let key in trackManagerState.current.tracks) {
-      const track = trackManagerState.current.tracks[key];
-      if (!track.metadata) {
-        continue;
-      }
-      const metaStringValue = Array.isArray(track.metadata[`${metaDataKey}`])
-        ? track.metadata[`${metaDataKey}`][
-            track.metadata[`${metaDataKey}`].length - 1
-          ]
-        : track.metadata[`${metaDataKey}`];
-      if (track.metadata[`${metaDataKey}`] && metaStringValue === stringValue) {
-        newSelectedTracks[`${track.id}`] = "";
-        newTrackModelArr.push(new TrackModel({ ...track, isSelected: true }));
-      } else {
-        newTrackModelArr.push(new TrackModel({ ...track, isSelected: false }));
-      }
-    }
-    onTracksChange(newTrackModelArr);
+    // Always rebuild the full track array (every track, in order) so the parent's
+    // track list length never changes on a selection-only update.
+    const newTrackModelArr: Array<any> = trackManagerState.current.tracks.map(
+      (track) => {
+        if (isSameSelection || !track.metadata) {
+          return new TrackModel({ ...track, isSelected: false });
+        }
+        const metaStringValue = Array.isArray(track.metadata[`${metaDataKey}`])
+          ? track.metadata[`${metaDataKey}`][
+              track.metadata[`${metaDataKey}`].length - 1
+            ]
+          : track.metadata[`${metaDataKey}`];
+        if (
+          track.metadata[`${metaDataKey}`] &&
+          metaStringValue === stringValue
+        ) {
+          newSelectedTracks[`${track.id}`] = "";
+          return new TrackModel({ ...track, isSelected: true });
+        }
+        return new TrackModel({ ...track, isSelected: false });
+      },
+    );
+
+    // Keep the ref in sync with what we hand to the parent (every other selection
+    // handler does this) so subsequent clicks diff against the current state.
+    trackManagerState.current.tracks = newTrackModelArr;
     selectedTracks.current = newSelectedTracks;
+    activeColorSelection.current = isSameSelection
+      ? null
+      : { metaDataKey, value: stringValue };
+    onTracksChange(newTrackModelArr);
   }
 
   // MARK: USEEFFECTS
@@ -4347,8 +4373,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               cache.trackType === "geneannotation" ||
               cache.trackType === "refbed" ||
               cache.trackType in numericalTracks ||
-              curConfigOptions?.fetchViewWindowOnly ||
-              curConfigOptions?.bothAnchorsInView ||
+              interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||
               ((cache.trackType === "vcf" || cache.trackType === "modbed") &&
@@ -4406,7 +4431,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <GenomeNavigator
           selectedRegion={userViewRegion}
           genomeConfig={genomeConfig}
-          windowWidth={windowWidthRef.current + 120}
+          windowWidth={windowWidthRef.current + legendWidth}
           onRegionSelected={onRegionSelected}
         />
       )}
@@ -4415,7 +4440,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           <div
             style={{
               backgroundColor: "var(--bg-color)",
-              width: `${windowWidthRef.current + 120}px`,
+              width: `${windowWidthRef.current + legendWidth}px`,
               marginTop: padding / 3,
               marginBottom: padding / 3,
               display: "flex",
@@ -4589,7 +4614,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             flexDirection: "row",
             outline: "1px solid #9AA6B2",
 
-            width: `${windowWidthRef.current + 120}px`,
+            width: `${windowWidthRef.current + legendWidth}px`,
             overflowX: "hidden",
             overflowY: "hidden",
           }}
@@ -4627,7 +4652,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 flexDirection: "row",
 
-                width: `${windowWidthRef.current + 120}px`,
+                width: `${windowWidthRef.current + legendWidth}px`,
               }}
             >
               {trackComponents ? (
@@ -4647,7 +4672,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         <div
                           key={item.id}
                           style={{
-                            width: `${windowWidthRef.current + 120}px`,
+                            width: `${windowWidthRef.current + legendWidth}px`,
                             position: "relative",
                             paddingTop: "1px",
                             paddingBottom: "1px",
@@ -4692,6 +4717,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             handleRetryFetchTrack={handleRetryFetchTrack}
                             initialLoad={initialLoad}
                             selectedRegionSet={selectedRegionSet}
+                            legendWidth={legendWidth}
                           />
                         </div>
                       </SortableList.Item>
@@ -4752,7 +4778,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     dragLimits={
                       new OpenInterval(
                         legendWidth,
-                        windowWidthRef.current + 120,
+                        windowWidthRef.current + legendWidth,
                       )
                     }
                     xOffset={
@@ -4770,7 +4796,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           ? block.current?.getBoundingClientRect().height
                           : 0,
                         zIndex: 3,
-                        width: `${windowWidthRef.current + 120}px`,
+                        width: `${windowWidthRef.current + legendWidth}px`,
                       }}
                     ></div>
                   </SelectableGenomeArea>
@@ -4787,6 +4813,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             menuData={configMenu}
             darkTheme={darkTheme}
             parentBlockDimensions={trackWrapperRef.current?.getBoundingClientRect()}
+            legendWidth={legendWidth}
           />
         ) : null}
       </OutsideClickDetector>

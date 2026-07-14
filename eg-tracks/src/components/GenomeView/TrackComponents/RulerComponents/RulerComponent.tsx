@@ -1,6 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
-
 // import Track from "./commonComponents/Track";
 // import HoverTooltipContext from "./commonComponents/tooltip/HoverTooltipContext";
 import Chromosomes from "../../genomeNavigator/Chromosomes";
@@ -11,7 +9,6 @@ import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 import TrackModel from "../../../../models/TrackModel";
 import TrackLegend from "../commonComponents/TrackLegend";
-import { config } from "process";
 import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 
 const CHROMOSOMES_Y = 60;
@@ -32,6 +29,8 @@ interface RulerVisualizerProps {
   genomeConfig?: any;
   options: any;
   viewWindow: any;
+  windowWidth: number;
+  legendWidth: number;
 }
 class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
   constructor(props) {
@@ -47,7 +46,7 @@ class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
   }
 
   render() {
-    const { viewRegion, width } = this.props;
+    const { viewRegion, width, legendWidth } = this.props;
     const genomeConfig = this.props.genomeConfig;
 
     if (this.props.options && this.props.options.forceSvg) {
@@ -94,6 +93,8 @@ interface RulerComponentProps {
   updatedLegend: any;
   options: any;
   viewWindow: any;
+  windowWidth: number;
+  legendWidth: number;
 }
 class RulerComponent extends React.Component<RulerComponentProps> {
   render() {
@@ -104,6 +105,7 @@ class RulerComponent extends React.Component<RulerComponentProps> {
       selectedRegion: this.props.selectedRegion,
       trackWidth: this.props.width,
       forceSvg: this.props.options.forceSvg,
+      legendWidth: this.props.legendWidth,
     };
     if (this.props.updatedLegend) {
       this.props.updatedLegend.current = legendProps;

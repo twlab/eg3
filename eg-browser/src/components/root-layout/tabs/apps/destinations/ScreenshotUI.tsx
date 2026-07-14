@@ -82,7 +82,6 @@ interface Props {
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("");
-  const [buttonDisabled, setButtonDisabled] = useState<string>("");
   const [svgView, setSvgView] = useState<any>(null);
   const [msg, setMsg] = useState<string>("");
   // const svgDataURL = (svg: SVGElement) => {
@@ -99,7 +98,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       darkTheme,
       viewWindow,
     } = props;
-
+    console.log(legendWidth);
     const tracks = Array.from(
       document
         .querySelector("#screenshotContainer")
@@ -117,11 +116,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       (acc, cur) => acc + cur.clientHeight,
       11 * tracks.length,
     );
-    const boxWidth = props.windowWidth + 120 + 1;
+    const boxWidth = props.windowWidth + props.legendWidth + 1;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
 
-    const width = props.windowWidth + 120 + 1;
+    const width = props.windowWidth + props.legendWidth + 1;
     svgElem.setAttributeNS(null, "width", width + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
@@ -157,7 +156,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       y = 5;
 
     tracksData.forEach(({ clientHeight, clone: ele }, idx) => {
-      const legendWidth = 120 + 1;
+      const currLegendWidth = props.legendWidth + 1;
       let trackHeight = clientHeight + 1;
       const trackLabelText =
         ele.children[0].children[0].querySelector(
@@ -202,13 +201,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const labelSvg = document.createElementNS(xmlns, "foreignObject");
         labelSvg.setAttributeNS(null, "x", x);
         labelSvg.setAttributeNS(null, "y", y);
-        labelSvg.setAttributeNS(null, "width", `${legendWidth - 32}`);
+        labelSvg.setAttributeNS(null, "width", `${currLegendWidth - 32}`);
         labelSvg.setAttributeNS(null, "height", `${trackHeight}`);
 
         const div = document.createElement("div");
         div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
         div.style.cssText = `width: ${
-          legendWidth - 42
+          currLegendWidth - 42
         }px; font-size: 9px; white-space: normal; word-wrap: break-word; color: ${fg};`;
         div.textContent = trackLabelText;
 
@@ -226,7 +225,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         svgElemg.appendChild(labelSvg);
       }
       if (trackLegendAxisSvgs.length > 0) {
-        const x2 = legendWidth - originalAxis[0].clientWidth;
+        const x2 = currLegendWidth - originalAxis[0].clientWidth;
         trackLegendAxisSvgs.forEach((trackLegendAxisSvg, index: number) => {
           trackLegendAxisSvg.setAttribute("id", "legendAxis" + index + idx);
           trackLegendAxisSvg.setAttribute("x", x2 + "");
@@ -243,7 +242,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       //y here will add space between tracks, it adds more for each track
 
       if (eleSvgs.length > 0) {
-        x += legendWidth;
+        x += currLegendWidth;
         let yoff = 0; // when bi-directional numerical track is not symmetric, need a tempory variable to hold y offset
         eleSvgs.forEach((eleSvg, idx2) => {
           eleSvg.setAttribute("id", "svg" + idx + idx2);
@@ -277,7 +276,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       sepLine.setAttribute("stroke", "#9AA6B2");
       svgElemg.appendChild(sepLine);
       x = 0;
-      clipX = legendWidth;
+      clipX = currLegendWidth;
     });
 
     clipHeight = boxHeight;
@@ -442,7 +441,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       (acc, cur) => acc + cur.clientHeight,
       11 * tracks.length,
     );
-    const boxWidth = props.windowWidth + 120 + 1;
+    const boxWidth = props.windowWidth + props.legendWidth + 1;
 
     // svg2pdf renders the SVG into the PDF as native vector shapes and
     // selectable/editable text (instead of a flattened raster image). It reads
@@ -565,6 +564,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             ? createSVGData.xvaluesData
             : null,
           isError: createSVGData.isError,
+          legendWidth: props.legendWidth ? props.legendWidth : 120,
           placeFeature: createSVGData.placeFeature,
         });
 

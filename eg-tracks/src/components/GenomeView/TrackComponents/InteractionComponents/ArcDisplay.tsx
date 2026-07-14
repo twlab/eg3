@@ -35,6 +35,8 @@ interface ArcDisplayProps {
   clampHeight?: boolean;
   options?: any;
   legend?: any;
+  windowWidth: number;
+  legendWidth: number;
 }
 
 const ITEM_LIMIT = 3000;
@@ -56,7 +58,6 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       viewWindow,
       height,
       clampHeight,
-      options,
     } = this.props;
     let { color, color2 } = this.props;
     if (placedInteraction.interaction.color) {
@@ -268,10 +269,11 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       options,
       legend,
       windowWidth,
+      legendWidth,
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
-        ? 0.5 * (viewWindow.end - viewWindow.start)
+        ? 0.5 * windowWidth
         : 0.5 * width;
     this.clampScale = scaleLinear()
       .domain([0, heightStandard])
@@ -298,7 +300,9 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
           transform: `translateX(${-viewWindow.start}px)`,
         }
       : {};
-    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+    let hoverStyle: any = options.packageVersion
+      ? { marginLeft: legendWidth ? legendWidth : 120 }
+      : {};
     return (
       <React.Fragment>
         {!forceSvg ? (
@@ -319,6 +323,7 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
               height={height}
               hasReverse={true}
               options={options}
+              legendWidth={legendWidth}
             />
           </div>
         ) : (

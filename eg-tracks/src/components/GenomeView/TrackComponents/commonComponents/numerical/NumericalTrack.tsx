@@ -34,6 +34,8 @@ interface NumericalTrackProps {
   dataIdx: number;
   initialLoad;
   updatedLegend?: any;
+  windowWidth?: number;
+  legendWidth: number;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -81,6 +83,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     dataIdx,
     initialLoad,
     windowWidth,
+    legendWidth,
   } = props;
 
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
@@ -236,6 +239,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     axisLegend: unit,
     label: options.label,
     forceSvg,
+    legendWidth: legendWidth,
   };
 
   if (updatedLegend) {
@@ -259,7 +263,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let curEleStyle: any = forceSvg
     ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
     : {};
-  let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+  let hoverStyle: any = options.packageVersion
+    ? { marginLeft: legendWidth }
+    : {};
 
   let visualizer;
 
@@ -301,6 +307,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
               unit={unit}
               hasReverse={true}
               options={options}
+              legendWidth={legendWidth}
             />
           </div>
         ) : (
