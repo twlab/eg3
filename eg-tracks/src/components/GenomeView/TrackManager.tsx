@@ -735,29 +735,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
     if (isMouseInsideRef.current) {
-      // Use cached rect instead of calling getBoundingClientRect on every move
+      // Use cached rect instead of calling getBoundingClientRect on every move.
+      // block can be unmounted (e.g. while the screenshot view is open) even
+      // though this document-level listener is still attached, so guard the
+      // ref instead of dereferencing null.
       const parentRect =
-        parentRectCache.current || block.current!.getBoundingClientRect();
-      const x = e.clientX - parentRect.left;
-      const y = e.clientY - parentRect.top;
+        parentRectCache.current || block.current?.getBoundingClientRect();
+      if (parentRect) {
+        const x = e.clientX - parentRect.left;
+        const y = e.clientY - parentRect.top;
 
-      // Update all mouse position references
-      mousePositionRef.current = { x: e.clientX, y: e.clientY };
-      mouseRelativePositionRef.current = { x, y };
+        // Update all mouse position references
+        mousePositionRef.current = { x: e.clientX, y: e.clientY };
+        mouseRelativePositionRef.current = { x, y };
 
-      // Use requestAnimationFrame to throttle crosshair updates
+        // Use requestAnimationFrame to throttle crosshair updates
 
-      if (rafId.current !== null) {
-        cancelAnimationFrame(rafId.current);
-      }
-      rafId.current = requestAnimationFrame(() => {
-        if (horizontalLineRef.current && verticalLineRef.current) {
-          horizontalLineRef.current.style.display = "block";
-          verticalLineRef.current.style.display = "block";
-          updateLinePosition(x, y);
+        if (rafId.current !== null) {
+          cancelAnimationFrame(rafId.current);
         }
-        rafId.current = null;
-      });
+        rafId.current = requestAnimationFrame(() => {
+          if (horizontalLineRef.current && verticalLineRef.current) {
+            horizontalLineRef.current.style.display = "block";
+            verticalLineRef.current.style.display = "block";
+            updateLinePosition(x, y);
+          }
+          rafId.current = null;
+        });
+      }
     } else {
       // Hide crosshair lines when mouse is outside
       if (horizontalLineRef.current && verticalLineRef.current) {
@@ -790,6 +795,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         Math.floor(sumArray(leftSectionSize.current) + windowWidthRef.current)
     ) {
       return;
+    }
+
+    // Stop at the actual data-region edges. The section-size checks above only
+    // cap how many fetched windows we've scrolled through, not where the
+    // underlying data ends, so without this you can keep dragging into empty
+    // space past the start (0) or end (totalBases) of the region — the drag
+    // updates even though handleMouseUp will refuse to commit it. Project the
+    // committed start bp for tempDragX using the same mapping handleMouseUp
+    // uses in coarse mode (leftStartCoord + -dragX * basePerPixel) and block
+    // once the view would run off either edge. Only applied in coarse mode:
+    // fine-mode commits use getRegionOffsetByX, which already clamps to
+    // [0, totalBases-1], and the linear projection is only approximate there.
+    const totalBases = curGenomeConfig.current?.navContext?._totalBases;
+    if (
+      !useFineModeNav.current &&
+      totalBases !== undefined &&
+      basePerPixel.current > 0
+    ) {
+      const projectedStartBp =
+        leftStartCoord.current + -tempDragX * basePerPixel.current;
+      if (
+        projectedStartBp < 0 ||
+        projectedStartBp + bpRegionSize.current > totalBases
+      ) {
+        return;
+      }
     }
     dragX.current -= deltaX;
 
