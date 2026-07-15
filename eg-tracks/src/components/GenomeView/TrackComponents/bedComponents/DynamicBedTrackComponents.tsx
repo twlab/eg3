@@ -4,6 +4,7 @@ import _ from "lodash";
 import FeatureArranger from "../../../../models/FeatureArranger";
 import { PixiAnnotation } from "../commonComponents/annotation/PixiAnnotation";
 import TrackLegend from "../commonComponents/TrackLegend";
+import { getFeatureName } from "../../../../models/Feature";
 
 export const TOP_PADDING = 2;
 export const ROW_VERTICAL_PADDING = 2;
@@ -30,15 +31,26 @@ interface DynamicBedTrackProps {
   svgHeight?: any;
   updatedLegend?: any;
   dataIdx: number;
+  windowWidth?: any;
+  // Precomputed per-sub-track arrangement from GroupedTrackManager.getGroupScale
+  // (`{ placements: FeaturePlacementResult[], height }`). When present the track
+  // renders straight from it instead of arranging here.
+  placeFeature?: any;
 }
 
-const getBedPadding = (bed: any, rowHeight: number) =>
-  bed.getName().length * rowHeight + 2;
+export const getBedPadding = (bed: any, rowHeight: number) =>
+  getFeatureName(bed).length * rowHeight + 2;
 
-const getHeight = (results: any[], rowHeight: number, maxRows: number) => {
-  const maxRow = _.max(results.map((r) => r.numRowsAssigned));
+export const getHeight = (
+  results: any[],
+  rowHeight: number,
+  maxRows: number,
+) => {
+  // `_.max([])` is undefined (empty/initial data), which would make rowsToDraw
+  // NaN and propagate an invalid `maxHeight` into the legend — clamp to 0 first.
+  const maxRow = _.max(results.map((r) => r.numRowsAssigned ?? 0)) ?? 0;
   let rowsToDraw = Math.min(maxRow, maxRows);
-  if (rowsToDraw < 1) {
+  if (!(rowsToDraw >= 1)) {
     rowsToDraw = 1;
   }
   return rowsToDraw * (rowHeight + ROW_VERTICAL_PADDING) + TOP_PADDING;
@@ -53,27 +65,35 @@ const DynamicBedTrackComponents: React.FC<DynamicBedTrackProps> = ({
   trackModel,
   svgHeight,
   updatedLegend,
+  placeFeature,
 }) => {
   const featureArranger = useMemo(() => new FeatureArranger(), []);
   featureArranger.arrange = memoizeOne(featureArranger.arrange);
 
+  // Prefer the arrangement computed once in GroupedTrackManager (the new format,
+  // shared with every other track); fall back to arranging locally when it isn't
+  // supplied (e.g. the standalone/embed path).
   const arrangeResults = useMemo(
     () =>
-      data.map((d) =>
-        featureArranger.arrange(
-          d,
-          visRegion,
-          width,
-          (bed: any) => getBedPadding(bed, options.rowHeight),
-          options.hiddenPixels,
-          undefined,
-          viewWindow,
-        ),
-      ),
-    [data, visRegion, width, options],
+      placeFeature?.placements
+        ? placeFeature.placements
+        : (data ?? []).map((d) =>
+            featureArranger.arrange(
+              d,
+              visRegion,
+              width,
+              (bed: any) => getBedPadding(bed, options.rowHeight),
+              options.hiddenPixels,
+              undefined,
+              viewWindow,
+            ),
+          ),
+    [data, visRegion, width, options, placeFeature],
   );
 
-  const height = getHeight(arrangeResults, options.rowHeight, options.maxRows);
+  const height =
+    placeFeature?.height ??
+    getHeight(arrangeResults, options.rowHeight, options.maxRows);
   if (svgHeight) {
     svgHeight.current = height;
   }

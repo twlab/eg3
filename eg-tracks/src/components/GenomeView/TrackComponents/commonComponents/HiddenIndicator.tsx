@@ -7,6 +7,7 @@ interface HiddenIndicatorProps {
   xOffset?: number;
   isVisible?: boolean;
   color: string;
+  legendWidth?: number;
 }
 
 const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
@@ -15,6 +16,7 @@ const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
   xOffset = 0,
   isVisible = false,
   color,
+  legendWidth,
 }) => {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(true);
@@ -57,7 +59,7 @@ const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
           onClick={() => setDismissed(false)}
           className={`popover-btn`}
           style={{
-            width: 120,
+            width: legendWidth,
             gap: "0.5em",
             position: "relative",
             verticalAlign: "top",

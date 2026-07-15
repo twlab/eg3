@@ -305,7 +305,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         return fetchInstance
           .getData(regionData.nav, regionData.basesPerPixel, options)
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })
@@ -335,7 +335,7 @@ async function getRemoteData(regionData: any, trackType: string) {
         return fetchInstance
           .getData(regionData.nav, regionData.basesPerPixel, options)
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })

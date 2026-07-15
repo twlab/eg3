@@ -8,7 +8,6 @@ import {
 } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 
-
 function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
   const darkTheme = props.darkTheme;
@@ -33,7 +32,12 @@ function ConfigMenuComponent(props: any) {
             defaultValue={defaultVal}
             onOptionSet={menuData.onConfigChange}
             trackId={menuData.trackId}
-            anchorPosition={{ left: position.left, top: position.top + menuHeight, pageX: mouseX, pageY: mouseY }}
+            anchorPosition={{
+              left: position.left,
+              top: position.top + menuHeight,
+              pageX: mouseX,
+              pageY: mouseY,
+            }}
           />
         );
       }),
@@ -46,7 +50,7 @@ function ConfigMenuComponent(props: any) {
       position.top,
       mouseX,
       mouseY,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -78,7 +82,7 @@ function ConfigMenuComponent(props: any) {
 
       // not off the left/top edges
       left = Math.max(8, left);
-      top = Math.max(8, top );
+      top = Math.max(8, top);
 
       setPosition({ left, top });
       setMenuHeight(menuRect.height);
@@ -115,10 +119,10 @@ function ConfigMenuComponent(props: any) {
             menuData.selectCount > 1
               ? menuData.selectCount + " tracks selected"
               : menuData.selectCount === 1 &&
-                menuData.tracks &&
-                menuData.tracks[0] &&
-                menuData.tracks[0].options &&
-                menuData.tracks[0].options.label
+                  menuData.tracks &&
+                  menuData.tracks[0] &&
+                  menuData.tracks[0].options &&
+                  menuData.tracks[0].options.label
                 ? menuData.tracks[0].options.label
                 : "(unnamed track)"
           }
@@ -140,7 +144,16 @@ function ConfigMenuComponent(props: any) {
           onApplyMatplot={menuData.handleAdd}
         />
         {menuData.tracks.length === 1 ? (
-          <TrackMoreInfo track={menuData.tracks[0]} anchorPosition={{ left: position.left, top: position.top + menuHeight, pageX: mouseX, pageY: mouseY }} />
+          <TrackMoreInfo
+            track={menuData.tracks[0]}
+            legendWidth={props.legendWidth}
+            anchorPosition={{
+              left: position.left,
+              top: position.top + menuHeight,
+              pageX: mouseX,
+              pageY: mouseY,
+            }}
+          />
         ) : (
           ""
         )}

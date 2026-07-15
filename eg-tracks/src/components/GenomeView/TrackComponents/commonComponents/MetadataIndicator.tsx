@@ -1,6 +1,5 @@
-import React, { useState, FC } from "react";
+import React, { useState, useRef, useLayoutEffect, FC } from "react";
 import ReactDOM from "react-dom";
-import { Manager, Reference, Popper } from "react-popper";
 import TrackModel from "../../../../models/TrackModel";
 
 import "./hoverToolTips/Tooltip.css";
@@ -75,8 +74,8 @@ export const COLORS = [
   "#E85EBE",
 ];
 
-const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
+const VIEWPORT_MARGIN = 4;
 
 /**
  * Port of Java's String `hashCode()` function. Consistently returns the same integer for equal strings.
@@ -167,13 +166,51 @@ const ColoredBox: FC<ColoredBoxProps> = ({
 }) => {
   const [isShowingTooltip, setIsShowingTooltip] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState({ left: 0, top: 0 });
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
 
+  // Show instantly on hover and follow the pointer.
   const showTooltip = (event: React.MouseEvent) => {
     setMousePosition({ x: event.pageX, y: event.pageY });
     setIsShowingTooltip(true);
   };
 
   const hideTooltip = () => setIsShowingTooltip(false);
+
+  // After the tooltip renders, measure it and nudge it back inside the
+  // viewport (flip above the cursor / clamp horizontally) if it overflows.
+  // useLayoutEffect runs before paint, so the corrected position is used
+  // for the first frame and there is no visible jump.
+  useLayoutEffect(() => {
+    if (!isShowingTooltip || !tooltipRef.current) {
+      return;
+    }
+    const { offsetWidth: width, offsetHeight: height } = tooltipRef.current;
+    const { x, y } = mousePosition;
+
+    let left = x;
+    let top = y + ARROW_SIZE;
+
+    const maxLeft =
+      window.scrollX + window.innerWidth - VIEWPORT_MARGIN - width;
+    if (left > maxLeft) {
+      left = maxLeft;
+    }
+    if (left < window.scrollX + VIEWPORT_MARGIN) {
+      left = window.scrollX + VIEWPORT_MARGIN;
+    }
+
+    if (top + height > window.scrollY + window.innerHeight - VIEWPORT_MARGIN) {
+      top = y - height - ARROW_SIZE; // flip above the cursor
+    }
+    if (top < window.scrollY + VIEWPORT_MARGIN) {
+      top = window.scrollY + VIEWPORT_MARGIN;
+    }
+
+    setPosition((prev) =>
+      prev.left === left && prev.top === top ? prev : { left, top },
+    );
+  }, [isShowingTooltip, mousePosition]);
 
   const boxStyle = {
     backgroundColor: color,
@@ -182,67 +219,37 @@ const ColoredBox: FC<ColoredBoxProps> = ({
     borderLeft: "1px solid lightgrey",
   };
 
-  const contentStyle = Object.assign({
-    marginTop: ARROW_SIZE,
-    pointerEvents: "auto" as const,
-  });
-
   const renderTooltip = () => {
     if (!isShowingTooltip) return null;
 
+    // Styled to match the expanded ("showFull") label in TrackLegend: plain,
+    // full text, no truncation.
     return ReactDOM.createPortal(
-      <Manager>
-        <Reference>
-          {({ ref }) => (
-            <div
-              ref={ref}
-              style={{
-                position: "absolute",
-                left: mousePosition.x - 8 * 2,
-                top: mousePosition.y,
-              }}
-            />
-          )}
-        </Reference>
-        <Popper
-          placement="bottom-start"
-          modifiers={[{ name: "flip", enabled: false }]}
-        >
-          {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <div className="Tooltip-minor-text">{term}:</div>
-              <div>{termValue || "(no value)"}</div>
-
-              {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: mousePosition.x - 8,
-                    top: mousePosition.y,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
-                document.body
-              )}
-            </div>
-          )}
-        </Popper>
-      </Manager>,
-      document.body
+      <div
+        ref={tooltipRef}
+        style={{
+          position: "absolute",
+          left: position.left,
+          top: position.top,
+          zIndex: 1001,
+          padding: "2px 6px",
+          backgroundColor: "black",
+          border: `2px solid ${color}`,
+          borderRadius: 2,
+          fontSize: "12px",
+          color: "white",
+          overflow: "visible",
+          textOverflow: "clip",
+          whiteSpace: "normal",
+          minWidth: 0,
+          maxWidth: "50vw",
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{ fontWeight: "bold" }}>{term}:</div>
+        <div>{termValue || "(no value)"}</div>
+      </div>,
+      document.body,
     );
   };
 
@@ -251,6 +258,7 @@ const ColoredBox: FC<ColoredBoxProps> = ({
       style={boxStyle}
       onClick={onClick}
       onMouseEnter={showTooltip}
+      onMouseMove={showTooltip}
       onMouseLeave={hideTooltip}
     >
       {renderTooltip()}

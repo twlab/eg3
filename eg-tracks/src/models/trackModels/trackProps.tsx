@@ -22,6 +22,8 @@ export interface TrackProps {
   trackComponents: any;
   isScreenShotOpen: boolean;
   newDrawData: any;
+  selfFetchTrigger?: any;
+  selfFetchApi?: any;
   trackModel?: any;
   dataIdx: number;
   getConfigMenu: any;
@@ -45,5 +47,6 @@ export interface TrackProps {
   Toolbar: { [key: string]: any };
   handleRetryFetchTrack: (trackIdx: number) => void;
   initialLoad: any;
-  selectedRegionSet: any
+  selectedRegionSet: any;
+  legendWidth: number;
 }

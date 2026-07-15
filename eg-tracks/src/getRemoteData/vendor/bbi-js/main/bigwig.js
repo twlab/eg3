@@ -9,9 +9,9 @@
 //
 
 "use strict";
-import { Range } from "../utils/spans";
-import { jszlib_inflate_buffer } from "../utils/jszlib";
-import { DASFeature, DASGroup } from "../utils/das";
+import { Range, union } from "../utils/spans.js";
+import { jszlib_inflate_buffer } from "../utils/jszlib.js";
+import { DASFeature, DASGroup } from "../utils/das.js";
 if (typeof require !== "undefined") {
   //   var spans = require("../utils/spans");
   //   var union = spans.union;
@@ -202,7 +202,7 @@ BigWigView.prototype.readWigDataById = function (chr, min, max, callback) {
   var cirFobRecur = function (offset, level) {
     if (thisB.bwg.instrument)
       console.log(
-        "level=" + level + "; offset=" + offset + "; time=" + (Date.now() | 0)
+        "level=" + level + "; offset=" + offset + "; time=" + (Date.now() | 0),
       );
 
     outstanding += offset.length;
@@ -317,7 +317,7 @@ BigWigView.prototype.readWigDataById = function (chr, min, max, callback) {
 BigWigView.prototype.fetchFeatures = function (
   filter,
   blocksToFetch,
-  callback
+  callback,
 ) {
   var thisB = this;
 
@@ -388,7 +388,7 @@ BigWigView.prototype.fetchFeatures = function (
                   0,
                   tmp,
                   0,
-                  fb.size
+                  fb.size,
                 );
                 data = tmp.buffer;
               }
@@ -719,7 +719,7 @@ BigWigView.prototype.getFirstAdjacentById = function (chr, pos, dir, callback) {
                     thisB.bwg.maxID,
                     1000000000,
                     dir,
-                    callback
+                    callback,
                   );
                 }
                 return callback([]);
@@ -755,7 +755,7 @@ BigWigView.prototype.getFirstAdjacentById = function (chr, pos, dir, callback) {
 
                   if (bestFeature != null) return callback([bestFeature]);
                   else return callback([]);
-                }
+                },
               );
             }
           }
@@ -857,7 +857,7 @@ BigWig.prototype.getUnzoomedView = function () {
       this,
       this.unzoomedIndexOffset,
       cirLen,
-      false
+      false,
     );
   }
   return this.unzoomedView;
@@ -871,7 +871,7 @@ BigWig.prototype.getZoomedView = function (z) {
       this,
       zh.indexOffset,
       /* this.zoomLevels[z + 1].dataOffset - zh.indexOffset */ 4000,
-      true
+      true,
     );
   }
   return zh.view;
@@ -904,7 +904,7 @@ export function makeBwg(data, callback, name) {
         } else {
           return callback(
             null,
-            "Not a supported format, magic=0x" + magic.toString(16)
+            "Not a supported format, magic=0x" + magic.toString(16),
           );
         }
 
@@ -939,7 +939,7 @@ export function makeBwg(data, callback, name) {
           });
         });
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     ); // Potential timeout on first request to catch mixed-content errors on
   // Chromium.
 }
@@ -955,7 +955,7 @@ BigWig.prototype._tsFetch = function (zoom, chr, min, max, callback) {
         function (feats) {
           bwg.topLevelReductionCache = feats;
           return bwg._tsFetch(zoom, chr, min, max, callback);
-        }
+        },
       );
     } else {
       var f = [];
@@ -983,7 +983,7 @@ BigWig.prototype.thresholdSearch = function (
   referencePoint,
   dir,
   threshold,
-  callback
+  callback,
 ) {
   dir = dir < 0 ? -1 : 1;
   var bwg = this;
@@ -1072,7 +1072,7 @@ BigWig.prototype.thresholdSearch = function (
           }
         }
         fbThresholdSearchRecur();
-      }
+      },
     );
   }
 
@@ -1166,7 +1166,7 @@ BigWig.prototype.getExtraIndices = function (callback) {
               eiType,
               eiFieldCount,
               eiOffset,
-              eiField
+              eiField,
             );
             indices.push(index);
           }
@@ -1252,7 +1252,7 @@ BBIExtraIndex.prototype.lookup = function (name, callback) {
                       return toks[thisB.field - 3] == name;
                   },
                   [{ offset: start, size: length }],
-                  callback
+                  callback,
                 );
               }
               offset += valSize;

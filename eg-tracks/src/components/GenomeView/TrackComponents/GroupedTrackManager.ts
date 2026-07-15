@@ -18,12 +18,21 @@ import {
 } from "../../../models/getXSpan/FeaturePlacer";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { Fiber } from "../../../models/Feature";
-import { FIBER_DENSITY_CUTOFF_LENGTH } from "./displayModeComponentMap";
+import {
+  FIBER_DENSITY_CUTOFF_LENGTH,
+  formatCombinedData,
+  formatDataByType,
+} from "./displayModeComponentMap";
+import {
+  getBedPadding,
+  getHeight as getDynamicBedHeight,
+} from "./bedComponents/DynamicBedTrackComponents";
 import {
   FiberDisplayModes,
   VcfColorScaleKeys,
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { scaleLinear } from "d3-scale";
+import * as d3 from "d3";
 
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
@@ -50,6 +59,20 @@ export const possibleNumericalTracks = {
   snp: "",
 };
 export const numericalTracksGroup = { bigwig: "", bedgraph: "" };
+const computeBoxStats = (features: any[]) => {
+  const data = features.map((f) => f.value);
+  if (!data || !data.length) {
+    return null;
+  }
+  const data_sorted = data.sort(d3.ascending);
+  const q1 = d3.quantile(data_sorted, 0.25);
+  const median = d3.quantile(data_sorted, 0.5);
+  const q3 = d3.quantile(data_sorted, 0.75);
+  const interQuantileRange = q3! - q1!;
+  const min = q1! - 1.5 * interQuantileRange;
+  const max = q1! + 1.5 * interQuantileRange;
+  return { q1, q3, median, min, max, count: data.length };
+};
 function getHeight(numRows: number, trackModel, configOptions): number {
   let rowHeight = trackOptionMap[`${trackModel.type}`]?.ROW_HEIGHT
     ? trackOptionMap[`${trackModel.type}`]?.ROW_HEIGHT
@@ -113,6 +136,7 @@ export class GroupedTrackManager {
       const xToRecords: Array<any> = result["xToFeaturesForward"]
         ? result["xToFeaturesForward"]
         : [];
+
       return xToRecords.map(MethylCRecord.aggregateByStrand);
     };
 
@@ -147,7 +171,9 @@ export class GroupedTrackManager {
           for (let x = startX; x <= endX; x++) {
             xToFibers[x].count += 1;
           }
-          (feature as Fiber).ons!.forEach((rbs) => {
+          // ons/offs can be absent on a malformed or partial fiber record
+          // (e.g. one with no methylation calls), so guard rather than assert.
+          (feature as Fiber).ons?.forEach((rbs) => {
             const bs = Math.abs(rbs);
             if (bs >= relativeStart && bs < relativeEnd) {
               const x =
@@ -158,7 +184,7 @@ export class GroupedTrackManager {
               xToFibers[x].on += 1;
             }
           });
-          (feature as Fiber).offs!.forEach((rbs) => {
+          (feature as Fiber).offs?.forEach((rbs) => {
             const bs = Math.abs(rbs);
             if (bs >= relativeStart && bs < relativeEnd) {
               const x =
@@ -189,6 +215,12 @@ export class GroupedTrackManager {
         // console.log(tracks[i]);
         const track = trackData[i];
 
+        // Raw cache data is formatted into model objects here, lazily and only
+        // for the track/view being aggregated (memoized by raw array). Raw
+        // numerical tracks pass through unformatted.
+        const data = formatCombinedData(track.data, track.trackModel?.type);
+        // const data = track.data;
+
         if (
           track.configOptions.group &&
           track.trackModel.type in numericalTracksGroup
@@ -204,7 +236,6 @@ export class GroupedTrackManager {
             break;
           }
           if (track.data) {
-            const data = track.data;
             let xvalues;
 
             if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
@@ -271,7 +302,6 @@ export class GroupedTrackManager {
           const tid = track.id;
 
           if (track.data) {
-            const data = track.data;
             let xvalues;
             if (
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
@@ -290,6 +320,25 @@ export class GroupedTrackManager {
               );
             } else if (track.trackModel.type === "methylc") {
               xvalues = this.aggregateRecords(data, track.visRegion, width);
+            } else if (track.trackModel.type === "qbed") {
+              const aggregator = new FeatureAggregator();
+              xvalues = aggregator.makeXMap(data, track.visRegion, width, true);
+            } else if (track.trackModel.type === "boxplot") {
+              const aggregator = new FeatureAggregator();
+              const xToFeatures = aggregator.makeXWindowMap(
+                data,
+                track.visRegion,
+                width,
+                false,
+                track.configOptions.windowSize,
+              );
+
+              const hash = {};
+              Object.keys(xToFeatures).forEach((x) => {
+                hash[x] = computeBoxStats(xToFeatures[x]);
+              });
+
+              xvalues = hash;
             } else if (track.trackModel.type === "matplot") {
               xvalues = data.map(
                 (d) =>
@@ -334,7 +383,7 @@ export class GroupedTrackManager {
               configOptions.displayMode === FiberDisplayModes.SUMMARY
             ) {
               const xvalues = this.aggregateFibers(
-                track.data,
+                data,
                 track.visRegion,
                 width,
               );
@@ -354,7 +403,7 @@ export class GroupedTrackManager {
               configOptions.displayMode === "density"
             ) {
               const xvalues = this.aggregator.xToValueMaker(
-                track.data,
+                data,
                 track.visRegion,
                 width,
                 configOptions,
@@ -365,9 +414,38 @@ export class GroupedTrackManager {
               }
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
                 xvalues;
-            } else {
-              const data = track.data;
+            } else if (curTrackModel.type === "dynamicbed") {
+              // Multi-file annotation track: arrange each sub-track (frame)
+              // separately from its raw grouped records, then cache the whole
+              // set as placeFeature so the component just renders it — the same
+              // "arrange in the group manager" flow every other track uses.
 
+              const subTracks = Array.isArray(data) ? data : [];
+              const arrangeResults = subTracks.map((subTrack) =>
+                featureArrange.arrange(
+                  subTrack,
+                  track.visRegion,
+                  width,
+                  (bed: any) => getBedPadding(bed, configOptions.rowHeight),
+                  configOptions.hiddenPixels,
+                  sortType,
+                  viewWindow,
+                ),
+              );
+              const height = getDynamicBedHeight(
+                arrangeResults,
+                configOptions.rowHeight,
+                configOptions.maxRows,
+              );
+              if (!trackManagerState.current.caches[tid][dataIdx]) {
+                trackManagerState.current.caches[tid][dataIdx] = {};
+              }
+              trackManagerState.current.caches[tid][dataIdx]["placeFeature"] = {
+                placements: arrangeResults,
+                height,
+                numHidden: 0,
+              };
+            } else {
               const placeFeatureData = featureArrange.arrange(
                 data,
                 track.visRegion,

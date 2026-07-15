@@ -55,12 +55,19 @@ const defaultTracks = [
   }),
 ];
 
-const publicHubData = {};
+const publicHubList = [
+  {
+    collection: "PAN011 Mat Methylation FIRE",
+    name: "PAN011 Mat Methylation FIRE",
+    url: "https://wangcluster.wustl.edu/~sdong/sdong/washu_epi_browser/washu_t2t_browser/important_json_fils/PAN011Mat_more_data_tracks.json",
+  },
+];
 const PAN011Mat = {
   genome: genome,
   navContext: navContext,
   defaultRegion: defaultRegion,
   defaultTracks: defaultTracks,
+  publicHubList: publicHubList,
   twoBitURL:
     "https://wangcluster.wustl.edu/~sdong/sdong/refGenome/ipsc_indvidual_genome_from_MigaLab/correct_POR/washu_browser/prep_for_WashuEpiBro_PAN011Mat/PAN011Mat.2bit",
 };

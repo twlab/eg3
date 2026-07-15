@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
 import { BlobFile } from "generic-filehandle2";
 import { chromAlias } from "../getRemoteData/fetchFunctions";
@@ -69,13 +68,12 @@ class LocalBigSourceGmod {
 
       const dataForEachLocus = await Promise.all(promises);
 
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-
-      const combinedData = _.flatten(dataForEachLocus);
-
-      return combinedData;
+      // Return one group per locus carrying the locus chr once, instead of
+      // stamping chr onto every feature. The chr is reattached when formatting.
+      return loci.map((locus, index) => ({
+        chr: locus.chr,
+        data: dataForEachLocus[index],
+      }));
     } catch (error) {
       return { error: true, message: `Failed to fetch data: ${error.message}` };
     }

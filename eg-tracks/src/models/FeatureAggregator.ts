@@ -1,12 +1,7 @@
 import _ from "lodash";
-import { Feature } from "./Feature";
+import { Feature, getFeatureValue } from "./Feature";
 import DisplayedRegionModel from "./DisplayedRegionModel";
 import { FeaturePlacer, PlacementMode } from "./getXSpan/FeaturePlacer";
-import { FeaturePlacementResult } from "./FeatureArranger";
-import { mode } from "d3";
-
-const VALUE_PROP_NAME = "value";
-
 /**
  * Available aggregators.  Note: SUM, MEAN, MIN, and MAX requires each record to have a `value` prop.
  */
@@ -21,18 +16,20 @@ export const AggregatorTypes = {
 
 const aggregateFunctions = {};
 aggregateFunctions[AggregatorTypes.COUNT] = (records: any[]) => records.length;
+// Read the value through getFeatureValue so both formatted Features (`value`)
+// and raw records (`score`) aggregate identically.
 aggregateFunctions[AggregatorTypes.SUM] = (records: any[]) =>
-  records.length > 0 ? _.sumBy(records, VALUE_PROP_NAME) : null;
+  records.length > 0 ? _.sumBy(records, getFeatureValue) : null;
 // For mean, min, and max; if passed an empty array, returns null
 aggregateFunctions[AggregatorTypes.MEAN] = (records: any[]) =>
-  records.length > 0 ? _.meanBy(records, VALUE_PROP_NAME) : null;
+  records.length > 0 ? _.meanBy(records, getFeatureValue) : null;
 aggregateFunctions[AggregatorTypes.MIN] = (records: any[]) =>
   records.length > 0
-    ? _.minBy(records, VALUE_PROP_NAME)[VALUE_PROP_NAME]
+    ? getFeatureValue(_.minBy(records, getFeatureValue))
     : null;
 aggregateFunctions[AggregatorTypes.MAX] = (records: any[]) =>
   records.length > 0
-    ? _.maxBy(records, VALUE_PROP_NAME)[VALUE_PROP_NAME]
+    ? getFeatureValue(_.maxBy(records, getFeatureValue))
     : null;
 
 // aggregateFunctions[AggregatorTypes.IMAGECOUNT] = (records: any[]) =>
@@ -149,35 +146,15 @@ export class FeatureAggregator {
     }
 
     const placer = new FeaturePlacer();
-    const result: any = placer.placeFeatures({
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
       useCenter,
       mode: PlacementMode.NUMERICAL,
+      xToFeaturesForward,
+      xToFeaturesReverse,
     });
-
-    const resultLength = Math.max(
-      result.placementsForward ? result.placementsForward.length : 0,
-      result.placementsReverse ? result.placementsReverse.length : 0,
-    );
-
-    for (let i = 0; i < resultLength; i++) {
-      if (i < result.placementsForward.length) {
-        sortXSpan(result.placementsForward[i], xToFeaturesForward);
-      }
-      if (i < result.placementsReverse.length) {
-        sortXSpan(result.placementsReverse[i], xToFeaturesReverse);
-      }
-    }
-
-    function sortXSpan(placedFeature, xToFeatures) {
-      const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      for (let x = startX; x <= endX; x++) {
-        xToFeatures[x].push(placedFeature.feature);
-      }
-    }
 
     return { xToFeaturesForward, xToFeaturesReverse };
   }
@@ -189,32 +166,31 @@ export class FeatureAggregator {
     useCenter: boolean = false,
     windowSize: number,
   ): { [x: number]: Feature[] } {
-    const map = {};
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
-    for (let x = 0; x < width; x += windowSize) {
-      // Fill the array with empty arrays
-      // if (x < width) {
-      map[x] = [];
-      // }
+
+    // NUMERICAL mode writes each feature into every pixel bucket its span covers,
+    // so it needs a dense per-pixel array (sortPlacedFeatureIntoXMap pushes
+    // without a key-existence check).
+    const xToFeaturesForward = Array(width).fill(null);
+    for (let x = 0; x < width; x++) {
+      xToFeaturesForward[x] = [];
     }
+
     const placer = new FeaturePlacer();
-    const placement: any = placer.placeFeatures({
+    placer.placeFeatures({
       features,
       viewRegion,
       width,
       useCenter: true,
       mode: PlacementMode.NUMERICAL,
+      xToFeaturesForward,
     });
-    if (placement && placement.placementsForward) {
-      for (const placedFeature of placement.placementsForward) {
-        const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-        const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-        for (let x = startX; x <= endX; x++) {
-          if (map.hasOwnProperty(x)) {
-            map[x].push(placedFeature.feature);
-          }
-        }
-      }
+
+    // Keep only the window-start buckets. xToFeaturesForward[w] already holds the
+    // features covering pixel w, which is exactly this window's bucket.
+    const map: { [x: number]: Feature[] } = {};
+    for (let x = 0; x < width; x += windowSize) {
+      map[x] = xToFeaturesForward[x];
     }
     return map;
   }

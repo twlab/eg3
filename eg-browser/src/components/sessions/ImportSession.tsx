@@ -94,6 +94,7 @@ export default function ImportSession() {
                 // retrieve bundle to display sessions below
                 try {
                   const res = await onRetrieveSession(bundleId);
+
                   if (res) {
                     setBundle(res);
                   }

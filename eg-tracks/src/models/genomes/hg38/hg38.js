@@ -125,20 +125,16 @@ const defaultTracks = [
   //   filetype: "genomealign",
   //   url: "https://hprc-epigenome.s3.us-east-2.amazonaws.com/samples/HG00097/hap1_vs_hg38.gz",
   // }),
-
-  //   new TrackModel({
+  // new TrackModel({
   //   type: "bed",
   //   name: "mm10 bed",
   //   url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
   // }),
-
   // new TrackModel({
-
-  //   type:"jaspar",
+  //   type: "jaspar",
   //   name: "test jaspar",
-  //   url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb"
+  //   url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb",
   // }),
-
   // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",
@@ -150,10 +146,28 @@ const defaultTracks = [
   //   genome: "hg38",
   //   url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.fixed-wave.vcf.gz",
   // }),
-  //   new TrackModel({
+  // new TrackModel({
   //   type: "modbed",
   //   name: "examplemod",
   //   url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
+  // }),
+  // new TrackModel({
+  //   type: "vcf",
+  //   name: "testVcf",
+  //   genome: "hg38",
+  //   url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.wave.vcf.gz",
+  // }),
+  // new TrackModel({
+  //   type: "vcf",
+  //   name: "testVcf",
+  //   genome: "hg38",
+  //   url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.wave.vcf.gz",
+  // }),
+  // new TrackModel({
+  //   type: "vcf",
+  //   name: "testVcf",
+  //   genome: "hg38",
+  //   url: "https://wangcluster.wustl.edu/~wzhang/projects/HPRCEN/data/graph_vcf/hprc-sep8-mc-grch38.wave.vcf.gz",
   // }),
   // new TrackModel({
   //   type: "vcf",
@@ -191,7 +205,6 @@ const defaultTracks = [
   //     },
   //   },
   // }),
-
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -203,13 +216,11 @@ const defaultTracks = [
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-
   // new TrackModel({
   //   type: "bigbed",
   //   name: "band2",
   //   url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
   // }),
-
   // new TrackModel({
   //   type: "g3d",
   //   url: "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
@@ -251,13 +262,12 @@ const defaultTracks = [
   //   name: "snp",
   //   genome: "hg38",
   // }),
-  //   new TrackModel({
-  //     type: "bam",
-  //     name: "Test bam",
-  //     url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
-  //   }),
-
-  //     new TrackModel({
+  // new TrackModel({
+  //   type: "bam",
+  //   name: "Test bam",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+  // }),
+  // new TrackModel({
   //   type: "refbed",
   //   name: "refbed",
   //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
@@ -297,7 +307,7 @@ const defaultTracks = [
   //     assay: "MRE",
   //   },
   // }),
-  // new TrackModel({     key={drawData.trackModel.id + "rough"}
+  // new TrackModel({
   //   type: "matplot",
   //   name: "matplot wrap",
   //   tracks: [
@@ -371,7 +381,6 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-
   // new TrackModel({
   //   type: "qbed",
   //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
@@ -387,7 +396,6 @@ const defaultTracks = [
   //     opacity: [50],
   //   },
   // }),
-
   // new TrackModel({
   //   type: "qbed",
   //   url: "https://htcf.wustl.edu/files/RdNgrGeQ/HCT116-PBase.qbed.gz",
@@ -463,7 +471,6 @@ const defaultTracks = [
   //     depthColor: "#01E9FE",
   //   },
   // }),
-
   // new TrackModel({
   //   type: "methylc",
   //   name: "H1",
@@ -496,7 +503,6 @@ const defaultTracks = [
   //   name: "test bigInteract",
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-
   // new TrackModel({
   //   name: "dynamic hic",
   //   type: "dynamichic",

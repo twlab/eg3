@@ -94,11 +94,12 @@ class BigSourceWorkerGmod {
       }
     }
 
-    loci.forEach((locus, index) => {
-      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-    });
-
-    return dataForEachLocus.flat();
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping chr onto every feature. The chr is reattached when formatting.
+    return loci.map((locus, index) => ({
+      chr: locus.chr,
+      data: dataForEachLocus[index],
+    }));
   }
 }
 

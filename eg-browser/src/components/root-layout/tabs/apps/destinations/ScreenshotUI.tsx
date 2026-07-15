@@ -10,7 +10,11 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ClipLoader } from "react-spinners";
-import { trackOptionMap, getDisplayModeFunction } from "wuepgg3-track";
+import {
+  trackOptionMap,
+  getDisplayModeFunction,
+  LinearDrawingModel,
+} from "wuepgg3-track";
 
 interface Highlight {
   start: number;
@@ -34,6 +38,7 @@ interface Props {
   retakeScreenshot: any;
   windowWidth: number;
   viewWindow: any;
+  selectedRegionSet?: boolean;
 }
 // export const getHighlightedXs = (
 //   interval: OpenInterval,
@@ -80,9 +85,38 @@ interface Props {
 //   return new OpenInterval(start, end);
 // };
 
+// Mirrors VerticalDivider.tsx: computes the x positions (in the track's own
+// visRegion/viewWindowRegion pixel space) where a region-set track switches
+// from one feature segment to the next, so the same divider lines shown in
+// the live view can also be drawn into the screenshot preview and export.
+function getRegionSetDividerXs(visData: any): number[] {
+  if (!visData?.visRegion?.getFeatureSegments) {
+    return [];
+  }
+  const { visRegion, viewWindowRegion, viewWindow } = visData;
+  const drawModel = new LinearDrawingModel(
+    viewWindowRegion,
+    viewWindow.getLength(),
+  );
+  const xs: number[] = [];
+  let x = 0;
+  let featureSegments;
+  try {
+    featureSegments = visRegion.getFeatureSegments();
+  } catch {
+    return [];
+  }
+  for (const segment of featureSegments) {
+    if (x > 0) {
+      xs.push(x);
+    }
+    x += drawModel.basesToXWidth(segment.getLength());
+  }
+  return xs;
+}
+
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("");
-  const [buttonDisabled, setButtonDisabled] = useState<string>("");
   const [svgView, setSvgView] = useState<any>(null);
   const [msg, setMsg] = useState<string>("");
   // const svgDataURL = (svg: SVGElement) => {
@@ -117,11 +151,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       (acc, cur) => acc + cur.clientHeight,
       11 * tracks.length,
     );
-    const boxWidth = props.windowWidth + 120 + 1;
+    const boxWidth = props.windowWidth + props.legendWidth + 1;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
 
-    const width = props.windowWidth + 120 + 1;
+    const width = props.windowWidth + props.legendWidth + 1;
     svgElem.setAttributeNS(null, "width", width + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
@@ -157,21 +191,30 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       y = 5;
 
     tracksData.forEach(({ clientHeight, clone: ele }, idx) => {
-      const legendWidth = 120 + 1;
+      const currLegendWidth = props.legendWidth + 1;
       let trackHeight = clientHeight + 1;
+      // Search the whole track clone (not just children[0].children[0]) since
+      // some track types (e.g. matplot/dynamicbed with subtrack labels) wrap
+      // the legend in an extra level of nesting. querySelector still finds it
+      // anywhere in the subtree; fall back to "" if it's genuinely missing
+      // (e.g. legend height was 0 for that render) instead of throwing.
       const trackLabelText =
-        ele.children[0].children[0].querySelector(
-          ".TrackLegend-label",
-        ).textContent;
+        ele.querySelector(".TrackLegend-label")?.textContent ?? "";
       const chrLabelText = ele.children[0].querySelector(
         ".TrackLegend-chrLabel",
       )
         ? ele.children[0].querySelector(".TrackLegend-chrLabel").textContent
         : null;
+      // Multi-label tracks (matplot/dynamic/dynamicbed) render a grid of
+      // per-subtrack labels, each with its own color. Grab the live node so
+      // those colors are preserved when cloned into the SVG below.
+      const subLabelsNode = (ele as Element).querySelector(
+        ".TrackLegend-subLabels",
+      );
       const trackLegendAxisSvgs =
-        ele.children[0].children[0].querySelectorAll("svg");
+        ele.children[0]?.children[0]?.querySelectorAll("svg") ?? [];
       const originalAxis =
-        tracks[idx].children[0].children[0].querySelectorAll("svg");
+        tracks[idx].children[0]?.children[0]?.querySelectorAll("svg") ?? [];
 
       let eleSvgs: Array<any> = [];
       let originalSvgs: any = [];
@@ -202,13 +245,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const labelSvg = document.createElementNS(xmlns, "foreignObject");
         labelSvg.setAttributeNS(null, "x", x);
         labelSvg.setAttributeNS(null, "y", y);
-        labelSvg.setAttributeNS(null, "width", `${legendWidth - 32}`);
+        labelSvg.setAttributeNS(null, "width", `${currLegendWidth - 32}`);
         labelSvg.setAttributeNS(null, "height", `${trackHeight}`);
 
         const div = document.createElement("div");
         div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
         div.style.cssText = `width: ${
-          legendWidth - 42
+          currLegendWidth - 42
         }px; font-size: 9px; white-space: normal; word-wrap: break-word; color: ${fg};`;
         div.textContent = trackLabelText;
 
@@ -225,8 +268,41 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         labelSvg.appendChild(textNode);
         svgElemg.appendChild(labelSvg);
       }
+      if (subLabelsNode) {
+        // Rebuild the per-subtrack labels as explicit stacked block divs.
+        // (grid/flex layout isn't reliably honored in the SVG render path, so
+        // a cloned grid ends up on a single line.) Each label keeps its own
+        // color, read from the live node. Anchored to the bottom of the legend
+        // to match the in-app layout (the grid uses align-items: end).
+        const labelSvg = document.createElementNS(xmlns, "foreignObject");
+        labelSvg.setAttributeNS(null, "x", x + "");
+        labelSvg.setAttributeNS(null, "y", y + "");
+        labelSvg.setAttributeNS(null, "width", `${currLegendWidth - 32}`);
+        labelSvg.setAttributeNS(null, "height", `${trackHeight}`);
+
+        const wrap = document.createElement("div");
+        wrap.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+        wrap.style.cssText = `display: flex; flex-direction: column; justify-content: flex-end; width: ${
+          currLegendWidth - 42
+        }px; height: ${trackHeight}px; font-size: 10px;`;
+
+        Array.from(subLabelsNode.children).forEach((child) => {
+          const text = child.textContent ?? "";
+          if (!text) {
+            return;
+          }
+          const color = (child as HTMLElement).style.color || fg;
+          const line = document.createElement("div");
+          line.style.cssText = `display: block; color: ${color}; white-space: normal; word-wrap: break-word;`;
+          line.textContent = text;
+          wrap.appendChild(line);
+        });
+
+        labelSvg.appendChild(wrap);
+        svgElemg.appendChild(labelSvg);
+      }
       if (trackLegendAxisSvgs.length > 0) {
-        const x2 = legendWidth - originalAxis[0].clientWidth;
+        const x2 = currLegendWidth - originalAxis[0].clientWidth;
         trackLegendAxisSvgs.forEach((trackLegendAxisSvg, index: number) => {
           trackLegendAxisSvg.setAttribute("id", "legendAxis" + index + idx);
           trackLegendAxisSvg.setAttribute("x", x2 + "");
@@ -243,7 +319,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       //y here will add space between tracks, it adds more for each track
 
       if (eleSvgs.length > 0) {
-        x += legendWidth;
+        x += currLegendWidth;
         let yoff = 0; // when bi-directional numerical track is not symmetric, need a tempory variable to hold y offset
         eleSvgs.forEach((eleSvg, idx2) => {
           eleSvg.setAttribute("id", "svg" + idx + idx2);
@@ -263,6 +339,24 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           yoff += originalSvgs[idx2].clientHeight; // do this before appendChild
           trackG.appendChild(eleSvg);
         });
+
+        if (props.selectedRegionSet) {
+          const trackId = (props.tracks[idx] || {}).id;
+          const visData =
+            trackId !== undefined
+              ? props.trackData[trackId]?.visData
+              : undefined;
+          getRegionSetDividerXs(visData).forEach((dividerX, dividerIdx) => {
+            const dividerLine = document.createElementNS(xmlns, "line");
+            dividerLine.setAttribute("id", `regionDivider${idx}-${dividerIdx}`);
+            dividerLine.setAttribute("x1", x + dividerX + "");
+            dividerLine.setAttribute("x2", x + dividerX + "");
+            dividerLine.setAttribute("y1", y + "");
+            dividerLine.setAttribute("y2", y + trackHeight + "");
+            dividerLine.setAttribute("stroke", "gray");
+            trackG.appendChild(dividerLine);
+          });
+        }
       }
 
       trackG.setAttributeNS(null, "transform", `translate(${translateX})`);
@@ -277,7 +371,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       sepLine.setAttribute("stroke", "#9AA6B2");
       svgElemg.appendChild(sepLine);
       x = 0;
-      clipX = legendWidth;
+      clipX = currLegendWidth;
     });
 
     clipHeight = boxHeight;
@@ -442,7 +536,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       (acc, cur) => acc + cur.clientHeight,
       11 * tracks.length,
     );
-    const boxWidth = props.windowWidth + 120 + 1;
+    const boxWidth = props.windowWidth + props.legendWidth + 1;
 
     // svg2pdf renders the SVG into the PDF as native vector shapes and
     // selectable/editable text (instead of a flattened raster image). It reads
@@ -530,6 +624,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       legendWidth,
       windowWidth,
       xOffset,
+      selectedRegionSet,
     } = props;
 
     // document.documentElement.style.setProperty("--bg-color", "white");
@@ -565,6 +660,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             ? createSVGData.xvaluesData
             : null,
           isError: createSVGData.isError,
+          legendWidth: props.legendWidth ? props.legendWidth : 120,
           placeFeature: createSVGData.placeFeature,
         });
 
@@ -612,6 +708,23 @@ const ScreenshotUI: React.FC<Props> = (props) => {
                     </div>
                   );
                 })
+              : ""}
+            {selectedRegionSet
+              ? getRegionSetDividerXs(createSVGData.visData).map(
+                  (x, dividerIdx) => (
+                    <div
+                      key={"divider" + dividerIdx}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: legendWidth + x,
+                        height: "100%",
+                        borderRight: "1px solid gray",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  ),
+                )
               : ""}
           </div>
         );

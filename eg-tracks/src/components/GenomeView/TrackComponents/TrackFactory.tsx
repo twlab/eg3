@@ -21,6 +21,7 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
+import { fetchGenomicData } from "../../../getRemoteData/fetchFunctions";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -30,21 +31,18 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackModel,
   dataIdx,
   signalTrackLoadComplete,
-
   id,
   setShow3dGene,
   isThereG3dTrack,
   viewWindowConfigChange,
-
   sentScreenshotData,
-  dragX,
   newDrawData,
+  selfFetchTrigger,
+  selfFetchApi,
   trackManagerState,
   globalTrackState,
   isScreenShotOpen,
   legendRef,
-  highlightElements,
-
   metaSets,
   onColorBoxClick,
   messageData,
@@ -52,6 +50,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   handleRetryFetchTrack,
   initialLoad,
   selectedRegionSet,
+  legendWidth,
 }) {
   function getConfigOptions() {
     try {
@@ -145,6 +144,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       handleRetryFetchTrack: handleRetryFetchTrack,
       initialLoad: initialLoad.current,
       placeFeature,
+      legendWidth: legendWidth ? legendWidth : 120,
     };
 
     // try {
@@ -355,20 +355,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let currIdx = dataIdx + 1;
       let noData = false;
 
-      if (
+      if (dynamicMatplotTracks.has(trackModel.type)) {
+        // matplot/dynamic use precomputed xvalues when available. dynamicbed is
+        // arranged in GroupedTrackManager (placeFeature), but we still always
+        // hand it the raw per-sub-track data as a fallback so it never renders
+        // empty on a draw where placeFeature isn't cached yet — its component
+        // prefers placeFeature and only arranges this data when it's absent.
+        // Gather the 3 stitched regions and bucket them by sub-track. This runs
+        // before the placeFeature/xvalues short-circuit below.
+        if (
+          trackModel.type !== "dynamicbed" &&
+          cacheTrackData[`${dataIdx}`]?.["xvalues"]
+        ) {
+          combinedData = [];
+        } else {
+          for (let i = 0; i < 3; i++) {
+            if (cacheTrackData[currIdx]?.dataCache) {
+              combinedData.push(cacheTrackData[currIdx]);
+            }
+            currIdx--;
+          }
+          combinedData = groupTracksArrMatPlot(combinedData);
+        }
+      } else if (
         cacheTrackData[`${dataIdx}`]?.["xvalues"] ||
         cacheTrackData[`${dataIdx}`]?.["placeFeature"]
       ) {
         combinedData = [];
-      } else if (dynamicMatplotTracks.has(trackModel.type)) {
-        if (
-          cacheTrackData[`${dataIdx}`] &&
-          cacheTrackData[`${dataIdx}`]["xvalues"]
-        ) {
-          combinedData = [];
-        } else {
-          combinedData = groupTracksArrMatPlot(combinedData);
-        }
       } else {
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
@@ -453,6 +466,84 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       });
     }
   }, [newDrawData]);
+
+  // MARK: [selfFetch]
+  // Fetch this track's own data (on the main thread) and draw it as soon as the
+  // fetch resolves, instead of waiting for the centralized queue + shared
+  // setDraw broadcast. Only eligible tracks get a non-null plan; coordinated
+  // tracks (genomealign views, grouped scale, query-aligned, interaction) return
+  // null here and keep drawing through the newDrawData path above.
+  function drawFromCache(viewWindow, groupScale) {
+    if (
+      !caches[`${id}`] ||
+      !globalTrackState.current.trackStates[dataIdx] ||
+      !globalTrackState.current.trackStates[dataIdx].trackState
+        .genomicFetchCoord
+    ) {
+      return;
+    }
+    const cacheTrackData = caches[`${id}`];
+    const trackState = {
+      ...globalTrackState.current.trackStates[dataIdx].trackState,
+    };
+    handleTrackDraw({
+      cacheTrackData,
+      trackState,
+      viewWindow,
+      groupScale,
+      xvalues: cacheTrackData[dataIdx]?.xvalues,
+      placeFeature: cacheTrackData[dataIdx]?.placeFeature,
+      isInit: true,
+    });
+  }
+
+  useEffect(() => {
+    if (!selfFetchTrigger || !selfFetchApi?.current) {
+      return;
+    }
+    const api = selfFetchApi.current;
+    const curDataIdx = dataIdx;
+    const plan = api.getTrackFetchPlan(id, curDataIdx);
+    if (!plan) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        if (plan.drawNow) {
+          const commit = await api.commitTrackFetch(id, [], curDataIdx);
+          if (!cancelled && commit.ready) {
+            drawFromCache(commit.viewWindow, commit.groupScale);
+          }
+          return;
+        }
+
+        const resultsNested = await Promise.all(
+          plan.argsArr.map((arg: any) => fetchGenomicData([arg])),
+        );
+        // Always commit the fetched data to the cache (even if this effect was
+        // superseded by a newer region) so the cache slot isn't left stuck as
+        // in-flight. commitTrackFetch itself no-ops the shared draw bookkeeping
+        // when the region is stale; we additionally gate the draw on cancelled.
+        const flatResults = resultsNested.flat();
+        const commit = await api.commitTrackFetch(id, flatResults, curDataIdx);
+        if (cancelled) {
+          return;
+        }
+        if (commit.ready) {
+          drawFromCache(commit.viewWindow, commit.groupScale);
+        }
+      } catch (e) {
+        console.error("Error in self-fetch for track", id, e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selfFetchTrigger]);
 
   // MARK: [viewWindowConfigChange]
 
@@ -582,8 +673,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : null,
             isError: fetchError.current,
             trackId: id,
+            legendWidth: legendWidth ? legendWidth : 120,
 
             placeFeature: cacheTrackData[dataIdx]?.placeFeature,
+            visData: viewComponent.visData,
           });
         }
       }
@@ -615,7 +708,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       >
         <div
           style={{
-            width: 120,
+            width: legendWidth,
             display: "flex",
             flexDirection: "column",
             backgroundColor: trackModel.isSelected
@@ -663,6 +756,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             selectedRegion={legend?.selectedRegion}
             trackWidth={legend?.trackWidth}
             noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
+            legendWidth={legendWidth}
           />
           {legend?.reverseStrandLegendProps && (
             <TrackLegend {...legend.reverseStrandLegendProps} />
@@ -694,6 +788,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             !viewComponent ||
             (viewComponent && dataIdx !== viewComponent.dataIdx)
           }
+          legendWidth={legendWidth}
           // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
           // xOffset={0}
         >
@@ -728,7 +823,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? getConfigOptions().height
                 : 40
           }
-          xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
+          xOffset={
+            windowWidth / 2 + legendWidth - (15 * metaSets.terms.length - 1)
+          }
           // Control visibility - show when data is loaded and items are hidden, but not when loading
           isVisible={
             viewComponent &&
@@ -739,6 +836,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               (viewComponent && dataIdx !== viewComponent.dataIdx)
             )
           }
+          legendWidth={legendWidth}
         />
 
         <div
@@ -755,7 +853,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                     trackModel.type === "methylc"
                   ? getConfigOptions().height * 2
                   : getConfigOptions().height,
-            left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
+            left:
+              windowWidth + (legendWidth - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
           }}
         >
           <MetadataIndicator
@@ -792,7 +891,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           position: "relative",
           willChange: "transform",
-          left: 120,
+          left: legendWidth,
           //  + viewComponent?.xOffset || 0,
         }}
       >

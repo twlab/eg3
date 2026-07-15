@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
 import { chromAlias } from "./fetchFunctions";
@@ -51,7 +50,16 @@ class TabixSource {
       return this.chromNamingCache;
     }
     try {
-      const names = await this.tabix.getReferenceSequenceNames();
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Timeout fetching tabix index")),
+          3000,
+        ),
+      );
+      const names = await Promise.race([
+        this.tabix.getReferenceSequenceNames(),
+        timeout,
+      ]);
       const firstChrom = names[0];
       if (!firstChrom) {
         this.chromNamingCache = false;
@@ -69,7 +77,9 @@ class TabixSource {
       console.error(
         "Error detecting chromosome naming. Check URL and file format.",
       );
-      return null;
+      throw new Error(
+        "Error detecting chromosome naming. Check URL and file format. ",
+      );
     }
   }
 
@@ -104,12 +114,12 @@ class TabixSource {
       }
     }
 
-    if (isEnsembl) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
-    return _.flatten(dataForEachLocus);
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping chr onto every feature. The chr is reattached when formatting.
+    return loci.map((locus, index) => ({
+      chr: locus.chr,
+      data: dataForEachLocus[index],
+    }));
   };
 
   /**

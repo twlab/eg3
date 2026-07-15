@@ -1,6 +1,7 @@
 import {
   createRef,
   memo,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -85,7 +86,7 @@ export const convertTrackModelToITrackModel = (
   tracks: track.tracks,
 });
 const groupManager = new GroupedTrackManager();
-const nonWorkerTracks = new Set(["vcf", "repeatmasker", "rmskv2", "jaspar"]);
+
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
   [Tool.ZoomOutOneThirdFold]: {
     factor: 4 / 3,
@@ -267,6 +268,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const maxBp = useRef(0);
   const minBp = useRef(0);
   const selectedTracks = useRef<{ [key: string]: any }>({});
+  // Tracks the metadata term/value whose tracks are currently highlighted via
+  // the MetadataHeader, so clicking the same value again toggles the highlight off.
+  const activeColorSelection = useRef<{
+    metaDataKey: string;
+    value: string;
+  } | null>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
   // const mouseGenomicPositionRef = useRef({ basePair: 0, chromosome: "" });
   const mouseRelativePositionRef = useRef({ x: 0, y: 0 });
@@ -280,6 +287,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const stateIdx = useRef(currentState.index);
   const padding = Math.max(8, Math.min(12, windowWidthRef.current * 0.008));
   const fontSize = Math.max(12, Math.min(12, windowWidthRef.current * 0.009));
+
   const trackManagerState = useRef<any>({
     bundleId: "",
     customTracksPool: [],
@@ -727,29 +735,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
     if (isMouseInsideRef.current) {
-      // Use cached rect instead of calling getBoundingClientRect on every move
+      // Use cached rect instead of calling getBoundingClientRect on every move.
+      // block can be unmounted (e.g. while the screenshot view is open) even
+      // though this document-level listener is still attached, so guard the
+      // ref instead of dereferencing null.
       const parentRect =
-        parentRectCache.current || block.current!.getBoundingClientRect();
-      const x = e.clientX - parentRect.left;
-      const y = e.clientY - parentRect.top;
+        parentRectCache.current || block.current?.getBoundingClientRect();
+      if (parentRect) {
+        const x = e.clientX - parentRect.left;
+        const y = e.clientY - parentRect.top;
 
-      // Update all mouse position references
-      mousePositionRef.current = { x: e.clientX, y: e.clientY };
-      mouseRelativePositionRef.current = { x, y };
+        // Update all mouse position references
+        mousePositionRef.current = { x: e.clientX, y: e.clientY };
+        mouseRelativePositionRef.current = { x, y };
 
-      // Use requestAnimationFrame to throttle crosshair updates
+        // Use requestAnimationFrame to throttle crosshair updates
 
-      if (rafId.current !== null) {
-        cancelAnimationFrame(rafId.current);
-      }
-      rafId.current = requestAnimationFrame(() => {
-        if (horizontalLineRef.current && verticalLineRef.current) {
-          horizontalLineRef.current.style.display = "block";
-          verticalLineRef.current.style.display = "block";
-          updateLinePosition(x, y);
+        if (rafId.current !== null) {
+          cancelAnimationFrame(rafId.current);
         }
-        rafId.current = null;
-      });
+        rafId.current = requestAnimationFrame(() => {
+          if (horizontalLineRef.current && verticalLineRef.current) {
+            horizontalLineRef.current.style.display = "block";
+            verticalLineRef.current.style.display = "block";
+            updateLinePosition(x, y);
+          }
+          rafId.current = null;
+        });
+      }
     } else {
       // Hide crosshair lines when mouse is outside
       if (horizontalLineRef.current && verticalLineRef.current) {
@@ -770,6 +783,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let tempDragX = dragX.current;
     tempDragX -= deltaX;
 
+    const totalBases = curGenomeConfig.current?.navContext?._totalBases;
+
+    // The whole data region already fits in the view, so there is nothing to
+    // scroll to — block all movement regardless of nav mode. This is the
+    // unified home for what used to be scattered `selectedRegionSet &&
+    // bpRegionSize === totalBases` special-cases: a region-set view loads the
+    // full region into the full window (bpRegionSize === totalBases), and full
+    // zoom-out does the same, so both are simply "whole region in view".
+    if (totalBases !== undefined && bpRegionSize.current >= totalBases) {
+      return;
+    }
+
     if (
       side.current === "right" &&
       -tempDragX >=
@@ -782,6 +807,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         Math.floor(sumArray(leftSectionSize.current) + windowWidthRef.current)
     ) {
       return;
+    }
+
+    // Stop at the actual data-region edges for partial views. The section-size
+    // checks above only cap how many fetched windows we've scrolled through,
+    // not where the underlying data ends, so without this you can keep dragging
+    // into empty space past the start (0) or end (totalBases) of the region —
+    // the drag updates even though handleMouseUp will refuse to commit it.
+    // Project the committed start bp for tempDragX using the same mapping
+    // handleMouseUp uses in coarse mode (leftStartCoord + -dragX * basePerPixel)
+    // and block once the view would run off either edge. Only applied in coarse
+    // mode: fine-mode commits use getRegionOffsetByX, which already clamps to
+    // [0, totalBases-1], and the linear projection is only approximate there.
+    if (
+      !useFineModeNav.current &&
+      totalBases !== undefined &&
+      basePerPixel.current > 0
+    ) {
+      const projectedStartBp =
+        leftStartCoord.current + -tempDragX * basePerPixel.current;
+      if (
+        projectedStartBp < 0 ||
+        projectedStartBp + bpRegionSize.current > totalBases
+      ) {
+        return;
+      }
     }
     dragX.current -= deltaX;
 
@@ -1510,6 +1560,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       selectedTracks.current = {};
     }
+    // The metadata-value highlight is no longer active once tracks are cleared.
+    activeColorSelection.current = null;
   }, [onTracksChange]);
 
   const handleDelete = useCallback(
@@ -2466,8 +2518,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 2);
         maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 2);
       } else {
-        minIdx = dataIdx.current - (isMemoryOver2GB() ? 2 : 3);
-        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 2 : 3);
+        minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 3);
+        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 3);
       }
       for (const cacheDataIdx of cacheKeys) {
         if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
@@ -2628,7 +2680,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             : curViewWindow,
         completedFetchedRegion,
       });
-      //   ,
+      // ,
       // );
     }
   }
@@ -2651,46 +2703,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         : dataIdx.current;
       const initialIdx = [currDataIdx + 1, currDataIdx, currDataIdx - 1];
 
-      let formattedData;
-      try {
-        let regionArray: any = [];
-        for (let idx of initialIdx) {
-          if (
-            !globalTrackState.current?.trackStates?.[idx]?.trackState
-              ?.regionLoci
-          ) {
-            regionArray = [];
-            break;
-          } else {
-            regionArray.push(
-              globalTrackState.current.trackStates[idx].trackState.regionLoci,
-            );
-          }
-        }
-
-        formattedData = formatDataByType(
-          result,
-          fetchRes.trackType,
-          fetchRes.trackModel.shouldPlaceRegion,
-          regionArray,
-        );
-      } catch (e) {
-        formattedData = [];
-        // eslint-disable-next-line no-console
-        trackManagerState.current.caches[`${fetchRes.id}`]["error"] =
-          "data format error";
-        console.error("formatDataByType failed for track", fetchRes.id, e);
-      }
-
+      // Cache the RAW fetched data for every track type. Model objects are
+      // built lazily downstream (in getGroupScale / the draw path) only for the
+      // view that needs them, instead of formatting every fetched region up
+      // front, which spiked memory right after each fetch.
+      const formattedData = result;
+      // const formattedData = formatDataByType(
+      //   result, fetchRes.trackModel.type
+      // )
       if (fetchRes?.errorType) {
         trackManagerState.current.caches[`${fetchRes.id}`]["error"] =
           fetchRes?.errorType;
       } else {
         if (fetchRes.trackModel.shouldPlaceRegion) {
           for (let i = 0; i < 3; i++) {
+            // Raw data isn't split per region; the aggregator clips to the view
+            // region and dedups, so all 3 indices share the same raw groups.
             trackManagerState.current.caches[`${fetchRes.id}`][initialIdx[i]][
               "dataCache"
-            ] = formattedData[i];
+            ] = formattedData;
           }
         } else {
           trackManagerState.current.caches[`${fetchRes.id}`][
@@ -3269,22 +3300,49 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return true;
         })
         .map((item) => convertTrackModelToITrackModel(item));
-      const currViewWindow = globalTrackState.current.viewWindow;
+      // When the view spans (or exceeds) the entire data region there is no
+      // 3-window expansion to offset against: the data occupies a single
+      // window anchored at x=0. Applying the usual windowWidth offset here
+      // shifts the drawn content out of the clip region (translateX =
+      // -viewWindow.start in ScreenshotUI), producing a blank screenshot. Use
+      // no offset with the viewWindow anchored at 0. A region-set view is just
+      // a special case of this (it loads the full region into the full window,
+      // so bpRegionSize === totalBases), so it needs no separate condition.
+      const totalBases = curGenomeConfig.current?.navContext?._totalBases;
+      const noViewWindowOffset =
+        totalBases !== undefined && bpRegionSize.current >= totalBases;
+
+      const currViewWindow = noViewWindowOffset
+        ? new OpenInterval(0, windowWidthRef.current)
+        : globalTrackState.current.viewWindow;
       let trackState = _.cloneDeep(
         globalTrackState.current?.trackStates?.[dataIdx.current]?.trackState,
       );
 
-      const xDiff =
-        currViewWindow.start - trackState?.visData?.viewWindow.start;
+      // xDiff is the scroll delta of the current window from the fetch's
+      // default (centered) position: globalTrackState.viewWindow.start sits at
+      // windowWidth when unscrolled and shifts as you drag, so subtracting
+      // windowWidth yields how far we've scrolled within the expanded region.
+      // Using windowWidth here (rather than visData.viewWindow.start) keeps this
+      // correct when the fetch expansion is clamped by the data edge — i.e. when
+      // the view spans a large fraction (~60%+) of the whole data region. There
+      // visData.viewWindow.start (leftExtraPixels) is < windowWidth, and the old
+      // formula over-shifted every feature/highlight by
+      // (windowWidth - visData.viewWindow.start).
+      const xDiff = noViewWindowOffset
+        ? 0
+        : currViewWindow.start - windowWidthRef.current;
 
-      const sameRegionViewWindow = {
-        start:
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.start + xDiff,
-        end:
-          trackState?.genomicFetchCoord[trackState.primaryGenName]
-            ?.primaryVisData?.viewWindow?.end + xDiff,
-      };
+      const sameRegionViewWindow = noViewWindowOffset
+        ? { start: 0, end: windowWidthRef.current }
+        : {
+            start:
+              trackState?.genomicFetchCoord[trackState.primaryGenName]
+                ?.primaryVisData?.viewWindow?.start + xDiff,
+            end:
+              trackState?.genomicFetchCoord[trackState.primaryGenName]
+                ?.primaryVisData?.viewWindow?.end + xDiff,
+          };
       const newScreenShot = getHighlightedXs();
       setScreenshotData({
         tracks: convertedITrackModel,
@@ -3294,6 +3352,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         windowWidth: windowWidthRef.current,
         legendWidth,
         xOffset: xDiff,
+        selectedRegionSet: selectedRegionSet,
       });
       screenshotDataObj.current = {};
     }
@@ -3342,30 +3401,48 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
   async function onColorBoxClick(metaDataKey, value) {
-    await onTrackUnSelect();
     await onConfigMenuClose();
     const stringValue = value;
+
+    // Clicking the value that's already highlighting tracks toggles it back off,
+    // deselecting/unhighlighting every track.
+    const isSameSelection =
+      activeColorSelection.current !== null &&
+      activeColorSelection.current.metaDataKey === metaDataKey &&
+      activeColorSelection.current.value === stringValue;
+
     const newSelectedTracks: { [key: string]: any } = {};
-    const newTrackModelArr: Array<any> = [];
-    for (let key in trackManagerState.current.tracks) {
-      const track = trackManagerState.current.tracks[key];
-      if (!track.metadata) {
-        continue;
-      }
-      const metaStringValue = Array.isArray(track.metadata[`${metaDataKey}`])
-        ? track.metadata[`${metaDataKey}`][
-            track.metadata[`${metaDataKey}`].length - 1
-          ]
-        : track.metadata[`${metaDataKey}`];
-      if (track.metadata[`${metaDataKey}`] && metaStringValue === stringValue) {
-        newSelectedTracks[`${track.id}`] = "";
-        newTrackModelArr.push(new TrackModel({ ...track, isSelected: true }));
-      } else {
-        newTrackModelArr.push(new TrackModel({ ...track, isSelected: false }));
-      }
-    }
-    onTracksChange(newTrackModelArr);
+    // Always rebuild the full track array (every track, in order) so the parent's
+    // track list length never changes on a selection-only update.
+    const newTrackModelArr: Array<any> = trackManagerState.current.tracks.map(
+      (track) => {
+        if (isSameSelection || !track.metadata) {
+          return new TrackModel({ ...track, isSelected: false });
+        }
+        const metaStringValue = Array.isArray(track.metadata[`${metaDataKey}`])
+          ? track.metadata[`${metaDataKey}`][
+              track.metadata[`${metaDataKey}`].length - 1
+            ]
+          : track.metadata[`${metaDataKey}`];
+        if (
+          track.metadata[`${metaDataKey}`] &&
+          metaStringValue === stringValue
+        ) {
+          newSelectedTracks[`${track.id}`] = "";
+          return new TrackModel({ ...track, isSelected: true });
+        }
+        return new TrackModel({ ...track, isSelected: false });
+      },
+    );
+
+    // Keep the ref in sync with what we hand to the parent (every other selection
+    // handler does this) so subsequent clicks diff against the current state.
+    trackManagerState.current.tracks = newTrackModelArr;
     selectedTracks.current = newSelectedTracks;
+    activeColorSelection.current = isSameSelection
+      ? null
+      : { metaDataKey, value: stringValue };
+    onTracksChange(newTrackModelArr);
   }
 
   // MARK: USEEFFECTS
@@ -3767,7 +3844,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   // MARK: viewWindowConfig
-
   function aggViewWindowData(
     viewWindow,
     dataIdx,
@@ -3862,7 +3938,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             cacheTrackData.trackType in
             { matplot: "", dynamic: "", dynamicbed: "" }
           ) {
-            if (cacheTrackData[1]?.xvalues) {
+            if (
+              cacheTrackData[dataIdx]?.xvalues ||
+              cacheTrackData[dataIdx]?.placeFeature
+            ) {
               combinedData = [];
             } else {
               combinedData = groupTracksArrMatPlot(combinedData);
@@ -4371,8 +4450,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               cache.trackType === "geneannotation" ||
               cache.trackType === "refbed" ||
               cache.trackType in numericalTracks ||
-              curConfigOptions?.fetchViewWindowOnly ||
-              curConfigOptions?.bothAnchorsInView ||
+              interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||
               ((cache.trackType === "vcf" || cache.trackType === "modbed") &&
@@ -4430,7 +4508,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <GenomeNavigator
           selectedRegion={userViewRegion}
           genomeConfig={genomeConfig}
-          windowWidth={windowWidthRef.current + 120}
+          windowWidth={windowWidthRef.current + legendWidth}
           onRegionSelected={onRegionSelected}
         />
       )}
@@ -4439,7 +4517,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           <div
             style={{
               backgroundColor: "var(--bg-color)",
-              width: `${windowWidthRef.current + 120}px`,
+              width: `${windowWidthRef.current + legendWidth}px`,
               marginTop: padding / 3,
               marginBottom: padding / 3,
               display: "flex",
@@ -4613,7 +4691,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             flexDirection: "row",
             outline: "1px solid #9AA6B2",
 
-            width: `${windowWidthRef.current + 120}px`,
+            width: `${windowWidthRef.current + legendWidth}px`,
             overflowX: "hidden",
             overflowY: "hidden",
           }}
@@ -4651,7 +4729,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 flexDirection: "row",
 
-                width: `${windowWidthRef.current + 120}px`,
+                width: `${windowWidthRef.current + legendWidth}px`,
               }}
             >
               {trackComponents ? (
@@ -4671,7 +4749,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         <div
                           key={item.id}
                           style={{
-                            width: `${windowWidthRef.current + 120}px`,
+                            width: `${windowWidthRef.current + legendWidth}px`,
                             position: "relative",
                             paddingTop: "1px",
                             paddingBottom: "1px",
@@ -4716,6 +4794,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             handleRetryFetchTrack={handleRetryFetchTrack}
                             initialLoad={initialLoad}
                             selectedRegionSet={selectedRegionSet}
+                            legendWidth={legendWidth}
                           />
                         </div>
                       </SortableList.Item>
@@ -4776,7 +4855,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     dragLimits={
                       new OpenInterval(
                         legendWidth,
-                        windowWidthRef.current + 120,
+                        windowWidthRef.current + legendWidth,
                       )
                     }
                     xOffset={
@@ -4794,7 +4873,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           ? block.current?.getBoundingClientRect().height
                           : 0,
                         zIndex: 3,
-                        width: `${windowWidthRef.current + 120}px`,
+                        width: `${windowWidthRef.current + legendWidth}px`,
                       }}
                     ></div>
                   </SelectableGenomeArea>
@@ -4811,6 +4890,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             menuData={configMenu}
             darkTheme={darkTheme}
             parentBlockDimensions={trackWrapperRef.current?.getBoundingClientRect()}
+            legendWidth={legendWidth}
           />
         ) : null}
       </OutsideClickDetector>

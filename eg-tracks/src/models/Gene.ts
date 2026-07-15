@@ -47,7 +47,7 @@ class Gene extends Feature {
     const locus = new ChromosomeInterval(
       dbRecord.chrom,
       dbRecord.txStart,
-      dbRecord.txEnd
+      dbRecord.txEnd,
     );
     const value = dbRecord.score;
     super(dbRecord.name!, locus, dbRecord.strand, value);
@@ -85,7 +85,7 @@ class Gene extends Feature {
     // tslint:disable-next-line:triple-equals
     if (
       [cdsStart, cdsEnd, exonStarts, exonEnds].some(
-        (value) => value === undefined
+        (value) => value === undefined,
       )
     ) {
       return;
@@ -99,7 +99,7 @@ class Gene extends Feature {
       .split(",")
       .map((n) => Number.parseInt(n, 10));
     const exons = _.zip(parsedExonStarts, parsedExonEnds).map(
-      ([start, end]) => new OpenInterval(start!, end!)
+      ([start, end]) => new OpenInterval(start!, end!),
     );
 
     for (const exon of exons) {

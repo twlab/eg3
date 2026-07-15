@@ -22,6 +22,8 @@ interface CubicCurveDisplayProps {
   bothAnchorsInView?: boolean;
   options?: any;
   legend?: any;
+  windowWidth?: number;
+  legendWidth?: number;
 }
 
 export class CubicCurveDisplay extends React.PureComponent<
@@ -96,6 +98,7 @@ export class CubicCurveDisplay extends React.PureComponent<
       legend,
       viewWindow,
       windowWidth,
+      legendWidth,
     } = this.props;
     // const sortedInteractions = placedInteractions.slice().sort((a, b)
     //        => b.interaction.score - a.interaction.score);
@@ -115,7 +118,6 @@ export class CubicCurveDisplay extends React.PureComponent<
           transform: `translateX(${-viewWindow.start}px)`,
         }
       : {};
-    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
     return (
       <React.Fragment>
         {placedInteractions.length === 0 ? (
