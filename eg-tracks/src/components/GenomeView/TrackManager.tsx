@@ -1,7 +1,7 @@
 import {
   createRef,
   memo,
-  startTransition,
+  // startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -2501,35 +2501,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (!memory) return false; // Not supported (non-Chromium browsers)
 
     const usedMB = memory.usedJSHeapSize / (1024 * 1024);
-    return usedMB > 2000;
+    return usedMB > 1500;
   }
   function checkDrawData(newDrawData) {
-    for (const key in trackManagerState.current.caches) {
-      const curTrack = trackManagerState.current.caches[key];
-      const cacheKeys = Object.keys(curTrack)
-        .filter((k) => isInteger(k))
-        .map(Number)
-        .sort((a, b) => a - b);
-      let minIdx, maxIdx;
-      if (
-        curTrack.trackType in trackUsingExpandedLoci ||
-        !curTrack.usePrimaryNav
-      ) {
-        minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 2);
-        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 2);
-      } else {
-        minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 3);
-        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 3);
-      }
-      for (const cacheDataIdx of cacheKeys) {
-        if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
-          if (trackManagerState.current.caches[key][cacheDataIdx]) {
-            trackManagerState.current.caches[key][cacheDataIdx] = {};
+    if (isMemoryOver2GB()) {
+      for (const key in trackManagerState.current.caches) {
+        const curTrack = trackManagerState.current.caches[key];
+        const cacheKeys = Object.keys(curTrack)
+          .filter((k) => isInteger(k))
+          .map(Number)
+          .sort((a, b) => a - b);
+        let minIdx, maxIdx;
+
+        minIdx = dataIdx.current - 1;
+        maxIdx = dataIdx.current + 1;
+
+        for (const cacheDataIdx of cacheKeys) {
+          if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
+            if (trackManagerState.current.caches[key][cacheDataIdx]) {
+              trackManagerState.current.caches[key][cacheDataIdx] = {};
+            }
           }
         }
       }
     }
-
     if (newDrawData && Object.keys(newDrawData.trackToDrawId).length > 0) {
       let curViewWindow;
       const genomeName = curGenomeConfig.current?.genome.getName();

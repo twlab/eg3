@@ -230,6 +230,13 @@ export class FeaturePlacer {
     // and are all processed.
     const seenDataRefs = new Set<any>();
 
+    // Dedupes placements by their drawn span (contextLocation start/end). The
+    // same span can arrive more than once — e.g. a feature split across nav
+    // context pieces, or overlapping fetch regions returning the same record.
+    // A string key is compact and O(1); an object Set wouldn't work since every
+    // placement is a fresh object (reference identity never matches).
+    const seenSpans = new Set<string>();
+
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
@@ -273,6 +280,13 @@ export class FeaturePlacer {
           if (!contextLocation) {
             continue;
           }
+
+          // Skip a span we've already placed (same drawn span).
+          const spanKey = `${contextLocation.start}-${contextLocation.end}`;
+          if (seenSpans.has(spanKey)) {
+            continue;
+          }
+          seenSpans.add(spanKey);
 
           const xSpan = useCenter
             ? drawModel.baseSpanToXCenter(contextLocation)
