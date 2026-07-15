@@ -56,7 +56,7 @@ export class Rmskv2Feature extends Feature {
   get repeatValue() {
     if (this._cachedValue === null) {
       const divergence = Number.parseFloat(this.milliDiv) / 100.0;
-      console.log(divergence);
+
       this._cachedValue = 1 - divergence;
     }
     return this._cachedValue;

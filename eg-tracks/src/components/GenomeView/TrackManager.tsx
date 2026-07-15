@@ -3844,7 +3844,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   // MARK: viewWindowConfig
-  console.log(trackManagerState.current.caches);
   function aggViewWindowData(
     viewWindow,
     dataIdx,
@@ -4284,7 +4283,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!initialLoad.current) {
-      console.log(genomeConfig);
       const updatedGenomeConfig = _.cloneDeep(genomeConfig);
       if (userViewRegion) {
         updatedGenomeConfig.defaultRegion = new OpenInterval(

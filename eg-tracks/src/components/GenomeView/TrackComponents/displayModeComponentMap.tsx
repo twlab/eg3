@@ -1007,14 +1007,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     windowWidth,
     placeFeature,
   }) {
-    console.log(
-      "dynamicbed",
-      placeFeature,
-      formattedData,
-      trackState,
-      configOptions,
-    );
-
     const canvasElements = (
       <DynamicBedTrackComponents
         data={formattedData}
@@ -2330,7 +2322,6 @@ function formatCategoricalData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  console.log(genesArr);
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 

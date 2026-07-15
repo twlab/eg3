@@ -133,7 +133,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       darkTheme,
       viewWindow,
     } = props;
-    console.log(legendWidth);
+
     const tracks = Array.from(
       document
         .querySelector("#screenshotContainer")
