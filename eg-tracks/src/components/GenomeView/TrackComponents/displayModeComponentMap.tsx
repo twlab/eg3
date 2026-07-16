@@ -2,6 +2,9 @@ import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import Feature, {
   ColoredFeature,
   Fiber,
+  getFeatureIsReverseStrand,
+  getFeatureName,
+  getFeatureScore,
   JasparFeature,
   NumericalArrayFeature,
   NumericalFeature,
@@ -18,7 +21,12 @@ import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotati
 import { objToInstanceAlign } from "../TrackManager";
 import BedAnnotation from "./bedComponents/BedAnnotation";
 import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
-import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
+import {
+  getRepeatCategoryId,
+  getRepeatRgb,
+  getRepeatValue,
+  RepeatMaskerFeature,
+} from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
@@ -136,6 +144,7 @@ function makeAnnotationElementMap(context: any) {
       <BedAnnotation
         key={i}
         feature={placement.feature}
+        trackType={trackModel.type}
         xSpan={placement.xSpan}
         y={y}
         isMinimal={isLastRow}
@@ -160,6 +169,7 @@ function makeAnnotationElementMap(context: any) {
       <BedAnnotation
         key={i}
         feature={placement.feature}
+        trackType={trackModel.type}
         xSpan={placement.xSpan}
         y={y}
         isMinimal={isLastRow}
@@ -245,6 +255,7 @@ function makeAnnotationElementMap(context: any) {
         <BedAnnotation
           key={i}
           feature={placement.feature}
+          trackType={trackModel.type}
           xSpan={placement.xSpan}
           y={y}
           isMinimal={isLastRow}
@@ -254,7 +265,7 @@ function makeAnnotationElementMap(context: any) {
           onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
-          opacity={scoreScale(placement.feature.score)}
+          opacity={scoreScale(getFeatureScore(placement.feature, "jaspar"))}
         />
       ));
     },
@@ -307,10 +318,11 @@ function makeAnnotationElementMap(context: any) {
         }
         let color;
 
-        if (feature.rgb) {
-          color = `rgb(${feature.rgb})`;
+        const rgb = getRepeatRgb(feature, "repeatmasker");
+        if (rgb) {
+          color = `rgb(${rgb})`;
         } else {
-          const categoryId = feature.getCategoryId();
+          const categoryId = getRepeatCategoryId(feature);
           color = categoryColors[categoryId];
         }
 
@@ -319,7 +331,7 @@ function makeAnnotationElementMap(context: any) {
           .domain([1, 0])
           .range([TOP_PADDING, configOptions.height]);
 
-        let yv = scale(feature.repeatValue);
+        let yv = scale(getRepeatValue(feature, "repeatmasker"));
         const drawHeight = configOptions.height - yv;
 
         const width = xSpan.getLength();
@@ -337,7 +349,7 @@ function makeAnnotationElementMap(context: any) {
           />
         );
         let label;
-        const labelText = feature.getName();
+        const labelText = getFeatureName(feature, "repeatmasker");
         const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
         if (estimatedLabelWidth < 0.9 * width) {
           const centerX = xSpan.start + 0.5 * width;
@@ -363,7 +375,9 @@ function makeAnnotationElementMap(context: any) {
             y={height - TEXT_HEIGHT}
             height={TEXT_HEIGHT}
             opacity={0.75}
-            isToRight={isReverse === (feature.strand === "-")}
+            isToRight={
+              isReverse === getFeatureIsReverseStrand(feature, "repeatmasker")
+            }
             color="white"
           />
         );
@@ -400,10 +414,11 @@ function makeAnnotationElementMap(context: any) {
         }
         let color;
 
-        if (feature.rgb) {
-          color = `rgb(${feature.rgb})`;
+        const rgb = getRepeatRgb(feature, "rmskv2");
+        if (rgb) {
+          color = `rgb(${rgb})`;
         } else {
-          const categoryId = feature.getCategoryId();
+          const categoryId = getRepeatCategoryId(feature);
           color = categoryColors[categoryId];
         }
 
@@ -411,7 +426,7 @@ function makeAnnotationElementMap(context: any) {
         let scale = scaleLinear()
           .domain([1, 0])
           .range([TOP_PADDING, configOptions.height]);
-        let yv = scale(feature.repeatValue);
+        let yv = scale(getRepeatValue(feature, "rmskv2"));
 
         const drawHeight = configOptions.height - yv;
 
@@ -430,7 +445,7 @@ function makeAnnotationElementMap(context: any) {
           />
         );
         let label;
-        const labelText = feature.getName();
+        const labelText = getFeatureName(feature, "rmskv2");
         const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
         if (estimatedLabelWidth < 0.9 * width) {
           const centerX = xSpan.start + 0.5 * width;
@@ -456,7 +471,9 @@ function makeAnnotationElementMap(context: any) {
             y={height - TEXT_HEIGHT}
             height={TEXT_HEIGHT}
             opacity={0.75}
-            isToRight={isReverse === (feature.strand === "-")}
+            isToRight={
+              isReverse === getFeatureIsReverseStrand(feature, "rmskv2")
+            }
             color="white"
           />
         );
@@ -485,7 +502,7 @@ function makeAnnotationElementMap(context: any) {
       height?: number,
     ) {
       return placedGroup.placedFeatures.map((placement: any, i: number) => {
-        const featureName = placement.feature.getName();
+        const featureName = getFeatureName(placement.feature);
         const color =
           configOptions.category && configOptions.category[featureName]
             ? configOptions.category[`${featureName}`].color
@@ -3115,6 +3132,16 @@ export const rawAggregatableTracks: { [type: string]: string } = {
 export const rawRenderTracks: { [type: string]: string } = {
   dynamicbed: "",
   matplot: "",
+  bed: "",
+  bigbed: "",
+  bigbedcolor: "",
+  jaspar: "",
+  categorical: "",
+  bedcolor: "",
+  repeatmasker: "",
+  rmskv2: "",
+  snp: "",
+  vcf: "",
 };
 
 /**
@@ -3127,6 +3154,7 @@ const formattedByRawData = new WeakMap<object, any[]>();
 export function getFormattedFromCache(rawData: any, type: string): any {
   if (
     type in rawAggregatableTracks ||
+    type in rawRenderTracks ||
     !rawData ||
     typeof rawData !== "object"
   ) {

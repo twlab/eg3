@@ -122,6 +122,11 @@ class BigSourceWorker {
     for (const locusData of dataForEachLocus) {
       for (let dasFeature of locusData) {
         dasFeature.min -= 1; // Compensate for 0 due to 1-indexing from bbi-js.
+        // Expose bed-style start/end so bigbed records can be placed/rendered
+        // straight from raw (bbi bigbed uses min/max/segment). formatBigBedData
+        // still reads min/max via `?? start`, so the formatted path is unaffected.
+        dasFeature.start = dasFeature.min;
+        dasFeature.end = dasFeature.max;
       }
     }
 

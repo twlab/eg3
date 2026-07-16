@@ -169,3 +169,51 @@ export class RepeatMaskerFeature extends Feature {
     return CLASS_ID_TO_DETAILS[this.getCategoryId()] || "???";
   }
 }
+
+// Standalone accessors so repeatmasker/rmskv2 can render straight from raw
+// records (no model objects). A real RepeatMaskerFeature/Rmskv2Feature (which
+// exposes the methods/getter) short-circuits the raw path. repeatmasker records
+// carry named fields (label/orientation/repClass/milliDiv, ÷1000 divergence);
+// rmskv2 packs everything into a tab-separated `rest` (name[0]/strand[2]/rgb[5]/
+// repClass[7]/milliDiv[9], ÷100 divergence).
+function restCols(record: any): string[] {
+  return typeof record.rest === "string" ? record.rest.split("\t") : [];
+}
+
+/** Repeat class id (1..12) for a repeatmasker feature/record. */
+export function getRepeatCategoryId(feature: any): number {
+  if (typeof feature.getCategoryId === "function") {
+    return feature.getCategoryId();
+  }
+  return CLASS_TO_ID[feature.repClass];
+}
+
+/** Repeat "value" (1 - divergence): repeatmasker uses ÷1000, rmskv2 ÷100. */
+export function getRepeatValue(feature: any, type?: string): number {
+  if (typeof feature.repeatValue === "number") {
+    return feature.repeatValue;
+  }
+  if (type === "rmskv2") {
+    return 1 - Number.parseFloat(restCols(feature)[9]) / 100.0;
+  }
+  return 1 - Number.parseInt(feature.milliDiv, 10) / 1000.0;
+}
+
+/** RGB string for an rmskv2 record (rest[5]); repeatmasker has none. */
+export function getRepeatRgb(feature: any, type?: string): string | undefined {
+  if (feature.rgb !== undefined) {
+    return feature.rgb;
+  }
+  return type === "rmskv2" ? restCols(feature)[5] : undefined;
+}
+
+/** Human-readable class details for the click tooltip. */
+export function getRepeatClassDetails(feature: any, type?: string): string {
+  if (typeof feature.getClassDetails === "function") {
+    return feature.getClassDetails();
+  }
+  if (type === "rmskv2") {
+    return restCols(feature)[7] ?? "";
+  }
+  return CLASS_ID_TO_DETAILS[getRepeatCategoryId(feature)] || "???";
+}

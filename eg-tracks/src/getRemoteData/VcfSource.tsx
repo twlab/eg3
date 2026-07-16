@@ -132,8 +132,13 @@ class VcfSource {
     await this.vcf.getLines(chrom, locus.start + 1, locus.end, (line) =>
       variants.push(this.parser.parseLine(line)),
     );
-    // CHROM is stamped from the locus group when formatting (see
-    // normalizeLocusGroupedData), so it always matches the browser's naming.
+    // Expose bed-style start/end (0-based) so a variant can be placed/rendered
+    // straight from raw — matches the Vcf model's [POS-1, POS-1+REF.length].
+    // chr is stamped from the locus group when the record is placed.
+    for (const variant of variants) {
+      variant.start = variant.POS - 1;
+      variant.end = variant.POS - 1 + variant.REF.length;
+    }
 
     return variants;
   }

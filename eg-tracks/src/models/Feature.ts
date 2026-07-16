@@ -54,32 +54,147 @@ export function getFeatureValue(featureOrLocus: any): any {
     : undefined;
 }
 
-/**
- * Name of a Feature (`name`) or a raw record. Feature instances expose `name`
- * directly, so we read it straight off; raw bed-like records keep the name in
- * column `[3]`. Used so annotation tracks can render straight from raw records
- * without building Feature objects.
- */
-export function getFeatureName(featureOrRecord: any): string {
-  if (featureOrRecord.name !== undefined) {
-    return featureOrRecord.name;
-  }
+// Raw records keep their display fields in different places depending on the
+// track type: plain bed-like tabix records use columns [3]=name/[5]=strand,
+// while bbi bigbed/jaspar records pack them into a tab-separated `rest` string
+// (with different indices per type). These helpers resolve name/strand/score
+// off the raw record given the track type, so annotation tracks can render
+// straight from raw records without building Feature objects. A real Feature
+// (which exposes the getX methods) always short-circuits the raw path.
+function splitRest(record: any): string[] {
+  return typeof record.rest === "string" ? record.rest.split("\t") : [];
+}
+
+/** Name of a Feature or raw record. */
+export function getFeatureName(featureOrRecord: any, type?: string): string {
   if (typeof featureOrRecord.getName === "function") {
     return featureOrRecord.getName();
   }
-  return featureOrRecord[3] !== undefined ? String(featureOrRecord[3]) : "";
+  switch (type) {
+    case "bigbed":
+    case "bigbedcolor": {
+      const rest = splitRest(featureOrRecord);
+      return String(
+        rest[0] || featureOrRecord.name || featureOrRecord.label || "",
+      );
+    }
+    case "jaspar": {
+      const rest = splitRest(featureOrRecord);
+      return rest[3] != null ? String(rest[3]) : "";
+    }
+    case "bedcolor":
+      // column [3] is the color, not a name — bedcolor features are unnamed.
+      return "";
+    case "repeatmasker":
+      return featureOrRecord.label != null ? String(featureOrRecord.label) : "";
+    case "rmskv2": {
+      const rest = splitRest(featureOrRecord);
+      return rest[0] != null ? String(rest[0]) : "";
+    }
+    case "snp":
+      return featureOrRecord.id != null ? String(featureOrRecord.id) : "";
+    case "vcf":
+      return ""; // Vcf features are unnamed (the model uses "")
+    default:
+      if (featureOrRecord.name !== undefined) {
+        return String(featureOrRecord.name);
+      }
+      return featureOrRecord[3] !== undefined
+        ? String(featureOrRecord[3])
+        : "";
+  }
 }
 
-/**
- * Whether a Feature or raw record is on the reverse strand. Feature instances
- * carry `strand`; raw bed-like records keep the strand in column `[5]`.
- */
-export function getFeatureIsReverseStrand(featureOrRecord: any): boolean {
+/** Raw strand character of a Feature or raw record. */
+export function getFeatureStrand(featureOrRecord: any, type?: string): string {
+  if (typeof featureOrRecord.getStrand === "function") {
+    return featureOrRecord.getStrand();
+  }
+  switch (type) {
+    case "bigbed":
+    case "bigbedcolor":
+      // rest[2] (orientation), falling back to record.orientation — matches
+      // formatBigBedData.
+      return splitRest(featureOrRecord)[2] || featureOrRecord.orientation || "";
+    case "jaspar":
+      return splitRest(featureOrRecord)[2] ?? "";
+    case "bedcolor":
+      return "+"; // formatBedColorData hardcodes the forward strand
+    case "repeatmasker":
+      return featureOrRecord.orientation ?? "";
+    case "rmskv2":
+      return splitRest(featureOrRecord)[2] ?? "";
+    case "snp":
+      // Ensembl API strand is numeric 1 / -1.
+      return featureOrRecord.strand === 1
+        ? "+"
+        : featureOrRecord.strand === -1
+          ? "-"
+          : "";
+    default:
+      return featureOrRecord.strand ?? featureOrRecord[5] ?? "";
+  }
+}
+
+/** Whether a Feature or raw record is on the reverse strand. */
+export function getFeatureIsReverseStrand(
+  featureOrRecord: any,
+  type?: string,
+): boolean {
   if (typeof featureOrRecord.getIsReverseStrand === "function") {
     return featureOrRecord.getIsReverseStrand();
   }
-  const strand = featureOrRecord.strand ?? featureOrRecord[5];
-  return strand === "-";
+  return getFeatureStrand(featureOrRecord, type) === REVERSE_STRAND_CHAR;
+}
+
+/** Whether a Feature or raw record carries strand info (forward or reverse). */
+export function getFeatureHasStrand(
+  featureOrRecord: any,
+  type?: string,
+): boolean {
+  if (typeof featureOrRecord.getHasStrand === "function") {
+    return featureOrRecord.getHasStrand();
+  }
+  const strand = getFeatureStrand(featureOrRecord, type);
+  return strand === FORWARD_STRAND_CHAR || strand === REVERSE_STRAND_CHAR;
+}
+
+/** Numeric score of a Feature (`score`) or raw record. */
+export function getFeatureScore(featureOrRecord: any, type?: string): any {
+  switch (type) {
+    case "bigbed":
+    case "bigbedcolor": {
+      const rest = splitRest(featureOrRecord);
+      return rest[1] ? Number(rest[1]) : featureOrRecord.score;
+    }
+    case "jaspar": {
+      const rest = splitRest(featureOrRecord);
+      return rest.length ? Number.parseInt(rest[1], 10) : featureOrRecord.score;
+    }
+    default:
+      return featureOrRecord.score;
+  }
+}
+
+/**
+ * Color of a Feature or raw record. bigbedcolor keeps it on `color`; raw
+ * bedcolor records keep the color string in column `[3]` (matches
+ * formatBedColorData's `.withColor(record[3])`).
+ */
+export function getFeatureColor(
+  featureOrRecord: any,
+  type?: string,
+): string | undefined {
+  if (type === "bedcolor") {
+    return featureOrRecord.color ?? featureOrRecord[3];
+  }
+  return featureOrRecord.color;
+}
+
+/** `chr:start-end` string for a Feature's or raw record's locus. */
+export function getFeatureLocusString(featureOrRecord: any): string {
+  const locus = getFeatureLocus(featureOrRecord);
+  return `${locus.chr}:${locus.start}-${locus.end}`;
 }
 
 /** Nav-context coordinates for a Feature's or raw record's locus. */

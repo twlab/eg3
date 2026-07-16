@@ -79,3 +79,12 @@ class Vcf extends Feature {
 }
 
 export default Vcf;
+
+/**
+ * Resolves the underlying @gmod/vcf variant from either a Vcf model (which keeps
+ * it on `.variant`) or a raw variant record (which is the variant itself). Lets
+ * vcf render straight from raw variants without building Vcf objects.
+ */
+export function getVariant(feature: any): Variant {
+  return feature?.variant ?? feature;
+}

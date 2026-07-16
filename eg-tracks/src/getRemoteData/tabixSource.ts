@@ -53,7 +53,7 @@ class TabixSource {
       const timeout = new Promise<never>((_, reject) =>
         setTimeout(
           () => reject(new Error("Timeout fetching tabix index")),
-          3000,
+          2000,
         ),
       );
       const names = await Promise.race([

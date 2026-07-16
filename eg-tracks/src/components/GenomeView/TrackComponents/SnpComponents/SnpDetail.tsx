@@ -1,5 +1,11 @@
 import React from "react";
 import Snp from "../../../models/Snp";
+import {
+  getFeatureHasStrand,
+  getFeatureLength,
+  getFeatureLocusString,
+  getFeatureStrand,
+} from "../../../models/Feature";
 import "../commonComponents/HoverToolTips/Tooltip.css";
 
 interface SnpDetailProps {
@@ -23,9 +29,11 @@ const SnpDetail: React.FC<SnpDetailProps> = ({ snp }) => {
         {snp.id} {ncbiLink}
       </div>
       <div>
-        {snp.getLocus().toString()} ({snp.getLocus().getLength()}bp)
+        {getFeatureLocusString(snp)} ({getFeatureLength(snp)}bp)
       </div>
-      {snp.getHasStrand() ? <div>Strand: {snp.getStrand()}</div> : null}
+      {getFeatureHasStrand(snp, "snp") ? (
+        <div>Strand: {getFeatureStrand(snp, "snp")}</div>
+      ) : null}
     </div>
   );
 };

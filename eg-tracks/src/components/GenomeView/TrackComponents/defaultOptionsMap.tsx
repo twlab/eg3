@@ -29,7 +29,7 @@ import {
   VcfColorScaleKeys,
   VcfDisplayModes,
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
-import Feature from "../../../models/Feature";
+import Feature, { getFeatureName } from "../../../models/Feature";
 import { DefaultAggregators } from "../../../models/FeatureAggregator";
 
 import { Fiber, JasparFeature } from "../../../models/Feature";
@@ -64,7 +64,7 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.getName().length * 9;
+      const estimatedLabelWidth = getFeatureName(feature, "bigbed").length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {
@@ -83,7 +83,8 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.getName().length * 9;
+      const estimatedLabelWidth =
+        getFeatureName(feature, "bigbedcolor").length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {
@@ -131,7 +132,9 @@ export const trackOptionMap: { [key: string]: any } = {
       xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.getName().length * 9;
+      // bed renders straight from raw records, so read the name via the accessor
+      // rather than feature.getName().
+      const estimatedLabelWidth = getFeatureName(feature).length * 9;
 
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
@@ -167,7 +170,8 @@ export const trackOptionMap: { [key: string]: any } = {
       xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.getName().length * 9;
+      const estimatedLabelWidth =
+        getFeatureName(feature, "repeatmasker").length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {
@@ -193,7 +197,7 @@ export const trackOptionMap: { [key: string]: any } = {
       xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.getName().length * 9;
+      const estimatedLabelWidth = getFeatureName(feature, "rmskv2").length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {
@@ -219,7 +223,7 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: function paddingFunc(vcf: Vcf, xSpan: OpenInterval) {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = vcf.getName().length * 9;
+      const estimatedLabelWidth = getFeatureName(vcf, "vcf").length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {
@@ -304,7 +308,7 @@ export const trackOptionMap: { [key: string]: any } = {
       xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.name.length * 9;
+      const estimatedLabelWidth = getFeatureName(feature).length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {
@@ -326,7 +330,7 @@ export const trackOptionMap: { [key: string]: any } = {
       xSpan: OpenInterval,
     ) {
       const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = feature.getName().length * 9;
+      const estimatedLabelWidth = getFeatureName(feature, "jaspar").length * 9;
       if (estimatedLabelWidth < 0.5 * width) {
         return 5;
       } else {

@@ -4,7 +4,8 @@ import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import BackgroundedText from "../geneAnnotationTrackComponents/BackgroundedText";
 import OpenInterval from "../../../../models/OpenInterval";
 import { getContrastingColor } from "../../../../models/util";
-import Vcf from "./Vcf";
+import { getFeatureName } from "../../../../models/Feature";
+import Vcf, { getVariant } from "./Vcf";
 
 /**
  * Visualizer for VCF objects.
@@ -56,7 +57,7 @@ class VcfAnnotation extends React.Component<Props> {
       alwaysDrawLabel,
     } = this.props;
 
-    const colorToUse = colorScale(feature.variant.QUAL);
+    const colorToUse = colorScale(getVariant(feature).QUAL);
     const contrastColor = getContrastingColor(colorToUse);
     const [startX, endX] = xSpan;
     const width2 = endX - startX;
@@ -73,7 +74,7 @@ class VcfAnnotation extends React.Component<Props> {
     }
 
     let label: any = null;
-    const estimatedLabelWidth = feature.getName().length * height;
+    const estimatedLabelWidth = getFeatureName(feature, "vcf").length * height;
     if (estimatedLabelWidth < 0.5 * width) {
       const centerX = startX + 0.5 * width;
       label = (
@@ -87,7 +88,7 @@ class VcfAnnotation extends React.Component<Props> {
           backgroundColor={colorToUse}
           backgroundOpacity={1}
         >
-          {feature.getName()}
+          {getFeatureName(feature, "vcf")}
         </BackgroundedText>
       );
     } else if (alwaysDrawLabel) {
@@ -100,7 +101,7 @@ class VcfAnnotation extends React.Component<Props> {
           dominantBaseline="hanging"
           textAnchor="start"
         >
-          {feature.getName()}
+          {getFeatureName(feature, "vcf")}
         </BackgroundedText>
       );
     }

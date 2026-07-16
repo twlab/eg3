@@ -1,7 +1,11 @@
 import React from "react";
 import _ from "lodash";
 import { CopyToClip } from "../commonComponents/CopyToClipboard";
-import Vcf from "./Vcf";
+import Vcf, { getVariant } from "./Vcf";
+import {
+  getFeatureLength,
+  getFeatureLocusString,
+} from "../../../../models/Feature";
 import "../commonComponents/HoverToolTips/Tooltip.css";
 const SAMPLE_ROWS_THRESHOLD = 10;
 
@@ -16,8 +20,9 @@ interface VcfDetailProps {
 class VcfDetail extends React.PureComponent<VcfDetailProps> {
   render() {
     const { vcf } = this.props;
+    const variant = getVariant(vcf);
 
-    const vcfId = vcf.variant?.ID ?? "";
+    const vcfId = variant?.ID ?? "";
 
     let linkOut,
       trimmed = {};
@@ -49,12 +54,12 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
       }
     }
     let sampleKeys: any = null;
-    if (vcf.variant?.SAMPLES) {
+    if (variant?.SAMPLES) {
       {
-        sampleKeys = Object.keys(vcf.variant?.SAMPLES);
+        sampleKeys = Object.keys(variant?.SAMPLES);
         sampleKeys
           .slice(0, SAMPLE_ROWS_THRESHOLD)
-          .forEach((k) => (trimmed[k] = vcf.variant?.SAMPLES[k]));
+          .forEach((k) => (trimmed[k] = variant?.SAMPLES[k]));
       }
     }
 
@@ -74,25 +79,25 @@ class VcfDetail extends React.PureComponent<VcfDetailProps> {
               <tr>
                 <th>REF</th>
                 <td style={{ wordBreak: "break-all", maxWidth: "300px" }}>
-                  {vcf.variant?.REF ?? ""}
+                  {variant?.REF ?? ""}
                 </td>
               </tr>
               <tr>
                 <th>ALT</th>
                 <td style={{ wordBreak: "break-all", maxWidth: "300px" }}>
-                  {vcf.variant?.ALT?.join(", ") ?? ""}
+                  {variant?.ALT?.join(", ") ?? ""}
                 </td>
               </tr>
               <tr>
                 <th>QUAL</th>
-                <td>{vcf.variant?.QUAL ?? ""}</td>
+                <td>{variant?.QUAL ?? ""}</td>
               </tr>
             </tbody>
           </table>
           <div>
-            {vcf.getLocus().toString()} ({vcf.getLocus().getLength()}bp)
+            {getFeatureLocusString(vcf)} ({getFeatureLength(vcf)}bp)
           </div>
-          <div>{infoAsTable(vcf.variant?.INFO ?? "")}</div>
+          <div>{infoAsTable(variant?.INFO ?? "")}</div>
           <div>
             {sampleKeys && sampleKeys.length > 0 && (
               <span>Sample count: {sampleKeys.length}</span>

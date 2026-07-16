@@ -23,6 +23,7 @@ import {
   formatCombinedData,
   formatDataByType,
 } from "./displayModeComponentMap";
+import { getVariant } from "./VcfComponents/Vcf";
 import {
   getBedPadding,
   getHeight as getDynamicBedHeight,
@@ -486,14 +487,12 @@ export class GroupedTrackManager {
                   let values: any[];
 
                   if (colorKey === VcfColorScaleKeys.QUAL) {
-                    values = data.map((v) => v.feature.variant.QUAL);
+                    values = data.map((v) => getVariant(v.feature).QUAL);
                   } else if (colorKey === VcfColorScaleKeys.AF) {
                     values = data.map((v) => {
-                      if (
-                        v.feature?.variant?.INFO &&
-                        v.feature?.variant?.INFO.hasOwnProperty("AF")
-                      ) {
-                        return v.feature.variant.INFO.AF[0];
+                      const info = getVariant(v.feature)?.INFO;
+                      if (info && info.hasOwnProperty("AF")) {
+                        return info.AF[0];
                       }
                       return 0;
                     });

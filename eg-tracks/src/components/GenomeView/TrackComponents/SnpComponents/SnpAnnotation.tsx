@@ -3,6 +3,11 @@ import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import BackgroundedText from "../geneAnnotationTrackComponents/BackgroundedText";
 import Snp from "../../../../models/Snp";
+import {
+  getFeatureHasStrand,
+  getFeatureIsReverseStrand,
+  getFeatureName,
+} from "../../../../models/Feature";
 import OpenInterval from "../../../../models/OpenInterval";
 import { getContrastingColor } from "../../../../models/util";
 
@@ -34,7 +39,9 @@ const SnpAnnotation: React.FC<SnpAnnotationProps> = ({
   onClick,
 }) => {
 
-  const colorToUse = snp.getIsReverseStrand() ? reverseStrandColor : color;
+  const colorToUse = getFeatureIsReverseStrand(snp, "snp")
+    ? reverseStrandColor
+    : color;
   const contrastColor = getContrastingColor(colorToUse);
   const [startX, endX] = xSpan;
   const width2 = endX - startX;
@@ -57,20 +64,23 @@ const SnpAnnotation: React.FC<SnpAnnotationProps> = ({
   }
 
   let arrows;
-  if (snp.getHasStrand()) {
+  if (getFeatureHasStrand(snp, "snp")) {
     arrows = (
       <AnnotationArrows
         startX={startX}
         endX={endX}
         height={HEIGHT}
-        isToRight={snp.getIsReverseStrand() === isInvertArrowDirection}
+        isToRight={
+          getFeatureIsReverseStrand(snp, "snp") === isInvertArrowDirection
+        }
         color={contrastColor}
       />
     );
   }
 
   let label;
-  const estimatedLabelWidth = snp.getName().length * HEIGHT;
+  const snpName = getFeatureName(snp, "snp");
+  const estimatedLabelWidth = snpName.length * HEIGHT;
   if (estimatedLabelWidth < 0.5 * width) {
     const centerX = startX + 0.5 * width;
     label = (
@@ -84,7 +94,7 @@ const SnpAnnotation: React.FC<SnpAnnotationProps> = ({
         backgroundColor={colorToUse}
         backgroundOpacity={1}
       >
-        {snp.getName()}
+        {snpName}
       </BackgroundedText>
     );
   } else if (alwaysDrawLabel) {
@@ -97,7 +107,7 @@ const SnpAnnotation: React.FC<SnpAnnotationProps> = ({
         dominantBaseline="hanging"
         textAnchor="start"
       >
-        {snp.getName()}
+        {snpName}
       </BackgroundedText>
     );
   }

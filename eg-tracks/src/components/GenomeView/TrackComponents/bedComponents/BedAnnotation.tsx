@@ -2,7 +2,11 @@ import React from "react";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import BackgroundedText from "../geneAnnotationTrackComponents/BackgroundedText";
-import Feature from "../../../../models/Feature";
+import Feature, {
+  getFeatureHasStrand,
+  getFeatureIsReverseStrand,
+  getFeatureName,
+} from "../../../../models/Feature";
 import OpenInterval from "../../../../models/OpenInterval";
 import { getContrastingColor } from "../../../../models/util";
 const HEIGHT = 9;
@@ -13,6 +17,7 @@ export const DEFAULT_OPTIONS = {
 };
 interface BedAnnotationProps {
   feature: Feature;
+  trackType?: string;
   xSpan: OpenInterval;
   y?: number;
   color?: string;
@@ -46,6 +51,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
   render() {
     const {
       feature,
+      trackType,
       xSpan,
       y = 0,
       color = "blue",
@@ -62,7 +68,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
       height = undefined,
     } = this.props;
 
-    const colorToUse = feature.getIsReverseStrand()
+    const colorToUse = getFeatureIsReverseStrand(feature, trackType)
       ? reverseStrandColor
       : color;
     const drawHeight = height ? height : HEIGHT;
@@ -95,13 +101,16 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
     }
 
     let arrows: any = null;
-    if (feature.getHasStrand()) {
+    if (getFeatureHasStrand(feature, trackType)) {
       arrows = (
         <AnnotationArrows
           startX={startX}
           endX={endX}
           height={drawHeight}
-          isToRight={feature.getIsReverseStrand() === isInvertArrowDirection}
+          isToRight={
+            getFeatureIsReverseStrand(feature, trackType) ===
+            isInvertArrowDirection
+          }
           color={contrastColor}
           opacity={opacity}
         />
@@ -109,7 +118,8 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
     }
 
     let label: any = null;
-    const estimatedLabelWidth = feature.getName().length * drawHeight;
+    const featureName = getFeatureName(feature, trackType);
+    const estimatedLabelWidth = featureName.length * drawHeight;
     if (estimatedLabelWidth < 0.5 * width) {
       const centerX = startX + 0.5 * width;
       label = (
@@ -123,7 +133,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
           backgroundColor={colorToUse}
           backgroundOpacity={1}
         >
-          {feature.getName()}
+          {featureName}
         </BackgroundedText>
       );
     } else if (alwaysDrawLabel) {
@@ -136,7 +146,7 @@ class BedAnnotation extends React.Component<BedAnnotationProps> {
           dominantBaseline="hanging"
           textAnchor="start"
         >
-          {feature.getName()}
+          {featureName}
         </BackgroundedText>
       );
     }

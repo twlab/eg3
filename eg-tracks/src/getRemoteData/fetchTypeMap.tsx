@@ -85,7 +85,11 @@ export const fetchTypeMap: { [key: string]: any } = {
       });
 
       const results = await Promise.all(fetchPromises);
-      return results.flat();
+      return regionData.nav.map((locus, index) => ({
+        chr: locus.chr,
+        locus: locus,
+        data: results[index],
+      }));
     } catch (error) {
       console.error("Error in refGeneFetch:", error);
       throw error;
@@ -146,7 +150,14 @@ export const fetchTypeMap: { [key: string]: any } = {
       });
 
       const results = await Promise.all(fetchPromises);
-      return results.flat();
+      // Normalize the Ensembl API shape to placeable raw records: browser chr
+      // and 0-based start (the Snp model used `chr${seq_region_name}` and
+      // start-1). Rendered straight from these via the getFeature* accessors.
+      return results.flat().map((record: any) => ({
+        ...record,
+        chr: `chr${record.seq_region_name}`,
+        start: record.start - 1,
+      }));
     } catch (error) {
       console.error("Error in snpFetch:", error);
       throw error;

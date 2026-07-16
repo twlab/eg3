@@ -90,6 +90,10 @@ class LocalBigSource {
     for (const locusData of dataForEachLocus) {
       for (let dasFeature of locusData) {
         dasFeature.min -= 1; // bbi-js returns 1-indexed features; -1 to compensate.
+        // Expose bed-style start/end so bigbed records can be placed/rendered
+        // straight from raw (bbi bigbed uses min/max/segment).
+        dasFeature.start = dasFeature.min;
+        dasFeature.end = dasFeature.max;
       }
     }
 
