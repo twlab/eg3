@@ -3284,7 +3284,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             item.type === "dynamicbed" ||
             item.type === "dynamic" ||
-            item.type === "dynamichic"
+            item.type === "dynamichic" ||
+            item.type === "dynamiclongrange"
           ) {
             return false;
           }
@@ -3880,7 +3881,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         if (
           cacheTrackData.trackType in
-          { hic: "", longrange: "", biginteraction: "", dynamichic: "" }
+          {
+            hic: "",
+            longrange: "",
+            biginteraction: "",
+            dynamichic: "",
+            dynamiclongrange: "",
+          }
         ) {
           trackToDrawId[key] = false;
           continue;
@@ -4437,6 +4444,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               cache.trackType === "matplot" ||
               cache.trackType === "dynamic" ||
               cache.trackType === "dynamichic" ||
+              cache.trackType === "dynamiclongrange" ||
               interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||

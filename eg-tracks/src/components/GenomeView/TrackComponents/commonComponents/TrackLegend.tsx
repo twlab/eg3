@@ -43,11 +43,6 @@ class TrackLegend extends React.PureComponent<
   TrackLegendProps,
   { showFull: boolean; clickX: number; clickY: number }
 > {
-  static defaultProps = {
-    width: 120,
-    forceSvg: false,
-  };
-
   state = { showFull: false, clickX: 0, clickY: 0 };
 
   private gNode: any;

@@ -453,7 +453,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                 responses.push(response);
               }
             }
-
+            console.log(responses, item);
             return {
               name: trackType,
               result: responses,

@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from "react";
 import _ from "lodash";
 import memoizeOne from "memoize-one";
-import { scaleLinear } from "d3-scale";
+import { scaleLinear, scalePow } from "d3-scale";
 import { PixiHeatmap } from "./PixiHeatmap";
 import PixiArc from "./PixiArc";
 import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
@@ -39,10 +39,14 @@ interface DynamicInteractionTrackComponentsProps {
   windowWidth?: number;
 }
 
+// Exponent for the AUTO-scale opacity curve. 1 is a plain linear ramp; lower
+// values brighten the low/mid scores. 0.5 is a sqrt curve.
+const OPACITY_GAMMA = 0.5;
+
 export const DEFAULT_OPTIONS = {
   color: "#B8008A",
   color2: "#006385",
-  backgroundColor: "var(--bg-color)",
+  backgroundColor: "white",
   scoreScale: ScaleChoices.AUTO,
   scoreMax: 10,
   scoreMin: 0,
@@ -84,14 +88,24 @@ const DynamicInteractionTrackComponents: React.FC<
   const computeScale = useMemo(() => {
     return memoizeOne(() => {
       const { scoreScale, scoreMin, scoreMax } = options;
+      // Scores can be negative (sign picks color2 at draw time), so the scale
+      // is built on magnitude — keyed on the raw score, an all-negative frame
+      // would give an inverted domain and render nothing.
       const maxValues = data.map((d: any) => {
-        const maxObj: any = _.maxBy(d, "score");
-        return maxObj ? maxObj.score : 1;
+        const maxObj: any = _.maxBy(d, (i: any) => Math.abs(i.score));
+        return maxObj ? Math.abs(maxObj.score) : 1;
       });
-      const maxScore = _.max(maxValues);
+      // `_.max` is undefined for an empty frame list — fall back rather than
+      // handing d3 an undefined domain bound.
+      const maxScore = _.max(maxValues) ?? 1;
       if (scoreScale === ScaleChoices.AUTO) {
         return {
-          opacityScale: scaleLinear()
+          // Contact scores span a wide range and the max is taken across every
+          // frame, so a linear ramp leaves most cells at a near-zero alpha. A
+          // sqrt curve lifts the low/mid end while keeping the order intact and
+          // the top of the range at full opacity.
+          opacityScale: scalePow()
+            .exponent(OPACITY_GAMMA)
             .domain([0, maxScore])
             .range([0, 1])
             .clamp(true),

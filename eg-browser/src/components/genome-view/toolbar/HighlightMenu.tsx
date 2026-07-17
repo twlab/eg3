@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { PortalContext } from "wuepgg3-track"
+import { PortalContext } from "wuepgg3-track";
 import "./HighlightMenu.css";
 import ResizablePanel from "../../ui/panel/ResizablePanel";
 import {
@@ -21,7 +21,7 @@ export class HighlightInterval {
     end: number,
     tag: string = "",
     color: string = "rgba(255,255,0, 0.3)",
-    display: boolean = true
+    display: boolean = true,
   ) {
     this.start = start;
     this.end = end;
@@ -53,7 +53,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   const handleHighlightIntervalUpdate = (
     doDelete: boolean,
     index: number,
-    interval?: HighlightInterval
+    interval?: HighlightInterval,
   ): void => {
     if (!currentSession) return;
 
@@ -62,7 +62,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
         ...currentSession.highlights.slice(0, index),
         ...currentSession.highlights.slice(
           index + 1,
-          currentSession.highlights.length
+          currentSession.highlights.length,
         ),
       ];
 
@@ -100,7 +100,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
             onHandleViewRegionJump={handleViewRegionJump}
             genomeConfig={genomeConfig}
           />
-        )
+        ),
       )}
     </ol>
   ) : (
@@ -138,7 +138,14 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   );
 
   return createPortal(
-    <div style={{ position: "fixed", top: panelTop, left: panelLeft, zIndex: 1000 }}>
+    <div
+      style={{
+        position: "fixed",
+        top: panelTop,
+        left: panelLeft,
+        zIndex: 1000,
+      }}
+    >
       <ResizablePanel
         title="Highlights"
         initialWidth={500}
@@ -149,7 +156,10 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
         excludeRefs={anchorEl ? [anchorEl] : []}
       >
         <div className="p-4">
-          <div className="flex items-center justify-end mb-3" style={{ fontSize: "16px" }}>
+          <div
+            className="flex items-center justify-end mb-3"
+            style={{ fontSize: "16px" }}
+          >
             {(currentSession?.highlights?.length ?? 0) > 0 && (
               <button
                 onClick={() =>
@@ -166,7 +176,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
         </div>
       </ResizablePanel>
     </div>,
-    portalTarget ?? document.body
+    portalTarget ?? document.body,
   );
 };
 
@@ -175,7 +185,7 @@ interface HighlightItemProps {
   onHandleHighlightIntervalUpdate: (
     doDelete: boolean,
     index: number,
-    interval?: HighlightInterval
+    interval?: HighlightInterval,
   ) => void;
   onHandleViewRegionJump: (interval: HighlightInterval) => void;
   index: number;
@@ -218,7 +228,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
               interval.start,
               interval.end,
               interval.tag,
-              newColor
+              newColor,
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}
@@ -236,7 +246,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
               interval.end,
               interval.tag,
               interval.color,
-              !interval.display
+              !interval.display,
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}

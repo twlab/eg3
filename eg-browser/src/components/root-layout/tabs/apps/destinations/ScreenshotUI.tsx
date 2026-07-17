@@ -635,7 +635,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         (track) =>
           !(
             track.type in
-            { dynamic: "", dbedgraph: "", dynamichic: "", dynamiclongrange: "" }
+            {
+              dynamic: "",
+              dbedgraph: "",
+              dynamichic: "",
+              dynamiclongrange: "",
+              dynamicbed: "",
+            }
           ),
       )
       .map((trackModel, index) => {

@@ -1793,12 +1793,11 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     simpleTracks.has(trackType)
   ) {
     return displayModeComponentMap[trackType](createFullParams());
-  } else if (trackType === "dynamichic") {
-    return displayModeComponentMap.dynamichic(
-      createFullParams({
-        configOptions: { ...configOptions, displayMode: "heatmap" },
-      }),
-    );
+  } else if (trackType === "dynamichic" || trackType === "dynamiclongrange") {
+    // displayMode comes from the config menu (heatmap/arc) and already
+    // defaults to heatmap via DEFAULT_OPTIONS — pinning it here made picking
+    // arc a no-op.
+    return displayModeComponentMap.dynamichic(createFullParams());
   } else if (dynamicTracks.has(trackType)) {
     const displayType =
       trackType === "dynamiclongrange" ? "dynamichic" : trackType;

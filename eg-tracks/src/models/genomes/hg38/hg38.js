@@ -523,7 +523,44 @@ const defaultTracks = [
     ],
     showOnHubLoad: true,
   }),
-
+  new TrackModel({
+    name: "dynamiclongrange",
+    type: "dynamiclongrange",
+    options: {
+      dynamicColors: ["red", "blue"],
+      useDynamicColors: true,
+    },
+    tracks: [
+      {
+        type: "longrange",
+        url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
+      },
+      {
+        name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+        type: "longrange",
+        url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
+      },
+    ],
+    showOnHubLoad: true,
+  }),
+  new TrackModel({
+    type: "longrange",
+    name: "longrange",
+    url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+    // metadata: { genome: "mm10" },
+  }),
+  new TrackModel({
+    type: "longrange",
+    name: "longrange",
+    url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+    // metadata: { genome: "mm10" },
+  }),
   new TrackModel({
     type: "hic",
     name: "test hic",
