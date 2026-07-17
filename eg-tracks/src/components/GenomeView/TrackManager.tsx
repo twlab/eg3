@@ -648,9 +648,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         for (const track of message[j].trackModelArr) {
           // hic tracks are fetched on the main thread (no worker) and the
-          // results are handed directly to createInfiniteOnMessage.
+          // results are handed directly to createInfiniteOnMessage. dynamichic
+          // is just several hic files in `tracks`, so it takes the same path —
+          // hic data comes back as GenomeInteraction instances, and postMessage
+          // would strip them down to plain objects.
 
-          if (track.type === "hic") {
+          if (track.type === "hic" || track.type === "dynamichic") {
             fetchGenomicData([{ ...newMessage, trackModelArr: [track] }])
               .then((results) => {
                 if (results) {
@@ -658,7 +661,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               })
               .catch((error) => {
-                console.error("Error fetching hic data:", error);
+                console.error(`Error fetching ${track.type} data:`, error);
               });
             continue;
           }
@@ -3877,7 +3880,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         if (
           cacheTrackData.trackType in
-          { hic: "", longrange: "", biginteraction: "" }
+          { hic: "", longrange: "", biginteraction: "", dynamichic: "" }
         ) {
           trackToDrawId[key] = false;
           continue;
@@ -4433,6 +4436,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               cache.trackType in numericalTracks ||
               cache.trackType === "matplot" ||
               cache.trackType === "dynamic" ||
+              cache.trackType === "dynamichic" ||
               interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||

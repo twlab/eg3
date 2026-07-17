@@ -84,7 +84,7 @@ export class PixiHeatmap extends PureComponent<
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
 
-    const bgColor = colorString2number("var(--bg-color)");
+    const bgColor = colorString2number(backgroundColor || "var(--bg-color)");
     this.app = new PIXI.Application();
     await this.app.init({
       width,
@@ -148,8 +148,11 @@ export class PixiHeatmap extends PureComponent<
 
     if (prevProps.backgroundColor !== this.props.backgroundColor) {
       if (this.app.renderer) {
-        this.app.renderer.background = colorString2number(
-          this.props.backgroundColor || "0x000000"
+        // pixi v8: `renderer.background` is the BackgroundSystem itself —
+        // the color lives on `.color`, so assigning the number to
+        // `background` would clobber the system instead of recoloring it.
+        this.app.renderer.background.color = colorString2number(
+          this.props.backgroundColor || "var(--bg-color)"
         );
       }
     }

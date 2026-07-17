@@ -503,26 +503,46 @@ const defaultTracks = [
   //   name: "test bigInteract",
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-  // new TrackModel({
-  //   name: "dynamic hic",
-  //   type: "dynamichic",
-  //   options: {
-  //     dynamicColors: ["red", "blue"],
-  //     useDynamicColors: true,
-  //   },
-  //   tracks: [
-  //     {
-  //       type: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //     },
-  //     {
-  //       name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
-  //       type: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //     },
-  //   ],
-  //   showOnHubLoad: true,
-  // }),
+  new TrackModel({
+    name: "dynamic hic",
+    type: "dynamichic",
+    options: {
+      dynamicColors: ["red", "blue"],
+      useDynamicColors: true,
+    },
+    tracks: [
+      {
+        type: "hic",
+        url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
+      },
+      {
+        name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+        type: "hic",
+        url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
+      },
+    ],
+    showOnHubLoad: true,
+  }),
+
+  new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+    // metadata: { genome: "mm10" },
+  }),
+
+  new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+    // metadata: { genome: "mm10" },
+  }),
   new TrackModel({
     type: "dynamicbed",
     name: "dynamic bed",

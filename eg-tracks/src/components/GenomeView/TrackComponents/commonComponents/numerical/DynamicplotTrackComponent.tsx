@@ -1,5 +1,4 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React, { useMemo, useRef } from "react";
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import memoizeOne from "memoize-one";
@@ -75,95 +74,98 @@ interface DynamicplotTrackProps {
   trackModel: TrackModel;
   width: number;
   updatedLegend: any;
+  xvaluesData?: any;
   dataIdx: number;
+  initialLoad?: any;
+  windowWidth?: number;
+  legendWidth?: number;
 }
 
-interface DynamicplotTrackState {
-  xToValue: number[][] | null;
-  scales: {
-    valueToY: (value: number) => number;
-    min: number;
-    max: number;
-  } | null;
-}
+const DynamicplotTrackComponent: React.FC<DynamicplotTrackProps> = (props) => {
+  const currentViewDataIdx = useRef(0);
+  const currentScale: any = useRef(null);
+  const currentViewWindow = useRef({ start: 0, end: 1 });
+  const currentVisualizer = useRef(null);
+  const currentViewOptions = useRef({});
+  const currentWindowWidth = useRef<any>(0);
 
-class DynamicplotTrackComponent extends React.PureComponent<
-  DynamicplotTrackProps,
-  DynamicplotTrackState
-> {
-  static propTypes = {
-    data: PropTypes.array.isRequired, // PropTypes.arrayOf(Feature)
-    unit: PropTypes.string,
-    options: PropTypes.object.isRequired,
-    isLoading: PropTypes.bool,
-    error: PropTypes.any,
-  };
+  const {
+    data,
+    viewRegion,
+    width,
+    trackModel,
+    unit,
+    options,
+    viewWindow,
+    updatedLegend,
+    xvaluesData,
+    dataIdx,
+    initialLoad,
+    windowWidth,
+    legendWidth,
+  } = props;
 
-  private xToValue: number[][] | null;
-  private scales: {
-    valueToY: (value: number) => number;
-    min: number;
-    max: number;
-  } | null;
+  const {
+    height,
+    smooth,
+    color,
+    backgroundColor,
+    playing,
+    speed,
+    steps,
+    dynamicLabels,
+    dynamicColors,
+    useDynamicColors,
+  } = options;
 
-  constructor(props: DynamicplotTrackProps) {
-    super(props);
-    this.xToValue = null;
-    this.scales = null;
+  const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-    this.aggregateFeatures = memoizeOne(this.aggregateFeatures);
-    this.computeScales = memoizeOne(this.computeScales);
-  }
+  const xToValue = xvaluesData
+    ? xvaluesData
+    : smooth === 0
+      ? data.map(
+          (d) => aggregator.xToValueMaker(d, viewRegion, width, options)[0],
+        )
+      : data.map((d) =>
+          Smooth(
+            aggregator.xToValueMaker(d, viewRegion, width, options)[0],
+            smooth,
+          ),
+        );
 
-  aggregateFeatures(
-    data: any[],
-    viewRegion: any,
-    width: number,
-    aggregatorId: string,
-  ) {
-    const aggregator = new NumericalAggregator();
+  const computeScales = useMemo(() => {
+    return memoizeOne((xToValue: number[][], height: number) => {
+      const { yScale, yMin, yMax } = options;
+      if (yMin > yMax) {
+        console.log("Y-axis min must be less than max", "error", 2000);
+      }
 
-    return aggregator.xToValueMaker(
-      data,
-      viewRegion,
-      width,
-      this.props.options,
-    )[0];
-  }
+      const visibleValues = _.flatten(
+        xToValue.map((d) => d.slice(viewWindow.start, viewWindow.end)),
+      );
 
-  computeScales(xToValue: number[][], height: number) {
-    const { yScale, yMin, yMax } = this.props.options;
-    if (yMin > yMax) {
-      console.log("Y-axis min must be less than max", "error", 2000);
-    }
+      let max = _.max(visibleValues) || 0;
+      let min = _.min(visibleValues) || 0;
 
-    const visibleValues = _.flatten(
-      xToValue.map((d) =>
-        d.slice(this.props.viewWindow.start, this.props.viewWindow.end),
-      ),
-    );
+      if (yScale === ScaleChoices.FIXED) {
+        max = yMax ? yMax : max;
+        min = yMin ? yMin : min;
+      }
 
-    let max = _.max(visibleValues) || 0;
-    let min = _.min(visibleValues) || 0;
+      if (min > max) {
+        min = max;
+      }
 
-    if (yScale === ScaleChoices.FIXED) {
-      max = yMax ? yMax : max;
-      min = yMin ? yMin : min;
-    }
-
-    if (min > max) {
-      min = max;
-    }
-
-    return {
-      valueToY: scaleLinear()
-        .domain([max, min])
-        .range([TOP_PADDING, height])
-        .clamp(true),
-      min,
-      max,
-    };
-  }
+      return {
+        valueToY: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height])
+          .clamp(true),
+        min,
+        max,
+      };
+    });
+  }, [options, props]);
 
   /**
    * Renders the default tooltip that is displayed on hover.
@@ -206,50 +208,33 @@ class DynamicplotTrackComponent extends React.PureComponent<
   //   );
   // }
 
-  render() {
-    const {
-      data,
-      viewRegion,
-      width,
+  const scales = computeScales(xToValue, height);
+  const xToValueZipped = _.zip(...xToValue);
+
+  if (updatedLegend) {
+    updatedLegend.current = {
       trackModel,
-      unit,
-      options,
-      viewWindow,
-      updatedLegend,
-    } = this.props;
-
-    const {
       height,
-      aggregateMethod,
-      smooth,
-      color,
-      backgroundColor,
-      playing,
-      speed,
-      steps,
-      dynamicLabels,
-      dynamicColors,
-      useDynamicColors,
-    } = options;
-    const aggregatedData = data.map((d) =>
-      this.aggregateFeatures(d, viewRegion, width, aggregateMethod),
-    );
-    this.xToValue =
-      smooth === 0
-        ? aggregatedData
-        : aggregatedData.map((d) => Smooth(d, smooth));
-    this.scales = this.computeScales(this.xToValue, height);
-    const xToValueZipped = _.zip(...this.xToValue);
-    if (updatedLegend) {
-      updatedLegend.current = {
-        trackModel,
-        height,
-        axisScale: this.scales.valueToY as any,
-        axisLegend: unit,
-      };
-    }
+      axisScale: scales.valueToY as any,
+      axisLegend: unit,
+      legendWidth,
+    };
+  }
 
-    const visualizer = (
+  let visualizer;
+
+  if (
+    initialLoad ||
+    (options as any).forceSvg ||
+    (dataIdx === currentViewDataIdx.current &&
+      !_.isEqual(viewWindow, currentViewWindow.current) &&
+      (!(scales.max === currentScale.current?.max) ||
+        !(scales.min === currentScale.current?.min))) ||
+    dataIdx !== currentViewDataIdx.current ||
+    !_.isEqual(options, currentViewOptions.current) ||
+    windowWidth !== currentWindowWidth.current
+  ) {
+    visualizer = (
       <React.Fragment>
         <div
           style={{
@@ -260,7 +245,7 @@ class DynamicplotTrackComponent extends React.PureComponent<
           }}
         >
           <HoverToolTip
-            data={this.xToValue}
+            data={xToValue}
             windowWidth={width}
             trackType={"dynamic"}
             trackModel={trackModel}
@@ -273,7 +258,7 @@ class DynamicplotTrackComponent extends React.PureComponent<
         </div>
         <PixiScene
           xToValue={xToValueZipped}
-          scales={this.scales}
+          scales={scales}
           width={width}
           height={height}
           steps={steps}
@@ -288,8 +273,18 @@ class DynamicplotTrackComponent extends React.PureComponent<
         />
       </React.Fragment>
     );
-    return visualizer;
+  } else {
+    visualizer = currentVisualizer.current;
   }
-}
+
+  currentWindowWidth.current = windowWidth;
+  currentVisualizer.current = visualizer;
+  currentViewDataIdx.current = dataIdx;
+  currentViewWindow.current = viewWindow;
+  currentScale.current = scales;
+  currentViewOptions.current = options;
+
+  return visualizer;
+};
 
 export default DynamicplotTrackComponent;

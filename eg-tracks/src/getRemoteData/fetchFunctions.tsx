@@ -429,18 +429,35 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           ).then((subTrackResults) => {
             let responses: Array<any> | { [key: string]: any } = [];
             let error: any = null;
+            let fileInfos: any = null;
             for (const response of subTrackResults) {
               if (isFetchError(response)) {
                 error = response.error;
                 responses = [];
                 break;
               }
-              responses.push(response);
+              // dynamichic's sub-tracks are hic files, which resolve to
+              // `{ data, fileInfos }` instead of a plain records array. Unwrap
+              // so each sub-track contributes its interactions directly, the
+              // same shape a lone hic track ends up with.
+              if (
+                trackType === "dynamichic" &&
+                response &&
+                typeof response === "object" &&
+                !Array.isArray(response) &&
+                "data" in response
+              ) {
+                fileInfos = fileInfos ?? response.fileInfos;
+                responses.push(response.data);
+              } else {
+                responses.push(response);
+              }
             }
 
             return {
               name: trackType,
               result: responses,
+              fileInfos,
               id: id,
               metadata: item.metadata,
               trackModel: item,

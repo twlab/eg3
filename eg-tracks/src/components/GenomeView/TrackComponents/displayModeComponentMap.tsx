@@ -980,6 +980,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    initialLoad,
     windowWidth,
   }) {
     const canvasElements = (
@@ -996,6 +997,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
       />
     );
@@ -1084,11 +1086,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <DynamicplotTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          trackState.viewWindow
-            ? trackState.viewWindow
-            : new OpenInterval(0, trackState.visWidth)
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
         viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
@@ -1730,8 +1728,6 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   if (trackType === "boxplot" || trackType === "qbed") {
     return displayModeComponentMap[trackType](createFullParams());
   } else if (trackType === "dbedgraph") {
-    return displayModeComponentMap[trackType](createFullParams());
-  } else if (trackType === "dynamic") {
     return displayModeComponentMap[trackType](createFullParams());
   } else if (isFullMode) {
     return displayModeComponentMap.full(

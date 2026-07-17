@@ -51,6 +51,7 @@ export const numericalTracks = {
   matplot: "",
   dbedgraph: "",
   dynamic: "",
+  dynamichic: "",
 };
 export const possibleNumericalTracks = {
   bigbed: "",
@@ -342,19 +343,10 @@ export class GroupedTrackManager {
               });
 
               xvalues = hash;
-            } else if (track.trackModel.type === "matplot") {
-              const combinedData = groupTracksArrMatPlot(data);
-
-              xvalues = combinedData.map(
-                (d) =>
-                  this.aggregator.xToValueMaker(
-                    d,
-                    track.visRegion,
-                    width,
-                    track.configOptions,
-                  )[0],
-              );
-            } else if (track.trackModel.type === "dynamic") {
+            } else if (
+              track.trackModel.type === "dynamic" ||
+              track.trackModel.type === "matplot"
+            ) {
               const combinedData = groupTracksArrMatPlot(data);
               xvalues = combinedData.map(
                 (d) =>
@@ -379,13 +371,12 @@ export class GroupedTrackManager {
                 DefaultArrayAggregators.fromId(newAggregatorId),
               );
             } else {
-              console.log("wit");
-              // xvalues = this.aggregator.xToValueMaker(
-              //   data,
-              //   track.visRegion,
-              //   width,
-              //   track.configOptions,
-              // );
+              xvalues = this.aggregator.xToValueMaker(
+                data,
+                track.visRegion,
+                width,
+                track.configOptions,
+              );
             }
 
             if (!trackManagerState.current.caches[tid][dataIdx]) {
