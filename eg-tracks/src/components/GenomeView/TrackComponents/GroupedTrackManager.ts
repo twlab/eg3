@@ -4,7 +4,10 @@ import TrackModel from "../../../models/TrackModel";
 
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
-import { FeatureAggregator } from "../../../models/FeatureAggregator";
+import {
+  DefaultArrayAggregators,
+  FeatureAggregator,
+} from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
 import FeatureArranger, {
   FeaturePlacementResult,
@@ -33,6 +36,7 @@ import {
 } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { scaleLinear } from "d3-scale";
 import * as d3 from "d3";
+import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 
 const featureArrange = new FeatureArranger();
 const sortType = SortItemsOptions.NOSORT;
@@ -45,6 +49,8 @@ export const numericalTracks = {
   qbed: "",
   dynseq: "",
   matplot: "",
+  dbedgraph: "",
+  dynamic: "",
 };
 export const possibleNumericalTracks = {
   bigbed: "",
@@ -303,11 +309,8 @@ export class GroupedTrackManager {
 
           if (track.data) {
             let xvalues;
-            if (
-              trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
-              track.usePrimaryNav
-            ) {
-              // continue;
+            if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
+              continue;
             }
 
             // else {
@@ -340,7 +343,9 @@ export class GroupedTrackManager {
 
               xvalues = hash;
             } else if (track.trackModel.type === "matplot") {
-              xvalues = data.map(
+              const combinedData = groupTracksArrMatPlot(data);
+
+              xvalues = combinedData.map(
                 (d) =>
                   this.aggregator.xToValueMaker(
                     d,
@@ -349,13 +354,38 @@ export class GroupedTrackManager {
                     track.configOptions,
                   )[0],
               );
-            } else {
-              xvalues = this.aggregator.xToValueMaker(
+            } else if (track.trackModel.type === "dynamic") {
+              const combinedData = groupTracksArrMatPlot(data);
+              xvalues = combinedData.map(
+                (d) =>
+                  this.aggregator.xToValueMaker(
+                    d,
+                    track.visRegion,
+                    width,
+                    track.configOptions,
+                  )[0],
+              );
+            } else if (track.trackModel.type === "dbedgraph") {
+              const aggregator = new FeatureAggregator();
+
+              let newAggregatorId = "MEAN";
+
+              const { xToFeaturesForward } = aggregator.makeXMap(
                 data,
                 track.visRegion,
                 width,
-                track.configOptions,
               );
+              xvalues = xToFeaturesForward.map(
+                DefaultArrayAggregators.fromId(newAggregatorId),
+              );
+            } else {
+              console.log("wit");
+              // xvalues = this.aggregator.xToValueMaker(
+              //   data,
+              //   track.visRegion,
+              //   width,
+              //   track.configOptions,
+              // );
             }
 
             if (!trackManagerState.current.caches[tid][dataIdx]) {
@@ -419,9 +449,9 @@ export class GroupedTrackManager {
               // separately from its raw grouped records, then cache the whole
               // set as placeFeature so the component just renders it — the same
               // "arrange in the group manager" flow every other track uses.
+              const combinedData = groupTracksArrMatPlot(data);
 
-              const subTracks = Array.isArray(data) ? data : [];
-              const arrangeResults = subTracks.map((subTrack) =>
+              const arrangeResults = combinedData.map((subTrack) =>
                 featureArrange.arrange(
                   subTrack,
                   track.visRegion,

@@ -1590,6 +1590,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     },
     [onTracksChange, onConfigMenuClose],
   );
+
   function handleAdd(tracks: Array<any>, trackType) {
     let newTrack: TrackModel | null = null;
     if (trackType === "matplot") {
@@ -2466,6 +2467,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         enqueueMessage(dataToFetchArr);
       }
+      console.log(
+        trackManagerState.current.caches,
+        dataIdx.current,
+        "caches after enqueue",
+      );
     }
 
     if (
@@ -2474,6 +2480,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         (hasGenomeAlign.current && !useFineModeNav.current)) &&
       !initialLoad.current
     ) {
+      console.log("usecache");
       if (dataIdx.current !== completedFetchedRegion.current.key) {
         completedFetchedRegion.current.key = dataIdx.current;
         completedFetchedRegion.current.done = {};
@@ -3928,20 +3935,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
             currIdx--;
           }
-          // these tracks has multiple subTracks that needs to to combined in groupTrack
-          if (
-            cacheTrackData.trackType in
-            { matplot: "", dynamic: "", dynamicbed: "" }
-          ) {
-            if (
-              cacheTrackData[dataIdx]?.xvalues ||
-              cacheTrackData[dataIdx]?.placeFeature
-            ) {
-              combinedData = [];
-            } else {
-              combinedData = groupTracksArrMatPlot(combinedData);
-            }
-          }
         }
         // }
 
@@ -4154,7 +4147,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               legendRef: newLegendRef,
               trackModel: curTrackModel,
             });
-
+            // completedFetchedRegion.current.done[curTrackModel.id] = false;
             initTrackFetchCache(curTrackModel);
           }
         }
@@ -4165,14 +4158,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         trackManagerState.current.tracks = filteredTracks;
-        // Reset completed fetch tracking so stale group entries from the
-        // previous track set don't block new grouped tracks from drawing.
-        completedFetchedRegion.current = {
-          key: null,
-          done: {},
-          groups: {},
-          selected: {},
-        };
+
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
         onTracksChange(filteredTracks);
@@ -4445,6 +4431,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               cache.trackType === "geneannotation" ||
               cache.trackType === "refbed" ||
               cache.trackType in numericalTracks ||
+              cache.trackType === "matplot" ||
+              cache.trackType === "dynamic" ||
               interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||

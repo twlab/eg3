@@ -451,7 +451,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
+      console.log(
+        cacheTrackData,
+        "cacheTrackData",
+        trackState,
+        "trackState",
+        newDrawData,
+      );
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -570,7 +576,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackState?.genomicFetchCoord[trackState.primaryGenName]
             ?.primaryVisData?.viewWindow?.end + xDiff,
       };
-
+      console.log("matplot", trackState);
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -759,7 +765,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             legendWidth={legendWidth}
           />
           {legend?.reverseStrandLegendProps && (
-            <TrackLegend {...legend.reverseStrandLegendProps} />
+            <TrackLegend
+              {...legend.reverseStrandLegendProps}
+              legendWidth={legendWidth}
+            />
           )}
         </div>
         {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}

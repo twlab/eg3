@@ -81,6 +81,7 @@ interface MethylCTrackProps {
   initialLoad: boolean;
   dataIdx: number;
   windowWidth?: number;
+  legendWidth?: number;
 }
 
 const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
@@ -104,6 +105,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
     dataIdx,
     initialLoad,
     updatedLegend,
+    legendWidth,
   } = props;
 
   const aggregateRecords = useMemo(() => {
@@ -197,6 +199,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
             .domain([0, options.maxMethyl])
             .range([0, options.height - VERTICAL_PADDING]),
           forceSvg,
+          legendWidth,
         }
       : undefined,
   };
@@ -219,6 +222,7 @@ const MethylCTrack: React.FC<MethylCTrackProps> = (props) => {
           height={options.height}
           maxMethyl={options.maxMethyl}
           forceSvg={forceSvg}
+          legendWidth={legendWidth}
         />
       )}
     </div>
@@ -509,6 +513,7 @@ function ReverseStrandLegend(props) {
         .domain([0, props.maxMethyl])
         .range([0, props.height - VERTICAL_PADDING])}
       forceSvg={props.forceSvg}
+      legendWidth={props.legendWidth}
     />
   );
 }
