@@ -27,10 +27,7 @@ import TrackFactory from "./TrackComponents/TrackFactory";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
-import {
-  groupTracksArrMatPlot,
-  trackUsingExpandedLoci,
-} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
@@ -43,10 +40,7 @@ import {
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-import {
-  formatDataByType,
-  interactionTracks,
-} from "./TrackComponents/displayModeComponentMap";
+import { interactionTracks } from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
 // import { fetchGenomicData } from "../../getRemoteData/fetchData";
 // import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
@@ -175,6 +169,7 @@ const reCalcAgg = new Set([
   "maxRows",
   "hideMinimalItems",
   "sortItems",
+  "smooth",
 ]);
 interface TrackManagerProps {
   windowWidth: number;
@@ -1387,7 +1382,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       queueRegionToFetch(dataIdx.current);
     } else if (key !== "legendFontColor" && key !== "label") {
       tempViewWindowConfig["tracksToDrawId"] = newSelected;
-
+      console.log(newSelected, "newSelected");
       if (reCalcAgg.has(key) || groupChange) {
         aggViewWindowData(
           tempViewWindowConfig.viewWindow,
@@ -3988,7 +3983,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // }
       }
       // TO-DO so far only group primary nav tracks, not track that align to secondary genome align, or nonprimary with primary
-
+      console.log(trackDataObj);
       const groupScale = groupManager.getGroupScale(
         trackDataObj,
         primaryVisData && primaryVisData.visWidth

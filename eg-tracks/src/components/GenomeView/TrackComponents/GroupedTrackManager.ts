@@ -310,9 +310,9 @@ export class GroupedTrackManager {
 
           if (track.data) {
             let xvalues;
-            if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
-              continue;
-            }
+            // if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
+            //   continue;
+            // }
 
             // else {
             if (track.trackModel.type === "dynseq") {
