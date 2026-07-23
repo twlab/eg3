@@ -8,6 +8,7 @@ import Button from "../ui/button/Button";
 import FileInput from "../ui/input/FileInput";
 
 import { convertSession } from "@/lib/redux/thunk/session";
+import { convertSession } from "@/lib/redux/thunk/session";
 import { importOneSession } from "@/lib/redux/thunk/session";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
 import { getDatabase, ref, remove } from "firebase/database";
@@ -26,6 +27,7 @@ export default function ImportSession() {
 
     if (!file) return;
 
+    let session: any;
     let session: any;
     try {
       const content = await file.text();
@@ -91,6 +93,7 @@ export default function ImportSession() {
               setError(null);
               setIsLoading(true);
               try {
+                // await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
                 // await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
                 // retrieve bundle to display sessions below
                 try {
@@ -240,6 +243,8 @@ export default function ImportSession() {
                               const sess = session.state;
                               sess["bundleId"] = bundle?.bundleId;
                               sess["title"] = session?.label;
+                              sess["bundleId"] = bundle?.bundleId;
+                              sess["title"] = session?.label;
 
                               await dispatch(
                                 importOneSession({
@@ -247,6 +252,7 @@ export default function ImportSession() {
                                   navigatingToSession: true,
                                 }) as any,
                               ).unwrap();
+                              // console.log("Session restored.");
                               // console.log("Session restored.");
                             } catch (e) {
                               console.error(e);
@@ -277,6 +283,7 @@ export default function ImportSession() {
                               const newBundle = { ...bundle };
                               delete newBundle.sessionsInBundle[id];
 
+                              // console.log("Session deleted.");
                               // console.log("Session deleted.");
                             } catch (e) {
                               console.error(e);

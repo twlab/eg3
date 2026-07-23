@@ -10,11 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ClipLoader } from "react-spinners";
-import {
-  trackOptionMap,
-  getDisplayModeFunction,
-  LinearDrawingModel,
-} from "wuepgg3-track";
+import { trackOptionMap, getDisplayModeFunction } from "wuepgg3-track";
 
 interface Highlight {
   start: number;
