@@ -135,11 +135,11 @@ const defaultTracks = [
   //   name: "test jaspar",
   //   url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb",
   // }),
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -216,11 +216,11 @@ const defaultTracks = [
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-  new TrackModel({
-    type: "bigbed",
-    name: "band2",
-    url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "band2",
+  //   url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
+  // }),
   // new TrackModel({
   //   type: "g3d",
   //   url: "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
@@ -485,30 +485,30 @@ const defaultTracks = [
   //     depthColor: "#01E9FE",
   //   },
   // }),
-  new TrackModel({
-    name: "vertebratephastCons46way",
-    label: "Vertebrate PhastCons 46-way",
-    filetype: "bedgraph",
-    url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
-    height: 50,
-    options: { color: "#006385" },
-  }),
-  new TrackModel({
-    name: "vertebratephastCons46way",
-    label: "Vertebrate PhastCons 46-way",
-    filetype: "bedgraph",
-    url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
-    height: 50,
-    options: { color: "#006385" },
-  }),
-  new TrackModel({
-    name: "vertebratephastCons46way",
-    label: "Vertebrate PhastCons 46-way",
-    filetype: "bedgraph",
-    url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
-    height: 50,
-    options: { color: "#006385" },
-  }),
+  // new TrackModel({
+  //   name: "vertebratephastCons46way",
+  //   label: "Vertebrate PhastCons 46-way",
+  //   filetype: "bedgraph",
+  //   url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+  //   height: 50,
+  //   options: { color: "#006385" },
+  // }),
+  // new TrackModel({
+  //   name: "vertebratephastCons46way",
+  //   label: "Vertebrate PhastCons 46-way",
+  //   filetype: "bedgraph",
+  //   url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+  //   height: 50,
+  //   options: { color: "#006385" },
+  // }),
+  // new TrackModel({
+  //   name: "vertebratephastCons46way",
+  //   label: "Vertebrate PhastCons 46-way",
+  //   filetype: "bedgraph",
+  //   url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+  //   height: 50,
+  //   options: { color: "#006385" },
+  // }),
   // new TrackModel({
   //   type: "boxplot",
   //   name: "example boxplot",
@@ -519,127 +519,127 @@ const defaultTracks = [
   //   name: "test bigInteract",
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-  new TrackModel({
-    name: "dynamic hic",
-    type: "dynamichic",
-    options: {
-      dynamicColors: ["red", "blue"],
-      useDynamicColors: true,
-    },
-    tracks: [
-      {
-        type: "hic",
-        url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
-      },
-      {
-        name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
-        type: "hic",
-        url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
-      },
-    ],
-    showOnHubLoad: true,
-  }),
-  new TrackModel({
-    name: "dynamiclongrange",
-    type: "dynamiclongrange",
-    options: {
-      dynamicColors: ["red", "blue"],
-      useDynamicColors: true,
-    },
-    tracks: [
-      {
-        type: "longrange",
-        url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
-      },
-      {
-        name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
-        type: "longrange",
-        url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
-      },
-    ],
-    showOnHubLoad: true,
-  }),
-  new TrackModel({
-    type: "longrange",
-    name: "longrange",
-    url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-    // metadata: { genome: "mm10" },
-  }),
-  new TrackModel({
-    type: "longrange",
-    name: "longrange",
-    url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-    // metadata: { genome: "mm10" },
-  }),
-  new TrackModel({
-    type: "hic",
-    name: "test hic",
-    url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-    // metadata: { genome: "mm10" },
-  }),
+  // new TrackModel({
+  //   name: "dynamic hic",
+  //   type: "dynamichic",
+  //   options: {
+  //     dynamicColors: ["red", "blue"],
+  //     useDynamicColors: true,
+  //   },
+  //   tracks: [
+  //     {
+  //       type: "hic",
+  //       url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
+  //     },
+  //     {
+  //       name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+  //       type: "hic",
+  //       url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
+  //     },
+  //   ],
+  //   showOnHubLoad: true,
+  // }),
+  // new TrackModel({
+  //   name: "dynamiclongrange",
+  //   type: "dynamiclongrange",
+  //   options: {
+  //     dynamicColors: ["red", "blue"],
+  //     useDynamicColors: true,
+  //   },
+  //   tracks: [
+  //     {
+  //       type: "longrange",
+  //       url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
+  //     },
+  //     {
+  //       name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+  //       type: "longrange",
+  //       url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
+  //     },
+  //   ],
+  //   showOnHubLoad: true,
+  // }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "longrange",
+  //   url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "longrange",
+  //   url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
 
-  new TrackModel({
-    type: "hic",
-    name: "test hic",
-    url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-    // metadata: { genome: "mm10" },
-  }),
-  new TrackModel({
-    type: "dynamicbed",
-    name: "dynamic bed",
-    showOnHubLoad: true,
-    tracks: [
-      {
-        type: "bed",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-        name: "peak1",
-      },
-      {
-        type: "bed",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
-        name: "peak2",
-      },
-    ],
-  }),
-  new TrackModel({
-    type: "dynamic",
-    name: "dynamic plot example",
-    showOnHubLoad: true,
-    tracks: [
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
-        name: "CH12 H3K4me1",
-      },
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
-        name: "CH12 H3K27ac",
-      },
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
-        name: "CH12 H3K4me3",
-      },
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
-        name: "CH12 H3K36me3",
-      },
-    ],
-  }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
+  // new TrackModel({
+  //   type: "dynamicbed",
+  //   name: "dynamic bed",
+  //   showOnHubLoad: true,
+  //   tracks: [
+  //     {
+  //       type: "bed",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+  //       name: "peak1",
+  //     },
+  //     {
+  //       type: "bed",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
+  //       name: "peak2",
+  //     },
+  //   ],
+  // }),
+  // new TrackModel({
+  //   type: "dynamic",
+  //   name: "dynamic plot example",
+  //   showOnHubLoad: true,
+  //   tracks: [
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
+  //       name: "CH12 H3K4me1",
+  //     },
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
+  //       name: "CH12 H3K27ac",
+  //     },
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
+  //       name: "CH12 H3K4me3",
+  //     },
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
+  //       name: "CH12 H3K36me3",
+  //     },
+  //   ],
+  // }),
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",
