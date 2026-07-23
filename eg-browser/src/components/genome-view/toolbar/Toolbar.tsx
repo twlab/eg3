@@ -462,6 +462,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <History
               state={{
                 past: currentState ? currentState.past : [],
+                present: currentState ? currentState.present : null,
                 future: currentState ? currentState.future : [],
               }}
               jumpToPast={jumpToPast}

@@ -56,7 +56,7 @@ const ScatterPlot: React.FC = () => {
 
   const sets = useMemo(() => {
     if (currentSession) {
-      return currentSession?.regionSets.map((item) => {
+      return (currentSession.regionSets ?? []).map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
           newRegionSet["id"] = item.id;
@@ -200,17 +200,22 @@ const ScatterPlot: React.FC = () => {
         }),
       ),
     );
-    let dataXall = rawDataX.map((item, index) => {
-      return item.map((record) => {
-        let newChrInt = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end,
-        );
-        return new NumericalFeature("", newChrInt).withValue(
-          record.score ? record.score : record["3"],
-        );
-      });
+    let dataXall = rawDataX.map((groups) => {
+      return groups.flatMap((group: any) =>
+        (group.data ?? []).map((record: any) => {
+          const chr = record.chr ?? group.chr;
+          const newChrInt = new ChromosomeInterval(
+            chr,
+            record.start,
+            record.end,
+          );
+          const rawValue =
+            record.score !== undefined ? record.score : record["3"];
+          return new NumericalFeature("", newChrInt).withValue(
+            Number(rawValue),
+          );
+        }),
+      );
     });
 
     const dataX = dataXall.map((all: any) =>
@@ -232,17 +237,22 @@ const ScatterPlot: React.FC = () => {
       ),
     );
 
-    let dataYall = rawDataY.map((item, index) => {
-      return item.map((record) => {
-        let newChrInt = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end,
-        );
-        return new NumericalFeature("", newChrInt).withValue(
-          record.score ? record.score : record["3"],
-        );
-      });
+    let dataYall = rawDataY.map((groups) => {
+      return groups.flatMap((group: any) =>
+        (group.data ?? []).map((record: any) => {
+          const chr = record.chr ?? group.chr;
+          const newChrInt = new ChromosomeInterval(
+            chr,
+            record.start,
+            record.end,
+          );
+          const rawValue =
+            record.score !== undefined ? record.score : record["3"];
+          return new NumericalFeature("", newChrInt).withValue(
+            Number(rawValue),
+          );
+        }),
+      );
     });
 
     const dataY = dataYall.map((all: any) =>

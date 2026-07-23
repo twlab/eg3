@@ -69,7 +69,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const sets = useMemo(() => {
     if (currentSession) {
-      return currentSession?.regionSets.map((item) => {
+      return (currentSession.regionSets ?? []).map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
           newRegionSet["id"] = item.id;
@@ -210,17 +210,26 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       ),
     );
 
-    let data = rawData.map((item, index) => {
-      return item.map((record) => {
-        let newChrInt = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end,
-        );
-        return new NumericalFeature("", newChrInt).withValue(
-          record.score ? record.score : record["3"],
-        );
-      });
+    // Each fetch result is grouped per locus as { chr, data: [record, ...] },
+    // so flatten the groups and read the locus off the group (bigwig) or the
+    // record itself (tabix/bedgraph). Coerce the value to a number because
+    // bedgraph records keep it as a string in column [3].
+    let data = rawData.map((groups) => {
+      return groups.flatMap((group: any) =>
+        (group.data ?? []).map((record: any) => {
+          const chr = record.chr ?? group.chr;
+          const newChrInt = new ChromosomeInterval(
+            chr,
+            record.start,
+            record.end,
+          );
+          const rawValue =
+            record.score !== undefined ? record.score : record["3"];
+          return new NumericalFeature("", newChrInt).withValue(
+            Number(rawValue),
+          );
+        }),
+      );
     });
 
     // const data = rawData.map((raw) => trackConfig.formatData(raw));

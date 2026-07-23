@@ -1382,7 +1382,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       queueRegionToFetch(dataIdx.current);
     } else if (key !== "legendFontColor" && key !== "label") {
       tempViewWindowConfig["tracksToDrawId"] = newSelected;
-      console.log(newSelected, "newSelected");
+
       if (reCalcAgg.has(key) || groupChange) {
         aggViewWindowData(
           tempViewWindowConfig.viewWindow,
@@ -2465,11 +2465,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         enqueueMessage(dataToFetchArr);
       }
-      console.log(
-        trackManagerState.current.caches,
-        dataIdx.current,
-        "caches after enqueue",
-      );
     }
 
     if (
@@ -2478,7 +2473,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         (hasGenomeAlign.current && !useFineModeNav.current)) &&
       !initialLoad.current
     ) {
-      console.log("usecache");
       if (dataIdx.current !== completedFetchedRegion.current.key) {
         completedFetchedRegion.current.key = dataIdx.current;
         completedFetchedRegion.current.done = {};
@@ -3983,7 +3977,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // }
       }
       // TO-DO so far only group primary nav tracks, not track that align to secondary genome align, or nonprimary with primary
-      console.log(trackDataObj);
+
       const groupScale = groupManager.getGroupScale(
         trackDataObj,
         primaryVisData && primaryVisData.visWidth

@@ -135,11 +135,11 @@ const defaultTracks = [
   //   name: "test jaspar",
   //   url: "https://hgdownload.soe.ucsc.edu/gbdb/hg19/jaspar/JASPAR2022.bb",
   // }),
-  // new TrackModel({
-  //   type: "bigbed",
-  //   name: "test bigbed",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  // }),
+  new TrackModel({
+    type: "bigbed",
+    name: "test bigbed",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -216,11 +216,11 @@ const defaultTracks = [
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-  // new TrackModel({
-  //   type: "bigbed",
-  //   name: "band2",
-  //   url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
-  // }),
+  new TrackModel({
+    type: "bigbed",
+    name: "band2",
+    url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
+  }),
   // new TrackModel({
   //   type: "g3d",
   //   url: "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
@@ -485,14 +485,30 @@ const defaultTracks = [
   //     depthColor: "#01E9FE",
   //   },
   // }),
-  // new TrackModel({
-  //   name: "vertebratephastCons46way",
-  //   label: "Vertebrate PhastCons 46-way",
-  //   filetype: "bedgraph",
-  //   url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
-  //   height: 50,
-  //   options: { color: "#006385" },
-  // }),
+  new TrackModel({
+    name: "vertebratephastCons46way",
+    label: "Vertebrate PhastCons 46-way",
+    filetype: "bedgraph",
+    url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+    height: 50,
+    options: { color: "#006385" },
+  }),
+  new TrackModel({
+    name: "vertebratephastCons46way",
+    label: "Vertebrate PhastCons 46-way",
+    filetype: "bedgraph",
+    url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+    height: 50,
+    options: { color: "#006385" },
+  }),
+  new TrackModel({
+    name: "vertebratephastCons46way",
+    label: "Vertebrate PhastCons 46-way",
+    filetype: "bedgraph",
+    url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+    height: 50,
+    options: { color: "#006385" },
+  }),
   // new TrackModel({
   //   type: "boxplot",
   //   name: "example boxplot",
