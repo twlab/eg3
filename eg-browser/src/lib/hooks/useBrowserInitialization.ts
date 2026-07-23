@@ -18,9 +18,20 @@ import {
 import { generateUUID } from "wuepgg3-track";
 
 import { addCustomTracksPool } from "../redux/slices/hubSlice";
+import { refreshLocalGenomes } from "../redux/thunk/genome-hub";
 
 export default function useBrowserInitialization() {
   const dispatch = useAppDispatch();
+
+  // Load custom genomes from IndexedDB on startup. The `genomeHub` slice is
+  // blacklisted from persistence, but `settings.customCollections` is persisted
+  // — so after a refresh a collection still lists its custom genomes while the
+  // genome data itself is gone until something reloads it. Without this, clicking
+  // a persisted custom genome in the picker resolves to nothing (no session is
+  // created) until the user opens a hub panel or uploads another genome.
+  useEffect(() => {
+    dispatch(refreshLocalGenomes());
+  }, [dispatch]);
 
   // const customTracksPool = useAppSelector(selectCustomTracksPool);
   // const currentSession = useAppSelector(selectCurrentSession);
