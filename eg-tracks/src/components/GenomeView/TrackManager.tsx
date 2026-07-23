@@ -643,12 +643,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         for (const track of message[j].trackModelArr) {
           // hic tracks are fetched on the main thread (no worker) and the
-          // results are handed directly to createInfiniteOnMessage. dynamichic
-          // is just several hic files in `tracks`, so it takes the same path —
-          // hic data comes back as GenomeInteraction instances, and postMessage
-          // would strip them down to plain objects.
+          // results are handed directly to createInfiniteOnMessage.
 
-          if (track.type === "hic" || track.type === "dynamichic") {
+          if (track.type === "hic") {
             fetchGenomicData([{ ...newMessage, trackModelArr: [track] }])
               .then((results) => {
                 if (results) {
@@ -656,7 +653,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               })
               .catch((error) => {
-                console.error(`Error fetching ${track.type} data:`, error);
+                console.error("Error fetching hic data:", error);
               });
             continue;
           }
