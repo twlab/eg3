@@ -6,7 +6,8 @@ import {
   createTransform,
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
-import undoable, { excludeAction } from "redux-undo";
+import undoable from "redux-undo";
+import { isEqual, omit } from "lodash";
 
 import browserReducer from "./slices/browserSlice";
 import genomeHubReducer from "./slices/genomeHubSlice";
@@ -16,7 +17,10 @@ import hubReducer from "./slices/hubSlice";
 import settingsReducer from "./slices/settingsSlice";
 import searchReducer from "./slices/searchSlice";
 import undoRedoReducer from "./slices/undoRedoSlice";
-import { setCurrentSession } from "./slices/browserSlice";
+import {
+  setCurrentSession,
+  updateCurrentSession,
+} from "./slices/browserSlice";
 import tabPanelReducer from "./slices/tabPanelSlice";
 
 // Detect whether this is a fresh browser start (as opposed to a page refresh).
@@ -154,9 +158,75 @@ const createStorageWithErrorHandling = (storage: any) => {
   };
 };
 
+// `updateCurrentSession` bumps `updatedAt` on every call, so two sessions can
+// be identical in content while differing by timestamp. Ignore the timestamps
+// when deciding whether an update actually changed anything.
+const IGNORED_SESSION_FIELDS = ["updatedAt", "createdAt"];
+
+// Transient, per-track UI flags that should not count as an undoable change.
+// Selecting a track (e.g. right-clicking to open its menu before deleting) and
+// the internal `changeConfigInitial` marker both flip these, and recording them
+// creates history entries that look identical to the user — which is why a
+// delete used to need two undos.
+const VOLATILE_TRACK_FIELDS = ["isSelected", "changeConfigInitial"];
+
+const getActiveSession = (browserPresent: any) => {
+  const id = browserPresent?.currentSession;
+  if (!id) return null;
+  return browserPresent?.sessions?.entities?.[id] ?? null;
+};
+
+// Strip fields that shouldn't drive history so two "content-equal" sessions
+// compare equal regardless of timestamps or transient track selection state.
+const normalizeSession = (session: any) => {
+  if (!session) return session;
+  const normalized: any = omit(session, IGNORED_SESSION_FIELDS);
+  if (Array.isArray(normalized.tracks)) {
+    normalized.tracks = normalized.tracks.map((track: any) =>
+      omit(track, VOLATILE_TRACK_FIELDS),
+    );
+  }
+  return normalized;
+};
+
+// True when an `updateCurrentSession` left the active session's meaningful
+// content unchanged (aside from timestamps and transient track flags).
+const isNoOpSessionUpdate = (currentState: any, previousHistory: any) => {
+  const prev = getActiveSession(previousHistory?.present);
+  const next = getActiveSession(currentState);
+  if (!prev || !next) return false;
+  return isEqual(normalizeSession(prev), normalizeSession(next));
+};
+
 const undoableConfig = {
   limit: 20,
-  filter: excludeAction([setCurrentSession.type]),
+  // Keep the "last recorded" state in sync with `present` when an action is
+  // filtered out. Without this, a filtered no-op update leaves the recorded
+  // baseline stale, so the next real edit pushes the wrong previous state into
+  // the past (an off-by-one that shows up as a duplicate history entry).
+  syncFilter: true,
+  // Decide which actions create a new history entry.
+  //
+  // Returning `false` updates `present` but leaves `past`/`future` untouched,
+  // so it does NOT clear the redo stack.
+  //
+  // - `setCurrentSession`: never part of history (as before).
+  // - `updateCurrentSession` that changes nothing: skip it. Right after an
+  //   undo/redo/jump the track container echoes the just-restored tracks and
+  //   view region back through `updateCurrentSession`. Recording those echoes
+  //   would clear the future and delete every state after the restored one.
+  //   A genuine edit (move, add/remove track, …) changes the content, so it
+  //   still records normally and truncates the future — the desired behavior.
+  filter: (action: any, currentState: any, previousHistory: any) => {
+    if (action.type === setCurrentSession.type) return false;
+    if (
+      action.type === updateCurrentSession.type &&
+      isNoOpSessionUpdate(currentState, previousHistory)
+    ) {
+      return false;
+    }
+    return true;
+  },
 
   // debug: true, // Set to true to enable detailed logging of undoable actions and state changes
 };

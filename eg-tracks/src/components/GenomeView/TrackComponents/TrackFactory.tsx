@@ -759,7 +759,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             legendWidth={legendWidth}
           />
           {legend?.reverseStrandLegendProps && (
-            <TrackLegend {...legend.reverseStrandLegendProps} />
+            <TrackLegend
+              {...legend.reverseStrandLegendProps}
+              legendWidth={legendWidth}
+            />
           )}
         </div>
         {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}

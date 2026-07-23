@@ -191,9 +191,24 @@ export const addSessionsFromBundleId = createAsyncThunk(
     // }
 
     if (sessionInView) {
-      thunkApi.dispatch(importOneSession({ session: sessionInView }));
+      // Await/unwrap so a parse failure inside importOneSession propagates and
+      // the caller can react (e.g. show a popup + fall back to the picker).
+      sessionInView["bundleId"] = response?.bundleId;
+
+      await thunkApi
+        .dispatch(
+          importOneSession({
+            session: sessionInView,
+            navigatingToSession: true,
+          }),
+        )
+        .unwrap();
     } else {
+      // Fetch returned nothing (bad id, empty bundle, or network error, since
+      // onRetrieveSession swallows errors and returns null). Reject so the
+      // caller shows the failure popup and lands on the genome picker.
       thunkApi.dispatch(setCurrentSession(null));
+      throw new Error("Failed to fetch session bundle");
     }
   },
 );
@@ -210,8 +225,23 @@ export const fetchBundle = createAsyncThunk(
           thunkApi.dispatch(updateBundle(resBundle));
         } else {
           thunkApi.dispatch(updateCurrentSession({ bundleId: null }));
+          thunkApi.dispatch(
+            updateBundle({
+              bundleId: null,
+              currentId: null,
+              sessionsInBundle: null,
+            }),
+          );
         }
       } catch (e) {
+        thunkApi.dispatch(updateCurrentSession({ bundleId: null }));
+        thunkApi.dispatch(
+          updateBundle({
+            bundleId: null,
+            currentId: null,
+            sessionsInBundle: null,
+          }),
+        );
         // console.error(e);
       }
     }

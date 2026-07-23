@@ -115,6 +115,7 @@ function sortPlacedFeatureIntoXMap(
 ) {
   const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
   const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+
   for (let x = startX; x <= endX; x++) {
     xToFeatures[x].push(placedFeature.feature);
   }
@@ -306,13 +307,16 @@ export class FeaturePlacer {
             isReverse,
           };
 
-          const featureValue = getFeatureValue(feature);
+          const featureValue =
+            getFeatureValue(feature) ?? feature.values ?? undefined;
+
           // Only genuinely negative values render on the reverse strand. undefined
           // and NaN (e.g. raw bed annotation records whose column 3 is a name, not
           // a number) must go forward — otherwise `arrange`, which returns only the
           // forward placements, would drop every annotation.
-          if (!(featureValue < 0)) {
+          if (!(featureValue < 0) || Array.isArray(featureValue)) {
             if (mode === PlacementMode.NUMERICAL && xToFeaturesForward) {
+          
               sortPlacedFeatureIntoXMap(placement, xToFeaturesForward, width);
             } else {
               tmpPlacementForward.push(placement);

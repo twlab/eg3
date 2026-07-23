@@ -50,30 +50,15 @@
 }
 
 .facet-column-header span {
-    /* transform: rotate(-60deg) translateY(65%); */
-    /* transform: rotate(-90deg) translateY(90%);
-    transform-origin: left bottom 0;
-    display: inline-block;
-    width: 1rem;
-    margin: 3px;
-    white-space: nowrap; */
-    -webkit-writing-mode: vertical-lr;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    width: 1rem;
     white-space: nowrap;
 }
 
 .facet-column-header div {
-    -webkit-writing-mode: vertical-lr;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    width: 1rem;
     white-space: nowrap;
 }
 
 div.facet-column-header {
-    padding-left: 2px;
+    padding: 6px 6px 4px 6px;
     border-right: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
 }
@@ -93,8 +78,34 @@ div.facet-column-header {
 }
 
 button.expanded {
-    font-style: italic;
-    color: #777;
+    font-weight: 700;
+}
+
+.facet-row-header button.expanded {
+    color: #2e7d32;
+}
+
+.facet-column-header button.expanded {
+    color: #1565c0;
+}
+
+/* Highlight the currently expanded (selected) row header (green) */
+.facet-row-header.is-expanded {
+    background-color: rgba(76, 175, 80, 0.14);
+    box-shadow: inset 3px 0 0 0 #4caf50;
+}
+
+/* Highlight the currently expanded (selected) column header (blue) */
+.facet-column-header.is-expanded {
+    background-color: rgba(21, 101, 192, 0.12);
+    box-shadow: inset 0 3px 0 0 #1565c0;
+    padding-top: 10px;
+}
+
+/* Nested child headers: subtle guide line to show they belong to the parent */
+.facet-row-header.is-child > button > span,
+.facet-column-header.is-child > button > span {
+    opacity: 0.85;
 }
 
 .facet-item:hover:after {
@@ -240,10 +251,20 @@ button.not-button {
 }
 
 /* Expanded button color adjustments */
-button.expanded {
-    color: #6b7280;
+[data-theme="dark"] .facet-row-header button.expanded {
+    color: #7ee787;
 }
 
-[data-theme="dark"] button.expanded {
-    color: #9ca3af;
+[data-theme="dark"] .facet-column-header button.expanded {
+    color: #7cb7ff;
+}
+
+[data-theme="dark"] .facet-row-header.is-expanded {
+    background-color: rgba(126, 231, 135, 0.12);
+    box-shadow: inset 3px 0 0 0 #7ee787;
+}
+
+[data-theme="dark"] .facet-column-header.is-expanded {
+    background-color: rgba(124, 183, 255, 0.14);
+    box-shadow: inset 0 3px 0 0 #7cb7ff;
 }

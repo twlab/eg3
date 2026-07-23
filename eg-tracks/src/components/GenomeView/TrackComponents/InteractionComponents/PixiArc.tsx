@@ -37,6 +37,7 @@ class PixiArc extends React.PureComponent<PixiArcProps, PixiArcState> {
   private steps: number;
   private subs: PIXI.Graphics[] = []; // holder for sub containers for each sprite sets from each track
   private arcData: any[][] = [];
+  private isUnmounted: boolean = false;
 
   static defaultProps = {
     currentStep: 0,
@@ -63,14 +64,24 @@ class PixiArc extends React.PureComponent<PixiArcProps, PixiArcState> {
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
     const bgColor = colorString2number(backgroundColor || "0x000000");
-    this.app = new PIXI.Application();
-    await this.app.init({
+    const app = new PIXI.Application();
+    await app.init({
       width,
       height,
       backgroundColor: bgColor,
       autoDensity: true,
       resolution: window.devicePixelRatio,
     });
+
+    // `init` is async, so the track can unmount while it's still in flight —
+    // moving away does exactly that. Bail out and release the WebGL context
+    // rather than wiring up an app nobody will ever unmount.
+    if (this.isUnmounted) {
+      app.destroy(true, { children: true });
+      return;
+    }
+    this.app = app;
+
     if (this.container) {
       this.container.appendChild(this.app.view);
     }
@@ -85,9 +96,14 @@ class PixiArc extends React.PureComponent<PixiArcProps, PixiArcState> {
   }
 
   componentWillUnmount() {
-    this.app.ticker.remove(this.tick);
+    this.isUnmounted = true;
     window.removeEventListener("resize", this.onWindowResize);
-    this.app.stage.off("pointerdown", this.onPointerDown);
+    // `this.app` is only set once `init` has resolved; unmounting before then
+    // leaves ticker/stage undefined, so guard every hop.
+    if (this.app) {
+      this.app.ticker?.remove(this.tick);
+      this.app.stage?.off("pointerdown", this.onPointerDown);
+    }
   }
 
   componentDidUpdate(prevProps: PixiArcProps, prevState: PixiArcState) {
@@ -265,7 +281,6 @@ class PixiArc extends React.PureComponent<PixiArcProps, PixiArcState> {
         const tintColor = colorString2number(colorToUse);
         const g = this.subs[index];
         g.moveTo(xSpan2Center, 0);
-        g.lineStyle(lineWidth, tintColor, opacityScale(score));
         g.arc(
           spanCenter,
           -halfLength,
@@ -273,6 +288,14 @@ class PixiArc extends React.PureComponent<PixiArcProps, PixiArcState> {
           Math.SQRT1_2,
           Math.PI - Math.SQRT1_2
         );
+        // pixi v8 only rasterizes a path on an explicit stroke()/fill(); the
+        // v7 `lineStyle()` this replaces set a style and drew implicitly, so
+        // the arcs were being built and never rendered.
+        g.stroke({
+          width: lineWidth,
+          color: tintColor,
+          alpha: opacityScale(Math.abs(score)),
+        });
         this.arcData[index].push([
           spanCenter,
           -halfLength,

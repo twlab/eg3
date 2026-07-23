@@ -43,11 +43,6 @@ class TrackLegend extends React.PureComponent<
   TrackLegendProps,
   { showFull: boolean; clickX: number; clickY: number }
 > {
-  static defaultProps = {
-    width: 120,
-    forceSvg: false,
-  };
-
   state = { showFull: false, clickX: 0, clickY: 0 };
 
   private gNode: any;
@@ -156,9 +151,9 @@ class TrackLegend extends React.PureComponent<
 
   getLabelWidth() {
     if (this.props.axisScale) {
-      return this.props.legendWidth
-        ? this.props.legendWidth - AXIS_WIDTH
-        : 120 - AXIS_WIDTH;
+      return (
+        (this.props.legendWidth ? this.props.legendWidth : 120) - AXIS_WIDTH
+      );
     } else {
       return undefined;
     }
@@ -197,8 +192,8 @@ class TrackLegend extends React.PureComponent<
     const axisHeight = axisScaleReverse ? height * 0.5 : height;
     const styleObj = {
       display: "flex",
-      width,
-      minWidth: width,
+      width: this.props.legendWidth ? this.props.legendWidth : 120,
+      minWidth: 120,
       height: axisHeight,
 
       zIndex: 10,

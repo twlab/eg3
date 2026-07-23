@@ -494,6 +494,22 @@ const defaultTracks = [
   //   options: { color: "#006385" },
   // }),
   // new TrackModel({
+  //   name: "vertebratephastCons46way",
+  //   label: "Vertebrate PhastCons 46-way",
+  //   filetype: "bedgraph",
+  //   url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+  //   height: 50,
+  //   options: { color: "#006385" },
+  // }),
+  // new TrackModel({
+  //   name: "vertebratephastCons46way",
+  //   label: "Vertebrate PhastCons 46-way",
+  //   filetype: "bedgraph",
+  //   url: "https://vizhub.wustl.edu/public/misc/callingcard/hg38/ENCODE_HCT116-H3K4me1_PE_map_sort.bedgraph.gz",
+  //   height: 50,
+  //   options: { color: "#006385" },
+  // }),
+  // new TrackModel({
   //   type: "boxplot",
   //   name: "example boxplot",
   //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
@@ -513,15 +529,72 @@ const defaultTracks = [
   //   tracks: [
   //     {
   //       type: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //       url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
   //     },
   //     {
   //       name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
   //       type: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //       url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
   //     },
   //   ],
   //   showOnHubLoad: true,
+  // }),
+  // new TrackModel({
+  //   name: "dynamiclongrange",
+  //   type: "dynamiclongrange",
+  //   options: {
+  //     dynamicColors: ["red", "blue"],
+  //     useDynamicColors: true,
+  //   },
+  //   tracks: [
+  //     {
+  //       type: "longrange",
+  //       url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
+  //     },
+  //     {
+  //       name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+  //       type: "longrange",
+  //       url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
+  //     },
+  //   ],
+  //   showOnHubLoad: true,
+  // }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "longrange",
+  //   url: "https://egg.wustl.edu/d/hg19/GM06990_obs_1mb.gz",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "longrange",
+  //   url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/primary.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
+
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
   // }),
   // new TrackModel({
   //   type: "dynamicbed",

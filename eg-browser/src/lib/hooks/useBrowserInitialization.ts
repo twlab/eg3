@@ -18,7 +18,6 @@ import {
 import { generateUUID } from "wuepgg3-track";
 
 import { addCustomTracksPool } from "../redux/slices/hubSlice";
-const IDEMPOTENCY_STORAGE_KEY = "_eg-query-idempotency-key";
 
 export default function useBrowserInitialization() {
   const dispatch = useAppDispatch();
@@ -30,10 +29,10 @@ export default function useBrowserInitialization() {
     const genome = searchParams.get("genome");
     const hub = searchParams.get("hub");
     const position = searchParams.get("position");
-    const bundleId = searchParams.get("bundleId");
+    // Accept both `bundleId` and the shorthand `bundle`.
+    const bundleId = searchParams.get("bundleId") || searchParams.get("bundle");
     const blob = searchParams.get("blob");
     const sessionFile = searchParams.get("sessionFile");
-    const idempotencyToken = searchParams.get("idempotencyToken");
 
     // MARK: - Legacy URL Handling
     const session = searchParams.get("session");
@@ -59,29 +58,28 @@ export default function useBrowserInitialization() {
       return;
     }
 
-    // MARK: - Idempotency Check
-
-    if (idempotencyToken) {
-      const currentIdempotencyToken = localStorage.getItem(
-        IDEMPOTENCY_STORAGE_KEY
-      );
-
-      if (currentIdempotencyToken === idempotencyToken) {
-        return;
-      }
-    }
-
     // MARK: - Session Loading
+    // if we have a session file, or a session file downloaded from a server,
+    // then we should check retreiving the bundleId first,
+    // if success update the session then importOneSession
+    // if fail then null bundleId for currentSession and try to importOneSession because
+    // there are still info that can still build the track view.
 
     if (sessionFile) {
       (async () => {
-        const file = await fetch(sessionFile).then((r) => r.json());
+        try {
+          const file = await fetch(sessionFile).then((r) => r.json());
 
-        dispatch(
-          importOneSession({ session: file, navigatingToSession: true })
-        );
-
-        generateAndSetIdempotencyToken();
+          await dispatch(
+            importOneSession({ session: file, navigatingToSession: true }),
+          ).unwrap();
+        } catch (error) {
+          console.error("Failed to load session file:", error);
+          alert(
+            "Failed to load the session file. Loading the genome picker instead.",
+          );
+          dispatch(setCurrentSession(null));
+        }
       })();
     }
 
@@ -94,18 +92,21 @@ export default function useBrowserInitialization() {
 
         dispatch(upsertSession(sessionData));
         dispatch(setCurrentSession(sessionData.id));
-
-        generateAndSetIdempotencyToken();
       } catch (error) {
         console.error("Failed to process blob data:", error);
       }
     }
-
+    // addSessionsFromBundleId will try to fetch the bundleID first, then > importOneSession
+    // and if fails then doesnt load any session because we only have the id
     if (bundleId) {
       dispatch(addSessionsFromBundleId(bundleId))
-        .catch((error) => console.error("Failed to import bundle:", error))
-        .finally(() => {
-          generateAndSetIdempotencyToken();
+        .unwrap()
+        .catch((error: unknown) => {
+          console.error("Failed to import bundle:", error);
+          alert(
+            "Failed to fetch the session bundle. Loading the genome picker instead.",
+          );
+          dispatch(setCurrentSession(null));
         });
     }
 
@@ -133,13 +134,13 @@ export default function useBrowserInitialization() {
             } catch (error) {
               console.error("Failed to load hub data:", error);
               alert(
-                "Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead."
+                "Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead.",
               );
             }
           }
 
           genome.defaultTracks = genome.defaultTracks?.map((t) =>
-            JSON.parse(JSON.stringify(t))
+            JSON.parse(JSON.stringify(t)),
           );
 
           dispatch(addCustomTracksPool([...additionalTracks]));
@@ -148,10 +149,8 @@ export default function useBrowserInitialization() {
               genome,
               viewRegion: position ? (position as GenomeCoordinate) : undefined,
               additionalTracks,
-            })
+            }),
           );
-
-          generateAndSetIdempotencyToken();
         }
       })();
     }
@@ -169,33 +168,4 @@ function decompressString(compressed: string): string {
     bytes[i] = binary.charCodeAt(i);
   }
   return new TextDecoder().decode(bytes);
-}
-
-function generateAndSetIdempotencyToken() {
-  const idempotencyToken = generateUUID();
-  localStorage.setItem(IDEMPOTENCY_STORAGE_KEY, idempotencyToken);
-
-  // Get current URL parameters without automatic encoding
-  const currentUrl = new URL(window.location.href);
-  currentUrl.searchParams.set("idempotencyToken", idempotencyToken);
-
-  // Manually construct URL to avoid encoding existing parameters
-  const params = new URLSearchParams();
-  for (const [key, value] of currentUrl.searchParams.entries()) {
-    params.append(key, value);
-  }
-
-  // Build URL string manually to preserve original parameter formatting
-  const paramString = params
-    .toString()
-    .replace(/https%3A%2F%2F/g, "https://")
-    .replace(/%2F/g, "/")
-    .replace(/%3A/g, ":");
-
-  const newUrl = paramString
-    ? `${window.location.pathname}?${paramString}`
-    : window.location.pathname;
-
-  window.history.replaceState({}, "", newUrl);
-  return idempotencyToken;
 }

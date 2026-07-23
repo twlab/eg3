@@ -629,13 +629,19 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
-
+    console.log(props.legendWidth);
     const trackSvgElements = tracks
       .filter(
         (track) =>
           !(
             track.type in
-            { dynamic: "", dbedgraph: "", dynamichic: "", dynamiclongrange: "" }
+            {
+              dynamic: "",
+              dbedgraph: "",
+              dynamichic: "",
+              dynamiclongrange: "",
+              dynamicbed: "",
+            }
           ),
       )
       .map((trackModel, index) => {

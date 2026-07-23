@@ -40,10 +40,11 @@ export default function ImportSession() {
         const res = await onRetrieveSession(session.bundleId);
         if (res) {
           setBundle(res);
+          return;
         }
-        return;
+        // no bundle found -> fall through to the single-session import logic
       } catch (e) {
-        // fall through to the standard single-session import logic
+        // retrieve failed -> fall through to the single-session import logic
       }
     }
 

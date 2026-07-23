@@ -116,8 +116,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
   }
 
   const selectAllRef = useRef<HTMLInputElement | null>(null);
-  const allSelected = currentSession ? currentSession.tracks.every((t: any) => t.isSelected) : false;
-  const someSelected = currentSession ? currentSession.tracks.some((t: any) => t.isSelected) : false;
+  const allSelected = currentSession
+    ? currentSession.tracks.every((t: any) => t.isSelected)
+    : false;
+  const someSelected = currentSession
+    ? currentSession.tracks.some((t: any) => t.isSelected)
+    : false;
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -177,9 +181,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     selectAllTracks(false);
                   }
                 }}
-                style={{
-    
-                }}
+                style={{}}
               />
             </label>
 
@@ -460,6 +462,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <History
               state={{
                 past: currentState ? currentState.past : [],
+                present: currentState ? currentState.present : null,
                 future: currentState ? currentState.future : [],
               }}
               jumpToPast={jumpToPast}

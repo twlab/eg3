@@ -11,6 +11,7 @@ import ResizablePanel from "../ui/panel/ResizablePanel";
 type Props = {
   state: {
     past: any[];
+    present?: any;
     future: any[];
   };
   jumpToPast: (index: number) => void;
@@ -40,7 +41,7 @@ const History: React.FC<Props> = ({
     clearHistory();
   }
   const renderHistory = () => {
-    const { past, future } = state;
+    const { past, present, future } = state;
 
     if ((past.length === 0 && future.length === 0) || checkStateEmpty) {
       return <div>No operation history yet!</div>;
@@ -52,11 +53,16 @@ const History: React.FC<Props> = ({
       (index) => jumpToFuture(index),
       "future",
     );
+    const presentItems = present
+      ? makeItemList([present], () => {}, "present", true)
+      : null;
 
     return (
       <div>
         {past.length > 0 && <p>Go back:</p>}
         {pastItems}
+        {presentItems && <p>Current:</p>}
+        {presentItems}
         {future.length > 0 && <p>Go forward:</p>}
         {futureItems}
       </div>
@@ -68,6 +74,7 @@ const History: React.FC<Props> = ({
     stateList: any[],
     callback: (index: number) => void,
     _type: string,
+    isCurrent = false,
   ) => {
     const items = stateList.map((value, index) => {
       const currentSessionKey = value.currentSession;
@@ -82,9 +89,10 @@ const History: React.FC<Props> = ({
       return (
         <li
           key={index}
-          onClick={() => callback(index)}
+          onClick={isCurrent ? undefined : () => callback(index)}
           style={{
-            border: "1px solid #ccc",
+            border: isCurrent ? "1px solid #3b82f6" : "1px solid #ccc",
+            backgroundColor: isCurrent ? "#eff6ff" : undefined,
             borderRadius: "4px",
             padding: "clamp(0.4em, 0.5vw, 0.4em)",
             fontSize: "clamp(10px, 0.9vw, 16px)",
@@ -93,6 +101,7 @@ const History: React.FC<Props> = ({
             alignItems: "center",
             gap: "clamp(4px, 0.5vw, 8px)",
             marginBottom: "0.1em",
+            cursor: isCurrent ? "default" : "pointer",
           }}
         >
           <span>
@@ -105,28 +114,42 @@ const History: React.FC<Props> = ({
             , # of tracks:{" "}
             {stateData && stateData.tracks ? stateData.tracks.length : 0}
           </span>
-          <button
-            style={{
-              fontSize: "clamp(10px, 0.8vw, 16px)",
-              marginRight: "4px",
-              fontStyle: "italic",
-              textDecoration: "underline",
-              padding: "2px 6px",
-              border: "1px solid transparent",
-              borderRadius: "3px",
-              transition: "background-color 0.2s, border-color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#f3f4f6";
-              e.currentTarget.style.borderColor = "#d1d5db";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.borderColor = "transparent";
-            }}
-          >
-            Select
-          </button>
+          {isCurrent ? (
+            <span
+              style={{
+                fontSize: "clamp(10px, 0.8vw, 16px)",
+                marginRight: "4px",
+                fontStyle: "italic",
+                color: "#3b82f6",
+                padding: "2px 6px",
+              }}
+            >
+              Current
+            </span>
+          ) : (
+            <button
+              style={{
+                fontSize: "clamp(10px, 0.8vw, 16px)",
+                marginRight: "4px",
+                fontStyle: "italic",
+                textDecoration: "underline",
+                padding: "2px 6px",
+                border: "1px solid transparent",
+                borderRadius: "3px",
+                transition: "background-color 0.2s, border-color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#f3f4f6";
+                e.currentTarget.style.borderColor = "#d1d5db";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.borderColor = "transparent";
+              }}
+            >
+              Select
+            </button>
+          )}
         </li>
       );
     });
