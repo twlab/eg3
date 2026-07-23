@@ -288,7 +288,10 @@ async function getRemoteData(regionData: any, trackType: string) {
   fetchInstance = cachedFetchInstance[regionData.trackModel.url];
   try {
     if (fetchInstance) {
-      regionData.trackModel.options["trackType"] = regionData.trackModel.type;
+      const options = {
+        ...regionData.trackModel.options,
+        trackType: regionData.trackModel.type,
+      };
       if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
         throw new Error("Please zoom in to see content. ");
       }
@@ -300,13 +303,9 @@ async function getRemoteData(regionData: any, trackType: string) {
       }
       if (trackType === "bigbed") {
         return fetchInstance
-          .getData(
-            regionData.nav,
-            regionData.basesPerPixel,
-            regionData.trackModel.options,
-          )
+          .getData(regionData.nav, regionData.basesPerPixel, options)
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })
@@ -319,7 +318,7 @@ async function getRemoteData(regionData: any, trackType: string) {
           .getData(
             objToInstanceAlign(regionData.visRegion),
             regionData.basesPerPixel,
-            regionData.trackModel.options,
+            options,
           )
           .then((data: any) => {
             // cachedFetchInstance[regionData.trackModel.url] = null;
@@ -334,13 +333,9 @@ async function getRemoteData(regionData: any, trackType: string) {
           });
       } else {
         return fetchInstance
-          .getData(
-            regionData.nav,
-            regionData.basesPerPixel,
-            regionData.trackModel.options,
-          )
+          .getData(regionData.nav, regionData.basesPerPixel, options)
           .then((data: any) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
+            // cachedFetchInstance[regionData.trackModel.url] = null;
 
             return data;
           })

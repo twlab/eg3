@@ -19,7 +19,7 @@ const useResizeObserver = () => {
         const { width, height } = entry.contentRect;
 
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
-        if (Math.abs(width - prevSize.current.width) > 120) {
+        if (Math.abs(width - prevSize.current.width) > 110) {
           setSize({ width: width, height: prevSize.current.height });
           prevSize.current = { width: width, height: prevSize.current.height };
         }

@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
 import { chromAlias } from "./fetchFunctions";
@@ -31,19 +30,49 @@ class TabixSource {
     this.dataLimit = dataLimit;
     this.chromNamingCache = null;
     this.usingProxy = false;
-    this.tabix = new TabixIndexedFile({
-      filehandle: new RemoteFile(url),
-      tbiFilehandle: new RemoteFile(this.indexUrl),
+    // Default cache mode: reuse the browser's HTTP cache to avoid refetching.
+    this.tabix = this.makeTabix();
+  }
+
+  // Build a tabix reader with an explicit HTTP cache mode, optionally through
+  // the CORS proxy. Range requests are how tabix seeks, so `cache` controls how
+  // they interact with the browser's disk cache (see `runWithFallback`).
+  makeTabix(useProxy = false, cache = "default") {
+    const dataUrl = useProxy ? proxiedUrl(this.url) : this.url;
+    const idxUrl = useProxy ? proxiedUrl(this.indexUrl) : this.indexUrl;
+    return new TabixIndexedFile({
+      filehandle: new RemoteFile(dataUrl, { overrides: { cache } }),
+      tbiFilehandle: new RemoteFile(idxUrl, { overrides: { cache } }),
     });
   }
 
-  switchToProxy() {
+  /**
+   * Runs a read against the preferred (cached) reader, escalating only on
+   * failure: cached -> same-origin cache-bypass (recovers from Chromium's
+   * intermittent net::ERR_CACHE_OPERATION_NOT_SUPPORTED without leaving our
+   * origin, and does not stick) -> CORS proxy (committed, since CORS is a
+   * persistent property of the URL). See BigSourceWorkerGmod for details.
+   */
+  async runWithFallback(run) {
+    // Tier 1: preferred reader (cached, or proxied if already committed).
+    try {
+      return await run(this.tabix);
+    } catch (error) {
+      if (this.usingProxy) throw error;
+    }
+
+    // Tier 2: same origin, cache bypassed — transient, not persisted.
+    try {
+      return await run(this.makeTabix(false, "reload"));
+    } catch (error) {
+      // fall through to the proxy
+    }
+
+    // Tier 3: commit to the CORS proxy for this and future reads.
     this.usingProxy = true;
     this.chromNamingCache = null;
-    this.tabix = new TabixIndexedFile({
-      filehandle: new RemoteFile(proxiedUrl(this.url)),
-      tbiFilehandle: new RemoteFile(proxiedUrl(this.indexUrl)),
-    });
+    this.tabix = this.makeTabix(true);
+    return await run(this.tabix);
   }
 
   async detectChromosomeNaming() {
@@ -51,25 +80,35 @@ class TabixSource {
       return this.chromNamingCache;
     }
     try {
-      const names = await this.tabix.getReferenceSequenceNames();
-      const firstChrom = names[0];
-      if (!firstChrom) {
-        this.chromNamingCache = false;
-        return false;
-      }
-      this.chromNamingCache =
-        !chromAlias[firstChrom] &&
-        Object.values(chromAlias).some((aliases) => aliases.has(firstChrom));
-      return this.chromNamingCache;
+      const naming = await this.runWithFallback(async (tabix) => {
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Timeout fetching tabix index")),
+            10000,
+          ),
+        );
+        const names = await Promise.race([
+          tabix.getReferenceSequenceNames(),
+          timeout,
+        ]);
+        const firstChrom = names[0];
+        if (!firstChrom) {
+          return false;
+        }
+        return (
+          !chromAlias[firstChrom] &&
+          Object.values(chromAlias).some((aliases) => aliases.has(firstChrom))
+        );
+      });
+      this.chromNamingCache = naming;
+      return naming;
     } catch (error) {
-      if (!this.usingProxy) {
-        this.switchToProxy();
-        return this.detectChromosomeNaming();
-      }
       console.error(
         "Error detecting chromosome naming. Check URL and file format.",
       );
-      return null;
+      throw new Error(
+        "Error detecting chromosome naming. Check URL and file format. ",
+      );
     }
   }
 
@@ -83,47 +122,37 @@ class TabixSource {
     const isEnsembl =
       options?.ensemblStyle ?? (await this.detectChromosomeNaming());
 
-    const fetchForLoci = () => {
-      const promises = loci.map((locus) => {
-        let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
-        if (chrom === "M") chrom = "MT";
-        return this.getDataForLocus(chrom, locus.start, locus.end);
-      });
-      return Promise.all(promises);
-    };
+    const dataForEachLocus = await this.runWithFallback((tabix) =>
+      Promise.all(
+        loci.map((locus) => {
+          let chrom = isEnsembl ? locus.chr.replace("chr", "") : locus.chr;
+          if (chrom === "M") chrom = "MT";
+          return this.getDataForLocus(tabix, chrom, locus.start, locus.end);
+        }),
+      ),
+    );
 
-    let dataForEachLocus: any[][];
-    try {
-      dataForEachLocus = await fetchForLoci();
-    } catch (error) {
-      if (!this.usingProxy) {
-        this.switchToProxy();
-        dataForEachLocus = await fetchForLoci();
-      } else {
-        throw error;
-      }
-    }
-
-    if (isEnsembl) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
-    return _.flatten(dataForEachLocus);
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping chr onto every feature. The chr is reattached when formatting.
+    return loci.map((locus, index) => ({
+      chr: locus.chr,
+      data: dataForEachLocus[index],
+    }));
   };
 
   /**
    * Gets data for a single chromosome interval.
    *
+   * @param {TabixIndexedFile} tabix - the reader to fetch from
    * @param {string} chr - genome coordinates
    * @param {number} start - genome coordinates
    * @param {stnumberring} end - genome coordinates
    * @return {Promise<BedRecord[]>} Promise for the data
    */
-  getDataForLocus = async (chr, start, end) => {
+  getDataForLocus = async (tabix, chr, start, end) => {
     // const { chr, start, end } = locus;
     const rawlines = [];
-    await this.tabix.getLines(chr, start, end, (line) => rawlines.push(line));
+    await tabix.getLines(chr, start, end, (line) => rawlines.push(line));
     let lines;
     if (rawlines.length > this.dataLimit) {
       lines = ensureMaxListLength(rawlines, this.dataLimit);

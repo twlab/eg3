@@ -24,7 +24,6 @@ import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
 import { getContrastingColor, parseNumberString } from "../../../models/util";
 import { scaleLinear } from "d3-scale";
-import MethylCRecord from "../../../models/MethylCRecord";
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
 import DynseqTrackComponents from "./DynseqComponents/DynseqTrackComponents";
 import {
@@ -67,6 +66,7 @@ import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 import Bedcolor from "./bedComponents/Bedcolor";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { chromAlias } from "../../../getRemoteData/fetchFunctions";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 
 export const dynamicMatplotTracks = new Set([
@@ -675,6 +675,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     onClose,
     scales,
     placeFeature,
+    legendWidth,
   }) {
     // Full visualizer is now extracted to `FullVisualizer` component above
 
@@ -798,6 +799,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           ? trackModel.options.label
           : "",
       forceSvg: configOptions.forceSvg,
+      legendWidth: legendWidth,
     };
     if (updatedLegend) {
       updatedLegend.current = legendProps;
@@ -808,6 +810,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     const legend = configOptions.forceSvg ? (
       <TrackLegend {...legendProps} />
     ) : null;
+
     const svgDATA = (
       <FullVisualizer
         placements={placeFeatureData.placements}
@@ -839,6 +842,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     xvaluesData,
     initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <NumericalTrack
@@ -859,6 +863,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth ? legendWidth : 120}
       />
     );
     return canvasElements;
@@ -871,6 +876,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     initialLoad,
     windowWidth,
+    xvaluesData,
+    legendWidth,
   }) {
     const canvasElements = (
       <QBedTrackComponents
@@ -891,6 +898,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth}
+        xvaluesData={xvaluesData}
       />
     );
     return canvasElements;
@@ -903,6 +912,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     windowWidth,
+    xvaluesData,
+    legendWidth,
   }) {
     const canvasElements = (
       <BoxplotTrackComponents
@@ -921,6 +932,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         dataIdx={trackState.dataIdx}
         unit={""}
         windowWidth={windowWidth}
+        legendWidth={legendWidth}
+        xvaluesData={xvaluesData}
       />
     );
     return canvasElements;
@@ -933,6 +946,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     xvaluesData,
+    initialLoad,
+    legendWidth,
     windowWidth,
   }) {
     const canvasElements = (
@@ -950,7 +965,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         xvaluesData={xvaluesData}
+        dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth}
       />
     );
     return canvasElements;
@@ -962,6 +980,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    initialLoad,
     windowWidth,
   }) {
     const canvasElements = (
@@ -969,13 +988,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
         data={formattedData}
         options={configOptions}
         viewWindow={
-          new OpenInterval(trackState.startWindow, trackState.startWindow * 2)
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
         }
         visRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
       />
     );
@@ -990,12 +1012,18 @@ export const displayModeComponentMap: { [key: string]: any } = {
     svgHeight,
     updatedLegend,
     windowWidth,
+    placeFeature,
   }) {
     const canvasElements = (
       <DynamicBedTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
+        placeFeature={placeFeature}
         visRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
@@ -1014,19 +1042,29 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    xvaluesData,
+    initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <DynamicNumericalTrack
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
+        xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth}
       />
     );
     return canvasElements;
@@ -1039,7 +1077,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    xvaluesData,
+    initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <DynamicplotTrackComponent
@@ -1050,8 +1091,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
+        xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth}
       />
     );
     return canvasElements;
@@ -1071,6 +1115,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     onClose,
     xvaluesData,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <FiberTrackComponent
@@ -1098,6 +1143,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
         windowWidth={windowWidth}
+        legendWidth={legendWidth ? legendWidth : 120}
       />
     );
 
@@ -1113,6 +1159,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <InteractionTrackComponent
@@ -1131,6 +1178,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         dataIdx={trackState.dataIdx}
         initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth ? legendWidth : 120}
       />
     );
 
@@ -1289,7 +1337,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             style={{
               display: "flex",
               position: "relative",
-              width: drawData.windowWidth + 120,
+              width: drawData.windowWidth + drawData.legendWidth,
               overflow: "hidden",
             }}
           >
@@ -1391,7 +1439,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               position: "relative",
 
               overflow: "hidden",
-              width: drawData.trackState.visWidth / 3 + 120,
+              width: drawData.trackState.visWidth / 3 + drawData.legendWidth,
             }
           : {};
         let curEleStyle: any = drawData.configOptions.forceSvg
@@ -1471,6 +1519,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     errorInfo,
     handleRetryFetchTrack,
+    legendWidth,
   }) {
     const legendProps = {
       height: 40,
@@ -1480,6 +1529,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         : trackModel.options.label
           ? trackModel.options.label
           : "",
+      legendWidth: legendWidth ? legendWidth : 120,
     };
     if (updatedLegend) {
       updatedLegend.current = legendProps;
@@ -1578,9 +1628,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
 };
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
-  const { trackModel, configOptions, genesArr, trackState } = drawData;
+  const { trackModel, configOptions, trackState, legendWidth } = drawData;
 
   const trackType = trackModel.type;
+
+  // The cache holds raw fetched data; when a view draws straight from it (no
+  // precomputed placeFeature/xvalues), format it into model objects here,
+  // lazily. Raw numerical tracks are left untouched.
+  let genesArr = drawData.genesArr;
+  if (Array.isArray(genesArr) && genesArr.length > 0) {
+    genesArr =
+      genesArr[0] && genesArr[0].dataCache !== undefined
+        ? formatCombinedData(genesArr, trackType)
+        : getFormattedFromCache(genesArr, trackType);
+    drawData.genesArr = genesArr;
+  }
 
   if (trackState?.visRegion)
     trackState["visRegion"] = objToInstanceAlign(trackState.visRegion);
@@ -1591,9 +1653,10 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     updatedLegend: drawData.updatedLegend,
     trackModel: drawData.trackModel,
     initialLoad: drawData.initialLoad,
+    legendWidth: drawData.legendWidth,
     windowWidth:
       configOptions.forceSvg || configOptions.packageVersion
-        ? 120 + drawData.windowWidth
+        ? legendWidth + drawData.windowWidth
         : drawData.windowWidth,
     ...extraParams,
   });
@@ -1662,8 +1725,11 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     (configOptions.displayMode === "full" &&
       !excludedFromFull.has(trackType)) ||
     (trackType === "omeroidr" && configOptions.displayMode !== "density");
-
-  if (isFullMode) {
+  if (trackType === "boxplot" || trackType === "qbed") {
+    return displayModeComponentMap[trackType](createFullParams());
+  } else if (trackType === "dbedgraph") {
+    return displayModeComponentMap[trackType](createFullParams());
+  } else if (isFullMode) {
     return displayModeComponentMap.full(
       createFullParams({
         ROW_HEIGHT: configOptions.rowHeight
@@ -1727,12 +1793,11 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     simpleTracks.has(trackType)
   ) {
     return displayModeComponentMap[trackType](createFullParams());
-  } else if (trackType === "dynamichic") {
-    return displayModeComponentMap.dynamichic(
-      createFullParams({
-        configOptions: { ...configOptions, displayMode: "heatmap" },
-      }),
-    );
+  } else if (trackType === "dynamichic" || trackType === "dynamiclongrange") {
+    // displayMode comes from the config menu (heatmap/arc) and already
+    // defaults to heatmap via DEFAULT_OPTIONS — pinning it here made picking
+    // arc a no-op.
+    return displayModeComponentMap.dynamichic(createFullParams());
   } else if (dynamicTracks.has(trackType)) {
     const displayType =
       trackType === "dynamiclongrange" ? "dynamichic" : trackType;
@@ -1742,7 +1807,6 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       }),
     );
   }
-
   // Density tracks (fallback)
   else if (
     densityTracks.has(trackType) ||
@@ -1891,7 +1955,7 @@ function formatRefBedData(
 
     for (const record of genesArr) {
       const gene = new Gene({
-        chrom: record.chr,
+        chrom: normalizeChrName(record.chr),
         txStart: record.start,
         txEnd: record.end,
         id: record[7],
@@ -1924,7 +1988,7 @@ function formatRefBedData(
   return genesArr.map(
     (record) =>
       new Gene({
-        chrom: record.chr,
+        chrom: normalizeChrName(record.chr),
         txStart: record.start,
         txEnd: record.end,
         id: record[7],
@@ -1951,7 +2015,11 @@ function formatBedColorData(
     for (const record of genesArr) {
       const feature = new ColoredFeature(
         "",
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         "+",
       ).withColor(record[3]);
 
@@ -1974,7 +2042,11 @@ function formatBedColorData(
   return genesArr.map((record) =>
     new ColoredFeature(
       "",
-      new ChromosomeInterval(record.chr, record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       "+",
     ).withColor(record[3]),
   );
@@ -1991,7 +2063,11 @@ function formatBedData(
     for (const record of genesArr) {
       const feature = new ColoredFeature(
         record[3],
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         record[5],
       ).withColor(record[3]);
 
@@ -2014,7 +2090,11 @@ function formatBedData(
   return genesArr.map((record) =>
     new ColoredFeature(
       "",
-      new ChromosomeInterval(record.chr, record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       "+",
     ).withColor(record[3]),
   );
@@ -2090,7 +2170,7 @@ function formatBigBedData(
 
     for (const record of genesArr) {
       // Handle both old format (segment/min/max) and new format (chr/start/end)
-      const chr = record.segment || record.chr;
+      const chr = normalizeChrName(record.segment || record.chr);
       const start = record.min ?? record.start;
       const end = record.max ?? record.end;
 
@@ -2131,7 +2211,7 @@ function formatBigBedData(
 
   return genesArr.map((record) => {
     // Handle both old format (segment/min/max) and new format (chr/start/end)
-    const chr = record.segment || record.chr;
+    const chr = normalizeChrName(record.segment || record.chr);
     const start = record.min ?? record.start;
     const end = record.max ?? record.end;
 
@@ -2166,7 +2246,7 @@ function formatBigBedColorData(
 
     for (const record of genesArr) {
       // Handle both old format (segment/min/max) and new format (chr/start/end)
-      const chr = record.segment || record.chr;
+      const chr = normalizeChrName(record.segment || record.chr);
       const start = record.min ?? record.start;
       const end = record.max ?? record.end;
 
@@ -2209,7 +2289,7 @@ function formatBigBedColorData(
 
   return genesArr.map((record) => {
     // Handle both old format (segment/min/max) and new format (chr/start/end)
-    const chr = record.segment || record.chr;
+    const chr = normalizeChrName(record.segment || record.chr);
     const start = record.min ?? record.start;
     const end = record.max ?? record.end;
 
@@ -2274,7 +2354,11 @@ function formatCategoricalData(
     for (const record of genesArr) {
       const feature = new Feature(
         record[BedColumnIndex.CATEGORY],
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       );
 
       for (let i = 0; i < regionLoci.length; i++) {
@@ -2297,7 +2381,11 @@ function formatCategoricalData(
     (record) =>
       new Feature(
         record[BedColumnIndex.CATEGORY],
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ),
   );
 }
@@ -2313,7 +2401,11 @@ function formatJasper(
       const rest = record.rest.split("\t");
       const feature = new JasparFeature(
         rest[3],
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         rest[2],
       ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
 
@@ -2337,7 +2429,11 @@ function formatJasper(
     const rest = record.rest.split("\t");
     return new JasparFeature(
       rest[3],
-      new ChromosomeInterval(record.chr, record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       rest[2],
     ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
   });
@@ -2353,7 +2449,11 @@ function formatModBedData(
     for (const record of genesArr) {
       const fiber = new Fiber(
         record[3],
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
         record[5],
       ).withFiber(parseNumberString(record[4]), record[6], record[7]);
 
@@ -2376,24 +2476,53 @@ function formatModBedData(
   return genesArr.map((record) =>
     new Fiber(
       record[3],
-      new ChromosomeInterval(record.chr, record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
       record[5],
     ).withFiber(parseNumberString(record[4]), record[6], record[7]),
   );
 }
+// Reverse index of chromAlias: maps any file-native chromosome name (e.g. "1",
+// "MT", "NC_000001.11") back to the browser's naming (e.g. "chr1", "chrM").
+const aliasToRefName: { [alias: string]: string } = (() => {
+  const map: { [alias: string]: string } = {};
+  for (const refName in chromAlias) {
+    map[refName] = refName;
+    for (const alias of chromAlias[refName]) {
+      map[alias] = refName;
+    }
+  }
+  return map;
+})();
+
+// Normalizes a feature's chromosome name to the browser's naming convention.
+// Unknown names (e.g. non-human scaffolds) are returned unchanged.
+function normalizeChrName(chr: string): string {
+  return aliasToRefName[chr] ?? chr;
+}
+
 function formatBigWigData(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
   //dynseq, boxplot track also
+  // record.chr is stamped from the fetched locus group (see
+  // normalizeLocusGroupedData); the raw bigwig features carry no chr of their own.
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 
     for (const record of genesArr) {
       const feature = new NumericalFeature(
         "",
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ).withValue(record.score);
 
       for (let i = 0; i < regionLoci.length; i++) {
@@ -2415,33 +2544,64 @@ function formatBigWigData(
   return genesArr.map((record) =>
     new NumericalFeature(
       "",
-      new ChromosomeInterval(record.chr, record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
     ).withValue(record.score),
   );
 }
-function formatMatplotData(
+// Multi-file tracks (matplot/dynamic/dynamicbed) share the same nested shape:
+// `genesArr` is an array of files, and each file is an array of per-locus groups
+// `{ chr, data }` (or, for legacy data, flat records that already carry `chr`).
+// These helpers read `chr` straight from the group so we never stamp (and thus
+// never mutate) the raw records — which are read-only once they cross the worker
+// boundary. `makeFeature(record, chr)` builds the per-track feature.
+function forEachGroupRecord(
+  file: any[],
+  cb: (record: any, chr: string) => void,
+) {
+  if (!Array.isArray(file)) {
+    return;
+  }
+  for (const entry of file) {
+    if (isLocusGroup(entry)) {
+      for (const record of entry.data) {
+        cb(record, entry.chr);
+      }
+    } else if (Array.isArray(entry)) {
+      // Per-region groups nested inside a sub-track bucket (produced by
+      // groupTracksArrMatPlot). Recurse rather than treating the array as a
+      // record.
+      forEachGroupRecord(entry, cb);
+    } else if (entry && entry.dataCache) {
+      forEachGroupRecord(entry.dataCache, cb);
+    } else if (entry) {
+      cb(entry, entry.chr);
+    }
+  }
+}
+
+function formatMultiFileGrouped(
   genesArr: any[],
   initialLoad: boolean,
-  regionLoci?: Array<any>,
+  regionLoci: Array<any> | undefined,
+  makeFeature: (record: any, chr: string) => any,
 ) {
   if (initialLoad && regionLoci?.length) {
-    const groupResult: any = regionLoci.map(() => []);
+    // `[region][file] = features` — grouped by region first, matching the shape
+    // the initial multi-region placement consumes.
+    const groupResult: any[][] = regionLoci.map(() => []);
 
-    genesArr.forEach((geneArr: any[]) => {
-      const regionGroups: any = regionLoci.map(() => []);
+    genesArr.forEach((file: any[]) => {
+      const perRegion: any[][] = regionLoci.map(() => []);
 
-      geneArr.forEach((record) => {
-        const unsafeValue = Number(record[3]);
-        const value = record.score
-          ? record.score
-          : Number.isFinite(unsafeValue)
-            ? unsafeValue
-            : 0;
-        const feature = new NumericalFeature(
-          "",
-          new ChromosomeInterval(record.chr, record.start, record.end),
-        ).withValue(value);
-
+      forEachGroupRecord(file, (record, chr) => {
+        const feature = makeFeature(record, chr);
+        if (!feature) {
+          return;
+        }
         regionLoci.forEach((region, index) => {
           if (
             checkOverlapWithRegionGroup(
@@ -2451,12 +2611,12 @@ function formatMatplotData(
               region,
             )
           ) {
-            regionGroups[index].push(feature);
+            perRegion[index].push(feature);
           }
         });
       });
 
-      regionGroups.forEach((group, index) => {
+      perRegion.forEach((group, index) => {
         groupResult[index].push(group);
       });
     });
@@ -2464,20 +2624,39 @@ function formatMatplotData(
     return groupResult;
   }
 
-  return genesArr.map((geneArr) =>
-    geneArr.map((record) => {
+  return genesArr.map((file: any[]) => {
+    const features: any[] = [];
+    forEachGroupRecord(file, (record, chr) => {
+      const feature = makeFeature(record, chr);
+      if (feature) {
+        features.push(feature);
+      }
+    });
+    return features;
+  });
+}
+
+function formatMatplotData(
+  genesArr: any[],
+  initialLoad: boolean,
+  regionLoci?: Array<any>,
+) {
+  return formatMultiFileGrouped(
+    genesArr,
+    initialLoad,
+    regionLoci,
+    (record, chr) => {
       const unsafeValue = Number(record[3]);
       const value = record.score
         ? record.score
         : Number.isFinite(unsafeValue)
           ? unsafeValue
           : 0;
-
       return new NumericalFeature(
         "",
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(normalizeChrName(chr), record.start, record.end),
       ).withValue(value);
-    }),
+    },
   );
 }
 
@@ -2490,24 +2669,27 @@ function formatMethylcData(
     const regionGroups: any[][] = regionLoci.map(() => []);
 
     for (const record of genesArr) {
-      const methylc = new MethylCRecord(record);
+      record.chr = normalizeChrName(record.chr);
       for (let i = 0; i < regionLoci.length; i++) {
         if (
           checkOverlapWithRegionGroup(
-            methylc.locus.chr,
-            methylc.locus.start,
-            methylc.locus.end,
+            record.chr,
+            record.start,
+            record.end,
             regionLoci[i],
           )
         ) {
-          regionGroups[i].push(methylc);
+          regionGroups[i].push(record);
         }
       }
     }
     return regionGroups;
   }
 
-  return genesArr.map((record) => new MethylCRecord(record));
+  return genesArr.map((record) => {
+    record.chr = normalizeChrName(record.chr);
+    return record;
+  });
 }
 
 function formatDynamicBed(
@@ -2515,41 +2697,15 @@ function formatDynamicBed(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    return genesArr.map((geneArr: any[]) => {
-      const regionGroups: any[][] = regionLoci.map(() => []);
-
-      for (const record of geneArr) {
-        const feature = new Feature(
-          record[3],
-          new ChromosomeInterval(record.chr, record.start, record.end),
-        );
-
-        for (let i = 0; i < regionLoci.length; i++) {
-          if (
-            checkOverlapWithRegionGroup(
-              feature.locus.chr,
-              feature.locus.start,
-              feature.locus.end,
-              regionLoci[i],
-            )
-          ) {
-            regionGroups[i].push(feature);
-          }
-        }
-      }
-      return regionGroups;
-    });
-  }
-
-  return genesArr.map((geneArr: any) =>
-    geneArr.map(
-      (record) =>
-        new Feature(
-          record[3],
-          new ChromosomeInterval(record.chr, record.start, record.end),
-        ),
-    ),
+  return formatMultiFileGrouped(
+    genesArr,
+    initialLoad,
+    regionLoci,
+    (record, chr) =>
+      new Feature(
+        record[3],
+        new ChromosomeInterval(normalizeChrName(chr), record.start, record.end),
+      ),
   );
 }
 function formatDynamicLongRange(genesArr: any[]) {
@@ -2564,7 +2720,11 @@ function formatDynamicLongRange(genesArr: any[]) {
           const end = Number.parseInt(regexMatch[3], 10);
           const score = Number.parseFloat(record[3].split(",")[1]);
           return new GenomeInteraction(
-            new ChromosomeInterval(record.chr, record.start, record.end),
+            new ChromosomeInterval(
+              normalizeChrName(record.chr),
+              record.start,
+              record.end,
+            ),
             new ChromosomeInterval(chr, start, end),
             score,
           );
@@ -2588,6 +2748,7 @@ function formatqBedData(
     const regionGroups: any[][] = regionLoci.map(() => []);
 
     for (const record of genesArr) {
+      record.chr = normalizeChrName(record.chr);
       const qbed = new QBed(record);
       for (let i = 0; i < regionLoci.length; i++) {
         if (
@@ -2605,47 +2766,25 @@ function formatqBedData(
     return regionGroups;
   }
 
-  return genesArr.map((record) => new QBed(record));
+  return genesArr.map((record) => {
+    record.chr = normalizeChrName(record.chr);
+    return new QBed(record);
+  });
 }
 function formatDynamic(
   genesArr: any[],
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  if (initialLoad && regionLoci && regionLoci.length > 0) {
-    return genesArr.map((geneArr: any[]) => {
-      const regionGroups: any[][] = regionLoci.map(() => []);
-
-      for (const record of geneArr) {
-        const feature = new NumericalFeature(
-          "",
-          new ChromosomeInterval(record.chr, record.start, record.end),
-        ).withValue(record.score);
-
-        for (let i = 0; i < regionLoci.length; i++) {
-          if (
-            checkOverlapWithRegionGroup(
-              feature.locus.chr,
-              feature.locus.start,
-              feature.locus.end,
-              regionLoci[i],
-            )
-          ) {
-            regionGroups[i].push(feature);
-          }
-        }
-      }
-      return regionGroups;
-    });
-  }
-
-  return genesArr.map((geneArr: any) =>
-    geneArr.map((record) =>
+  return formatMultiFileGrouped(
+    genesArr,
+    initialLoad,
+    regionLoci,
+    (record, chr) =>
       new NumericalFeature(
         "",
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(normalizeChrName(chr), record.start, record.end),
       ).withValue(record.score),
-    ),
   );
 }
 
@@ -2661,7 +2800,11 @@ function formatBedgraph(
     const value = Number.isFinite(unsafeValue) ? unsafeValue : 0;
     return new NumericalFeature(
       "",
-      new ChromosomeInterval(record.chr, record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
     ).withValue(value);
   });
 
@@ -2703,7 +2846,11 @@ function formatdBedGraph(
       }
       const feature = new NumericalArrayFeature(
         "",
-        new ChromosomeInterval(record.chr, record.start, record.end),
+        new ChromosomeInterval(
+          normalizeChrName(record.chr),
+          record.start,
+          record.end,
+        ),
       ).withValues(parsedValue);
 
       for (let i = 0; i < regionLoci.length; i++) {
@@ -2732,7 +2879,11 @@ function formatdBedGraph(
     }
     return new NumericalArrayFeature(
       "",
-      new ChromosomeInterval(record.chr, record.start, record.end),
+      new ChromosomeInterval(
+        normalizeChrName(record.chr),
+        record.start,
+        record.end,
+      ),
     ).withValues(parsedValue);
   });
 }
@@ -2805,7 +2956,11 @@ function formatLongRange(genesArr: any[]) {
         const end = Number.parseInt(regexMatch[3], 10);
         const score = Number.parseFloat(record[3].split(",")[1]);
         return new GenomeInteraction(
-          new ChromosomeInterval(record.chr, record.start, record.end),
+          new ChromosomeInterval(
+            normalizeChrName(record.chr),
+            record.start,
+            record.end,
+          ),
           new ChromosomeInterval(chr, start, end),
           score,
         );
@@ -2853,6 +3008,71 @@ const formatFunctions: {
   vcf: formatVcf,
   longrange: formatLongRange,
 };
+// A per-locus source returns its data grouped as `{ chr, data }[]` (one group
+// per requested locus) instead of stamping every feature with `chr`. That keeps
+// the chromosome name out of every feature as the data crosses the worker
+// boundary. Here we flatten those groups back into plain records, stamping each
+// record with its group's chr, so the existing per-type formatters (which read
+// `record.chr` / `record.CHROM`) work unchanged.
+function isLocusGroup(x: any): boolean {
+  return (
+    x !== null &&
+    typeof x === "object" &&
+    !Array.isArray(x) &&
+    Array.isArray(x.data) &&
+    "chr" in x
+  );
+}
+
+function flattenLocusGroups(groups: any[]): any[] {
+  const flat: any[] = [];
+  for (const group of groups) {
+    if (isLocusGroup(group)) {
+      for (const record of group.data) {
+        // Source records can be frozen — the screenshot path passes data
+        // through Redux/Immer, which deep-freezes state — so stamp onto a
+        // shallow copy in that case instead of mutating in place (which throws
+        // on a read-only property). Non-frozen records keep the cheap in-place
+        // path used during normal rendering.
+        const stamped =
+          record !== null &&
+          typeof record === "object" &&
+          Object.isFrozen(record)
+            ? { ...record }
+            : record;
+        stamped.chr = group.chr;
+        if (stamped.CHROM !== undefined) {
+          stamped.CHROM = group.chr;
+        }
+        flat.push(stamped);
+      }
+    } else {
+      flat.push(group);
+    }
+  }
+  return flat;
+}
+
+// Normalizes raw source data (which may be grouped by locus) into the flat
+// record shape the formatters expect. Handles single-file tracks (a flat list
+// of groups) and multi-file tracks such as matplot/dynamic (a list of per-file
+// group lists). Legacy flat data passes through untouched.
+function normalizeLocusGroupedData(genesArr: any[]): any[] {
+  if (!Array.isArray(genesArr) || genesArr.length === 0) {
+    return genesArr;
+  }
+  const first = genesArr[0];
+  if (isLocusGroup(first)) {
+    return flattenLocusGroups(genesArr);
+  }
+  if (Array.isArray(first)) {
+    return genesArr.map((subTrack) =>
+      Array.isArray(subTrack) ? flattenLocusGroups(subTrack) : subTrack,
+    );
+  }
+  return genesArr;
+}
+
 export function formatDataByType(
   genesArr: any[],
   type: string,
@@ -2878,11 +3098,83 @@ export function formatDataByType(
       }
     }
   }
+  // matplot/dynamic/dynamicbed consume the per-locus grouped shape
+  // (`{ chr, data }` per file) directly, reading chr from each group without
+  // mutating records, so they skip the flattening normalize step.
+  const normalizedData = dynamicMatplotTracks.has(type)
+    ? genesArr
+    : normalizeLocusGroupedData(genesArr);
+
   const formatter = formatFunctions[type];
 
   if (formatter) {
-    return formatter(genesArr, initialLoad, regionLoci);
+    return formatter(normalizedData, initialLoad, regionLoci);
   } else {
     return initialLoad ? [[], [], []] : genesArr; //fallback if no formatter is found
   }
+}
+
+// Track types whose aggregation only needs a record's chr/start/end/value, so
+// they can be cached as raw records and aggregated straight from the cache
+// (via the getFeature* accessors) without ever building Feature objects. These
+// are the dense numerical density tracks — the biggest memory savers.
+export const rawAggregatableTracks: { [type: string]: string } = {
+  bigwig: "",
+  bedgraph: "",
+  dynseq: "",
+  methylc: "",
+};
+
+// Annotation tracks that render straight from raw records (via the getFeature*
+// accessors) instead of Feature model objects — the placer/aggregator read
+// chr/start/end and the renderer reads name/strand off the raw record, so no
+// formatting step is needed.
+export const rawRenderTracks: { [type: string]: string } = {
+  dynamicbed: "",
+  matplot: "",
+};
+
+/**
+ * Lazily formats a cache entry's raw data into model objects, memoized by the
+ * raw array. Numerical raw-aggregatable tracks (bigwig/bedgraph/dynseq) never
+ * need models and are returned untouched.
+ */
+const formattedByRawData = new WeakMap<object, any[]>();
+
+export function getFormattedFromCache(rawData: any, type: string): any {
+  if (
+    type in rawAggregatableTracks ||
+    !rawData ||
+    typeof rawData !== "object"
+  ) {
+    return rawData;
+  }
+  let formatted = formattedByRawData.get(rawData);
+  if (!formatted) {
+    const result = formatDataByType(rawData, type);
+    formatted = Array.isArray(result) ? result : [];
+    formattedByRawData.set(rawData, formatted);
+  }
+  return formatted;
+}
+
+/**
+ * Formats the per-region cache entries a track hands to the aggregator/draw.
+ * `combinedData` is an array of cache entries shaped `{ dataCache, ... }`; each
+ * entry's raw `dataCache` is replaced with its lazily-formatted models. Raw
+ * numerical tracks pass through unchanged.
+ */
+export function formatCombinedData(combinedData: any, type: string): any {
+  if (
+    type in rawAggregatableTracks ||
+    type in rawRenderTracks ||
+    !Array.isArray(combinedData)
+  ) {
+    return combinedData;
+  }
+  return combinedData.map((entry: any) =>
+    entry && entry.dataCache
+      ? { ...entry, dataCache: getFormattedFromCache(entry.dataCache, type) }
+      : entry,
+  );
 }

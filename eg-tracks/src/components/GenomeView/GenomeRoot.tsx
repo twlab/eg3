@@ -13,7 +13,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 3;
+const MAX_WORKERS = 8;
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -323,7 +323,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           />
         </div>
       ) : size.width > 0 ? (
-        <div style={{ width: size.width - 20, height: size.height - 45 }}>
+        <div style={{ width: size.width - 20, height: window.innerHeight }}>
           <FlexLayout.Layout model={model} factory={factory} />
         </div>
       ) : (

@@ -1,6 +1,7 @@
-import React, { MouseEvent } from "react";
+import React, { useMemo, useRef } from "react";
 import _ from "lodash";
-import { scaleLinear } from "d3-scale";
+import memoizeOne from "memoize-one";
+import { scaleLinear, scalePow } from "d3-scale";
 import { PixiHeatmap } from "./PixiHeatmap";
 import PixiArc from "./PixiArc";
 import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
@@ -34,12 +35,18 @@ interface DynamicInteractionTrackComponentsProps {
   viewWindow: any;
   updatedLegend?: any;
   dataIdx: number;
+  initialLoad?: any;
+  windowWidth?: number;
 }
+
+// Exponent for the AUTO-scale opacity curve. 1 is a plain linear ramp; lower
+// values brighten the low/mid scores. 0.5 is a sqrt curve.
+const OPACITY_GAMMA = 0.5;
 
 export const DEFAULT_OPTIONS = {
   color: "#B8008A",
   color2: "#006385",
-  backgroundColor: "var(--bg-color)",
+  backgroundColor: "white",
   scoreScale: ScaleChoices.AUTO,
   scoreMax: 10,
   scoreMin: 0,
@@ -52,94 +59,114 @@ export const DEFAULT_OPTIONS = {
   displayMode: DynamicInteractionDisplayMode.HEATMAP,
 };
 
-class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInteractionTrackComponentsProps> {
-  public featurePlacer: FeaturePlacer;
-  scales: any;
+const DynamicInteractionTrackComponents: React.FC<
+  DynamicInteractionTrackComponentsProps
+> = (props) => {
+  const currentViewDataIdx = useRef(0);
+  const currentScale: any = useRef(null);
+  const currentViewWindow = useRef({ start: 0, end: 1 });
+  const currentVisualizer = useRef(null);
+  const currentViewOptions = useRef({});
+  const currentWindowWidth = useRef<any>(0);
 
-  constructor(props: DynamicInteractionTrackComponentsProps) {
-    super(props);
-    this.scales = null;
-    this.featurePlacer = new FeaturePlacer();
-    // this.featurePlacer.placeInteractions = memoizeOne(this.featurePlacer.placeInteractions);
-    // this.computeScale = memoizeOne(this.computeScale);
-  }
+  const {
+    data,
+    trackModel,
+    visRegion,
+    width,
+    viewWindow,
+    options,
+    viewer3dNumFrames,
+    updatedLegend,
+    dataIdx,
+    initialLoad,
+    windowWidth,
+  } = props;
 
-  computeScale = () => {
-    const { scoreScale, scoreMin, scoreMax } = this.props.options;
-    const maxValues = this.props.data.map((d: any) => {
-      const maxObj: any = _.maxBy(d, "score");
-      return maxObj ? maxObj.score : 1;
-    });
-    const maxScore = _.max(maxValues);
-    if (scoreScale === ScaleChoices.AUTO) {
-      return {
-        opacityScale: scaleLinear()
-          .domain([0, maxScore])
-          .range([0, 1])
-          .clamp(true),
-        min: 0,
-        max: maxScore,
-      };
-    } else {
-      if (
-        scoreMin !== undefined &&
-        scoreMax !== undefined &&
-        scoreMin >= scoreMax
-      ) {
-        console.error("Score min cannot be greater than Score max");
+  const featurePlacer = useMemo(() => new FeaturePlacer(), []);
+
+  const computeScale = useMemo(() => {
+    return memoizeOne(() => {
+      const { scoreScale, scoreMin, scoreMax } = options;
+      // Scores can be negative (sign picks color2 at draw time), so the scale
+      // is built on magnitude — keyed on the raw score, an all-negative frame
+      // would give an inverted domain and render nothing.
+      const maxValues = data.map((d: any) => {
+        const maxObj: any = _.maxBy(d, (i: any) => Math.abs(i.score));
+        return maxObj ? Math.abs(maxObj.score) : 1;
+      });
+      // `_.max` is undefined for an empty frame list — fall back rather than
+      // handing d3 an undefined domain bound.
+      const maxScore = _.max(maxValues) ?? 1;
+      if (scoreScale === ScaleChoices.AUTO) {
         return {
-          opacityScale: scaleLinear()
-            .domain([scoreMax - 1, scoreMax])
+          // Contact scores span a wide range and the max is taken across every
+          // frame, so a linear ramp leaves most cells at a near-zero alpha. A
+          // sqrt curve lifts the low/mid end while keeping the order intact and
+          // the top of the range at full opacity.
+          opacityScale: scalePow()
+            .exponent(OPACITY_GAMMA)
+            .domain([0, maxScore])
             .range([0, 1])
             .clamp(true),
-          min: scoreMax - 1,
+          min: 0,
+          max: maxScore,
+        };
+      } else {
+        if (
+          scoreMin !== undefined &&
+          scoreMax !== undefined &&
+          scoreMin >= scoreMax
+        ) {
+          console.error("Score min cannot be greater than Score max");
+          return {
+            opacityScale: scaleLinear()
+              .domain([scoreMax - 1, scoreMax])
+              .range([0, 1])
+              .clamp(true),
+            min: scoreMax - 1,
+            max: scoreMax,
+          };
+        }
+        return {
+          opacityScale: scaleLinear()
+            .domain([scoreMin!, scoreMax!])
+            .range([0, 1])
+            .clamp(true),
+          min: scoreMin,
           max: scoreMax,
         };
       }
-      return {
-        opacityScale: scaleLinear()
-          .domain([scoreMin!, scoreMax!])
-          .range([0, 1])
-          .clamp(true),
-        min: scoreMin,
-        max: scoreMax,
-      };
-    }
-  };
+    });
+  }, [options, data]);
 
-  showTooltip(event: MouseEvent, interaction: GenomeInteraction) {
-    // Implement your tooltip logic here
-    const tooltip = (
-      <div>
-        <div>Locus1: {interaction.locus1.toString()}</div>
-        <div>Locus2: {interaction.locus2.toString()}</div>
-        <div>Score: {interaction.score}</div>
-      </div>
-    );
-    // Render tooltip as needed
+  const scales = computeScale();
+
+  if (updatedLegend) {
+    updatedLegend.current = { trackModel, height: options.height };
   }
 
-  render() {
-    const {
-      data,
-      trackModel,
-      visRegion,
-      width,
-      viewWindow,
-      options,
-      viewer3dNumFrames,
-      updatedLegend,
-    } = this.props;
-    this.scales = this.computeScale();
+  let visualizer;
 
+  if (
+    initialLoad ||
+    (options as any).forceSvg ||
+    (dataIdx === currentViewDataIdx.current &&
+      !_.isEqual(viewWindow, currentViewWindow.current) &&
+      (!(scales.max === currentScale.current?.max) ||
+        !(scales.min === currentScale.current?.min))) ||
+    dataIdx !== currentViewDataIdx.current ||
+    !_.isEqual(options, currentViewOptions.current) ||
+    windowWidth !== currentWindowWidth.current
+  ) {
     const visualizerProps = {
       placedInteractionsArray: data.map((d: any) =>
-        this.featurePlacer.placeInteractions(d, visRegion, width),
+        featurePlacer.placeInteractions(d, visRegion, width),
       ),
       viewWindow,
       width,
       height: options.height,
-      opacityScale: this.scales.opacityScale,
+      opacityScale: scales.opacityScale,
       color: options.color,
       color2: options.color2,
       backgroundColor: options.backgroundColor,
@@ -153,19 +180,24 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       useDynamicColors: options.useDynamicColors,
       viewer3dNumFrames,
     };
-    let visualizer;
-    if (updatedLegend) {
-      updatedLegend.current = { trackModel, height: options.height };
-    }
 
     if (options.displayMode === DynamicInteractionDisplayMode.ARC) {
       visualizer = <PixiArc {...visualizerProps} />;
     } else {
       visualizer = <PixiHeatmap {...visualizerProps} />;
     }
-
-    return visualizer;
+  } else {
+    visualizer = currentVisualizer.current;
   }
-}
+
+  currentWindowWidth.current = windowWidth;
+  currentVisualizer.current = visualizer;
+  currentViewDataIdx.current = dataIdx;
+  currentViewWindow.current = viewWindow;
+  currentScale.current = scales;
+  currentViewOptions.current = options;
+
+  return visualizer;
+};
 
 export default DynamicInteractionTrackComponents;

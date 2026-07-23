@@ -60,6 +60,8 @@ interface FiberTrackProps {
   onClose: any;
   xvaluesData?: any;
   dataIdx?: number;
+  windowWidth?: number;
+  legendWidth: number;
 }
 
 interface AggregatedFiber {
@@ -99,13 +101,11 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
     width,
     options,
     trackModel,
-    getAnnotationTrack,
     trackState,
-    renderTooltip,
     xvaluesData,
-    updatedLegend,
     viewWindow,
     windowWidth,
+    legendWidth,
   } = props;
 
   /**
@@ -279,6 +279,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
         options.displayMode === FiberDisplayModes.SUMMARY
           ? scales.pctToY
           : scales.countToY,
+      legendWidth: legendWidth,
     };
     if (updatedLegend) {
       updatedLegend.current = legendProps;
@@ -307,7 +308,9 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
           transform: `translateX(${-viewWindow.start}px)`,
         }
       : {};
-    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+    let hoverStyle: any = options.packageVersion
+      ? { marginLeft: legendWidth }
+      : {};
     return (
       <React.Fragment>
         {!forceSvg ? (
@@ -323,6 +326,7 @@ const FiberTrackComponent: React.FC<FiberTrackProps> = (props) => {
             <HoverToolTip
               data={xMap}
               scale={scales}
+              legendWidth={legendWidth}
               windowWidth={width}
               trackType={"modbed"}
               trackModel={trackModel}

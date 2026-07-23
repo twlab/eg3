@@ -21,6 +21,8 @@ interface SquareDisplayProps {
   bothAnchorsInView?: boolean;
   legend?: any;
   options: any;
+  windowWidth: number;
+  legendWidth: number;
 }
 
 export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
@@ -149,6 +151,8 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
       viewWindow,
       options,
       legend,
+      windowWidth,
+      legendWidth,
     } = this.props;
 
     let curParentStyle: any = forceSvg
@@ -156,7 +160,7 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
           position: "relative",
 
           overflow: "hidden",
-          width: windowWidth / 3,
+          width: windowWidth,
         }
       : {};
     let curEleStyle: any = forceSvg
@@ -165,7 +169,9 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
           transform: `translateX(${-viewWindow.start}px)`,
         }
       : {};
-    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+    let hoverStyle: any = options.packageVersion
+      ? { marginLeft: legendWidth ? legendWidth : 120 }
+      : {};
     return (
       <React.Fragment>
         {!forceSvg ? (

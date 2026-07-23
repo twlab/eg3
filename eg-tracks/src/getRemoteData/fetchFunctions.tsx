@@ -254,7 +254,7 @@ export const chromAlias: Record<string, Set<string>> = {
     "CM000686.2",
     "NC_000024.10",
   ]),
-  chrM: new Set(["M", "NC_001807.4", "J01415.2", "NC_012920.1"]),
+  chrM: new Set(["M", "MT", "NC_001807.4", "J01415.2", "NC_012920.1"]),
 };
 const componentMap: { [key: string]: any } = {
   geneannotation: "",
@@ -429,18 +429,35 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
           ).then((subTrackResults) => {
             let responses: Array<any> | { [key: string]: any } = [];
             let error: any = null;
+            let fileInfos: any = null;
             for (const response of subTrackResults) {
               if (isFetchError(response)) {
                 error = response.error;
                 responses = [];
                 break;
               }
-              responses.push(response);
+              // dynamichic's sub-tracks are hic files, which resolve to
+              // `{ data, fileInfos }` instead of a plain records array. Unwrap
+              // so each sub-track contributes its interactions directly, the
+              // same shape a lone hic track ends up with.
+              if (
+                trackType === "dynamichic" &&
+                response &&
+                typeof response === "object" &&
+                !Array.isArray(response) &&
+                "data" in response
+              ) {
+                fileInfos = fileInfos ?? response.fileInfos;
+                responses.push(response.data);
+              } else {
+                responses.push(response);
+              }
             }
-
+            console.log(responses, item);
             return {
               name: trackType,
               result: responses,
+              fileInfos,
               id: id,
               metadata: item.metadata,
               trackModel: item,
@@ -694,7 +711,14 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
             trackModel: item,
           });
 
-          const records = responds.map((record) => {
+          // TabixSource now returns per-locus groups ({ chr, data }); flatten
+          // back to the flat record list the alignment parser expects (matches
+          // the old `_.flatten(dataForEachLocus)` shape).
+          const flatRecords = responds.flatMap((entry: any) =>
+            entry && Array.isArray(entry.data) ? entry.data : [entry],
+          );
+
+          const records = flatRecords.map((record) => {
             const parsedData = JSON5.parse("{" + record[3] + "}");
             if (!useFineModeNav) {
               parsedData.genomealign.targetseq = null;

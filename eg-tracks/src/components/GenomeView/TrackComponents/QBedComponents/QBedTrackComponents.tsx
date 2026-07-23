@@ -1,4 +1,4 @@
-import React, { JSX, useMemo, useRef } from "react";
+import React, { JSX, useCallback, useMemo, useRef } from "react";
 import _ from "lodash";
 import { scaleLinear, scaleLog } from "d3-scale";
 import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates";
@@ -56,7 +56,8 @@ type QBedTrackProps = {
   xvaluesData?: Array<any>;
   dataIdx: number;
   initialLoad: boolean;
-  windowWidth?: number;
+  windowWidth: number;
+  legendWidth: number;
 };
 
 export const DEFAULT_OPTIONS = {
@@ -159,6 +160,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     initialLoad,
     updatedLegend,
     windowWidth = 0,
+    legendWidth = 0,
   } = props;
   const {
     height,
@@ -172,11 +174,8 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     horizontalLineValue,
   } = options;
 
-  const aggregator = useMemo(() => new FeatureAggregator(), []);
-  let xToValue: Array<any> =
-    xvaluesData && options.usePrimaryNav
-      ? xvaluesData
-      : aggregator.makeXMap(data, viewRegion, width, true).xToFeaturesForward;
+  let xToValue = xvaluesData.xToFeaturesForward;
+
   scalesRef.current = computeScales(xToValue, height);
   for (let i = 0; i < xToValue.length; i++) {
     for (let j = 0; j < xToValue[i].length; j++) {
@@ -197,6 +196,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
     axisScale: scalesRef.current.valueToY,
     label: options.label,
     forceSvg,
+    legendWidth: legendWidth,
   };
   if (updatedLegend) {
     updatedLegend.current = legendProps;
@@ -214,7 +214,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
         position: "relative",
 
         overflow: "hidden",
-        width: windowWidth / 3 / 3 + 120,
+        width: windowWidth,
       }
     : {};
   let curEleStyle: any = forceSvg
@@ -223,7 +223,9 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
         transform: `translateX(${-viewWindow.start}px)`,
       }
     : {};
-  let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
+  let hoverStyle: any = options.packageVersion
+    ? { marginLeft: legendWidth ? legendWidth : 120 }
+    : {};
 
   let visualizer;
 
@@ -302,7 +304,7 @@ const QBedTrackComponents: React.FC<QBedTrackProps> = (props) => {
   currentScale.current = scalesRef.current;
   currentViewOptions.current = options;
   currentWindowWidth.current = windowWidth;
-  xToValue = [];
+
   return visualizer;
 };
 
@@ -322,33 +324,47 @@ type QBedPlotProps = {
   viewWindow: any;
 };
 
-class QBedPlot extends React.PureComponent<QBedPlotProps> {
-  renderPixel(value: QBed[], x: number) {
-    if (value.length === 0) {
-      return null;
-    }
-    const { scales, color, color2, markerSize, alpha } = this.props;
-    return value.map((quantum, idx) => {
-      const y = scales.valueToY(quantum.value);
-      const key = `${x}-${idx}`;
-      const colorToUse = quantum.strand === "-" ? color2 : color;
-      return (
-        <circle
-          key={key}
-          cx={x}
-          cy={y}
-          r={markerSize}
-          fill="none"
-          stroke={colorToUse}
-          strokeOpacity={alpha}
-        />
-      );
-    });
-  }
+const QBedPlot = (props: QBedPlotProps) => {
+  const {
+    xToValue,
+    scales,
+    height,
+    color,
+    color2,
+    markerSize,
+    alpha,
+    showHorizontalLine,
+    horizontalLineValue,
+    forceSvg,
+    viewWindow,
+  } = props;
 
-  renderHorizontalLine = () => {
-    const { showHorizontalLine, horizontalLineValue, scales, viewWindow } =
-      this.props;
+  const renderPixel = useCallback(
+    (value: QBed[], x: number) => {
+      if (value.length === 0) {
+        return null;
+      }
+      return value.map((quantum, idx) => {
+        const y = scales.valueToY(quantum.value);
+        const key = `${x}-${idx}`;
+        const colorToUse = quantum.strand === "-" ? color2 : color;
+        return (
+          <circle
+            key={key}
+            cx={x}
+            cy={y}
+            r={markerSize}
+            fill="none"
+            stroke={colorToUse}
+            strokeOpacity={alpha}
+          />
+        );
+      });
+    },
+    [scales, color, color2, markerSize, alpha],
+  );
+
+  const renderHorizontalLine = () => {
     if (!showHorizontalLine) {
       return null;
     }
@@ -365,19 +381,16 @@ class QBedPlot extends React.PureComponent<QBedPlotProps> {
     );
   };
 
-  render() {
-    const { xToValue, height, forceSvg } = this.props;
-    return (
-      <DesignRenderer
-        type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-        width={xToValue.length}
-        height={height}
-      >
-        {xToValue.map(this.renderPixel.bind(this))}
-        {this.renderHorizontalLine()}
-      </DesignRenderer>
-    );
-  }
-}
+  return (
+    <DesignRenderer
+      type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+      width={xToValue.length}
+      height={height}
+    >
+      {xToValue.map(renderPixel)}
+      {renderHorizontalLine()}
+    </DesignRenderer>
+  );
+};
 
 export default QBedTrackComponents;

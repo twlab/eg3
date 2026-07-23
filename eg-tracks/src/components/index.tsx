@@ -4,7 +4,6 @@ import { getGenomeConfig } from "../models/genomes/allGenomes";
 import {
   ChromosomeInterval,
   DisplayedRegionModel,
-  formatDataByType,
   getDisplayModeFunction,
   interactionTracks,
   OpenInterval,

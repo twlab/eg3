@@ -1,8 +1,10 @@
-import Feature from "./Feature";
-import ChromosomeInterval from "./ChromosomeInterval";
 import _ from "lodash";
-import BedRecord from "./BedRecord";
 
+/**
+ * Column indices of a raw MethylC bed-like record (as returned by the tabix
+ * fetch / worker), e.g.:
+ *   { chr: "chr7", start: 27219040, end: 27219041, 3: "CG", 4: "0.22", 5: "+", 6: "74", n: 7 }
+ */
 enum MethylRecordColumnIndex {
   CONTEXT = 3,
   VALUE = 4,
@@ -24,40 +26,61 @@ interface AggregationByStrandResult {
   reverse: AggregationByRecordsResult;
 }
 
+/** Reads a raw MethylC record's context (column 3), e.g. "CG" | "CHG" | "CHH". */
+function getRecordContext(record: any): string {
+  return String(record[MethylRecordColumnIndex.CONTEXT]);
+}
+
+/** Reads a raw MethylC record's methylation value (column 4), from 0 to 1. */
+function getRecordValue(record: any): number {
+  return Number.parseFloat(record[MethylRecordColumnIndex.VALUE]);
+}
+
+/** Reads a raw MethylC record's read depth (column 6). */
+function getRecordDepth(record: any): number {
+  return Number.parseInt(record[MethylRecordColumnIndex.DEPTH], 10);
+}
+
+/** Whether a raw MethylC record (strand at column 5) is on the forward strand. */
+function getRecordIsForwardStrand(record: any): boolean {
+  return record[MethylRecordColumnIndex.STRAND] === "+";
+}
+
 /**
- * A data container for a MethylC record.
+ * Aggregation utilities for raw MethylC records (plain bed-like objects
+ * straight from the fetch/worker, e.g.
+ * `{ chr, start, end, 3: "CG", 4: "0.22", 5: "+", 6: "74" }`), so pixels don't
+ * need a wrapper instance built per record.
  *
  * @author Daofeng Li
  */
-class MethylCRecord extends Feature {
+const MethylCRecord = {
   /**
-   * Combines all MethylCRecords that (presumably) are in one pixel.  See schema below the function for return schema.
+   * Combines all raw MethylC records that (presumably) are in one pixel.  See schema below the function for return schema.
    * If passed an empty array, returns null.
    *
-   * @param {MethylCRecord[]} records
-   * @return {AggregationResult}
+   * @param {any[]} records
+   * @return {AggregationByRecordsResult | null}
    */
-  static aggregateRecords(
-    records: MethylCRecord[]
-  ): AggregationByRecordsResult | null {
+  aggregateRecords(records: any[]): AggregationByRecordsResult | null {
     if (records.length === 0) {
       return null;
     }
-    const depth = _.meanBy(records, "depth");
-    const groupedByContext = _.groupBy(records, "context");
+    const depth = _.meanBy(records, getRecordDepth);
+    const groupedByContext = _.groupBy(records, getRecordContext);
     const contextValues: Array<any> = [];
     for (const contextName in groupedByContext) {
       const recordsOfThatContext = groupedByContext[contextName];
       contextValues.push({
         context: contextName,
-        value: _.meanBy(recordsOfThatContext, "value"),
+        value: _.meanBy(recordsOfThatContext, getRecordValue),
       });
     }
     return {
       depth,
       contextValues,
     };
-  }
+  },
   /*
     {
         depth: 5,
@@ -70,17 +93,16 @@ class MethylCRecord extends Feature {
     */
 
   /**
-   * Combines all MethylCRecords that (presumably) are in one pixel.  See schema below the function for return schema.
+   * Combines all raw MethylC records that (presumably) are in one pixel, splitting by strand.
+   * See schema below the function for return schema.
    *
-   * @param {MethylCRecord[]} records
-   * @return {Object}
+   * @param {any[]} records
+   * @return {AggregationByStrandResult}
    */
-  static aggregateByStrand(
-    records: MethylCRecord[]
-  ): AggregationByStrandResult {
+  aggregateByStrand(records: any[]): AggregationByStrandResult {
     const [forwardStrandRecords, reverseStrandRecords] = _.partition(
       records,
-      (record) => record.getIsForwardStrand()
+      getRecordIsForwardStrand,
     );
 
     return {
@@ -95,31 +117,7 @@ class MethylCRecord extends Feature {
             reverse: {}
         }
         */
-  }
-
-  /*
-    Input， strings like following
-    chrX	2709724	2709725	CHH	0.111	-	9
-    chrX	2709728	2709729	CG	0.875	+	8
-    chrX	2709767	2709768	CHG	0.059	-	17
-    /**
-     * Constructs a new MethylCRecord, given a string from tabix
-     *
-     */
-  context: any;
-  value: number;
-  depth: number;
-  constructor(bedRecord: BedRecord) {
-    const locus = new ChromosomeInterval(
-      bedRecord.chr,
-      bedRecord.start,
-      bedRecord.end
-    );
-    super("", locus, bedRecord[MethylRecordColumnIndex.STRAND]);
-    this.context = bedRecord[MethylRecordColumnIndex.CONTEXT];
-    this.value = Number.parseFloat(bedRecord[MethylRecordColumnIndex.VALUE]); // methylation value, from 0 to 1
-    this.depth = Number.parseInt(bedRecord[MethylRecordColumnIndex.DEPTH], 10); // read depth
-  }
-}
+  },
+};
 
 export default MethylCRecord;

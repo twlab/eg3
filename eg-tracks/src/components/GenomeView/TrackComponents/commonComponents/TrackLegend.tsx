@@ -28,6 +28,7 @@ interface TrackLegendProps {
   selectedRegion?: DisplayedRegionModel; // the region for viewing, without expansion
   axisLegend?: any;
   label?: string;
+  legendWidth?: number;
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
@@ -42,43 +43,27 @@ class TrackLegend extends React.PureComponent<
   TrackLegendProps,
   { showFull: boolean; clickX: number; clickY: number }
 > {
-  static defaultProps = {
-    width: 120,
-    forceSvg: false,
-  };
-
   state = { showFull: false, clickX: 0, clickY: 0 };
 
   private gNode: any;
   private containerRef = React.createRef<HTMLDivElement>();
   private popupRef = React.createRef<HTMLDivElement>();
+  private hoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: TrackLegendProps) {
     super(props);
     this.gNode = null;
     this.handleRef = this.handleRef.bind(this);
     this.plotATCGLegend = this.plotATCGLegend.bind(this);
-    this.handleDocumentMouseDown = this.handleDocumentMouseDown.bind(this);
   }
 
   componentDidMount() {
     this.drawAxis();
-    document.addEventListener("mousedown", this.handleDocumentMouseDown);
   }
 
   componentWillUnmount() {
-    document.removeEventListener("mousedown", this.handleDocumentMouseDown);
-  }
-
-  handleDocumentMouseDown(e: MouseEvent) {
-    if (
-      this.state.showFull &&
-      this.popupRef.current &&
-      !this.popupRef.current.contains(e.target as Node) &&
-      this.containerRef.current &&
-      !this.containerRef.current.contains(e.target as Node)
-    ) {
-      this.setState({ showFull: false });
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
     }
   }
 
@@ -166,9 +151,9 @@ class TrackLegend extends React.PureComponent<
 
   getLabelWidth() {
     if (this.props.axisScale) {
-      return this.props.trackModel.legendWidth
-        ? this.props.trackModel.legendWidth - AXIS_WIDTH
-        : this.props.width - AXIS_WIDTH;
+      return (
+        (this.props.legendWidth ? this.props.legendWidth : 120) - AXIS_WIDTH
+      );
     } else {
       return undefined;
     }
@@ -207,8 +192,8 @@ class TrackLegend extends React.PureComponent<
     const axisHeight = axisScaleReverse ? height * 0.5 : height;
     const styleObj = {
       display: "flex",
-      width,
-      minWidth: width,
+      width: this.props.legendWidth ? this.props.legendWidth : 120,
+      minWidth: 120,
       height: axisHeight,
 
       zIndex: 10,
@@ -264,12 +249,20 @@ class TrackLegend extends React.PureComponent<
       }
     }
     let labelList;
-    if (trackModel.type === "matplot" && trackModel.tracks) {
+    let subTrackLabels: string[] = [];
+
+    if (
+      trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" } &&
+      trackModel.tracks?.length
+    ) {
       const labels = trackModel.tracks.map((track, i) => {
         const color =
           track && track.options && track.options.color
             ? track.options.color
             : "blue";
+        const trackLabel =
+          track?.label || track?.options?.label || track?.name || "";
+        subTrackLabels.push(trackLabel);
         return (
           <div
             key={i}
@@ -281,12 +274,13 @@ class TrackLegend extends React.PureComponent<
               minWidth: 0,
             }}
           >
-            {track && track.label ? track.label : ""}
+            {trackLabel}
           </div>
         );
       });
       labelList = (
         <div
+          className="TrackLegend-subLabels"
           style={{
             display: "grid",
             gridTemplateColumns: "auto",
@@ -298,70 +292,17 @@ class TrackLegend extends React.PureComponent<
         </div>
       );
     }
-    const rect = this.containerRef.current?.getBoundingClientRect();
-    const { clickX, clickY } = this.state;
-    const popup = showFull
-      ? ReactDOM.createPortal(
-          <div
-            ref={this.popupRef}
-            style={{
-              position: "fixed",
-              top: clickY,
-              left: clickX,
-              minWidth: rect ? rect.width : 120,
-              maxWidth: 240,
-              zIndex: 9999,
-              backgroundColor: "#fff",
-              color: "#000",
-              border: "1px solid rgba(0,0,0,0.15)",
-              borderRadius: 6,
-              padding: "8px 10px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-              fontSize: "x-small",
-              lineHeight: 1.4,
-              wordWrap: "break-word",
-              wordBreak: "break-all",
-              whiteSpace: "normal",
-            }}
-          >
-            <p style={{ margin: 0 }}>
-              {label
-                ? label
-                : trackModel.options
-                  ? trackModel.options.label
-                  : ""}
-            </p>
-            {labelList}
-            {chromLabel ? (
-              <div
-                style={{ fontSize: "11px", marginTop: 4 }}
-                className="TrackLegend-chrLabel"
-              >
-                {chromLabel}
-              </div>
-            ) : (
-              ""
-            )}
-          </div>,
-          document.body,
-        )
-      : null;
 
     return (
-      <div
-        ref={this.containerRef}
-        style={{ ...divStyle, cursor: "pointer" }}
-        onClick={(e) =>
-          this.setState((s) => ({
-            showFull: !s.showFull,
-            clickX: e.clientX,
-            clickY: e.clientY,
-          }))
-        }
-      >
+      <div ref={this.containerRef} style={{ ...divStyle, cursor: "pointer" }}>
         <div
           className="TrackLegend-wrap"
-          title={trackModel.options ? trackModel.options.label : ""}
+          title={[
+            trackModel.options ? trackModel.options.label : "",
+            ...subTrackLabels,
+          ]
+            .filter(Boolean)
+            .join("\n")}
         >
           <p
             className="TrackLegend-label"
@@ -392,7 +333,6 @@ class TrackLegend extends React.PureComponent<
           )}
         </div>
         {axis}
-        {popup}
       </div>
     );
   }

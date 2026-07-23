@@ -127,7 +127,7 @@ export class RepeatMaskerFeature extends Feature {
     const locus = new ChromosomeInterval(
       rmskRecord.segment,
       rmskRecord.min,
-      rmskRecord.max
+      rmskRecord.max,
     );
     super(rmskRecord.label, locus, rmskRecord.orientation, rmskRecord.score);
     this.repClass = rmskRecord.repClass;

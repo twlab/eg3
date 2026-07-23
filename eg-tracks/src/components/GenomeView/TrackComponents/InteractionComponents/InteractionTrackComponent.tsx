@@ -60,6 +60,8 @@ interface InteractionTrackProps {
   visRegion: DisplayedRegionModel;
   updatedLegend: any;
   initialLoad?: boolean;
+  windowWidth: number;
+  legendWidth: number;
 }
 
 export const DEFAULT_OPTIONS = {
@@ -210,6 +212,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
     updatedLegend,
     dataIdx,
     initialLoad,
+    legendWidth,
   } = props;
 
   const filteredData = filterData(data, options);
@@ -245,6 +248,8 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
       fetchViewWindowOnly: options.fetchViewWindowOnly,
       isThereG3dTrack,
       clampHeight: options.clampHeight,
+      legendWidth: legendWidth,
+      windowWidth: props.windowWidth,
     };
 
     const legendProps = {
@@ -255,6 +260,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
           ? scales.heightScale
           : undefined,
       forceSvg,
+      legendWidth: legendWidth,
     };
 
     if (updatedLegend) {

@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { BigWigZoomLevels } from "../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { makeBwg } from "../getRemoteData/vendor/bbi-js/main/bigwig";
 import { BlobFetchable } from "../getRemoteData/vendor/bbi-js/utils/bin";
@@ -88,16 +87,18 @@ class LocalBigSource {
       );
     });
     const dataForEachLocus = await Promise.all(promises);
-    const combinedData = _.flatten(dataForEachLocus);
-    for (let dasFeature of combinedData) {
-      dasFeature.min -= 1; // bbi-js returns 1-indexed features; -1 to compensate.
+    for (const locusData of dataForEachLocus) {
+      for (let dasFeature of locusData) {
+        dasFeature.min -= 1; // bbi-js returns 1-indexed features; -1 to compensate.
+      }
     }
-    if (isEnsembl) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
-    return combinedData;
+
+    // Return one group per locus carrying the locus chr once, instead of
+    // stamping chr onto every feature. The chr is reattached when formatting.
+    return loci.map((locus, index) => ({
+      chr: locus.chr,
+      data: dataForEachLocus[index],
+    }));
   }
 
   /**
