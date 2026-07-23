@@ -9,7 +9,10 @@ import {
   updateBundle,
 } from "../../../../../lib/redux/slices/hubSlice";
 
-import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settingsSlice";
+import {
+  selectIsNavigatorVisible,
+  selectTrackLegendWidth,
+} from "../../../../../lib/redux/slices/settingsSlice";
 
 import { addCustomGenomeRemote } from "../../../../../lib/redux/thunk/genome-hub";
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
@@ -62,7 +65,7 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab }) => {
   const bundle = useAppSelector(selectBundle);
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const _genomeConfig = useCurrentGenome();
-
+  const legendWidth = useAppSelector(selectTrackLegendWidth);
   // Early return if required data is not available
   if (!currentSession || !_genomeConfig) {
     return null;
@@ -123,7 +126,7 @@ const Session: React.FC<{ tab?: boolean }> = ({ tab }) => {
       metadataTerms: [],
       regionSetView: selectedRegionSet,
       regionSets,
-      trackLegendWidth: 120,
+      trackLegendWidth: legendWidth,
       tracks,
       viewRegion: userViewRegion ? userViewRegion : currentSession.viewRegion,
       viewInterval: curViewInterval,

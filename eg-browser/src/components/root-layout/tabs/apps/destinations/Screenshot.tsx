@@ -8,7 +8,10 @@ import {
 } from "@/lib/redux/slices/hubSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
-import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
+import {
+  selectDarkTheme,
+  selectTrackLegendWidth,
+} from "@/lib/redux/slices/settingsSlice";
 
 export default function Screenshot() {
   useExpandedNavigationTab();
@@ -17,7 +20,7 @@ export default function Screenshot() {
   const isOpen = useAppSelector(selectScreenShotOpen);
   const isRetakeScreenshot = useRef<boolean>(false);
   const dispatch = useAppDispatch();
-
+  const legendWidth = useAppSelector(selectTrackLegendWidth);
   function retakeScreenshot() {
     dispatch(updateScreenShotData({}));
     dispatch(updateScreenShotOpen(false));
@@ -49,7 +52,7 @@ export default function Screenshot() {
       <ScreenshotUI
         highlights={screenShotData.highlights}
         needClip={true}
-        legendWidth={120}
+        legendWidth={legendWidth}
         primaryView={screenShotData.primaryView}
         darkTheme={
           darkTheme !== null || darkTheme !== undefined ? darkTheme : false
@@ -61,6 +64,7 @@ export default function Screenshot() {
         retakeScreenshot={retakeScreenshot}
         windowWidth={screenShotData.windowWidth}
         xOffset={screenShotData.xOffset}
+        selectedRegionSet={screenShotData.selectedRegionSet}
       />
     </div>
   ) : (

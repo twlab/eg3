@@ -7,6 +7,7 @@ import {
   selectDarkTheme,
   selectIsNavigatorVisible,
   selectIsToolBarVisible,
+  selectTrackLegendWidth,
 } from "@/lib/redux/slices/settingsSlice";
 import { selectToolState } from "@/lib/redux/slices/utilitySlice";
 import {
@@ -40,6 +41,7 @@ export default function GenomeView() {
   const isToolBarVisible = useAppSelector(selectIsToolBarVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
+  const legendWidth = useAppSelector(selectTrackLegendWidth);
   const bundleId =
     currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
@@ -103,7 +105,7 @@ export default function GenomeView() {
       tracks={currentSession.tracks}
       highlights={currentSession.highlights}
       genomeConfig={genomeConfig}
-      legendWidth={120}
+      legendWidth={legendWidth}
       showGenomeNav={isNavigatorVisible}
       showToolBar={isToolBarVisible}
       onNewRegion={handleNewRegion}

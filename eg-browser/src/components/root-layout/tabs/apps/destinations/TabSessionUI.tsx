@@ -82,13 +82,16 @@ export const onRetrieveSession = async (retrieveId: string) => {
   const dbRef = ref(getDatabase());
   try {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
+    let hasGenomeName = true;
     if (snapshot.exists()) {
       let res = snapshot.val();
 
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
-
+          if (!object.genomeName) {
+            hasGenomeName = false;
+          }
           const regionSets = object.regionSets
             ? object.regionSets.map(RegionSet.deserialize)
             : [];
@@ -120,6 +123,15 @@ export const onRetrieveSession = async (retrieveId: string) => {
                   : object.id
                     ? object.id
                     : null,
+            genomeName: object.genomeId
+              ? object.genomeId
+              : object.genomeName
+                ? object.genomeName
+                : object.name
+                  ? object.name
+                  : object.id
+                    ? object.id
+                    : null,
             viewInterval,
             chromosomes: object.chromosomes || null,
             tracks: object.tracks,
@@ -130,7 +142,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
             bundleId: object.bundleId,
             isShowingNavigator: object.isShowingNavigator,
             isShowingVR: object.isShowingVR,
-            layout: object.layout || {},
+            layout: {},
             highlights: object.highlights || [],
             darkTheme: object.darkTheme || false,
             viewRegion: object.viewRegion,
@@ -140,6 +152,18 @@ export const onRetrieveSession = async (retrieveId: string) => {
           // Replace the state key with the newBundle in the session.
           res.sessionsInBundle[curId].state = newBundle;
         }
+      }
+
+      // Persist the cleared layout (and rebuilt state) back to the DB.
+      try {
+        if (!hasGenomeName && snapshot.exists() && res) {
+          await set(
+            ref(getDatabase(), `sessions/${retrieveId}`),
+            JSON.parse(JSON.stringify(res)),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to update session bundle in DB", error);
       }
 
       return res;
@@ -615,6 +639,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       const text = await file.text();
       const bundleSession = JSON.parse(text);
 
+      let useFallback = !bundleSession.bundleId;
+
       if (bundleSession.bundleId) {
         try {
           const bundleRes = await onRetrieveSession(bundleSession.bundleId);
@@ -625,11 +651,15 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
             setBundle(bundleRes);
             onRetrieveBundle(bundleRes);
             setShowFullUI(true);
+          } else {
+            useFallback = true;
           }
         } catch (error) {
-          // ignore retrieval errors
+          useFallback = true;
         }
-      } else {
+      }
+
+      if (useFallback) {
         const object = bundleSession;
 
         let viewInterval;

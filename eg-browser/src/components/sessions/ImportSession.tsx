@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAppDispatch } from "@/lib/redux/hooks";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import {
   setCurrentSession,
   upsertSession,
@@ -8,10 +7,7 @@ import {
 import Button from "../ui/button/Button";
 import FileInput from "../ui/input/FileInput";
 
-import {
-  addSessionsFromBundleId,
-  convertSession,
-} from "@/lib/redux/thunk/session";
+import { convertSession } from "@/lib/redux/thunk/session";
 import { importOneSession } from "@/lib/redux/thunk/session";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
 import { getDatabase, ref, remove } from "firebase/database";
@@ -30,9 +26,29 @@ export default function ImportSession() {
 
     if (!file) return;
 
+    let session: any;
     try {
       const content = await file.text();
-      let session = JSON.parse(content);
+      session = JSON.parse(content);
+    } catch (e) {
+      setError("Invalid session file. Please check the file format.");
+      return;
+    }
+
+    if (session?.bundleId) {
+      try {
+        const res = await onRetrieveSession(session.bundleId);
+        if (res) {
+          setBundle(res);
+          return;
+        }
+        // no bundle found -> fall through to the single-session import logic
+      } catch (e) {
+        // retrieve failed -> fall through to the single-session import logic
+      }
+    }
+
+    try {
       session = convertSession(session, dispatch);
 
       if (!session.id || !session.genomeId || !session.viewRegion) {
@@ -75,10 +91,11 @@ export default function ImportSession() {
               setError(null);
               setIsLoading(true);
               try {
-                await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
+                // await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
                 // retrieve bundle to display sessions below
                 try {
                   const res = await onRetrieveSession(bundleId);
+
                   if (res) {
                     setBundle(res);
                   }
@@ -221,6 +238,8 @@ export default function ImportSession() {
                             // restore this session into the browser
                             try {
                               const sess = session.state;
+                              sess["bundleId"] = bundle?.bundleId;
+                              sess["title"] = session?.label;
 
                               await dispatch(
                                 importOneSession({
@@ -228,7 +247,7 @@ export default function ImportSession() {
                                   navigatingToSession: true,
                                 }) as any,
                               ).unwrap();
-                              console.log("Session restored.");
+                              // console.log("Session restored.");
                             } catch (e) {
                               console.error(e);
                             }
@@ -258,7 +277,7 @@ export default function ImportSession() {
                               const newBundle = { ...bundle };
                               delete newBundle.sessionsInBundle[id];
 
-                              console.log("Session deleted.");
+                              // console.log("Session deleted.");
                             } catch (e) {
                               console.error(e);
                             }

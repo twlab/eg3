@@ -14,6 +14,8 @@ import {
   XMarkIcon,
   CheckIcon,
   ExclamationTriangleIcon,
+  ArrowTopRightOnSquareIcon,
+  RectangleStackIcon,
 } from "@heroicons/react/24/outline";
 import FileInput from "../ui/input/FileInput";
 import { GenomeSerializer, type IGenome } from "wuepgg3-track";
@@ -40,6 +42,12 @@ import { selectCustomGenomes } from "@/lib/redux/slices/genomeHubSlice";
 import GenomePicker from "../genome-picker/GenomePicker";
 import { type SpeciesInfo } from "wuepgg3-track";
 
+// Shared control styling so every header button is the same height/shape.
+const CTRL_BASE =
+  "h-9 inline-flex items-center gap-2 px-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer";
+const CTRL_SECONDARY = `${CTRL_BASE} border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700`;
+const CTRL_PRIMARY = `${CTRL_BASE} bg-tint text-white border border-tint hover:opacity-90`;
+
 export default function AddCustomGenome() {
   const dispatch = useAppDispatch();
   const customCollections = useAppSelector(selectCustomCollections) ?? {};
@@ -56,6 +64,9 @@ export default function AddCustomGenome() {
   > | null>(null);
   const [fieldWarnings, setFieldWarnings] = useState<
     { label: string; missing: string[] }[]
+  >([]);
+  const [unusedFieldWarnings, setUnusedFieldWarnings] = useState<
+    { label: string; keys: string[] }[]
   >([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSchema, setShowSchema] = useState(false);
@@ -77,11 +88,53 @@ export default function AddCustomGenome() {
   const [hubPanelOpen, setHubPanelOpen] = useState(false);
 
   // Toast notification
-  const [toast, setToast] = useState<{ visible: boolean; collection: string }>({
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    collection: string;
+    already: boolean;
+  }>({
     visible: false,
     collection: "",
+    already: false,
   });
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Show the toast; `already` = the genome was already in the collection.
+  const showToast = (collection: string, already = false) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ visible: true, collection, already });
+    toastTimerRef.current = setTimeout(
+      () => setToast((t) => ({ ...t, visible: false })),
+      7000,
+    );
+  };
+
+  // Add an uploaded custom genome to the current collection, or tell the user
+  // (via toast) if it's already there.
+  const addCustomGenomeToCollection = (genome: IGenome) => {
+    if (!selectedCollection) return;
+    const already = (customCollections[selectedCollection] ?? []).some(
+      (entry) => entry.assemblies.includes(genome.id),
+    );
+    if (already) {
+      showToast(selectedCollection, true);
+      return;
+    }
+    const entry: CustomGenomeEntry = {
+      name: genome.name || genome.id,
+      logoUrl: "",
+      assemblies: [],
+      color: "white",
+    };
+    dispatch(
+      addGenomeToCollection({
+        collectionName: selectedCollection,
+        genome: entry,
+        assemblyName: genome.id,
+      }),
+    );
+    showToast(selectedCollection, false);
+  };
 
   // Sync selectedCollection when collections change
   useEffect(() => {
@@ -134,6 +187,11 @@ export default function AddCustomGenome() {
       (async () => {
         setIsLoading(true);
         setFieldWarnings([]);
+        setUnusedFieldWarnings([]);
+        // Clear the previous file's result so the add-to-collection effect
+        // never fires on a stale (already-valid) validation while this new
+        // file is still being validated.
+        setValidationErrors(null);
         try {
           const json = await file.text();
           const parsedJson = JSON.parse(json);
@@ -160,8 +218,43 @@ export default function AddCustomGenome() {
           });
           setFieldWarnings(warnings);
 
-          const errors = GenomeSerializer.validateGenomeObject(items);
-          setValidationErrors(errors);
+          const result = GenomeSerializer.validateGenomeObject(items);
+
+          // Extra keys not in the schema shouldn't block the upload — as long
+          // as the required/type checks pass, let the genome through and just
+          // warn the user that those keys are ignored on load.
+          const allErrors = (result.errors ?? []) as any[];
+          const blockingErrors = allErrors.filter(
+            (e) => e.keyword !== "additionalProperties",
+          );
+          const extraKeyErrors = allErrors.filter(
+            (e) => e.keyword === "additionalProperties",
+          );
+
+          const unusedByGenome = new Map<string, Set<string>>();
+          extraKeyErrors.forEach((e) => {
+            const idxMatch = String(e.instancePath).match(/^\[(\d+)\]/);
+            const idx = idxMatch ? Number(idxMatch[1]) : 0;
+            const item = items[idx];
+            const label = item?.name || item?.id || `Genome #${idx + 1}`;
+            const key = e.params?.additionalProperty;
+            if (!key) return;
+            if (!unusedByGenome.has(label))
+              unusedByGenome.set(label, new Set());
+            unusedByGenome.get(label)!.add(key);
+          });
+          setUnusedFieldWarnings(
+            Array.from(unusedByGenome.entries()).map(([label, keys]) => ({
+              label,
+              keys: Array.from(keys),
+            })),
+          );
+
+          setValidationErrors({
+            ...result,
+            valid: blockingErrors.length === 0,
+            errors: blockingErrors,
+          });
         } catch (error) {
           console.error(error);
           setValidationErrors({
@@ -185,7 +278,11 @@ export default function AddCustomGenome() {
   }, [file]);
 
   useEffect(() => {
-    if (file && validationErrors?.valid && validationErrors.normalizedData) {
+    // Only depend on validationErrors (not `file`): validationErrors is set
+    // asynchronously after the file is validated, so keying on `file` would
+    // fire this effect with the *previous* file's still-valid result and add
+    // the wrong genome to the collection.
+    if (validationErrors?.valid && validationErrors.normalizedData) {
       const genomes = validationErrors.normalizedData as IGenome[];
       dispatch(addCustomGenome(genomes));
       if (selectedCollection) {
@@ -204,15 +301,10 @@ export default function AddCustomGenome() {
             }),
           );
         }
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        setToast({ visible: true, collection: selectedCollection });
-        toastTimerRef.current = setTimeout(
-          () => setToast((t) => ({ ...t, visible: false })),
-          4000,
-        );
+        showToast(selectedCollection, false);
       }
     }
-  }, [file, validationErrors]);
+  }, [validationErrors]);
 
   const handleCreateCollection = () => {
     const name = newCollectionName.trim();
@@ -225,6 +317,13 @@ export default function AddCustomGenome() {
 
   const handleAddGenome = (genome: SpeciesInfo, assemblyName: string) => {
     if (!selectedCollection) return;
+    const already = (customCollections[selectedCollection] ?? []).some(
+      (entry) => entry.assemblies.includes(assemblyName),
+    );
+    if (already) {
+      showToast(selectedCollection, true);
+      return;
+    }
     const entry: CustomGenomeEntry = {
       name: genome.name,
       logoUrl: genome.logoUrl ?? "",
@@ -238,13 +337,7 @@ export default function AddCustomGenome() {
         assemblyName,
       }),
     );
-    // Show toast
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast({ visible: true, collection: selectedCollection });
-    toastTimerRef.current = setTimeout(
-      () => setToast((t) => ({ ...t, visible: false })),
-      4000,
-    );
+    showToast(selectedCollection, false);
   };
 
   const renderFieldWarnings = () => {
@@ -264,6 +357,33 @@ export default function AddCustomGenome() {
                   className="font-mono text-xs bg-orange-100 px-1 rounded mr-1"
                 >
                   {f}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  const renderUnusedFieldWarnings = () => {
+    if (unusedFieldWarnings.length === 0) return null;
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mt-4">
+        <h3 className="text-yellow-800 font-medium mb-2">
+          Unused Fields (ignored on load):
+        </h3>
+        <ul className="list-disc pl-5 text-yellow-700 text-sm">
+          {unusedFieldWarnings.map(({ label, keys }, i) => (
+            <li key={i} className="mb-1">
+              <span className="font-mono text-xs">{label}</span> has fields that
+              aren't part of the genome schema and will be ignored:{" "}
+              {keys.map((k) => (
+                <span
+                  key={k}
+                  className="font-mono text-xs bg-yellow-100 px-1 rounded mr-1"
+                >
+                  {k}
                 </span>
               ))}
             </li>
@@ -324,7 +444,7 @@ export default function AddCustomGenome() {
             className="fixed top-4 left-1/2 z-[100] -translate-x-1/2 flex items-center gap-3 px-4 py-2.5 rounded-xl shadow-lg bg-gray-900 dark:bg-dark-surface text-white text-sm font-medium"
           >
             <span>
-              Added to{" "}
+              {toast.already ? "Already in " : "Added to "}
               <span className="font-semibold text-tint">
                 "{toast.collection}"
               </span>
@@ -356,7 +476,7 @@ export default function AddCustomGenome() {
           onClick={() => setShowSchema(false)}
         >
           <div
-            className="relative bg-white dark:bg-dark-background rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto p-4"
+            className="relative bg-white dark:bg-dark-background rounded-lg shadow-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -485,174 +605,179 @@ export default function AddCustomGenome() {
                 transition={{ duration: 0.22 }}
                 className="flex flex-col gap-3"
               >
-                {/* Title row: collection selector inline */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap"
-                    style={{ fontSize: "16px" }}
-                  >
-                    Current collection:
+                {/* Header toolbar: selector + actions */}
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                    Current collection
                   </span>
-
-                  {/* Inline collection dropdown */}
-                  <div className="relative" ref={dropdownRef}>
-                    <button
-                      onClick={() => setCollectionDropdownOpen((o) => !o)}
-                      className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 font-semibold text-tint bg-white dark:bg-dark-surface text-base font-medium focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
-                    >
-                      <span>{selectedCollection ?? "Select collection"}</span>
-                      <motion.div
-                        animate={{ rotate: collectionDropdownOpen ? 90 : 0 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                      >
-                        <ChevronRightIcon className="w-3.5 h-3.5 text-tint" />
-                      </motion.div>
-                    </button>
-                    <AnimatePresence>
-                      {collectionDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.15, ease: "easeOut" }}
-                          className="absolute z-20 mt-1 min-w-max rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-surface shadow-lg py-1"
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Collection selector: name (switch) + count (expand list) */}
+                    <div className="relative" ref={dropdownRef}>
+                      <div className="inline-flex items-stretch h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface overflow-hidden">
+                        <button
+                          onClick={() => setCollectionDropdownOpen((o) => !o)}
+                          className="inline-flex items-center gap-2 px-3 text-sm font-semibold text-tint hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none cursor-pointer"
                         >
-                          {collectionKeys.map((key) => (
-                            <div
-                              key={key}
-                              className="flex items-center group hover:bg-gray-100 dark:hover:bg-gray-700"
+                          <span>
+                            {selectedCollection ?? "Select collection"}
+                          </span>
+                          <motion.div
+                            animate={{
+                              rotate: collectionDropdownOpen ? 90 : 0,
+                            }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                          >
+                            <ChevronRightIcon className="w-3.5 h-3.5 text-tint" />
+                          </motion.div>
+                        </button>
+                        {selectedCollection && (
+                          <button
+                            onClick={() => setGenomesExpanded((e) => !e)}
+                            className="inline-flex items-center gap-1.5 px-2.5 border-l border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-background text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none cursor-pointer"
+                            title="View genomes in this collection"
+                          >
+                            <RectangleStackIcon className="w-3.5 h-3.5 text-tint" />
+                            <span className="text-xs font-semibold">
+                              {(
+                                customCollections[selectedCollection] ?? []
+                              ).reduce(
+                                (sum, g) => sum + (g.assemblies?.length ?? 1),
+                                0,
+                              )}
+                            </span>
+                            <motion.div
+                              animate={{ rotate: genomesExpanded ? 90 : 0 }}
+                              transition={{ duration: 0.2, ease: "easeInOut" }}
                             >
-                              <button
-                                onClick={() => {
-                                  setSelectedCollection(key);
-                                  setCollectionDropdownOpen(false);
-                                }}
-                                className="flex-1 flex items-center gap-2 px-4 py-2 text-sm text-gray-800 dark:text-gray-200"
+                              <ChevronRightIcon className="w-3 h-3" />
+                            </motion.div>
+                          </button>
+                        )}
+                      </div>
+                      <AnimatePresence>
+                        {collectionDropdownOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="absolute z-20 mt-1 min-w-max rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-surface shadow-lg py-1"
+                          >
+                            {collectionKeys.map((key) => (
+                              <div
+                                key={key}
+                                className="flex items-center group hover:bg-gray-100 dark:hover:bg-gray-700"
                               >
-                                <span>{key}</span>
-                                {key === selectedCollection && (
-                                  <span className="text-tint text-xs font-bold">
-                                    ✓
-                                  </span>
-                                )}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  dispatch(removeCustomCollection(key));
-                                  if (key === selectedCollection)
+                                <button
+                                  onClick={() => {
+                                    setSelectedCollection(key);
                                     setCollectionDropdownOpen(false);
-                                }}
-                                className="pr-3 pl-1 py-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                aria-label={`Remove ${key}`}
-                              >
-                                <XMarkIcon className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
-                        </motion.div>
+                                  }}
+                                  className="flex-1 flex items-center gap-2 px-4 py-2 text-sm text-gray-800 dark:text-gray-200"
+                                >
+                                  <span>{key}</span>
+                                  {key === selectedCollection && (
+                                    <span className="text-tint text-xs font-bold">
+                                      ✓
+                                    </span>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    dispatch(removeCustomCollection(key));
+                                    if (key === selectedCollection)
+                                      setCollectionDropdownOpen(false);
+                                  }}
+                                  className="pr-3 pl-1 py-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  aria-label={`Remove ${key}`}
+                                >
+                                  <XMarkIcon className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Actions grouped to the right */}
+                    <div className="flex items-center gap-2 sm:ml-auto">
+                      {/* Open the current collection in the Genome Picker */}
+                      {selectedCollection && (
+                        <button
+                          onClick={() => {
+                            dispatch(setFocusCollection(selectedCollection));
+                            dispatch(setGenomePickerTab("picker"));
+                          }}
+                          className={CTRL_PRIMARY}
+                          title={`Open "${selectedCollection}" in the Genome Picker`}
+                        >
+                          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                          View Genomes
+                        </button>
                       )}
-                    </AnimatePresence>
+
+                      {/* New collection — opens the create row on the line below */}
+                      <button
+                        onClick={() => setShowCreateInput((s) => !s)}
+                        className={
+                          showCreateInput
+                            ? `${CTRL_SECONDARY} ring-2 ring-tint`
+                            : CTRL_SECONDARY
+                        }
+                      >
+                        <PlusIcon className="w-4 h-4" />
+                        New collection
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Genomes in collection toggle button */}
-                  {selectedCollection && (
-                    <button
-                      onClick={() => setGenomesExpanded((e) => !e)}
-                      className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-surface text-base font-medium focus:outline-none focus:ring-2 focus:ring-tint cursor-pointer"
-                    >
-                      <span>Genomes in collection</span>
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-tint/15 text-tint text-xs font-semibold">
-                        {(customCollections[selectedCollection] ?? []).reduce(
-                          (sum, g) => sum + (g.assemblies?.length ?? 1),
-                          0,
-                        )}
-                      </span>
+                  {/* Second line: create-collection input */}
+                  <AnimatePresence initial={false}>
+                    {showCreateInput && (
                       <motion.div
-                        animate={{ rotate: genomesExpanded ? 90 : 0 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        key="create-row"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.18, ease: "easeInOut" }}
+                        style={{ overflow: "hidden" }}
                       >
-                        <ChevronRightIcon className="w-3.5 h-3.5 text-gray-400" />
-                      </motion.div>
-                    </button>
-                  )}
-
-                  {/* New collection button / input — inline */}
-                  <AnimatePresence mode="wait" initial={false}>
-                    {!showCreateInput ? (
-                      <motion.div
-                        key="add-btn"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Button
-                          leftIcon={<PlusIcon className="w-3 h-3" />}
-                          onClick={() => setShowCreateInput(true)}
-                          style={{
-                            backgroundColor: "#5E7AC4",
-                            color: "white",
-                            fontSize: "16px",
-                            width: "fit-content",
-                            padding: "6px",
-                            borderRadius: "6px",
-                          }}
-                        >
-                          New collection
-                        </Button>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="add-input"
-                        initial={{ opacity: 0, x: 8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -8 }}
-                        transition={{ duration: 0.18 }}
-                        className="flex items-center gap-2"
-                      >
-                        <input
-                          type="text"
-                          autoFocus
-                          value={newCollectionName}
-                          onChange={(e) => setNewCollectionName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleCreateCollection();
-                            if (e.key === "Escape") {
+                        <div className="flex items-center gap-2 px-0.5 py-1.5">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={newCollectionName}
+                            onChange={(e) =>
+                              setNewCollectionName(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleCreateCollection();
+                              if (e.key === "Escape") {
+                                setShowCreateInput(false);
+                                setNewCollectionName("");
+                              }
+                            }}
+                            placeholder="Collection name"
+                            className="h-9 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm focus:outline-none focus:ring-2 focus:ring-tint"
+                          />
+                          <button
+                            onClick={handleCreateCollection}
+                            className={CTRL_PRIMARY}
+                          >
+                            Create
+                          </button>
+                          <button
+                            onClick={() => {
                               setShowCreateInput(false);
                               setNewCollectionName("");
-                            }
-                          }}
-                          placeholder="Collection name"
-                          className="h-7 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm"
-                        />
-                        <Button
-                          onClick={handleCreateCollection}
-                          style={{
-                            padding: "4px 10px",
-                            width: "fit-content",
-                            backgroundColor: "#5E7AC4",
-                            color: "white",
-                            borderRadius: "6px",
-                            fontSize: "13px",
-                          }}
-                        >
-                          Create
-                        </Button>
-                        <Button
-                          outlined
-                          onClick={() => {
-                            setShowCreateInput(false);
-                            setNewCollectionName("");
-                          }}
-                          style={{
-                            padding: "4px 8px",
-                            fontSize: "13px",
-                            borderRadius: "6px",
-                          }}
-                        >
-                          Cancel
-                        </Button>
+                            }}
+                            className={CTRL_SECONDARY}
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -869,6 +994,7 @@ export default function AddCustomGenome() {
                           ) : (
                             <>
                               {renderFieldWarnings()}
+                              {renderUnusedFieldWarnings()}
                               {renderValidationErrors()}
                             </>
                           )}
@@ -953,69 +1079,62 @@ export default function AddCustomGenome() {
                                                 ),
                                               )
                                             : false;
+                                        // Every collection this genome belongs to
+                                        const containingCollections =
+                                          Object.entries(customCollections)
+                                            .filter(([, entries]) =>
+                                              (entries ?? []).some((entry) =>
+                                                entry.assemblies.includes(
+                                                  genome.id,
+                                                ),
+                                              ),
+                                            )
+                                            .map(([name]) => name);
+                                        // Collections other than the current one
+                                        const otherCollections =
+                                          containingCollections.filter(
+                                            (c) => c !== selectedCollection,
+                                          );
                                         const isConfirming =
                                           confirmDeleteId === genome.id;
                                         return (
                                           <div
                                             key={genome.id}
-                                            onClick={() => {
-                                              if (
-                                                isInCollection ||
-                                                !selectedCollection
-                                              )
-                                                return;
-                                              const entry: CustomGenomeEntry = {
-                                                name: genome.name || genome.id,
-                                                logoUrl: "",
-                                                assemblies: [],
-                                                color: "white",
-                                              };
-                                              dispatch(
-                                                addGenomeToCollection({
-                                                  collectionName:
-                                                    selectedCollection,
-                                                  genome: entry,
-                                                  assemblyName: genome.id,
-                                                }),
-                                              );
-                                              if (toastTimerRef.current)
-                                                clearTimeout(
-                                                  toastTimerRef.current,
-                                                );
-                                              setToast({
-                                                visible: true,
-                                                collection: selectedCollection,
-                                              });
-                                              toastTimerRef.current =
-                                                setTimeout(
-                                                  () =>
-                                                    setToast((t) => ({
-                                                      ...t,
-                                                      visible: false,
-                                                    })),
-                                                  4000,
-                                                );
-                                            }}
-                                            className={`flex flex-row justify-between items-center p-3 rounded-xl border transition-colors ${
+                                            className={`flex flex-row justify-between items-center gap-3 p-3 rounded-xl border transition-colors ${
                                               isInCollection
-                                                ? "bg-tint/5 border-tint/20 cursor-default"
-                                                : selectedCollection
-                                                  ? "bg-secondary dark:bg-dark-secondary border-transparent hover:border-tint/30 cursor-pointer"
-                                                  : "bg-secondary dark:bg-dark-secondary border-transparent cursor-default opacity-60"
+                                                ? "bg-tint/5 border-tint/20"
+                                                : "bg-secondary dark:bg-dark-secondary border-transparent"
                                             }`}
                                           >
                                             {/* Left: genome info */}
-                                            <div className="flex flex-col gap-1">
-                                              <div className="flex items-center gap-2">
+                                            <div className="flex flex-col gap-1 min-w-0">
+                                              <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-sm font-medium">
                                                   {genome.name}
                                                 </span>
-                                                {isInCollection && (
-                                                  <span className="inline-flex items-center gap-1 text-xs text-tint font-semibold">
-                                                    <CheckIcon className="w-3.5 h-3.5" />
-                                                    In collection
-                                                  </span>
-                                                )}
+                                                {isInCollection &&
+                                                  selectedCollection && (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        dispatch(
+                                                          setFocusCollection(
+                                                            selectedCollection,
+                                                          ),
+                                                        );
+                                                        dispatch(
+                                                          setGenomePickerTab(
+                                                            "picker",
+                                                          ),
+                                                        );
+                                                      }}
+                                                      className="inline-flex items-center gap-1 text-xs text-tint font-semibold px-2 py-0.5 rounded-full bg-tint/10 hover:bg-tint/20 transition-colors cursor-pointer"
+                                                      title={`Go to "${selectedCollection}" in Choose a genome`}
+                                                    >
+                                                      <CheckIcon className="w-3.5 h-3.5" />
+                                                      In "{selectedCollection}"
+                                                    </button>
+                                                  )}
                                               </div>
                                               <span className="text-xs text-gray-400">
                                                 {genome.chromosomes.length > 0
@@ -1032,58 +1151,128 @@ export default function AddCustomGenome() {
                                                       : "")
                                                   : "No chromosomes"}
                                               </span>
+                                              {otherCollections.length > 0 && (
+                                                <div className="flex items-center gap-1 flex-wrap text-xs text-gray-400">
+                                                  <span>Also in:</span>
+                                                  {otherCollections.map(
+                                                    (col) => (
+                                                      <button
+                                                        key={col}
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          dispatch(
+                                                            setFocusCollection(
+                                                              col,
+                                                            ),
+                                                          );
+                                                          dispatch(
+                                                            setGenomePickerTab(
+                                                              "picker",
+                                                            ),
+                                                          );
+                                                        }}
+                                                        className="inline-flex items-center px-2 py-0.5 rounded-full bg-tint/10 text-tint hover:bg-tint/20 transition-colors cursor-pointer"
+                                                        title={`Go to "${col}" in Choose a genome`}
+                                                      >
+                                                        {col}
+                                                      </button>
+                                                    ),
+                                                  )}
+                                                </div>
+                                              )}
                                             </div>
 
-                                            {/* Right: delete button */}
-                                            <button
-                                              onClick={async (e) => {
-                                                e.stopPropagation();
-                                                if (!isConfirming) {
-                                                  setConfirmDeleteId(genome.id);
-                                                  setTimeout(
-                                                    () =>
-                                                      setConfirmDeleteId(
-                                                        (id) =>
-                                                          id === genome.id
-                                                            ? null
-                                                            : id,
-                                                      ),
-                                                    2000,
+                                            {/* Right: actions */}
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  addCustomGenomeToCollection(
+                                                    genome,
                                                   );
-                                                  return;
+                                                }}
+                                                disabled={!selectedCollection}
+                                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                                                  !selectedCollection
+                                                    ? "bg-gray-100 dark:bg-dark-background text-gray-400 cursor-not-allowed"
+                                                    : isInCollection
+                                                      ? "bg-tint/10 text-tint cursor-pointer hover:bg-tint/20"
+                                                      : "bg-tint text-white cursor-pointer hover:opacity-90"
+                                                }`}
+                                                title={
+                                                  !selectedCollection
+                                                    ? "Select a collection first"
+                                                    : isInCollection
+                                                      ? `Already in "${selectedCollection}"`
+                                                      : `Add to "${selectedCollection}"`
                                                 }
-                                                setConfirmDeleteId(null);
-                                                await dispatch(
-                                                  deleteCustomGenome(genome.id),
-                                                ).unwrap();
-                                                dispatch(
-                                                  removeAssembliesFromAllCollections(
-                                                    [genome.id],
-                                                  ),
-                                                );
-                                              }}
-                                              className={`p-1 rounded-md transition-colors ${
-                                                isConfirming
-                                                  ? "bg-red-500 text-white"
-                                                  : "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                              }`}
-                                              aria-label={
-                                                isConfirming
-                                                  ? `Confirm delete ${genome.name}`
-                                                  : `Delete ${genome.name}`
-                                              }
-                                              title={
-                                                isConfirming
-                                                  ? "Click again to confirm"
-                                                  : "Delete genome"
-                                              }
-                                            >
-                                              {isConfirming ? (
-                                                <ExclamationTriangleIcon className="w-4 h-4" />
-                                              ) : (
-                                                <XMarkIcon className="w-4 h-4" />
-                                              )}
-                                            </button>
+                                              >
+                                                {isInCollection ? (
+                                                  <>
+                                                    <CheckIcon className="w-3.5 h-3.5" />
+                                                    In collection
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <PlusIcon className="w-3.5 h-3.5" />
+                                                    Add
+                                                  </>
+                                                )}
+                                              </button>
+                                              <button
+                                                onClick={async (e) => {
+                                                  e.stopPropagation();
+                                                  if (!isConfirming) {
+                                                    setConfirmDeleteId(
+                                                      genome.id,
+                                                    );
+                                                    setTimeout(
+                                                      () =>
+                                                        setConfirmDeleteId(
+                                                          (id) =>
+                                                            id === genome.id
+                                                              ? null
+                                                              : id,
+                                                        ),
+                                                      2000,
+                                                    );
+                                                    return;
+                                                  }
+                                                  setConfirmDeleteId(null);
+                                                  await dispatch(
+                                                    deleteCustomGenome(
+                                                      genome.id,
+                                                    ),
+                                                  ).unwrap();
+                                                  dispatch(
+                                                    removeAssembliesFromAllCollections(
+                                                      [genome.id],
+                                                    ),
+                                                  );
+                                                }}
+                                                className={`p-1 rounded-md transition-colors ${
+                                                  isConfirming
+                                                    ? "bg-red-500 text-white"
+                                                    : "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                }`}
+                                                aria-label={
+                                                  isConfirming
+                                                    ? `Confirm delete ${genome.name}`
+                                                    : `Delete ${genome.name}`
+                                                }
+                                                title={
+                                                  isConfirming
+                                                    ? "Click again to confirm"
+                                                    : "Delete genome"
+                                                }
+                                              >
+                                                {isConfirming ? (
+                                                  <ExclamationTriangleIcon className="w-4 h-4" />
+                                                ) : (
+                                                  <XMarkIcon className="w-4 h-4" />
+                                                )}
+                                              </button>
+                                            </div>
                                           </div>
                                         );
                                       })

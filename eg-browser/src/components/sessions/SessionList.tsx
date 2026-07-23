@@ -215,6 +215,7 @@ function SessionListItem({
   const currentSession = useAppSelector(selectCurrentSession);
   const selectedRegionSet = currentSession?.selectedRegionSet;
   const userViewRegion = currentSession?.userViewRegion;
+
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     if (isConfirmingDelete) {
@@ -234,7 +235,7 @@ function SessionListItem({
       await navigator.clipboard.writeText(id);
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 1500);
-      console.log("Bundle ID copied to clipboard", "success", 1500);
+      // console.log("Bundle ID copied to clipboard", "success", 1500);
     } catch (e) {
       console.error("Failed to copy bundle ID", e);
     }
