@@ -25,7 +25,7 @@ export class NumericalAggregator {
       viewRegion,
       width,
     );
-    
+
     return [
       xToFeaturesForward.map(DefaultAggregators.fromId(newAggregatorId)),
       xToFeaturesReverse.map(DefaultAggregators.fromId(newAggregatorId)),
@@ -45,6 +45,7 @@ export class NumericalAggregator {
         this.aggregateFeatures(data, viewRegion, width, aggregateMethod);
 
       const smoothNumber = Number.parseInt(smooth) || 0;
+
       xToValue =
         smoothNumber === 0
           ? xToValueBeforeSmooth

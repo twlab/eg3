@@ -1,6 +1,7 @@
 ﻿// @ts-nocheck
 import { useState } from "react";
 import { genomeFileSchema } from "wuepgg3-track";
+import BrowserUrlAnatomy from "./BrowserUrlAnatomy";
 
 type SchemaNode = {
   type?: string | string[];
@@ -313,7 +314,11 @@ export default function GenomeSchemaView() {
   const [showExample, setShowExample] = useState(true);
 
   return (
-    <div className="max-w-3xl mx-auto text-sm">
+    <div className="max-w-8xl mx-auto text-sm">
+      <BrowserUrlAnatomy />
+
+      <hr className="my-6 border-gray-200 dark:border-gray-700" />
+
       <p className="mb-4 text-gray-600 dark:text-gray-300">
         The file must be a JSON array of genome objects (or a single object).
         Hover any line to see its type and whether it is required. Click{" "}

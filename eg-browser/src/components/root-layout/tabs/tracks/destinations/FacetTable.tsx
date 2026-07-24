@@ -234,8 +234,27 @@ const FacetTable: React.FC<FacetTableProps> = ({
     return list;
   };
 
-  // Header components memoized to avoid re-render on unrelated changes
-  const ColumnHeaders = React.memo(({ list }: { list: any[] }) => {
+  // Nesting depth of a header/value: 0 for the top-level header, 1 for its
+  // direct children, 2 for grandchildren, etc. Walks the child2ancestor chain.
+  const getLevel = (name: string) => {
+    let level = 0;
+    let cur = name;
+    while (
+      state.child2ancestor[cur] &&
+      state.child2ancestor[cur] !== cur &&
+      level < 20
+    ) {
+      cur = state.child2ancestor[cur];
+      level++;
+    }
+    return level;
+  };
+
+  const INDENT_PX = 16;
+
+  // Rendered as plain functions (not separate component types) so that
+  // toggling expand/collapse does not remount the subtree and reset scroll.
+  const renderColumnHeaders = (list: any[]) => {
     const colClass = "facet-column-header";
     return (
       <>
@@ -243,8 +262,20 @@ const FacetTable: React.FC<FacetTableProps> = ({
           const hasChildren = element.children && element.children.size;
           const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
           const expandClass = hasChildren && element.expanded ? "expanded" : "";
+          const level = getLevel(element.name);
+          const divClass = `${colClass}${
+            hasChildren && element.expanded ? " is-expanded" : ""
+          }${level > 0 ? " is-child" : ""}`;
           return (
-            <div key={`${element.name}-${idx}`} className={`${colClass}`}>
+            <div
+              key={`${element.name}-${idx}`}
+              className={divClass}
+              style={
+                level > 0
+                  ? { paddingLeft: `${level * INDENT_PX}px` }
+                  : undefined
+              }
+            >
               {hasChildren ? (
                 <button
                   name={element.name}
@@ -270,9 +301,9 @@ const FacetTable: React.FC<FacetTableProps> = ({
         })}
       </>
     );
-  });
+  };
 
-  const RowHeaders = React.memo(({ list }: { list: any[] }) => {
+  const renderRowHeaders = (list: any[]) => {
     const rowClass = "facet-row-header";
     return (
       <>
@@ -280,8 +311,20 @@ const FacetTable: React.FC<FacetTableProps> = ({
           const hasChildren = element.children && element.children.size;
           const prefix = hasChildren ? (element.expanded ? "⊟" : "⊞") : "";
           const expandClass = hasChildren && element.expanded ? "expanded" : "";
+          const level = getLevel(element.name);
+          const divClass = `${rowClass}${
+            hasChildren && element.expanded ? " is-expanded" : ""
+          }${level > 0 ? " is-child" : ""}`;
           return (
-            <div key={`${element.name}-${idx}`} className={`${rowClass}`}>
+            <div
+              key={`${element.name}-${idx}`}
+              className={divClass}
+              style={
+                level > 0
+                  ? { paddingLeft: `${level * INDENT_PX}px` }
+                  : undefined
+              }
+            >
               {hasChildren ? (
                 <button
                   name={element.name}
@@ -307,7 +350,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
         })}
       </>
     );
-  });
+  };
 
   const swapHeader = () => {
     let { rowHeader, columnHeader, rowList, columnList } = state;
@@ -327,16 +370,11 @@ const FacetTable: React.FC<FacetTableProps> = ({
     setColNumber();
   };
 
-  const MatrixGrid = React.memo(
-    ({
-      rowList,
-      columnList,
-      columnHeader,
-    }: {
-      rowList: any[];
-      columnList: any[];
-      columnHeader: string;
-    }) => {
+  const renderMatrixGrid = (
+    rowList: any[],
+    columnList: any[],
+    columnHeader: string,
+  ) => {
       const divs: Array<any> = [];
       if (columnHeader !== UNUSED_META_KEY) {
         for (let row of rowList) {
@@ -367,8 +405,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
       }
 
       return <>{divs}</>;
-    },
-  );
+  };
 
   const trackMetadataBelongsTo = (
     tkMeta: string | string[],
@@ -589,13 +626,13 @@ const FacetTable: React.FC<FacetTableProps> = ({
           <div className="facet-outer">
             <div className="facet-content">
               <div className="facet-holder"></div>
-              <ColumnHeaders list={state.columnList} />
-              <RowHeaders list={state.rowList} />
-              <MatrixGrid
-                rowList={state.rowList}
-                columnList={state.columnList}
-                columnHeader={state.columnHeader}
-              />
+              {renderColumnHeaders(state.columnList)}
+              {renderRowHeaders(state.rowList)}
+              {renderMatrixGrid(
+                state.rowList,
+                state.columnList,
+                state.columnHeader,
+              )}
             </div>
           </div>
         </div>}

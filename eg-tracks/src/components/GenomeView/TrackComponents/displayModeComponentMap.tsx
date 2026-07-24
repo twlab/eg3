@@ -963,6 +963,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     xvaluesData,
+    initialLoad,
     legendWidth,
     windowWidth,
   }) {
@@ -981,6 +982,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         xvaluesData={xvaluesData}
+        dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
         legendWidth={legendWidth}
       />
@@ -994,6 +997,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    initialLoad,
     windowWidth,
   }) {
     const canvasElements = (
@@ -1001,13 +1005,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
         data={formattedData}
         options={configOptions}
         viewWindow={
-          new OpenInterval(trackState.startWindow, trackState.startWindow * 2)
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
         }
         visRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
       />
     );
@@ -1024,20 +1031,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
     windowWidth,
     placeFeature,
   }) {
-    console.log(
-      "dynamicbed",
-      placeFeature,
-      formattedData,
-      trackState,
-      configOptions,
-    );
-
     const canvasElements = (
       <DynamicBedTrackComponents
         data={formattedData}
         options={configOptions}
         viewWindow={
-          new OpenInterval(trackState.startWindow, trackState.startWindow * 2)
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
         }
         placeFeature={placeFeature}
         visRegion={trackState.visRegion}
@@ -1058,19 +1059,29 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    xvaluesData,
+    initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <DynamicNumericalTrack
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         viewRegion={trackState.visRegion}
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
+        xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth}
       />
     );
     return canvasElements;
@@ -1083,7 +1094,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    xvaluesData,
+    initialLoad,
     windowWidth,
+    legendWidth,
   }) {
     const canvasElements = (
       <DynamicplotTrackComponent
@@ -1094,8 +1108,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         trackModel={trackModel}
         updatedLegend={updatedLegend}
+        xvaluesData={xvaluesData}
         dataIdx={trackState.dataIdx}
+        initialLoad={initialLoad}
         windowWidth={windowWidth}
+        legendWidth={legendWidth}
       />
     );
     return canvasElements;
@@ -1727,6 +1744,8 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     (trackType === "omeroidr" && configOptions.displayMode !== "density");
   if (trackType === "boxplot" || trackType === "qbed") {
     return displayModeComponentMap[trackType](createFullParams());
+  } else if (trackType === "dbedgraph") {
+    return displayModeComponentMap[trackType](createFullParams());
   } else if (isFullMode) {
     return displayModeComponentMap.full(
       createFullParams({
@@ -1791,12 +1810,11 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     simpleTracks.has(trackType)
   ) {
     return displayModeComponentMap[trackType](createFullParams());
-  } else if (trackType === "dynamichic") {
-    return displayModeComponentMap.dynamichic(
-      createFullParams({
-        configOptions: { ...configOptions, displayMode: "heatmap" },
-      }),
-    );
+  } else if (trackType === "dynamichic" || trackType === "dynamiclongrange") {
+    // displayMode comes from the config menu (heatmap/arc) and already
+    // defaults to heatmap via DEFAULT_OPTIONS — pinning it here made picking
+    // arc a no-op.
+    return displayModeComponentMap.dynamichic(createFullParams());
   } else if (dynamicTracks.has(trackType)) {
     const displayType =
       trackType === "dynamiclongrange" ? "dynamichic" : trackType;
@@ -2347,7 +2365,6 @@ function formatCategoricalData(
   initialLoad: boolean,
   regionLoci?: Array<any>,
 ) {
-  console.log(genesArr);
   if (initialLoad && regionLoci && regionLoci.length > 0) {
     const regionGroups: any[][] = regionLoci.map(() => []);
 

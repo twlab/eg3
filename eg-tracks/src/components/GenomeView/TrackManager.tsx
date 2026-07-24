@@ -1,7 +1,7 @@
 import {
   createRef,
   memo,
-  startTransition,
+  // startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -27,10 +27,7 @@ import TrackFactory from "./TrackComponents/TrackFactory";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
-import {
-  groupTracksArrMatPlot,
-  trackUsingExpandedLoci,
-} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
@@ -43,10 +40,7 @@ import {
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-import {
-  formatDataByType,
-  interactionTracks,
-} from "./TrackComponents/displayModeComponentMap";
+import { interactionTracks } from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
 // import { fetchGenomicData } from "../../getRemoteData/fetchData";
 // import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
@@ -175,6 +169,7 @@ const reCalcAgg = new Set([
   "maxRows",
   "hideMinimalItems",
   "sortItems",
+  "smooth",
 ]);
 interface TrackManagerProps {
   windowWidth: number;
@@ -648,9 +643,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         for (const track of message[j].trackModelArr) {
           // hic tracks are fetched on the main thread (no worker) and the
-          // results are handed directly to createInfiniteOnMessage.
+          // results are handed directly to createInfiniteOnMessage. dynamichic
+          // is just several hic files in `tracks`, so it takes the same path —
+          // hic data comes back as GenomeInteraction instances, and postMessage
+          // would strip them down to plain objects.
 
-          if (track.type === "hic") {
+          if (track.type === "hic" || track.type === "dynamichic") {
             fetchGenomicData([{ ...newMessage, trackModelArr: [track] }])
               .then((results) => {
                 if (results) {
@@ -658,7 +656,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               })
               .catch((error) => {
-                console.error("Error fetching hic data:", error);
+                console.error(`Error fetching ${track.type} data:`, error);
               });
             continue;
           }
@@ -1590,6 +1588,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     },
     [onTracksChange, onConfigMenuClose],
   );
+
   function handleAdd(tracks: Array<any>, trackType) {
     let newTrack: TrackModel | null = null;
     if (trackType === "matplot") {
@@ -2501,35 +2500,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (!memory) return false; // Not supported (non-Chromium browsers)
 
     const usedMB = memory.usedJSHeapSize / (1024 * 1024);
-    return usedMB > 2000;
+    return usedMB > 1500;
   }
   function checkDrawData(newDrawData) {
-    for (const key in trackManagerState.current.caches) {
-      const curTrack = trackManagerState.current.caches[key];
-      const cacheKeys = Object.keys(curTrack)
-        .filter((k) => isInteger(k))
-        .map(Number)
-        .sort((a, b) => a - b);
-      let minIdx, maxIdx;
-      if (
-        curTrack.trackType in trackUsingExpandedLoci ||
-        !curTrack.usePrimaryNav
-      ) {
-        minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 2);
-        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 2);
-      } else {
-        minIdx = dataIdx.current - (isMemoryOver2GB() ? 1 : 3);
-        maxIdx = dataIdx.current + (isMemoryOver2GB() ? 1 : 3);
-      }
-      for (const cacheDataIdx of cacheKeys) {
-        if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
-          if (trackManagerState.current.caches[key][cacheDataIdx]) {
-            trackManagerState.current.caches[key][cacheDataIdx] = {};
+    if (isMemoryOver2GB()) {
+      for (const key in trackManagerState.current.caches) {
+        const curTrack = trackManagerState.current.caches[key];
+        const cacheKeys = Object.keys(curTrack)
+          .filter((k) => isInteger(k))
+          .map(Number)
+          .sort((a, b) => a - b);
+        let minIdx, maxIdx;
+
+        minIdx = dataIdx.current - 1;
+        maxIdx = dataIdx.current + 1;
+
+        for (const cacheDataIdx of cacheKeys) {
+          if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
+            if (trackManagerState.current.caches[key][cacheDataIdx]) {
+              trackManagerState.current.caches[key][cacheDataIdx] = {};
+            }
           }
         }
       }
     }
-
     if (newDrawData && Object.keys(newDrawData.trackToDrawId).length > 0) {
       let curViewWindow;
       const genomeName = curGenomeConfig.current?.genome.getName();
@@ -3279,7 +3273,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             item.type === "dynamicbed" ||
             item.type === "dynamic" ||
-            item.type === "dynamichic"
+            item.type === "dynamichic" ||
+            item.type === "dynamiclongrange"
           ) {
             return false;
           }
@@ -3844,7 +3839,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   // MARK: viewWindowConfig
-  console.log(trackManagerState.current.caches);
   function aggViewWindowData(
     viewWindow,
     dataIdx,
@@ -3876,7 +3870,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         if (
           cacheTrackData.trackType in
-          { hic: "", longrange: "", biginteraction: "" }
+          {
+            hic: "",
+            longrange: "",
+            biginteraction: "",
+            dynamichic: "",
+            dynamiclongrange: "",
+          }
         ) {
           trackToDrawId[key] = false;
           continue;
@@ -3933,20 +3933,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               break;
             }
             currIdx--;
-          }
-          // these tracks has multiple subTracks that needs to to combined in groupTrack
-          if (
-            cacheTrackData.trackType in
-            { matplot: "", dynamic: "", dynamicbed: "" }
-          ) {
-            if (
-              cacheTrackData[dataIdx]?.xvalues ||
-              cacheTrackData[dataIdx]?.placeFeature
-            ) {
-              combinedData = [];
-            } else {
-              combinedData = groupTracksArrMatPlot(combinedData);
-            }
           }
         }
         // }
@@ -4160,7 +4146,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               legendRef: newLegendRef,
               trackModel: curTrackModel,
             });
-
+            // completedFetchedRegion.current.done[curTrackModel.id] = false;
             initTrackFetchCache(curTrackModel);
           }
         }
@@ -4171,14 +4157,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         trackManagerState.current.tracks = filteredTracks;
-        // Reset completed fetch tracking so stale group entries from the
-        // previous track set don't block new grouped tracks from drawing.
-        completedFetchedRegion.current = {
-          key: null,
-          done: {},
-          groups: {},
-          selected: {},
-        };
+
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
         onTracksChange(filteredTracks);
@@ -4284,7 +4263,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!initialLoad.current) {
-      console.log(genomeConfig);
       const updatedGenomeConfig = _.cloneDeep(genomeConfig);
       if (userViewRegion) {
         updatedGenomeConfig.defaultRegion = new OpenInterval(
@@ -4452,6 +4430,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               cache.trackType === "geneannotation" ||
               cache.trackType === "refbed" ||
               cache.trackType in numericalTracks ||
+              cache.trackType === "matplot" ||
+              cache.trackType === "dynamic" ||
+              cache.trackType === "dynamichic" ||
+              cache.trackType === "dynamiclongrange" ||
               interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||

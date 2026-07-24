@@ -25,16 +25,51 @@ class TwoBitSource {
    */
   constructor(url) {
     this.url = url;
-    this.twobit = new TwoBitFile({
-      filehandle: new RemoteFile(url),
+    // Default cache mode: reuse the browser's HTTP cache to avoid refetching.
+    this.twobit = this.makeTwoBit();
+  }
+
+  // Build a reader with an explicit HTTP cache mode, optionally through the
+  // CORS proxy. Range requests are how .2bit seeks, so `cache` controls how
+  // they interact with the browser's disk cache (see `runWithFallback`).
+  private makeTwoBit(
+    useProxy = false,
+    cache: RequestCache = "default",
+  ): TwoBitFile {
+    const url = useProxy ? proxiedUrl(this.url) : this.url;
+    return new TwoBitFile({
+      filehandle: new RemoteFile(url, { overrides: { cache } }),
     });
   }
 
-  private switchToProxy() {
+  /**
+   * Runs a read against the preferred (cached) reader, escalating only on
+   * failure: cached -> same-origin cache-bypass (recovers from Chromium's
+   * intermittent net::ERR_CACHE_OPERATION_NOT_SUPPORTED without leaving our
+   * origin, and does not stick) -> CORS proxy (committed). See
+   * BigSourceWorkerGmod for details.
+   */
+  private async runWithFallback<T>(
+    run: (twobit: TwoBitFile) => Promise<T>,
+  ): Promise<T> {
+    // Tier 1: preferred reader (cached, or proxied if already committed).
+    try {
+      return await run(this.twobit);
+    } catch (error) {
+      if (this.usingProxy) throw error;
+    }
+
+    // Tier 2: same origin, cache bypassed — transient, not persisted.
+    try {
+      return await run(this.makeTwoBit(false, "reload"));
+    } catch (error) {
+      // fall through to the proxy
+    }
+
+    // Tier 3: commit to the CORS proxy for this and future reads.
     this.usingProxy = true;
-    this.twobit = new TwoBitFile({
-      filehandle: new RemoteFile(proxiedUrl(this.url)),
-    });
+    this.twobit = this.makeTwoBit(true);
+    return await run(this.twobit);
   }
 
   /**
@@ -44,31 +79,25 @@ class TwoBitSource {
    * @return {Promise<SequenceData[]>} - sequence in the region
    */
   async getData(region) {
-    const fetchForRegion = () =>
-      region.getGenomeIntervals().map(async (locus) => {
-        const sequence = await this.getSequenceInInterval(locus);
-        return new SequenceData(locus, sequence!);
-      });
-
-    try {
-      return await Promise.all(fetchForRegion());
-    } catch (error) {
-      if (!this.usingProxy) {
-        this.switchToProxy();
-        return await Promise.all(fetchForRegion());
-      }
-      throw error;
-    }
+    return this.runWithFallback((twobit) =>
+      Promise.all(
+        region.getGenomeIntervals().map(async (locus) => {
+          const sequence = await this.getSequenceInInterval(twobit, locus);
+          return new SequenceData(locus, sequence!);
+        }),
+      ),
+    );
   }
 
   /**
    * Gets the sequence for a single chromosome interval.
    *
+   * @param {TwoBitFile} twobit - the reader to fetch from
    * @param {ChromosomeInterval} interval - coordinates
    * @return {Promise<string>} - a Promise for the sequence
    */
-  async getSequenceInInterval(interval) {
-    const seq = await this.twobit.getSequence(
+  async getSequenceInInterval(twobit, interval) {
+    const seq = await twobit.getSequence(
       interval.chr,
       interval.start,
       interval.end,

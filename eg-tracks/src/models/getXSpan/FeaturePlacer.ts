@@ -115,6 +115,7 @@ function sortPlacedFeatureIntoXMap(
 ) {
   const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
   const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
+
   for (let x = startX; x <= endX; x++) {
     xToFeatures[x].push(placedFeature.feature);
   }
@@ -230,6 +231,13 @@ export class FeaturePlacer {
     // and are all processed.
     const seenDataRefs = new Set<any>();
 
+    // Dedupes placements by their drawn span (contextLocation start/end). The
+    // same span can arrive more than once — e.g. a feature split across nav
+    // context pieces, or overlapping fetch regions returning the same record.
+    // A string key is compact and O(1); an object Set wouldn't work since every
+    // placement is a fresh object (reference identity never matches).
+    const seenSpans = new Set<string>();
+
     // Loop through outer array (regions: features[0]=region1, features[1]=region2, features[2]=region3)
     for (let regionIndex = 0; regionIndex < features.length; regionIndex++) {
       const item = features[regionIndex];
@@ -274,6 +282,13 @@ export class FeaturePlacer {
             continue;
           }
 
+          // Skip a span we've already placed (same drawn span).
+          const spanKey = `${contextLocation.start}-${contextLocation.end}`;
+          if (seenSpans.has(spanKey)) {
+            continue;
+          }
+          seenSpans.add(spanKey);
+
           const xSpan = useCenter
             ? drawModel.baseSpanToXCenter(contextLocation)
             : drawModel.baseSpanToXSpan(contextLocation);
@@ -292,13 +307,16 @@ export class FeaturePlacer {
             isReverse,
           };
 
-          const featureValue = getFeatureValue(feature);
+          const featureValue =
+            getFeatureValue(feature) ?? feature.values ?? undefined;
+
           // Only genuinely negative values render on the reverse strand. undefined
           // and NaN (e.g. raw bed annotation records whose column 3 is a name, not
           // a number) must go forward — otherwise `arrange`, which returns only the
           // forward placements, would drop every annotation.
-          if (!(featureValue < 0)) {
+          if (!(featureValue < 0) || Array.isArray(featureValue)) {
             if (mode === PlacementMode.NUMERICAL && xToFeaturesForward) {
+          
               sortPlacedFeatureIntoXMap(placement, xToFeaturesForward, width);
             } else {
               tmpPlacementForward.push(placement);

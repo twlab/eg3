@@ -56,6 +56,7 @@ export class PixiScene extends React.PureComponent<
   private container: HTMLDivElement | null = null;
   private particles: PIXI.Container;
   private app: any;
+  private isUnmounted: boolean = false;
   private t: any;
   private centerLine: PIXI.Sprite | null = null;
   private count: number = 0;
@@ -80,14 +81,24 @@ export class PixiScene extends React.PureComponent<
     const { height, width, backgroundColor } = this.props;
     const bgColor = colorString2number(backgroundColor || "0x000000");
 
-    this.app = new PIXI.Application();
-    await this.app.init({
+    const app = new PIXI.Application();
+    await app.init({
       width,
       height,
       backgroundColor: bgColor,
       autoDensity: true,
       resolution: window.devicePixelRatio,
     });
+
+    // `init` is async, so the track can be unmounted while it's still in
+    // flight — moving away from the view does exactly that. Bail out and
+    // release the WebGL context rather than wiring up an app nobody will
+    // ever unmount.
+    if (this.isUnmounted) {
+      app.destroy(true, { children: true });
+      return;
+    }
+    this.app = app;
 
     if (this.container) {
       this.container.appendChild(this.app.view as HTMLCanvasElement);
@@ -115,9 +126,14 @@ export class PixiScene extends React.PureComponent<
   }
 
   componentWillUnmount() {
-    this.app.ticker.remove(this.tick);
+    this.isUnmounted = true;
     window.removeEventListener("resize", this.onWindowResize);
-    this.app.stage.off("pointerdown", this.onPointerDown);
+    // `this.app` is only set once `init` has resolved; unmounting before then
+    // leaves ticker/stage undefined, so guard every hop.
+    if (this.app) {
+      this.app.ticker?.remove(this.tick);
+      this.app.stage?.off("pointerdown", this.onPointerDown);
+    }
   }
 
   componentDidUpdate(prevProps: PixiSceneProps, prevState: PixiSceneState) {

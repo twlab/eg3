@@ -68,6 +68,7 @@ export class PixiHeatmap extends PureComponent<
   private steps: number;
   private subs: PIXI.Container[] = []; // holder for sub containers for each sprite sets from each track
   private hmData: any[][] = [];
+  private isUnmounted: boolean = false;
 
   constructor(props: PixiHeatmapProps) {
     super(props);
@@ -84,15 +85,25 @@ export class PixiHeatmap extends PureComponent<
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
 
-    const bgColor = colorString2number("var(--bg-color)");
-    this.app = new PIXI.Application();
-    await this.app.init({
+    const bgColor = colorString2number(backgroundColor || "var(--bg-color)");
+    const app = new PIXI.Application();
+    await app.init({
       width,
       height,
       backgroundColor: bgColor,
       autoDensity: true,
       resolution: window.devicePixelRatio,
     });
+
+    // `init` is async, so the track can unmount while it's still in flight —
+    // switching display mode or moving away does exactly that. Bail out and
+    // release the WebGL context rather than wiring up an app nobody will
+    // ever unmount.
+    if (this.isUnmounted) {
+      app.destroy(true, { children: true });
+      return;
+    }
+    this.app = app;
 
     if (this.container) {
       this.container.appendChild(this.app.view);
@@ -109,10 +120,13 @@ export class PixiHeatmap extends PureComponent<
   }
 
   componentWillUnmount() {
+    this.isUnmounted = true;
+    window.removeEventListener("resize", this.onWindowResize);
+    // `this.app` is only set once `init` has resolved; unmounting before then
+    // leaves ticker/stage undefined, so guard every hop.
     if (this.app) {
       this.app.ticker?.remove(this.tick);
       this.app.stage?.off("pointerdown", this.onPointerDown);
-      window.removeEventListener("resize", this.onWindowResize);
     }
   }
 
@@ -148,8 +162,11 @@ export class PixiHeatmap extends PureComponent<
 
     if (prevProps.backgroundColor !== this.props.backgroundColor) {
       if (this.app.renderer) {
-        this.app.renderer.background = colorString2number(
-          this.props.backgroundColor || "0x000000"
+        // pixi v8: `renderer.background` is the BackgroundSystem itself —
+        // the color lives on `.color`, so assigning the number to
+        // `background` would clobber the system instead of recoloring it.
+        this.app.renderer.background.color = colorString2number(
+          this.props.backgroundColor || "var(--bg-color)"
         );
       }
     }
@@ -337,7 +354,10 @@ export class PixiHeatmap extends PureComponent<
         );
         s.pivot.set(0);
         s.rotation = ANGLE;
-        s.alpha = opacityScale(score);
+        // Magnitude drives opacity, sign drives the color (color2 above) —
+        // without the abs, a negative score clamps to alpha 0 and the cell
+        // never shows.
+        s.alpha = opacityScale(Math.abs(score));
         this.subs[index].addChild(s);
 
         // only push the points in screen

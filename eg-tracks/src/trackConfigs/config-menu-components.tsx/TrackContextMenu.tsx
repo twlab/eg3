@@ -131,7 +131,6 @@ export function ObjectAsTable(props) {
   );
 }
 export function TrackMoreInfo(props) {
-  console.log(props.legendWidth);
   const track = props.track;
   const anchorPosition = props.anchorPosition;
 
