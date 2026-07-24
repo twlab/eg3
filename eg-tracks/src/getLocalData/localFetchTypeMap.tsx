@@ -32,67 +32,69 @@ function objToInstanceAlign(alignment: { [key: string]: any }) {
   );
 }
 
+// How long any single fetch is allowed to run before we give up. Hic-based
+// tracks are heavier, so they get a longer budget than everything else.
+const DEFAULT_TIMEOUT_MS = 8000;
+const HIC_TIMEOUT_MS = 20000;
+const LONG_TIMEOUT_TYPES = new Set(["hic", "dynamichic"]);
+
+function timeoutForType(type: string) {
+  return LONG_TIMEOUT_TYPES.has(type) ? HIC_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+}
+
+// Track types grouped by the data source they fetch through. A type only needs
+// to appear in one set; getLocalData uses these to pick the fetch strategy.
+const BED_OR_TABIX = new Set([
+  "bed",
+  "bedgraph",
+  "qbed",
+  "refbed",
+  "matplot",
+  "categorical",
+  "longrange",
+  "methylc",
+]);
+const BIG = new Set(["bigwig", "dynseq", "biginteract"]);
+const BIGBED = new Set(["bigbed"]);
+const HIC = new Set(["hic"]);
+
+// Every supported local track type routes through getLocalData; the strategy is
+// derived from regionData.trackModel.type, so no second argument is needed.
+const LOCAL_TYPES = [...BED_OR_TABIX, ...BIG, ...BIGBED, ...HIC];
+
+// Track types served from an in-browser text blob via getTextData.
+const TEXT_TYPES = ["bed", "bedgraph", "qbed", "refbed", "longrange"];
+
 let cachedLocalFetchInstance: { [key: string]: any } = {};
 
-export const localFetchTypeMap: { [key: string]: any } = {
-  bed: async function bedFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  bedgraph: async function bedgraphFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  qbed: async function qbedFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  bigbed: async function bigbedFetch(regionData: any) {
-    return getLocalData(regionData, "bigbed");
-  },
-  refbed: async function refbedFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  matplot: async function matplotFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  bigwig: async function bigwigFetch(regionData: any) {
-    return getLocalData(regionData, "big");
-  },
-  categorical: async function coolFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  longrange: async function longrangeFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  dynseq: async function dynseqFetch(regionData: any) {
-    return getLocalData(regionData, "big");
-  },
-  biginteract: async function biginteractFetch(regionData: any) {
-    return getLocalData(regionData, "big");
-  },
-  methylc: async function methylcFetch(regionData: any) {
-    return getLocalData(regionData, "bedOrTabix");
-  },
-  hic: async function hicFetch(regionData: any) {
-    return getLocalHicData(regionData);
-  },
-};
+// Reject if the wrapped promise doesn't settle within `ms` milliseconds.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: any;
+  const timeout = new Promise<T>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`Request timed out after ${ms / 1000} seconds. `)),
+      ms,
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
-export const textFetchTypeMap: { [key: string]: any } = {
-  bed: async function bedFetch(regionData: any) {
-    return getTextData(regionData);
+export const localFetchTypeMap: { [key: string]: any } = LOCAL_TYPES.reduce(
+  (map, type) => {
+    map[type] = (regionData: any) => getLocalData(regionData);
+    return map;
   },
-  bedgraph: async function bedgraphFetch(regionData: any) {
-    return getTextData(regionData);
+  {} as { [key: string]: any },
+);
+
+export const textFetchTypeMap: { [key: string]: any } = TEXT_TYPES.reduce(
+  (map, type) => {
+    map[type] = (regionData: any) =>
+      withTimeout(getTextData(regionData), timeoutForType(type));
+    return map;
   },
-  qbed: async function qbedFetch(regionData: any) {
-    return getTextData(regionData);
-  },
-  refbed: async function refbedFetch(regionData: any) {
-    return getTextData(regionData);
-  },
-  longrange: async function coolFetch(regionData: any) {
-    return getTextData(regionData);
-  },
-};
+  {} as { [key: string]: any },
+);
 
 async function getTextData(regionData: any) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
@@ -122,15 +124,25 @@ async function getTextData(regionData: any) {
   return await fetchInstance.getData(regionData.nav);
 }
 
-async function getLocalData(regionData: any, trackType: string) {
+function getLocalData(regionData: any) {
+  const type = regionData.trackModel.type;
+  const dataPromise = HIC.has(type)
+    ? fetchLocalHic(regionData)
+    : fetchLocalSource(regionData);
+  return withTimeout(dataPromise, timeoutForType(type));
+}
+
+async function fetchLocalSource(regionData: any) {
+  const type = regionData.trackModel.type;
+
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
-    if (trackType === "bigbed") {
+    if (BIGBED.has(type)) {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LocalBigSource(regionData.trackModel.fileObj);
-    } else if (trackType === "big") {
+    } else if (BIG.has(type)) {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LocalBigSourceGmod(regionData.trackModel.fileObj);
-    } else if (trackType === "bedOrTabix") {
+    } else if (BED_OR_TABIX.has(type)) {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LocalTabixSource(regionData.trackModel);
     }
@@ -138,7 +150,7 @@ async function getLocalData(regionData: any, trackType: string) {
 
   let fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
 
-  if (trackType in { bigbed: "" }) {
+  if (BIGBED.has(type)) {
     return await fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,
@@ -152,7 +164,7 @@ async function getLocalData(regionData: any, trackType: string) {
   );
 }
 
-async function getLocalHicData(regionData: any) {
+async function fetchLocalHic(regionData: any) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
     cachedLocalFetchInstance[`${regionData.trackModel.id}`] = new HicSource(
       regionData.trackModel.fileObj,

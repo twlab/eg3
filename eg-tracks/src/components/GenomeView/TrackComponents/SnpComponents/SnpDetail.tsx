@@ -1,11 +1,11 @@
 import React from "react";
-import Snp from "../../../models/Snp";
+import Snp from "../../../../models/Snp";
 import {
   getFeatureHasStrand,
   getFeatureLength,
   getFeatureLocusString,
   getFeatureStrand,
-} from "../../../models/Feature";
+} from "../../../../models/Feature";
 import "../commonComponents/HoverToolTips/Tooltip.css";
 
 interface SnpDetailProps {

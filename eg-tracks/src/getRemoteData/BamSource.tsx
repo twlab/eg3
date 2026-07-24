@@ -44,9 +44,7 @@ class BamSource {
   // through the CORS proxy. Only valid for remote (string url) sources.
   private makeBam(useProxy = false, cache: RequestCache = "default"): BamFile {
     const bamUrl = useProxy ? proxiedUrl(this.url) : this.url;
-    const baiUrl = useProxy
-      ? proxiedUrl(this.url + ".bai")
-      : this.url + ".bai";
+    const baiUrl = useProxy ? proxiedUrl(this.url + ".bai") : this.url + ".bai";
     return new BamFile({
       bamFilehandle: new RemoteFile(bamUrl, { overrides: { cache } }),
       baiFilehandle: new RemoteFile(baiUrl, { overrides: { cache } }),
@@ -98,13 +96,29 @@ class BamSource {
 
       // Return one group per locus carrying the locus chr once, instead of
       // stamping chr onto every record. The chr is reattached when formatting.
+      //
+      // @gmod/bam records expose their fields lazily: a record's private `data`
+      // cache starts as just `{ start }`, and cigar/end/name/seq/MD only appear
+      // once you call the matching accessor. Materialize them here into a plain,
+      // fully-populated object so downstream code (BamAlignment, and the
+      // Redux/Immer-frozen screenshot path) gets a stable, serializable shape
+      // instead of undefined fields. Dropping the live record also releases its
+      // reference to the whole decompressed block buffer once we return.
       return locusArr.map((locus, index) => ({
         chr: locus.chr,
-        data: dataForEachSegment[index].map((r: any) =>
-          Object.assign(r, {
-            ref: bam.indexToChr[r.get("seq_id")].refName,
-          }),
-        ),
+        data: dataForEachSegment[index].map((r: any) => ({
+          _id: r._id,
+          flags: r.flags,
+          ref: bam.indexToChr[r.get("seq_id")].refName,
+          data: {
+            start: r.get("start"),
+            end: r.get("end"),
+            cigar: r.get("cigar"),
+            name: r.get("name"),
+            seq: r.get("seq"),
+            md: r.get("MD"),
+          },
+        })),
       }));
     });
   }

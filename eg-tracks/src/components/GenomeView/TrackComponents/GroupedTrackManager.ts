@@ -24,7 +24,6 @@ import { Fiber } from "../../../models/Feature";
 import {
   FIBER_DENSITY_CUTOFF_LENGTH,
   formatCombinedData,
-  formatDataByType,
 } from "./displayModeComponentMap";
 import { getVariant } from "./VcfComponents/Vcf";
 import {
