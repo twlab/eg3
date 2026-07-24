@@ -140,7 +140,7 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
     updatedLegend.current = legendProps;
   }
   let visualizer;
-  console.log(viewWindow, currentViewWindow.current);
+
   if (
     initialLoad ||
     (options as any).forceSvg ||

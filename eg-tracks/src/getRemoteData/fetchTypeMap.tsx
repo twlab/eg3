@@ -337,9 +337,6 @@ function getRemoteData(regionData: any) {
   } else {
     dataPromise = fetchFromSource(regionData);
   }
-  if (type === "bam") {
-    console.log(dataPromise);
-  }
 
   return withTimeout(dataPromise, timeoutForType(type));
 }
