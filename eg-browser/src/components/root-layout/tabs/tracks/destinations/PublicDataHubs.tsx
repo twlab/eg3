@@ -243,7 +243,7 @@ export default function PublicDataHubs() {
   const renderHubGroup = (collection: string, hubs: any[]) => (
     <div key={collection} className="mb-2 relative">
       <h2
-        className="text-base font-medium sticky z-10 bg-white dark:bg-dark-background text-primary dark:text-white"
+        className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 sticky z-10 bg-white dark:bg-dark-background"
         style={{
           top: `${searchBarGeometry.height}px`,
         }}

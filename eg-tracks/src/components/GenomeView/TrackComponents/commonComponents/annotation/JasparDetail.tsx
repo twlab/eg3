@@ -1,6 +1,14 @@
 import React from "react";
 import "../HoverToolTips/Tooltip.css";
-import { JasparFeature } from "../../../models/Feature";
+import {
+  getFeatureHasStrand,
+  getFeatureLength,
+  getFeatureLocusString,
+  getFeatureName,
+  getFeatureScore,
+  getFeatureStrand,
+  JasparFeature,
+} from "../../../../../models/Feature";
 
 interface JasparDetailProps {
   feature: JasparFeature;
@@ -12,10 +20,17 @@ interface JasparDetailProps {
 class JasparDetail extends React.PureComponent<JasparDetailProps> {
   render() {
     const { feature } = this.props;
-    const tfName = feature.getName();
-    const matrixId = feature.matrixId;
-    const suffix = feature.strand === "-" ? "?revcomp=1" : "";
-    const rc = feature.strand === "-" ? ".rc" : "";
+    const tfName = getFeatureName(feature, "jaspar");
+    // JasparFeature keeps matrixId on the model; a raw jaspar record keeps it in
+    // rest[0] (see formatJasper: withJaspar(parseInt(rest[1]), rest[0])).
+    const rest =
+      typeof (feature as any).rest === "string"
+        ? (feature as any).rest.split("\t")
+        : [];
+    const matrixId = feature.matrixId ?? rest[0];
+    const strand = getFeatureStrand(feature, "jaspar");
+    const suffix = strand === "-" ? "?revcomp=1" : "";
+    const rc = strand === "-" ? ".rc" : "";
     const queryURL = `https://jaspar.genereg.net/matrix/${matrixId}/${suffix}`;
     const logoURL = `https://jaspar.genereg.net/static/logos/all/svg/${matrixId}${rc}.svg`;
     const linkOut = (
@@ -35,7 +50,7 @@ class JasparDetail extends React.PureComponent<JasparDetailProps> {
             {matrixId} {linkOut}
           </div>
         ) : null}
-        <div>Score: {feature.score}</div>
+        <div>Score: {getFeatureScore(feature, "jaspar")}</div>
         <div style={{ textAlign: "center" }}>
           <img
             alt={matrixId}
@@ -45,10 +60,10 @@ class JasparDetail extends React.PureComponent<JasparDetailProps> {
           />
         </div>
         <div>
-          {feature.getLocus().toString()} ({feature.getLocus().getLength()}bp)
+          {getFeatureLocusString(feature)} ({getFeatureLength(feature)}bp)
         </div>
-        {feature.getHasStrand() ? (
-          <div>Strand: {feature.getStrand()}</div>
+        {getFeatureHasStrand(feature, "jaspar") ? (
+          <div>Strand: {strand}</div>
         ) : null}
       </div>
     );

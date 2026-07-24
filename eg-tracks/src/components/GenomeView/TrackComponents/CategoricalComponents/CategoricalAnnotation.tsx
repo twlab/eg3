@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import BackgroundedText from "../geneAnnotationTrackComponents/BackgroundedText";
 
-import Feature from "../../../../models/Feature";
+import Feature, { getFeatureName } from "../../../../models/Feature";
 import OpenInterval from "../../../../models/OpenInterval";
 import { getContrastingColor } from "../../../../models/util";
 
@@ -88,7 +88,7 @@ class CategoricalAnnotation extends React.Component<CategoricalAnnotationProps> 
     }
 
     let label;
-    const name = feature.getName() ? feature.getName() : feature.name;
+    const name = getFeatureName(feature);
     const labelText =
     
       category && category[name]
@@ -123,7 +123,7 @@ class CategoricalAnnotation extends React.Component<CategoricalAnnotationProps> 
             dominantBaseline="hanging"
             textAnchor="start"
           >
-            {feature.getName()}
+            {name}
           </BackgroundedText>
         );
       }

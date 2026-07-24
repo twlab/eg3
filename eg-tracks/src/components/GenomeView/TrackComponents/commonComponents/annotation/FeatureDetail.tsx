@@ -1,7 +1,13 @@
 import PropTypes from "prop-types";
 import React from "react";
 import _ from "lodash";
-import Feature from "../../../../../models/Feature";
+import Feature, {
+  getFeatureHasStrand,
+  getFeatureLength,
+  getFeatureLocusString,
+  getFeatureName,
+  getFeatureStrand,
+} from "../../../../../models/Feature";
 import "../HoverToolTips/Tooltip.css";
 import { CopyToClip } from "../CopyToClipboard";
 
@@ -14,6 +20,7 @@ interface FeatureDetailProps {
   feature: any;
   category: any;
   queryEndpoint: any;
+  type?: string;
 }
 class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
   static propTypes = {
@@ -23,12 +30,8 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
   };
 
   render() {
-    const { feature, category, queryEndpoint } = this.props;
-    const name = feature.getName()
-      ? feature.getName()
-      : feature?.name
-        ? feature.name
-        : "";
+    const { feature, category, queryEndpoint, type } = this.props;
+    const name = getFeatureName(feature, type);
 
     const featureName =
       category && category[name] && category[name].name
@@ -88,10 +91,10 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
           </div>
         ) : null}
         <div>
-          {feature.getLocus().toString()} ({feature.getLocus().getLength()}bp)
+          {getFeatureLocusString(feature)} ({getFeatureLength(feature)}bp)
         </div>
-        {feature.getHasStrand() ? (
-          <div>Strand: {feature.getStrand()}</div>
+        {getFeatureHasStrand(feature, type) ? (
+          <div>Strand: {getFeatureStrand(feature, type)}</div>
         ) : null}
       </div>
     );
