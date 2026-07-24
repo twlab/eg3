@@ -1728,8 +1728,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   ]);
   if (drawData.svgHeight) {
     if (
-      (drawData.trackModel.type === "methylc" ||
-        drawData.trackModel.type === "dynseq") &&
+      drawData.trackModel.type === "methylc" &&
       !drawData.configOptions.isCombineStrands
     ) {
       drawData.svgHeight.current = configOptions.height * 2;

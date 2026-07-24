@@ -71,6 +71,7 @@ export function TrackContainerRepresentable({
       files: track.files,
       changeConfigInitial: track.changeConfigInitial,
       isText: track.isText,
+      genome: track?.genome ? track?.genome : genomeConfig?.genome?._name,
     }),
     [],
   );
@@ -94,6 +95,7 @@ export function TrackContainerRepresentable({
         fileObj: track.fileObj,
         files: track.files,
         changeConfigInitial: track.changeConfigInitial,
+        genome: track?.genome,
       });
     };
 
