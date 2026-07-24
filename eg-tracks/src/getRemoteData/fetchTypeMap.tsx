@@ -36,8 +36,8 @@ const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
 // How long any single fetch is allowed to run before we give up. Hic-based
 // tracks are heavier, so they get a longer budget than everything else.
-const DEFAULT_TIMEOUT_MS = 8000;
-const HIC_TIMEOUT_MS = 20000;
+const DEFAULT_TIMEOUT_MS = 90000;
+const HIC_TIMEOUT_MS = 90000;
 const LONG_TIMEOUT_TYPES = new Set(["hic", "dynamichic"]);
 
 function timeoutForType(type: string) {
