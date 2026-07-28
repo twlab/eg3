@@ -392,6 +392,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const genomeAlignMessageQueue = useRef<any>([]);
 
+  // MARK: RegionCoalesce
+  // Coalesce scroll-driven region fetches down to a single "dirty" flag. While
+  // a region's data is still being fetched we don't dispatch new region
+  // fetches; we just mark that the current view needs a fetch. When the
+  // in-flight region finishes, drainRegionQueue fetches whatever region the
+  // user is actually on now (dataIdx.current), discarding every region scrolled
+  // past. We intentionally do NOT remember a specific queued index: the user
+  // may have scrolled further while fetching, so the only region worth fetching
+  // is the current one.
+  const pendingRegionFetch = useRef<boolean>(false);
+  // Tracks whether a genome-align fetch is currently in flight. Genome-align
+  // fetches don't use the worker processingCount, so we flag them separately
+  // to know when a region is truly done fetching.
+  const genomeAlignInFlight = useRef<boolean>(false);
+
   const curViewWindowRegion = useMemo(() => {
     if (
       draw?.completedFetchedRegion?.current?.key &&
@@ -538,6 +553,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       genomeAlignMessageQueue.current.push(message);
     }
 
+    genomeAlignInFlight.current = true;
     processGenomeAlignQueue();
   };
   // const processQueue = async () => {
@@ -691,6 +707,39 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ]);
         }
       }
+    } else if (
+      Array.isArray(message) &&
+      message.length > 0 &&
+      message[0].trackDataIdx !== dataIdx.current
+    ) {
+      // This message was for a region the user has already scrolled past, so we
+      // drop it instead of fetching stale data. queueRegionToFetch marked these
+      // tracks' dataCache as null (the "loading" marker) when it queued them; if
+      // we leave that null in place the track shows a spinner forever and
+      // queueRegionToFetch will never re-fetch it (a null dataCache reads as
+      // "already has data"). Clear the marker so the region can be fetched again
+      // if the user scrolls back to it.
+      for (const item of message) {
+        if (!item || !Array.isArray(item.trackModelArr)) {
+          continue;
+        }
+        for (const track of item.trackModelArr) {
+          const cache = trackManagerState.current.caches[track.id];
+          if (
+            cache &&
+            cache[item.missingIdx] &&
+            cache[item.missingIdx].dataCache === null
+          ) {
+            delete cache[item.missingIdx].dataCache;
+          }
+        }
+      }
+      // We just dropped a stale fetch for the region the user scrolled away
+      // from. The region they're actually on now still needs its data, so
+      // re-arm and drain (it fetches immediately if nothing else is in flight,
+      // otherwise a later completion picks it up).
+      pendingRegionFetch.current = true;
+      drainRegionQueue();
     }
   };
   const processGenomeAlignQueue = () => {
@@ -708,6 +757,53 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeAlignWorker.current!.fetchWorker.postMessage(message);
     }
   };
+
+  // MARK: RegionDrain
+  // A region is "idle" (fully fetched) only when no workers are still
+  // processing, both message queues are drained, and no genome-align fetch is
+  // in flight. Only then is it safe to start fetching the next region.
+  function isFetchIdle(): boolean {
+    const workers = infiniteScrollWorkers.current?.worker;
+    const workersIdle =
+      !workers || workers.length === 0
+        ? true
+        : workers.every((w: any) => w.processingCount === 0);
+
+    return (
+      workersIdle &&
+      messageQueue.current.length === 0 &&
+      genomeAlignMessageQueue.current.length === 0 &&
+      !genomeAlignInFlight.current
+    );
+  }
+
+  // Gatekeeper for scroll-driven region fetches. Instead of dispatching a fetch
+  // for every region the user scrolls through, we just flag that a fetch is
+  // needed and let drainRegionQueue decide when (and for which region) to fetch.
+  function requestRegionFetch(_regionIdx: number) {
+    pendingRegionFetch.current = true;
+    drainRegionQueue();
+  }
+
+  // Once the in-flight region has fully finished fetching, fetch whatever region
+  // the user is currently on (dataIdx.current), discarding the ones scrolled
+  // past. Called from requestRegionFetch and from every fetch-completion
+  // callback so the queue keeps draining as work finishes. This is single-shot:
+  // we clear the flag and fetch the current region exactly once. If part of that
+  // fetch later has to be dropped because the user scrolled again, processQueue
+  // re-arms the flag so we come back and fetch wherever they ended up.
+  function drainRegionQueue() {
+    if (!pendingRegionFetch.current) {
+      return;
+    }
+    if (!isFetchIdle()) {
+      // A region is still being fetched — wait; a completion callback will
+      // call drainRegionQueue again once it's done.
+      return;
+    }
+    pendingRegionFetch.current = false;
+    queueRegionToFetch(dataIdx.current);
+  }
 
   // MARK: mouseAction
 
@@ -1028,12 +1124,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (
         globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
       ) {
-        queueRegionToFetch(curDataIdx);
-        // if (!hasGenomeAlign.current && areAllWorkersIdle()) {
-        //   queueRegionToFetch(curDataIdx);
-        // } else if (hasGenomeAlign.current) {
-        //   queueRegionToFetch(curDataIdx);
-        // }
+        // Coalesce scroll-driven fetches: while a region is still fetching,
+        // this just records the latest region and returns. When the in-flight
+        // region finishes, drainRegionQueue fetches this latest region and
+        // discards the ones scrolled past.
+        requestRegionFetch(curDataIdx);
       }
     }
   }
@@ -2099,6 +2194,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             );
           }
         }
+        // This region's data may now be fully fetched — try to fetch the
+        // latest pending region the user scrolled to.
+        drainRegionQueue();
       })
       .catch((error) => {
         console.error("Error in createInfiniteOnMessage:", error);
@@ -2113,6 +2211,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             );
           }
         }
+        drainRegionQueue();
       });
   };
 
@@ -2122,6 +2221,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     event: MessageEvent | { [key: string]: any },
   ) => {
     const regionDrawIdx = event.data.navData.trackDataIdx;
+
+    // The genome-align worker fetch is done the moment we receive its message;
+    // clear the in-flight flag now so a synchronous error below (e.g. the
+    // region's trackState was cleaned up) can't leave it stuck true and freeze
+    // draining forever. The follow-up non-genomealign fetches this enqueues are
+    // tracked separately via the worker processingCount, so isFetchIdle still
+    // waits for them.
+    genomeAlignInFlight.current = false;
+    if (globalTrackState.current.trackStates[regionDrawIdx] === undefined) {
+      drainRegionQueue();
+      return;
+    }
 
     const curTrackState = {
       ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
@@ -2281,13 +2392,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           trackToDrawId,
           missingIdx: curTrackState.missingIdx,
         });
+      })
+      .finally(() => {
+        // genomeAlignInFlight was already cleared at the top of this handler.
+        // The follow-up non-genomealign fetches this enqueued keep the workers
+        // busy, so drainRegionQueue correctly waits for those before advancing
+        // to the next region.
+        drainRegionQueue();
       });
   };
   // MARK: queueRegion
 
-  function queueRegionToFetch(regionIdx: number) {
+  // Returns true if it dispatched a fetch (worker or genome-align) for this
+  // region, false if everything needed was already cached / nothing to do.
+  // drainRegionQueue uses this to know whether the current region is complete.
+  function queueRegionToFetch(regionIdx: number): boolean {
     if (!curGenomeConfig.current) {
-      return;
+      return false;
     }
     const trackToDrawId: { [key: string]: any } = {};
 
@@ -2489,6 +2610,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       }
     }
+
+    return needToFetch;
   }
   // create a useRef object, that keep track of the current dataidx most current view
   // if data Idx from new fetch is diff then, go back to empty object.
@@ -3023,6 +3146,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     pixelPerBase.current = 0;
 
     messageQueue.current = [];
+    genomeAlignMessageQueue.current = [];
+    pendingRegionFetch.current = false;
+    genomeAlignInFlight.current = false;
     bpX.current = 0;
     maxBp.current = 0;
     minBp.current = 0;
