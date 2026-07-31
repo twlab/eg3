@@ -1,6 +1,6 @@
 import React from "react";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
-import { ColoredFeature } from "../../../../models/Feature";
+import { ColoredFeature, getFeatureColor } from "../../../../models/Feature";
 import OpenInterval from "../../../../models/OpenInterval";
 
 interface BedcolorProps {
@@ -28,7 +28,13 @@ const Bedcolor: React.FC<BedcolorProps> = ({
   }
 
   const mainBody = (
-    <rect x={startX} y={0} width={width} height={height} fill={feature.color} />
+    <rect
+      x={startX}
+      y={0}
+      width={width}
+      height={height}
+      fill={getFeatureColor(feature, "bedcolor")}
+    />
   );
 
   if (isMinimal) {

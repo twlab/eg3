@@ -35,7 +35,7 @@ const genome = new Genome("hg38", [
 //   // chr7:10000-20000
 //   //testin https://wangcluster.wustl.edu/~wzhang/projects/MSN_epigenome/datahub.json  finemode  27213325-27213837, 27195171-27202238, chr7:27166871-27181006
 //   //chr7:157159564-158159564
-
+// dupe test, chr7:30909538-31229914, session file 38 tracks
 // chr7:24333029-24373096 TESTING GENOMEALIGN ROUGH with query WENJIN FILE
 
 //chr7:26805572-26825594

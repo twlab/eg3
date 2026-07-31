@@ -643,9 +643,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         for (const track of message[j].trackModelArr) {
           // hic tracks are fetched on the main thread (no worker) and the
-          // results are handed directly to createInfiniteOnMessage.
+          // results are handed directly to createInfiniteOnMessage. dynamichic
+          // is just several hic files in `tracks`, so it takes the same path —
+          // hic data comes back as GenomeInteraction instances, and postMessage
+          // would strip them down to plain objects.
 
-          if (track.type === "hic") {
+          if (
+            track.type === "hic" ||
+            track.type === "dynamichic" ||
+            track.type === "vcf"
+          ) {
             fetchGenomicData([{ ...newMessage, trackModelArr: [track] }])
               .then((results) => {
                 if (results) {
@@ -653,7 +660,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               })
               .catch((error) => {
-                console.error("Error fetching hic data:", error);
+                console.error(`Error fetching ${track.type} data:`, error);
               });
             continue;
           }
@@ -2678,8 +2685,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: createCache
   async function createCache(fetchRes: { [key: string]: any }) {
-    const result = fetchRes.result;
-
     if (fetchRes["fileInfos"]) {
       trackManagerState.current.caches[`${fetchRes.id}`]["fileInfos"] =
         fetchRes.fileInfos;
@@ -2698,7 +2703,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // built lazily downstream (in getGroupScale / the draw path) only for the
       // view that needs them, instead of formatting every fetched region up
       // front, which spiked memory right after each fetch.
-      const formattedData = result;
+      // const formattedData = result;
       // const formattedData = formatDataByType(
       //   result, fetchRes.trackModel.type
       // )
@@ -2712,12 +2717,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             // region and dedups, so all 3 indices share the same raw groups.
             trackManagerState.current.caches[`${fetchRes.id}`][initialIdx[i]][
               "dataCache"
-            ] = formattedData;
+            ] = fetchRes.result;
           }
         } else {
           trackManagerState.current.caches[`${fetchRes.id}`][
             fetchRes.missingIdx
-          ]["dataCache"] = formattedData;
+          ]["dataCache"] = fetchRes.result;
         }
       }
     }
@@ -4732,8 +4737,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           style={{
                             width: `${windowWidthRef.current + legendWidth}px`,
                             position: "relative",
-                            paddingTop: "1px",
-                            paddingBottom: "1px",
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
@@ -4791,7 +4794,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         width: windowWidthRef.current,
                         height: "100%",
                         pointerEvents: "none",
-                        zIndex: 5,
+                        // keep highlight bands under the TrackLegend (zIndex 2)
+                        // while still painting over the track data (auto z-index)
+                        zIndex: 1,
                       }}
                     >
                       {highlightElements.map((item, index) => {

@@ -34,321 +34,311 @@ function objToInstanceAlign(alignment: { [key: string]: any }) {
 }
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 
-// Map track types to their data source types
+// How long any single fetch is allowed to run before we give up. Hic-based
+// tracks are heavier, so they get a longer budget than everything else.
+const DEFAULT_TIMEOUT_MS = 90000;
+const HIC_TIMEOUT_MS = 90000;
+const LONG_TIMEOUT_TYPES = new Set(["hic", "dynamichic"]);
+
+function timeoutForType(type: string) {
+  return LONG_TIMEOUT_TYPES.has(type) ? HIC_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+}
+
+// Track types grouped by the data source they fetch through. A type only needs
+// to appear in one set; getRemoteData uses these to pick the fetch strategy.
+const BED_OR_TABIX = new Set([
+  "bed",
+  "bedcolor",
+  "omeroidr",
+  "bedgraph",
+  "qbed",
+  "dbedgraph",
+  "modbed",
+  "refbed",
+  "matplot",
+  "categorical",
+  "longrange",
+  "methylc",
+  "genomealign",
+]);
+const BIG = new Set(["boxplot", "bigwig", "dynseq", "biginteract"]);
+const BIGBED = new Set(["bigbed", "bigbedcolor"]);
+const JASPAR = new Set(["jaspar"]);
+const REPEATMASKER = new Set(["repeatmasker"]);
+const RMSKV2 = new Set(["rmskv2"]);
+const VCF = new Set(["vcf"]);
+const HIC = new Set(["hic"]);
+const BAM = new Set(["bam"]);
+const GENE_ANNOTATION = new Set(["geneannotation"]);
+const SNP = new Set(["snp"]);
+
+// Every supported track type routes through getRemoteData; the strategy is
+// derived from regionData.trackModel.type, so no second argument is needed.
+const ALL_TYPES = [
+  ...BED_OR_TABIX,
+  ...BIG,
+  ...BIGBED,
+  ...JASPAR,
+  ...REPEATMASKER,
+  ...RMSKV2,
+  ...VCF,
+  ...HIC,
+  ...BAM,
+  ...GENE_ANNOTATION,
+  ...SNP,
+];
 
 let cachedFetchInstance: { [key: string]: any } = {};
-export const fetchTypeMap: { [key: string]: any } = {
-  geneannotation: async function refGeneFetch(regionData: any) {
-    let genomeName;
-    let apiConfigPrefix;
 
-    const trackModel = regionData.trackModel;
-    if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
-      genomeName = trackModel["apiConfig"]["genome"];
-    } else {
-      genomeName = regionData.genomeName;
-    }
+export const fetchTypeMap: { [key: string]: any } = ALL_TYPES.reduce(
+  (map, type) => {
+    map[type] = (regionData: any) => getRemoteData(regionData);
+    return map;
+  },
+  {} as { [key: string]: any },
+);
 
-    if (
-      trackModel["apiConfig"] &&
-      trackModel["apiConfig"]["format"] in apiConfigMap
-    ) {
-      apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`];
-    } else {
-      apiConfigPrefix = apiConfigMap.WashU;
-    }
+// Reject if the wrapped promise doesn't settle within `ms` milliseconds.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: any;
+  const timeout = new Promise<T>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`Request timed out after ${ms / 1000} seconds. `)),
+      ms,
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
-    try {
-      const fetchPromises = regionData.nav.map(async (region: any) => {
-        const url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${region.chr}&start=${region.start}&end=${region.end}`;
+async function refGeneFetch(regionData: any) {
+  let genomeName;
+  let apiConfigPrefix;
 
-        try {
-          const genRefResponse = await fetch(url, {
-            method: "GET",
-            mode: "cors",
-            cache: "default",
-            credentials: "omit",
-          });
+  const trackModel = regionData.trackModel;
+  if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
+    genomeName = trackModel["apiConfig"]["genome"];
+  } else {
+    genomeName = regionData.genomeName;
+  }
 
-          if (!genRefResponse.ok) {
-            throw new Error(`HTTP error! status: ${genRefResponse.status}`);
-          }
+  if (
+    trackModel["apiConfig"] &&
+    trackModel["apiConfig"]["format"] in apiConfigMap
+  ) {
+    apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`];
+  } else {
+    apiConfigPrefix = apiConfigMap.WashU;
+  }
 
-          return genRefResponse.json();
-        } catch (error) {
+  try {
+    const fetchPromises = regionData.nav.map(async (region: any) => {
+      const url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${region.chr}&start=${region.start}&end=${region.end}`;
+
+      try {
+        const genRefResponse = await fetch(url, {
+          method: "GET",
+          mode: "cors",
+          cache: "default",
+          credentials: "omit",
+        });
+
+        if (!genRefResponse.ok) {
+          throw new Error(`HTTP error! status: ${genRefResponse.status}`);
+        }
+
+        return genRefResponse.json();
+      } catch (error) {
+        console.error(
+          `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
+          error,
+        );
+        throw error;
+      }
+    });
+
+    const results = await Promise.all(fetchPromises);
+    return regionData.nav.map((locus, index) => ({
+      chr: locus.chr,
+      locus: locus,
+      data: results[index],
+    }));
+  } catch (error) {
+    console.error("Error in refGeneFetch:", error);
+    throw error;
+  }
+}
+
+async function snpFetch(regionData: any) {
+  const SNP_REGION_API: { [key: string]: any } = {
+    hg19: "https://grch37.rest.ensembl.org/overlap/region/human",
+    hg38: "https://rest.ensembl.org/overlap/region/human",
+  };
+
+  const api =
+    regionData.genomeName in SNP_REGION_API
+      ? SNP_REGION_API[`${regionData.genomeName}`]
+      : null;
+
+  if (!api) {
+    return [];
+  }
+
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  try {
+    const fetchPromises = regionData.nav.map(async (region: any) => {
+      if (region.end - region.start > 30000) {
+        throw new Error("Please zoom in to see content. ");
+      }
+
+      const url = `${api}/${region.chr.substr(3)}:${region.start}-${
+        region.end
+      }?content-type=application%2Fjson&feature=variation`;
+
+      try {
+        const response = await fetch(url, {
+          headers,
+          mode: "cors",
+          cache: "default",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return response.json();
+      } catch (error) {
+        if (region.end - region.start > 30000) {
+          throw new Error("Please zoom in to see content. ");
+        } else {
           console.error(
-            `Error fetching data for region ${region.chr}:${region.start}-${region.end}:`,
+            `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}: `,
             error,
           );
           throw error;
         }
-      });
-
-      const results = await Promise.all(fetchPromises);
-      return results.flat();
-    } catch (error) {
-      console.error("Error in refGeneFetch:", error);
-      throw error;
-    }
-  },
-  snp: async function snpFetch(regionData: any) {
-    const SNP_REGION_API: { [key: string]: any } = {
-      hg19: "https://grch37.rest.ensembl.org/overlap/region/human",
-      hg38: "https://rest.ensembl.org/overlap/region/human",
-    };
-
-    const api =
-      regionData.genomeName in SNP_REGION_API
-        ? SNP_REGION_API[`${regionData.genomeName}`]
-        : null;
-
-    if (!api) {
-      return [];
-    }
-
-    const headers = {
-      "Content-Type": "application/json",
-    };
-
-    try {
-      const fetchPromises = regionData.nav.map(async (region: any) => {
-        if (region.end - region.start > 30000) {
-          throw new Error("Please zoom in to see content. ");
-        }
-
-        const url = `${api}/${region.chr.substr(3)}:${region.start}-${
-          region.end
-        }?content-type=application%2Fjson&feature=variation`;
-
-        try {
-          const response = await fetch(url, {
-            headers,
-            mode: "cors",
-            cache: "default",
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          return response.json();
-        } catch (error) {
-          if (region.end - region.start > 30000) {
-            throw new Error("Please zoom in to see content. ");
-          } else {
-            console.error(
-              `Error fetching SNP data for region ${region.chr}:${region.start}-${region.end}: `,
-              error,
-            );
-            throw error;
-          }
-        }
-      });
-
-      const results = await Promise.all(fetchPromises);
-      return results.flat();
-    } catch (error) {
-      console.error("Error in snpFetch:", error);
-      throw error;
-    }
-  },
-  bed: async function bedFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  bedcolor: async function bedFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  omeroidr: async function bedFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  bedgraph: async function bedgraphFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-
-  qbed: async function qbedFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  dbedgraph: async function dbedgraphFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-
-  boxplot: async function boxplotFetch(regionData: any) {
-    return getRemoteData(regionData, "big");
-  },
-  modbed: async function bedFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-
-  jaspar: async function jasparFetch(regionData: any) {
-    return getRemoteData(regionData, "jaspar");
-  },
-  bigbed: async function bigbedFetch(regionData: any) {
-    return getRemoteData(regionData, "bigbed");
-  },
-  bigbedcolor: async function bigbedcolorFetch(regionData: any) {
-    return getRemoteData(regionData, "bigbed");
-  },
-  refbed: async function refbedFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  matplot: async function matplotFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  bigwig: async function bigwigFetch(regionData: any) {
-    return getRemoteData(regionData, "big");
-  },
-
-  categorical: async function coolFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  longrange: async function coolFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  dynseq: async function dynseqFetch(regionData: any) {
-    return getRemoteData(regionData, "big");
-  },
-
-  repeatmasker: async function repeatmaskerFetch(regionData: any) {
-    return getRemoteData(regionData, "repeatmasker");
-  },
-
-  rmskv2: async function rmskv2Fetch(regionData: any) {
-    return getRemoteData(regionData, "rmskv2");
-  },
-  biginteract: async function biginteractFetch(regionData: any) {
-    return getRemoteData(regionData, "big");
-  },
-  methylc: async function methylcFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-
-  genomealign: function genomeAlignFetch(regionData: any) {
-    return getRemoteData(regionData, "bedOrTabix");
-  },
-  vcf: function vcfFetch(regionData: any) {
-    return getRemoteData(regionData, "vcf");
-  },
-
-  hic: function hicFetch(regionData: any) {
-    return getRemoteData(regionData, "hic");
-  },
-
-  bam: function bamFetch(regionData: any) {
-    return getRemoteData(regionData, "bam");
-  },
-};
-
-async function getRemoteData(regionData: any, trackType: string) {
-  const indexUrl = regionData.trackModel.indexUrl || null;
-  let fetchInstance: any = null;
-  // cachedFetchInstance[regionData.trackModel.url] = null;
-  if (!cachedFetchInstance[regionData.trackModel.url]) {
-    if (trackType === "bedOrTabix") {
-      cachedFetchInstance[regionData.trackModel.url] = new TabixSource(
-        regionData.trackModel.url,
-        indexUrl,
-      );
-    } else if (trackType === "vcf") {
-      cachedFetchInstance[regionData.trackModel.url] = new VcfSource(
-        regionData.trackModel.url,
-        indexUrl,
-      );
-    } else if (trackType === "bigbed") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
-        regionData.trackModel.url,
-      );
-    } else if (trackType === "big") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url,
-      );
-    } else if (trackType === "repeatmasker") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorker(
-        regionData.trackModel.url,
-      );
-    } else if (trackType === "rmskv2") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url,
-      );
-    } else if (trackType === "jaspar") {
-      cachedFetchInstance[regionData.trackModel.url] = new BigSourceWorkerGmod(
-        regionData.trackModel.url,
-      );
-    } else if (trackType === "hic") {
-      cachedFetchInstance[regionData.trackModel.url] = new HicSource(
-        regionData.trackModel.url,
-      );
-    } else if (trackType === "bam") {
-      cachedFetchInstance[regionData.trackModel.url] = new BamSource(
-        regionData.trackModel.url,
-      );
-    } else {
-      throw new Error(`Unsupported track type: ${trackType}. `);
-    }
-  }
-  fetchInstance = cachedFetchInstance[regionData.trackModel.url];
-  try {
-    if (fetchInstance) {
-      const options = {
-        ...regionData.trackModel.options,
-        trackType: regionData.trackModel.type,
-      };
-      if (trackType === "jaspar" && regionData.basesPerPixel > 2) {
-        throw new Error("Please zoom in to see content. ");
       }
-      if (
-        (trackType === "repeatmasker" || trackType === "rmskv2") &&
-        regionData.basesPerPixel > 1000
-      ) {
-        throw new Error("Please zoom in to see content. ");
-      }
-      if (trackType === "bigbed") {
-        return fetchInstance
-          .getData(regionData.nav, regionData.basesPerPixel, options)
-          .then((data: any) => {
-            // cachedFetchInstance[regionData.trackModel.url] = null;
+    });
 
-            return data;
-          })
-          .catch((error) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
-            throw error;
-          });
-      } else if (trackType === "hic") {
-        return fetchInstance
-          .getData(
-            objToInstanceAlign(regionData.visRegion),
-            regionData.basesPerPixel,
-            options,
-          )
-          .then((data: any) => {
-            // cachedFetchInstance[regionData.trackModel.url] = null;
-            const fileInfos =
-              cachedFetchInstance[regionData.trackModel.url].getFileInfo();
-            const result = { data, fileInfos };
-            return result;
-          })
-          .catch((error) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
-            throw error;
-          });
-      } else {
-        return fetchInstance
-          .getData(regionData.nav, regionData.basesPerPixel, options)
-          .then((data: any) => {
-            // cachedFetchInstance[regionData.trackModel.url] = null;
-
-            return data;
-          })
-          .catch((error) => {
-            cachedFetchInstance[regionData.trackModel.url] = null;
-            throw error;
-          });
-      }
-    }
+    const results = await Promise.all(fetchPromises);
+    // Normalize the Ensembl API shape to placeable raw records: browser chr
+    // and 0-based start (the Snp model used `chr${seq_region_name}` and
+    // start-1). Rendered straight from these via the getFeature* accessors.
+    return results.flat().map((record: any) => ({
+      ...record,
+      chr: `chr${record.seq_region_name}`,
+      start: record.start - 1,
+    }));
   } catch (error) {
-    fetchInstance = null;
+    console.error("Error in snpFetch:", error);
     throw error;
   }
+}
+
+// Build (or reuse) the data source instance for a track type.
+function createFetchInstance(type: string, url: string, indexUrl: any) {
+  if (BED_OR_TABIX.has(type)) return new TabixSource(url, indexUrl);
+  if (VCF.has(type)) return new VcfSource(url, indexUrl);
+  if (BIGBED.has(type)) return new BigSourceWorker(url);
+  if (BIG.has(type)) return new BigSourceWorkerGmod(url);
+  if (REPEATMASKER.has(type)) return new BigSourceWorker(url);
+  if (RMSKV2.has(type)) return new BigSourceWorkerGmod(url);
+  if (JASPAR.has(type)) return new BigSourceWorkerGmod(url);
+  if (HIC.has(type)) return new HicSource(url);
+  if (BAM.has(type)) return new BamSource(url);
+  throw new Error(`Unsupported track type: ${type}. `);
+}
+
+async function fetchFromSource(regionData: any) {
+  const type = regionData.trackModel.type;
+  const indexUrl = regionData.trackModel.indexUrl || null;
+  const url = regionData.trackModel.url;
+
+  if (!cachedFetchInstance[url]) {
+    cachedFetchInstance[url] = createFetchInstance(type, url, indexUrl);
+  }
+  const fetchInstance = cachedFetchInstance[url];
+
+  try {
+    if (!fetchInstance) {
+      return;
+    }
+    const options = {
+      ...regionData.trackModel.options,
+      trackType: regionData.trackModel.type,
+    };
+    if (JASPAR.has(type) && regionData.basesPerPixel > 2) {
+      throw new Error("Please zoom in to see content. ");
+    }
+    if (
+      (REPEATMASKER.has(type) || RMSKV2.has(type)) &&
+      regionData.basesPerPixel > 1000
+    ) {
+      throw new Error("Please zoom in to see content. ");
+    }
+    if (BIGBED.has(type)) {
+      return fetchInstance
+        .getData(regionData.nav, regionData.basesPerPixel, options)
+        .then((data: any) => {
+          cachedFetchInstance[url] = null;
+
+          return data;
+        })
+        .catch((error) => {
+          cachedFetchInstance[url] = null;
+          throw error;
+        });
+    } else if (HIC.has(type)) {
+      return fetchInstance
+        .getData(
+          objToInstanceAlign(regionData.visRegion),
+          regionData.basesPerPixel,
+          options,
+        )
+        .then((data: any) => {
+          // cachedFetchInstance[url] = null;
+          const fileInfos = cachedFetchInstance[url].getFileInfo();
+          const result = { data, fileInfos };
+          return result;
+        })
+        .catch((error) => {
+          cachedFetchInstance[url] = null;
+          throw error;
+        });
+    } else {
+      return fetchInstance
+        .getData(regionData.nav, regionData.basesPerPixel, options)
+        .then((data: any) => {
+          cachedFetchInstance[url] = null;
+
+          return data;
+        })
+        .catch((error) => {
+          cachedFetchInstance[url] = null;
+          throw error;
+        });
+    }
+  } catch (error) {
+    cachedFetchInstance[url] = null;
+    throw error;
+  }
+}
+
+function getRemoteData(regionData: any) {
+  const type = regionData.trackModel.type;
+
+  let dataPromise: Promise<any>;
+  if (GENE_ANNOTATION.has(type)) {
+    dataPromise = refGeneFetch(regionData);
+  } else if (SNP.has(type)) {
+    dataPromise = snpFetch(regionData);
+  } else {
+    dataPromise = fetchFromSource(regionData);
+  }
+
+  return withTimeout(dataPromise, timeoutForType(type));
 }
 
 export default fetchTypeMap;

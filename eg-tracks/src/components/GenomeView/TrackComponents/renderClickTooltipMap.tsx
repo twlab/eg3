@@ -7,6 +7,16 @@ import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import SnpDetail from "./SnpComponents/SnpDetail";
 import Vcf from "./VcfComponents/Vcf";
 import VcfDetail from "./VcfComponents/VcfDetail";
+import {
+  getFeatureLength,
+  getFeatureLocusString,
+  getFeatureName,
+  getFeatureStrand,
+} from "../../../models/Feature";
+import {
+  getRepeatClassDetails,
+  getRepeatValue,
+} from "../../../models/RepeatMaskerFeature";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 
 const ARROW_SIZE = 16;
@@ -17,12 +27,14 @@ export const geneClickToolTipMap: { [key: string]: any } = {
     pageY,
     name,
     onClose,
+    trackModel,
   }: {
     feature: any;
     pageX: number;
     pageY: number;
     name: string;
     onClose: () => void;
+    trackModel?: any;
   }) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
@@ -67,6 +79,7 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                         feature={feature}
                         category={undefined}
                         queryEndpoint={undefined}
+                        type={trackModel?.type}
                       />
                     </OutsideClickDetector>
                   </div>
@@ -102,12 +115,14 @@ export const geneClickToolTipMap: { [key: string]: any } = {
     pageY,
     name,
     onClose,
+    trackModel,
   }: {
     feature: any;
     pageX: number;
     pageY: number;
     name: string;
     onClose: () => void;
+    trackModel?: any;
   }) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
@@ -152,6 +167,7 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                         feature={feature}
                         category={undefined}
                         queryEndpoint={undefined}
+                        type={trackModel?.type}
                       />
                     </OutsideClickDetector>
                   </div>
@@ -489,12 +505,14 @@ export const geneClickToolTipMap: { [key: string]: any } = {
     pageY,
     name,
     onClose,
+    trackModel,
   }: {
     feature: any;
     pageX: number;
     pageY: number;
     name: string;
     onClose: () => void;
+    trackModel?: any;
   }) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
@@ -539,6 +557,7 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                         feature={feature}
                         category={undefined}
                         queryEndpoint={undefined}
+                        type={trackModel?.type}
                       />
                     </OutsideClickDetector>
                   </div>
@@ -629,20 +648,23 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                             className="Tooltip-major-text"
                             style={{ marginRight: 5 }}
                           >
-                            {feature.getName()}
+                            {getFeatureName(feature, trackModel?.type)}
                           </span>
                           <span className="Tooltip-minor-text">
-                            {feature.getClassDetails()}
+                            {getRepeatClassDetails(feature, trackModel?.type)}
                           </span>
                         </div>
                         <div>
-                          {feature.getLocus().toString()} (
-                          {feature.getLocus().getLength()}bp)
+                          {getFeatureLocusString(feature)} (
+                          {getFeatureLength(feature)}bp)
                         </div>
                         <div>
-                          (1 - divergence%) = {feature.repeatValue.toFixed(2)}
+                          (1 - divergence%) ={" "}
+                          {getRepeatValue(feature, trackModel?.type).toFixed(2)}
                         </div>
-                        <div>strand: {feature.strand}</div>
+                        <div>
+                          strand: {getFeatureStrand(feature, trackModel?.type)}
+                        </div>
                         <div className="Tooltip-minor-text">
                           {trackModel.getDisplayLabel()}
                         </div>

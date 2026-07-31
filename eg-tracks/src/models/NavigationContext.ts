@@ -216,7 +216,8 @@ class NavigationContext {
   convertGenomeIntervalToBases(
     chrInterval: ChromosomeInterval,
   ): OpenInterval[] {
-    const potentialOverlaps = this._featuresForChr[chrInterval.chr] || [];
+    const chr = chrInterval.chr || chrInterval.chrom;
+    const potentialOverlaps = this._featuresForChr[chr] || [];
     const contextIntervals: Array<OpenInterval> = [];
 
     for (const feature of potentialOverlaps) {
@@ -272,7 +273,6 @@ class NavigationContext {
    * @throws {RangeError} when parsing an interval outside of the context or something otherwise nonsensical
    */
   parse(str: string): OpenInterval | undefined {
-
     // convert string into standard format
     // Pattern: "chr7   154900269 chr8    1379003" -> "chr7:154900269-chr8:1379003"
     // Pattern: "chr7 27103672 27424040" -> "chr7:27103672-27424040"
@@ -337,11 +337,9 @@ class NavigationContext {
         );
       }
 
-
       let startContextCoord;
       let endContextCoord;
       if (startFeature.strand === "-") {
-
         startContextCoord =
           startFeature.locus.end -
           Number(startPosStr) +
@@ -357,14 +355,13 @@ class NavigationContext {
           endFeature.locus.end -
           Number(endPosStr) +
           this._minCoordinateForFeature.get(endFeature);
-
       } else {
         endContextCoord =
           Number(endPosStr) -
           endFeature.locus.start +
           this._minCoordinateForFeature.get(endFeature);
       }
-  
+
       return new OpenInterval(startContextCoord, endContextCoord);
     }
 
