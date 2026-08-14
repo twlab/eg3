@@ -75,6 +75,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : { ...trackOptionMap["error"].defaultOptions };
   }
 
+  const scrollPanEnabled = true;
   const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
@@ -696,15 +697,27 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     >
       <div
         ref={legendRef}
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
+        style={
+          scrollPanEnabled
+            ? {
+                position: "sticky",
+                left: 0,
+                alignSelf: "stretch",
+                flexShrink: 0,
+                willChange: "transform",
+                zIndex: 2,
+                pointerEvents: "none",
+              }
+            : {
+                position: "absolute",
+                left: 0,
+                top: 0,
 
-          willChange: "transform",
-          zIndex: 2,
-          pointerEvents: "none",
-        }}
+                willChange: "transform",
+                zIndex: 2,
+                pointerEvents: "none",
+              }
+        }
       >
         <div
           style={{
@@ -894,7 +907,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           position: "relative",
           willChange: "transform",
-          left: legendWidth,
+          left: scrollPanEnabled ? 0 : legendWidth,
           //  + viewComponent?.xOffset || 0,
         }}
       >
