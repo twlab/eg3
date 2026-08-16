@@ -105,14 +105,21 @@ export const browserSlice = createSlice({
       };
 
       const MAX_SESSIONS = 50;
-      const allIds = state.sessions.ids;
-      if (allIds.length >= MAX_SESSIONS) {
-        // Remove the oldest session (adapter is sorted by createdAt ascending)
-        const oldestId = allIds[0];
-        if (state.currentSession === oldestId) {
-          state.currentSession = allIds.length > 1 ? (allIds[1] as uuid) : null;
-        }
-        browserSessionAdapter.removeOne(state.sessions, oldestId);
+      // Evict oldest-first until there's room for the new session. `ids` is kept
+      // sorted by `createdAt` ascending by the adapter's sortComparer. This used
+      // to drop exactly one session, so a persisted state that was already over
+      // the cap (e.g. from an older build with a higher limit) never shrank back
+      // down. The active session is skipped so a full cache can't delete the
+      // session the user is currently looking at.
+      const overflow = state.sessions.ids.length - MAX_SESSIONS + 1;
+      if (overflow > 0) {
+        const evictable = (state.sessions.ids as uuid[]).filter(
+          (id) => id !== state.currentSession,
+        );
+        browserSessionAdapter.removeMany(
+          state.sessions,
+          evictable.slice(0, overflow),
+        );
       }
 
       browserSessionAdapter.addOne(state.sessions, nextSession);
@@ -209,6 +216,20 @@ export const browserSlice = createSlice({
         }
       }
     },
+    // Delete the `count` oldest sessions. `ids` is sorted by `createdAt`
+    // ascending, so the oldest are at the front. The active session is never
+    // pruned: this is the storage-quota recovery path, and dropping the session
+    // the user is currently viewing would kick them back to the genome picker
+    // in the middle of their work.
+    pruneOldestSessions: (state, action: PayloadAction<number>) => {
+      const count = Math.floor(action.payload);
+      if (!Number.isFinite(count) || count <= 0) return;
+
+      const prunable = (state.sessions.ids as uuid[]).filter(
+        (id) => id !== state.currentSession,
+      );
+      browserSessionAdapter.removeMany(state.sessions, prunable.slice(0, count));
+    },
     clearAllSessions: (state) => {
       browserSessionAdapter.removeAll(state.sessions);
       state.currentSession = null;
@@ -224,8 +245,12 @@ export const {
   updateCurrentSession,
   updateSession,
   addTracks,
+  pruneOldestSessions,
   clearAllSessions,
 } = browserSlice.actions;
+
+export const selectSessionCount = (state: RootState) =>
+  state.browser.present.sessions.ids.length;
 
 export const selectCurrentSessionId = (state: RootState) => {
   return state.browser.present.currentSession;
