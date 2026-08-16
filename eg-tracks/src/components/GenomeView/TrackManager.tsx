@@ -755,11 +755,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function getDragX() {
-    if (
-      scrollPanEnabled &&
-      scrollRootRef.current &&
-      !needScrollReset.current
-    ) {
+    if (scrollPanEnabled && scrollRootRef.current && !needScrollReset.current) {
       return (
         dragXBase.current -
         (scrollRootRef.current.scrollLeft - scrollAnchorPx())
@@ -819,8 +815,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     ignoreScrollRef.current = true;
-    root.scrollLeft =
-      dragXBase.current + scrollAnchorPx() - targetDragXEff;
+    root.scrollLeft = dragXBase.current + scrollAnchorPx() - targetDragXEff;
     lastScrollLeft.current = root.scrollLeft;
     lastProcSlRef.current = root.scrollLeft;
     releaseScrollGuard();
@@ -882,10 +877,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const curViewWindow =
       side.current === "right"
         ? new OpenInterval(
-            -(
-              (curDragXVal % windowWidthRef.current) +
-              -windowWidthRef.current
-            ),
+            -((curDragXVal % windowWidthRef.current) + -windowWidthRef.current),
             -(
               (curDragXVal % windowWidthRef.current) +
               -windowWidthRef.current
@@ -893,10 +885,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           )
         : new OpenInterval(
             windowWidthRef.current * 3 -
-              ((curDragXVal % windowWidthRef.current) +
-                windowWidthRef.current),
-            windowWidthRef.current * 3 -
-              (curDragXVal % windowWidthRef.current),
+              ((curDragXVal % windowWidthRef.current) + windowWidthRef.current),
+            windowWidthRef.current * 3 - (curDragXVal % windowWidthRef.current),
           );
 
     if (windowWidthRef.current > 0) {
@@ -1009,10 +999,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     let stepGuard = 0;
     const idxBeforeSteps = dataIdx.current;
-    while (
-      Math.ceil(dragXEff / w) !== dataIdx.current &&
-      stepGuard < 6
-    ) {
+    while (Math.ceil(dragXEff / w) !== dataIdx.current && stepGuard < 6) {
       const targetIdx = Math.ceil(dragXEff / w);
       const stepDir = targetIdx > dataIdx.current ? 1 : -1;
       const nextIdx = dataIdx.current + stepDir;
@@ -1075,7 +1062,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const rootNow = scrollRootRef.current;
       if (
         rootNow &&
-        Math.abs(rootNow.scrollLeft - scrollAnchorPx()) > 2 * windowWidthRef.current
+        Math.abs(rootNow.scrollLeft - scrollAnchorPx()) >
+          2 * windowWidthRef.current
       ) {
         recenterBand();
       }
@@ -1104,6 +1092,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       dragOn.current === false ||
       (totalBases !== undefined && bpRegionSize.current >= totalBases);
     root.style.overflowX = frozen ? "hidden" : "auto";
+    // Must be set explicitly alongside overflowX. Per the CSS overflow spec, if
+    // one axis is non-visible and the other is `visible`, the visible one
+    // computes to `auto` — so setting only overflowX silently turns the pan band
+    // into a *vertical* scroll container too. See the style prop on the scroll
+    // root for why that is a bug.
+    root.style.overflowY = "hidden";
   }
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
@@ -1157,7 +1151,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       const scrollDeltaX = lastX.current - e.pageX;
       lastX.current = e.pageX;
-      const totalBasesForDrag = curGenomeConfig.current?.navContext?._totalBases;
+      const totalBasesForDrag =
+        curGenomeConfig.current?.navContext?._totalBases;
       if (
         totalBasesForDrag !== undefined &&
         bpRegionSize.current >= totalBasesForDrag
