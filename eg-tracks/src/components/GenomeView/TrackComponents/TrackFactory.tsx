@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, startTransition } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
@@ -22,6 +22,10 @@ import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cac
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
 import { fetchGenomicData } from "../../../getRemoteData/fetchFunctions";
+import {
+  cancelTrackCommit,
+  scheduleTrackCommit,
+} from "./trackCommitScheduler";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -148,56 +152,74 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       legendWidth: legendWidth ? legendWidth : 120,
     };
 
-    // try {
-    const res = getDisplayModeFunction(displayArgs);
-    // }
-    // catch (e) {
-    //   fetchError.current = "error when creating drawData";
-    //   displayArgs.errorInfo = fetchError.current;
-    //   res = getDisplayModeFunction(displayArgs);
-    // }
+    // Everything above is cheap bookkeeping on values captured from this
+    // render. Everything below - arranging features into an element tree and
+    // committing it to React - is the long task, so it goes through the shared
+    // scheduler, which yields between tracks instead of letting several of them
+    // run as one unbroken block. displayArgs is built eagerly so a deferred
+    // commit still draws with the inputs it was queued with.
+    function commit() {
+      // try {
+      const res = getDisplayModeFunction(displayArgs);
+      // }
+      // catch (e) {
+      //   fetchError.current = "error when creating drawData";
+      //   displayArgs.errorInfo = fetchError.current;
+      //   res = getDisplayModeFunction(displayArgs);
+      // }
 
-    if (cacheDataIdx === dataIdx) {
-      signalTrackLoadComplete(id);
-      updateSide.current = side;
-      let result;
-      let numHidden = 0;
+      if (cacheDataIdx === dataIdx) {
+        signalTrackLoadComplete(id);
+        updateSide.current = side;
+        let result;
+        let numHidden = 0;
 
-      if (
-        typeof res === "object" &&
-        Object.prototype.hasOwnProperty.call(res, "numHidden")
-      ) {
-        result = res.component;
-        numHidden = res.numHidden;
-      } else {
-        result = res;
-      }
+        if (
+          typeof res === "object" &&
+          Object.prototype.hasOwnProperty.call(res, "numHidden")
+        ) {
+          result = res.component;
+          numHidden = res.numHidden;
+        } else {
+          result = res;
+        }
 
-      // Wrap the track component with an ErrorBoundary so render errors
-      // inside the display components don't crash the whole app.
-      try {
-        result = (
-          <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
-            {result as any}
-          </ErrorBoundary>
+        // Wrap the track component with an ErrorBoundary so render errors
+        // inside the display components do not crash the whole app.
+        try {
+          result = (
+            <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
+              {result as any}
+            </ErrorBoundary>
+          );
+        } catch (wrapErr) {
+          console.error("Error wrapping result with ErrorBoundary:", wrapErr);
+        }
+
+        xPos.current = curXPos;
+
+        // Reconciling this tree is the other half of the long task. Marking it
+        // a transition lets React render it in interruptible slices, so a
+        // pointer move can preempt it instead of waiting it out.
+        startTransition(() =>
+          setViewComponent({
+            component: result,
+            dataIdx: cacheDataIdx,
+            numHidden: numHidden,
+            visData: trackState.visData,
+            xPos: curXPos,
+            viewWindow: trackState.viewWindow,
+          }),
         );
-      } catch (wrapErr) {
-        console.error("Error wrapping result with ErrorBoundary:", wrapErr);
       }
+    }
 
-      xPos.current = curXPos;
-
-      // startTransition(() =>
-      setViewComponent({
-        component: result,
-        dataIdx: cacheDataIdx,
-        numHidden: numHidden,
-        visData: trackState.visData,
-        xPos: curXPos,
-        viewWindow: trackState.viewWindow,
-      });
-      // ,
-      // );
+    if (initialLoad.current) {
+      // First paint has no gesture to protect, and signalTrackLoadComplete
+      // gates the end of the load, so keep it on the synchronous path.
+      commit();
+    } else {
+      scheduleTrackCommit(id, commit);
     }
   }
   function onClose() {
@@ -310,6 +332,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
+
+  useEffect(() => {
+    // A queued commit closes over setViewComponent, so drop it if this track
+    // goes away before the scheduler gets to it.
+    return () => cancelTrackCommit(id);
+  }, [id]);
   // MARK:[newDrawDat
   // Helper function to handle track drawing logic for newDrawData, viewWindowConfigChange, and configChange
   function handleTrackDraw({

@@ -24,6 +24,7 @@ import _, { throttle } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 // import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
+import { setTrackCommitDragActive } from "./TrackComponents/trackCommitScheduler";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
@@ -972,7 +973,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const nowT = performance.now();
     const procDt = nowT - lastProcTimeRef.current;
     const procDpx = Math.abs(root.scrollLeft - lastProcSlRef.current);
-    if (procDt > 0 && procDt < 250) {
+    if (isDragging.current) {
+      // A mouse drag never reaches the wheel-fling velocity threshold below, but
+      // it needs the same deferral even more: a wheel scroll keeps moving pixels
+      // on the compositor while the main thread is busy, whereas a drag only
+      // moves the band from handleMove, so a synchronous redraw mid-gesture
+      // freezes the drag outright. Coalesce draws into pendingDrawRef and flush
+      // them on release (handleMouseUp) or on the idle timer below.
+      scrollFastRef.current = true;
+    } else if (procDt > 0 && procDt < 250) {
       scrollFastRef.current = procDpx / procDt > 1.2;
     }
     lastProcTimeRef.current = nowT;
@@ -1101,7 +1110,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
-    if (isMouseInsideRef.current) {
+    // handleMouseDown hides the crosshair for the duration of a drag, so none of
+    // this is visible while panning. Skip it: every pointermove spent on rect
+    // math and style writes is a frame the band does not move.
+    if (isMouseInsideRef.current && !isDragging.current) {
       // Use cached rect instead of calling getBoundingClientRect on every move.
       // block can be unmounted (e.g. while the screenshot view is open) even
       // though this document-level listener is still attached, so guard the
@@ -1130,7 +1142,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           rafId.current = null;
         });
       }
-    } else {
+    } else if (!isDragging.current) {
       // Hide crosshair lines when mouse is outside
       if (horizontalLineRef.current && verticalLineRef.current) {
         horizontalLineRef.current.style.display = "none";
@@ -1264,6 +1276,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     isDragging.current = true;
+    // Pace track commits at one per frame for the duration of the gesture.
+    setTrackCommitDragActive(true);
     lastPointerType.current = e.pointerType || "mouse";
     lastX.current = e.pageX;
 
@@ -1316,12 +1330,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //   );
   // }
   function handleMouseUp() {
+    const wasDragging = isDragging.current;
     isDragging.current = false;
+    setTrackCommitDragActive(false);
     if (horizontalLineRef.current && verticalLineRef.current) {
       horizontalLineRef.current.style.display = "block";
       verticalLineRef.current.style.display = "block";
     }
     if (scrollPanEnabled) {
+      // Draws were deferred for the whole drag (see processScroll), so commit
+      // and flush here instead of waiting out the 160ms idle timer. Guarded on
+      // wasDragging because this runs on every document pointerup/mouseup.
+      if (wasDragging) {
+        scrollFastRef.current = false;
+        syncScrollState(true);
+        flushPendingDraw();
+      }
       return;
     }
     if (lastDragX.current === dragX.current || !curGenomeConfig.current) {
@@ -4081,6 +4105,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return () => {
       document.removeEventListener("pointermove", handleMove);
       document.removeEventListener("pointerup", handleMouseUp);
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [trackComponents, windowWidthRef.current]);
 
@@ -4798,6 +4824,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         document.addEventListener("mouseup", handleMouseUp);
       }
     }
+    return () => {
+      document.removeEventListener("pointermove", handleMove);
+      document.removeEventListener("pointerup", handleMouseUp);
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
   }, [windowWidthRef.current]);
 
   useEffect(() => {
