@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
@@ -9,6 +9,7 @@ import memoizeOne from "memoize-one";
 // import HoverTooltipContext from "../tooltip/HoverTooltipContext";
 // import configOptionMerging from "../configOptionMerging";
 import { RenderTypes, DesignRenderer } from "../art/DesignRenderer";
+import { drawValuePlot } from "./drawValuePlot";
 import { NumericalDisplayModes } from "../../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { DefaultAggregators } from "../../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../../models/ScaleChoices";
@@ -506,19 +507,70 @@ const ValuePlot = (props) => {
 
   const { xToValue, height, forceSvg, width, viewWindow } = props;
 
-  return xToValue.length === 0 ? (
-    <div style={{ width: width, height: height }}></div>
-  ) : (
-    <DesignRenderer
-      type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-      width={xToValue.length}
+  if (xToValue.length === 0) {
+    return <div style={{ width: width, height: height }}></div>;
+  }
+
+  // Screenshots and the packaged export need real SVG nodes, so that path keeps
+  // building elements per column. Interactive drawing goes straight to the
+  // canvas instead - see drawValuePlot for why.
+  if (forceSvg) {
+    return (
+      <DesignRenderer
+        type={RenderTypes.SVG}
+        width={xToValue.length}
+        height={height}
+        forceSvg={forceSvg}
+        viewWindow={viewWindow}
+      >
+        {xToValue.map(renderPixel)}
+      </DesignRenderer>
+    );
+  }
+
+  return (
+    <CanvasValuePlot
+      xToValue={xToValue}
+      scales={props.scales}
       height={height}
-      forceSvg={forceSvg}
-      viewWindow={viewWindow}
-    >
-      {xToValue.map(renderPixel)}
-    </DesignRenderer>
+      color={props.color}
+      colorOut={props.colorOut}
+      isDrawingBars={props.isDrawingBars}
+    />
   );
+};
+
+const CanvasValuePlot = ({
+  xToValue,
+  scales,
+  height,
+  color,
+  colorOut,
+  isDrawingBars,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // No dependency array: this mirrors the componentDidMount/componentDidUpdate
+  // pair it replaces, redrawing whenever the parent hands down a new plot. A
+  // layout effect rather than a passive one so the canvas is never painted
+  // empty for a frame first.
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+    drawValuePlot(canvas, {
+      xToValue,
+      scales,
+      height,
+      color,
+      colorOut,
+      isDrawingBars,
+    });
+  });
+
+  // display: block prevents the extra bottom padding an inline canvas gets.
+  return <canvas ref={canvasRef} style={{ display: "block" }} />;
 };
 
 export default NumericalTrack;
