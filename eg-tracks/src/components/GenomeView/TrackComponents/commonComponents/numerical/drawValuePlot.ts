@@ -42,6 +42,75 @@ function getPixelRatioSafely(): number {
 }
 
 /**
+ * Opt-in draw timing, off by default so the hot path costs one boolean check.
+ * Enable from the console with __egDrawStats.enable(), drag, then read
+ * __egDrawStats.get(). This is the number that decides whether moving drawing
+ * to a worker is worth its round-trip: if maxMs is already well inside a frame
+ * budget, it is not.
+ */
+const drawStats = {
+  enabled: false,
+  draws: 0,
+  totalMs: 0,
+  maxMs: 0,
+};
+
+if (typeof globalThis !== "undefined") {
+  (globalThis as any).__egDrawStats = {
+    enable: () => {
+      drawStats.enabled = true;
+    },
+    disable: () => {
+      drawStats.enabled = false;
+    },
+    reset: () => {
+      drawStats.draws = 0;
+      drawStats.totalMs = 0;
+      drawStats.maxMs = 0;
+    },
+    get: () => ({
+      draws: drawStats.draws,
+      totalMs: +drawStats.totalMs.toFixed(2),
+      maxMs: +drawStats.maxMs.toFixed(3),
+      avgMs: drawStats.draws
+        ? +(drawStats.totalMs / drawStats.draws).toFixed(3)
+        : 0,
+    }),
+  };
+}
+
+/**
+ * Draws into an already-sized context. Split out from drawValuePlot so the same
+ * code can run against an OffscreenCanvas context in a worker, where sizing and
+ * the element style are handled differently: the worker owns the backing store
+ * while the main thread still owns the element CSS size.
+ *
+ * Clears the context itself, so callers only have to size and scale it.
+ */
+export function drawValuePlotInto(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  args: ValuePlotDrawArgs,
+) {
+  const start = drawStats.enabled ? performance.now() : 0;
+
+  ctx.clearRect(0, 0, args.xToValue.length, args.height);
+  if (args.isDrawingBars) {
+    drawBars(ctx, args);
+  } else {
+    drawHeatmap(ctx, args);
+  }
+
+  if (drawStats.enabled) {
+    const elapsed = performance.now() - start;
+    drawStats.draws += 1;
+    drawStats.totalMs += elapsed;
+    if (elapsed > drawStats.maxMs) {
+      drawStats.maxMs = elapsed;
+    }
+  }
+}
+
+/**
  * Sizes the canvas for the device pixel ratio and draws the plot. Assigning
  * width/height resets the 2D context (transform included), so the scale is
  * applied after sizing, never before.
@@ -64,13 +133,8 @@ export function drawValuePlot(
     return;
   }
   ctx.scale(pixelRatio, pixelRatio);
-  ctx.clearRect(0, 0, width, height);
 
-  if (args.isDrawingBars) {
-    drawBars(ctx, args);
-  } else {
-    drawHeatmap(ctx, args);
-  }
+  drawValuePlotInto(ctx, args);
 }
 
 /**
