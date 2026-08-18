@@ -667,6 +667,7 @@ export default function NavBar(props) {
                     </Button>
                     <div className="h-8 flex flex-row items-center flex-shrink-0">
                       <Switch
+                        label="Dark mode"
                         checked={darkTheme}
                         onChange={(checked) => dispatch(setDarkTheme(checked))}
                         checkedIcon={
@@ -801,6 +802,7 @@ export default function NavBar(props) {
             </Button>
             <div className="h-8 flex flex-row items-center flex-shrink-0">
               <Switch
+                label="Dark mode"
                 checked={darkTheme}
                 onChange={(checked) => dispatch(setDarkTheme(checked))}
                 checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
@@ -910,6 +912,7 @@ export default function NavBar(props) {
                     </Button>
                     <div className="h-8 flex flex-row justify-center flex-shrink-0">
                       <Switch
+                        label="Dark mode"
                         checked={darkTheme}
                         onChange={(checked) => dispatch(setDarkTheme(checked))}
                         checkedIcon={

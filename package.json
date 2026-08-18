@@ -6,5 +6,10 @@
     "eg-tracks",
     "eg-browser",
     "docs"
-  ]
+  ],
+  "scripts": {
+    "test": "npm run test --workspace=wuepgg3-track",
+    "test:e2e": "npm run test:e2e --workspace=eg-next",
+    "test:all": "npm run test && npm run test:e2e"
+  }
 }

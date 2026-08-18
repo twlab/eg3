@@ -5053,6 +5053,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: render________________________________________
   return (
     <div
+      data-testid="track-manager"
+      data-track-count={tracks ? tracks.length : 0}
       style={{
         backgroundColor: "var(--bg-color)",
         paddingLeft: "18px",

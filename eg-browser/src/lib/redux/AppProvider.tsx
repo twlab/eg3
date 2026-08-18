@@ -2,6 +2,7 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { getOrCreateStore, StoreConfig } from "./createStore";
 import { useMemo } from "react";
+import { installTestHandle } from "../testHandle";
 
 export interface AppProviderProps {
   children: React.ReactNode;
@@ -19,6 +20,10 @@ export default function AppProvider({
     () => getOrCreateStore({ storeId, enablePersistence }),
     [storeId, enablePersistence]
   );
+
+  // Exposes window.__EG__ for the dev harness and e2e tests. No-op outside
+  // dev builds unless the build opted in with VITE_EG_TEST=1.
+  useMemo(() => installTestHandle(store), [store]);
 
   if (!persistor) {
     // No persistence enabled, use plain Provider

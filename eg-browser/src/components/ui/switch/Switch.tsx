@@ -7,14 +7,23 @@ export default function Switch({
   onChange,
   checkedIcon,
   uncheckedIcon,
+  label,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   checkedIcon?: ReactNode;
   uncheckedIcon?: ReactNode;
+  /** Accessible name. Without it the control is unreachable by name. */
+  label?: string;
 }) {
   return (
     <div
+      // A bare clickable div is invisible to assistive tech and to anyone
+      // navigating by keyboard, and gives tests nothing to target by name.
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      tabIndex={0}
       className={classNames(
         "flex items-center w-15 p-1 h-8 rounded-full cursor-pointer transition-all duration-300",
         checked
@@ -22,6 +31,12 @@ export default function Switch({
           : "bg-gray-300 dark:bg-dark-surface"
       )}
       onClick={() => onChange(!checked)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onChange(!checked);
+        }
+      }}
     >
       <div
         className={classNames(

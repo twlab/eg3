@@ -11,6 +11,13 @@ import Screenshot from "./destinations/Screenshot";
 import DynamicRecord from "./destinations/DynamicRecord";
 import FetchSequence from "./destinations/FetchSequence";
 import RegionSetSelector from "./destinations/region-set/RegionSetSelector";
+import TrackHarness from "./destinations/TrackHarness";
+
+// The harness is a development aid — kept out of production builds, but
+// available in preview/CI builds that opt in with VITE_EG_TEST=1 so the e2e
+// suite can drive it.
+const showTrackHarness =
+  import.meta.env.DEV || import.meta.env.VITE_EG_TEST === "1";
 
 export default function AppsTab({ panelCounter, onNavigationPathChange }: { panelCounter?: number; onNavigationPathChange?: (path: any) => void }) {
   const destinations: NavigationDestination[] = useMemo(
@@ -73,6 +80,17 @@ export default function AppsTab({ panelCounter, onNavigationPathChange }: { pane
           title: "Fetch Sequence",
         },
       },
+      ...(showTrackHarness
+        ? [
+            {
+              path: "track-harness",
+              component: TrackHarness,
+              options: {
+                title: "Track Harness",
+              },
+            },
+          ]
+        : []),
     ],
     []
   );
@@ -87,6 +105,9 @@ export default function AppsTab({ panelCounter, onNavigationPathChange }: { pane
         {/* <DescriptiveNavigationLink compact path="go-live" title="Go Live" description="Share your browser view in real-time with others" /> */}
         <DescriptiveNavigationLink compact path="screenshot" title="Screenshot" description="Capture and export browser views as images" />
         <DescriptiveNavigationLink compact path="fetch-sequence" title="Fetch Sequence" description="Retrieve and analyze genomic sequences" />
+        {showTrackHarness && (
+          <DescriptiveNavigationLink compact path="track-harness" title="Track Harness" description="Load example tracks and jump to their test regions" />
+        )}
       </div>
     </NavigationStack>
   );

@@ -48,7 +48,7 @@ export default function Screenshot() {
   }, []);
 
   return Object.keys(screenShotData).length > 0 && isOpen ? (
-    <div>
+    <div data-testid="screenshot-app" data-screenshot-state="captured">
       <ScreenshotUI
         highlights={screenShotData.highlights}
         needClip={true}
@@ -68,6 +68,9 @@ export default function Screenshot() {
       />
     </div>
   ) : (
-    <div> No tracks in view </div>
+    <div data-testid="screenshot-app" data-screenshot-state="empty">
+      {" "}
+      No tracks in view{" "}
+    </div>
   );
 }

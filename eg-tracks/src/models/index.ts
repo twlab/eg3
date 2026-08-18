@@ -31,4 +31,5 @@ export { default as IsoformSelection } from "../components/GenomeView/genomeNavi
 export { default as OutsideClickDetector } from "../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 export { default as TwoBitSource } from "../getRemoteData/TwoBitSource";
 export * from "./genomes/GenomeConfig";
+export * from "./genomes/trackExamples";
 export * from "../components";

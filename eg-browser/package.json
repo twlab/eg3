@@ -10,7 +10,13 @@
     "lint": "eslint .",
     "deploy": "aws s3 sync ./dist/ s3://epigenomegateway.org/browser/ --delete",
     "postdeploy": "aws cloudfront create-invalidation --distribution-id E1MGKYTP7KY77B --paths \"/browser/*\"",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:record": "cross-env EG_HAR=record playwright test",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:fast": "cross-env EG_SKIP_SLOW=1 playwright test",
+    "test:e2e:live": "cross-env EG_HAR=off playwright test"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -39,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.1.10",
     "@types/lodash": "^4.17.13",
     "@types/node": "^20.17.47",
@@ -46,6 +53,7 @@
     "@types/react-dom": "^18.0.0 || ^19.0.0",
     "@types/react-plotly.js": "^2.6.3",
     "@vitejs/plugin-react": "^4.3.3",
+    "cross-env": "^10.1.0",
     "eslint": "^9.13.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",

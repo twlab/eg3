@@ -1,5 +1,6 @@
-import { Chromosome, Genome } from '../../Genome';
-import ChromosomeInterval from '../../interval/ChromosomeInterval';
+import Chromosome from '../../Chromosome';
+import Genome from '../../Genome';
+import ChromosomeInterval from '../../ChromosomeInterval';
 
 const CHROMOSOMES = [
     new Chromosome("chr1", 10),
