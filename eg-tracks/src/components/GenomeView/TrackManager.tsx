@@ -3060,18 +3060,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           completedFetchedRegion.current.groups[`${groupId}`],
         );
 
-        const groupKeyInState = new Set(
-          trackManagerState.current.tracks
-            .filter(
-              (track) =>
-                track.options && String(track.options.group) === groupId,
-            )
-            .map((track) => track.id),
-        );
+        const groupKeyInState = trackManagerState.current.tracks
+          .filter(
+            (track) =>
+              track.options &&
+              String(track.options.group) === groupId &&
+              track.type in numericalTracksGroup,
+          )
+          .map((track) => track.id);
 
         let haveAllGroupElements = true;
-        for (let trackId of fetchFinishGroupKeys) {
-          if (!groupKeyInState.has(trackId)) {
+        for (let trackId of groupKeyInState) {
+          if (!fetchFinishGroupKeys.includes(trackId)) {
             haveAllGroupElements = false;
             break;
           }
