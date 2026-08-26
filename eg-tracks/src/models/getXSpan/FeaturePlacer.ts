@@ -316,7 +316,6 @@ export class FeaturePlacer {
           // forward placements, would drop every annotation.
           if (!(featureValue < 0) || Array.isArray(featureValue)) {
             if (mode === PlacementMode.NUMERICAL && xToFeaturesForward) {
-          
               sortPlacedFeatureIntoXMap(placement, xToFeaturesForward, width);
             } else {
               tmpPlacementForward.push(placement);
