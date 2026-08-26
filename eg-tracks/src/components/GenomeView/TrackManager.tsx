@@ -63,6 +63,12 @@ import { LinearDrawingModel } from "../../models";
  * @returns {TrackModel[]} Array of trackModels with type "genomealign" whose IDs are not in the second array
  */
 
+export function isInteger(str: string): boolean {
+  const num = Number(str);
+
+  return str !== null && !isNaN(num) && Number.isInteger(num);
+}
+
 export const convertTrackModelToITrackModel = (
   track: TrackModel,
 ): ITrackModel => ({
@@ -263,8 +269,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const maxBp = useRef(0);
   const minBp = useRef(0);
   const selectedTracks = useRef<{ [key: string]: any }>({});
-  // Tracks the metadata term/value whose tracks are currently highlighted via
-  // the MetadataHeader, so clicking the same value again toggles the highlight off.
+
   const activeColorSelection = useRef<{
     metaDataKey: string;
     value: string;
@@ -372,7 +377,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     contextNavCoord: { [key: string]: any };
   } | null>(null);
 
-  // These states are used to update the tracks with new fetch(data);
+  // these states are used to update the tracks with new fetch(data);
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
@@ -461,45 +466,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     };
   };
-  // Cancel any in-flight fetch operations on workers. Prefer graceful abort
-  // via postMessage({type: 'abort'}) but fall back to terminate() if needed.
-  // function cancelPendingWorkerFetches() {
-  //   try {
-  //     if (
-  //       infiniteScrollWorkers &&
-  //       infiniteScrollWorkers.current &&
-  //       Array.isArray(infiniteScrollWorkers.current.worker)
-  //     ) {
-  //       infiniteScrollWorkers.current.worker.forEach((w: any) => {
-  //         try {
-  //           w.fetchWorker.postMessage?.({ type: "abort" });
-  //         } catch (e) {
-  //           try {
-  //             w.fetchWorker.terminate?.();
-  //           } catch (err) {
-  //             // ignore
-  //           }
-  //         }
-  //       });
-  //     }
 
-  //     if (fetchGenomeAlignWorker && fetchGenomeAlignWorker.current) {
-  //       try {
-  //         fetchGenomeAlignWorker.current.fetchWorker.postMessage?.({
-  //           type: "abort",
-  //         });
-  //       } catch (e) {
-  //         try {
-  //           fetchGenomeAlignWorker.current.fetchWorker.terminate?.();
-  //         } catch (err) {
-  //           // ignore
-  //         }
-  //       }
-  //     }
-  //   } catch (err) {
-  //     // defensive: swallow any unexpected errors
-  //   }
-  // }
   const onNewRegionSelectRef = useRef(onNewRegionSelect);
   onNewRegionSelectRef.current = onNewRegionSelect;
 
@@ -519,7 +486,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     messageQueue.current.forEach((messageArr: any) => {
       if (messageArr && Array.isArray(messageArr)) {
-        // If missingIdx and genomicLoci are properties of the array itself
         messageArr.forEach((message: any) => {
           if (message.trackModelArr && Array.isArray(message.trackModelArr)) {
             message.trackModelArr.forEach((trackModel: any) => {
@@ -556,68 +522,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     processGenomeAlignQueue();
   };
-  // const processQueue = async () => {
-  //   if (messageQueue.current.length === 0) {
-  //     setMessageData({});
-  //     return;
-  //   }
 
-  //   setMessageData(getMessageData());
-
-  //   const message = messageQueue.current.pop();
-
-  //   // split an array into N contiguous chunks
-  //   function splitArrayIntoChunks(arr, numChunks) {
-  //     const chunkSize = Math.ceil(arr.length / numChunks);
-  //     const chunks: Array<any> = [];
-  //     for (let i = 0; i < numChunks; i++) {
-  //       const start = i * chunkSize;
-  //       const end = start + chunkSize;
-  //       chunks.push(arr.slice(start, end));
-  //     }
-  //     return chunks;
-  //   }
-
-  //   // Send messages to worker workers
-  //   if (
-  //     infiniteScrollWorkers.current &&
-  //     infiniteScrollWorkers.current.worker.length > 0
-  //   ) {
-  //     const numWorkers = infiniteScrollWorkers.current.worker.length;
-
-  //     for (let i = 0; i < numWorkers; i++) {
-  //       const messagesForWorker: Array<any> = [];
-  //       for (const msgObj of message) {
-  //         if (
-  //           Array.isArray(msgObj.trackModelArr) &&
-  //           msgObj.trackModelArr.length > 0
-  //         ) {
-  //           const chunks = splitArrayIntoChunks(
-  //             msgObj.trackModelArr,
-  //             numWorkers,
-  //           );
-  //           if (chunks[i].length > 0) {
-  //             messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
-  //           }
-  //         }
-  //       }
-
-  //       if (
-  //         messagesForWorker.length > 0 &&
-  //         messagesForWorker[0].trackDataIdx === dataIdx.current
-  //       ) {
-  //         if (infiniteScrollWorkers.current.worker[i].hasOnMessage === false) {
-  //           infiniteScrollWorkers.current.worker[i].fetchWorker.onmessage =
-  //             createInfiniteOnMessage;
-  //           infiniteScrollWorkers.current.worker[i].hasOnMessage = true;
-  //         }
-  //         infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-  //           messagesForWorker,
-  //         );
-  //       }
-  //     }
-  //   }
-  // };
   const processQueue = async () => {
     if (messageQueue.current.length === 0) {
       setMessageData({});
@@ -628,32 +533,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const message = messageQueue.current.pop();
 
-    // Send each track to the worker with the least active processes
     if (
       infiniteScrollWorkers.current &&
       infiniteScrollWorkers.current.worker.length > 0 &&
       message.length > 0 &&
       message[0].trackDataIdx === dataIdx.current
     ) {
-      // Ensure all workers have onmessage set
       for (const workerObj of infiniteScrollWorkers.current.worker) {
         if (workerObj.hasOnMessage === false) {
-          // workerObj.fetchWorker.onmessage = async (event) => {
-          //   await createInfiniteOnMessage(event);
-          //   if (infiniteScrollWorkers.current) {
-
-          //     if (areAllWorkersIdle()) {
-          //       queueRegionToFetch(dataIdx.current);
-          //     }
-          //   }
-          // };
           workerObj.fetchWorker.onmessage = createInfiniteOnMessage;
 
           workerObj.hasOnMessage = true;
         }
       }
 
-      // Loop through each track and assign to least-busy worker
+      // loop through and find least busy worker
       for (let j = 0; j < message.length; j++) {
         const newMessage = _.cloneDeep(message[j]);
 
@@ -681,7 +575,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             continue;
           }
 
-          // Find the worker with the fewest active processes
           let leastBusyIdx = 0;
           let minCount =
             infiniteScrollWorkers.current.worker[0].processingCount;
@@ -698,7 +591,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               leastBusyIdx = i;
             }
           }
-          console.log(leastBusyIdx, "leastBusyIdx");
+
           infiniteScrollWorkers.current.worker[leastBusyIdx].processingCount++;
           infiniteScrollWorkers.current.worker[
             leastBusyIdx
@@ -729,7 +622,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const handleMouseEnter = useCallback(() => {
     isMouseInsideRef.current = true;
-    // Cache the bounding rect when mouse enters
+
     if (block.current) {
       parentRectCache.current = block.current.getBoundingClientRect();
     }
@@ -737,14 +630,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const handleMouseLeave = useCallback(() => {
     isMouseInsideRef.current = false;
-    // Clear the cached rect when mouse leaves
+
     parentRectCache.current = null;
-    // Cancel any pending animation frame
+
     if (rafId.current !== null) {
       cancelAnimationFrame(rafId.current);
       rafId.current = null;
     }
-    // Hide crosshair lines when mouse leaves
+
     if (horizontalLineRef.current && verticalLineRef.current) {
       horizontalLineRef.current.style.display = "none";
       verticalLineRef.current.style.display = "none";
@@ -926,8 +819,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           pendingFetchIdx.current = null;
           queueRegionToFetch(curDataIdx);
         } else {
-          // Mid-pan: remember that we owe a fetch and let settlePan issue it
-          // for whatever window the user actually lands on.
           pendingFetchIdx.current = curDataIdx;
         }
       }
@@ -958,18 +849,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     releaseScrollGuard();
   }
 
-  // Commit the pan. This is the only place that pushes the new region out
-  // (onNewRegion), advances dataIdx and queues the next fetch. It runs once the
-  // gesture is actually over -- pointer up AND the scroller gone quiet -- so
-  // panning itself stays purely visual, like it was before smooth scroll.
-  // Safe to call directly (handleMouseUp does) as well as from the idle timer.
   function settlePan() {
     if (scrollIdleTimer.current !== null) {
       clearTimeout(scrollIdleTimer.current);
       scrollIdleTimer.current = null;
     }
     if (isDragging.current) {
-      // Pointer is still down, so the drag isn't finished. Wait for mouse up.
       scheduleSettle();
       return;
     }
@@ -994,6 +879,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       recenterBand();
     }
   }
+
+  const busyWorkerSettleDelayMs = 750;
 
   function scheduleSettle(delayMs: number = 160) {
     if (scrollIdleTimer.current !== null) {
@@ -1058,11 +945,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         clamped = true;
       }
     }
-    // Keep the runway growing as the user crosses window boundaries, otherwise
-    // the clamp below walls them off at the edge of the fetched sections while
-    // data is still loading. These syncs are structural only - commitRegion and
-    // allowFetch are both false, so onNewRegion and queueRegionToFetch still
-    // wait for settlePan.
+
     let stepGuard = 0;
     const idxBeforeSteps = dataIdx.current;
     while (Math.ceil(dragXEff / w) !== dataIdx.current && stepGuard < 6) {
@@ -1080,8 +963,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       Math.ceil(dragXEff / w) !== dataIdx.current &&
       dataIdx.current !== idxBeforeSteps
     ) {
-      // More windows to step through than one frame allows: keep going next
-      // frame instead of clamping the scroller here.
       scheduleSettle();
       lastScrollLeft.current = root.scrollLeft;
       applyScrollTransforms();
@@ -1141,21 +1022,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
     if (isMouseInsideRef.current) {
-      // Use cached rect instead of calling getBoundingClientRect on every move.
-      // block can be unmounted (e.g. while the screenshot view is open) even
-      // though this document-level listener is still attached, so guard the
-      // ref instead of dereferencing null.
       const parentRect =
         parentRectCache.current || block.current?.getBoundingClientRect();
       if (parentRect) {
         const x = e.clientX - parentRect.left;
         const y = e.clientY - parentRect.top;
 
-        // Update all mouse position references
         mousePositionRef.current = { x: e.clientX, y: e.clientY };
         mouseRelativePositionRef.current = { x, y };
-
-        // Use requestAnimationFrame to throttle crosshair updates
 
         if (rafId.current !== null) {
           cancelAnimationFrame(rafId.current);
@@ -1170,7 +1044,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       }
     } else {
-      // Hide crosshair lines when mouse is outside
       if (horizontalLineRef.current && verticalLineRef.current) {
         horizontalLineRef.current.style.display = "none";
         verticalLineRef.current.style.display = "none";
@@ -1219,10 +1092,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const totalBases = curGenomeConfig.current?.navContext?._totalBases;
 
-    // The whole data region already fits in the view, so there is nothing to
-    // scroll to — block all movement regardless of nav mode. This is the
-    // unified home for what used to be scattered `selectedRegionSet &&
-    // bpRegionSize === totalBases` special-cases: a region-set view loads the
+    // all datas in the view
+    //  block all movement. this is for
+    //  `selectedRegionSet &&
+    // bpRegionSize === totalBases` , a region-set view loads the
     // full region into the full window (bpRegionSize === totalBases), and full
     // zoom-out does the same, so both are simply "whole region in view".
     if (totalBases !== undefined && bpRegionSize.current >= totalBases) {
@@ -1243,16 +1116,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
 
-    // Stop at the actual data-region edges for partial views. The section-size
-    // checks above only cap how many fetched windows we've scrolled through,
-    // not where the underlying data ends, so without this you can keep dragging
-    // into empty space past the start (0) or end (totalBases) of the region —
-    // the drag updates even though handleMouseUp will refuse to commit it.
-    // Project the committed start bp for tempDragX using the same mapping
-    // handleMouseUp uses in coarse mode (leftStartCoord + -dragX * basePerPixel)
-    // and block once the view would run off either edge. Only applied in coarse
-    // mode: fine-mode commits use getRegionOffsetByX, which already clamps to
-    // [0, totalBases-1], and the linear projection is only approximate there.
     if (
       !useFineModeNav.current &&
       totalBases !== undefined &&
@@ -1295,7 +1158,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMouseDown(e: any) {
     if (e.button !== 0) {
-      // If not the left button, exit the function
       return;
     }
 
@@ -1342,18 +1204,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return first.toStringWithOther(last);
     }
   }
-  // function areAllWorkersIdle(): boolean {
-  //   if (
-  //     !infiniteScrollWorkers.current ||
-  //     infiniteScrollWorkers.current.worker.length === 0
-  //   ) {
-  //     return true;
-  //   }
+  function areAllWorkersIdle(): boolean {
+    if (
+      !infiniteScrollWorkers.current ||
+      infiniteScrollWorkers.current.worker.length === 0
+    ) {
+      return true;
+    }
 
-  //   return infiniteScrollWorkers.current.worker.every(
-  //     (w) => w.processingCount === 0,
-  //   );
-  // }
+    return infiniteScrollWorkers.current.worker.every(
+      (w) => w.processingCount === 0,
+    );
+  }
   function handleMouseUp() {
     isDragging.current = false;
     if (horizontalLineRef.current && verticalLineRef.current) {
@@ -1361,15 +1223,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       verticalLineRef.current.style.display = "block";
     }
     if (scrollPanEnabled) {
-      // The drag is over, so commit it right here in the mouse up rather than
-      // going through the idle timer -- no delay, same as before smooth scroll.
-      // Anything still moving on its own (trackpad/touch momentum) has no mouse
-      // up, so it keeps firing scroll events and settles from processScroll.
       if (
         scrollIdleTimer.current !== null ||
         getDragX() !== lastDragX.current
       ) {
-        settlePan();
+        if (areAllWorkersIdle()) {
+          settlePan();
+        } else {
+          scheduleSettle(busyWorkerSettleDelayMs);
+        }
       }
       return;
     }
@@ -1751,9 +1613,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     (t: any) => `${t.id}` === idStr,
                   ),
                 });
-              } catch (e) {
-                // ignore per-track propagation errors
-              }
+              } catch (e) {}
             }
           } else {
             if (key === "aggregateMethod") {
@@ -1804,9 +1664,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   (t: any) => `${t.id}` === idStr,
                 ),
               });
-            } catch (e) {
-              // ignore per-track propagation errors
-            }
+            } catch (e) {}
           }
         }
       });
@@ -1846,12 +1704,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       const curTrackToDrawId = tempViewWindowConfig["tracksToDrawId"] || {};
 
-      // for (let key in curTrackToDrawId) {
-      //   if (completedFetchedRegion.current.done[key] === false) {
-
-      //     delete curTrackToDrawId[key];
-      //   }
-      // }
       if (Object.keys(curTrackToDrawId).length > 0) {
         setViewWindowConfigChange({
           dataIdx: dataIdx.current,
@@ -1912,7 +1764,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackManagerState.current.tracks = newTracks;
 
       if (initialLoad.current) {
-        // During initial load, also update trackComponents to reflect the selection
         const updatedComponents = trackComponents.map((component) => ({
           ...component,
           trackModel:
@@ -1976,7 +1827,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackManagerState.current.tracks = newTracks;
 
       if (initialLoad.current) {
-        // During initial load, also update trackComponents to reflect the selection
         const updatedComponents = trackComponents.map((component) => ({
           ...component,
           trackModel:
@@ -2011,7 +1861,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       selectedTracks.current = {};
     }
-    // The metadata-value highlight is no longer active once tracks are cleared.
+
     activeColorSelection.current = null;
   }, [onTracksChange]);
 
@@ -2418,7 +2268,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any },
   ) => {
-    console.log(event.data);
     await Promise.all(
       event.data.map(async (dataItem: any) => {
         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
@@ -2534,13 +2383,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }),
     )
       .then(() => {
-        // Decrement the processing count for this worker after all items complete
         const workers = infiniteScrollWorkers.current?.worker;
         if (workers) {
-          // Find the worker that posted this message by matching the source
-          // We decrement the least-count worker that is > 0 as a proxy,
-          // but since event.source is not available in onmessage we track via
-          // a workerIndex embedded in the message data.
           const workerIdx = event.data[0]?._workerIdx;
           if (workerIdx !== undefined && workers[workerIdx]) {
             workers[workerIdx].processingCount = Math.max(
@@ -2552,7 +2396,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       })
       .catch((error) => {
         console.error("Error in createInfiniteOnMessage:", error);
-        // Decrement on error too
+
         const workers = infiniteScrollWorkers.current?.worker;
         if (workers) {
           const workerIdx = event.data[0]?._workerIdx;
@@ -2580,7 +2424,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
     const fetchNewRegion = event.data.navData.fetchNewRegion;
     const fetchedDragX = event.data.navData.dragX;
-    // Process all fetch results with promises
 
     Promise.all(
       Object.values(event.data.fetchResults).map((item: any) =>
@@ -2965,7 +2808,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (!memory) return false; // Not supported (non-Chromium browsers)
 
     const usedMB = memory.usedJSHeapSize / (1024 * 1024);
-    return usedMB > 2000;
+    return usedMB > 2500;
   }
   function flushPendingDraw() {
     const pending = pendingDrawRef.current;
@@ -3004,9 +2847,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           .map(Number)
           .sort((a, b) => a - b);
         let minIdx, maxIdx;
-
-        minIdx = dataIdx.current - 2;
-        maxIdx = dataIdx.current + 2;
+        if (
+          trackManagerState.current.caches?.[key]?.useExpandedLoci ||
+          trackManagerState.current.caches?.[key]?.usePrimaryNav === false
+        ) {
+          minIdx = dataIdx.current - 1;
+          maxIdx = dataIdx.current + 1;
+        } else {
+          minIdx = dataIdx.current - 2;
+          maxIdx = dataIdx.current + 2;
+        }
 
         for (const cacheDataIdx of cacheKeys) {
           if (cacheDataIdx < minIdx || cacheDataIdx > maxIdx) {
@@ -3148,8 +2998,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           )
           .map((track) => track.id);
 
-        // The group draws only after every one of its tracks has finished
-        // fetching, so a group is not redrawn once per member that lands.
         const haveAllGroupElements =
           groupKeyInState.length > 0 &&
           groupKeyInState.every((trackId) =>
@@ -3208,8 +3056,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         if (fetchRes.trackModel.shouldPlaceRegion) {
           for (let i = 0; i < 3; i++) {
-            // Raw data isn't split per region; the aggregator clips to the view
-            // region and dedups, so all 3 indices share the same raw groups.
             trackManagerState.current.caches[`${fetchRes.id}`][initialIdx[i]][
               "dataCache"
             ] = fetchRes.result;
@@ -3458,10 +3304,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       true;
     trackManagerState.current.caches[`${initTrackModel.id}`]["trackType"] =
       initTrackModel.type;
-    // Ensure the canonical trackModel lives in trackManagerState.current.tracks
+
     const existing = getTrackModelById(initTrackModel.id);
     if (existing) {
-      // replace the existing trackModel in place
       trackManagerState.current.tracks = trackManagerState.current.tracks.map(
         (t: any) =>
           String(t.id) === String(initTrackModel.id) ? initTrackModel : t,
@@ -3504,7 +3349,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     );
   }
   const refreshState = () => {
-    // Reset useRef letiables
     initialLoad.current = true;
     completedFetchedRegion.current = {
       key: -0,
@@ -3677,13 +3521,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             };
           }
         });
-        // When a track refreshes or a new genome is initialize, we
-        // select the region that was selected before the refresh after the track is
-        // created
-        // if (highlights) {
-        //   let highlightElement = createHighlight(highlights);
-        //   if (highlightElement) setHighLightElements([...highlightElement]);
-        // }
+
         const isSelected: Array<any> = [];
         tracks.map((item) => {
           if (item.isSelected) {
@@ -3697,7 +3535,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               if (trackComponents) {
                 for (const component of trackComponents) {
                   if (component.id === key) {
-                    // component.legendRef.current.style.backgroundColor = "white";
                     delete selectedTracks.current[key];
                   }
                 }
@@ -3812,14 +3649,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return true;
         })
         .map((item) => convertTrackModelToITrackModel(item));
-      // When the view spans (or exceeds) the entire data region there is no
-      // 3-window expansion to offset against: the data occupies a single
-      // window anchored at x=0. Applying the usual windowWidth offset here
-      // shifts the drawn content out of the clip region (translateX =
-      // -viewWindow.start in ScreenshotUI), producing a blank screenshot. Use
-      // no offset with the viewWindow anchored at 0. A region-set view is just
-      // a special case of this (it loads the full region into the full window,
-      // so bpRegionSize === totalBases), so it needs no separate condition.
+
       const totalBases = curGenomeConfig.current?.navContext?._totalBases;
       const noViewWindowOffset =
         totalBases !== undefined && bpRegionSize.current >= totalBases;
@@ -3831,16 +3661,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         globalTrackState.current?.trackStates?.[dataIdx.current]?.trackState,
       );
 
-      // xDiff is the scroll delta of the current window from the fetch's
-      // default (centered) position: globalTrackState.viewWindow.start sits at
-      // windowWidth when unscrolled and shifts as you drag, so subtracting
-      // windowWidth yields how far we've scrolled within the expanded region.
-      // Using windowWidth here (rather than visData.viewWindow.start) keeps this
-      // correct when the fetch expansion is clamped by the data edge — i.e. when
-      // the view spans a large fraction (~60%+) of the whole data region. There
-      // visData.viewWindow.start (leftExtraPixels) is < windowWidth, and the old
-      // formula over-shifted every feature/highlight by
-      // (windowWidth - visData.viewWindow.start).
       const xDiff = noViewWindowOffset
         ? 0
         : currViewWindow.start - windowWidthRef.current;
@@ -3916,16 +3736,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     await onConfigMenuClose();
     const stringValue = value;
 
-    // Clicking the value that's already highlighting tracks toggles it back off,
-    // deselecting/unhighlighting every track.
     const isSameSelection =
       activeColorSelection.current !== null &&
       activeColorSelection.current.metaDataKey === metaDataKey &&
       activeColorSelection.current.value === stringValue;
 
     const newSelectedTracks: { [key: string]: any } = {};
-    // Always rebuild the full track array (every track, in order) so the parent's
-    // track list length never changes on a selection-only update.
+
     const newTrackModelArr: Array<any> = trackManagerState.current.tracks.map(
       (track) => {
         if (isSameSelection || !track.metadata) {
@@ -3947,8 +3764,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       },
     );
 
-    // Keep the ref in sync with what we hand to the parent (every other selection
-    // handler does this) so subsequent clicks diff against the current state.
     trackManagerState.current.tracks = newTrackModelArr;
     selectedTracks.current = newSelectedTracks;
     activeColorSelection.current = isSameSelection
@@ -3963,8 +3778,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
 
-  // Recompute termValues whenever the active terms list changes.
-  // Runs after render so trackManagerState.current.tracks is always up to date.
   useEffect(() => {
     if (metaSets.terms.length === 0) return;
     const currentTracks = trackManagerState.current.tracks;
@@ -3982,7 +3795,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       newTermValues[term] = Array.from(values);
     }
     setMetaSets((prev) => ({ ...prev, termValues: newTermValues }));
-  }, [metaSets.terms]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [metaSets.terms]);
 
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
@@ -4067,7 +3880,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     }
     return () => {
-      // Clear ref data and remove event listeners to prevent memory leaks after component unmounts
       if (scrollIdleTimer.current !== null) {
         clearTimeout(scrollIdleTimer.current);
         scrollIdleTimer.current = null;
@@ -4078,7 +3890,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
       refreshState();
-      // Reset hasOnMessage so the next TrackManager instance re-binds its own closures
       if (infiniteScrollWorkers.current) {
         infiniteScrollWorkers.current.worker.forEach((workerObj) => {
           workerObj.hasOnMessage = false;
@@ -4092,11 +3903,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
         window.removeEventListener("scroll", clearCachedRect, true);
       }
-
-      // document.removeEventListener("pointermove", handleMove);
-      // document.removeEventListener("pointerup", handleMouseUp);
-
-      // console.log("trackmanager terminate");
     };
   }, []);
 
@@ -4250,10 +4056,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       completedFetchedRegion.current.key = dataIdx.current;
       completedFetchedRegion.current.done = {};
       completedFetchedRegion.current.groups = {};
-      // for (const cacheKey in trackManagerState.current.caches) {
-      //   trackToDrawId[cacheKey] = false;
-      //   completedFetchedRegion.current.done[cacheKey] = false;
-      // }
+
       const prevStateWindowWidth = prevWindowWidth.current;
 
       const newWindowWidth = windowWidthRef.current;
@@ -4501,19 +4304,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         let combinedData: any = [];
         let hasData = true;
-        // if (
-        // (
-        // !cacheTrackData?.[dataIdx]?.["xvalues"]
-        // &&
-        // curTrackModel.type in numericalTracks) || ((!(cacheTrackData.trackType in numericalTracks) &&
-        //   configOptions.displayMode !== "density") && configOptions?.displayMode === "full"
-
-        // && !cacheTrackData?.[dataIdx]?.["placeFeature"]
-        // )
-        // &&
-
-        //   cacheTrackData.usePrimaryNav
-        // ) {
 
         let currIdx = fetchDataIdx + 1;
         // combine data from view region and adjacent regions using dataIdx
@@ -4534,7 +4324,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             currIdx--;
           }
         }
-        // }
 
         if (hasData) {
           const trackState = {
@@ -4571,9 +4360,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           trackToDrawId[key] = false;
         }
-        // else {
-        //   delete trackToDrawId[key]
-        // }
       }
       // TO-DO so far only group primary nav tracks, not track that align to secondary genome align, or nonprimary with primary
 
@@ -4618,12 +4404,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: [tracks]
 
-  function isInteger(str: string): boolean {
-    const num = Number(str);
-
-    return str !== null && !isNaN(num) && Number.isInteger(num);
-  }
-
   useEffect(() => {
     if (!initialLoad.current && tracks && tracks.length === 0) {
       setTrackComponents([]);
@@ -4644,10 +4424,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         filteredTracks[i]["changeConfigInitial"] = false;
       }
       const tracksInView = [...trackComponents.map((item) => item.trackModel)];
-      // const tracksRemoved = tracksInView.filter(
-      //   (trackInView) =>
-      //     !filteredTracks.some((track) => track.id === trackInView.id)
-      // );
 
       if (!arraysHaveSameTrackModels(filteredTracks, tracksInView)) {
         const newGenomealignTracks = filteredTracks.filter(
@@ -5231,15 +5007,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       onRemoveTerm={onRemoveTerm}
                       tracks={trackManagerState.current.tracks}
                       onTracksChange={(updatedTracks) => {
-                        // Re-wrap as TrackModel instances in case MetadataSelectionMenu
-                        // spread them into plain objects (losing prototype methods).
                         const asTrackModels = updatedTracks.map((t: any) =>
                           t instanceof TrackModel ? t : new TrackModel(t),
                         );
                         trackManagerState.current.tracks = asTrackModels;
                         onTracksChange(asTrackModels);
                         addTermToMetaSets(asTrackModels);
-                        // Sync trackComponents so each track re-renders with updated metadata
+
                         setTrackComponents((prev) =>
                           prev.map((component) => ({
                             ...component,

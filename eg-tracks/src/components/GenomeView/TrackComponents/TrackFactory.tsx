@@ -21,7 +21,6 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
-import { fetchGenomicData } from "../../../getRemoteData/fetchFunctions";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -37,8 +36,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   viewWindowConfigChange,
   sentScreenshotData,
   newDrawData,
-  selfFetchTrigger,
-  selfFetchApi,
+
   trackManagerState,
   globalTrackState,
   isScreenShotOpen,
@@ -56,7 +54,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     try {
       const globalCfg = trackManagerState.current.globalConfig;
       if (globalCfg) {
-        // support either a ref-like shape (legacy) or plain object
         const entry = globalCfg.current
           ? globalCfg.current[`${id}`]
           : globalCfg[`${id}`];
@@ -64,9 +61,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           return entry.configOptions;
         }
       }
-    } catch (e) {
-      // fallthrough to defaults
-    }
+    } catch (e) {}
     return trackOptionMap[trackModel.type]
       ? {
           ...trackOptionMap[`${trackModel.type}`].defaultOptions,
@@ -150,12 +145,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
     // try {
     const res = getDisplayModeFunction(displayArgs);
-    // }
-    // catch (e) {
-    //   fetchError.current = "error when creating drawData";
-    //   displayArgs.errorInfo = fetchError.current;
-    //   res = getDisplayModeFunction(displayArgs);
-    // }
 
     if (cacheDataIdx === dataIdx) {
       signalTrackLoadComplete(id);
@@ -173,8 +162,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         result = res;
       }
 
-      // Wrap the track component with an ErrorBoundary so render errors
-      // inside the display components don't crash the whole app.
       try {
         result = (
           <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
@@ -471,13 +458,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   // MARK: [viewWindowConfigChange]
 
   useEffect(() => {
-    if (
-      viewWindowConfigChange &&
-      id in viewWindowConfigChange.trackToDrawId
-      // &&
-      // (trackModel.type in numericalTracks ||
-      //   getConfigOptions().displayMode === "density")
-    ) {
+    if (viewWindowConfigChange && id in viewWindowConfigChange.trackToDrawId) {
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
@@ -720,15 +701,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   : 40
           }
           color={trackModel.isSelected ? "black" : "var(--font-color)"}
-          // Control visibility - show when loading
           isVisible={
             trackModel.id in messageData ||
             !viewComponent ||
             (viewComponent && dataIdx !== viewComponent.dataIdx)
           }
           legendWidth={legendWidth}
-          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-          // xOffset={0}
         >
           <div>
             {trackModel.id in messageData
@@ -764,7 +742,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           xOffset={
             windowWidth / 2 + legendWidth - (15 * metaSets.terms.length - 1)
           }
-          // Control visibility - show when data is loaded and items are hidden, but not when loading
           isVisible={
             viewComponent &&
             viewComponent.numHidden &&
