@@ -6,7 +6,7 @@ import {
   createTransform,
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
-import undoable, { ActionCreators } from "redux-undo";
+import undoable from "redux-undo";
 import { isEqual, omit } from "lodash";
 
 import browserReducer from "./slices/browserSlice";
@@ -18,11 +18,16 @@ import settingsReducer from "./slices/settingsSlice";
 import searchReducer from "./slices/searchSlice";
 import undoRedoReducer from "./slices/undoRedoSlice";
 import {
-  clearAllSessions,
-  pruneOldestSessions,
+  BrowserSession,
   setCurrentSession,
   updateCurrentSession,
 } from "./slices/browserSlice";
+import {
+  clearStorageFull,
+  reportStorageFull,
+  storageRecheckFailed,
+} from "./slices/utilitySlice";
+import { getSerializedSize } from "@/lib/utils/storageManager";
 import tabPanelReducer from "./slices/tabPanelSlice";
 
 // Detect whether this is a fresh browser start (as opposed to a page refresh).
@@ -109,75 +114,38 @@ type StoreRef = {
   current: { getState: () => any; dispatch: (action: any) => any } | null;
 };
 
-const getSessionCount = (storeRef: StoreRef): number =>
-  storeRef.current?.getState()?.browser?.present?.sessions?.ids?.length ?? 0;
-
-// How many of the oldest sessions to delete, "all", "cancel" when the user
-// actively declined, or null when the question was already answered with an
-// explanatory alert (bad input, nothing prunable) and no further warning is due.
-type FreeSpaceChoice = number | "all" | "cancel" | null;
-
-const askHowMuchToFree = (sessionCount: number): FreeSpaceChoice => {
-  if (typeof window === "undefined" || typeof window.prompt !== "function") {
-    return null;
-  }
-
-  const answer = window.prompt(
-    `Storage is full — your latest changes could not be saved.\n\n` +
-      `You have ${sessionCount} saved session${sessionCount === 1 ? "" : "s"}.\n\n` +
-      `Enter how many of the OLDEST sessions to delete, ` +
-      `or type "all" to delete every session.\n` +
-      `Cancel keeps everything (your latest changes stay unsaved).`,
-    "1",
+// Total serialized size of every saved session. Recorded when a write fails so
+// the pruner has a fixed "this is what full looks like" baseline to trim back
+// to — see `pruneSessionsToTarget`.
+const getSessionBytes = (storeRef: StoreRef): number => {
+  const sessions = storeRef.current?.getState()?.browser?.present?.sessions;
+  const ids: string[] = sessions?.ids ?? [];
+  return ids.reduce(
+    (total, id) =>
+      total + getSerializedSize(sessions.entities?.[id] as BrowserSession),
+    0,
   );
+};
 
-  if (answer === null) return "cancel";
-
-  const trimmed = answer.trim().toLowerCase();
-  if (trimmed === "") return 1; // empty input = the prefilled default
-  if (trimmed === "all") return "all";
-
-  const count = Number.parseInt(trimmed, 10);
-  if (!Number.isFinite(count) || count <= 0) {
-    alert(`"${answer}" isn't a valid number of sessions. Nothing was deleted.`);
-    return null;
+// A write went through, so localStorage has room. That only matters when the
+// user has just deleted sessions and asked the banner to re-test itself — the
+// write that used to fail now succeeding is the real answer to "is it still
+// full?", far better than guessing from estimated sizes.
+const noteStorageWritable = (storeRef: StoreRef) => {
+  const utility = storeRef.current?.getState()?.utility;
+  if (utility?.storageFull && utility.awaitingStorageRecheck) {
+    storeRef.current!.dispatch(clearStorageFull());
   }
-
-  // The active session is never pruned, so at most sessionCount - 1 can go.
-  // When it's the only one left, a numeric answer would resolve to 0 and free
-  // nothing — the next write would fail and re-prompt forever. Say so and make
-  // the user pick "all" if they really want it gone.
-  const prunable = Math.max(sessionCount - 1, 0);
-  if (prunable === 0) {
-    alert(
-      "The only saved session is the one you're using right now, so there is " +
-        'nothing older to delete. Choose "all" if you want to delete it too.',
-    );
-    return null;
-  }
-  return Math.min(count, prunable);
 };
 
 // Custom storage wrapper with error handling for quota exceeded
 const createStorageWithErrorHandling = (storage: any, storeRef: StoreRef) => {
-  // `setItem` fires on every throttled persist tick (once a second while the
-  // user is active). Without this guard a full quota pops a fresh blocking
-  // dialog on each tick, stacking prompts faster than they can be dismissed.
-  let recoveryInProgress = false;
-
-  // Set when the user cancels the dialog. Re-prompting on every subsequent
-  // failed write would be unusable, so declining is treated as "stop asking and
-  // just make room" — from then on each time storage fills up (which in
-  // practice means each time a new session is added) the oldest session is
-  // dropped silently. Deliberately not reset on a successful write, so the
-  // choice sticks for the rest of the page's life; a reload asks again.
-  let autoPruneOldest = false;
-
   return {
     ...storage,
     setItem: async (key: string, value: string) => {
       try {
         await storage.setItem(key, value);
+        noteStorageWritable(storeRef);
         return;
       } catch (error: any) {
         if (!isQuotaExceededError(error)) throw error;
@@ -214,88 +182,42 @@ const createStorageWithErrorHandling = (storage: any, storeRef: StoreRef) => {
           }
           await storage.setItem(key, value);
           console.log("Successfully saved after removing the key");
+          noteStorageWritable(storeRef);
           return;
         } catch (retryError) {
           console.error("Failed to save after removing key:", retryError);
         }
 
-        // A prompt is already open on another tick, or there's nothing to
-        // delete — put the old blob back and let the write fail.
-        if (recoveryInProgress || !storeRef.current) {
-          await restorePrevious();
-          throw error;
+        // Put the last blob that did fit back, so a full quota costs the user
+        // only the newest unsaved change instead of every saved session.
+        await restorePrevious();
+
+        // Raise the banner and stop. Nothing is deleted here on purpose:
+        // `setItem` runs on every throttled persist tick (about once a second
+        // while the user is active), so pruning from here would delete sessions
+        // out from under whatever the user is doing, and a dialog would stack a
+        // fresh copy of itself every tick. The banner asks instead, and
+        // `pruneSessionsToTarget` runs only on the events where making room is
+        // safe: a new session, a session switch, or the user dismissing it.
+        //
+        // Only the first failure of a run is reported. The size recorded here
+        // is the baseline the pruner trims back to, and later ticks would keep
+        // moving it; it is armed again when the user dismisses the banner.
+        // Measuring is not cheap either, which is another reason not to redo it
+        // on every failing tick.
+        const utility = storeRef.current?.getState()?.utility;
+        if (storeRef.current) {
+          if (!utility?.storageFull) {
+            storeRef.current.dispatch(
+              reportStorageFull(getSessionBytes(storeRef)),
+            );
+          } else if (utility.awaitingStorageRecheck) {
+            // The user deleted sessions and we re-tested: still full.
+            storeRef.current.dispatch(storageRecheckFailed());
+          }
         }
 
-        recoveryInProgress = true;
-        try {
-          const sessionCount = getSessionCount(storeRef);
-
-          // The user already declined to choose, so make room without asking.
-          // Falls back to the dialog if only the active session is left, since
-          // there's nothing older to drop and "all" becomes the only option.
-          if (autoPruneOldest && sessionCount > 1) {
-            console.warn(
-              "Storage full — automatically deleting the oldest session.",
-            );
-            storeRef.current.dispatch(pruneOldestSessions(1));
-            storeRef.current.dispatch(ActionCreators.clearHistory());
-            await restorePrevious();
-            return;
-          }
-          autoPruneOldest = false;
-
-          if (sessionCount === 0) {
-            await restorePrevious();
-            alert(
-              "Storage is full and there are no saved sessions left to delete. " +
-                "Free up browser storage for this site to continue.",
-            );
-            throw error;
-          }
-
-          const choice = askHowMuchToFree(sessionCount);
-
-          if (choice === "cancel") {
-            autoPruneOldest = true;
-            await restorePrevious();
-            alert(
-              "Nothing was deleted, so there is still no room to save.\n\n" +
-                "From now on, whenever storage fills up — which happens each " +
-                "time you add a new session — your OLDEST session will be " +
-                "deleted automatically to make room, without asking again.\n\n" +
-                "To avoid that, delete sessions yourself from the session list. " +
-                "Reloading the page brings this prompt back.",
-            );
-            throw error;
-          }
-
-          if (choice === null) {
-            await restorePrevious();
-            throw error;
-          }
-
-          if (choice === "all") {
-            storeRef.current.dispatch(clearAllSessions());
-          } else {
-            storeRef.current.dispatch(pruneOldestSessions(choice));
-          }
-
-          // Undo history holds a full copy of every session per entry, so it is
-          // usually the bulk of the persisted blob. It also has to go for
-          // correctness: undoing past the prune would restore the very sessions
-          // just deleted and trip the quota again immediately.
-          storeRef.current.dispatch(ActionCreators.clearHistory());
-
-          // Those dispatches changed the store, so redux-persist has already
-          // scheduled a fresh write containing the pruned state. Writing `value`
-          // here would put the deleted sessions right back, so restore the old
-          // blob (it fit before) and let the scheduled write supersede it. If
-          // that write is still too big we land back here with a lower count.
-          await restorePrevious();
-          return;
-        } finally {
-          recoveryInProgress = false;
-        }
+        throw error;
       }
     },
   };

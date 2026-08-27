@@ -181,6 +181,41 @@ export const onRetrieveSession = async (retrieveId: string) => {
   }
 };
 
+function SectionCard({
+  accent,
+  title,
+  description,
+  children,
+}: {
+  /** Colour of the rule that marks the section. */
+  accent: "load" | "save";
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-background/40 p-3">
+      <div className="flex items-stretch gap-2.5 mb-3">
+        <span
+          aria-hidden="true"
+          className={`w-1 shrink-0 rounded-full ${
+            accent === "load" ? "bg-sky-500" : "bg-emerald-500"
+          }`}
+        />
+        <div className="min-w-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-primary dark:text-dark-primary">
+            {title}
+          </h2>
+          <p className="text-xs text-primary/70 dark:text-dark-primary/70">
+            {description}
+          </p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
 const TabSessionUI: React.FC<SessionUIProps> = ({
   onRestoreSession,
   onRetrieveBundle,
@@ -786,8 +821,13 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
       </AnimatePresence>
       <div className={classes.inputContainer}>
         {!withGenomePicker && (
-          <>
-            <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="flex flex-col gap-3">
+            <SectionCard
+              accent="load"
+              title="Load a session"
+              description="Retrieve a saved bundle by its ID, or upload a session file."
+            >
+              <div className="flex flex-wrap items-center gap-2">
               <input
                 type="text"
                 className="w-70 h-7 px-2 outline outline-gray-300 dark:outline-gray-600 rounded-md bg-secondary dark:bg-dark-secondary dark:text-dark-primary text-primary text-sm truncate"
@@ -817,11 +857,14 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 containerClassName=""
                 className="!h-8 px-3 border border-gray-300 rounded-lg text-sm whitespace-nowrap w-auto"
               />
-            </div>
-            <div
-              className="w-full dark:bg-white bg-black"
-              style={{ height: "1px" }}
-            />
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              accent="save"
+              title="Save this session"
+              description="Store the current view remotely and get a bundle ID you can share."
+            >
             <AnimatePresence initial={false}>
               {showFullUI ? (
                 <motion.div
@@ -1207,7 +1250,8 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                 </motion.div>
               )}
             </AnimatePresence>
-          </>
+            </SectionCard>
+          </div>
         )}
 
         <div className={classes.disclaimer}>

@@ -104,24 +104,10 @@ export const browserSlice = createSlice({
         height: height,
       };
 
-      const MAX_SESSIONS = 50;
-      // Evict oldest-first until there's room for the new session. `ids` is kept
-      // sorted by `createdAt` ascending by the adapter's sortComparer. This used
-      // to drop exactly one session, so a persisted state that was already over
-      // the cap (e.g. from an older build with a higher limit) never shrank back
-      // down. The active session is skipped so a full cache can't delete the
-      // session the user is currently looking at.
-      const overflow = state.sessions.ids.length - MAX_SESSIONS + 1;
-      if (overflow > 0) {
-        const evictable = (state.sessions.ids as uuid[]).filter(
-          (id) => id !== state.currentSession,
-        );
-        browserSessionAdapter.removeMany(
-          state.sessions,
-          evictable.slice(0, overflow),
-        );
-      }
-
+      // Sessions are uncapped. The old fixed limit of 50 evicted the oldest
+      // session on every create once you hit it, whether or not storage was
+      // anywhere near full; what actually matters is bytes, and that is watched
+      // directly — see `checkStorageHeadroom` and `pruneSessionsToTarget`.
       browserSessionAdapter.addOne(state.sessions, nextSession);
       state.currentSession = nextSession.id;
     },
@@ -204,6 +190,13 @@ export const browserSlice = createSlice({
     deleteSession: (state, action: PayloadAction<uuid>) => {
       browserSessionAdapter.removeOne(state.sessions, action.payload);
     },
+    // Delete an explicit set of sessions in one go, for the session list's
+    // multi-select mode. The active session is skipped: deleting the session
+    // being viewed would kick the user back to the genome picker mid-work.
+    deleteSessions: (state, action: PayloadAction<uuid[]>) => {
+      const ids = action.payload.filter((id) => id !== state.currentSession);
+      browserSessionAdapter.removeMany(state.sessions, ids);
+    },
     setCurrentSession: (state, action: PayloadAction<uuid | null>) => {
       state.currentSession = action.payload;
       if (action.payload) {
@@ -241,6 +234,7 @@ export const {
   createSession,
   upsertSession,
   deleteSession,
+  deleteSessions,
   setCurrentSession,
   updateCurrentSession,
   updateSession,

@@ -29,6 +29,11 @@ export const navigationSlice = createSlice({
     genomePickerTab: "picker" as "picker" | "add" | "import",
     openNewCollectionForm: false,
     focusCollection: null as string | null,
+    // Multi-select mode in SessionList (the Apple-style "Edit" / "Done"
+    // toggle). Lives here rather than in SessionList's own state so the
+    // storage-full banner can drop the user straight into it.
+    sessionEditMode: false,
+    sessionListTab: "edit" as "edit" | "switch",
   },
   reducers: {
     setNavigationPath: (state, action: PayloadAction<NavigationPath>) => {
@@ -70,6 +75,12 @@ export const navigationSlice = createSlice({
     setFocusCollection: (state, action: PayloadAction<string | null>) => {
       state.focusCollection = action.payload;
     },
+    setSessionEditMode: (state, action: PayloadAction<boolean>) => {
+      state.sessionEditMode = action.payload;
+    },
+    setSessionListTab: (state, action: PayloadAction<"edit" | "switch">) => {
+      state.sessionListTab = action.payload;
+    },
   },
 });
 
@@ -84,6 +95,8 @@ export const {
   setGenomePickerTab,
   setOpenNewCollectionForm,
   setFocusCollection,
+  setSessionEditMode,
+  setSessionListTab,
 } = navigationSlice.actions;
 
 export const selectNavigationPath = (state: RootState) => state.navigation.path;
@@ -102,5 +115,9 @@ export const selectOpenNewCollectionForm = (state: RootState) =>
   state.navigation.openNewCollectionForm;
 export const selectFocusCollection = (state: RootState) =>
   state.navigation.focusCollection;
+export const selectSessionEditMode = (state: RootState) =>
+  state.navigation.sessionEditMode;
+export const selectSessionListTab = (state: RootState) =>
+  state.navigation.sessionListTab;
 
 export default navigationSlice.reducer;
