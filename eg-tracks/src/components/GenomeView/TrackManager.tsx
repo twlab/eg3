@@ -120,6 +120,10 @@ function sumArray(numbers: Array<any>) {
 }
 const MIN_VIEW_REGION_SIZE = 5;
 
+// Sub-pixel scrollLeft differences come from the browser snapping the scroll
+// offset, not from the user panning, so anything under this is not a real move.
+const DRAG_EPSILON_PX = 0.5;
+
 export function objToInstanceAlign(alignment: { [key: string]: any }) {
   if (!alignment) {
     return;
@@ -696,8 +700,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     ignoreScrollRef.current = true;
-    root.scrollLeft = scrollAnchorPx();
+    const anchor = scrollAnchorPx();
+    root.scrollLeft = anchor;
+    // The browser snaps scrollLeft, so what lands is not exactly the anchor.
+    // Fold that residual into dragXBase the way recenterBand does, otherwise
+    // getDragX() reports a phantom offset before anything has been dragged.
+    dragXBase.current += root.scrollLeft - anchor;
     lastScrollLeft.current = root.scrollLeft;
+    lastProcSlRef.current = root.scrollLeft;
     applyScrollTransforms();
     releaseScrollGuard();
   }
@@ -724,10 +734,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     const curDragXVal =
       overrideDragX !== undefined ? overrideDragX : getDragX();
-    const shouldCommit = commitRegion && lastDragX.current !== curDragXVal;
+    const shouldCommit =
+      commitRegion &&
+      Math.abs(curDragXVal - lastDragX.current) > DRAG_EPSILON_PX;
     if (shouldCommit) {
       lastDragX.current = curDragXVal;
     }
+
     let curBp;
     let curBpInterval;
     if (
@@ -858,7 +871,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     scrollFastRef.current = false;
-    syncScrollState(true);
+    // A settle can be queued more than once for the same resting position: the
+    // pointer release settles immediately, and a scroll rAF still in flight
+    // from the tail of a fast drag schedules another one behind it. Only the
+    // first of those has anything to commit.
+    if (Math.abs(getDragX() - lastDragX.current) > DRAG_EPSILON_PX) {
+      syncScrollState(true);
+    }
     if (pendingFetchIdx.current !== null) {
       pendingFetchIdx.current = null;
       if (
@@ -875,7 +894,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       Math.abs(rootNow.scrollLeft - scrollAnchorPx()) >
         2 * windowWidthRef.current
     ) {
-      recenterBand();
+      // The sync above already ran at this position and re-anchoring leaves the
+      // effective dragX untouched, so recentering has nothing new to publish.
+      recenterBand(false);
     }
   }
 
@@ -1224,7 +1245,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (scrollPanEnabled) {
       if (
         scrollIdleTimer.current !== null ||
-        getDragX() !== lastDragX.current
+        Math.abs(getDragX() - lastDragX.current) > DRAG_EPSILON_PX
       ) {
         if (areAllWorkersIdle()) {
           settlePan();
@@ -2787,11 +2808,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       }
     }
-    console.log(
-      dataIdx.current,
-      trackManagerState.current.caches,
-      "caches after queueRegionToFetch",
-    );
   }
   // create a useRef object, that keep track of the current dataidx most current view
   // if data Idx from new fetch is diff then, go back to empty object.
@@ -3080,15 +3096,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     toolTitle: number | string = "isJump",
     highlightSearch: boolean = false,
   ) {
-    // console.log(startbase, endbase, "SELECT REGION");
-    // const genomeFeatureSegment: Array<FeatureSegment> =
-    //   genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
-
-    // const newCoordinate = currentRegionAsString(
-    //   genomeFeatureSegment,
-    // ) as GenomeCoordinate;
-    // console.log(newCoordinate, "SELECT");
-
     const newLength = endbase - startbase;
 
     if (newLength < MIN_VIEW_REGION_SIZE) {
@@ -3414,8 +3421,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     if (scrollPanEnabled && scrollRootRef.current) {
       ignoreScrollRef.current = true;
-      scrollRootRef.current.scrollLeft =
-        scrollRunwayWindows * windowWidthRef.current;
+      const resetAnchor = scrollRunwayWindows * windowWidthRef.current;
+      scrollRootRef.current.scrollLeft = resetAnchor;
+      dragXBase.current += scrollRootRef.current.scrollLeft - resetAnchor;
       lastScrollLeft.current = scrollRootRef.current.scrollLeft;
       requestAnimationFrame(() => {
         ignoreScrollRef.current = false;
@@ -3941,11 +3949,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     });
 
+    // Pointer events cover mouse, pen and touch, and the drag can only start
+    // from onPointerDown, so the mouse compatibility events would only ever
+    // re-run these handlers with a different pageX resolution.
     document.addEventListener("pointermove", handleMove);
     document.addEventListener("pointerup", handleMouseUp);
-
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleMouseUp);
     return () => {
       document.removeEventListener("pointermove", handleMove);
       document.removeEventListener("pointerup", handleMouseUp);
@@ -4638,12 +4646,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           });
         });
-
-        document.addEventListener("pointermove", handleMove);
-        document.addEventListener("pointerup", handleMouseUp);
-
-        document.addEventListener("mousemove", handleMove);
-        document.addEventListener("mouseup", handleMouseUp);
       }
     }
   }, [windowWidthRef.current]);
