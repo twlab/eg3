@@ -48,7 +48,6 @@ import { arraysHaveSameTrackModels } from "../../util";
 import { generateUUID } from "../../util";
 
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
-import { motion } from "framer-motion";
 import MetadataSelectionMenu from "./ToolComponents/MetadataSelectionMenu";
 import { ChevronRightIcon } from "@primer/octicons-react";
 import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
@@ -4989,12 +4988,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     title="Metadata options"
                   >
                     <span className="text-xs">Metadata</span>
-                    <motion.div
-                      animate={{ rotate: isShowingEditMenu ? 90 : 0 }}
-                      transition={{ duration: 0.2 }}
+                    <div
+                      style={{
+                        display: "flex",
+                        transform: isShowingEditMenu
+                          ? "rotate(90deg)"
+                          : "rotate(0deg)",
+                        transition: "transform 0.2s",
+                      }}
                     >
                       <ChevronRightIcon />
-                    </motion.div>
+                    </div>
                   </button>
                   <div>
                     <MetadataSelectionMenu
