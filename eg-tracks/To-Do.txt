@@ -1,3 +1,16 @@
+
+8/25/2026
+fixed some big bugs 
+1. initial load data failed a trackDataIdx check in createCache, so it uses dataIdx.current which when fetches are queued, it gets cached incorrectly
+2. group track draw, instead of waiting for all group track to finish fetch and then draw, it would draw the completed, and then draw again when anther of the same group arrives  
+3. isMemoryOver might delete cached data that are needed for draw when panning fast 
+4. new panning using browser scroll, where it would trigger, new fetch and new draw when in same dataIdx to occur every time the user left click drag pans instead of when the user letting go 
+    and when pannining and view change instead of when the panning stops. 
+5. Use already created xvalues and placeFeature instead of recomputing it if it exist. before we had to recal everything because config change need to recal it, but now added a check sent to 
+    aggViewWindowData
+NEW TO DO: 
+queue system to stop fetch somehow when panning to new regions and current region is unneeded.
+
 6/24/2026
 package version footer hidden 
 update https://epgg.github.io/ docunmentation

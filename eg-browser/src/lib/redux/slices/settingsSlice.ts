@@ -2,6 +2,8 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../createStore";
 
 export type SessionSortPreference = "createdAt" | "updatedAt";
+/** Newest first ("desc") or oldest first ("asc"). */
+export type SessionSortDirection = "desc" | "asc";
 
 export type CookieConsentStatus = "pending" | "granted" | "denied";
 
@@ -22,6 +24,7 @@ export const settingsSlice = createSlice({
     isToolBarVisible: true,
     trackLegendWidth: 120,
     sessionSortPreference: "createdAt" as SessionSortPreference,
+    sessionSortDirection: "desc" as SessionSortDirection,
     cookieConsentStatus: "pending" as CookieConsentStatus,
     darkTheme: false,
     customCollections: {} as CustomCollections,
@@ -46,6 +49,12 @@ export const settingsSlice = createSlice({
       action: PayloadAction<SessionSortPreference>,
     ) => {
       state.sessionSortPreference = action.payload;
+    },
+    setSessionSortDirection: (
+      state,
+      action: PayloadAction<SessionSortDirection>,
+    ) => {
+      state.sessionSortDirection = action.payload;
     },
     setCookieConsentStatus: (
       state,
@@ -159,6 +168,7 @@ export const {
   setToolBarVisibility,
   setTrackLegendWidth,
   setSessionSortPreference,
+  setSessionSortDirection,
   setCookieConsentStatus,
   setDarkTheme,
   addCustomCollection,
@@ -181,6 +191,8 @@ export const selectTrackLegendWidth = (state: RootState) =>
   state.settings.trackLegendWidth;
 export const selectSessionSortPreference = (state: RootState) =>
   state.settings.sessionSortPreference;
+export const selectSessionSortDirection = (state: RootState) =>
+  state.settings.sessionSortDirection;
 export const selectCookieConsentStatus = (state: RootState) =>
   state.settings.cookieConsentStatus;
 export const selectDarkTheme = (state: RootState) => state.settings.darkTheme;

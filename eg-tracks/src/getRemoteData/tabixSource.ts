@@ -81,16 +81,8 @@ class TabixSource {
     }
     try {
       const naming = await this.runWithFallback(async (tabix) => {
-        const timeout = new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Timeout fetching tabix index")),
-            10000,
-          ),
-        );
-        const names = await Promise.race([
-          tabix.getReferenceSequenceNames(),
-          timeout,
-        ]);
+        const names = await tabix.getReferenceSequenceNames();
+
         const firstChrom = names[0];
         if (!firstChrom) {
           return false;

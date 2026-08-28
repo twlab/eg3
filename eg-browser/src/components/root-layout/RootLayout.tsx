@@ -10,6 +10,9 @@ import TabView from "../ui/tab-view/TabView";
 import AddCustomGenome from "../genome-hub/AddCustomGenome";
 import ImportSession from "../sessions/ImportSession";
 import SessionList from "../sessions/SessionList";
+import StorageBanner from "../sessions/StorageBanner";
+import SessionEditToggle from "../sessions/SessionEditToggle";
+import ClosePanelButton from "../sessions/ClosePanelButton";
 
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
@@ -43,12 +46,18 @@ import {
   setNavSearchOpen,
   selectGenomePickerTab,
   setGenomePickerTab,
+  setSessionEditMode,
 } from "@/lib/redux/slices/navigationSlice";
 import {
   setToggleTool,
   escapeTools,
   resetUtility,
+  selectStorageFull,
 } from "@/lib/redux/slices/utilitySlice";
+import {
+  checkStorageHeadroom,
+  pruneSessionsToTarget,
+} from "@/lib/redux/thunk/storage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -169,6 +178,36 @@ export default function RootLayout(props: AppProps) {
     dispatch(resetUtility());
     clearHistory();
   }, [sessionId]);
+
+  // Making room when localStorage is full happens here, not in the persist
+  // layer: writes fail on a timer, so pruning from there would delete sessions
+  // at an arbitrary moment mid-edit. These are the only two moments where it is
+  // safe and expected — a session was just added, or the user switched to a
+  // different one. (Dismissing the banner is the third, and it prunes itself.)
+  const storageFull = useAppSelector(selectStorageFull);
+  const sessionCount = sessions.length;
+  const lastPruneTrigger = useRef({ count: sessionCount, id: sessionId });
+  useEffect(() => {
+    const previous = lastPruneTrigger.current;
+    const sessionAdded = sessionCount > previous.count;
+    const sessionSwitched = sessionId !== previous.id;
+    lastPruneTrigger.current = { count: sessionCount, id: sessionId };
+    if (storageFull && (sessionAdded || sessionSwitched)) {
+      dispatch(pruneSessionsToTarget());
+    }
+
+    // Re-measure the headroom on the same beats, plus on mount. This both
+    // raises the early warning when sessions pile up and takes it back down
+    // once the user has deleted enough to be comfortable again.
+    dispatch(checkStorageHeadroom());
+  }, [storageFull, sessionCount, sessionId, dispatch]);
+
+  // The banner's only action: show the session list already in multi-select
+  // mode, so the user can pick what to delete instead of letting the oldest go.
+  const handleOpenSessionsForEditing = () => {
+    setLeftPanelOpen(true);
+    dispatch(setSessionEditMode(true));
+  };
   const showNavBar = isPackageMode ? isNavBarVisible : true;
 
   useEffect(() => {
@@ -420,6 +459,11 @@ export default function RootLayout(props: AppProps) {
                 />
               </div>
             )}
+            <StorageBanner
+              top={navBarHeight + 12}
+              onOpenSessions={handleOpenSessionsForEditing}
+            />
+
             <AnimatePresence>
               {leftPanelOpen ? (
                 <motion.div
@@ -435,6 +479,12 @@ export default function RootLayout(props: AppProps) {
                     initialHeight={window.innerHeight - 50}
                     onClose={() => setLeftPanelOpen(false)}
                     header={false}
+                    leading={<SessionEditToggle />}
+                    actions={
+                      <ClosePanelButton
+                        onClick={() => setLeftPanelOpen(false)}
+                      />
+                    }
                   >
                     <SessionList
                       onSessionClick={(s) => {
@@ -442,7 +492,6 @@ export default function RootLayout(props: AppProps) {
                         setLeftPanelOpen(false);
                       }}
                       showImportSessionButton
-                      onRequestClose={() => setLeftPanelOpen(false)}
                     />
                   </ResizablePanel>
                 </motion.div>
