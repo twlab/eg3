@@ -18,20 +18,30 @@ export default function AnnotationTracks() {
   const session = useAppSelector(selectCurrentSession);
   const genomeConfig = useCurrentGenome();
   const [expandedGenomes, setExpandedGenomes] = useState<Set<string>>(
-    new Set([genomeConfig?.name].filter(Boolean) as string[])
+    new Set([genomeConfig?.name].filter(Boolean) as string[]),
   );
 
   const selectedIds = useMemo(() => {
-    return new Set(session?.tracks.map((track) => {
-      let trackId
-      if (track.type === "genomealign") {
-
-        trackId = track.url;
-      } else {
-        trackId = track.name
-      }
-      return trackId
-    }));
+    return new Set(
+      session?.tracks?.map((track) => {
+        let trackId;
+        if (track.type === "genomealign") {
+          trackId = track.url;
+        } else {
+          const secondaryId = track?.metadata?.genome
+            ? track?.metadata?.genome
+            : track?.querygenome
+              ? track?.querygenome
+              : track?.genome
+                ? track?.genome
+                : genomeConfig?.name
+                  ? genomeConfig.name
+                  : "";
+          trackId = track.name + secondaryId;
+        }
+        return trackId;
+      }),
+    );
   }, [session?.tracks]);
 
   const combinedGenomeData = useMemo(() => {
@@ -62,10 +72,13 @@ export default function AnnotationTracks() {
             trackList = Array.isArray(value) ? value : [value];
           }
 
+          const genomeName = genomeConfig.name ?? "none";
           return trackList.map((track) => ({
             section,
-            genomeName: genomeConfig.name ?? "none",
-            id: track.name || track.url,
+            genomeName,
+            // composite id (name + genome) so it matches the selectedIds key,
+            // which disambiguates the same track name across genomes
+            id: (track.name || track.url) + genomeName,
             title: track.label ?? track.name,
             data: track,
           }));
@@ -77,9 +90,9 @@ export default function AnnotationTracks() {
     if (session?.tracks && genomeConfig) {
       for (let i = 0; i < session.tracks.length; i++) {
         const track = session.tracks[i];
-        const queryGenome = track["querygenome"]
+        const queryGenome = track?.querygenome
           ? track.querygenome
-          : track.metadata?.genome
+          : track?.metadata?.genome
             ? track.metadata.genome
             : null;
         if (
@@ -109,20 +122,24 @@ export default function AnnotationTracks() {
                   value !== null
                 ) {
                   trackList = Object.values(
-                    value as Record<string, unknown>
+                    value as Record<string, unknown>,
                   ).flat();
                 } else {
                   trackList = Array.isArray(value) ? value : [value];
                 }
 
+                const genomeName =
+                  queryGenomeConfig?.genome.getName() ?? "none";
                 return trackList.map((track) => ({
                   section,
-                  genomeName: queryGenomeConfig?.genome.getName() ?? "none",
-                  id: track.name || track.url,
+                  genomeName,
+                  // composite id (name + genome) so it matches the selectedIds key,
+                  // which disambiguates the same track name across genomes
+                  id: (track.name || track.url) + genomeName,
                   title: track.label ?? track.name,
                   data: track,
                 }));
-              }
+              },
             ),
           });
         }
@@ -143,7 +160,7 @@ export default function AnnotationTracks() {
     dispatch(
       updateCurrentSession({
         tracks: [...session!.tracks, track],
-      })
+      }),
     );
   };
 
@@ -160,7 +177,7 @@ export default function AnnotationTracks() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {combinedGenomeData.map((genomeData) => {
         const isExpanded = expandedGenomes.has(genomeData.genomeName);
         const isPrimary = genomeData.genomeName === genomeConfig?.name;
@@ -176,8 +193,9 @@ export default function AnnotationTracks() {
             >
               <div className="flex items-center gap-2">
                 <ChevronDownIcon
-                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'
-                    }`}
+                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+                    isExpanded ? "rotate-0" : "-rotate-90"
+                  }`}
                 />
                 <span className="font-medium text-gray-900 dark:text-gray-100">
                   {genomeData.genomeName}
@@ -189,12 +207,14 @@ export default function AnnotationTracks() {
                 )}
               </div>
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {genomeData.tracks.length} track{genomeData.tracks.length !== 1 ? 's' : ''}
+                {genomeData.tracks.length} track
+                {genomeData.tracks.length !== 1 ? "s" : ""}
               </span>
             </button>
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-                }`}
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+              }`}
             >
               <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-background text-primary dark:text-dark-primary">
                 <CollectionView

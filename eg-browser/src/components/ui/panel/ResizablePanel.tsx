@@ -31,6 +31,10 @@ interface ResizablePanelProps {
   children?: React.ReactNode;
   navigationPath: Array<any>;
   header?: boolean;
+  /** Controls rendered at the far left of the drag bar, before the title. */
+  leading?: React.ReactNode;
+  /** Controls rendered at the right of the drag bar, before the close button. */
+  actions?: React.ReactNode;
   excludeRefs?: React.RefObject<HTMLElement | null>[];
 }
 
@@ -47,6 +51,8 @@ export default function ResizablePanel(props: ResizablePanelProps) {
     navigationPath,
     children,
     header,
+    leading,
+    actions,
     excludeRefs,
   } = props;
 
@@ -641,6 +647,16 @@ export default function ResizablePanel(props: ResizablePanelProps) {
           }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {leading ? (
+            // The bar is a drag handle, so keep pointer-downs on the controls
+            // from starting a drag.
+            <div
+              className="flex items-center gap-2"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {leading}
+            </div>
+          ) : null}
           {navigationPath.length > 0 ? (
             <button
               onClick={(e) => {
@@ -673,31 +689,45 @@ export default function ResizablePanel(props: ResizablePanelProps) {
             </strong>
           </div>
         </div>
-        {header ? (
-          <div className="flex items-center gap-1">
-            <span className="text-sm text-gray-700 dark:text-dark-primary">
-              <kbd
-                className="px-1 font-mono"
-                style={{
-                  backgroundColor: "var(--foreground)",
-                  color: "var(--background)",
-                  opacity: 0.7,
-                }}
+        {header || actions ? (
+          <div className="flex items-center gap-2">
+            {actions ? (
+              // The bar is a drag handle, so keep pointer-downs on the controls
+              // from starting a drag.
+              <div
+                className="flex items-center gap-2"
+                onPointerDown={(e) => e.stopPropagation()}
               >
-                Esc
-              </kbd>{" "}
-              to close
-            </span>
+                {actions}
+              </div>
+            ) : null}
+            {header ? (
+              <>
+                <span className="text-sm text-gray-700 dark:text-dark-primary">
+                  <kbd
+                    className="px-1 font-mono"
+                    style={{
+                      backgroundColor: "var(--foreground)",
+                      color: "var(--background)",
+                      opacity: 0.7,
+                    }}
+                  >
+                    Esc
+                  </kbd>{" "}
+                  to close
+                </span>
 
-            <button
-              onClick={onClose}
-              onPointerDown={(e) => e.stopPropagation()}
-              aria-label="Close"
-              title="Close"
-              className="rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
-            >
-              <XMarkIcon className="w-5 h-5" />
-            </button>
+                <button
+                  onClick={onClose}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  aria-label="Close"
+                  title="Close"
+                  className="rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-700 transition-colors duration-150"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </>
+            ) : null}
           </div>
         ) : (
           <div

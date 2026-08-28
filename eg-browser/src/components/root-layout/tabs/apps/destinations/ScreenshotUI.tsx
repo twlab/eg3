@@ -10,12 +10,12 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ClipLoader } from "react-spinners";
-
 import {
   trackOptionMap,
   getDisplayModeFunction,
   LinearDrawingModel,
 } from "wuepgg3-track";
+
 interface Highlight {
   start: number;
   end: number;
@@ -629,7 +629,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
-    console.log(props.legendWidth);
+
     const trackSvgElements = tracks
       .filter(
         (track) =>

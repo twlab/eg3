@@ -13,6 +13,7 @@ export default function TabView<T extends string>({
   onTabChange,
   className,
   centerTabs,
+  trailing,
 }: {
   tabs: ITabViewItem<T>[];
   initialTab?: T;
@@ -20,6 +21,8 @@ export default function TabView<T extends string>({
   onTabChange?: (value: T) => void;
   className?: string;
   centerTabs?: boolean;
+  /** Rendered at the right end of the tab strip, level with the tabs. */
+  trailing?: React.ReactNode;
 }) {
   const [internalTabId, setInternalTabId] = useState<T>(
     initialTab ?? tabs[0].value,
@@ -60,6 +63,9 @@ export default function TabView<T extends string>({
             </button>
           );
         })}
+        {trailing ? (
+          <div className="ml-auto flex items-center pl-2 pb-1">{trailing}</div>
+        ) : null}
       </div>
 
       <div className="flex-1 min-h-0">

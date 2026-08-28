@@ -126,10 +126,10 @@ export default function CollectionView<T>({
   );
 
   const renderGroup = (group: IGroupedData<T>) => (
-    <div key={group.name} className="mb-4 relative">
+    <div key={group.name} className="mb-2 relative">
       {group.name && (
         <h2
-          className="text-base font-medium mb-1 sticky z-10 pb-1 bg-white dark:bg-dark-background"
+          className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1 sticky z-10 pb-1 bg-white dark:bg-dark-background"
           style={{ top: `${searchBarGeometry.height}px` }}
         >
           {group.name}

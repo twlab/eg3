@@ -18,9 +18,16 @@ import settingsReducer from "./slices/settingsSlice";
 import searchReducer from "./slices/searchSlice";
 import undoRedoReducer from "./slices/undoRedoSlice";
 import {
+  BrowserSession,
   setCurrentSession,
   updateCurrentSession,
 } from "./slices/browserSlice";
+import {
+  clearStorageFull,
+  reportStorageFull,
+  storageRecheckFailed,
+} from "./slices/utilitySlice";
+import { getSerializedSize } from "@/lib/utils/storageManager";
 import tabPanelReducer from "./slices/tabPanelSlice";
 
 // Detect whether this is a fresh browser start (as opposed to a page refresh).
@@ -82,77 +89,135 @@ const migrations = {
   },
 };
 
+// Browsers disagree on how they report a full localStorage: Chrome throws a
+// `QuotaExceededError`, Firefox `NS_ERROR_DOM_QUOTA_REACHED`, older WebKit
+// `QUOTA_EXCEEDED_ERR`, and the legacy numeric codes still show up. Matching
+// only on Chrome's name meant every other browser rethrew and the recovery
+// below never ran at all.
+const isQuotaExceededError = (error: any): boolean => {
+  if (!error) return false;
+  return (
+    error.name === "QuotaExceededError" ||
+    error.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+    error.name === "QUOTA_EXCEEDED_ERR" ||
+    error.code === 22 ||
+    error.code === 1014
+  );
+};
+
+// The storage engine is built before the store exists (it's part of the persist
+// config), so the store is handed back through this ref afterwards. Recovery
+// needs it to count sessions and to actually delete them from Redux — deleting
+// them only from the serialized blob would leave them in memory and the very
+// next write would put them straight back.
+type StoreRef = {
+  current: { getState: () => any; dispatch: (action: any) => any } | null;
+};
+
+// Total serialized size of every saved session. Recorded when a write fails so
+// the pruner has a fixed "this is what full looks like" baseline to trim back
+// to — see `pruneSessionsToTarget`.
+const getSessionBytes = (storeRef: StoreRef): number => {
+  const sessions = storeRef.current?.getState()?.browser?.present?.sessions;
+  const ids: string[] = sessions?.ids ?? [];
+  return ids.reduce(
+    (total, id) =>
+      total + getSerializedSize(sessions.entities?.[id] as BrowserSession),
+    0,
+  );
+};
+
+// A write went through, so localStorage has room. That only matters when the
+// user has just deleted sessions and asked the banner to re-test itself — the
+// write that used to fail now succeeding is the real answer to "is it still
+// full?", far better than guessing from estimated sizes.
+const noteStorageWritable = (storeRef: StoreRef) => {
+  const utility = storeRef.current?.getState()?.utility;
+  if (utility?.storageFull && utility.awaitingStorageRecheck) {
+    storeRef.current!.dispatch(clearStorageFull());
+  }
+};
+
 // Custom storage wrapper with error handling for quota exceeded
-const createStorageWithErrorHandling = (storage: any) => {
+const createStorageWithErrorHandling = (storage: any, storeRef: StoreRef) => {
   return {
     ...storage,
     setItem: async (key: string, value: string) => {
       try {
         await storage.setItem(key, value);
+        noteStorageWritable(storeRef);
+        return;
       } catch (error: any) {
-        if (error?.name === "QuotaExceededError") {
-          console.error("Storage quota exceeded. Attempting to free space...");
+        if (!isQuotaExceededError(error)) throw error;
 
-          // First try to remove the offending key and retry
-          try {
-            if (typeof storage.removeItem === "function") {
-              await storage.removeItem(key);
-            } else if (typeof window !== "undefined" && window.localStorage) {
-              window.localStorage.removeItem(key);
-            }
+        console.error("Storage quota exceeded. Attempting to free space...");
 
-            await storage.setItem(key, value);
-            console.log("Successfully saved after removing the key");
-            return;
-          } catch (retryError) {
-            console.error("Failed to save after removing key:", retryError);
-
-            // Ask the user whether to clear all stored sessions (confirm shows OK/Cancel)
-            const userConfirmed =
-              typeof window !== "undefined" &&
-              typeof window.confirm === "function"
-                ? window.confirm(
-                    "Storage is full. Clear all stored sessions to free space? Press OK to clear.",
-                  )
-                : false;
-
-            if (userConfirmed) {
-              try {
-                if (typeof storage.clear === "function") {
-                  await storage.clear();
-                } else if (
-                  typeof window !== "undefined" &&
-                  window.localStorage
-                ) {
-                  window.localStorage.clear();
-                }
-
-                // Try saving again after clearing
-                await storage.setItem(key, value);
-                alert("Storage cleared and data saved successfully.");
-                console.log("Saved after user-cleared storage");
-                return;
-              } catch (finalError) {
-                console.error(
-                  "Failed to save after clearing storage:",
-                  finalError,
-                );
-                alert(
-                  "Failed to clear storage and save. Please manually delete some old sessions.",
-                );
-                throw finalError;
-              }
-            } else {
-              // User declined to clear storage
-              alert(
-                "Storage is full. Please delete some old sessions to continue.",
-              );
-              throw retryError;
-            }
-          }
-        } else {
-          throw error;
+        // Snapshot the last good blob first. The retry below removes the key,
+        // and if everything after that fails we'd otherwise have thrown away
+        // every persisted session on top of failing to save the new one.
+        let previousValue: string | null = null;
+        try {
+          previousValue = await storage.getItem(key);
+        } catch {
+          previousValue = null;
         }
+
+        const restorePrevious = async () => {
+          if (previousValue === null) return;
+          try {
+            await storage.setItem(key, previousValue);
+          } catch (restoreError) {
+            console.error(
+              "Failed to restore the previous persisted state:",
+              restoreError,
+            );
+          }
+        };
+
+        // Cheapest fix first: some browsers only reclaim the old value once the
+        // key is removed, so remove-then-write can succeed on its own.
+        try {
+          if (typeof storage.removeItem === "function") {
+            await storage.removeItem(key);
+          }
+          await storage.setItem(key, value);
+          console.log("Successfully saved after removing the key");
+          noteStorageWritable(storeRef);
+          return;
+        } catch (retryError) {
+          console.error("Failed to save after removing key:", retryError);
+        }
+
+        // Put the last blob that did fit back, so a full quota costs the user
+        // only the newest unsaved change instead of every saved session.
+        await restorePrevious();
+
+        // Raise the banner and stop. Nothing is deleted here on purpose:
+        // `setItem` runs on every throttled persist tick (about once a second
+        // while the user is active), so pruning from here would delete sessions
+        // out from under whatever the user is doing, and a dialog would stack a
+        // fresh copy of itself every tick. The banner asks instead, and
+        // `pruneSessionsToTarget` runs only on the events where making room is
+        // safe: a new session, a session switch, or the user dismissing it.
+        //
+        // Only the first failure of a run is reported. The size recorded here
+        // is the baseline the pruner trims back to, and later ticks would keep
+        // moving it; it is armed again when the user dismisses the banner.
+        // Measuring is not cheap either, which is another reason not to redo it
+        // on every failing tick.
+        const utility = storeRef.current?.getState()?.utility;
+        if (storeRef.current) {
+          if (!utility?.storageFull) {
+            storeRef.current.dispatch(
+              reportStorageFull(getSessionBytes(storeRef)),
+            );
+          } else if (utility.awaitingStorageRecheck) {
+            // The user deleted sessions and we re-tested: still full.
+            storeRef.current.dispatch(storageRecheckFailed());
+          }
+        }
+
+        throw error;
       }
     },
   };
@@ -291,10 +356,14 @@ export function createAppStore(config: StoreConfig = {}) {
     return { store, persistor: null };
   }
 
+  // Filled in right after the store is created — the storage engine needs the
+  // store to recover from a full quota, but is built before it exists.
+  const storeRef: StoreRef = { current: null };
+
   // Create a store with persistence
   const persistConfig = {
     key: storeId,
-    storage: createStorageWithErrorHandling(storage),
+    storage: createStorageWithErrorHandling(storage, storeRef),
     blacklist: ["navigation", "hub", "genomeHub", "utility", "undoRedo"],
     version: 1,
     migrate: createMigrate(migrations, {
@@ -324,6 +393,8 @@ export function createAppStore(config: StoreConfig = {}) {
         return result;
       }),
   });
+
+  storeRef.current = store;
 
   const persistor = persistStore(store);
 

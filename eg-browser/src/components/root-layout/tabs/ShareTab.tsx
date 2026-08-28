@@ -49,7 +49,30 @@ export default function ShareTab({
   const url = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
   const fullUrl = `${url}?blob=${compressed}`;
 
+  // TinyURL's /create endpoint rejects non-public origins (localhost / private
+  // network IPs) with a 422, and a short link pointing at such an origin would
+  // be useless to share anyway. Detect those and skip the request.
+  const isShareableOrigin = (() => {
+    const host = window.location.hostname;
+    return !(
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host === "" ||
+      host.endsWith(".local") ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+    );
+  })();
+
   const generateShortLink = async () => {
+    if (!isShareableOrigin) {
+      // Nothing to shorten for a local/private origin; the UI falls back to the
+      // full URL via `linkToShare`.
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
@@ -66,9 +89,22 @@ export default function ShareTab({
         }),
       });
 
-      if (response.status !== 200) {
+      if (!response.ok) {
+        // Surface TinyURL's actual validation message (e.g. invalid/too-long
+        // URL) instead of just the status code.
+        let detail = "";
+        try {
+          const errBody = await response.json();
+          detail = Array.isArray(errBody?.errors)
+            ? errBody.errors.join(", ")
+            : JSON.stringify(errBody);
+        } catch {
+          // response had no JSON body
+        }
         throw new Error(
-          `Error with the tiny-url fetch operation. Status Code: ${response.status}`,
+          `tiny-url create failed (HTTP ${response.status})${
+            detail ? `: ${detail}` : ""
+          }`,
         );
       }
 
@@ -221,7 +257,7 @@ export default function ShareTab({
     <div className="flex flex-col items-center gap-4 p-6">
       <OutdatedLinkWarning />
       <div className="p-4 bg-white dark:bg-white rounded-xl shadow-sm border border-gray-200">
-        <QRCodeSVG value={shortLink} size={220} />
+        <QRCodeSVG value={linkToShare} size={220} />
       </div>
       <p className="text-sm text-primary/60 dark:text-dark-primary/60">
         Scan to open the current view
