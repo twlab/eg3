@@ -425,11 +425,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         return;
       }
       if (dataIdx !== newDrawData.curDataIdx) {
-        console.log(
-          dataIdx,
-          newDrawData.curDataIdx,
-          "dataIdx !== newDrawData.curDataIdx",
-        );
         return;
       }
       if (
