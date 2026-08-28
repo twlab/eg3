@@ -196,12 +196,6 @@ function SectionCard({
   return (
     <section className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-background/40 p-3">
       <div className="flex items-stretch gap-2.5 mb-3">
-        <span
-          aria-hidden="true"
-          className={`w-1 shrink-0 rounded-full ${
-            accent === "load" ? "bg-sky-500" : "bg-emerald-500"
-          }`}
-        />
         <div className="min-w-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-primary dark:text-dark-primary">
             {title}
@@ -828,35 +822,35 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               description="Retrieve a saved bundle by its ID, or upload a session file."
             >
               <div className="flex flex-wrap items-center gap-2">
-              <input
-                type="text"
-                className="w-70 h-7 px-2 outline outline-gray-300 dark:outline-gray-600 rounded-md bg-secondary dark:bg-dark-secondary dark:text-dark-primary text-primary text-sm truncate"
-                placeholder="Session Bundle ID"
-                value={retrieveId}
-                onChange={(e) => setRetrieveId(e.target.value.trim())}
-              />
-              <Button
-                style={{
-                  width: "fit-content",
-                  padding: "4px 6px",
-                  fontSize: "16px",
-                  backgroundColor: "#5E7AC4",
-                  color: "white",
-                  borderRadius: "6px",
-                }}
-                onClick={() => retrieveBundle(retrieveId)}
-              >
-                Retrieve
-              </Button>
-              <FileInput
-                accept=".json"
-                onFileChange={handleUploadFile}
-                dragMessage="Drop / Click Upload"
-                clickMessage=""
-                orMessage=""
-                containerClassName=""
-                className="!h-8 px-3 border border-gray-300 rounded-lg text-sm whitespace-nowrap w-auto"
-              />
+                <input
+                  type="text"
+                  className="w-70 h-7 px-2 outline outline-gray-300 dark:outline-gray-600 rounded-md bg-secondary dark:bg-dark-secondary dark:text-dark-primary text-primary text-sm truncate"
+                  placeholder="Session Bundle ID"
+                  value={retrieveId}
+                  onChange={(e) => setRetrieveId(e.target.value.trim())}
+                />
+                <Button
+                  style={{
+                    width: "fit-content",
+                    padding: "4px 6px",
+                    fontSize: "16px",
+                    backgroundColor: "#5E7AC4",
+                    color: "white",
+                    borderRadius: "6px",
+                  }}
+                  onClick={() => retrieveBundle(retrieveId)}
+                >
+                  Retrieve
+                </Button>
+                <FileInput
+                  accept=".json"
+                  onFileChange={handleUploadFile}
+                  dragMessage="Drop / Click Upload"
+                  clickMessage=""
+                  orMessage=""
+                  containerClassName=""
+                  className="!h-8 px-3 border border-gray-300 rounded-lg text-sm whitespace-nowrap w-auto"
+                />
               </div>
             </SectionCard>
 
@@ -865,337 +859,254 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
               title="Save this session"
               description="Store the current view remotely and get a bundle ID you can share."
             >
-            <AnimatePresence initial={false}>
-              {showFullUI ? (
-                <motion.div
-                  key="fullUI"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.22 }}
-                >
-                  <>
-                    <div className={classes.inputContainer}>
-                      <div className={classes.label}>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                            justifyContent: "flex-start",
-                            columnGap: "12px",
-                            rowGap: "0px",
-                            width: "100%",
-                            marginTop: "10px",
-                          }}
-                        >
-                          <h1 className="text-md shrink-0 text-primary dark:text-dark-primary">
-                            Add New Session To Bundle
-                          </h1>
-
-                          <div className="flex items-center p-0.5 bg-[#f8f9fa] dark:bg-dark-secondary rounded">
-                            <code
-                              onClick={handleCopyBundleId}
-                              onMouseEnter={() => setCodeHover(true)}
-                              onMouseLeave={() => setCodeHover(false)}
-                              title={
-                                bundle && bundle.bundleId
-                                  ? "Click to copy bundle ID"
-                                  : "Save a session to generate ID"
-                              }
-                              className={classes.bundleCode}
-                              style={{
-                                color:
-                                  bundle && bundle.bundleId
-                                    ? "#0b5cff"
-                                    : "#8b949e",
-                                textDecoration: codeHover
-                                  ? "underline"
-                                  : "none",
-                                cursor:
-                                  bundle && bundle.bundleId
-                                    ? "pointer"
-                                    : "default",
-                              }}
-                            >
-                              {bundle && bundle.bundleId
-                                ? bundle.bundleId
-                                : "ID will generate after saving a session"}
-                            </code>
-                            {copiedId && (
-                              <span className="text-xs text-green-600 dark:text-green-400 ml-1">
-                                Copied
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className={classes.row}>
+              <AnimatePresence initial={false}>
+                {showFullUI ? (
+                  <motion.div
+                    key="fullUI"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22 }}
+                  >
+                    <>
+                      <div className={classes.inputContainer}>
+                        <div className={classes.label}>
                           <div
                             style={{
-                              position: "relative",
-                              flex: "1",
-                              // marginTop: "4px",
+                              display: "flex",
+                              flexWrap: "wrap",
+                              alignItems: "center",
+                              justifyContent: "flex-start",
+                              columnGap: "12px",
+                              rowGap: "0px",
+                              width: "100%",
+                              marginTop: "10px",
                             }}
                           >
-                            <input
-                              type="text"
-                              value={newSessionLabel}
-                              className="w-full pr-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm h-7"
-                              placeholder="Enter new session name (optional)"
-                              onChange={(e) =>
-                                setNewSessionLabel(e.target.value.trim())
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  saveSession();
+                            <h1 className="text-md shrink-0 text-primary dark:text-dark-primary">
+                              Add New Session To Bundle
+                            </h1>
+
+                            <div className="flex items-center p-0.5 bg-[#f8f9fa] dark:bg-dark-secondary rounded">
+                              <code
+                                onClick={handleCopyBundleId}
+                                onMouseEnter={() => setCodeHover(true)}
+                                onMouseLeave={() => setCodeHover(false)}
+                                title={
+                                  bundle && bundle.bundleId
+                                    ? "Click to copy bundle ID"
+                                    : "Save a session to generate ID"
                                 }
-                              }}
-                            />
-                            <button
-                              type="button"
-                              className="text-primary dark:text-dark-primary hover:opacity-60"
-                              style={{
-                                position: "absolute",
-                                right: "48px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: "4px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                              onClick={saveSession}
-                              title="Save session (Enter)"
-                            >
-                              <ArrowTurnDownLeftIcon
-                                className="w-4 h-4"
+                                className={classes.bundleCode}
                                 style={{
-                                  backgroundColor: "transparent",
-                                  border: "none",
-                                  outline: "none",
+                                  color:
+                                    bundle && bundle.bundleId
+                                      ? "#0b5cff"
+                                      : "#8b949e",
+                                  textDecoration: codeHover
+                                    ? "underline"
+                                    : "none",
+                                  cursor:
+                                    bundle && bundle.bundleId
+                                      ? "pointer"
+                                      : "default",
                                 }}
-                              />
-                            </button>
+                              >
+                                {bundle && bundle.bundleId
+                                  ? bundle.bundleId
+                                  : "ID will generate after saving a session"}
+                              </code>
+                              {copiedId && (
+                                <span className="text-xs text-green-600 dark:text-green-400 ml-1">
+                                  Copied
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className={classes.row}>
                             <div
                               style={{
-                                position: "absolute",
-                                right: "38px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                width: "1px",
-                                height: "60%",
-                                backgroundColor: "#ccc",
+                                position: "relative",
+                                flex: "1",
+                                // marginTop: "4px",
                               }}
-                            />
-                            <button
-                              type="button"
-                              style={{
-                                position: "absolute",
-                                right: "8px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                color: "#F0AD4E",
-                                padding: "4px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                              onMouseOver={(e) =>
-                                (e.currentTarget.style.color = "#EC971F")
-                              }
-                              onMouseOut={(e) =>
-                                (e.currentTarget.style.color = "#F0AD4E")
-                              }
-                              onClick={() => setNewSessionLabel(getFunName())}
-                              title="Generate random name"
                             >
-                              <ArrowPathIcon
-                                className="w-4 h-4"
-                                style={{
-                                  backgroundColor: "transparent",
-                                  border: "none",
-                                  outline: "none",
+                              <input
+                                type="text"
+                                value={newSessionLabel}
+                                className="w-full pr-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm h-7"
+                                placeholder="Enter new session name (optional)"
+                                onChange={(e) =>
+                                  setNewSessionLabel(e.target.value.trim())
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    saveSession();
+                                  }
                                 }}
                               />
-                            </button>
+                              <button
+                                type="button"
+                                className="text-primary dark:text-dark-primary hover:opacity-60"
+                                style={{
+                                  position: "absolute",
+                                  right: "48px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  padding: "4px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                                onClick={saveSession}
+                                title="Save session (Enter)"
+                              >
+                                <ArrowTurnDownLeftIcon
+                                  className="w-4 h-4"
+                                  style={{
+                                    backgroundColor: "transparent",
+                                    border: "none",
+                                    outline: "none",
+                                  }}
+                                />
+                              </button>
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  right: "38px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  width: "1px",
+                                  height: "60%",
+                                  backgroundColor: "#ccc",
+                                }}
+                              />
+                              <button
+                                type="button"
+                                style={{
+                                  position: "absolute",
+                                  right: "8px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  color: "#F0AD4E",
+                                  padding: "4px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                                onMouseOver={(e) =>
+                                  (e.currentTarget.style.color = "#EC971F")
+                                }
+                                onMouseOut={(e) =>
+                                  (e.currentTarget.style.color = "#F0AD4E")
+                                }
+                                onClick={() => setNewSessionLabel(getFunName())}
+                                title="Generate random name"
+                              >
+                                <ArrowPathIcon
+                                  className="w-4 h-4"
+                                  style={{
+                                    backgroundColor: "transparent",
+                                    border: "none",
+                                    outline: "none",
+                                  }}
+                                />
+                              </button>
+                            </div>
+                            <Button
+                              onClick={saveSession}
+                              style={{
+                                width: "fit-content",
+                                padding: "4px 6px",
+                                fontSize: "16px",
+                                backgroundColor: "#5E7AC4",
+                                color: "white",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              Save session
+                            </Button>
                           </div>
-                          <Button
-                            onClick={saveSession}
-                            style={{
-                              width: "fit-content",
-                              padding: "4px 6px",
-                              fontSize: "16px",
-                              backgroundColor: "#5E7AC4",
-                              color: "white",
-                              borderRadius: "6px",
-                            }}
-                          >
-                            Save session
-                          </Button>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Saved Sessions */}
-                    {renderSavedSessions()}
-                    <div className={classes.additionalActions}>
-                      <Button
-                        onClick={downloadAsSession}
-                        backgroundColor="tint"
-                        style={{
-                          width: "fit-content",
-                          padding: "4px 6px",
-                          fontSize: "16px",
-                        }}
-                      >
-                        Download current session
-                      </Button>
+                      {/* Saved Sessions */}
+                      {renderSavedSessions()}
+                      <div className={classes.additionalActions}>
+                        <Button
+                          onClick={downloadAsSession}
+                          backgroundColor="tint"
+                          style={{
+                            width: "fit-content",
+                            padding: "4px 6px",
+                            fontSize: "16px",
+                          }}
+                        >
+                          Download current session
+                        </Button>
 
-                      <Button
-                        onClick={downloadAsHub}
-                        backgroundColor="tint"
-                        style={{
-                          width: "fit-content",
-                          padding: "4px 6px",
-                          fontSize: "16px",
-                        }}
-                      >
-                        Download as datahub
-                      </Button>
+                        <Button
+                          onClick={downloadAsHub}
+                          backgroundColor="tint"
+                          style={{
+                            width: "fit-content",
+                            padding: "4px 6px",
+                            fontSize: "16px",
+                          }}
+                        >
+                          Download as datahub
+                        </Button>
 
-                      <Button
-                        onClick={downloadWholeBundle}
-                        backgroundColor="tint"
-                        style={{
-                          width: "fit-content",
-                          padding: "4px 6px",
-                          fontSize: "16px",
-                        }}
-                      >
-                        Download whole bundle
-                      </Button>
-                    </div>
-                  </>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="compact"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.22 }}
-                >
-                  <div
-                    className="mt-4"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
+                        <Button
+                          onClick={downloadWholeBundle}
+                          backgroundColor="tint"
+                          style={{
+                            width: "fit-content",
+                            padding: "4px 6px",
+                            fontSize: "16px",
+                          }}
+                        >
+                          Download whole bundle
+                        </Button>
+                      </div>
+                    </>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="compact"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22 }}
                   >
-                    <AnimatePresence initial={false} mode="wait">
-                      {!showCreateInput ? (
-                        <motion.div
-                          key="create-button"
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -8 }}
-                          transition={{ duration: 0.18 }}
-                          className="w-full flex justify-center"
-                        >
-                          <Button
-                            onClick={() => {
-                              setShowCreateInput(true);
-
-                              setNewSessionLabel(
-                                state?.title &&
-                                  !bundleId &&
-                                  state.title !== "Untitled Session"
-                                  ? state.title
-                                  : "",
-                              );
-                            }}
-                            style={{
-                              backgroundColor: "#5E7AC4",
-                              color: "white",
-                              fontSize: "16px",
-                              width: "fit-content",
-                              padding: "4px 6px",
-                              borderRadius: "6px",
-                            }}
-                          >
-                            Create remote bundle and save session
-                          </Button>
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          key="create-input"
-                          initial={{ opacity: 0, x: 8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -8 }}
-                          transition={{ duration: 0.18 }}
-                          className="flex items-center gap-1 w-full justify-start"
-                        >
-                          <input
-                            type="text"
-                            value={newSessionLabel}
-                            onChange={(e) => setNewSessionLabel(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleAttemptSave();
-                              }
-                            }}
-                            placeholder="Enter new session name (optional)"
-                            className="flex-1 h-7 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm"
-                          />
-                          <Button
-                            onClick={handleAttemptSave}
-                            style={{
-                              padding: "4px 6px",
-                              width: "fit-content",
-
-                              background: "white",
-                              borderRadius: "6px",
-                              backgroundColor: "#5E7AC4",
-                              color: "white",
-                            }}
-                          >
-                            Save
-                          </Button>
+                    <div
+                      className="mt-4"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                      }}
+                    >
+                      <AnimatePresence initial={false} mode="wait">
+                        {!showCreateInput ? (
                           <motion.div
-                            initial={false}
-                            animate={{
-                              borderRadius: saveCurveActive ? 20 : 8,
-                              borderColor: saveCurveActive
-                                ? "#4285F4"
-                                : "transparent",
-                              boxShadow: saveCurveActive
-                                ? "0 6px 18px rgba(66,133,244,0.12)"
-                                : "none",
-                            }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 400,
-                              damping: 30,
-                            }}
-                            style={{
-                              display: "inline-block",
-
-                              //   padding: "2px",
-                              //   borderStyle: "solid",
-                              //   borderWidth: "1px",
-                              borderRadius: 8,
-                            }}
+                            key="create-button"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.18 }}
+                            className="w-full flex justify-center"
                           >
                             <Button
                               onClick={() => {
-                                setShowCreateInput(false);
+                                setShowCreateInput(true);
+
                                 setNewSessionLabel(
                                   state?.title &&
                                     !bundleId &&
@@ -1204,52 +1115,137 @@ const TabSessionUI: React.FC<SessionUIProps> = ({
                                     : "",
                                 );
                               }}
-                              outlined
+                              style={{
+                                backgroundColor: "#5E7AC4",
+                                color: "white",
+                                fontSize: "16px",
+                                width: "fit-content",
+                                padding: "4px 6px",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              Create remote bundle and save session
+                            </Button>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="create-input"
+                            initial={{ opacity: 0, x: 8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -8 }}
+                            transition={{ duration: 0.18 }}
+                            className="flex items-center gap-1 w-full justify-start"
+                          >
+                            <input
+                              type="text"
+                              value={newSessionLabel}
+                              onChange={(e) =>
+                                setNewSessionLabel(e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleAttemptSave();
+                                }
+                              }}
+                              placeholder="Enter new session name (optional)"
+                              className="flex-1 h-7 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-secondary dark:bg-dark-secondary text-primary dark:text-dark-primary text-sm"
+                            />
+                            <Button
+                              onClick={handleAttemptSave}
                               style={{
                                 padding: "4px 6px",
                                 width: "fit-content",
 
+                                background: "white",
                                 borderRadius: "6px",
+                                backgroundColor: "#5E7AC4",
+                                color: "white",
                               }}
                             >
-                              Cancel
+                              Save
                             </Button>
-                          </motion.div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                    <div
-                      className={classes.additionalActions}
-                      style={{ marginTop: "12px" }}
-                    >
-                      <Button
-                        onClick={downloadAsSession}
-                        backgroundColor="tint"
-                        style={{
-                          width: "fit-content",
-                          padding: "4px 6px",
-                          fontSize: "16px",
-                        }}
-                      >
-                        Download current session
-                      </Button>
+                            <motion.div
+                              initial={false}
+                              animate={{
+                                borderRadius: saveCurveActive ? 20 : 8,
+                                borderColor: saveCurveActive
+                                  ? "#4285F4"
+                                  : "transparent",
+                                boxShadow: saveCurveActive
+                                  ? "0 6px 18px rgba(66,133,244,0.12)"
+                                  : "none",
+                              }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 30,
+                              }}
+                              style={{
+                                display: "inline-block",
 
-                      <Button
-                        onClick={downloadAsHub}
-                        backgroundColor="tint"
-                        style={{
-                          width: "fit-content",
-                          padding: "4px 6px",
-                          fontSize: "16px",
-                        }}
+                                //   padding: "2px",
+                                //   borderStyle: "solid",
+                                //   borderWidth: "1px",
+                                borderRadius: 8,
+                              }}
+                            >
+                              <Button
+                                onClick={() => {
+                                  setShowCreateInput(false);
+                                  setNewSessionLabel(
+                                    state?.title &&
+                                      !bundleId &&
+                                      state.title !== "Untitled Session"
+                                      ? state.title
+                                      : "",
+                                  );
+                                }}
+                                outlined
+                                style={{
+                                  padding: "4px 6px",
+                                  width: "fit-content",
+
+                                  borderRadius: "6px",
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </motion.div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      <div
+                        className={classes.additionalActions}
+                        style={{ marginTop: "12px" }}
                       >
-                        Download as datahub
-                      </Button>
+                        <Button
+                          onClick={downloadAsSession}
+                          backgroundColor="tint"
+                          style={{
+                            width: "fit-content",
+                            padding: "4px 6px",
+                            fontSize: "16px",
+                          }}
+                        >
+                          Download current session
+                        </Button>
+
+                        <Button
+                          onClick={downloadAsHub}
+                          backgroundColor="tint"
+                          style={{
+                            width: "fit-content",
+                            padding: "4px 6px",
+                            fontSize: "16px",
+                          }}
+                        >
+                          Download as datahub
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </SectionCard>
           </div>
         )}

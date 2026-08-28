@@ -13,13 +13,18 @@ import { ExclamationTriangleIcon } from "@heroicons/react/16/solid";
 import {
   XMarkIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
   CheckIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef } from "react";
 import {
+  SessionSortDirection,
+  SessionSortPreference,
+  selectSessionSortDirection,
   selectSessionSortPreference,
+  setSessionSortDirection,
   setSessionSortPreference,
 } from "@/lib/redux/slices/settingsSlice";
 import {
@@ -50,6 +55,7 @@ export default function SessionList({
   const currentSession = useAppSelector(selectCurrentSession);
   const currentSessionId = useAppSelector(selectCurrentSessionId);
   const sortPreference = useAppSelector(selectSessionSortPreference);
+  const sortDirection = useAppSelector(selectSessionSortDirection);
   const sessionTab = useAppSelector(selectSessionListTab);
   const setSessionTab = (tab: "edit" | "switch") =>
     dispatch(setSessionListTab(tab));
@@ -62,12 +68,13 @@ export default function SessionList({
 
   const sortedSessions = useMemo(() => {
     return [...sessions].sort((a, b) => {
-      if (sortPreference === "updatedAt") {
-        return b.updatedAt - a.updatedAt;
-      }
-      return b.createdAt - a.createdAt;
+      const difference =
+        sortPreference === "updatedAt"
+          ? a.updatedAt - b.updatedAt
+          : a.createdAt - b.createdAt;
+      return sortDirection === "desc" ? -difference : difference;
     });
-  }, [sessions, sortPreference]);
+  }, [sessions, sortPreference, sortDirection]);
 
   // The session being viewed can't be deleted, so it can't be selected either.
   const selectableIds = useMemo(
@@ -186,14 +193,14 @@ export default function SessionList({
               sessionCount={sessions.length}
             />
 
-            <SessionSortButton
+            <SessionFilterMenu
               sortPreference={sortPreference}
-              onToggle={() =>
-                dispatch(
-                  setSessionSortPreference(
-                    sortPreference === "updatedAt" ? "createdAt" : "updatedAt",
-                  ),
-                )
+              sortDirection={sortDirection}
+              onSortPreferenceChange={(next) =>
+                dispatch(setSessionSortPreference(next))
+              }
+              onSortDirectionChange={(next) =>
+                dispatch(setSessionSortDirection(next))
               }
             />
           </div>
@@ -288,12 +295,12 @@ function SessionListTitle({
   if (currentSession) {
     return (
       <div className="min-w-0 text-left text-primary dark:text-dark-primary">
-        <h2 className="text-sm font-semibold truncate">
+        <h2 className="text-sm truncate">
           {currentSession.title
             ? `Current Session: "${currentSession.title}"`
             : `Current Session: "Untitled Session"`}
         </h2>
-        <p className="text-xs truncate">
+        <p className="text-sm truncate">
           Session Bundle ID:{" "}
           {currentSession.bundleId ? (
             <span className="text-blue-600">{currentSession.bundleId}</span>
@@ -307,7 +314,7 @@ function SessionListTitle({
 
   return (
     <div className="flex items-center gap-2 min-w-0 text-primary dark:text-dark-primary">
-      <h2 className="text-sm font-semibold truncate">Previous sessions</h2>
+      <h2 className="text-sm truncate">Previous sessions</h2>
       <span className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1 text-xs rounded-full bg-blue-600 text-white">
         {sessionCount}
       </span>
@@ -315,29 +322,143 @@ function SessionListTitle({
   );
 }
 
+/** A small caps heading separating the groups inside the filter menu. */
+function FilterMenuLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-2 pt-1 pb-0.5 text-[10px] uppercase tracking-wide opacity-60">
+      {children}
+    </div>
+  );
+}
+
 /**
- * States how the list is ordered, and changes it when clicked.
- *
- * The label names what you are looking at rather than what the click will do —
- * a control that reads "Recently created" while showing recently-updated order
- * would be lying about the list right under it.
+ * One choice in the filter menu. The tick keeps its space when unselected so
+ * every label starts at the same x.
  */
-function SessionSortButton({
-  sortPreference,
-  onToggle,
+function FilterMenuOption({
+  selected,
+  onClick,
+  children,
 }: {
-  sortPreference: "createdAt" | "updatedAt";
-  onToggle: () => void;
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
-      onClick={onToggle}
-      title="Click to sort by the other date"
-      className="shrink-0 inline-flex h-7 items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 px-3 text-xs leading-none text-primary dark:text-dark-primary cursor-pointer transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/10"
+      role="menuitemradio"
+      aria-checked={selected}
+      onClick={onClick}
+      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-primary dark:text-dark-primary cursor-pointer transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/10"
     >
-      {sortPreference === "updatedAt" ? "Recently updated" : "Recently created"}
+      <CheckIcon
+        className={`size-3.5 shrink-0 text-blue-600 dark:text-blue-400 ${
+          selected ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      {children}
     </button>
+  );
+}
+
+/**
+ * The list's Filter control: which date to order by, and which way round.
+ *
+ * The menu stays open while you change things, so picking a field and then
+ * flipping the order does not mean opening it twice.
+ */
+function SessionFilterMenu({
+  sortPreference,
+  sortDirection,
+  onSortPreferenceChange,
+  onSortDirectionChange,
+}: {
+  sortPreference: SessionSortPreference;
+  sortDirection: SessionSortDirection;
+  onSortPreferenceChange: (next: SessionSortPreference) => void;
+  onSortDirectionChange: (next: SessionSortDirection) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={menuRef} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((shown) => !shown)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Sort the session list"
+        className={[
+          "inline-flex h-7 items-center gap-1 rounded-full border px-3",
+          "text-xs leading-none cursor-pointer transition-colors duration-150",
+          open
+            ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+            : "border-gray-300 dark:border-gray-600 text-primary dark:text-dark-primary hover:bg-black/5 dark:hover:bg-white/10",
+        ].join(" ")}
+      >
+        Filter
+        <ChevronDownIcon
+          className={`size-3 transition-transform duration-150 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-20 mt-1 w-44 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-secondary p-1 shadow-lg"
+        >
+          <FilterMenuLabel>Sort by</FilterMenuLabel>
+          <FilterMenuOption
+            selected={sortPreference === "updatedAt"}
+            onClick={() => onSortPreferenceChange("updatedAt")}
+          >
+            Date updated
+          </FilterMenuOption>
+          <FilterMenuOption
+            selected={sortPreference === "createdAt"}
+            onClick={() => onSortPreferenceChange("createdAt")}
+          >
+            Date created
+          </FilterMenuOption>
+
+          <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
+
+          <FilterMenuLabel>Order</FilterMenuLabel>
+          <FilterMenuOption
+            selected={sortDirection === "desc"}
+            onClick={() => onSortDirectionChange("desc")}
+          >
+            Newest first
+          </FilterMenuOption>
+          <FilterMenuOption
+            selected={sortDirection === "asc"}
+            onClick={() => onSortDirectionChange("asc")}
+          >
+            Oldest first
+          </FilterMenuOption>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -432,9 +553,11 @@ function DetailField({
 }
 
 /**
- * A short, readable age — "Just now", "5 min ago", "Yesterday", "3 days ago" —
+ * A short, readable age — "just now", "5 min ago", "yesterday", "3 days ago" —
  * falling back to a plain date past a week, where an exact age stops being the
  * useful thing. `formatDate` still gives the precise timestamp for tooltips.
+ *
+ * Lower case because it always follows "Updated" or "Created" in the card row.
  */
 function formatRelativeTime(value: string | number | Date) {
   const then = new Date(value).getTime();
@@ -446,12 +569,12 @@ function formatRelativeTime(value: string | number | Date) {
   // Clock skew can put `then` slightly in the future; that lands in "Just now".
   const elapsed = Date.now() - then;
 
-  if (elapsed < minute) return "Just now";
+  if (elapsed < minute) return "just now";
   if (elapsed < hour) return `${Math.floor(elapsed / minute)} min ago`;
   if (elapsed < day) return `${Math.floor(elapsed / hour)} hr ago`;
   if (elapsed < 7 * day) {
     const days = Math.floor(elapsed / day);
-    return days === 1 ? "Yesterday" : `${days} days ago`;
+    return days === 1 ? "yesterday" : `${days} days ago`;
   }
 
   return new Date(value).toLocaleDateString(undefined, {
@@ -686,7 +809,7 @@ function SessionListItem({
 
         {/* Everything the eye needs stacked into two tight lines, using the
             width that was going spare rather than four lines of height. */}
-        <div className="flex flex-col min-w-0 flex-1">
+        <div className="@container flex flex-col min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
             <h3 className="text-sm font-medium truncate">
               {session.title && session.title.length > 0
@@ -700,24 +823,33 @@ function SessionListItem({
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 min-w-0 text-xs text-primary/70 dark:text-dark-primary/70">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 @sm:flex @sm:items-center @sm:gap-1.5 min-w-0 text-xs text-primary/70 dark:text-dark-primary/70">
             {/* Exact timestamp stays a hover away, so the line can stay short. */}
             <span
-              className="shrink-0 whitespace-nowrap"
+              className="min-w-0 truncate @sm:shrink-0 @sm:whitespace-nowrap"
               title={formatDate(sortedDate)}
             >
+              {sortPreference === "updatedAt" ? "Updated" : "Created"}{" "}
               {formatRelativeTime(sortedDate)}
             </span>
-            <span aria-hidden="true">·</span>
-            <span className="shrink-0 whitespace-nowrap">
+            <span aria-hidden="true" className="hidden @sm:inline">
+              ·
+            </span>
+            <span className="min-w-0 truncate @sm:shrink-0 @sm:whitespace-nowrap">
               {trackCount} {trackCount === 1 ? "track" : "tracks"}
             </span>
-            <span aria-hidden="true">·</span>
-            <span className="truncate">{_genomeConfig?.name ?? "…"}</span>
-            <span aria-hidden="true">·</span>
+            <span aria-hidden="true" className="hidden @sm:inline">
+              ·
+            </span>
+            <span className="min-w-0 truncate">
+              {_genomeConfig?.name ?? "…"}
+            </span>
+            <span aria-hidden="true" className="hidden @sm:inline">
+              ·
+            </span>
             {session.bundleId ? (
               <span
-                className="truncate text-blue-600 dark:text-blue-400 cursor-pointer"
+                className="min-w-0 truncate text-blue-600 dark:text-blue-400 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCopyBundleId();
@@ -730,7 +862,9 @@ function SessionListItem({
                 {copiedId ? "Copied" : session.bundleId}
               </span>
             ) : (
-              <span className="shrink-0 text-red-600">Not saved remotely</span>
+              <span className="min-w-0 truncate text-red-600 @sm:shrink-0">
+                Not saved remotely
+              </span>
             )}
           </div>
         </div>
@@ -738,22 +872,6 @@ function SessionListItem({
         <div className="flex items-center gap-1 shrink-0">
           {selectionMode ? null : (
             <>
-              {allowDelete && (
-                <button
-                  onClick={(e) => handleDelete(e)}
-                  className={`p-1 rounded-md text-red-600 transition-colors duration-150 ${isConfirmingDelete ? "bg-alert text-white" : "hover:bg-red-100 dark:hover:bg-red-700"}`}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  title={
-                    isConfirmingDelete ? "Confirm delete" : "Delete session"
-                  }
-                >
-                  {isConfirmingDelete ? (
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                  ) : (
-                    <XMarkIcon className="w-4 h-4" />
-                  )}
-                </button>
-              )}
               <motion.div
                 animate={{ rotate: isExpanded ? 90 : 0 }}
                 transition={{ duration: 0.2 }}
