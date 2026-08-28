@@ -1726,7 +1726,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       if (Object.keys(curTrackToDrawId).length > 0) {
         setViewWindowConfigChange({
-          dataIdx: dataIdx.current,
+          curDataIdx: dataIdx.current,
           viewWindow: tempViewWindowConfig.viewWindow,
           groupScale:
             globalTrackState.current.trackStates[dataIdx.current].trackState[
@@ -3048,6 +3048,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 ? { start: 0, end: windowWidthRef.current }
                 : curViewWindow,
             completedFetchedRegion,
+            curDataIdx: newDrawData.curDataIdx,
           });
         }
       }
