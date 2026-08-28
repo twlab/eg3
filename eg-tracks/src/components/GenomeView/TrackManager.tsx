@@ -2335,69 +2335,69 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             },
           ),
         ).then(() => {
-          const currentDataIdx = dataIdx.current;
-          const idxArr = [
-            currentDataIdx - 1,
-            currentDataIdx,
-            currentDataIdx + 1,
-          ];
+          if (dataItem.trackDataIdx === dataIdx.current) {
+            const currentDataIdx = dataIdx.current;
+            const idxArr = [
+              currentDataIdx - 1,
+              currentDataIdx,
+              currentDataIdx + 1,
+            ];
 
-          const cacheKeysWithData: { [key: string]: boolean } = {};
+            const cacheKeysWithData: { [key: string]: boolean } = {};
 
-          for (let trackToDrawKey in trackToDrawId) {
-            const cache = trackManagerState.current.caches[trackToDrawKey];
+            for (let trackToDrawKey in trackToDrawId) {
+              const cache = trackManagerState.current.caches[trackToDrawKey];
 
-            if (cache) {
-              if (cache["error"]) {
-                cacheKeysWithData[trackToDrawKey] = false;
-              } else if (
-                useFineModeNav.current ||
-                cache.useExpandedLoci ||
-                !cache.usePrimaryNav
-              ) {
-                // For fine mode or expanded loci, only check current index
-
-                if (
-                  (cache[currentDataIdx] &&
-                    cache[currentDataIdx]["dataCache"]) ||
+              if (cache) {
+                if (cache["error"]) {
+                  cacheKeysWithData[trackToDrawKey] = false;
+                } else if (
+                  useFineModeNav.current ||
+                  cache.useExpandedLoci ||
                   !cache.usePrimaryNav
                 ) {
-                  cacheKeysWithData[trackToDrawKey] = false;
-                }
-              } else {
-                //  normal mode check all three indices
-                let hasAllRegionData = true;
-                for (let idx of idxArr) {
-                  if (!cache[idx] || !cache[idx].dataCache) {
-                    hasAllRegionData = false;
-                    break;
+                  // For fine mode or expanded loci, only check current index
+
+                  if (
+                    (cache[currentDataIdx] &&
+                      cache[currentDataIdx]["dataCache"]) ||
+                    !cache.usePrimaryNav
+                  ) {
+                    cacheKeysWithData[trackToDrawKey] = false;
                   }
-                }
-                if (hasAllRegionData) {
-                  cacheKeysWithData[trackToDrawKey] = false;
+                } else {
+                  //  normal mode check all three indices
+                  let hasAllRegionData = true;
+                  for (let idx of idxArr) {
+                    if (!cache[idx] || !cache[idx].dataCache) {
+                      hasAllRegionData = false;
+                      break;
+                    }
+                  }
+                  if (hasAllRegionData) {
+                    cacheKeysWithData[trackToDrawKey] = false;
+                  }
                 }
               }
             }
-          }
 
-          // if we have valid cached data
+            // if we have valid cached data
 
-          if (Object.keys(cacheKeysWithData).length > 0) {
-            if (completedFetchedRegion.current.key !== currentDataIdx) {
-              completedFetchedRegion.current.key = currentDataIdx;
-              completedFetchedRegion.current.done = {};
-              completedFetchedRegion.current.groups = {};
+            if (Object.keys(cacheKeysWithData).length > 0) {
+              if (completedFetchedRegion.current.key !== currentDataIdx) {
+                completedFetchedRegion.current.key = currentDataIdx;
+                completedFetchedRegion.current.done = {};
+                completedFetchedRegion.current.groups = {};
+              }
+
+              checkDrawData({
+                trackDataIdx: dataItem.trackDataIdx,
+                initial: dataItem.initial,
+                trackToDrawId: cacheKeysWithData,
+                missingIdx: dataItem.missingIdx,
+                curDataIdx: dataItem.trackDataIdx,
+              });
             }
-
-            checkDrawData({
-              trackDataIdx: dataItem.trackDataIdx,
-              initial: dataItem.initial,
-              trackToDrawId: cacheKeysWithData,
-              missingIdx: dataItem.missingIdx,
-              curDataIdx: dataItem.trackDataIdx,
-            });
-
-            processQueue();
           }
         });
       }),
@@ -2412,6 +2412,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               workers[workerIdx].processingCount - 1,
             );
           }
+        }
+        if (messageQueue.current.length === 0) {
+          setMessageData({});
+          return;
         }
       })
       .catch((error) => {
@@ -2532,6 +2536,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 isInitial: 0,
                 trackToDrawId,
                 missingIdx: curTrackState.missingIdx,
+                trackDataIdx: curTrackState.trackDataIdx,
               });
             }
           }
@@ -2569,6 +2574,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             isInitial: 0,
             trackToDrawId,
             missingIdx: curTrackState.missingIdx,
+            trackDataIdx: curTrackState.trackDataIdx,
           });
         }
       })
@@ -2995,6 +3001,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 ? { start: 0, end: windowWidthRef.current }
                 : curViewWindow,
             completedFetchedRegion,
+            curDataIdx: newDrawData.curDataIdx,
           });
         }
       }
@@ -4844,13 +4851,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         if (Object.keys(curTracksToDrawId).length > 0) {
           setViewWindowConfigChange({
-            dataIdx: dataIdx.current,
             viewWindow: viewWindowConfigData.current.viewWindow,
             groupScale:
               globalTrackState.current.trackStates[dataIdx.current].trackState[
                 "groupScale"
               ],
             trackToDrawId: curTracksToDrawId,
+            curDataIdx: viewWindowConfigData.current.dataIdx,
           });
         }
       }
