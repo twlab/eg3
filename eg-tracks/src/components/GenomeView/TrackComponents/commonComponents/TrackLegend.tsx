@@ -194,7 +194,7 @@ class TrackLegend extends React.PureComponent<
       display: "flex",
       width: this.props.legendWidth ? this.props.legendWidth : 120,
       minWidth: 120,
-      height: axisHeight,
+      height: axisHeight + (trackModel?.type === "methylc" ? 0 : 2),
 
       zIndex: 10,
       //         backgroundColor: "var(--bg-color)",

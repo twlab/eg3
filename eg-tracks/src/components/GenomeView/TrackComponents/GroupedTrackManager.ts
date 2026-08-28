@@ -310,7 +310,6 @@ export class GroupedTrackManager {
           track.trackModel.type in numericalTracks ||
           track?.trackModel?.options?.displayMode === "density"
         ) {
-          console.log(useCurRegionAggData);
           const tid = track.id;
 
           if (track.data) {
