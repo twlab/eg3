@@ -214,6 +214,7 @@ export class GroupedTrackManager {
     viewWindow: OpenInterval,
     dataIdx: number,
     trackManagerState: any,
+    useCurRegionAggData: boolean = false,
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     if (trackData) {
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
@@ -245,7 +246,10 @@ export class GroupedTrackManager {
           if (track.data) {
             let xvalues;
 
-            if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
+            if (
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
+              useCurRegionAggData
+            ) {
               xvalues =
                 trackManagerState.current.caches[tid][dataIdx]["xvalues"];
             } else {
@@ -310,12 +314,15 @@ export class GroupedTrackManager {
 
           if (track.data) {
             let xvalues;
-            // if (trackManagerState.current.caches[tid][dataIdx]["xvalues"]) {
-            //   continue;
-            // }
+            if (
+              trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
+              useCurRegionAggData
+            ) {
+              continue;
+            }
 
             // else {
-            if (track.trackModel.type === "dynseq") {
+            else if (track.trackModel.type === "dynseq") {
               xvalues = this.aggregator.xToValueMaker(
                 data,
                 track.visRegion,
@@ -403,6 +410,12 @@ export class GroupedTrackManager {
                 configOptions.displayMode === FiberDisplayModes.AUTO) ||
               configOptions.displayMode === FiberDisplayModes.SUMMARY
             ) {
+              if (
+                trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
+                useCurRegionAggData
+              ) {
+                continue;
+              }
               const xvalues = this.aggregateFibers(
                 data,
                 track.visRegion,
@@ -423,6 +436,12 @@ export class GroupedTrackManager {
                 configOptions.displayMode === "auto") ||
               configOptions.displayMode === "density"
             ) {
+              if (
+                trackManagerState.current.caches[tid][dataIdx]["xvalues"] &&
+                useCurRegionAggData
+              ) {
+                continue;
+              }
               const xvalues = this.aggregator.xToValueMaker(
                 data,
                 track.visRegion,
@@ -436,6 +455,14 @@ export class GroupedTrackManager {
               trackManagerState.current.caches[tid][dataIdx]["xvalues"] =
                 xvalues;
             } else if (curTrackModel.type === "dynamicbed") {
+              if (
+                trackManagerState.current.caches[tid][dataIdx][
+                  "placeFeature"
+                ] &&
+                useCurRegionAggData
+              ) {
+                continue;
+              }
               // Multi-file annotation track: arrange each sub-track (frame)
               // separately from its raw grouped records, then cache the whole
               // set as placeFeature so the component just renders it — the same
@@ -467,6 +494,14 @@ export class GroupedTrackManager {
                 numHidden: 0,
               };
             } else {
+              if (
+                trackManagerState.current.caches[tid][dataIdx][
+                  "placeFeature"
+                ] &&
+                useCurRegionAggData
+              ) {
+                continue;
+              }
               const placeFeatureData = featureArrange.arrange(
                 data,
                 track.visRegion,

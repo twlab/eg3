@@ -21,7 +21,6 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
-import { fetchGenomicData } from "../../../getRemoteData/fetchFunctions";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -37,8 +36,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   viewWindowConfigChange,
   sentScreenshotData,
   newDrawData,
-  selfFetchTrigger,
-  selfFetchApi,
+
   trackManagerState,
   globalTrackState,
   isScreenShotOpen,
@@ -56,7 +54,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     try {
       const globalCfg = trackManagerState.current.globalConfig;
       if (globalCfg) {
-        // support either a ref-like shape (legacy) or plain object
         const entry = globalCfg.current
           ? globalCfg.current[`${id}`]
           : globalCfg[`${id}`];
@@ -64,9 +61,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           return entry.configOptions;
         }
       }
-    } catch (e) {
-      // fallthrough to defaults
-    }
+    } catch (e) {}
     return trackOptionMap[trackModel.type]
       ? {
           ...trackOptionMap[`${trackModel.type}`].defaultOptions,
@@ -75,6 +70,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : { ...trackOptionMap["error"].defaultOptions };
   }
 
+  const scrollPanEnabled = true;
   const svgHeight = useRef(40);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
@@ -110,8 +106,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   function createSVGOrCanvas(
     trackState,
     genesArr,
-
-    cacheDataIdx,
+    curDataIdx,
     xvalues = null,
     placeFeature = null,
   ) {
@@ -149,14 +144,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
     // try {
     const res = getDisplayModeFunction(displayArgs);
-    // }
-    // catch (e) {
-    //   fetchError.current = "error when creating drawData";
-    //   displayArgs.errorInfo = fetchError.current;
-    //   res = getDisplayModeFunction(displayArgs);
-    // }
 
-    if (cacheDataIdx === dataIdx) {
+    if (curDataIdx === dataIdx) {
       signalTrackLoadComplete(id);
       updateSide.current = side;
       let result;
@@ -172,8 +161,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         result = res;
       }
 
-      // Wrap the track component with an ErrorBoundary so render errors
-      // inside the display components don't crash the whole app.
       try {
         result = (
           <ErrorBoundary errorDrawData={displayArgs} fetchError={fetchError}>
@@ -189,7 +176,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       // startTransition(() =>
       setViewComponent({
         component: result,
-        dataIdx: cacheDataIdx,
+        dataIdx: curDataIdx,
         numHidden: numHidden,
         visData: trackState.visData,
         xPos: curXPos,
@@ -317,7 +304,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     viewWindow,
     groupScale,
     xvalues,
-    isInit,
+    curDataIdx,
     placeFeature,
   }) {
     const primaryVisData = trackState.genomicFetchCoord
@@ -334,7 +321,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     trackState["visWidth"] = primaryVisData.visWidth
       ? primaryVisData.visWidth
       : windowWidth * 3;
-    trackState["dataIdx"] = dataIdx;
+    trackState["dataIdx"] = curDataIdx;
 
     fetchError.current = cacheTrackData["error"]
       ? cacheTrackData["error"]
@@ -344,7 +331,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       createSVGOrCanvas(
         trackState,
         fetchError.current,
-        dataIdx,
+        curDataIdx,
         xvalues ? xvalues : null,
       );
     } else if (
@@ -352,7 +339,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       cacheTrackData.usePrimaryNav
     ) {
       let combinedData: Array<any> = [];
-      let currIdx = dataIdx + 1;
+      let currIdx = curDataIdx + 1;
       let noData = false;
 
       if (dynamicMatplotTracks.has(trackModel.type)) {
@@ -365,7 +352,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         // before the placeFeature/xvalues short-circuit below.
         if (
           trackModel.type !== "dynamicbed" &&
-          cacheTrackData[`${dataIdx}`]?.["xvalues"]
+          cacheTrackData[`${curDataIdx}`]?.["xvalues"]
         ) {
           combinedData = [];
         } else {
@@ -378,8 +365,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData = groupTracksArrMatPlot(combinedData);
         }
       } else if (
-        cacheTrackData[`${dataIdx}`]?.["xvalues"] ||
-        cacheTrackData[`${dataIdx}`]?.["placeFeature"]
+        cacheTrackData[`${curDataIdx}`]?.["xvalues"] ||
+        cacheTrackData[`${curDataIdx}`]?.["placeFeature"]
       ) {
         combinedData = [];
       } else {
@@ -402,14 +389,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         createSVGOrCanvas(
           trackState,
           combinedData,
-          dataIdx,
+          curDataIdx,
           xvalues ? xvalues : null,
           placeFeature ? placeFeature : null,
         );
       }
     } else {
-      const combinedData = cacheTrackData[dataIdx]
-        ? cacheTrackData[dataIdx].dataCache
+      const combinedData = cacheTrackData[curDataIdx]
+        ? cacheTrackData[curDataIdx].dataCache
         : null;
       if (viewWindow) {
         trackState["viewWindow"] = viewWindow;
@@ -419,7 +406,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         createSVGOrCanvas(
           trackState,
           combinedData,
-          dataIdx,
+          curDataIdx,
           xvalues ? xvalues : null,
           placeFeature ? placeFeature : null,
         );
@@ -437,7 +424,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       } else {
         return;
       }
-
+      if (dataIdx !== newDrawData.curDataIdx) {
+        console.log(
+          dataIdx,
+          newDrawData.curDataIdx,
+          "dataIdx !== newDrawData.curDataIdx",
+        );
+        return;
+      }
       if (
         !caches[`${id}`] ||
         !globalTrackState.current.trackStates[dataIdx] ||
@@ -462,99 +456,18 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         placeFeature: cacheTrackData[dataIdx]?.placeFeature,
-        isInit: true,
+        curDataIdx: newDrawData.curDataIdx,
       });
     }
   }, [newDrawData]);
 
-  // MARK: [selfFetch]
-  // Fetch this track's own data (on the main thread) and draw it as soon as the
-  // fetch resolves, instead of waiting for the centralized queue + shared
-  // setDraw broadcast. Only eligible tracks get a non-null plan; coordinated
-  // tracks (genomealign views, grouped scale, query-aligned, interaction) return
-  // null here and keep drawing through the newDrawData path above.
-  function drawFromCache(viewWindow, groupScale) {
-    if (
-      !caches[`${id}`] ||
-      !globalTrackState.current.trackStates[dataIdx] ||
-      !globalTrackState.current.trackStates[dataIdx].trackState
-        .genomicFetchCoord
-    ) {
-      return;
-    }
-    const cacheTrackData = caches[`${id}`];
-    const trackState = {
-      ...globalTrackState.current.trackStates[dataIdx].trackState,
-    };
-    handleTrackDraw({
-      cacheTrackData,
-      trackState,
-      viewWindow,
-      groupScale,
-      xvalues: cacheTrackData[dataIdx]?.xvalues,
-      placeFeature: cacheTrackData[dataIdx]?.placeFeature,
-      isInit: true,
-    });
-  }
-
-  useEffect(() => {
-    if (!selfFetchTrigger || !selfFetchApi?.current) {
-      return;
-    }
-    const api = selfFetchApi.current;
-    const curDataIdx = dataIdx;
-    const plan = api.getTrackFetchPlan(id, curDataIdx);
-    if (!plan) {
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        if (plan.drawNow) {
-          const commit = await api.commitTrackFetch(id, [], curDataIdx);
-          if (!cancelled && commit.ready) {
-            drawFromCache(commit.viewWindow, commit.groupScale);
-          }
-          return;
-        }
-
-        const resultsNested = await Promise.all(
-          plan.argsArr.map((arg: any) => fetchGenomicData([arg])),
-        );
-        // Always commit the fetched data to the cache (even if this effect was
-        // superseded by a newer region) so the cache slot isn't left stuck as
-        // in-flight. commitTrackFetch itself no-ops the shared draw bookkeeping
-        // when the region is stale; we additionally gate the draw on cancelled.
-        const flatResults = resultsNested.flat();
-        const commit = await api.commitTrackFetch(id, flatResults, curDataIdx);
-        if (cancelled) {
-          return;
-        }
-        if (commit.ready) {
-          drawFromCache(commit.viewWindow, commit.groupScale);
-        }
-      } catch (e) {
-        console.error("Error in self-fetch for track", id, e);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selfFetchTrigger]);
-
   // MARK: [viewWindowConfigChange]
 
   useEffect(() => {
-    if (
-      viewWindowConfigChange &&
-      id in viewWindowConfigChange.trackToDrawId
-      // &&
-      // (trackModel.type in numericalTracks ||
-      //   getConfigOptions().displayMode === "density")
-    ) {
+    if (viewWindowConfigChange && id in viewWindowConfigChange.trackToDrawId) {
+      if (viewWindowConfigChange.curDataIdx !== dataIdx) {
+        return;
+      }
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState,
       );
@@ -581,7 +494,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ],
         xvalues: cacheTrackData[dataIdx]?.xvalues,
         placeFeature: cacheTrackData[dataIdx]?.placeFeature,
-        isInit: false,
+        curDataIdx: viewWindowConfigChange.curDataIdx,
       });
     }
   }, [viewWindowConfigChange]);
@@ -696,15 +609,27 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     >
       <div
         ref={legendRef}
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
+        style={
+          scrollPanEnabled
+            ? {
+                position: "sticky",
+                left: 0,
+                alignSelf: "stretch",
+                flexShrink: 0,
+                willChange: "transform",
+                zIndex: 2,
+                pointerEvents: "none",
+              }
+            : {
+                position: "absolute",
+                left: 0,
+                top: 0,
 
-          willChange: "transform",
-          zIndex: 2,
-          pointerEvents: "none",
-        }}
+                willChange: "transform",
+                zIndex: 2,
+                pointerEvents: "none",
+              }
+        }
       >
         <div
           style={{
@@ -785,15 +710,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   : 40
           }
           color={trackModel.isSelected ? "black" : "var(--font-color)"}
-          // Control visibility - show when loading
           isVisible={
             trackModel.id in messageData ||
             !viewComponent ||
             (viewComponent && dataIdx !== viewComponent.dataIdx)
           }
           legendWidth={legendWidth}
-          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-          // xOffset={0}
         >
           <div>
             {trackModel.id in messageData
@@ -829,7 +751,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           xOffset={
             windowWidth / 2 + legendWidth - (15 * metaSets.terms.length - 1)
           }
-          // Control visibility - show when data is loaded and items are hidden, but not when loading
           isVisible={
             viewComponent &&
             viewComponent.numHidden &&
@@ -894,7 +815,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           position: "relative",
           willChange: "transform",
-          left: legendWidth,
+          left: scrollPanEnabled ? 0 : legendWidth,
           //  + viewComponent?.xOffset || 0,
         }}
       >
