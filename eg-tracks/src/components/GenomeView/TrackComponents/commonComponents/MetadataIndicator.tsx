@@ -2,7 +2,7 @@ import React, { useState, useRef, useLayoutEffect, FC } from "react";
 import ReactDOM from "react-dom";
 import TrackModel from "../../../../models/TrackModel";
 
-import "./hoverToolTips/Tooltip.css";
+import "./HoverToolTips/Tooltip.css";
 
 import { variableIsObject } from "../../../../models/util";
 
