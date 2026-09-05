@@ -388,19 +388,20 @@ class NavigationContext {
       const endPos = Math.round(Number(endStr));
       const currFeature = this._features.find((f) => f.getName() === chrPart);
 
-      // Build the locus directly rather than round-tripping through
-      // ChromosomeInterval.parse. That helper shifts the start down by one for
-      // any string containing ":" (its 1-based "position format" adjustment),
-      // and nothing on the way back out adds it again - ChromosomeInterval and
-      // FeatureSegment both print the raw 0-based start. Feeding it a ":"
-      // string here therefore lost a base off the start on every
-      // string -> region -> string trip, and the drift accumulated because the
-      // view region is held as a string and re-parsed on each render. The
-      // multi-chromosome branch above already does this arithmetic without the
-      // adjustment, so this also makes the two branches agree.
+      // Coordinates are typed and displayed 1-based (see genomicCoordStart in
+      // TrackManager, which prints locus.start + 1), while ChromosomeInterval
+      // and the nav context are 0-based half-open. Convert the start here so
+      // parse is the exact inverse of the display.
+      //
+      // Done explicitly rather than via ChromosomeInterval.parse, whose
+      // equivalent shift is hidden behind "does the string contain a colon".
+      // Getting this out of step with the display is what made the view region
+      // lose a base on every string -> region -> string trip - and it
+      // accumulates, because userViewRegion is held as a string and re-parsed
+      // on each render.
       const locus = new ChromosomeInterval(
         currFeature.locus.chr,
-        startPos,
+        Math.max(startPos - 1, 0),
         endPos,
       );
 

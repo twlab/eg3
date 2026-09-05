@@ -888,26 +888,76 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         createRegionTrackState(0, "left", curViewWindow);
       }
     }
-    console.log(curBpInterval, "1");
-    globalTrackState.current.viewWindow = curViewWindow;
-    globalTrackState.current.bpInterval = curBpInterval;
-    // if (dataIdx.current === curDataIdx) {
-    //   viewWindowConfigData.current = {
-    //     viewWindow: curViewWindow,
-    //     groupScale: null,
-    //     dataIdx: curDataIdx,
-    //     contextNavCoord: { start: curBp, end: curBp + bpRegionSize.current },
-    //   };
-    // } else {
-    //   dataIdx.current = curDataIdx;
-    //   if (
-    //     globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
-    //   ) {
-    //     queueRegionToFetch(curDataIdx);
-    //   }
-    // }
-  }
 
+    globalTrackState.current.viewWindow = curViewWindow;
+
+    if (dataIdx.current === curDataIdx) {
+      console.log("same indx", curViewWindow);
+      // viewWindowConfigData.current = {
+      //   viewWindow: curViewWindow,
+      //   groupScale: null,
+      //   dataIdx: curDataIdx,
+      //   contextNavCoord: { start: curBp, end: curBp + bpRegionSize.current },
+      // };
+    } else {
+      if (useFineModeNav.current) {
+        const curViewRegion = objToInstanceAlign(
+          globalTrackState.current.trackStates[dataIdx.current].trackState
+            .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
+            .primaryVisData.visRegion,
+        );
+
+        if (curViewRegion) {
+          const visWidth =
+            globalTrackState.current.trackStates[dataIdx.current].trackState
+              .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
+              .primaryVisData.visWidth;
+          const viewWindowStart =
+            globalTrackState.current.trackStates[dataIdx.current].trackState
+              .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
+              .primaryVisData.viewWindow?.start;
+
+          const drawModel = new LinearDrawingModel(curViewRegion, visWidth);
+          let segment;
+
+          const newRegionXoffset =
+            dataIdx.current > curDataIdx
+              ? viewWindowStart + curViewWindow.start
+              : curViewWindow.start -
+                windowWidthRef.current +
+                Math.abs(windowWidthRef.current - viewWindowStart);
+          console.log(viewWindowStart, curViewWindow.start);
+          const newRegionBpStart = drawModel.xToBase(newRegionXoffset);
+
+          try {
+            segment = drawModel.xToSegmentCoordinate(newRegionXoffset);
+          } catch (error) {
+            console.log("");
+          }
+          if (NavigationContext.isGapFeature(segment.feature)) {
+            console.log(segment.getName());
+          } else {
+            const locus = segment.getLocus();
+
+            const start = Math.floor(locus.start);
+
+            globalTrackState.current.newRegionBpStart = newRegionBpStart;
+            globalTrackState.current.genomicCoordStart = start + 1;
+            console.log(`${locus.chr}:${start + 1}`, newRegionBpStart, "1");
+            // return `${locus.chr}:${Math.floor(locus.start)}`;
+          }
+        }
+      }
+
+      dataIdx.current = curDataIdx;
+
+      if (
+        globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
+      ) {
+        queueRegionToFetch(curDataIdx);
+      }
+    }
+  }
   // syncAfter is skipped while a pan is still in flight: re-anchoring keeps the
   // effective dragX identical, so the only thing syncScrollState would do there
   // is push view/dataIdx updates mid-pan, which is what settlePan owns instead.

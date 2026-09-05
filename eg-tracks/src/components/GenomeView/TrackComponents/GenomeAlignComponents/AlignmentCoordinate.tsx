@@ -11,7 +11,7 @@ const GAP_CHAR = "-";
 export function makeBaseNumberLookup(
   sequence: string,
   baseAtStart: number,
-  isReverse = false
+  isReverse = false,
 ): number[] {
   const diff = isReverse ? -1 : 1;
 
@@ -53,7 +53,7 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
       const cusorLocus = Math.floor(
         ((x - alignment.targetXSpan.start) /
           (alignment.targetXSpan.end - alignment.targetXSpan.start)) *
-          length
+          length,
       );
 
       const relativeDisplayStart =
@@ -72,7 +72,7 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
       const cusorTargetSeqLeft = record.targetSeq
         .substr(
           start + relativeDisplayStart,
-          relativeHighlightStart - relativeDisplayStart
+          relativeHighlightStart - relativeDisplayStart,
         )
         .toUpperCase();
       const cusorTargetSeqMid = record.targetSeq
@@ -81,14 +81,14 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
       const cusorTargetSeqRight = record.targetSeq
         .substr(
           start + relativeHighlightStart + highlightLength,
-          relativeDisplayEnd - relativeHighlightEnd
+          relativeDisplayEnd - relativeHighlightEnd,
         )
         .toUpperCase();
 
       const cusorQuerySeqLeft = record.querySeq
         .substr(
           start + relativeDisplayStart,
-          relativeHighlightStart - relativeDisplayStart
+          relativeHighlightStart - relativeDisplayStart,
         )
         .toUpperCase();
       const cusorQuerySeqMid = record.querySeq
@@ -97,13 +97,13 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
       const cusorQuerySeqRight = record.querySeq
         .substr(
           start + relativeHighlightStart + highlightLength,
-          relativeDisplayEnd - relativeHighlightEnd
+          relativeDisplayEnd - relativeHighlightEnd,
         )
         .toUpperCase();
 
       const targetBaseLookup = makeBaseNumberLookup(
         alignment.targetSequence,
-        visiblePart.relativeStart
+        visiblePart.relativeStart,
       );
       const targetStart =
         record.locus.start + targetBaseLookup[relativeDisplayStart];
@@ -121,7 +121,7 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
       const queryBaseLookup = makeBaseNumberLookup(
         alignment.querySequence,
         queryLookupStart,
-        isReverse
+        isReverse,
       );
 
       const queryStart = queryBaseLookup[relativeDisplayStart];
@@ -133,7 +133,7 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
         targetStart.toString().length,
         targetEnd.toString().length,
         queryStart.toString().length,
-        queryEnd.toString().length
+        queryEnd.toString().length,
       );
       const displayPix = maxTextLength * 10 + 10 + "px"; // text width with font-size: 16px;
       const tickLeft = _getick(cusorTargetSeqLeft, cusorQuerySeqLeft);

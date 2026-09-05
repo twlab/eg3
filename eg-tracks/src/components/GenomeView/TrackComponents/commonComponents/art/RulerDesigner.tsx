@@ -23,7 +23,7 @@ export class RulerDesigner {
    */
   constructor(
     tickSeparationHint = 60,
-    rulerElementFactory = new RulerElementFactory()
+    rulerElementFactory = new RulerElementFactory(),
   ) {
     this._tickSeparationHint = tickSeparationHint;
     this._elementFactory = rulerElementFactory;
@@ -78,10 +78,11 @@ export class RulerDesigner {
   design(viewRegion, width) {
     const navContext = viewRegion.getNavigationContext();
     const drawModel = new LinearDrawingModel(viewRegion, width);
+
     const numMajorTicks = drawModel.getDrawWidth() / this._tickSeparationHint;
     // If one wanted numMajorTicks to represent the min number of ticks, use Math.floor() instead.
     const log10BasesPerMajorTick = Math.ceil(
-      Math.log10(viewRegion.getWidth() / numMajorTicks)
+      Math.log10(viewRegion.getWidth() / numMajorTicks),
     );
     const basesPerMajorTick = Math.pow(10, log10BasesPerMajorTick); // Ensures each major tick is a power of 10.
     const basesPerMinorTick = basesPerMajorTick / MINOR_TICKS;
@@ -93,7 +94,7 @@ export class RulerDesigner {
     const elements: Array<any> = [];
     // The horizontal line spanning the width of the ruler
     elements.push(elementFactory.mainLine(drawModel.getDrawWidth()));
-
+    console.log(elements);
     const segments = viewRegion.getFeatureSegments(false);
     for (const segment of segments) {
       const segmentLocus = segment.getLocus();
@@ -103,14 +104,14 @@ export class RulerDesigner {
         segmentLocus,
         segmentContextSpan,
         true,
-        segment.feature.getIsReverseStrand()
+        segment.feature.getIsReverseStrand(),
       ); // Major
       if (basesPerMinorTick >= 1) {
         addTicks(
           segmentLocus,
           segmentContextSpan,
           false,
-          segment.feature.getIsReverseStrand()
+          segment.feature.getIsReverseStrand(),
         ); // Minor
       }
     }
@@ -191,7 +192,7 @@ export class RulerElementFactory {
   constructor(
     color = COLOR,
     majorTickHeight = MAJOR_TICK_HEIGHT,
-    fontSize = FONT_SIZE
+    fontSize = FONT_SIZE,
   ) {
     this.color = color;
     this.majorTickHeight = majorTickHeight;

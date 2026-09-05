@@ -27,6 +27,7 @@ class GenomicCoordinates extends React.Component<GenomicCoordinatesProps> {
    */
   render() {
     const { viewRegion, width, x } = this.props;
+
     const drawModel = new LinearDrawingModel(viewRegion, width);
     let segment;
     try {

@@ -40,6 +40,7 @@ class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
 
   getTooltipContents(relativeX) {
     const { viewRegion, width } = this.props;
+    console.log(relativeX);
     return (
       <GenomicCoordinates viewRegion={viewRegion} width={width} x={relativeX} />
     );
