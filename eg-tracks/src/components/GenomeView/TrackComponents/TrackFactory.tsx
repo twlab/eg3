@@ -429,9 +429,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
       if (
         !caches[`${id}`] ||
-        !globalTrackState.current.trackStates[dataIdx] ||
-        !globalTrackState.current.trackStates[dataIdx].trackState
-          .genomicFetchCoord
+        !globalTrackState.current?.trackStates?.[dataIdx] ||
+        !globalTrackState.current?.trackStates?.[dataIdx]?.trackState
+          ?.genomicFetchCoord
       ) {
         return;
       }
@@ -463,6 +463,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (viewWindowConfigChange.curDataIdx !== dataIdx) {
         return;
       }
+      if (!globalTrackState.current?.trackStates?.[dataIdx]?.trackState) {
+        return;
+      }
+
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState,
       );

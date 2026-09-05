@@ -363,6 +363,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const dragXBase = useRef(0);
   const ignoreScrollRef = useRef(false);
   const scrollRafPending = useRef(false);
+  const scrollRafId = useRef<number | null>(null);
   const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastScrollLeft = useRef(0);
   const needScrollReset = useRef(true);
@@ -370,7 +371,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastProcTimeRef = useRef(0);
   const lastProcSlRef = useRef(0);
   const pendingDrawRef = useRef<any>(null);
-  const pendingFetchIdx = useRef<number | null>(null);
   const scrollDebug = useRef({ commits: 0, reanchors: 0 });
   const startingBpArr = useRef<Array<any>>([]);
   const viewWindowConfigData = useRef<{
@@ -511,6 +511,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return lociMap;
   }
 
+  // queueRegionToFetch stamps caches[id][idx].dataCache = null to mark a fetch
+  // as in flight. Its "does this track still need data" test is
+  // `"dataCache" in cache[idx]`, so a null that never gets filled reads as
+  // "already has data" forever and the region is never retried. Whenever a
+  // batch is abandoned instead of posted, clear the markers it left behind so
+  // the next queueRegionToFetch asks for those regions again.
+  function releaseInFlightMarkers(message: Array<any>) {
+    if (!Array.isArray(message)) {
+      return;
+    }
+    for (const dataToFetch of message) {
+      const missingIdx = dataToFetch?.missingIdx;
+      if (missingIdx === undefined || !isInteger(String(missingIdx))) {
+        continue;
+      }
+      for (const trackModel of dataToFetch.trackModelArr ?? []) {
+        const curTrackCache =
+          trackManagerState.current.caches[`${trackModel.id}`];
+        if (curTrackCache?.[missingIdx]?.dataCache === null) {
+          delete curTrackCache[missingIdx].dataCache;
+        }
+      }
+    }
+  }
+
   const enqueueMessage = (message: Array<any>) => {
     messageQueue.current.push(message);
 
@@ -536,11 +561,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const message = messageQueue.current.pop();
 
+    // A batch covers [trackDataIdx - 1, trackDataIdx, trackDataIdx + 1], which
+    // is the same neighbourhood createInfiniteOnMessage draws from, so accept
+    // it while it is still within one window of where the user is. With a
+    // genomealign track the batch is held back until the alignment returns, and
+    // an exact match dropped every batch the user had already scrolled past by
+    // then - leaving those tracks stuck at dataCache: null.
     if (
       infiniteScrollWorkers.current &&
       infiniteScrollWorkers.current.worker.length > 0 &&
       message.length > 0 &&
-      message[0].trackDataIdx === dataIdx.current
+      Math.abs(message[0].trackDataIdx - dataIdx.current) <= 1
     ) {
       for (const workerObj of infiniteScrollWorkers.current.worker) {
         if (workerObj.hasOnMessage === false) {
@@ -603,6 +634,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ]);
         }
       }
+    } else {
+      // Batch is too far behind the view (or there are no workers), so it is
+      // dropped. Give back the in-flight markers it is holding so the regions
+      // it covered can be re-requested.
+      releaseInFlightMarkers(message);
     }
   };
   const processGenomeAlignQueue = () => {
@@ -724,11 +760,47 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     releaseScrollGuard();
   }
 
-  function syncScrollState(
-    commitRegion: boolean,
-    overrideDragX?: number,
-    allowFetch: boolean = true,
-  ) {
+  // Grow the fetched-section runway ahead of the user while they pan. This is
+  // the only piece of work that has to happen mid-gesture: without it the
+  // clamp in processScroll walls them off as soon as they reach the edge of
+  // the sections that already exist. It is deliberately structural only - no
+  // onNewRegion, no viewWindow/bpInterval, no dataIdx move, no fetch. All of
+  // that belongs to syncScrollState, which only settlePan calls.
+  function extendScrollRunway(targetDragX: number) {
+    const w = windowWidthRef.current;
+    if (!curGenomeConfig.current || w <= 0) {
+      return;
+    }
+    let guard = 0;
+    while (guard < 6) {
+      const rightEdge = sumArray(rightSectionSize.current);
+      const leftEdge = sumArray(leftSectionSize.current);
+      const growRight = targetDragX < 0 && -targetDragX >= rightEdge;
+      const growLeft = targetDragX > 0 && targetDragX >= leftEdge;
+      if (!growRight && !growLeft) {
+        return;
+      }
+      // The new section belongs to the boundary being crossed, not to wherever
+      // the pointer happens to be now, so build its view window from that.
+      const edgeDragX = growRight ? -rightEdge : leftEdge;
+      const edgeViewWindow = growRight
+        ? new OpenInterval(-((edgeDragX % w) + -w), -((edgeDragX % w) + -w) + w)
+        : new OpenInterval(
+            w * 3 - ((edgeDragX % w) + w),
+            w * 3 - (edgeDragX % w),
+          );
+      if (growRight) {
+        rightSectionSize.current.push(w);
+        createRegionTrackState(0, "right", edgeViewWindow);
+      } else {
+        leftSectionSize.current.push(w);
+        createRegionTrackState(0, "left", edgeViewWindow);
+      }
+      guard += 1;
+    }
+  }
+
+  function syncScrollState(commitRegion: boolean, overrideDragX?: number) {
     if (!curGenomeConfig.current) {
       return;
     }
@@ -741,19 +813,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       lastDragX.current = curDragXVal;
     }
 
+    // Which window this position falls in, and which way it is being read,
+    // have to be resolved before the bp maths below. curDragXVal % windowWidth
+    // is the offset *within* window ceil(curDragXVal / windowWidth), so pairing
+    // it with the region of a stale dataIdx.current measures the offset from
+    // the wrong window: the moment the user crosses a boundary the interval
+    // snaps back by a full window. dataIdx.current is only moved to match at
+    // the very bottom of this function, so read curDataIdx here instead.
+    const curDataIdx = Math.ceil(curDragXVal / windowWidthRef.current);
+    if (curDragXVal > 0 && side.current === "right") {
+      side.current = "left";
+    } else if (curDragXVal <= 0 && side.current === "left") {
+      side.current = "right";
+    }
+
     let curBp;
     let curBpInterval;
-    if (
-      useFineModeNav.current &&
-      globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
-        ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData
-        ?.viewWindowRegion
-    ) {
-      const primaryVisData =
-        globalTrackState.current.trackStates?.[dataIdx.current]?.trackState
-          ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData;
+    const finePrimaryVisData =
+      globalTrackState.current.trackStates?.[curDataIdx]?.trackState
+        ?.genomicFetchCoord[genomeConfig.genome.getName()]?.primaryVisData;
+    if (useFineModeNav.current && finePrimaryVisData?.viewWindowRegion) {
       curBpInterval = getRegionOffsetByX(
-        objToInstanceAlign(primaryVisData.viewWindowRegion),
+        objToInstanceAlign(finePrimaryVisData.viewWindowRegion),
         (curDragXVal % windowWidthRef.current) -
           (side.current === "left" ? windowWidthRef.current : 0),
       );
@@ -776,13 +857,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onNewRegion(curBpInterval.start, curBpInterval.end);
     }
     bpX.current = curBp;
-
-    const curDataIdx = Math.ceil(curDragXVal / windowWidthRef.current);
-    if (curDragXVal > 0 && side.current === "right") {
-      side.current = "left";
-    } else if (curDragXVal <= 0 && side.current === "left") {
-      side.current = "right";
-    }
 
     const curViewWindow =
       side.current === "right"
@@ -814,27 +888,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         createRegionTrackState(0, "left", curViewWindow);
       }
     }
+    console.log(curBpInterval, "1");
     globalTrackState.current.viewWindow = curViewWindow;
-    if (dataIdx.current === curDataIdx) {
-      viewWindowConfigData.current = {
-        viewWindow: curViewWindow,
-        groupScale: null,
-        dataIdx: curDataIdx,
-        contextNavCoord: { start: curBp, end: curBp + bpRegionSize.current },
-      };
-    } else {
-      dataIdx.current = curDataIdx;
-      if (
-        globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
-      ) {
-        if (allowFetch) {
-          pendingFetchIdx.current = null;
-          queueRegionToFetch(curDataIdx);
-        } else {
-          pendingFetchIdx.current = curDataIdx;
-        }
-      }
-    }
+    globalTrackState.current.bpInterval = curBpInterval;
+    // if (dataIdx.current === curDataIdx) {
+    //   viewWindowConfigData.current = {
+    //     viewWindow: curViewWindow,
+    //     groupScale: null,
+    //     dataIdx: curDataIdx,
+    //     contextNavCoord: { start: curBp, end: curBp + bpRegionSize.current },
+    //   };
+    // } else {
+    //   dataIdx.current = curDataIdx;
+    //   if (
+    //     globalTrackState.current.trackStates[curDataIdx]?.trackState.visData
+    //   ) {
+    //     queueRegionToFetch(curDataIdx);
+    //   }
+    // }
   }
 
   // syncAfter is skipped while a pan is still in flight: re-anchoring keeps the
@@ -870,6 +941,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       scheduleSettle();
       return;
     }
+    // A scroll frame is usually still queued when the pointer comes up, and it
+    // is what applies the edge clamps. Running it first means we read a final,
+    // clamped position here. Otherwise this commits the unclamped dragX, the
+    // frame then corrects it, and its own scheduleSettle commits a second time
+    // -- the duplicate syncScrollState after checkDrawData.
+    if (scrollRafPending.current) {
+      if (scrollRafId.current !== null) {
+        cancelAnimationFrame(scrollRafId.current);
+      }
+      processScroll();
+      // processScroll always arms a settle on the way out; this one is it.
+      if (scrollIdleTimer.current !== null) {
+        clearTimeout(scrollIdleTimer.current);
+        scrollIdleTimer.current = null;
+      }
+    }
     scrollFastRef.current = false;
     // A settle can be queued more than once for the same resting position: the
     // pointer release settles immediately, and a scroll rAF still in flight
@@ -877,15 +964,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // first of those has anything to commit.
     if (Math.abs(getDragX() - lastDragX.current) > DRAG_EPSILON_PX) {
       syncScrollState(true);
-    }
-    if (pendingFetchIdx.current !== null) {
-      pendingFetchIdx.current = null;
-      if (
-        globalTrackState.current.trackStates[dataIdx.current]?.trackState
-          .visData
-      ) {
-        queueRegionToFetch(dataIdx.current);
-      }
     }
     flushPendingDraw();
     const rootNow = scrollRootRef.current;
@@ -911,6 +989,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function processScroll() {
     scrollRafPending.current = false;
+    scrollRafId.current = null;
     const root = scrollRootRef.current;
     if (!root) {
       return;
@@ -966,32 +1045,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
 
-    let stepGuard = 0;
-    const idxBeforeSteps = dataIdx.current;
-    while (Math.ceil(dragXEff / w) !== dataIdx.current && stepGuard < 6) {
-      const targetIdx = Math.ceil(dragXEff / w);
-      const stepDir = targetIdx > dataIdx.current ? 1 : -1;
-      const nextIdx = dataIdx.current + stepDir;
-      if (nextIdx === targetIdx) {
-        syncScrollState(false, dragXEff, false);
-        break;
-      }
-      syncScrollState(false, nextIdx * w - 0.001, false);
-      stepGuard += 1;
-    }
-    if (
-      Math.ceil(dragXEff / w) !== dataIdx.current &&
-      dataIdx.current !== idxBeforeSteps
-    ) {
-      scheduleSettle();
-      lastScrollLeft.current = root.scrollLeft;
-      applyScrollTransforms();
-      if (!scrollRafPending.current) {
-        scrollRafPending.current = true;
-        requestAnimationFrame(processScroll);
-      }
-      return;
-    }
+    extendScrollRunway(dragXEff);
     const rightLimit = -(
       Math.floor(sumArray(rightSectionSize.current) + w) - 1
     );
@@ -1023,7 +1077,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     scrollRafPending.current = true;
-    requestAnimationFrame(processScroll);
+    scrollRafId.current = requestAnimationFrame(processScroll);
   }
 
   function updateScrollFreeze() {
@@ -2529,6 +2583,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 });
 
                 enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+              } else {
+                // The view moved while the alignment was being fetched, so this
+                // batch is abandoned. Hand back the in-flight markers it is
+                // holding, otherwise those regions read as "already has data"
+                // and are never re-requested.
+                releaseInFlightMarkers(curTrackState.fetchAfterGenAlignTracks);
               }
             } else {
               checkDrawData({
@@ -3422,7 +3482,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     needScrollReset.current = true;
     scrollFastRef.current = false;
     pendingDrawRef.current = null;
-    pendingFetchIdx.current = null;
     if (scrollIdleTimer.current !== null) {
       clearTimeout(scrollIdleTimer.current);
       scrollIdleTimer.current = null;
