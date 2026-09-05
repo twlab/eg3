@@ -643,7 +643,7 @@ const FullVisualizer: React.FC<any> = ({
       height={height}
     >
       {placements.map(renderAnnotation)}
-      {/* <line
+      <line
         x1={
           trackState?.genomicFetchCoord[trackState.primaryGenName]
             ?.primaryVisData?.viewWindow?.start
@@ -672,7 +672,7 @@ const FullVisualizer: React.FC<any> = ({
         y2={height}
         stroke="black"
         strokeWidth={1}
-      /> */}
+      />
     </svg>
   );
 };

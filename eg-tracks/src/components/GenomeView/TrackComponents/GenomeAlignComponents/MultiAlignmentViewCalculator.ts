@@ -104,6 +104,10 @@ const MERGE_PIXEL_DISTANCE = 200;
 const MIN_MERGE_DRAW_WIDTH = 5;
 const FEATURE_PLACER = new FeaturePlacer();
 
+// TEMPORARY: flip to false (or delete, with the [primaryVis] block below) once
+// the fine-mode bp drift is located.
+const DEBUG_PRIMARY_VIS = true;
+
 export class MultiAlignmentViewCalculator {
   private primaryGenome: string;
 
@@ -204,6 +208,46 @@ export class MultiAlignmentViewCalculator {
     const newViewWindow = newDrawModel.baseSpanToXSpan(
       newViewWindowRegion.getContextCoordinates()
     );
+
+    // TEMPORARY DIAGNOSTIC - delete this block and DEBUG_PRIMARY_VIS below.
+    // Tests whether the gap inflation is even across the three windows. The
+    // scale here is fixed by the MIDDLE window alone (newPixelsPerBase), so the
+    // middle is exact by construction; if the left/right windows carry a
+    // different gap density their pixel widths will not be windowWidth, and
+    // every consumer that assumes an evenly divided strip drifts.
+    if (DEBUG_PRIMARY_VIS) {
+      const [oldVisStart, oldVisEnd] = visRegion.getContextCoordinates();
+      const [oldVwStart, oldVwEnd] = viewWindowRegion.getContextCoordinates();
+      const [newVisStart] = newVisRegion.getContextCoordinates();
+      const [newVwStart, newVwEnd] = newViewWindowRegion.getContextCoordinates();
+      const windowPx = viewWindow.getLength();
+      const gapBasesTotal = allGaps.reduce((n, g: any) => n + g.length, 0);
+      console.log("[primaryVis]", {
+        // gap inflation per window, in bases
+        leftBasesOld: oldVwStart - oldVisStart,
+        leftBasesNew: newVwStart - newVisStart,
+        leftGapBases: newVwStart - newVisStart - (oldVwStart - oldVisStart),
+        midBasesOld: oldVwEnd - oldVwStart,
+        midBasesNew: newVwEnd - newVwStart,
+        midGapBases: newVwEnd - newVwStart - (oldVwEnd - oldVwStart),
+        rightBasesOld: oldVisEnd - oldVwEnd,
+        rightGapBases:
+          newVisRegion.getWidth() -
+          (newVwEnd - newVisStart) -
+          (oldVisEnd - oldVwEnd),
+        // the two numbers every downstream consumer assumes
+        // viewWindowStart should equal windowWidth; visWidth should equal 3x it
+        viewWindowStart: newViewWindow.start,
+        windowWidth: windowPx,
+        viewWindowStartDelta: newViewWindow.start - windowPx,
+        visWidth: newVisWidth,
+        visWidthDelta: newVisWidth - windowPx * 3,
+        // scale + raw gap totals
+        newPixelsPerBase,
+        gapCount: allGaps.length,
+        gapBasesTotal,
+      });
+    }
 
     return {
       visRegion: newVisRegion,

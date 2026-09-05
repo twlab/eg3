@@ -388,10 +388,21 @@ class NavigationContext {
       const endPos = Math.round(Number(endStr));
       const currFeature = this._features.find((f) => f.getName() === chrPart);
 
-      // Format with space for ChromosomeInterval.parse compatibility
-      const cleanedStr = `${currFeature.locus.chr}:${startPos}-${endPos}`;
-
-      const locus = ChromosomeInterval.parse(cleanedStr);
+      // Build the locus directly rather than round-tripping through
+      // ChromosomeInterval.parse. That helper shifts the start down by one for
+      // any string containing ":" (its 1-based "position format" adjustment),
+      // and nothing on the way back out adds it again - ChromosomeInterval and
+      // FeatureSegment both print the raw 0-based start. Feeding it a ":"
+      // string here therefore lost a base off the start on every
+      // string -> region -> string trip, and the drift accumulated because the
+      // view region is held as a string and re-parsed on each render. The
+      // multi-chromosome branch above already does this arithmetic without the
+      // adjustment, so this also makes the two branches agree.
+      const locus = new ChromosomeInterval(
+        currFeature.locus.chr,
+        startPos,
+        endPos,
+      );
 
       const contextCoordsArray = this.convertGenomeIntervalToBases(locus);
 
