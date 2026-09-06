@@ -115,6 +115,7 @@ class LinearDrawingModel {
    */
   xToSegmentCoordinate(pixel: number): FeatureSegment {
     const contextBase = Math.floor(this.xToBase(pixel));
+
     return this._viewRegion
       .getNavigationContext()
       .convertBaseToFeatureCoordinate(contextBase);

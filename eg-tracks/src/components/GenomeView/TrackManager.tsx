@@ -893,12 +893,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (dataIdx.current === curDataIdx) {
       console.log("same indx", curViewWindow);
-      // viewWindowConfigData.current = {
-      //   viewWindow: curViewWindow,
-      //   groupScale: null,
-      //   dataIdx: curDataIdx,
-      //   contextNavCoord: { start: curBp, end: curBp + bpRegionSize.current },
-      // };
+      viewWindowConfigData.current = {
+        viewWindow: curViewWindow,
+        groupScale: null,
+        dataIdx: curDataIdx,
+        contextNavCoord: { start: curBp, end: curBp + bpRegionSize.current },
+      };
     } else {
       if (useFineModeNav.current) {
         const curViewRegion = objToInstanceAlign(
@@ -943,6 +943,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             globalTrackState.current.newRegionBpStart = newRegionBpStart;
             globalTrackState.current.genomicCoordStart = start + 1;
+            // newRegionBpStart is a context coordinate in THIS region's
+            // gap-inflated nav context. The region we are moving into inserts a
+            // different set of gaps, so that number does not mean the same
+            // position over there. The genomic locus does - keep it raw and
+            // 0-based so the draw side can convert it into whichever context it
+            // ends up holding.
+            globalTrackState.current.newRegionLocus = {
+              chr: locus.chr,
+              start,
+              // xToSegmentCoordinate floors the context base internally, so the
+              // locus above has already lost the sub-base part of the position.
+              // Keep it from the unfloored xToBase and add it back on the draw
+              // side - at roughly 2px per base it is worth about 2px of view
+              // window placement. The fraction is "how far into this base we
+              // are", which means the same thing in either nav context.
+              frac: newRegionBpStart - Math.floor(newRegionBpStart),
+            };
             console.log(`${locus.chr}:${start + 1}`, newRegionBpStart, "1");
             // return `${locus.chr}:${Math.floor(locus.start)}`;
           }
@@ -3007,8 +3024,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const genomeName = curGenomeConfig.current?.genome.getName();
       if (
         useFineModeNav.current &&
-        globalTrackState.current.trackStates[newDrawData.curDataIdx].trackState
-          .genomicFetchCoord
+        globalTrackState.current?.trackStates?.[newDrawData.curDataIdx]
+          ?.trackState?.genomicFetchCoord
       ) {
         let trackState = {
           ...globalTrackState.current.trackStates[newDrawData.curDataIdx]
@@ -3017,32 +3034,124 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         const primaryVisData =
           trackState.genomicFetchCoord[genomeName].primaryVisData;
-
         const startViewWindow = primaryVisData.viewWindow;
-        const tmpCur = globalTrackState.current.viewWindow;
-        let tmpStart;
-        let tmpEnd;
-        if (tmpCur) {
-          tmpStart = tmpCur.start;
-          tmpEnd = tmpCur.end;
-        } else {
-          tmpStart = 0;
-          tmpEnd = 1;
-        }
-        let curBpInterval;
-        const viewWindowRegion = objToInstanceAlign(
-          primaryVisData.viewWindowRegion,
-        );
 
-        curBpInterval = getRegionOffsetByX(
-          objToInstanceAlign(viewWindowRegion),
-          (getDragX() % windowWidthRef.current) -
-            (side.current === "left" ? windowWidthRef.current : 0),
-        );
-        onNewRegion(curBpInterval.start, curBpInterval.end);
-        const start = tmpStart - windowWidthRef.current + startViewWindow.start;
-        const end = start + windowWidthRef.current;
-        curViewWindow = new OpenInterval(start, end);
+        if (globalTrackState.current.newRegionBpStart) {
+          const curViewRegion = objToInstanceAlign(primaryVisData.visRegion);
+          const curViewWindowRegion = objToInstanceAlign(
+            primaryVisData.viewWindowRegion,
+          );
+          // curViewRegion is the whole three-window strip, so the draw width
+          // has to be the strip's width. windowWidth made pixelsPerBase three
+          // times too small, and every baseToX taken from it.
+          const drawModel = new LinearDrawingModel(
+            curViewRegion,
+            primaryVisData.visWidth,
+          );
+          const prevBpStart = Math.floor(
+            globalTrackState.current.newRegionBpStart,
+          );
+
+          onNewRegion(prevBpStart, prevBpStart + windowWidthRef.current);
+
+          // Re-derive the landed position in THIS region's context from the
+          // genomic locus, rather than reusing the previous region's context
+          // coordinate - the two contexts carry different gaps, which is why
+          // their viewWindow.start values differ at all.
+          const landedLocus = globalTrackState.current.newRegionLocus;
+          let landedContextBase;
+          if (landedLocus) {
+            const [landedInterval] = curViewRegion
+              .getNavigationContext()
+              .convertGenomeIntervalToBases(
+                new ChromosomeInterval(
+                  landedLocus.chr,
+                  landedLocus.start,
+                  landedLocus.start + 1,
+                ),
+              );
+            landedContextBase = landedInterval?.start;
+            if (landedContextBase !== undefined && landedLocus.frac) {
+              landedContextBase += landedLocus.frac;
+            }
+          }
+
+          // Match what TrackFactory's viewWindowConfigChange path computes,
+          // since that is the one already known to render correctly - it is why
+          // the position only comes right once you scroll inside the region.
+          // It does
+          //     xDiff = cleanViewWindow.start - visData.viewWindow.start
+          //     placed = primaryVisData.viewWindow.start + xDiff
+          // i.e. a clean -> STRIP conversion. visData.viewWindow.start is the
+          // clean inset stamped by createRegionTrackState; primaryVisData's is
+          // the gap-inflated one. The renderer consumes strip frame, so the
+          // first-load path has to produce strip frame too.
+          // Where the landed coordinate actually sits in THIS region's strip.
+          const stripX = drawModel.baseToX(
+            landedContextBase !== undefined ? landedContextBase : prevBpStart,
+          );
+          const start = stripX;
+          const end = start + windowWidthRef.current;
+          curViewWindow = new OpenInterval(start, end);
+
+          // dragX still describes the region we came FROM. The two strips
+          // inflate by different gap counts, so carrying the same scroll offset
+          // across the handoff lands on a different genomic position - that is
+          // the jump. Re-anchor it to the coordinate we actually landed on.
+          //
+          // The renderer's relationship is
+          //     viewWindow.start = stripInset + (cleanStart - cleanInset)
+          //     dragX            = dataIdx * w - s
+          // with s the offset inside this region's middle window, so pinning s
+          // to the landed position keeps the view continuous and leaves
+          // cleanStart consistent with the window above on the next sync.
+          const subWindowOffset = stripX - startViewWindow.start;
+          const targetDragX =
+            newDrawData.curDataIdx * windowWidthRef.current - subWindowOffset;
+          console.log(
+            "newRegion viewWindow",
+            curViewWindow,
+            "stripInset",
+            startViewWindow.start,
+            "s",
+            subWindowOffset,
+            "dragX",
+            getDragX(),
+            "->",
+            targetDragX,
+          );
+          // Only while the gesture is over - re-anchoring mid-drag would fight
+          // the user's own scrolling.
+          if (scrollPanEnabled && !isDragging.current) {
+            clampScrollTo(targetDragX);
+          }
+        } else {
+          const tmpCur = globalTrackState.current.viewWindow;
+          let tmpStart;
+          let tmpEnd;
+          if (tmpCur) {
+            tmpStart = tmpCur.start;
+            tmpEnd = tmpCur.end;
+          } else {
+            tmpStart = 0;
+            tmpEnd = 1;
+          }
+          let curBpInterval;
+          const viewWindowRegion = objToInstanceAlign(
+            primaryVisData.viewWindowRegion,
+          );
+
+          curBpInterval = getRegionOffsetByX(
+            viewWindowRegion,
+            (getDragX() % windowWidthRef.current) -
+              (side.current === "left" ? windowWidthRef.current : 0),
+          );
+          onNewRegion(curBpInterval.start, curBpInterval.end);
+          const start =
+            tmpStart - windowWidthRef.current + startViewWindow.start;
+          const end = start + windowWidthRef.current;
+          curViewWindow = new OpenInterval(start, end);
+        }
       } else if (
         selectedRegionSet &&
         bpRegionSize.current === curGenomeConfig.current.navContext._totalBases
@@ -3050,6 +3159,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curViewWindow = new OpenInterval(0, windowWidthRef.current);
       } else {
         curViewWindow = globalTrackState.current.viewWindow;
+      }
+
+      // Make the region's stored viewWindow authoritative. createRegionTrackState
+      // stamped it with whatever was current when the window was created, and
+      // several draw paths read it straight off globalTrackState rather than
+      // from newDrawData - TrackFactory spreads the stored trackState first and
+      // only overwrites viewWindow when newDrawData carries one. That stale
+      // value is what a track can paint with on its first frame before the
+      // fresh one arrives.
+      if (
+        curViewWindow &&
+        globalTrackState.current?.trackStates?.[newDrawData.curDataIdx]
+          ?.trackState
+      ) {
+        globalTrackState.current.trackStates[
+          newDrawData.curDataIdx
+        ].trackState.viewWindow = curViewWindow;
       }
 
       for (const trackId in newDrawData.trackToDrawId) {
