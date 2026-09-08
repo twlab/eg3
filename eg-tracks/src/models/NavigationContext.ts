@@ -156,13 +156,27 @@ class NavigationContext {
    */
   getFeatureStart(feature: Feature): number {
     const coordinate = this._minCoordinateForFeature.get(feature);
-    if (coordinate === undefined) {
+    if (coordinate !== undefined) {
+      return coordinate;
+    }
+
+    // This map is keyed by object identity, which does not survive a structural
+    // copy: _.cloneDeep clones the objects in _features but reuses the ORIGINAL
+    // objects as the Map keys, so every lookup on a cloned context misses and
+    // this used to throw. Callers that deep-clone track state - TrackFactory's
+    // viewWindowConfigChange and screenshot paths - then lost anything that
+    // walks features, the region set dividers among them. Fall back to the
+    // feature's position in _features, whose starts are _sortedFeatureStarts by
+    // construction, and re-key the map so the lookup is only slow once.
+    const index = this._features.indexOf(feature);
+    if (index < 0) {
       throw new RangeError(
         `Feature "${feature.getName()}" not in this navigation context`,
       );
-    } else {
-      return coordinate;
     }
+    const start = this._sortedFeatureStarts[index];
+    this._minCoordinateForFeature.set(feature, start);
+    return start;
   }
 
   /**

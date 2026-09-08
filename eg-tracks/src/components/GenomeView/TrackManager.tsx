@@ -925,11 +925,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           try {
             segment = drawModel.xToSegmentCoordinate(newRegionXoffset);
           } catch (error) {
-            console.log("");
+
           }
           if (NavigationContext.isGapFeature(segment.feature)) {
-            console.log(segment.getName());
-          } else {
+            // console.log( segment.getLocus(), segment);
+            
+          } 
+          else {
             const locus = segment.getLocus();
 
             const start = Math.floor(locus.start);
@@ -954,7 +956,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               curDataIdx: dataIdx.current,
               frac: newRegionBpStart - Math.floor(newRegionBpStart),
             };
-            console.log(`${locus.chr}:${start + 1}`, newRegionBpStart, "1");
+            // console.log(`${locus.chr}:${start + 1}`, newRegionBpStart, "1");
             // return `${locus.chr}:${Math.floor(locus.start)}`;
           }
         }
@@ -3016,28 +3018,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (newDrawData && Object.keys(newDrawData.trackToDrawId).length > 0) {
       let curViewWindow;
       const genomeName = curGenomeConfig.current?.genome.getName();
+
       if (
+        selectedRegionSet &&
+        bpRegionSize.current === curGenomeConfig.current.navContext._totalBases
+      ) {
+        curViewWindow = new OpenInterval(0, windowWidthRef.current);
+      } else if (
         useFineModeNav.current &&
-        globalTrackState.current?.trackStates?.[newDrawData.curDataIdx]
+        globalTrackState.current?.trackStates?.[newDrawData?.curDataIdx]
           ?.trackState?.genomicFetchCoord
       ) {
         let trackState = {
           ...globalTrackState.current.trackStates[newDrawData.curDataIdx]
             .trackState,
         };
-        console.log(newDrawData);
+
         const primaryVisData =
           trackState.genomicFetchCoord[genomeName].primaryVisData;
         const startViewWindow = primaryVisData.viewWindow;
-        console.log(
-          newDrawData.curDataIdx ===
-            globalTrackState.current?.newRegionLocus?.curDataIdx - 1,
-          newDrawData?.curDataIdx ===
-            globalTrackState.current?.newRegionLocus?.curDataIdx + 1,
-          newDrawData.curDataIdx,
-          globalTrackState.current?.newRegionLocus?.curDataIdx + 1,
-          globalTrackState.current?.newRegionLocus?.curDataIdx - 1,
-        );
+
         if (
           globalTrackState.current.newRegionBpStart &&
           (newDrawData.curDataIdx - 1 ===
@@ -3046,12 +3046,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               globalTrackState.current?.newRegionLocus?.curDataIdx)
         ) {
           const curViewRegion = objToInstanceAlign(primaryVisData.visRegion);
-          const curViewWindowRegion = objToInstanceAlign(
-            primaryVisData.viewWindowRegion,
-          );
-          // curViewRegion is the whole three-window strip, so the draw width
-          // has to be the strip's width. windowWidth made pixelsPerBase three
-          // times too small, and every baseToX taken from it.
+
+          // use expanded region, all three views to calcculate the draw model, and full three region width.
+
           const drawModel = new LinearDrawingModel(
             curViewRegion,
             primaryVisData.visWidth,
@@ -3062,10 +3059,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           onNewRegion(prevBpStart, prevBpStart + windowWidthRef.current);
 
-          // Re-derive the landed position in THIS region's context from the
-          // genomic locus, rather than reusing the previous region's context
-          // coordinate - the two contexts carry different gaps, which is why
-          // their viewWindow.start values differ at all.
+          // recalcualte the actual windowView, because gaps in each region are different
+          // so we use the actual genomic locus and bp to find the exact pixel in the new region
           const landedLocus = globalTrackState.current.newRegionLocus;
           let landedContextBase;
           if (landedLocus) {
@@ -3102,12 +3097,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const end = start + windowWidthRef.current;
           curViewWindow = new OpenInterval(start, end);
 
-          // dragX still describes the region we came FROM. The two strips
+          // dragX still describes the region we came from not the new region gaps and region data. The two strips
           // inflate by different gap counts, so carrying the same scroll offset
           // across the handoff lands on a different genomic position - that is
           // the jump. Re-anchor it to the coordinate we actually landed on.
           //
-          // The renderer's relationship is
+          // the renderer's relationship is
           //     viewWindow.start = stripInset + (cleanStart - cleanInset)
           //     dragX            = dataIdx * w - s
           // with s the offset inside this region's middle window, so pinning s
@@ -3117,8 +3112,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const targetDragX =
             newDrawData.curDataIdx * windowWidthRef.current - subWindowOffset;
 
-          // Only while the gesture is over - re-anchoring mid-drag would fight
-          // the user's own scrolling.
+          // re adjust the mouse dragX position because of different region size because of gaps
+
           if (scrollPanEnabled && !isDragging.current) {
             clampScrollTo(targetDragX);
           }
@@ -3149,11 +3144,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const end = start + windowWidthRef.current;
           curViewWindow = new OpenInterval(start, end);
         }
-      } else if (
-        selectedRegionSet &&
-        bpRegionSize.current === curGenomeConfig.current.navContext._totalBases
-      ) {
-        curViewWindow = new OpenInterval(0, windowWidthRef.current);
       } else {
         curViewWindow = globalTrackState.current.viewWindow;
       }

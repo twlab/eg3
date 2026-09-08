@@ -1,8 +1,11 @@
 # Version history
 
-## 62.0.0
+## 63.0.0
 
--
+- fixed genomealign bug where other tracks don't load when panning fast
+- fixed genomealign tracks, when loading new regions tracks are slightly misalign from where user last landed in previous region
+
+## 62.0.0
 
 ## 61.9.5
 
