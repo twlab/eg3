@@ -94,7 +94,7 @@ export class RulerDesigner {
     const elements: Array<any> = [];
     // The horizontal line spanning the width of the ruler
     elements.push(elementFactory.mainLine(drawModel.getDrawWidth()));
-    console.log(elements);
+
     const segments = viewRegion.getFeatureSegments(false);
     for (const segment of segments) {
       const segmentLocus = segment.getLocus();

@@ -892,7 +892,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     globalTrackState.current.viewWindow = curViewWindow;
 
     if (dataIdx.current === curDataIdx) {
-      console.log("same indx", curViewWindow);
       viewWindowConfigData.current = {
         viewWindow: curViewWindow,
         groupScale: null,
@@ -901,21 +900,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     } else {
       if (useFineModeNav.current) {
-        const curViewRegion = objToInstanceAlign(
-          globalTrackState.current.trackStates[dataIdx.current].trackState
-            .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
-            .primaryVisData.visRegion,
-        );
+        const curPrimaryVisData =
+          globalTrackState.current?.trackStates?.[dataIdx.current]?.trackState
+            ?.genomicFetchCoord?.[curGenomeConfig.current?.genome.getName()]
+            ?.primaryVisData;
+        const curViewRegion = objToInstanceAlign(curPrimaryVisData.visRegion);
 
         if (curViewRegion) {
-          const visWidth =
-            globalTrackState.current.trackStates[dataIdx.current].trackState
-              .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
-              .primaryVisData.visWidth;
-          const viewWindowStart =
-            globalTrackState.current.trackStates[dataIdx.current].trackState
-              .genomicFetchCoord[curGenomeConfig.current?.genome.getName()]
-              .primaryVisData.viewWindow?.start;
+          const visWidth = curPrimaryVisData.visWidth;
+          const viewWindowStart = curPrimaryVisData.viewWindow?.start;
 
           const drawModel = new LinearDrawingModel(curViewRegion, visWidth);
           let segment;
@@ -923,10 +916,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const newRegionXoffset =
             dataIdx.current > curDataIdx
               ? viewWindowStart + curViewWindow.start
-              : curViewWindow.start -
-                windowWidthRef.current +
-                Math.abs(windowWidthRef.current - viewWindowStart);
-          console.log(viewWindowStart, curViewWindow.start);
+              : curViewWindow.start +
+                viewWindowStart -
+                windowWidthRef.current * 2;
+
           const newRegionBpStart = drawModel.xToBase(newRegionXoffset);
 
           try {
@@ -958,6 +951,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               // side - at roughly 2px per base it is worth about 2px of view
               // window placement. The fraction is "how far into this base we
               // are", which means the same thing in either nav context.
+              curDataIdx: dataIdx.current,
               frac: newRegionBpStart - Math.floor(newRegionBpStart),
             };
             console.log(`${locus.chr}:${start + 1}`, newRegionBpStart, "1");
@@ -3031,12 +3025,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...globalTrackState.current.trackStates[newDrawData.curDataIdx]
             .trackState,
         };
-
+        console.log(newDrawData);
         const primaryVisData =
           trackState.genomicFetchCoord[genomeName].primaryVisData;
         const startViewWindow = primaryVisData.viewWindow;
-
-        if (globalTrackState.current.newRegionBpStart) {
+        console.log(
+          newDrawData.curDataIdx ===
+            globalTrackState.current?.newRegionLocus?.curDataIdx - 1,
+          newDrawData?.curDataIdx ===
+            globalTrackState.current?.newRegionLocus?.curDataIdx + 1,
+          newDrawData.curDataIdx,
+          globalTrackState.current?.newRegionLocus?.curDataIdx + 1,
+          globalTrackState.current?.newRegionLocus?.curDataIdx - 1,
+        );
+        if (
+          globalTrackState.current.newRegionBpStart &&
+          (newDrawData.curDataIdx - 1 ===
+            globalTrackState.current?.newRegionLocus?.curDataIdx ||
+            newDrawData?.curDataIdx + 1 ===
+              globalTrackState.current?.newRegionLocus?.curDataIdx)
+        ) {
           const curViewRegion = objToInstanceAlign(primaryVisData.visRegion);
           const curViewWindowRegion = objToInstanceAlign(
             primaryVisData.viewWindowRegion,
@@ -3108,18 +3116,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const subWindowOffset = stripX - startViewWindow.start;
           const targetDragX =
             newDrawData.curDataIdx * windowWidthRef.current - subWindowOffset;
-          console.log(
-            "newRegion viewWindow",
-            curViewWindow,
-            "stripInset",
-            startViewWindow.start,
-            "s",
-            subWindowOffset,
-            "dragX",
-            getDragX(),
-            "->",
-            targetDragX,
-          );
+
           // Only while the gesture is over - re-anchoring mid-drag would fight
           // the user's own scrolling.
           if (scrollPanEnabled && !isDragging.current) {

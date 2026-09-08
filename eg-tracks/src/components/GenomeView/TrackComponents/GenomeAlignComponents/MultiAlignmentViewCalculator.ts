@@ -104,10 +104,6 @@ const MERGE_PIXEL_DISTANCE = 200;
 const MIN_MERGE_DRAW_WIDTH = 5;
 const FEATURE_PLACER = new FeaturePlacer();
 
-// TEMPORARY: flip to false (or delete, with the [primaryVis] block below) once
-// the fine-mode bp drift is located.
-const DEBUG_PRIMARY_VIS = true;
-
 export class MultiAlignmentViewCalculator {
   private primaryGenome: string;
 
@@ -136,7 +132,7 @@ export class MultiAlignmentViewCalculator {
       const oldRecordsArray = rawRecords;
       const { newRecordsArray, allGaps } = this.refineRecordsArray(
         oldRecordsArray,
-        visData
+        visData,
       );
       recordsArray = newRecordsArray;
 
@@ -147,21 +143,21 @@ export class MultiAlignmentViewCalculator {
           ...multiAlign,
           [records.query]: records.isBigChain
             ? this.alignRough(
-              records.id,
-              records.query,
-              records.records,
-              visData
-            )
+                records.id,
+                records.query,
+                records.records,
+                visData,
+              )
             : this.alignFine(
-              records.id,
-              records.query,
-              records.records,
-              visData,
-              primaryVisData,
-              allGaps
-            ),
+                records.id,
+                records.query,
+                records.records,
+                visData,
+                primaryVisData,
+                allGaps,
+              ),
         }),
-        {}
+        {},
       );
     } else {
       // const recordsPromise = this._alignmentFetchers.map(async (fetcher) => {
@@ -182,10 +178,10 @@ export class MultiAlignmentViewCalculator {
             records.id,
             records.query,
             records.records,
-            visData
+            visData,
           ),
         }),
-        {}
+        {},
       );
     }
   }
@@ -206,48 +202,8 @@ export class MultiAlignmentViewCalculator {
     const newVisWidth = newVisRegion.getWidth() * newPixelsPerBase;
     const newDrawModel = new LinearDrawingModel(newVisRegion, newVisWidth);
     const newViewWindow = newDrawModel.baseSpanToXSpan(
-      newViewWindowRegion.getContextCoordinates()
+      newViewWindowRegion.getContextCoordinates(),
     );
-
-    // TEMPORARY DIAGNOSTIC - delete this block and DEBUG_PRIMARY_VIS below.
-    // Tests whether the gap inflation is even across the three windows. The
-    // scale here is fixed by the MIDDLE window alone (newPixelsPerBase), so the
-    // middle is exact by construction; if the left/right windows carry a
-    // different gap density their pixel widths will not be windowWidth, and
-    // every consumer that assumes an evenly divided strip drifts.
-    if (DEBUG_PRIMARY_VIS) {
-      const [oldVisStart, oldVisEnd] = visRegion.getContextCoordinates();
-      const [oldVwStart, oldVwEnd] = viewWindowRegion.getContextCoordinates();
-      const [newVisStart] = newVisRegion.getContextCoordinates();
-      const [newVwStart, newVwEnd] = newViewWindowRegion.getContextCoordinates();
-      const windowPx = viewWindow.getLength();
-      const gapBasesTotal = allGaps.reduce((n, g: any) => n + g.length, 0);
-      console.log("[primaryVis]", {
-        // gap inflation per window, in bases
-        leftBasesOld: oldVwStart - oldVisStart,
-        leftBasesNew: newVwStart - newVisStart,
-        leftGapBases: newVwStart - newVisStart - (oldVwStart - oldVisStart),
-        midBasesOld: oldVwEnd - oldVwStart,
-        midBasesNew: newVwEnd - newVwStart,
-        midGapBases: newVwEnd - newVwStart - (oldVwEnd - oldVwStart),
-        rightBasesOld: oldVisEnd - oldVwEnd,
-        rightGapBases:
-          newVisRegion.getWidth() -
-          (newVwEnd - newVisStart) -
-          (oldVisEnd - oldVwEnd),
-        // the two numbers every downstream consumer assumes
-        // viewWindowStart should equal windowWidth; visWidth should equal 3x it
-        viewWindowStart: newViewWindow.start,
-        windowWidth: windowPx,
-        viewWindowStartDelta: newViewWindow.start - windowPx,
-        visWidth: newVisWidth,
-        visWidthDelta: newVisWidth - windowPx * 3,
-        // scale + raw gap totals
-        newPixelsPerBase,
-        gapCount: allGaps.length,
-        gapBasesTotal,
-      });
-    }
 
     return {
       visRegion: newVisRegion,
@@ -261,14 +217,14 @@ export class MultiAlignmentViewCalculator {
       return new DisplayedRegionModel(
         newNavContext,
         navContextBuilder.convertOldCoordinates(contextStart),
-        navContextBuilder.convertOldCoordinates(contextEnd)
+        navContextBuilder.convertOldCoordinates(contextEnd),
       );
     }
   }
   // return a new recordObj array with gaps inserted, and allGap contextBase.
   refineRecordsArray(
     recordsArray: RecordsObj[],
-    visData: ViewExpansion
+    visData: ViewExpansion,
   ): RefinedObj {
     const minGapLength = MIN_GAP_LENGTH;
     // use a new array of objects to manipulate later, and
@@ -279,7 +235,7 @@ export class MultiAlignmentViewCalculator {
       // Calculate context coordinates of the records and gaps within.
       const placements = this._computeContextLocations(
         recordsObj.records,
-        visData
+        visData,
       );
       const primaryGaps = this._getPrimaryGenomeGaps(placements, minGapLength);
       const primaryGapsObj = primaryGaps.reduce((resultObj, gap) => {
@@ -294,7 +250,7 @@ export class MultiAlignmentViewCalculator {
         if (contextBase in allGapsObj) {
           allGapsObj[contextBase] = Math.max(
             allGapsObj[contextBase],
-            primaryGapsObj[contextBase]
+            primaryGapsObj[contextBase],
           );
         } else {
           allGapsObj[contextBase] = primaryGapsObj[contextBase];
@@ -341,14 +297,14 @@ export class MultiAlignmentViewCalculator {
           const thePlacement = records.placements.filter(
             (placement) =>
               placement.contextSpan.start < insertBase &&
-              placement.contextSpan.end > insertBase
+              placement.contextSpan.end > insertBase,
           )[0]; // There could only be 0 or 1 placement pass the filter.
           if (thePlacement) {
             const visibleTargetSeq =
               thePlacement.visiblePart.getTargetSequence();
             const insertIndex = indexLookup(
               visibleTargetSeq,
-              insertBase - thePlacement.contextSpan.start
+              insertBase - thePlacement.contextSpan.start,
             );
             const relativePosition =
               thePlacement.visiblePart.sequenceInterval.start + insertIndex;
@@ -366,7 +322,7 @@ export class MultiAlignmentViewCalculator {
         }
 
         records.recordsObj.records = records.placements.map(
-          (placement) => placement.record
+          (placement) => placement.record,
         );
       }
     }
@@ -393,7 +349,7 @@ export class MultiAlignmentViewCalculator {
     records: AlignmentRecord[],
     oldVisData: ViewExpansion,
     visData: ViewExpansion,
-    allGaps: Gap[]
+    allGaps: Gap[],
   ): Alignment {
     // There's a lot of steps, so bear with me...
     const { visRegion, visWidth } = visData;
@@ -416,7 +372,7 @@ export class MultiAlignmentViewCalculator {
       const visiblePart = placement.visiblePart;
       const newContextSpan = new OpenInterval(
         navContextBuilder.convertOldCoordinates(oldContextSpan.start),
-        navContextBuilder.convertOldCoordinates(oldContextSpan.end)
+        navContextBuilder.convertOldCoordinates(oldContextSpan.end),
       );
 
       const xSpan = drawModel.baseSpanToXSpan(newContextSpan);
@@ -430,13 +386,13 @@ export class MultiAlignmentViewCalculator {
         targetSeq,
         minGapLength,
         xSpan.start,
-        drawModel
+        drawModel,
       );
       placement.querySegments = this._placeSequenceSegments(
         querySeq,
         minGapLength,
         xSpan.start,
-        drawModel
+        drawModel,
       );
     }
     const drawGapTexts: Array<any> = [];
@@ -494,8 +450,8 @@ export class MultiAlignmentViewCalculator {
         preferredTargetStart <= lastXEnd || preferredTargetEnd >= xStart;
       const targetGapTextXSpan = shiftTargetTxt
         ? targetIntervalPlacer.place(
-          new OpenInterval(preferredTargetStart, preferredTargetEnd)
-        )
+            new OpenInterval(preferredTargetStart, preferredTargetEnd),
+          )
         : new OpenInterval(preferredTargetStart, preferredTargetEnd);
       const targetGapXSpan = new OpenInterval(lastXEnd, xStart);
 
@@ -509,12 +465,12 @@ export class MultiAlignmentViewCalculator {
         preferredQueryEnd >= placement.queryXSpan!.start;
       const queryGapTextXSpan = shiftQueryTxt
         ? queryIntervalPlacer.place(
-          new OpenInterval(preferredQueryStart, preferredQueryEnd)
-        )
+            new OpenInterval(preferredQueryStart, preferredQueryEnd),
+          )
         : new OpenInterval(preferredQueryStart, preferredQueryEnd);
       const queryGapXSpan = new OpenInterval(
         lastPlacement.queryXSpan!.end,
-        placement.queryXSpan!.start
+        placement.queryXSpan!.start,
       );
       drawGapTexts.push({
         targetGapText: placementTargetGap,
@@ -532,7 +488,7 @@ export class MultiAlignmentViewCalculator {
     const queryRegion = this._makeQueryGenomeRegion(
       queryPieces,
       visWidth,
-      drawModel
+      drawModel,
     );
 
     return {
@@ -550,7 +506,7 @@ export class MultiAlignmentViewCalculator {
   }
 
   /**
-   * 
+   *
    * Groups and merges alignment records based on their proximity in the query (secondary) genome.  Then, calculates
    * draw positions for all records.
    *
@@ -563,9 +519,8 @@ export class MultiAlignmentViewCalculator {
     id: any,
     query: string,
     alignmentRecords: AlignmentRecord[],
-    visData: ViewExpansion
+    visData: ViewExpansion,
   ): Alignment {
-
     const { visRegion, visWidth } = visData;
     const drawModel = new LinearDrawingModel(visRegion, visWidth);
     const mergeDistance = drawModel.xWidthToBases(MERGE_PIXEL_DISTANCE);
@@ -578,25 +533,25 @@ export class MultiAlignmentViewCalculator {
         (record.getIsReverseStrandQuery()
           ? -1 * record.getLength()
           : record.getLength()),
-      0
+      0,
     );
     const plotStrand = aggregateStrandsNumber < 0 ? "-" : "+";
 
     const placedRecords = this._computeContextLocations(
       alignmentRecords,
-      visData
+      visData,
     );
     // First, merge the alignments by query genome coordinates
     let queryLocusMerges = ChromosomeInterval.mergeAdvanced(
       // Note that the third parameter gets query loci
       placedRecords,
       mergeDistance,
-      (placement) => placement.visiblePart.getQueryLocus()
+      (placement) => placement.visiblePart.getQueryLocus(),
     );
 
     // Sort so we place the largest query loci first in the next step
     queryLocusMerges = queryLocusMerges.sort(
-      (a, b) => b.locus.getLength() - a.locus.getLength()
+      (a, b) => b.locus.getLength() - a.locus.getLength(),
     );
 
     const intervalPlacer = new IntervalPlacer(MARGIN);
@@ -612,25 +567,25 @@ export class MultiAlignmentViewCalculator {
 
       // Find the center of the primary segments, and try to center the merged query locus there too.
       const drawCenter = computeCentroid(
-        placementsInMerge.map((segment) => segment.targetXSpan)
+        placementsInMerge.map((segment) => segment.targetXSpan),
       );
       const targetXStart = Math.min(
-        ...placementsInMerge.map((segment) => segment.targetXSpan.start)
+        ...placementsInMerge.map((segment) => segment.targetXSpan.start),
       );
       const targetEnd = Math.max(
-        ...placementsInMerge.map((segment) => segment.targetXSpan.end)
+        ...placementsInMerge.map((segment) => segment.targetXSpan.end),
       );
       const mergeTargetXSpan = new OpenInterval(targetXStart, targetEnd);
       const preferredStart = drawCenter - halfDrawWidth;
       const preferredEnd = drawCenter + halfDrawWidth;
       // Place it so it doesn't overlap other segments
       const mergeXSpan = intervalPlacer.place(
-        new OpenInterval(preferredStart, preferredEnd)
+        new OpenInterval(preferredStart, preferredEnd),
       );
 
       // Put the actual secondary/query genome segments in the placed merged query locus from above
       const queryLoci = placementsInMerge.map(
-        (placement) => placement.record.queryLocus
+        (placement) => placement.record.queryLocus,
       );
       const isReverse = plotStrand === "-" ? true : false;
       const lociXSpans = this._placeInternalLoci(
@@ -638,7 +593,7 @@ export class MultiAlignmentViewCalculator {
         queryLoci,
         mergeXSpan,
         isReverse,
-        drawModel
+        drawModel,
       );
       for (let i = 0; i < queryLoci.length; i++) {
         placementsInMerge[i].queryXSpan = lociXSpans[i];
@@ -674,7 +629,7 @@ export class MultiAlignmentViewCalculator {
    */
   _computeContextLocations(
     records: AlignmentRecord[],
-    visData: ViewExpansion
+    visData: ViewExpansion,
   ): PlacedAlignment[] {
     const { visRegion, visWidth } = visData;
 
@@ -705,7 +660,7 @@ export class MultiAlignmentViewCalculator {
    */
   _getPrimaryGenomeGaps(
     placements: PlacedAlignment[],
-    minGapLength: number
+    minGapLength: number,
   ): Gap[] {
     const gaps: Array<any> = [];
     for (const placement of placements) {
@@ -713,11 +668,11 @@ export class MultiAlignmentViewCalculator {
       const segments = segmentSequence(
         visiblePart.getTargetSequence(),
         minGapLength,
-        true
+        true,
       );
       const baseLookup = makeBaseNumberLookup(
         visiblePart.getTargetSequence(),
-        contextSpan.start
+        contextSpan.start,
       );
       for (const segment of segments) {
         gaps.push({
@@ -733,7 +688,7 @@ export class MultiAlignmentViewCalculator {
     sequence: string,
     minGapLength: number,
     startX: number,
-    drawModel: LinearDrawingModel
+    drawModel: LinearDrawingModel,
   ) {
     const segments = segmentSequence(sequence, minGapLength);
     segments.sort((a, b) => a.index - b.index);
@@ -745,7 +700,7 @@ export class MultiAlignmentViewCalculator {
       const xSpanLength = drawModel.basesToXWidth(bases);
       (segment as PlacedSequenceSegment).xSpan = new OpenInterval(
         x,
-        x + xSpanLength
+        x + xSpanLength,
       );
       x += xSpanLength;
     }
@@ -769,12 +724,12 @@ export class MultiAlignmentViewCalculator {
         baseLookup = makeBaseNumberLookup(
           querySeq,
           visiblePart.getQueryLocusFine().end,
-          true
+          true,
         );
       } else {
         baseLookup = makeBaseNumberLookup(
           querySeq,
-          visiblePart.getQueryLocusFine().start
+          visiblePart.getQueryLocusFine().start,
         );
       }
       const queryChr = record.queryLocus.chr;
@@ -792,20 +747,20 @@ export class MultiAlignmentViewCalculator {
           segmentLocus = new ChromosomeInterval(
             queryChr,
             base - locusLength,
-            base
+            base,
           );
         } else {
           segmentLocus = new ChromosomeInterval(
             queryChr,
             base,
-            base + locusLength
+            base + locusLength,
           );
         }
         queryPieces.push({
           queryFeature: new Feature(
             undefined,
             segmentLocus,
-            record.queryStrand
+            record.queryStrand,
           ),
           queryXSpan: xSpan,
         });
@@ -818,7 +773,7 @@ export class MultiAlignmentViewCalculator {
   _makeQueryGenomeRegion(
     genomePieces: QueryGenomePiece[],
     visWidth: number,
-    drawModel: LinearDrawingModel
+    drawModel: LinearDrawingModel,
   ): DisplayedRegionModel {
     // Sort by start
     const sortedPieces = genomePieces
@@ -858,7 +813,7 @@ export class MultiAlignmentViewCalculator {
     internalLoci: ChromosomeInterval[],
     parentXSpan: OpenInterval,
     drawReverse: boolean,
-    drawModel: LinearDrawingModel
+    drawModel: LinearDrawingModel,
   ) {
     const xSpans: Array<any> = [];
 
@@ -912,7 +867,7 @@ class IntervalPlacer {
     let finalLocation = preferredLocation;
     if (
       this._placements.some(
-        (placement) => placement.getOverlap(preferredLocation) != null
+        (placement) => placement.getOverlap(preferredLocation) != null,
       )
     ) {
       const center = 0.5 * (preferredLocation.start + preferredLocation.end);
@@ -921,13 +876,13 @@ class IntervalPlacer {
         Math.abs(center - this.rightExtent);
       finalLocation = isInsertLeft
         ? new OpenInterval(
-          this.leftExtent - preferredLocation.getLength(),
-          this.leftExtent
-        )
+            this.leftExtent - preferredLocation.getLength(),
+            this.leftExtent,
+          )
         : new OpenInterval(
-          this.rightExtent,
-          this.rightExtent + preferredLocation.getLength()
-        );
+            this.rightExtent,
+            this.rightExtent + preferredLocation.getLength(),
+          );
     }
 
     this._placements.push(finalLocation);
@@ -949,7 +904,7 @@ class IntervalPlacer {
 function computeCentroid(intervals: OpenInterval[]) {
   const numerator = _.sumBy(
     intervals,
-    (interval) => 0.5 * interval.getLength() * (interval.start + interval.end)
+    (interval) => 0.5 * interval.getLength() * (interval.start + interval.end),
   );
   const denominator = _.sumBy(intervals, (interval) => interval.getLength());
   return numerator / denominator;
@@ -957,7 +912,7 @@ function computeCentroid(intervals: OpenInterval[]) {
 
 function doLociTouchInGenome(
   locus1: ChromosomeInterval,
-  locus2: ChromosomeInterval
+  locus2: ChromosomeInterval,
 ) {
   if (locus1.chr !== locus2.chr) {
     return false;
