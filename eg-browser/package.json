@@ -1,7 +1,7 @@
 {
   "name": "wuepgg",
   "private": false,
-  "version": "63.0.0",
+  "version": "63.0.1",
   "license": "SEE LICENSE IN LICENSE.txt",
   "type": "module",
   "main": "dist-lib/index.umd.cjs",
