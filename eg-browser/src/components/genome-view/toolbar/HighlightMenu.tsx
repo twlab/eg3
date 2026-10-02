@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { PortalContext } from "wuepgg3-track";
 import "./HighlightMenu.css";
+import browserIcon from "@/assets/favicon-144.png";
 import ResizablePanel from "../../ui/panel/ResizablePanel";
 import {
   selectCurrentSession,
@@ -115,7 +116,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
       }}
     >
       <img
-        src="/browser/img/favicon-144.png"
+        src={browserIcon}
         alt="Browser Icon"
         style={{
           height: "clamp(80px, 10vw, 150px)",

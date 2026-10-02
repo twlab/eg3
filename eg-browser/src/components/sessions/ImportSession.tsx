@@ -12,6 +12,7 @@ import { importOneSession } from "@/lib/redux/thunk/session";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/TabSessionUI";
 import { getDatabase, ref, remove } from "firebase/database";
 import { generateUUID } from "wuepgg3-track";
+import { downloadTextFile } from "@/lib/downloadFile";
 export default function ImportSession() {
   const dispatch = useAppDispatch();
 
@@ -145,12 +146,11 @@ export default function ImportSession() {
             <p>
               You can also{" "}
               <button
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href =
-                    import.meta.env.BASE_URL + "/example_session.json";
-                  link.download = "example_session.json";
-                  link.click();
+                onClick={async () => {
+                  const { default: example } = await import(
+                    "../../../public/example_session.json?raw"
+                  );
+                  downloadTextFile(example, "example_session.json");
                 }}
                 className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-medium bg-tint dark:bg-dark-tint text-white focus:outline-none cursor-pointer transition-opacity hover:opacity-90"
               >

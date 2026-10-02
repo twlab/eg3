@@ -6,7 +6,7 @@ import Gene from "../../../models/Gene";
 import GeneSearchBoxBase from "./GeneSearchBoxBase";
 
 import Genome from "../../../models/Genome";
-import { GenomeCoordinate } from "@/types";
+import { GenomeCoordinate } from "../../../types";
 
 interface GeneSearchBoxProps {
   navContext: NavigationContext; // The current navigation context

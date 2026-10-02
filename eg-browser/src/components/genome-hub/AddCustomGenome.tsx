@@ -41,6 +41,7 @@ import {
 import { selectCustomGenomes } from "@/lib/redux/slices/genomeHubSlice";
 import GenomePicker from "../genome-picker/GenomePicker";
 import { type SpeciesInfo } from "wuepgg3-track";
+import { downloadTextFile } from "@/lib/downloadFile";
 
 // Shared control styling so every header button is the same height/shape.
 const CTRL_BASE =
@@ -972,13 +973,14 @@ export default function AddCustomGenome() {
                                 </button>
                                 You can also{" "}
                                 <button
-                                  onClick={() => {
-                                    const link = document.createElement("a");
-                                    link.href =
-                                      import.meta.env.BASE_URL +
-                                      "/example_hg19.json";
-                                    link.download = "example_hg19.json";
-                                    link.click();
+                                  onClick={async () => {
+                                    const { default: example } = await import(
+                                      "../../../public/example_hg19.json?raw"
+                                    );
+                                    downloadTextFile(
+                                      example,
+                                      "example_hg19.json",
+                                    );
                                   }}
                                   className="inline-flex items-center px-2 py-0.5 rounded-md text-sm font-medium bg-tint dark:bg-dark-tint text-white focus:outline-none cursor-pointer transition-opacity hover:opacity-90"
                                 >

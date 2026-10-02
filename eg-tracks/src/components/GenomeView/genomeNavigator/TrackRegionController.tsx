@@ -2,7 +2,7 @@ import React, { useState, FC } from "react";
 import classNames from "classnames";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import Genome from "../../../models/Genome";
-import { GenomeCoordinate } from "@/types/track-container";
+import { GenomeCoordinate } from "../../../types/track-container";
 import TrackRegionButton from "./TrackRegionButton";
 import RegionsPanel from "./RegionsPanel";
 

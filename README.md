@@ -51,6 +51,19 @@
   ➜  press h + enter to show help
     ```
 
+## Build
+
+eg-tracks is not published on its own; the browser and the tracks are built
+together from `eg-browser` in one of two modes:
+
+| Command (in `eg-browser`) | Output | Purpose |
+| --- | --- | --- |
+| `yarn build` | `dist/` | Hosted website, served under `/browser/` (`yarn deploy` uploads it) |
+| `yarn build:lib` | `dist-lib/` | The `wuepgg` npm package, with eg-tracks bundled in |
+
+`npm publish` (from `eg-browser`) runs `build:lib` automatically. Only React and
+React DOM are left as peer dependencies; everything else is bundled.
+
 ## Use the Browser as a module in your web application
 
 * install the package from NPM registry
@@ -62,10 +75,14 @@
 * import the package and related style sheet
 
     ```javascript
-    import GenomeHub from "wuepg"
+    import { GenomeHub } from "wuepgg"
     import "wuepgg/style.css"
-    
-    <GenomeHub name={exampleName} dataHub={exampleDataHub} />
+
+    <GenomeHub
+      genomeName="hg38"
+      viewRegion="chr7:27053397-27373765"
+      tracks={exampleTracks}
+    />
     ```
 
 * example of screenshot for each step can found below:

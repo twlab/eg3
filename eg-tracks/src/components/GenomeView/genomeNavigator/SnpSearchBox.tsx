@@ -4,7 +4,7 @@ import _ from "lodash";
 import NavigationContext from "../../../models/NavigationContext";
 
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import { GenomeCoordinate } from "@/types";
+import { GenomeCoordinate } from "../../../types";
 
 const DEBOUNCE_INTERVAL = 250;
 const SNP_ENDPOINTS = {

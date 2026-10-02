@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.lib.tsbuildinfo",
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "..",
+    "paths": {
+      "@/*": ["./src/*"],
+      "wuepgg3-track": ["../eg-tracks/src/index"]
+    },
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false
+  },
+  "include": ["src", "../eg-tracks/src"],
+  "exclude": ["src/main.tsx", "src/versionCheck.ts"]
+}
