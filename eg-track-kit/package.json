@@ -1,0 +1,59 @@
+{
+  "name": "wuepgg-tracks",
+  "private": false,
+  "version": "0.1.0",
+  "description": "The WashU Epigenome Browser's tracks on their own: fetch a track's data, format it and draw it, without the browser around them.",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "types": "./dist/eg-track-kit/src/index.d.ts",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/eg-track-kit/src/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./draw": {
+      "types": "./dist/eg-track-kit/src/draw.d.ts",
+      "import": "./dist/draw.js"
+    },
+    "./fetch": {
+      "types": "./dist/eg-track-kit/src/fetch.d.ts",
+      "import": "./dist/fetch.js"
+    },
+    "./fetch-local": {
+      "types": "./dist/eg-track-kit/src/fetch-local.d.ts",
+      "import": "./dist/fetch-local.js"
+    },
+    "./workers": {
+      "types": "./dist/eg-track-kit/src/workers.d.ts",
+      "import": "./dist/workers.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist",
+    "LICENSE.txt"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "report": "vite build --mode report",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.10",
+    "vite-plugin-dts": "^4.5.4",
+    "wuepgg3-track": "*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  }
+}

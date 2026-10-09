@@ -1,8 +1,8 @@
 import { DEFAULT_OPTIONS as defaultBigBedTrack } from "./bedComponents/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
+import { ANNOTATION_DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/defaultOptions";
 import { DEFAULT_OPTIONS as defaultOmeroTrack } from "./imageTrackComponents/OmeroTrackComponents";
-import { DEFAULT_OPTIONS as defaultCategorical } from "../../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
+import { CATEGORICAL_DEFAULT_OPTIONS as defaultCategorical } from "../../../trackConfigs/config-menu-models.tsx/defaultOptions";
 import { DEFAULT_OPTIONS as defaultMethylc } from "./MethylcComponents/MethylCTrackComputation";
 import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComponents";
 import { DEFAULT_OPTIONS as defaultBoxplotTrack } from "./commonComponents/stats/BoxplotTrackComponents";

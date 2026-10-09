@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "workspaces": [
     "eg-tracks",
+    "eg-track-kit",
     "eg-browser",
     "docs"
   ]

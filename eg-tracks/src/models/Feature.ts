@@ -419,8 +419,11 @@ export class Fiber extends Feature {
    * @return {this}
    */
   withFiber(score: number | string, onString: string, offString: string): this {
-    this.ons = onString !== "." ? JSON.parse("[" + onString + "]") : [];
-    this.offs = offString !== "." ? JSON.parse("[" + offString + "]") : [];
+    /* A record whose last column is empty comes back without it. */
+    const positions = (list: string) =>
+      list && list !== "." ? JSON.parse("[" + list + "]") : [];
+    this.ons = positions(onString);
+    this.offs = positions(offString);
     this.score = score;
     return this;
   }

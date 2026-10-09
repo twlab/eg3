@@ -18,7 +18,7 @@ import { SortItemsOptions } from "../../../models/SortItemsOptions";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import TrackLegend from "./commonComponents/TrackLegend";
 import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
-import { objToInstanceAlign } from "../TrackManager";
+import { objToInstanceAlign } from "../../../models/objToInstanceAlign";
 import BedAnnotation from "./bedComponents/BedAnnotation";
 import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
 import {

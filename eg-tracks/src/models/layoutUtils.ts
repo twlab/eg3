@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Model, Actions } from "flexlayout-react"; // Use named imports based on what's available
-import { generateUUID } from "../util";
+import { generateUUID } from "../uuid";
 /**
  * utilities to deal with layouts
  * @autor Daofeng Li

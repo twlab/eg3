@@ -16,8 +16,8 @@ import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
+import { objToInstanceAlign } from "../../models/objToInstanceAlign";
 import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import TrackModel from "../../models/TrackModel";
 import _, { throttle } from "lodash";
@@ -124,35 +124,7 @@ const MIN_VIEW_REGION_SIZE = 5;
 // offset, not from the user panning, so anything under this is not a real move.
 const DRAG_EPSILON_PX = 0.5;
 
-export function objToInstanceAlign(alignment: { [key: string]: any }) {
-  if (!alignment) {
-    return;
-  }
-  let visRegionFeatures: Feature[] = [];
-
-  for (let feature of alignment._navContext._features) {
-    let newChr = new ChromosomeInterval(
-      feature.locus.chr,
-      feature.locus.start,
-      feature.locus.end,
-    );
-    visRegionFeatures.push(
-      new Feature(feature.name, newChr, feature.strand, feature.value),
-    );
-  }
-
-  let visRegionNavContext = new NavigationContext(
-    alignment._navContext._name,
-    visRegionFeatures,
-  );
-
-  let visRegion = new DisplayedRegionModel(
-    visRegionNavContext,
-    alignment._startBase,
-    alignment._endBase,
-  );
-  return visRegion;
-}
+export { objToInstanceAlign };
 
 export function bpNavToGenNav(bpNaletr: Array<any>, genome: GenomeConfig) {
   let genRes: Array<any> = [];

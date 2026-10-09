@@ -1,15 +1,7 @@
 import { TrackConfig } from "./TrackConfig";
+import { ANNOTATION_DEFAULT_OPTIONS as DEFAULT_OPTIONS } from "./defaultOptions";
 
-export const DEFAULT_OPTIONS = {
-  displayMode: AnnotationDisplayModes.FULL,
-  color: "blue",
-  color2: "red",
-  maxRows: 20,
-  height: 40, // For density display mode
-  hideMinimalItems: false,
-  sortItems: false,
-  aggregateMethod: "COUNT",
-};
+export { DEFAULT_OPTIONS };
 import { AnnotationDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";
 import {
   PrimaryColorConfig,

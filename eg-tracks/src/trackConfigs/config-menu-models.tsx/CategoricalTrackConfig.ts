@@ -6,14 +6,9 @@ import MaxRowsConfig from "../config-menu-components.tsx/MaxRowsConfig";
 
 import CategoryColorConfig from "../config-menu-components.tsx/CategoryColorConfig";
 import RowHeightConfig from "../config-menu-components.tsx/RowHeightConfig";
-export const DEFAULT_OPTIONS = {
-  height: 20,
-  color: "blue",
-  maxRows: 1,
-  hiddenPixels: 0.5,
-  alwaysDrawLabel: false,
-  category: {},
-};
+import { CATEGORICAL_DEFAULT_OPTIONS as DEFAULT_OPTIONS } from "./defaultOptions";
+
+export { DEFAULT_OPTIONS };
 
 enum BedColumnIndex {
   CATEGORY = 3,

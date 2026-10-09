@@ -8,7 +8,7 @@ import { SequenceSegment } from "../../../../models/AlignmentStringUtils";
 import OpenInterval from "../../../../models/OpenInterval";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import { Sequence } from "./Sequence";
-import { generateUUID } from "../../../../util";
+import { generateUUID } from "../../../../uuid";
 export const DEFAULT_OPTIONS = {
   height: 80,
   primaryColor: "darkblue",
