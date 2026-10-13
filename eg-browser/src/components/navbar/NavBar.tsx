@@ -14,7 +14,14 @@ import {
 } from "@heroicons/react/24/outline";
 import classNames from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 
 import Logo from "../../assets/logo.png";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
@@ -53,9 +60,102 @@ import RegionsPanel from "./RegionsPanel";
 import type { GenomeCoordinate } from "wuepgg3-track";
 import SessionToggleButton from "../sessions/SessionToggleButton";
 
+const BROWSER_TITLES = {
+  epigenome: "Epigenome Browser",
+  pangenome: "Pangenome Browser",
+} as const;
+type BrowserName = keyof typeof BROWSER_TITLES;
+const BROWSER_NAMES = Object.keys(BROWSER_TITLES) as BrowserName[];
+/* The two names swapping places, drawn as half a turn of a ring seen from
+   a little above: how long it takes, how far the far side rises and the
+   near side dips - the bar has little room either way - how much larger
+   the near side is drawn and smaller the far side, and how many points of
+   the turn are drawn. */
+const TITLE_TURN_MS = 550;
+const TITLE_TURN_RISE_PX = 7;
+const TITLE_TURN_DIP_PX = 6;
+const TITLE_TURN_DEPTH = 0.06;
+const TITLE_TURN_STEPS = 24;
+
 export default function NavBar(props) {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  /* Which browser the title names; the other sits beside it, small, in a
+     button in the lower right corner, and clicking it swaps the two. Only
+     the title for now. */
+  const [titleBrowser, setTitleBrowser] = useState<BrowserName>("epigenome");
+  const otherBrowser: BrowserName =
+    titleBrowser === "epigenome" ? "pangenome" : "epigenome";
+  /* Each name's element, and where both were just before a swap, which the
+     turn below is drawn from. */
+  const titleNames = useRef<Partial<Record<BrowserName, HTMLElement | null>>>(
+    {},
+  );
+  const titleTurnFrom = useRef<Partial<Record<BrowserName, DOMRect>> | null>(
+    null,
+  );
+  const turnTitle = () => {
+    const from: Partial<Record<BrowserName, DOMRect>> = {};
+    for (const name of BROWSER_NAMES) {
+      const element = titleNames.current[name];
+      if (element) from[name] = element.getBoundingClientRect();
+    }
+    titleTurnFrom.current = from;
+    setTitleBrowser(otherBrowser);
+  };
+  /* The swap, drawn as the pair turning about the point between them: each
+     name starts where it was and comes round to where it now is - the one
+     going into the title over the top, the one going into the corner
+     underneath - growing or shrinking on the way. Started before the
+     browser paints the swapped names, so neither is seen to jump; a click
+     mid-turn starts the next turn from wherever the names have got to. */
+  useLayoutEffect(() => {
+    const from = titleTurnFrom.current;
+    titleTurnFrom.current = null;
+    if (
+      !from ||
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+    const turns: Animation[] = [];
+    for (const name of BROWSER_NAMES) {
+      const element = titleNames.current[name];
+      const start = from[name];
+      if (!element || !start) continue;
+      const end = element.getBoundingClientRect();
+      if (!(end.height > 0)) continue;
+      const dx = start.left - end.left;
+      const dy = start.top - end.top;
+      const scale = start.height / end.height;
+      /* Into the title round the far side, over the top; into the corner
+         round the near side, underneath and in front. */
+      const farSide = name === titleBrowser;
+      const swing = farSide ? -TITLE_TURN_RISE_PX : TITLE_TURN_DIP_PX;
+      const depth = farSide ? -TITLE_TURN_DEPTH : TITLE_TURN_DEPTH;
+      const frames: Keyframe[] = [];
+      for (let step = 0; step <= TITLE_TURN_STEPS; step++) {
+        const angle = (Math.PI * step) / TITLE_TURN_STEPS;
+        const round = Math.sin(angle);
+        /* Across with the cosine, up or down with the sine: the share of
+           the way still to go, from 1 to 0. */
+        const toGo = (1 + Math.cos(angle)) / 2;
+        frames.push({
+          transform: `translate(${dx * toGo}px, ${
+            dy * toGo + swing * round
+          }px) scale(${(1 + (scale - 1) * toGo) * (1 + depth * round)})`,
+          opacity: farSide ? 1 - 0.45 * round : 1,
+          /* Above the page under the bar, which the near side dips over,
+             and the near side above the far. */
+          zIndex: farSide ? 60 : 61,
+        });
+      }
+      turns.push(
+        element.animate(frames, { duration: TITLE_TURN_MS, easing: "linear" }),
+      );
+    }
+    return () => turns.forEach((turn) => turn.cancel());
+  }, [titleBrowser]);
 
   const navRef = useRef<HTMLDivElement | null>(null);
   const tabButtonsRef = useRef<HTMLDivElement | null>(null);
@@ -768,8 +868,49 @@ export default function NavBar(props) {
               ) : (
                 <>
                   {!currentSession && (
-                    <div style={{ fontSize: 21 }}>
-                      <span>WashU </span> Epigenome Browser
+                    <div
+                      className="flex items-baseline"
+                      style={{ fontSize: 21 }}
+                    >
+                      <span>WashU&nbsp;</span>
+                      {/* The title, and the button in the corner holding the
+                          other name. The names swap places between the two
+                          on a click (see turnTitle); the button stays. Each
+                          name is above the button's face, so the one leaving
+                          it is not hidden behind it. */}
+                      {[titleBrowser, otherBrowser].map((name) => {
+                        const label = (
+                          <span
+                            key={name}
+                            ref={(element) => {
+                              titleNames.current[name] = element;
+                            }}
+                            className="relative z-[1] inline-block whitespace-nowrap"
+                            style={{ transformOrigin: "0 0" }}
+                          >
+                            {BROWSER_TITLES[name]}
+                          </span>
+                        );
+                        return name === titleBrowser ? (
+                          label
+                        ) : (
+                          <button
+                            key="corner"
+                            type="button"
+                            onClick={turnTitle}
+                            title={`Switch to the ${BROWSER_TITLES[name]}`}
+                            className="ml-2 inline-flex items-baseline rounded-full border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-dark-background px-2.5 py-0.5 text-gray-600 dark:text-gray-300 shadow-sm cursor-pointer transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:border-blue-500 dark:hover:text-blue-300"
+                            style={{
+                              fontSize: 12,
+                              lineHeight: "16px",
+                              position: "relative",
+                              top: 3,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </>
