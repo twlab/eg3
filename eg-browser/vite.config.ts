@@ -27,6 +27,15 @@ const alias = {
   "@": path.resolve(__dirname, "./src"),
 };
 
+// The pangenome browser's database worker (src/core/gbz/worker) runs the
+// SQLite wasm build, which locates its own .wasm relative to itself: that
+// breaks if it is prebundled, and only survives in a module worker - the
+// default iife worker output drops the import.meta.url it reads.
+const gbzWorkerConfig: Pick<UserConfig, "optimizeDeps" | "worker"> = {
+  optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
+  worker: { format: "es" },
+};
+
 // Hosted website: `vite` / `vite build` (deployed to epigenomegateway.org/browser/).
 const appConfig: UserConfig = {
   plugins: [react(), tailwindcss(), versionFile()],
@@ -36,6 +45,7 @@ const appConfig: UserConfig = {
     __BUILD_VERSION__: JSON.stringify(buildVersion),
   },
   resolve: { alias },
+  ...gbzWorkerConfig,
   base: "/browser/",
 };
 
@@ -64,6 +74,7 @@ const libConfig: UserConfig = {
     __BUILD_VERSION__: JSON.stringify(buildVersion),
   },
   resolve: { alias },
+  ...gbzWorkerConfig,
   // The website's public/ folder (3Dmol, example files, logos) is not shipped.
   publicDir: false,
   build: {

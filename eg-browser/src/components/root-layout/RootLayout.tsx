@@ -5,6 +5,7 @@ import {
 } from "../../lib/redux/hooks";
 
 import GenomePicker from "../genome-picker/GenomePicker";
+import PangenomePicker from "../genome-picker/PangenomePicker";
 
 import TabView from "../ui/tab-view/TabView";
 import AddCustomGenome from "../genome-hub/AddCustomGenome";
@@ -105,6 +106,11 @@ export default function RootLayout(props: AppProps) {
   const currentTab = useAppSelector(selectNavigationTab);
   const navSearchOpen = useAppSelector(selectNavSearchOpen);
   const genomePickerTab = useAppSelector(selectGenomePickerTab);
+  /* Which browser the start page is for, as the title's switch in the
+     NavBar says: eg3's genomes, or a pangenome to open. */
+  const [browser, setBrowser] = useState<"epigenome" | "pangenome">(
+    "epigenome",
+  );
   const initialState = useRef(true);
   const handlePortalRef = useCallback((el: HTMLDivElement | null) => {
     setPortalContainer(el);
@@ -456,6 +462,8 @@ export default function RootLayout(props: AppProps) {
                   sessions={sessions}
                   currentSession={currentSession}
                   isPackageMode={!!isPackageMode}
+                  browser={browser}
+                  onBrowserChange={setBrowser}
                 />
               </div>
             )}
@@ -509,7 +517,28 @@ export default function RootLayout(props: AppProps) {
                     zIndex: 5,
                   }}
                 >
-                  {!sessionId && !emptyPropsPackageMode ? (
+                  {!sessionId && !emptyPropsPackageMode && browser === "pangenome" ? (
+                    <TabView<"choose" | "upload">
+                      /* Its own instance: in the same place as the genome
+                         picker's, React would keep that one's tab. */
+                      key="pangenome"
+                      centerTabs
+                      /* Each tab's picker is keyed, or switching tabs would
+                         hand one tab's open database to the other. */
+                      tabs={[
+                        {
+                          label: "CHOOSE A PANGENOME",
+                          value: "choose",
+                          component: <PangenomePicker key="choose" mode="choose" />,
+                        },
+                        {
+                          label: "UPLOAD A PANGENOME",
+                          value: "upload",
+                          component: <PangenomePicker key="upload" mode="upload" />,
+                        },
+                      ]}
+                    />
+                  ) : !sessionId && !emptyPropsPackageMode ? (
                     <TabView<"picker" | "add" | "import">
                       centerTabs
                       selectedTab={genomePickerTab}

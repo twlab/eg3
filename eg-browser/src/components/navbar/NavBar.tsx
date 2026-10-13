@@ -81,9 +81,16 @@ export default function NavBar(props) {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   /* Which browser the title names; the other sits beside it, small, in a
-     button in the lower right corner, and clicking it swaps the two. Only
-     the title for now. */
-  const [titleBrowser, setTitleBrowser] = useState<BrowserName>("epigenome");
+     button in the lower right corner, and clicking it swaps the two. The
+     page below follows it when RootLayout passes `browser` and
+     `onBrowserChange`; without them the switch keeps its own. */
+  const [ownTitleBrowser, setOwnTitleBrowser] =
+    useState<BrowserName>("epigenome");
+  const titleBrowser: BrowserName = props.browser ?? ownTitleBrowser;
+  const setTitleBrowser = (next: BrowserName) => {
+    setOwnTitleBrowser(next);
+    props.onBrowserChange?.(next);
+  };
   const otherBrowser: BrowserName =
     titleBrowser === "epigenome" ? "pangenome" : "epigenome";
   /* Each name's element, and where both were just before a swap, which the

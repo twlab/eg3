@@ -3507,6 +3507,11 @@
     micromark-util-character "^1.1.0"
     micromark-util-symbol "^1.0.1"
 
+"@sqlite.org/sqlite-wasm@^3.53.4-build1":
+  version "3.53.4-build2"
+  resolved "https://registry.yarnpkg.com/@sqlite.org/sqlite-wasm/-/sqlite-wasm-3.53.4-build2.tgz#b006b7c7788eae4db71ec82d19dbb5b42287a6d9"
+  integrity sha512-kQVArGJA4z7s56Dm8t+eTBXad4LiohuVj9pfgDNOcxa+Ic5xMrWlLPTq6cT0hw5S4MIvtpsraW+B0wD+IPvC7A==
+
 "@standard-schema/spec@^1.0.0":
   version "1.1.0"
   resolved "https://registry.npmjs.org/@standard-schema/spec/-/spec-1.1.0.tgz"

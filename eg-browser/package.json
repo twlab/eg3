@@ -37,6 +37,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.3.0",
+    "@sqlite.org/sqlite-wasm": "^3.53.4-build1",
     "@types/uuid": "^10.0.0",
     "clsx": "^2.1.1",
     "firebase": "^11.5.0",
