@@ -7,9 +7,12 @@ import {
   localPathBounds,
   openLocalDatabase,
   openRemoteDatabase,
-} from "@/core/gbz/worker/gbzClient";
-import type { DatabaseSummary } from "@/core/gbz/worker/protocol";
-import type { HaplotypeSummary, PathBounds } from "@/core/gbz/bounds";
+} from "wuepgg3-track";
+import type {
+  DatabaseSummary,
+  HaplotypeSummary,
+  PathBounds,
+} from "wuepgg3-track";
 import { exampleRegions, initialWindow } from "../genome-view/graphFetchConfig";
 import type { GraphFetchConfig } from "../genome-view/graphFetchConfig";
 import { toEgTrack } from "@/core/hprc/hprcCatalog";

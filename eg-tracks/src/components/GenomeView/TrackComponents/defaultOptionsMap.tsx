@@ -110,6 +110,14 @@ export const trackOptionMap: { [key: string]: any } = {
       displayMode: "full",
     },
   },
+  /* The pangenome graph: as tall as its haplotypes need, which it says
+     itself once drawn. */
+  pangenome: {
+    defaultOptions: {
+      displayMode: "full",
+      height: 40,
+    },
+  },
   refbed: {
     defaultOptions: {
       ...defaultGeneAnnotationTrack,

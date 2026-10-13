@@ -46,6 +46,8 @@ export interface TrackProps {
   messageData: any;
   Toolbar: { [key: string]: any };
   handleRetryFetchTrack: (trackIdx: number) => void;
+  /** Told when this track has committed its drawing of a band. */
+  onBandDrawn?: (dataIdx: number) => void;
   initialLoad: any;
   selectedRegionSet: any;
   legendWidth: number;

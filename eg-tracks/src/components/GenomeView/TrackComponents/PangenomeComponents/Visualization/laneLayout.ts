@@ -1,0 +1,109 @@
+import { stackDepths } from "./laneRaster";
+import type { PangenomeModel } from "./pangenomeModel";
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Where the rows of the linear view sit.
+
+   The drawing pans and the names beside it do not, so they are two elements
+   rather than one - and two elements that have to agree to the pixel, since
+   a name level with the wrong bar is worse than no name at all. Neither of
+   them owns the arithmetic: this does, and both read it.
+
+   Everything here is in the drawing's own coordinates, measured down from
+   the top of it. The legend sits at the same top, so the numbers mean the
+   same thing on both sides.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/** The names down the left, and the room the drawing gives up for them. */
+export const LEGEND_WIDTH = 120;
+
+/** The ruler: its marks and labels are drawn up from its foot, and this is
+    the room they need. */
+export const RULER_H = 28;
+/** How tall a haplotype's bar is drawn; the tube map sizes its tubes from it. */
+export const LANE_H = 17;
+/** Between one haplotype's bar and the next, and between the strip and the
+    first of them. Nothing: what separates one from the next is the rule
+    under it, and a gap as well left every bar looking as though it had been
+    pushed down from its own name. */
+export const LANE_GAP = 0;
+export const STRIP_GAP = 0;
+/** Top to top, which is the bar itself now that nothing sits between two. */
+export const LANE_HEIGHT = LANE_H + LANE_GAP;
+/** Nothing under the last bar: the rule under it is where the drawing ends,
+    and room past that read as a gap belonging to something. */
+export const FOOT_PAD = 0;
+/** One row of the strip. The rows sit against each other: the reference's own
+    walk and the alleles of it are one drawing of one place. */
+export const NODE_H = 18;
+
+/** One row of the drawing, and the haplotype it belongs to. */
+export interface LaneRow {
+  key: string;
+  label: string;
+  color: string;
+  /** The reference's row is the strip, which is drawn rather than barred. */
+  isReference: boolean;
+  top: number;
+  height: number;
+}
+
+export interface LaneLayout {
+  /** The strip, which is where the reference is drawn. */
+  stripTop: number;
+  stripH: number;
+  /** A row for the strip and one per haplotype bar, top to bottom. */
+  rows: LaneRow[];
+  /** What the whole drawing comes to. */
+  height: number;
+}
+
+/**
+ * The rows of the linear view, in the order they are drawn.
+ *
+ * The ruler, then the strip - the reference, one row of it and a row per
+ * alternative allele while those are asked for - then a bar per haplotype,
+ * each as many rows tall as the copies it stacks.
+ */
+export function laneLayout(
+  model: PangenomeModel,
+  alleleRows: boolean,
+): LaneLayout {
+  const stripTop = RULER_H;
+  const stripH = (alleleRows ? model.rowCount : 1) * NODE_H;
+
+  const reference = model.lanes.find((lane) => lane.isReference);
+  const rows: LaneRow[] = reference
+    ? [
+        {
+          key: reference.key,
+          label: reference.label,
+          color: reference.color,
+          isReference: true,
+          top: stripTop,
+          height: stripH,
+        },
+      ]
+    : [];
+
+  /* One row per card a haplotype stacks, so the letters of a second copy
+     have their own room rather than being squeezed in beside the first. */
+  const depths = stackDepths(model);
+  let running = stripTop + stripH + STRIP_GAP;
+  model.lanes.forEach((lane, index) => {
+    /* The reference has no bar of its own: the strip is where it is drawn. */
+    if (lane.isReference) return;
+    const height = depths[index] * LANE_H;
+    rows.push({
+      key: lane.key,
+      label: lane.label,
+      color: lane.color,
+      isReference: false,
+      top: running,
+      height,
+    });
+    running += height + LANE_GAP;
+  });
+
+  return { stripTop, stripH, rows, height: running + FOOT_PAD };
+}

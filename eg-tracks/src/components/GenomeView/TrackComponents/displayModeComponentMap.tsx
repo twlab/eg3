@@ -75,6 +75,10 @@ import Vcf from "./VcfComponents/Vcf";
 import Bedcolor from "./bedComponents/Bedcolor";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { chromAlias } from "../../../getRemoteData/fetchFunctions";
+import PangenomeTrackView, {
+  pangenomeTrackHeight,
+} from "./PangenomeComponents/PangenomeTrackView";
+import { PANGENOME_TRACK_TYPE } from "./PangenomeComponents/fetchPangenomeData";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 
 export const dynamicMatplotTracks = new Set([
@@ -1309,6 +1313,32 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+  /* The pangenome graph, drawn on the band its own fetch laid out. */
+  pangenome: function getPangenome(drawData: { [key: string]: any }) {
+    const { trackState } = drawData;
+    const primaryVisData =
+      trackState?.genomicFetchCoord?.[
+        trackState.primaryGenName ?? drawData.genomeName
+      ]?.primaryVisData;
+    const height = pangenomeTrackHeight(drawData.genesArr);
+    if (drawData.svgHeight) {
+      drawData.svgHeight.current = height;
+    }
+    if (drawData.updatedLegend) {
+      drawData.updatedLegend.current = {
+        height,
+        trackModel: drawData.trackModel,
+        label: drawData.trackModel.options?.label ?? drawData.trackModel.name,
+      };
+    }
+    return (
+      <PangenomeTrackView
+        queryResult={drawData.genesArr}
+        primaryVisData={primaryVisData}
+        windowWidth={drawData.windowWidth}
+      />
+    );
+  },
   genomealign: function getGenomeAlign(drawData) {
     let result = drawData.genesArr;
     if (!result) {
@@ -1714,6 +1744,10 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
 
   if (trackType === "genomealign") {
     return displayModeComponentMap.genomealign(drawData);
+  }
+
+  if (trackType === PANGENOME_TRACK_TYPE) {
+    return displayModeComponentMap.pangenome(drawData);
   }
 
   // Full display mode condition

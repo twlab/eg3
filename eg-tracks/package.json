@@ -25,6 +25,7 @@
     "@primer/octicons-react": "^19.11.0",
     "@reduxjs/toolkit": "^2.4.0",
     "@rollup/plugin-url": "^8.0.2",
+    "@sqlite.org/sqlite-wasm": "^3.53.4-build1",
     "@types/d3-scale": "^4.0.8",
     "@types/lodash": "^4.17.6",
     "@types/pako": "^2.0.3",

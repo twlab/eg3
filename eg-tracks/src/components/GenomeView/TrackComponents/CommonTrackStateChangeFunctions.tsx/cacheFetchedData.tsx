@@ -35,6 +35,7 @@ export const trackUsingExpandedLoci = {
   hic: "",
   longrange: "",
   genomealign: "",
+  pangenome: "",
 };
 
 export function transformArray(arr: any[][][]) {

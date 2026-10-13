@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
@@ -46,6 +46,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   messageData,
   Toolbar,
   handleRetryFetchTrack,
+  onBandDrawn,
   initialLoad,
   selectedRegionSet,
   legendWidth,
@@ -294,6 +295,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     if (viewComponent && viewComponent.dataIdx === dataIdx) {
       setLegend(updatedLegend.current);
+    }
+  }, [viewComponent]);
+  /* The band on screen, newly drawn: told before the browser paints it, so
+     the scroll moves with the picture. */
+  useLayoutEffect(() => {
+    if (viewComponent && viewComponent.dataIdx === dataIdx) {
+      onBandDrawn?.(viewComponent.dataIdx);
     }
   }, [viewComponent]);
   // MARK:[newDrawDat

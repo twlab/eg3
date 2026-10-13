@@ -1,0 +1,1256 @@
+/* ── Pangenome subgraph views (linear paths / tube map) ────────────────── */
+
+/* Hue carries meaning in the drawing — one colour per haplotype, orange for
+   the reference — so the chrome around it is built from value alone: ink,
+   hairlines, and one inverted state for "on".  Nothing in the panel competes
+   with a swatch for attention. */
+.pgv-panel,
+.pgv-shell,
+.pgv-tooltip,
+.pgv-floating-card {
+  --pgv-ink: #1b1d21;
+  --pgv-ink-2: #565b63;
+  --pgv-ink-3: #8a8f97;
+  --pgv-rule: #d2d5da;
+  --pgv-rule-soft: #e6e8ec;
+  --pgv-paper: #fdfdfd;
+  --pgv-paper-2: #f1f2f4;
+  --pgv-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
+    monospace;
+}
+
+/* ── Control panel ─────────────────────────────────────────────────────── */
+/* Two rows: how you are looking at it, then what you are looking at.  The
+   window's size used to be stated twice, in the toolbar and again in the
+   detail bar; it is stated once now, in the second row. */
+.pgv-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: var(--pgv-ink);
+  background: var(--pgv-paper);
+  border: 1px solid var(--pgv-rule);
+  font:
+    400 11px/1.4 ui-sans-serif,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+  user-select: none;
+}
+
+.pgv-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  min-height: 24px;
+  padding: 0 7px;
+}
+
+.pgv-row + .pgv-row {
+  border-top: 1px solid var(--pgv-rule-soft);
+}
+
+.pgv-row-ctx {
+  background: var(--pgv-paper-2);
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.pgv-grow {
+  flex: 1;
+}
+
+/* A hairline the height of its row. */
+.pgv-vr {
+  align-self: stretch;
+  width: 1px;
+  margin: 5px 0;
+  background: var(--pgv-rule);
+}
+
+/* ── Mode picker ───────────────────────────────────────────────────────── */
+.pgv-modes {
+  display: flex;
+  margin-left: -6px;
+}
+
+.pgv-mode {
+  padding: 5px 6px;
+  font: inherit;
+  color: var(--pgv-ink-3);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.pgv-mode:hover {
+  color: var(--pgv-ink);
+}
+
+.pgv-mode-on {
+  font-weight: 600;
+  color: var(--pgv-ink);
+  border-bottom-color: var(--pgv-ink);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.pgv-btn {
+  height: 17px;
+  min-width: 17px;
+  padding: 0 5px;
+  font: inherit;
+  color: var(--pgv-ink-2);
+  background: var(--pgv-paper);
+  border: 1px solid var(--pgv-rule);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.pgv-btn:hover {
+  color: var(--pgv-ink);
+  border-color: var(--pgv-ink-3);
+}
+
+.pgv-btn-on,
+.pgv-btn-on:hover {
+  color: var(--pgv-paper);
+  background: var(--pgv-ink);
+  border-color: var(--pgv-ink);
+}
+
+/* Butted together, so a pair reads as one stepper. */
+.pgv-group {
+  display: flex;
+}
+
+.pgv-group .pgv-btn + .pgv-btn {
+  margin-left: -1px;
+}
+
+.pgv-zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The swatch doubles as the colour picker: the input itself is hidden
+   behind it, so the square the reader already reads as the colour is the
+   square they click to change it. */
+.pgv-swatch-pick {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.pgv-swatch-pick input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.pgv-chip-name {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.pgv-chip-reset {
+  font: inherit;
+  color: var(--pgv-ink-3);
+  background: none;
+  border: none;
+  padding: 0 4px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* A picker in the bar, worn like the buttons beside it. */
+.pgv-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--pgv-ink-3);
+  cursor: pointer;
+}
+
+.pgv-select {
+  height: 17px;
+  padding: 0 2px;
+  font: inherit;
+  font-family: var(--pgv-mono);
+  color: var(--pgv-ink-2);
+  background: var(--pgv-paper);
+  border: 1px solid var(--pgv-rule);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+/* eg3's zoom tools: out, then in, each a sign and its three folds. */
+.pgv-zoom-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pgv-zoom-sign {
+  font-family: var(--pgv-mono);
+  color: var(--pgv-ink-3);
+}
+
+/* ── Haplotype legend, doubling as the highlight control ───────────────── */
+.pgv-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.pgv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  font: inherit;
+  white-space: nowrap;
+  color: var(--pgv-ink-2);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.pgv-chip:hover {
+  color: var(--pgv-ink);
+}
+
+.pgv-chip-on {
+  font-weight: 600;
+  color: var(--pgv-ink);
+  border-bottom-color: var(--pgv-ink);
+}
+
+/* The drawing dims hard; a chip only has to recede. */
+.pgv-chip.pgv-dim {
+  opacity: 0.45;
+}
+
+.pgv-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* An allele that is one of several ways in or out says so on the side it
+   branches at. Dark enough to read over the node it sits on and over the
+   paper either side of it, since it straddles the edge. */
+.pgv-bullet {
+  cursor: pointer;
+}
+
+.pgv-bullet circle {
+  fill: #2b3550;
+  stroke: #f6f8fc;
+  stroke-width: 1;
+}
+
+.pgv-bullet:hover circle,
+.pgv-bullet-open circle {
+  fill: #007aff;
+}
+
+/* The stretch under the pointer, in the bar it is drawn in. The colour the
+   graph lights a node with, since it is the same act of pointing. */
+.pgv-hover-node {
+  fill: none;
+  stroke: #22d3ee;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+/* From an open bullet to the node it names that the pointer is on. */
+.pgv-bullet-link {
+  stroke: #007aff;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+  pointer-events: none;
+}
+
+.pgv-bullet text {
+  font-size: 5.5px;
+  font-weight: 600;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+/* The reference lane already reads as the reference from its swatch, so this
+   is a label, not a badge. */
+.pgv-ref-tag {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pgv-ink-3);
+}
+
+/* ── Detail readout ───────────────────────────────────────────────────── */
+/* Sits at the right of the legend row, and drops to a line of its own when
+   there are too many haplotypes to share one. */
+.pgv-detail {
+  display: flex;
+  align-items: center;
+  gap: 0 7px;
+  min-width: 0;
+  margin-left: auto;
+  padding: 3px 0;
+}
+
+.pgv-detail > * + *::before {
+  content: "·";
+  margin-right: 7px;
+  color: var(--pgv-rule);
+}
+
+.pgv-detail-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--pgv-ink);
+}
+
+.pgv-detail-val {
+  font-family: var(--pgv-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--pgv-ink);
+}
+
+.pgv-detail-note {
+  white-space: nowrap;
+  color: var(--pgv-ink-2);
+}
+
+/* An instruction, not another field, so it stays out of the dotted run. */
+.pgv-detail-hint {
+  margin-left: 4px;
+  color: var(--pgv-ink-3);
+}
+
+.pgv-detail-hint::before {
+  content: none !important;
+}
+
+.pgv-detail-seq {
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--pgv-mono);
+  color: var(--pgv-ink-2);
+  background: var(--pgv-paper);
+  border: 1px solid var(--pgv-rule-soft);
+  padding: 0 4px;
+}
+
+/* Drops the current pick and goes back to describing the whole window. */
+.pgv-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--pgv-ink-3);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.pgv-x:hover {
+  color: var(--pgv-ink);
+}
+
+.pgv-x::before {
+  content: none !important;
+}
+
+/* ── Canvas ────────────────────────────────────────────────────────────── */
+/* Outlined rather than bordered, because a border takes layout space and
+   box-sizing is border-box the whole way down: the height here is the height
+   of the drawing exactly, so a 1px border each side left the canvas two
+   pixels short of its own contents - and two pixels is all an auto overflow
+   needs to put a scrollbar down the side. An outline is drawn outside the box
+   and costs nothing, so the content box is the height it was given.
+
+   The same two pixels were behind the horizontal bar; that one is clipped
+   instead, because the drawing width is the band width every pan offset is
+   measured in and cannot be given away. */
+.pgv-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #f6f8fc;
+  color: #1a2233;
+  outline: 1px solid var(--pgv-rule);
+  overflow: hidden;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* ── The names down the left ───────────────────────────────────────────
+   Pinned over the drawing rather than drawn into it, so panning and
+   zooming leave it where it is. It paints the page colour behind itself
+   because the bars run underneath. */
+/* The row that holds the legend and the drawing side by side. */
+.pgv-canvas-row {
+  display: flex;
+  align-items: stretch;
+  width: max-content;
+}
+
+/* The names beside the bars. It keeps its place while the drawing pans,
+   which is a matter of where it sits - outside the element that scrolls -
+   rather than anything here. */
+.pgv-legend-col {
+  position: relative;
+  flex-shrink: 0;
+  background: var(--pgv-paper, #fdfdfd);
+  border-right: 1px solid var(--pgv-rule, #d2d5da);
+  pointer-events: none;
+}
+
+/* One row per bar, at the bar's own top: the drawing hands out those
+   coordinates, so the two cannot drift. The name sits at the head of the
+   row rather than in the middle of it - a bar several rows tall is still
+   one haplotype, and its name belongs where the bar starts.
+
+   The rule underneath is the row's own last pixel - inside the height, so
+   it lands on the same pixel as the rule drawn across the drawing beside it
+   and neither of them sits on the row below. */
+.pgv-legend-row {
+  box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 4px 0 8px;
+  min-width: 0;
+  border-bottom: 1px solid var(--pgv-rule-soft, #e6e8ec);
+}
+
+.pgv-legend-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  /* Tight, so the name starts at the top of its bar rather than a line's
+     worth of leading below it. */
+  line-height: 1;
+  color: var(--pgv-ink-2, #565b63);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.pgv-legend-name:hover {
+  color: var(--pgv-ink, #1b1d21);
+}
+
+.pgv-legend-name-on {
+  color: var(--pgv-ink, #1b1d21);
+  font-weight: 600;
+}
+
+
+.pgv-legend-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The bars are canvases, stacked down the drawing at the offsets the
+   layout gives them, and the drawn layer sits over the top of all of
+   them. Both are placed in the same coordinates, so a canvas and the
+   ruler above it cannot disagree about where a base is. */
+.pgv-linear {
+  position: relative;
+}
+
+.pgv-lane-slot {
+  position: absolute;
+  left: 0;
+}
+
+.pgv-lane-canvas {
+  display: block;
+  cursor: pointer;
+}
+
+/* Laid over the bars, and deaf - or it would take every hover meant for
+   the canvas beneath it. The graph inside turns its own hearing back on. */
+.pgv-over {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.pgv-hears {
+  pointer-events: auto;
+}
+
+.pgv-svg {
+  pointer-events: none;
+}
+
+/* While the band is being moved the drawing is a picture, not a set of
+   targets: a pointer crossing forty nodes on its way past should not
+   light them up, and the release that ends the drag is not a click on
+   whatever happened to be underneath. The tooltip goes with them - with
+   no pointer events there is no mouseout to clear it, so it would hang
+   on the last thing hovered before the drag began.
+
+   Everything in the drawing, not the SVG layer alone: the bars are
+   canvases of their own now, and a rule naming the layer over them left
+   every bar still taking hovers and the click that ends a pan. The second
+   selector reaches the pieces that turn their own hearing back on, which
+   one level of selector could not outrank. */
+.pgv-dragging .pgv-canvas,
+.pgv-dragging .pgv-canvas * {
+  pointer-events: none;
+}
+
+.pgv-dragging .pgv-tooltip {
+  display: none !important;
+}
+
+/* Never scrolls sideways. The drawing is exactly the band wide and the band
+   is moved by translating it, so there is nothing here to scroll to - but the
+   shell around it is width:100% with a 1px border, and box-sizing is
+   border-box the whole way down, so its content box comes out two pixels
+   narrower than the drawing it holds. Two pixels is all an auto overflow needs
+   to put a scrollbar across the foot of the view.
+
+   Clipped rather than fixed by narrowing the drawing: its width is the band
+   width the pan offset and the window slot are both measured in, and taking
+   two pixels off it would move every one of those by a base or so. */
+.pgv-canvas {
+  position: relative;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #f6f8fc;
+}
+
+.pgv-svg {
+  display: block;
+}
+
+/* ── The bases under the pointer, magnified ─────────────────────────────
+   A bar gives a base two or three pixels, so its letters are unreadable
+   long before the data stops being interesting. This is where they can be
+   read: a line of sequence around wherever the pointer is, with that one
+   base picked out. */
+.pgv-zoom {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid var(--pgv-rule-soft);
+}
+
+/* The toolbar has a control of the same name, and it is a flex row. This one
+   stacks - the sequence, then where it is - and a row put them side by side
+   and squeezed the sequence to nothing once it began clipping its overflow.
+
+   It comes first in the tooltip, so the rule that separates it from the rest
+   goes under it rather than over it. */
+.pgv-tooltip .pgv-zoom {
+  display: block;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--pgv-rule-soft);
+}
+
+.pgv-zoom-seq {
+  font-family: var(--pgv-mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  /* Every letter, wrapped onto as many lines as it takes: clipped at the
+     edge, a long allele ended in "..." and the rest could not be read. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  /* A definite width, not a maximum: the tooltip is shrink-to-fit, and with
+     only a maximum it shrank this to a single column of letters. */
+  width: 404px;
+  color: var(--pgv-ink-2);
+}
+
+/* The one the pointer is actually on. */
+.pgv-zoom-at {
+  padding: 1px 2px;
+  font-weight: 700;
+  color: #fff;
+  background: #14181f;
+  border-radius: 2px;
+}
+
+.pgv-zoom-where {
+  margin-top: 3px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pgv-ink-3);
+}
+
+/* ── Ruler ─────────────────────────────────────────────────────────────── */
+.pgv-ruler line {
+  stroke: #b9c4d6;
+  stroke-width: 1;
+}
+
+/* A labelled mark stands taller than the nine between it and the next. */
+.pgv-tick-major {
+  stroke: #8a8f97;
+  stroke-width: 1;
+}
+
+.pgv-tick-minor {
+  stroke: #c2c6cc;
+  stroke-width: 1;
+}
+
+.pgv-ruler text {
+  font-size: 10.5px;
+  fill: #6b7a93;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Linear path view ──────────────────────────────────────────────────── */
+.pgv-lane {
+  cursor: pointer;
+}
+
+.pgv-lane-track {
+  fill: #e3e9f4;
+}
+
+.pgv-lane-label {
+  font-size: 11.5px;
+  fill: #46536c;
+  text-anchor: end;
+  dominant-baseline: auto;
+}
+
+/* The dot that marks the reference, in the reference colour. The amber
+   elsewhere means "under the pointer", which is a different thing. */
+.pgv-ref-dot {
+  fill: #30afff;
+}
+
+.pgv-alt-hatch {
+  pointer-events: none;
+}
+
+/* Inside the drawing rather than in a gutter to its left, so it reads from
+   its own x rather than back towards it. */
+/* What the strip floats over on its way down the page. The canvas colour, so
+   it cannot be seen while the strip is sitting in its own slot. */
+/* Under the ruler: the shell's own colour, so it is invisible where the
+   ruler is sitting in its own slot and hides the bars when it floats. */
+.pgv-ruler-ground {
+  fill: #f6f8fc;
+  pointer-events: none;
+}
+
+/* The reference's own band, a shade off the paper either side of it: it is
+   one of the bars now, and the one every other bar is read against, so it is
+   worth telling from them at a glance. */
+.pgv-strip-ground {
+  fill: #e9eef8;
+  pointer-events: none;
+}
+
+.pgv-strip-label {
+  font-size: 11px;
+  font-style: italic;
+  fill: #8794ab;
+  text-anchor: start;
+}
+
+/* Square and unstroked, so a run of nodes is one unbroken bar as a
+   haplotype's is: what breaks it is the layout leaving room, not a
+   boundary between two nodes. Those are `.pgv-node-edge` below. */
+.pgv-node rect {
+  fill: #5b6b8c;
+  stroke: none;
+}
+
+/* Where one node ends and the next begins. A mid tone, not white: white is
+   the colour of the hatching and of the paper either side of the bar, and a
+   white line between two nodes was read as a gap in the sequence. Thin, and
+   only a little darker than the allele rows and a little lighter than the
+   reference row, so it separates them without drawing the eye. */
+.pgv-node-edge {
+  stroke: #7d8db0;
+  stroke-width: 0.5;
+  pointer-events: none;
+}
+
+.pgv-node-alt rect {
+  fill: #93a3c2;
+}
+
+/* Size is set per-render from the zoom so a glyph is exactly one base wide;
+   see sequenceFontSize in nodeDetail.ts. */
+.pgv-seq {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  fill: #fff;
+  pointer-events: none;
+  letter-spacing: 0;
+}
+
+/* ── Tube map view ─────────────────────────────────────────────────────── */
+.pgv-tube-node rect {
+  fill: #e7ecf6;
+  stroke: #9dabc6;
+  stroke-width: 1;
+}
+
+.pgv-tube-node.pgv-node-alt rect {
+  fill: #f3eadf;
+  stroke: #c9ab7e;
+  stroke-dasharray: 3 2;
+}
+
+.pgv-node-id {
+  font-size: 10.5px;
+  fill: #7a879e;
+  text-anchor: middle;
+}
+
+/* The tube map: one canvas, with the ruler drawn over it in the same
+   coordinates - the arrangement the linear view uses for its bars. */
+.pgv-tube {
+  position: relative;
+}
+
+.pgv-tube-canvas {
+  display: block;
+  cursor: pointer;
+}
+
+/* The foot of a row, matching the one under its name in the legend. */
+.pgv-row-rule {
+  stroke: var(--pgv-rule-soft, #e6e8ec);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.pgv-tube-line {
+  stroke-width: 2.75;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.pgv-tube-seam {
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  opacity: 0.55;
+  fill: none;
+}
+
+/* Sequences sit under the node boxes, where tubes dipping to a minority
+   allele cross them; the halo keeps the letters readable through a tube. */
+.pgv-seq-over {
+  fill: #26314a;
+  stroke: #f6f8fc;
+  stroke-width: 2.5px;
+  paint-order: stroke fill;
+}
+
+/* ── Dimming when one haplotype is picked out ──────────────────────────── */
+.pgv-dim {
+  opacity: 0.18;
+}
+
+/* ── Tooltip ───────────────────────────────────────────────────────────── */
+.pgv-tooltip {
+  position: absolute;
+  z-index: 20;
+  /* Room for a long allele's letters and a node list, which wrap within it
+     rather than being cut off. */
+  max-width: 420px;
+  padding: 5px 8px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #f2f3f4;
+  background: rgba(27, 29, 33, 0.94);
+  border: 1px solid rgba(27, 29, 33, 0.94);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Placed against the viewport from the pointer's own coordinates, so
+   showing it costs no measurement of the page. */
+.pgv-tooltip-fixed {
+  position: fixed;
+}
+
+/* One text node for all the lines, so updating it is one write rather
+   than a rebuild of the list. */
+.pgv-tooltip-lines {
+  white-space: pre-line;
+}
+
+.pgv-tooltip-title {
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1px;
+}
+
+/* Wrapped, never cut: a line too long for the tooltip goes onto the next,
+   breaking inside a long run of letters or ids if it has to. */
+.pgv-tooltip-line {
+  color: #b6babf;
+  overflow-wrap: anywhere;
+}
+
+/* ── Picked node ──────────────────────────────────────────────────────── */
+.pgv-node.pgv-node-picked rect,
+.pgv-tube-node.pgv-node-picked rect {
+  stroke: #2e6fc4;
+  stroke-width: 2.5;
+}
+
+.pgv-node,
+.pgv-tube-node {
+  cursor: pointer;
+}
+
+/* ── Node graph view ──────────────────────────────────────────────────── */
+.pgv-graph-node rect {
+  fill: #e7ecf6;
+  stroke: #7b8db0;
+  stroke-width: 1.5;
+}
+
+.pgv-graph-node.pgv-node-alt rect {
+  fill: #f3eadf;
+  stroke: #c9ab7e;
+}
+
+.pgv-graph-edge {
+  fill: none;
+  stroke: #7b8db0;
+  stroke-linecap: round;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.pgv-graph-edge:hover {
+  stroke: #2e6fc4;
+  opacity: 1;
+}
+
+/* A connection that jumps over other nodes, drawn above the row. */
+.pgv-graph-skip {
+  stroke: #b8863a;
+  stroke-dasharray: 5 3;
+  opacity: 0.85;
+}
+
+/* Expanded mode: one strand per haplotype, and the short run inside a node
+   that keeps a strand looking continuous when it lands and leaves at
+   different heights. */
+.pgv-graph-strand {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  cursor: pointer;
+}
+
+.pgv-graph-strand-skip {
+  stroke-dasharray: 5 3;
+  opacity: 0.9;
+}
+
+/* Only drawn for a picked node or haplotype, so it can be full strength. */
+.pgv-graph-through {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+/* An opened node is a container for its strands, so it recedes. */
+.pgv-graph-node-open rect {
+  fill: #eef2f9;
+  stroke: #aab6cc;
+}
+
+.pgv-graph-node-open.pgv-node-alt rect {
+  fill: #f7f1e7;
+  stroke: #cdb389;
+}
+
+/* ── Alleles shown under their own haplotype's bar ────────────────────── */
+.pgv-allele {
+  cursor: pointer;
+}
+
+/* The allele box is gone - what it said is spelled into the hatching now -
+   so all that is left under .pgv-allele is the span that takes the pointer.
+   These have to name it rather than its rects: the chips the letters stand on
+   are rects too, and a descendant selector outranks their own class, which
+   painted every one of them slate blue. */
+.pgv-allele-hit {
+  fill: transparent;
+  stroke-width: 2;
+  /* A transparent fill is painted with no colour, and whether that counts as
+     a target is left to the browser under the default visiblePainted. Saying
+     so outright settles it. */
+  pointer-events: all;
+}
+
+.pgv-allele.pgv-node-picked .pgv-allele-hit {
+  stroke: #2e6fc4;
+  stroke-width: 2.5;
+}
+
+/* A letter sits in a box of its own, painted over the hatching so that no
+   diagonal crosses the glyph. Black behind white: 21:1, which still holds
+   at the four pixels a letter shrinks to at a wide zoom. */
+.pgv-seq-chip {
+  fill: #000;
+  pointer-events: none;
+}
+
+/* The face comes from .pgv-seq, which every sequence in the drawing shares:
+   monospace, so a glyph is the width of the base it spells. */
+.pgv-allele-seq {
+  fill: #fff;
+  pointer-events: none;
+}
+
+/* ── Nodes belonging to the stretch of bar under the pointer ──────────── */
+/* What is under the pointer, in the strip and in the bars that carry it.
+   Cyan: the one hue the haplotype palette does not use, so it reads on a
+   green bar as well as on a plum one, and on the strip's own slate. The
+   amber it replaces was the sand lane's own colour. */
+.pgv-node.pgv-node-lit rect,
+.pgv-allele.pgv-node-lit .pgv-allele-hit {
+  stroke: #22d3ee;
+  stroke-width: 2.5;
+}
+
+/* The same allele, outlined where a haplotype carries it. Thinner than the
+   strip's, a bar being the shorter of the two. */
+.pgv-lit-span {
+  fill: none;
+  stroke: #22d3ee;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.pgv-node.pgv-node-lit rect {
+  fill: #3f4d69;
+}
+
+/* The detour a picked node sits in: the run of alleles connecting to one
+   another around it. After the hover's own fill, since a node can be both
+   and what was picked outranks what the pointer happens to be over. */
+.pgv-node.pgv-node-route rect {
+  fill: #007aff;
+}
+
+/* ── Sections, zoomed out ─────────────────────────────────────────────── */
+/* One target over a section of the strip; see SECTION_PX in
+   LinearPathView. Invisible until the pointer is on it. */
+.pgv-section-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.pgv-section-hit:hover {
+  fill: rgba(46, 111, 196, 0.12);
+  stroke: #2e6fc4;
+  stroke-width: 1;
+}
+
+/* What a clicked section was made from. Placed in the band's own
+   coordinates, under the section, so it moves with a pan. */
+.pgv-section-card {
+  position: absolute;
+  z-index: 15;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px 22px 7px 9px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #f2f3f4;
+  background: rgba(27, 29, 33, 0.96);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.pgv-section-line {
+  color: #b6babf;
+}
+
+.pgv-section-head {
+  margin-top: 5px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.pgv-section-node {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
+    monospace;
+  color: #d9dce0;
+}
+
+.pgv-section-close {
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  padding: 0 3px;
+  font-size: 14px;
+  line-height: 1;
+  color: #b6babf;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.pgv-section-close:hover {
+  color: #fff;
+}
+
+/* ── Variants view ─────────────────────────────────────────────────────── */
+/* See VariantBubbleView: a line through the window, a dash per stretch
+   everyone shares, and a circle per unique walk through each site. */
+.pgv-variants {
+  position: relative;
+}
+
+.pgv-variant-same {
+  stroke: #8a8f97;
+  stroke-width: 3;
+  stroke-linecap: butt;
+  cursor: default;
+}
+
+.pgv-variant-walk {
+  cursor: pointer;
+}
+
+.pgv-variant-walk ellipse {
+  fill: #e7ecf6;
+  stroke: #7b8db0;
+  stroke-width: 1.5;
+}
+
+.pgv-variant-walk:hover ellipse {
+  stroke: #2e6fc4;
+  stroke-width: 2;
+}
+
+.pgv-variant-ref ellipse {
+  stroke-width: 2;
+}
+
+.pgv-variant-picked ellipse {
+  fill: #d6e4fa;
+  stroke: #2e6fc4;
+  stroke-width: 2.5;
+}
+
+.pgv-variant-count,
+.pgv-variant-count-out {
+  font-size: 10px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: #1b1d21;
+  pointer-events: none;
+}
+
+.pgv-variant-count-out {
+  font-size: 9px;
+  fill: #565b63;
+  dominant-baseline: auto;
+}
+
+/* How many walks spell the same bases through other nodes. */
+.pgv-variant-spelling {
+  font-size: 9px;
+  font-weight: 700;
+  fill: #b3541a;
+  pointer-events: none;
+}
+
+.pgv-variant-more {
+  font-size: 10px;
+  text-anchor: middle;
+  fill: #565b63;
+  cursor: pointer;
+}
+
+.pgv-variant-card {
+  min-width: 300px;
+  max-height: 420px;
+  white-space: normal;
+}
+
+.pgv-variant-row {
+  color: #d9dce0;
+  padding: 1px 4px;
+  margin: 0 -4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pgv-variant-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pgv-variant-row-on {
+  background: rgba(46, 111, 196, 0.45);
+  color: #fff;
+}
+
+.pgv-variant-search {
+  width: 100%;
+  margin: 3px 0 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #f2f3f4;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.pgv-variant-svg {
+  display: block;
+  pointer-events: auto;
+}
+
+.pgv-variant-link {
+  fill: none;
+  stroke-opacity: 0.6;
+  stroke-linecap: round;
+}
+
+/* On the body, at the pointer: placed by the viewport, not the band. */
+.pgv-section-card.pgv-variant-card {
+  width: 340px;
+}
+
+/* A card opened at the pointer, on the page's body: above everything, in
+   the window, scrolling inside when the window is short. See
+   FloatingCard.tsx. */
+.pgv-floating-card,
+.pgv-section-card.pgv-floating-card {
+  position: fixed;
+  z-index: 99999;
+  transform: none;
+  margin: 0;
+  max-height: min(480px, calc(100vh - 16px));
+  overflow-y: auto;
+}
+
+.pgv-variant-skip {
+  stroke-dasharray: 5 3;
+}
+
+/* A walk's length under its bubble, a stretch's over its dash. */
+.pgv-variant-length {
+  font-size: 9px;
+  text-anchor: middle;
+  fill: #565b63;
+  pointer-events: none;
+}
+
+/* The part of a bubble its bases fill; see VariantWalk.fill. As specific as
+   the bubble's own rule, which would otherwise outline it like a second
+   bubble. */
+.pgv-variant-walk ellipse.pgv-variant-fill,
+.pgv-variant-walk:hover ellipse.pgv-variant-fill,
+.pgv-variant-picked ellipse.pgv-variant-fill {
+  fill: #b8c6e2;
+  stroke: none;
+  stroke-width: 0;
+  pointer-events: none;
+}
+
+/* ── eg3's tracks: their names in the legend column (VisualManager) ──── */
+.pgv-eg-legend {
+  box-sizing: border-box;
+  padding: 2px 6px;
+  overflow: hidden;
+  border-top: 1px solid #d2d5da;
+  font: 600 11px/14px ui-sans-serif, system-ui, sans-serif;
+  color: #3a4150;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: #fff;
+}
+.pgv-eg-track {
+  border-top: 1px solid #d2d5da;
+  background: #fff;
+}
+.pgv-eg-error {
+  padding: 4px 6px;
+  font: 11px/14px ui-sans-serif, system-ui, sans-serif;
+  color: #b42318;
+}
+.pgv-eg-legend-path {
+  display: block;
+  font-weight: 500;
+  font-size: 9px;
+  line-height: 11px;
+  color: #8a8f97;
+  letter-spacing: 0.02em;
+}
+
+/* A hover kept open by a click (LinearPathView): its lines can carry a
+   node's whole sequence, so they wrap rather than run the card off wide. */
+.pgv-section-card.pgv-detail-card {
+  white-space: pre-wrap;
+  max-width: 440px;
+  overflow-wrap: anywhere;
+}
+
+/* A gap in the reference's walk, drawn over the strip in its own ground
+   colour, at least a screen pixel wide (LinearPathView). */
+.pgv-reference-gap {
+  fill: #e9eef8;
+  pointer-events: none;
+}

@@ -28,6 +28,11 @@ import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import {
+  fetchPangenomeData,
+  isLayoutTrackType,
+  PANGENOME_TRACK_TYPE,
+} from "./TrackComponents/PangenomeComponents/fetchPangenomeData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
@@ -119,6 +124,9 @@ function sumArray(numbers: Array<any>) {
   return total;
 }
 const MIN_VIEW_REGION_SIZE = 5;
+/** How long a new band's draws wait for a track still fetching before the
+    rest are drawn without it; see heldBandDraw. */
+const BAND_WAIT_MS = 1500;
 
 // Sub-pixel scrollLeft differences come from the browser snapping the scroll
 // offset, not from the user panning, so anything under this is not a real move.
@@ -332,6 +340,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastX = useRef(0);
   const dragX = useRef(0);
   const hasGenomeAlign = useRef(false);
+  /* A pangenome graph lays the band out the way an alignment does, and at
+     every zoom: its room for longer alleles is there however far out. */
+  const hasPangenome = useRef(false);
   const isToolSelected = useRef(false);
   const side = useRef("right");
   const isDragging = useRef(false);
@@ -371,6 +382,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastProcTimeRef = useRef(0);
   const lastProcSlRef = useRef(0);
   const pendingDrawRef = useRef<any>(null);
+  /* Under a pangenome graph every band lays the reference out with its own
+     gaps, so a track still showing the last band no longer lines up with
+     one showing the next. A new band's draws are held until every track has
+     its data - or BAND_WAIT_MS has passed - and drawn in one go. */
+  const heldBandDraw = useRef<{
+    draw: any;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
+  const shownBandIdx = useRef<number | null>(null);
+  /* The scroll correction a handoff computes, kept until the band's new
+     drawing is committed (see onBandDrawn), so the two move in one frame. */
+  const pendingReanchor = useRef<{
+    dataIdx: number;
+    targetDragX: number;
+    dragAt: number;
+  } | null>(null);
   const scrollDebug = useRef({ commits: 0, reanchors: 0 });
   const startingBpArr = useRef<Array<any>>([]);
   const viewWindowConfigData = useRef<{
@@ -647,6 +674,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     const message = genomeAlignMessageQueue.current.pop();
+    if (
+      message.trackToFetch?.some(
+        (track: any) => track.type === PANGENOME_TRACK_TYPE,
+      )
+    ) {
+      fetchPangenomeData(message)
+        .then((data) => createGenomeAlignOnMessage({ data }))
+        .catch((error) => console.error("Error fetching the pangenome:", error));
+      return;
+    }
     if (fetchGenomeAlignWorker.current) {
       if (fetchGenomeAlignWorker.current.hasOnMessage === false) {
         fetchGenomeAlignWorker.current.fetchWorker.onmessage =
@@ -928,10 +965,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           }
           if (NavigationContext.isGapFeature(segment.feature)) {
-            // console.log( segment.getLocus(), segment);
-            
-          } 
-          else {
+            /* The edge is in a gap: room the band lets in, with no base of
+               its own to land on. Anchor on the first base after it instead,
+               and keep how far that is from the edge - left as it was, the
+               band arriving next was placed by whatever an earlier handoff
+               had kept, and under a long insertion that is a gap's width
+               away. */
+            if (hasPangenome.current && segment) {
+              const afterBase =
+                Math.floor(newRegionBpStart) +
+                segment.feature.getLength() -
+                segment.relativeStart;
+              try {
+                const after = curViewRegion
+                  .getNavigationContext()
+                  .convertBaseToFeatureCoordinate(afterBase);
+                if (!NavigationContext.isGapFeature(after.feature)) {
+                  const locus = after.getLocus();
+                  const start = Math.floor(locus.start);
+                  globalTrackState.current.newRegionBpStart = newRegionBpStart;
+                  globalTrackState.current.genomicCoordStart = start + 1;
+                  globalTrackState.current.newRegionLocus = {
+                    chr: locus.chr,
+                    start,
+                    curDataIdx: dataIdx.current,
+                    frac: 0,
+                    pxFromEdge: drawModel.baseToX(afterBase) - newRegionXoffset,
+                  };
+                }
+              } catch (error) {}
+            }
+          } else {
             const locus = segment.getLocus();
 
             const start = Math.floor(locus.start);
@@ -1355,6 +1419,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   function handleMouseUp() {
     isDragging.current = false;
+    /* A handoff's correction held while the pointer was down, for a band
+       already on screen. One still to be drawn takes it when it is. */
+    const heldCorrection = pendingReanchor.current;
+    if (
+      scrollPanEnabled &&
+      heldCorrection &&
+      heldCorrection.dataIdx === shownBandIdx.current
+    ) {
+      pendingReanchor.current = null;
+      clampScrollTo(
+        heldCorrection.targetDragX + (getDragX() - heldCorrection.dragAt),
+      );
+    }
     if (horizontalLineRef.current && verticalLineRef.current) {
       horizontalLineRef.current.style.display = "block";
       verticalLineRef.current.style.display = "block";
@@ -2613,7 +2690,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (isInteger(curTrackState.missingIdx)) {
             const trackToDrawId: { [key: string]: any } = {};
             for (const track of trackManagerState.current.tracks) {
-              if (track.type === "genomealign") {
+              if (isLayoutTrackType(track.type)) {
                 trackToDrawId[track.id] = false;
               }
             }
@@ -2679,8 +2756,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const trackToDrawId: { [key: string]: any } = {};
           for (const key in trackManagerState.current.caches) {
             if (
-              trackManagerState.current.caches[key].trackType ===
-                "genomealign" &&
+              isLayoutTrackType(
+                trackManagerState.current.caches[key].trackType,
+              ) &&
               trackManagerState.current.caches[key].error
             ) {
               trackToDrawId[key] = false;
@@ -2769,7 +2847,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             continue;
           }
 
-          const isGenomeAlignTrack = curTrackCache.trackType === "genomealign";
+          const isGenomeAlignTrack = isLayoutTrackType(curTrackCache.trackType);
 
           const dataCacheKeyMissing =
             !("dataCache" in curTrackCache[idx]) ||
@@ -2807,7 +2885,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             ((curTrackCache.useExpandedLoci || !curTrackCache.usePrimaryNav) &&
               curDataIdx !== curIdx) ||
-            curTrackCache.trackType === "genomealign"
+            isLayoutTrackType(curTrackCache.trackType)
           ) {
             continue;
           }
@@ -2880,7 +2958,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (hasGenomeAlign.current && needToFetchGenAlign) {
         const genomeAlignTracks = trackManagerState.current.tracks.filter(
           (items, _index) => {
-            return items.type === "genomealign";
+            return isLayoutTrackType(items.type);
           },
         );
 
@@ -2954,6 +3032,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const usedMB = memory.usedJSHeapSize / (1024 * 1024);
     return usedMB > 2500;
   }
+  /** Whether every track has what it draws for band `idx`: the band
+      itself for one fetched whole, its three windows for the rest. */
+  function bandHasAllData(idx: number) {
+    for (const track of trackManagerState.current.tracks) {
+      const cache = trackManagerState.current.caches[`${track.id}`];
+      if (!cache || cache.error) continue;
+      const needed =
+        cache.useExpandedLoci || !cache.usePrimaryNav
+          ? [idx]
+          : [idx - 1, idx, idx + 1];
+      if (!needed.every((i) => cache[i] && cache[i].dataCache)) return false;
+    }
+    return true;
+  }
+
+  /** A track has committed its drawing of band `drawnIdx`: the handoff's
+      scroll correction lands now, before the browser paints, with however
+      far the pointer has moved since it was worked out. */
+  function onBandDrawn(drawnIdx: number) {
+    const pending = pendingReanchor.current;
+    if (!pending || pending.dataIdx !== drawnIdx) return;
+    /* Not under a dragging pointer: moving the scroll mid-drag let drag steps
+       slip, and the picture fell behind the pointer and caught up. Kept for
+       the release instead (handleMouseUp). */
+    if (isDragging.current) return;
+    pendingReanchor.current = null;
+    clampScrollTo(pending.targetDragX + (getDragX() - pending.dragAt));
+  }
+
   function flushPendingDraw() {
     const pending = pendingDrawRef.current;
     if (pending) {
@@ -2982,6 +3089,41 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         pendingDrawRef.current = newDrawData;
       }
       return;
+    }
+    if (
+      hasPangenome.current &&
+      newDrawData?.trackToDrawId &&
+      newDrawData.curDataIdx !== shownBandIdx.current
+    ) {
+      const held = heldBandDraw.current;
+      const merged =
+        held && held.draw.curDataIdx === newDrawData.curDataIdx
+          ? {
+              ...held.draw,
+              ...newDrawData,
+              trackToDrawId: {
+                ...held.draw.trackToDrawId,
+                ...newDrawData.trackToDrawId,
+              },
+            }
+          : newDrawData;
+      if (held) clearTimeout(held.timer);
+      heldBandDraw.current = null;
+      if (!bandHasAllData(merged.curDataIdx) && !merged.bandWaited) {
+        heldBandDraw.current = {
+          draw: merged,
+          timer: setTimeout(() => {
+            const late = heldBandDraw.current;
+            if (late && late.draw === merged) {
+              heldBandDraw.current = null;
+              checkDrawData({ ...merged, bandWaited: true });
+            }
+          }, BAND_WAIT_MS),
+        };
+        return;
+      }
+      shownBandIdx.current = merged.curDataIdx;
+      newDrawData = merged;
     }
     if (isMemoryOver2GB()) {
       for (const key in trackManagerState.current.caches) {
@@ -3093,7 +3235,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const stripX = drawModel.baseToX(
             landedContextBase !== undefined ? landedContextBase : prevBpStart,
           );
-          const start = stripX;
+          /* The landed base, as far from the edge as it was in the band
+             left behind: on it, unless the edge was in a gap. */
+          const start = stripX - (landedLocus?.pxFromEdge ?? 0);
           const end = start + windowWidthRef.current;
           curViewWindow = new OpenInterval(start, end);
 
@@ -3108,13 +3252,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           // with s the offset inside this region's middle window, so pinning s
           // to the landed position keeps the view continuous and leaves
           // cleanStart consistent with the window above on the next sync.
-          const subWindowOffset = stripX - startViewWindow.start;
+          const subWindowOffset = start - startViewWindow.start;
           const targetDragX =
             newDrawData.curDataIdx * windowWidthRef.current - subWindowOffset;
 
           // re adjust the mouse dragX position because of different region size because of gaps
 
-          if (scrollPanEnabled && !isDragging.current) {
+          if (scrollPanEnabled && hasPangenome.current) {
+            /* Not now, while the old band's picture is still up - it would
+               slide by the correction before the new one replaces it - but
+               when the new one is committed (onBandDrawn), or, mid-drag,
+               when the pointer lets go. */
+            pendingReanchor.current = {
+              dataIdx: newDrawData.curDataIdx,
+              targetDragX,
+              dragAt: getDragX(),
+            };
+          } else if (scrollPanEnabled && !isDragging.current) {
             clampScrollTo(targetDragX);
           }
         } else {
@@ -3505,6 +3659,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       hasGenomeAlign.current = true;
     }
+    if (initTrackModel.type === PANGENOME_TRACK_TYPE) {
+      useFineModeNav.current = true;
+      hasGenomeAlign.current = true;
+      hasPangenome.current = true;
+    }
 
     if (
       initTrackModel.type in
@@ -3587,6 +3746,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   const refreshState = () => {
     initialLoad.current = true;
+    if (heldBandDraw.current) clearTimeout(heldBandDraw.current.timer);
+    heldBandDraw.current = null;
+    shownBandIdx.current = null;
+    pendingReanchor.current = null;
     completedFetchedRegion.current = {
       key: -0,
       done: {},
@@ -4251,7 +4414,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
 
-    if (basePerPixel.current < 10) {
+    if (basePerPixel.current < 10 || hasPangenome.current) {
       useFineModeNav.current = true;
     } else {
       useFineModeNav.current = false;
@@ -4424,7 +4587,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       globalTrackState.current.viewWindow = newViewWindow;
       if (hasGenomeAlign.current) {
-        if (basePerPixel.current < 10) {
+        if (basePerPixel.current < 10 || hasPangenome.current) {
           useFineModeNav.current = true;
         } else {
           useFineModeNav.current = false;
@@ -4663,11 +4826,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const tracksInView = [...trackComponents.map((item) => item.trackModel)];
 
       if (!arraysHaveSameTrackModels(filteredTracks, tracksInView)) {
-        const newGenomealignTracks = filteredTracks.filter(
-          (item) => item.type === "genomealign",
+        const newGenomealignTracks = filteredTracks.filter((item) =>
+          isLayoutTrackType(item.type),
         );
-        const genomealignTracksInView = tracksInView.filter(
-          (item) => item.type === "genomealign",
+        const genomealignTracksInView = tracksInView.filter((item) =>
+          isLayoutTrackType(item.type),
         );
         if (
           !arraysHaveSameTrackModels(
@@ -4732,7 +4895,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               if (curTrackModel.type === "g3d") {
                 continue;
               } else {
-                if (trackComponent.trackModel.type === "genomealign") {
+                if (isLayoutTrackType(trackComponent.trackModel.type)) {
                   checkHasGenAlign = true;
                 }
                 newTrackComponents.push(trackComponent);
@@ -4744,7 +4907,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           // if not in view this means that this is the new track that was added.
           if (!foundComp) {
             newAddedTrackModel.push(curTrackModel);
-            if (curTrackModel.type === "genomealign") {
+            if (isLayoutTrackType(curTrackModel.type)) {
               checkHasGenAlign = true;
             }
 
@@ -4771,6 +4934,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           useFineModeNav.current = false;
           hasGenomeAlign.current = false;
         }
+        hasPangenome.current = filteredTracks.some(
+          (track) => track.type === PANGENOME_TRACK_TYPE,
+        );
 
         trackManagerState.current.tracks = filteredTracks;
 
@@ -5429,6 +5595,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             messageData={messageData}
                             Toolbar={Toolbar}
                             handleRetryFetchTrack={handleRetryFetchTrack}
+                            onBandDrawn={onBandDrawn}
                             initialLoad={initialLoad}
                             selectedRegionSet={selectedRegionSet}
                             legendWidth={legendWidth}

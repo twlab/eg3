@@ -1,4 +1,4 @@
-import type { DatabaseSummary } from "@/core/gbz/worker/protocol";
+import type { DatabaseSummary } from "wuepgg3-track";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Which region the browser opens on.
