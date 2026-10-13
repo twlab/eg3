@@ -13,6 +13,7 @@ import {
   queryLocalInterval,
 } from "../../../../getRemoteData/gbz/worker/gbzClient";
 import { buildModel, referenceTicks } from "./Visualization/pangenomeModel";
+import { GRAPH_PART } from "./Visualization/VisualizationContainer";
 
 /* ══════════════════════════════════════════════════════════════════════════
    The pangenome graph, fetched the way a genomealign track is: first, for
@@ -54,6 +55,9 @@ interface PangenomeOptions {
   context?: number;
   /** Only these haplotypes' walks, as `sample#haplotype`; all when absent. */
   haplotypes?: string[];
+  /** Which row of the graph this track is: `GRAPH_PART` for the strip, or a
+      haplotype's `sample#haplotype` for its bar. */
+  part?: string;
 }
 
 /* A database opened from a URL can be opened again; one from disk cannot.
@@ -177,6 +181,154 @@ function withGaps(
   };
 }
 
+/** `SAMPLE#HAP#CONTIG[start-end]`, the shape the graph's walks are named in. */
+const WALK_NAME = /^(.*?)#(\d+)#([^[\]]+?)(?:\[(\d+)-(\d+)\])?$/;
+
+/** The contig as a haplotype's own files name it: `SAMPLE#HAP#CONTIG`. */
+const altContig = (sample: string, haplotype: number | string, contig: string) =>
+  contig.includes("#") ? contig : `${sample}#${haplotype}#${contig}`;
+
+/**
+ * A haplotype's stretches in the band's graph, `key` being `sample#haplotype`:
+ * one locus per walk piece, in its own coordinates and on the contigs its
+ * files name. What its tracks are fetched over.
+ */
+function haplotypeLoci(graph: any, key: string): ChromosomeInterval[] {
+  const paths: any[] = graph?.paths ?? graph?.result?.paths ?? [];
+  const seen = new Set<string>();
+  const loci: ChromosomeInterval[] = [];
+  for (const path of paths) {
+    const match = path?.name ? WALK_NAME.exec(path.name) : null;
+    const sample = path?.sample ?? match?.[1];
+    const haplotype = path?.haplotype ?? (match ? Number(match[2]) : undefined);
+    const contig = path?.contig ?? match?.[3];
+    if (`${sample}#${haplotype}` !== key || !contig) continue;
+    if (!match || match[4] === undefined || match[5] === undefined) continue;
+    const start = Number(match[4]);
+    const end = Number(match[5]);
+    const chr = altContig(sample, haplotype, contig);
+    const name = `${chr}:${start}-${end}`;
+    if (!(end > start) || seen.has(name)) continue;
+    seen.add(name);
+    loci.push(new ChromosomeInterval(chr, start, end));
+  }
+  return loci;
+}
+
+/**
+ * A haplotype as a query genome of the band, as genomealign gives each query
+ * one: the loci its tracks are fetched over, and the region they are drawn
+ * across - the band's width of context, the haplotype's own bases where the
+ * graph draws its nodes and gaps everywhere else.
+ *
+ * The band's context counts the layout one for one - its gaps are the
+ * layout's room - so a node's place in it is its place in the layout plus a
+ * constant, read off the reference's first node. Only the haplotype's
+ * longest unbroken piece is drawn; the others' data are fetched but not.
+ */
+function haplotypeCoord(
+  model: ReturnType<typeof buildModel>,
+  graph: any,
+  key: string,
+  visRegion: DisplayedRegionModel,
+  chr: string | undefined,
+) {
+  const total = Math.round(visRegion.getWidth());
+  const empty = () =>
+    new DisplayedRegionModel(
+      new NavigationContext(key, [NavigationContext.makeGap(total, "gap 1")]),
+      0,
+      total,
+    );
+  const coord = (queryRegion: DisplayedRegionModel) => ({
+    queryGenomicCoord: haplotypeLoci(graph, key).map((locus) =>
+      locus.serialize(),
+    ),
+    queryRegion,
+    id: key,
+  });
+
+  const anchors = model ? referenceTicks(model) : [];
+  if (!model || !chr || !anchors.length) return coord(empty());
+  const [first] = visRegion
+    .getNavigationContext()
+    .convertGenomeIntervalToBases(
+      new ChromosomeInterval(chr, anchors[0].bp, anchors[0].bp + 1),
+    );
+  if (!first) return coord(empty());
+  const regionStart = visRegion.getContextCoordinates().start;
+  /* From a place in the layout to one in the region drawn across the band. */
+  const at = (graphX: number) =>
+    Math.round(graphX - anchors[0].x + first.start - regionStart);
+
+  /* Its longest unbroken piece. */
+  const [sample, haplotype] = key.split("#");
+  let best: { steps: any[]; contig: string; bp: number } | null = null;
+  for (const lane of model.lanes) {
+    if (lane.isReference || lane.label !== key) continue;
+    const pieces = new Map<number, any[]>();
+    for (const step of lane.steps) {
+      const piece = pieces.get(step.segment);
+      if (piece) piece.push(step);
+      else pieces.set(step.segment, [step]);
+    }
+    for (const steps of pieces.values()) {
+      const bp = steps.reduce((sum, step) => sum + (step.end - step.start), 0);
+      if (!best || bp > best.bp) {
+        best = { steps, contig: altContig(sample, haplotype, lane.contig), bp };
+      }
+    }
+  }
+  if (!best) return coord(empty());
+
+  /* Its bases where the graph draws them, in order: a node behind what is
+     already laid - the path passing the same place again - is left out,
+     and one running past either edge of the band is cut there. */
+  type Run = { start: number; end: number } | { gap: number };
+  const runs: Run[] = [];
+  let cursor = 0;
+  let last: { start: number; end: number } | null = null;
+  for (const step of best.steps) {
+    const node = model.nodeById.get(step.node);
+    if (!node) continue;
+    const length = step.end - step.start;
+    const from = at(node.x);
+    if (from + length <= cursor) continue;
+    if (from >= total) break;
+    if (from > cursor) {
+      runs.push({ gap: from - cursor });
+      cursor = from;
+      last = null;
+    }
+    const skip = cursor - from;
+    const keep = Math.min(length - skip, total - cursor);
+    if (keep <= 0) continue;
+    const start = step.start + skip;
+    if (last && last.end === start) {
+      last.end = start + keep;
+    } else {
+      last = { start, end: start + keep };
+      runs.push(last);
+    }
+    cursor += keep;
+  }
+  if (total > cursor) runs.push({ gap: total - cursor });
+  if (!runs.some((run) => !("gap" in run))) return coord(empty());
+
+  let gapCount = 0;
+  const features = runs.map((run) =>
+    "gap" in run
+      ? NavigationContext.makeGap(run.gap, `gap ${++gapCount}`)
+      : new Feature(
+          `${best!.contig}:${run.start}-${run.end}`,
+          new ChromosomeInterval(best!.contig, run.start, run.end),
+        ),
+  );
+  return coord(
+    new DisplayedRegionModel(new NavigationContext(key, features), 0, total),
+  );
+}
+
 /** What a genomealign fetch returns, for a band of the graph. */
 export async function fetchPangenomeData(data: any): Promise<any> {
   const {
@@ -199,29 +351,39 @@ export async function fetchPangenomeData(data: any): Promise<any> {
 
   const fetchResults: any = {};
   const trackToDrawId: any = {};
-  let gaps: Gap[] = [];
 
-  /* One graph per view; were there more, the first would lay the band out. */
-  for (const trackModel of trackToFetch) {
-    let records: any = null;
-    let errorType: string | undefined;
-    try {
-      const options = trackModel.options as PangenomeOptions;
-      const database = await liveDatabase(options);
-      /* The band's stretch of the reference, on the contig it covers most. */
-      const locus = visRegion
-        .getGenomeIntervals()
-        .reduce((a: ChromosomeInterval | null, b: ChromosomeInterval) =>
-          !a || b.getLength() > a.getLength() ? b : a,
-        null);
-      const bounds = locus
-        ? await pathBounds(database, options.sample, locus.chr)
-        : null;
-      const start = Math.max(locus?.start ?? 0, bounds?.start ?? 0);
-      const end = Math.min(locus?.end ?? 0, bounds?.end ?? Infinity);
-      records =
-        locus && end > start
-          ? await queryLocalInterval(database, {
+  /* The band's stretch of the reference, on the contig it covers most. */
+  const locus = visRegion
+    .getGenomeIntervals()
+    .reduce(
+      (a: ChromosomeInterval | null, b: ChromosomeInterval) =>
+        !a || b.getLength() > a.getLength() ? b : a,
+      null,
+    );
+
+  /* The graph's rows - its strip and a bar per haplotype - are tracks of
+     their own that draw from one graph, so the band is queried once for
+     all of them that ask the same of the same database. */
+  const queries = new Map<string, Promise<any>>();
+  const queryFor = (options: PangenomeOptions) => {
+    const key = JSON.stringify([
+      options.database,
+      options.url,
+      options.sample,
+      options.context,
+      options.haplotypes,
+    ]);
+    let query = queries.get(key);
+    if (!query) {
+      query = (async () => {
+        const database = await liveDatabase(options);
+        const bounds = locus
+          ? await pathBounds(database, options.sample, locus.chr)
+          : null;
+        const start = Math.max(locus?.start ?? 0, bounds?.start ?? 0);
+        const end = Math.min(locus?.end ?? 0, bounds?.end ?? Infinity);
+        return locus && end > start
+          ? queryLocalInterval(database, {
               sample: options.sample,
               contig: locus.chr,
               start: Math.floor(start),
@@ -232,13 +394,24 @@ export async function fetchPangenomeData(data: any): Promise<any> {
               haplotypes: options.haplotypes,
             })
           : { nodes: [], edges: [], paths: [] };
-      if (!gaps.length && locus) {
-        gaps = graphGaps(
-          buildModel(records),
-          visRegion.getNavigationContext(),
-          locus.chr,
-        );
-      }
+      })();
+      queries.set(key, query);
+    }
+    return query;
+  };
+
+  /* The first graph lays the band out; the views never hold two. */
+  let layoutRecords: any = null;
+  const haplotypes = new Set<string>();
+  for (const trackModel of trackToFetch) {
+    let records: any = null;
+    let errorType: string | undefined;
+    try {
+      const options = trackModel.options as PangenomeOptions;
+      records = await queryFor(options);
+      layoutRecords ??= records;
+      for (const key of options.haplotypes ?? []) haplotypes.add(key);
+      if (options.part && options.part !== GRAPH_PART) haplotypes.add(options.part);
       trackToDrawId[trackModel.id] = "";
     } catch (error) {
       errorType =
@@ -256,6 +429,12 @@ export async function fetchPangenomeData(data: any): Promise<any> {
     };
   }
 
+  const model = layoutRecords && locus ? buildModel(layoutRecords) : null;
+  const gaps =
+    model && locus
+      ? graphGaps(model, visRegion.getNavigationContext(), locus.chr)
+      : [];
+
   /* Without a graph to read gaps off, the band is drawn as it is, so the
      other tracks still have somewhere to go. */
   const { primaryVisData, navContextBuilder } = withGaps(
@@ -265,11 +444,31 @@ export async function fetchPangenomeData(data: any): Promise<any> {
     gaps,
   );
 
+  /* Each haplotype as a query genome, the way genomealign gives each query
+     its coordinates: a track whose genome is \`sample#haplotype\` is fetched
+     over that haplotype's own stretches in the band and drawn along its
+     bar. Every one asked for has an entry, so a haplotype this band has
+     none of draws empty rather than failing. */
+  for (const lane of model?.lanes ?? []) {
+    if (!lane.isReference) haplotypes.add(lane.label);
+  }
+  const queryCoords: any = {};
+  for (const key of haplotypes) {
+    queryCoords[key] = haplotypeCoord(
+      model,
+      layoutRecords,
+      key,
+      primaryVisData.visRegion,
+      locus?.chr,
+    );
+  }
+
   return {
     fetchResults,
     navData: {
       ...data,
       genomicFetchCoord: {
+        ...queryCoords,
         [primaryGenName]: {
           genomicLoci,
           regionExpandLoci,

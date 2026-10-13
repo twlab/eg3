@@ -306,6 +306,8 @@ export default function LocalDatabaseCard({
       interval: `${start}..${end}`,
       context,
       ...(picked === null ? {} : { haplotypes: [...picked] }),
+      /* Named either way: each is a row of the view. */
+      lanes: pickedKeys,
       ...(hprcTracks.length ? { tracks: hprcTracks.map(toEgTrack) } : {}),
     });
   };

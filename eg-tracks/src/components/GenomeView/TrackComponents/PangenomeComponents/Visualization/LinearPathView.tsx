@@ -5,12 +5,11 @@ import type {
   Lane,
   PangenomeModel,
 } from "./pangenomeModel";
-import Ruler, { rulerTicks } from "./Ruler";
 import LaneCanvas from "./LaneCanvas";
 import FloatingCard from "./FloatingCard";
 import { rasteriseLanes } from "./laneRaster";
 import { laneLayout } from "./laneLayout";
-import { FOOT_PAD, LANE_H, NODE_H, RULER_H } from "./laneLayout";
+import { FOOT_PAD, LANE_H, NODE_H } from "./laneLayout";
 import { bandAxis } from "./pangenomeModel";
 import {
   baseCentres,
@@ -134,8 +133,9 @@ const HATCH_INK = "#FFFFFF";
 export function linearHeight(
   model: PangenomeModel,
   alleleRows: boolean,
+  strip = true,
 ): number {
-  return laneLayout(model, alleleRows).height;
+  return laneLayout(model, alleleRows, strip).height;
 }
 
 export interface HoverTarget {
@@ -180,6 +180,9 @@ interface LinearPathViewProps {
   /** Zoomed out, a haplotype's section is marked as off the reference only
       where more than this many of its bases there are; see LaneCanvas. */
   sectionAltBp?: number;
+  /** Whether the graph strip is drawn. Off, only the model's haplotype bars
+      are: one haplotype as a track row of its own. */
+  strip?: boolean;
 }
 
 /* The bars used to be split into runs here and drawn as rects. They are
@@ -198,6 +201,7 @@ function LinearPathView({
   selectedNode,
   alleleRows,
   sectionAltBp = 0,
+  strip = true,
 }: LinearPathViewProps) {
   /* Several of these can share a page, so the hatch needs its own id. */
   const hatchId = `pgv-hatch-${useId().replace(/[^\w-]/g, "")}`;
@@ -346,7 +350,10 @@ function LinearPathView({
      the strip under the ruler, the haplotypes under it, a bar apiece. */
   /* Rebuilt only with the model: it walks every haplotype, and a render that
      changes neither - a pick, a card opening - should not pay for it. */
-  const layout = useMemo(() => laneLayout(model, alleleRows), [model, alleleRows]);
+  const layout = useMemo(
+    () => laneLayout(model, alleleRows, strip),
+    [model, alleleRows, strip],
+  );
   const { stripTop, stripH } = layout;
   const laneTop = new Map<string, number>();
   const laneHeight = new Map<string, number>();
@@ -441,14 +448,10 @@ function LinearPathView({
      to work out again. */
   const hoverBoxRef = useRef<SVGRectElement>(null);
   const stickyRef = useRef<SVGGElement>(null);
-  /* The ruler travels with the strip: they are two halves of one thing to
-     read, the coordinate and the reference at it. */
-  const rulerStickyRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
     const svg = svgRef.current;
     const strip = stickyRef.current;
-    const ruler = rulerStickyRef.current;
     if (!svg || !strip) return;
 
     let queued = 0;
@@ -481,7 +484,6 @@ function LinearPathView({
 
       const move = shift > 0 ? `translate(0, ${Math.round(shift)})` : "";
       strip.setAttribute("transform", move);
-      ruler?.setAttribute("transform", move);
     };
 
     const onMove = () => {
@@ -916,33 +918,8 @@ function LinearPathView({
           </pattern>
         </defs>
 
-        {/* ── Ruler ─────────────────────────────────────────────────────
-            In a group of its own so it can be held at the top of the screen
-            with the strip; see the effect above. ─────────────────────── */}
-        <g ref={rulerStickyRef}>
-        {/* Ground under the ruler, for the same reason the strip has one:
-            held at the top of the screen it floats over the bars, and
-            without this they scroll through the space between its labels.
-            It meets the strip's own ground, which starts a few pixels above
-            the strip, so there is no seam between the two. */}
-        <rect
-          className="pgv-ruler-ground"
-          x={0}
-          y={0}
-          width={width}
-          height={RULER_H}
-        />
-        <Ruler
-          ticks={rulerTicks(
-            model,
-            (graphX) => px(graphX),
-            scale,
-          )}
-          height={RULER_H}
-          from={0}
-          to={width}
-        />
-        </g>
+        {/* No ruler: eg3's ruler track draws the coordinates, on the same
+            band. */}
 
 
       {/* The foot of each row, carried on from the rule under its name.
@@ -1068,6 +1045,7 @@ function LinearPathView({
       {/* One group, so the whole strip can be held at the top of the screen
           together. Last in the drawing, so it paints over the bars it floats
           across on the way down. */}
+      {strip && (
       <g className="pgv-strip pgv-hears" ref={stickyRef}>
         {/* Ground under the strip, so the bars it floats over do not show
             through it. The shell's own colour, which makes it invisible
@@ -1241,6 +1219,7 @@ function LinearPathView({
           />
         ))}
       </g>
+      )}
 
       </svg>
 

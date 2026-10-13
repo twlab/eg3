@@ -79,6 +79,7 @@ import PangenomeTrackView, {
   pangenomeTrackHeight,
 } from "./PangenomeComponents/PangenomeTrackView";
 import { PANGENOME_TRACK_TYPE } from "./PangenomeComponents/fetchPangenomeData";
+import { GRAPH_PART } from "./PangenomeComponents/Visualization/VisualizationContainer";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 
 export const dynamicMatplotTracks = new Set([
@@ -1320,7 +1321,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackState?.genomicFetchCoord?.[
         trackState.primaryGenName ?? drawData.genomeName
       ]?.primaryVisData;
-    const height = pangenomeTrackHeight(drawData.genesArr);
+    /* Which row of the graph: its strip, or one haplotype's bar. */
+    const part = drawData.trackModel.options?.part ?? GRAPH_PART;
+    const height = pangenomeTrackHeight(drawData.genesArr, part);
     if (drawData.svgHeight) {
       drawData.svgHeight.current = height;
     }
@@ -1336,6 +1339,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         queryResult={drawData.genesArr}
         primaryVisData={primaryVisData}
         windowWidth={drawData.windowWidth}
+        part={part}
       />
     );
   },

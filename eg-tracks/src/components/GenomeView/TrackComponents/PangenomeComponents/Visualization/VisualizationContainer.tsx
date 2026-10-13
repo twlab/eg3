@@ -100,10 +100,17 @@ interface VisualizationContainerProps {
   /** Told the model, axis and band this draws with, so tracks along an alt
       path can be laid where the graph draws that path. */
   onBandModel?: (model: PangenomeModel, axis: BandAxis, frame: DrawFrame) => void;
+  /** Which part of the linear view to draw, when the graph is laid out as
+      track rows: `GRAPH_PART` for the graph strip, or a haplotype's
+      `sample#haplotype` for its bar alone. Everything when absent. */
+  part?: string;
   /** Accepted so existing callers keep type-checking; unused by these views. */
   viewport?: any;
   setViewport?: (v: any) => void;
 }
+
+/** The `part` that is the graph strip rather than a haplotype's bar. */
+export const GRAPH_PART = "graph";
 
 /** Room left for the tooltip so it does not run off the right of the window. */
 const TOOLTIP_W = 260;
@@ -118,6 +125,7 @@ export default function VisualizationContainer({
   height = 600,
   isPrimary = false,
   onBandModel,
+  part,
 }: VisualizationContainerProps) {
   const view = usePangenomeView();
   /* Zoomed out, a section of the linear view's bars is hatched only where
@@ -390,6 +398,20 @@ export default function VisualizationContainer({
     [variants, variantAxis],
   );
 
+  /* The part of the linear view this draws. The model keeps its layout, so
+     a haplotype's bar lands where it would in the whole drawing; only the
+     lanes drawn are cut down to the part's. */
+  const strip = !part || part === GRAPH_PART;
+  const linearModel = useMemo(() => {
+    if (!model || !part) return model;
+    return {
+      ...model,
+      lanes: model.lanes.filter((lane) =>
+        part === GRAPH_PART ? lane.isReference : !lane.isReference && lane.label === part,
+      ),
+    };
+  }, [model, part]);
+
   /* The box is the height of what is in it. The linear view and the tube
      map can say in advance - a bar or a tube is a known height each - so
      they are asked; the node graph lays itself out before it knows, and
@@ -397,7 +419,7 @@ export default function VisualizationContainer({
   const shellHeight = !model
     ? height
     : view?.mode === "linear"
-      ? linearHeight(model, view.alleleRows)
+      ? linearHeight(linearModel ?? model, view.alleleRows, strip)
       : view?.mode === "variants"
         ? (variantShape?.height ?? height)
         : tube
@@ -506,6 +528,8 @@ export default function VisualizationContainer({
         {view.mode === "linear" ? (
           <LinearPathView
             {...shared}
+            model={linearModel ?? shared.model}
+            strip={strip}
             alleleRows={view.alleleRows}
             sectionAltBp={sectionAltBp}
           />

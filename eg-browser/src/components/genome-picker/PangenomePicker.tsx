@@ -3,6 +3,7 @@ import { useState } from "react";
 import LocalDatabaseCard from "./LocalDatabaseCard";
 import {
   GenomeHubManager,
+  GRAPH_PART,
   localPathBounds,
   PANGENOME_TRACK_TYPE,
 } from "wuepgg3-track";
@@ -43,6 +44,16 @@ export default function PangenomePicker({
         contig: config.contig,
       });
       const [start, end] = config.interval.split("..").map(Number);
+      /* Every row of the graph asks the same of the same database, so the
+         band is fetched once for all of them. */
+      const graph = {
+        database: summary.id,
+        ...(summary.url ? { url: summary.url } : {}),
+        sample: config.sample,
+        context: config.context,
+        ...(config.haplotypes ? { haplotypes: config.haplotypes } : {}),
+      };
+      const hprc = config.tracks ?? [];
       const genome: IGenome = {
         id: `pangenome:${summary.name}:${config.sample}:${config.contig}`,
         name: `${config.sample} · ${summary.name}`,
@@ -52,21 +63,30 @@ export default function PangenomePicker({
         defaultRegion: `${config.contig}:${start}-${end}`,
         defaultTracks: [
           { type: "ruler", name: "Ruler" },
+          /* The graph strip, on the reference. */
           {
             type: PANGENOME_TRACK_TYPE,
-            name: summary.name,
-            options: {
-              label: summary.name,
-              database: summary.id,
-              ...(summary.url ? { url: summary.url } : {}),
-              sample: config.sample,
-              context: config.context,
-              ...(config.haplotypes ? { haplotypes: config.haplotypes } : {}),
-            },
+            name: config.sample,
+            options: { ...graph, part: GRAPH_PART, label: config.sample },
           },
-          /* The sample tracks in the reference's own coordinates. Those on
-             an alt path wait for the graph to place them. */
-          ...(config.tracks ?? []).filter((track) => track.onReference),
+          /* The sample tracks in the reference's own coordinates. */
+          ...hprc.filter((track) => track.onReference),
+          /* Each haplotype a row of its own, and its tracks under it: in
+             its own coordinates, as a query genome the graph places. */
+          ...(config.lanes ?? []).flatMap((key) => [
+            {
+              type: PANGENOME_TRACK_TYPE,
+              name: key,
+              options: { ...graph, part: key, label: key },
+            },
+            ...hprc
+              .filter((track) => track.altPath === key)
+              .map((track) => ({
+                ...track,
+                querygenome: key,
+                metadata: { ...(track.metadata ?? {}), genome: key },
+              })),
+          ]),
         ],
         customGenome: true,
       };

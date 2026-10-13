@@ -1,10 +1,13 @@
 import { useMemo } from "react";
 
-import VisualizationContainer from "./Visualization/VisualizationContainer";
+import VisualizationContainer, {
+  GRAPH_PART,
+} from "./Visualization/VisualizationContainer";
 import { PangenomeViewProvider } from "./Visualization/pangenomeViewState";
 import { buildModel } from "./Visualization/pangenomeModel";
 import type { DrawFrame, PangenomeModel } from "./Visualization/pangenomeModel";
 import { linearHeight } from "./Visualization/LinearPathView";
+import { LANE_H } from "./Visualization/laneLayout";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
 import LinearDrawingModel from "../../../../models/LinearDrawingModel";
 
@@ -29,10 +32,17 @@ function modelOf(queryResult: any): PangenomeModel | null {
   return models.get(queryResult) ?? null;
 }
 
-/** How tall the linear view of this graph is drawn. */
-export function pangenomeTrackHeight(queryResult: any): number {
+/** How tall a part of the linear view of this graph is drawn: the graph
+    strip, or one haplotype's bar (see VisualizationContainer). */
+export function pangenomeTrackHeight(queryResult: any, part: string): number {
   const model = modelOf(queryResult);
-  return model && model.lanes.length ? linearHeight(model, false) : 40;
+  if (!model) return 40;
+  const lanes = model.lanes.filter((lane) =>
+    part === GRAPH_PART ? lane.isReference : !lane.isReference && lane.label === part,
+  );
+  /* A haplotype with nothing in this band still holds its row. */
+  if (!lanes.length) return part === GRAPH_PART ? 40 : LANE_H;
+  return linearHeight({ ...model, lanes }, false, part === GRAPH_PART);
 }
 
 /**
@@ -85,10 +95,13 @@ export default function PangenomeTrackView({
   queryResult,
   primaryVisData,
   windowWidth,
+  part,
 }: {
   queryResult: any;
   primaryVisData: any;
   windowWidth: number;
+  /** The graph strip, or a haplotype's bar: see VisualizationContainer. */
+  part: string;
 }) {
   const frame = useMemo(() => bandFrame(primaryVisData), [primaryVisData]);
   return (
@@ -98,6 +111,7 @@ export default function PangenomeTrackView({
           isPrimary
           queryResult={queryResult}
           frame={frame}
+          part={part}
         />
       </div>
     </PangenomeViewProvider>

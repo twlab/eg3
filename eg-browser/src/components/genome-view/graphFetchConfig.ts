@@ -62,6 +62,9 @@ export interface GraphFetchConfig {
   /** eg3 tracks to draw under the graph, as eg3 describes them - type, url,
       name, options - each fetched over the region the graph shows. */
   tracks?: Array<{ [key: string]: any }>;
+  /** The haplotypes picked, as `sample#haplotype`, every one of them named
+      even when all were picked: each is a row of the view. */
+  lanes?: string[];
 }
 
 /** One of the regions a file can be opened straight onto. */

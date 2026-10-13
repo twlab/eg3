@@ -17,8 +17,9 @@ import type { PangenomeModel } from "./pangenomeModel";
 /** The names down the left, and the room the drawing gives up for them. */
 export const LEGEND_WIDTH = 120;
 
-/** The ruler: its marks and labels are drawn up from its foot, and this is
-    the room they need. */
+/** The variants view's ruler: its marks and labels are drawn up from its
+    foot, and this is the room they need. The linear view has none - eg3's
+    ruler track draws its coordinates. */
 export const RULER_H = 28;
 /** How tall a haplotype's bar is drawn; the tube map sizes its tubes from it. */
 export const LANE_H = 17;
@@ -61,19 +62,22 @@ export interface LaneLayout {
 /**
  * The rows of the linear view, in the order they are drawn.
  *
- * The ruler, then the strip - the reference, one row of it and a row per
- * alternative allele while those are asked for - then a bar per haplotype,
- * each as many rows tall as the copies it stacks.
+ * The strip - the reference, one row of it and a row per alternative
+ * allele while those are asked for - then a bar per haplotype, each as many
+ * rows tall as the copies it stacks. No ruler: eg3's ruler track draws the
+ * coordinates. Without `strip`, only the bars: a haplotype drawn as a track
+ * row of its own.
  */
 export function laneLayout(
   model: PangenomeModel,
   alleleRows: boolean,
+  strip = true,
 ): LaneLayout {
-  const stripTop = RULER_H;
-  const stripH = (alleleRows ? model.rowCount : 1) * NODE_H;
+  const stripTop = 0;
+  const stripH = strip ? (alleleRows ? model.rowCount : 1) * NODE_H : 0;
 
   const reference = model.lanes.find((lane) => lane.isReference);
-  const rows: LaneRow[] = reference
+  const rows: LaneRow[] = reference && strip
     ? [
         {
           key: reference.key,
@@ -89,7 +93,7 @@ export function laneLayout(
   /* One row per card a haplotype stacks, so the letters of a second copy
      have their own room rather than being squeezed in beside the first. */
   const depths = stackDepths(model);
-  let running = stripTop + stripH + STRIP_GAP;
+  let running = stripTop + stripH + (strip ? STRIP_GAP : 0);
   model.lanes.forEach((lane, index) => {
     /* The reference has no bar of its own: the strip is where it is drawn. */
     if (lane.isReference) return;

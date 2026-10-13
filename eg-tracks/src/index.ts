@@ -35,3 +35,4 @@ export {
 export type { DatabaseSummary } from "./getRemoteData/gbz/worker/protocol";
 export type { HaplotypeSummary, PathBounds } from "./getRemoteData/gbz/bounds";
 export { PANGENOME_TRACK_TYPE } from "./components/GenomeView/TrackComponents/PangenomeComponents/fetchPangenomeData";
+export { GRAPH_PART } from "./components/GenomeView/TrackComponents/PangenomeComponents/Visualization/VisualizationContainer";
