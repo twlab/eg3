@@ -94,14 +94,38 @@ export interface PangenomeViewProviderProps {
   windowWidth?: number;
   /** Adopt a span of the reference as the region. */
   onCommitRegion?: (start: number, end: number) => void;
+  /** The view, when whoever mounts this holds it - eg3's TrackManager,
+      whose toolbar switches it and whose tracks are laid out by it. */
+  mode?: ViewMode;
+  onModeChange?: (mode: ViewMode) => void;
+  /** The groupings, when whoever mounts this holds them too: the tube map's
+      decides the room the band is laid out with. */
+  tubeGrouping?: number;
+  setTubeGrouping?: React.Dispatch<React.SetStateAction<number>>;
+  variantGrouping?: number;
+  setVariantGrouping?: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export function PangenomeViewProvider({
   children,
   windowWidth = 0,
   onCommitRegion,
+  mode: heldMode,
+  onModeChange,
+  tubeGrouping: heldTubeGrouping,
+  setTubeGrouping: setHeldTubeGrouping,
+  variantGrouping: heldVariantGrouping,
+  setVariantGrouping: setHeldVariantGrouping,
 }: PangenomeViewProviderProps) {
-  const [mode, setMode] = useState<ViewMode>("linear");
+  const [ownMode, setOwnMode] = useState<ViewMode>("linear");
+  const mode = heldMode ?? ownMode;
+  const setMode = useCallback(
+    (next: ViewMode) => {
+      setOwnMode(next);
+      onModeChange?.(next);
+    },
+    [onModeChange],
+  );
   const [nodeGap, setNodeGap] = useState(DEFAULT_NODE_GAP);
   const [rowGap, setRowGap] = useState(DEFAULT_ROW_GAP);
   const [gapScale, setGapScale] = useState(DEFAULT_GAP_SCALE);
@@ -119,8 +143,12 @@ export function PangenomeViewProvider({
      spelled into the bar rather than given a row of its own. */
   const [alleleRows, setAlleleRows] = useState(false);
   /* Auto, so the variants view draws no more sites than there is room for. */
-  const [variantGrouping, setVariantGrouping] = useState(0);
-  const [tubeGrouping, setTubeGrouping] = useState(0);
+  const [ownVariantGrouping, setOwnVariantGrouping] = useState(0);
+  const [ownTubeGrouping, setOwnTubeGrouping] = useState(0);
+  const variantGrouping = heldVariantGrouping ?? ownVariantGrouping;
+  const setVariantGrouping = setHeldVariantGrouping ?? setOwnVariantGrouping;
+  const tubeGrouping = heldTubeGrouping ?? ownTubeGrouping;
+  const setTubeGrouping = setHeldTubeGrouping ?? setOwnTubeGrouping;
   const [model, publishModel] = useState<PangenomeModel | null>(null);
   /* Adopt a span of the reference as the region. Nothing reaches for this
      now that the wheel no longer zooms - a pan is the only thing that

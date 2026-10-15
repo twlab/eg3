@@ -1,4 +1,3 @@
-import { stackDepths } from "./laneRaster";
 import type { PangenomeModel } from "./pangenomeModel";
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -17,12 +16,12 @@ import type { PangenomeModel } from "./pangenomeModel";
 /** The names down the left, and the room the drawing gives up for them. */
 export const LEGEND_WIDTH = 120;
 
-/** The variants view's ruler: its marks and labels are drawn up from its
-    foot, and this is the room they need. The linear view has none - eg3's
-    ruler track draws its coordinates. */
-export const RULER_H = 28;
-/** How tall a haplotype's bar is drawn; the tube map sizes its tubes from it. */
+/** The tube map sizes its tubes from this: what a haplotype's bar was. */
 export const LANE_H = 17;
+/** How tall an alt path's bar is: one row, whatever it holds. Where the
+    haplotype reads one place more than once the visits split it between
+    them - see `visitBand` in laneRaster.ts. */
+export const BAR_H = 60;
 /** Between one haplotype's bar and the next, and between the strip and the
     first of them. Nothing: what separates one from the next is the rule
     under it, and a gap as well left every bar looking as though it had been
@@ -63,8 +62,7 @@ export interface LaneLayout {
  * The rows of the linear view, in the order they are drawn.
  *
  * The strip - the reference, one row of it and a row per alternative
- * allele while those are asked for - then a bar per haplotype, each as many
- * rows tall as the copies it stacks. No ruler: eg3's ruler track draws the
+ * allele while those are asked for - then a bar per haplotype, BAR_H tall. No ruler: eg3's ruler track draws the
  * coordinates. Without `strip`, only the bars: a haplotype drawn as a track
  * row of its own.
  */
@@ -90,14 +88,13 @@ export function laneLayout(
       ]
     : [];
 
-  /* One row per card a haplotype stacks, so the letters of a second copy
-     have their own room rather than being squeezed in beside the first. */
-  const depths = stackDepths(model);
+  /* One bar per haplotype, BAR_H tall: copies of a stretch share it as
+     thinner bars rather than taking rows of their own. */
   let running = stripTop + stripH + (strip ? STRIP_GAP : 0);
-  model.lanes.forEach((lane, index) => {
+  model.lanes.forEach((lane) => {
     /* The reference has no bar of its own: the strip is where it is drawn. */
     if (lane.isReference) return;
-    const height = depths[index] * LANE_H;
+    const height = BAR_H;
     rows.push({
       key: lane.key,
       label: lane.label,

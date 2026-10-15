@@ -1,4 +1,5 @@
 import type { GraphNode, Lane, PangenomeModel } from "./pangenomeModel";
+import { laneTotal } from "./pangenomeModel";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Shared between the two views, so a node reads the same in both.
@@ -169,7 +170,7 @@ export function nodeDetailLines(
     node.onReference
       ? "on the reference walk"
       : "an alternative to the reference here",
-    `carried by ${node.lanes.length} of ${model.lanes.length} haplotypes`,
+    `carried by ${node.lanes.length} of ${laneTotal(model)} haplotypes`,
   ];
   /* The whole allele, wrapped in the tooltip, up to a length a tooltip can
      still be read at: past that the rest is counted rather than shown. */
@@ -202,7 +203,10 @@ const NEIGHBOUR_CAP = 3;
  * so they stay separate nodes, and this says which is which: where each joins
  * the graph, and how far apart a haplotype through both meets them.
  */
-function sameSequenceLines(node: GraphNode, model: PangenomeModel): string[] {
+export function sameSequenceLines(
+  node: GraphNode,
+  model: PangenomeModel,
+): string[] {
   const column = model.columns[node.column];
   if (!column || !node.sequence) return [];
   const twins = column.nodeIds

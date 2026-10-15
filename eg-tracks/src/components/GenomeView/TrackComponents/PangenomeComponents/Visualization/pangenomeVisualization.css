@@ -1254,3 +1254,155 @@
   fill: #e9eef8;
   pointer-events: none;
 }
+
+/* A list in a clicked section's card: every node of its kind, scrolling
+   on its own, each opening in place to what it is (LinearPathView). */
+.pgv-section-list {
+  max-height: 168px;
+  overflow-y: auto;
+  margin-top: 1px;
+  padding-right: 4px;
+}
+
+button.pgv-section-item {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+button.pgv-section-item:hover,
+button.pgv-section-item[aria-expanded="true"] {
+  color: #fff;
+}
+
+.pgv-section-caret {
+  display: inline-block;
+  width: 1.1em;
+  color: #8f959c;
+}
+
+/* What an opened node is: wrapped, since a sequence runs long. */
+.pgv-section-detail {
+  max-width: 420px;
+  margin: 0 0 3px 1.1em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
+    monospace;
+  color: #b6babf;
+}
+
+/* Coordinates in a card: the reference's blue and an alt path's green, as
+   their legends are - lighter, to read on the card's dark ground. */
+.pgv-coord-ref {
+  color: #8ab8ff;
+}
+
+.pgv-coord-alt {
+  color: #6fdc96;
+}
+
+.pgv-coord-label {
+  color: #f2f3f4;
+  font-weight: 600;
+}
+
+/* A haplotype's variants in its card, by what each does to the reference:
+   pastel, to read on the card's dark ground. */
+.pgv-var-sub {
+  color: #f6e3a1;
+}
+
+.pgv-var-ins {
+  color: #b5ebb0;
+}
+
+.pgv-var-del {
+  color: #f6b0b0;
+}
+
+/* Several changes in one stretch: lavender, none of the three it is made
+   of, which its line names in their own colours. */
+.pgv-var-multi {
+  color: #d9c6f7;
+}
+
+/* One of a multiple variant's changes, in what it opens to: set in from
+   the line that says what it is made of. */
+.pgv-variant-part {
+  display: inline-block;
+  padding-left: 1.1em;
+}
+
+/* On one line, as the variant's own line is: wrapped, a coordinate broke
+   in two. */
+.pgv-section-detail:has(> .pgv-variant-part) {
+  max-width: none;
+  white-space: nowrap;
+}
+
+/* The card a hover shows in the zoomed-in linear view, following the
+   pointer; a click keeps it as a floating card (LinearPathView). */
+.pgv-section-card.pgv-hover-card {
+  position: fixed;
+  z-index: 99998;
+  transform: none;
+  margin: 0;
+  max-height: min(480px, calc(100vh - 16px));
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The letters under the pointer, at the head of a card. */
+.pgv-section-card .pgv-card-zoom {
+  display: block;
+  margin: 3px 0 4px;
+  padding: 0 0 4px;
+  border-top: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Broken between any two letters, so the lines fill: breaking only where
+   it could left the leading "…" on a line of its own. */
+.pgv-section-card .pgv-zoom-seq {
+  color: #b6babf;
+  word-break: break-all;
+}
+
+.pgv-section-card .pgv-zoom-at {
+  color: #0b1220;
+  background: #22d3ee;
+}
+
+.pgv-section-card .pgv-zoom-where {
+  color: #8f959c;
+}
+
+/* The nodes either side of the one a card is about, headed in the yellow
+   they are outlined in. */
+.pgv-section-head.pgv-head-near {
+  color: #facc15;
+}
+
+/* What a kept card is about, outlined where it is drawn: the node itself
+   in the hover's cyan, the nodes either side of it in yellow. */
+.pgv-kept-node {
+  fill: none;
+  stroke: #22d3ee;
+  stroke-width: 2.5;
+  pointer-events: none;
+}
+
+.pgv-kept-near {
+  fill: none;
+  stroke: #facc15;
+  stroke-width: 2;
+  pointer-events: none;
+}

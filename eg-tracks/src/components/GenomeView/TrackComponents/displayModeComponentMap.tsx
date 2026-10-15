@@ -1317,13 +1317,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
   /* The pangenome graph, drawn on the band its own fetch laid out. */
   pangenome: function getPangenome(drawData: { [key: string]: any }) {
     const { trackState } = drawData;
-    const primaryVisData =
+    const primary =
       trackState?.genomicFetchCoord?.[
         trackState.primaryGenName ?? drawData.genomeName
-      ]?.primaryVisData;
+      ];
+    const primaryVisData = primary?.primaryVisData;
     /* Which row of the graph: its strip, or one haplotype's bar. */
     const part = drawData.trackModel.options?.part ?? GRAPH_PART;
-    const height = pangenomeTrackHeight(drawData.genesArr, part);
+    const height = pangenomeTrackHeight(
+      drawData.genesArr,
+      part,
+      primary?.pangenomeView,
+      primary?.primaryVisData,
+      primary?.pangenomeTube,
+      primary?.pangenomeVariantGrouping,
+    );
     if (drawData.svgHeight) {
       drawData.svgHeight.current = height;
     }
@@ -1340,6 +1348,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         primaryVisData={primaryVisData}
         windowWidth={drawData.windowWidth}
         part={part}
+        tube={primary?.pangenomeTube}
       />
     );
   },

@@ -1,22 +1,37 @@
-import { useId, useMemo, useState, memo, useRef, useEffect } from "react";
+import {
+  forwardRef,
+  memo,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type {
   DrawFrame,
   GraphNode,
   Lane,
+  LaneStep,
   PangenomeModel,
 } from "./pangenomeModel";
 import LaneCanvas from "./LaneCanvas";
+import type { LaneHover } from "./LaneCanvas";
 import FloatingCard from "./FloatingCard";
-import { rasteriseLanes } from "./laneRaster";
+import { pieceAt, rasteriseLanes, visitPieces } from "./laneRaster";
+import type { LaneRaster, RasterNode } from "./laneRaster";
 import { laneLayout } from "./laneLayout";
-import { FOOT_PAD, LANE_H, NODE_H } from "./laneLayout";
+import { BAR_H, FOOT_PAD, NODE_H } from "./laneLayout";
 import { bandAxis } from "./pangenomeModel";
+import { alleleKey } from "../../../../../getRemoteData/gbz/subgraph";
 import {
   baseCentres,
-  laneNeighbourLines,
   laneNeighbours,
-  nodeDetailLines,
   nodeInterval,
+  sameSequenceLines,
   sequenceSize,
 } from "./nodeDetail";
 
@@ -46,10 +61,12 @@ export const GUTTER = 0;
    legend beside it reads too - see there. Re-exported, since the tube map
    sizes its tubes from the height of a bar. */
 export { LANE_HEIGHT, LANE_H } from "./laneLayout";
+/** Every alt path's bar, for now: a pastel green, with its variant
+    stretches hatched in ivory (LaneCanvas). Meant to be the reader's to
+    choose in the config menu, later. */
+const ALT_BAR_COLOR = "#9fd6a4";
 /** The mark on an allele that is one of several ways in or out. */
 const BULLET_R = 3.5;
-/** How many of the nodes it connects to a bullet names before it counts. */
-const BULLET_LIST_MAX = 8;
 /** How far the strip's ground reaches above it, to meet the ruler's own
     without a seam. It does not reach below: the first bar starts where the
     strip ends, and a ground hanging past it covered the top of that bar. */
@@ -70,8 +87,8 @@ const SEQUENCE_MIN_SIZE = 4;
    bars are read a section at a time instead - neighbouring nodes joined
    until the section is at least this wide - and only on a click. */
 const SECTION_PX = 16;
-/** How many nodes of each kind a section's card names before it counts. */
-const SECTION_LIST_MAX = 12;
+/** How much of a sequence a card spells out before it counts the rest. */
+const CARD_SEQUENCE_MAX = 120;
 
 /** Neighbouring nodes read as one, zoomed out. */
 interface StripSection {
@@ -85,22 +102,330 @@ interface SectionCard {
   /** Where it was clicked, in window coordinates: the card opens there. */
   x: number;
   y: number;
-  /** What a hover said, kept by a click: its lines wrap. */
-  detail?: boolean;
+  /** Zoomed in, what the card is about: outlined in the drawing, with the
+      nodes either side of it, while the card is kept open. */
+  target?: CardTarget;
   title: string;
-  lines: string[];
-  /** Headed lists: the nodes of each kind, or a haplotype's alleles. */
-  groups: Array<{ head: string; lines: string[] }>;
+  /** The letters under the pointer, on a haplotype's bar. */
+  zoom?: CardZoom;
+  lines: ReactNode[];
+  /** Headed lists of nodes - every one of them, in a list that scrolls -
+      each opening, on a click, to what it is. Near: the nodes either side
+      of the one the card is about, headed in the yellow they are outlined
+      in. Empty: what to say when the list has none. */
+  groups: Array<{
+    head: string;
+    items: CardItem[];
+    near?: boolean;
+    empty?: string;
+  }>;
 }
 
-/** The first few of a list, and how many more there are. */
-const listed = (lines: string[]) =>
-  lines.length > SECTION_LIST_MAX
-    ? [
-        ...lines.slice(0, SECTION_LIST_MAX),
-        `…and ${lines.length - SECTION_LIST_MAX} more`,
-      ]
-    : lines;
+/** What a card says, apart from where it is. */
+type CardContent = Omit<SectionCard, "x" | "y" | "target">;
+
+/** The letters around the pointer, with the ones it covers picked out. */
+interface CardZoom {
+  before: string;
+  at: string;
+  after: string;
+  where: ReactNode;
+}
+
+/** One node in a card's list: its line, and what opening it says. */
+interface CardItem {
+  key: string;
+  line: ReactNode;
+  details: ReactNode[];
+  /** Told when the pointer is on the entry and when it leaves. */
+  onPoint?: (on: boolean) => void;
+}
+
+/** What a zoomed-in card is about. */
+type CardTarget =
+  /* One visit of a haplotype's bar - which of its raster's visits - and
+     the letters under the pointer there. */
+  | { kind: "visit"; lane: string; index: number; zoom: LaneHover["zoom"] }
+  /* One node of the graph strip. */
+  | { kind: "node"; id: string }
+  /* The ways into or out of a visit a bullet counts, and where the bullet
+     is drawn. */
+  | {
+      kind: "ways";
+      lane: string;
+      index: number;
+      side: "before" | "after";
+      ids: string[];
+      x: number;
+      y: number;
+    };
+
+/** A target as a string: the hover draws itself again only when it changes. */
+const targetKey = (target: CardTarget) =>
+  target.kind === "visit"
+    ? `visit:${target.lane}:${target.index}:${target.zoom?.markFrom ?? ""}:${target.zoom?.markTo ?? ""}`
+    : target.kind === "node"
+      ? `node:${target.id}`
+      : `ways:${target.lane}:${target.index}:${target.side}`;
+
+/** Whether a card is kept open anywhere on the page. Each of the graph's
+    rows is a view of its own, and while any of them keeps a card, no
+    row's hover says anything. */
+const cardKeptOpen = () =>
+  typeof document !== "undefined" &&
+  !!document.querySelector(".pgv-floating-card");
+
+/** One way a haplotype differs from the reference, as its card lists it. */
+interface Variant {
+  /** Unresolved: the haplotype's walk here starts or ends while off the
+      reference, so there is no reference node on that side to say what it
+      stands in for. */
+  /* Multiple: several changes in one stretch off the reference - see
+     parts. Complex: a change the graph does not line up base by base, or a
+     walk jumping back along the reference. */
+  kind:
+    | "substitution"
+    | "multiple"
+    | "complex"
+    | "insertion"
+    | "deletion"
+    | "unresolved";
+  /** For a multiple one, the changes it is made of, in reference order. */
+  parts?: VariantPart[];
+  /** For an unresolved one, which end of the walk here is off the
+      reference. Whether the walk carries on past what was fetched or its
+      contig stops there, the walk here cannot say. */
+  openAt?: "start" | "end" | "both";
+  /** Where on the reference: the stretch it replaces, or the point an
+      insertion goes in at. */
+  refFrom: number;
+  refTo: number;
+  /** Where in the haplotype: what it reads, or the point a deletion is at. */
+  ownFrom: number;
+  ownTo: number;
+  /** Where its nodes off the reference are read in the haplotype - all of
+      them, before any shared bases are trimmed off: how a visit finds the
+      variant it is part of. */
+  runFrom: number;
+  runTo: number;
+  /** What the haplotype reads, and the reference instead - on the
+      reference's strand, less the bases the two share at either end. */
+  reads: string;
+  instead: string;
+  /** The two alleles as the graph has them, where trimming shared bases
+      off them changed what they say. */
+  graph?: { instead: string; reads: string };
+  /** The walk through it: the reference node it leaves, its nodes off the
+      reference, the reference node it rejoins at. */
+  walk: string[];
+  /** A walk jumping back along the reference rather than over some of it. */
+  jumpsBack: boolean;
+  /** The pixels it is drawn across. */
+  left: number;
+  right: number;
+}
+
+/** One change a multiple variant is made of. */
+interface VariantPart {
+  kind: "substitution" | "complex" | "insertion" | "deletion";
+  refFrom: number;
+  refTo: number;
+  ownFrom: number;
+  ownTo: number;
+  reads: string;
+  instead: string;
+}
+
+/* A variant's colour by what it does to the reference. */
+const VARIANT_CLASS: Record<Variant["kind"], string> = {
+  substitution: "pgv-var-sub",
+  multiple: "pgv-var-multi",
+  complex: "pgv-var-sub",
+  insertion: "pgv-var-ins",
+  deletion: "pgv-var-del",
+  unresolved: "",
+};
+
+/** A sequence short enough for a card's one-line entry. */
+const shortSequence = (sequence: string) =>
+  sequence.length > 12 ? `${sequence.slice(0, 12)}…` : sequence;
+
+/** A sequence for a card: whole, or its start and how much more there is. */
+const cardSequence = (sequence: string) =>
+  !sequence
+    ? "(no sequence)"
+    : sequence.length > CARD_SEQUENCE_MAX
+      ? `${sequence.slice(0, CARD_SEQUENCE_MAX)}… (${(
+          sequence.length - CARD_SEQUENCE_MAX
+        ).toLocaleString()} more bp)`
+      : sequence;
+
+/** What a card says - the same whether a hover is showing it or a click
+    has kept it. Kept, its entries open on a click. */
+function CardBody({
+  card,
+  openItems,
+  onToggle,
+}: {
+  card: CardContent;
+  openItems?: ReadonlySet<string>;
+  onToggle?: (key: string) => void;
+}) {
+  return (
+    <>
+      <div className="pgv-tooltip-title">{card.title}</div>
+      {card.zoom && (
+        <div className="pgv-zoom pgv-card-zoom">
+          <div className="pgv-zoom-seq">
+            {card.zoom.before}
+            <span className="pgv-zoom-at">{card.zoom.at}</span>
+            {card.zoom.after}
+          </div>
+          <div className="pgv-zoom-where">{card.zoom.where}</div>
+        </div>
+      )}
+      {card.lines.map((line, index) => (
+        <div key={index} className="pgv-section-line">
+          {line}
+        </div>
+      ))}
+      {card.groups.map((group) => (
+        <div key={group.head}>
+          <div
+            className={`pgv-section-head${group.near ? " pgv-head-near" : ""}`}
+          >
+            {group.head}
+          </div>
+          {group.items.length === 0 ? (
+            <div className="pgv-section-line">{group.empty ?? "none"}</div>
+          ) : (
+            <div className="pgv-section-list">
+              {group.items.map((item) => {
+                const key = `${group.head}:${item.key}`;
+                const open = openItems?.has(key) ?? false;
+                return (
+                  <div key={key}>
+                    <button
+                      type="button"
+                      className="pgv-section-node pgv-section-item"
+                      aria-expanded={open}
+                      onClick={() => onToggle?.(key)}
+                      onMouseEnter={
+                        item.onPoint ? () => item.onPoint?.(true) : undefined
+                      }
+                      onMouseLeave={
+                        item.onPoint ? () => item.onPoint?.(false) : undefined
+                      }
+                    >
+                      <span className="pgv-section-caret">
+                        {open ? "▾" : "▸"}
+                      </span>
+                      {item.line}
+                    </button>
+                    {open &&
+                      item.details.map((line, index) => (
+                        <div key={index} className="pgv-section-detail">
+                          {line}
+                        </div>
+                      ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ))}
+    </>
+  );
+}
+
+interface HoverCardHandle {
+  /** Shows the card for `key` at the pointer, building it only when the
+      key is not the one already shown. */
+  show: (
+    key: string,
+    build: () => CardContent | null,
+    x: number,
+    y: number,
+  ) => void;
+  hide: () => void;
+}
+
+/** Between the pointer and the card, and the card and the window's edges. */
+const HOVER_GAP = 14;
+const HOVER_EDGE = 8;
+
+/**
+ * The card a hover shows: what a click would keep, following the pointer.
+ *
+ * A component of its own holding its own state, so a hover renders this
+ * and nothing else - the drawing it sits beside is thousands of elements,
+ * and a hover is a hundred events long. It is moved by writing to its
+ * style, as the tooltip it replaces was, and drawn again only when what it
+ * is about changes.
+ */
+const HoverCard = forwardRef<HoverCardHandle>(function HoverCard(_props, ref) {
+  const [shown, setShown] = useState<{ key: string; card: CardContent } | null>(
+    null,
+  );
+  const box = useRef<HTMLDivElement>(null);
+  const at = useRef({ x: 0, y: 0 });
+  /* Measured once per change of what it says, so a move costs no layout. */
+  const size = useRef({ width: 0, height: 0 });
+  /* Below and right of the pointer; left of it near the right edge, above
+     it near the bottom. */
+  const place = () => {
+    const element = box.current;
+    if (!element) return;
+    const { x, y } = at.current;
+    const { width, height } = size.current;
+    let left = x + HOVER_GAP;
+    if (left + width > window.innerWidth - HOVER_EDGE) {
+      left = Math.max(HOVER_EDGE, x - HOVER_GAP - width);
+    }
+    let top = y + HOVER_GAP;
+    if (top + height > window.innerHeight - HOVER_EDGE) {
+      top = Math.max(HOVER_EDGE, y - HOVER_GAP - height);
+    }
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+  };
+  useImperativeHandle(
+    ref,
+    () => ({
+      show(key, build, x, y) {
+        at.current = { x, y };
+        setShown((was) => {
+          if (was?.key === key) return was;
+          const card = build();
+          return card ? { key, card } : null;
+        });
+        place();
+      },
+      hide() {
+        setShown(null);
+      },
+    }),
+    /* place reads only refs. */
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    [],
+  );
+  useLayoutEffect(() => {
+    const element = box.current;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    size.current = { width: rect.width, height: rect.height };
+    place();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [shown]);
+  if (!shown) return null;
+  return createPortal(
+    <div ref={box} className="pgv-section-card pgv-hover-card">
+      <CardBody card={shown.card} />
+    </div>,
+    document.body,
+  );
+});
 
 /* Alleles off the reference walk are hatched rather than recoloured, so the
    haplotype keeps its colour and the divergence still reads at a glance.
@@ -195,10 +520,6 @@ function LinearPathView({
   pxPerBase,
   frame,
   highlight,
-
-  onHover,
-  onSelectNode,
-  selectedNode,
   alleleRows,
   sectionAltBp = 0,
   strip = true,
@@ -215,115 +536,45 @@ function LinearPathView({
   } | null>(null);
   const nodeIsLit = (id: string) => litRun?.nodes.has(id) ?? false;
 
-  /* What a bullet says when it is asked: the nodes on the other side of it. */
-  const neighbourLines = (ids: string[]) => {
-    const shown = ids.slice(0, BULLET_LIST_MAX);
-    const lines = shown.map((id) => {
-      const node = model.nodeById.get(id);
-      if (!node) return `node ${id}`;
-      const carried = `${node.lanes.length}/${model.lanes.length} haplotypes`;
-      return `node ${id} · ${node.length} bp · ${carried}${
-        node.onReference ? " · reference walk" : ""
-      }`;
-    });
-    if (ids.length > shown.length) {
-      lines.push(`…and ${ids.length - shown.length} more`);
-    }
-    return lines;
-  };
-  /**
-   * The bullet a reader has opened, if any, and the node they are pointing
-   * at of the ones it names.
-   *
-   * Kept apart from the hover, which writes to the tooltip and touches no
-   * state at all: this changes only when the pointer crosses one of the few
-   * nodes an open bullet names, so it costs a render then and never
-   * otherwise.
-   */
-  const [openBullet, setOpenBullet] = useState<{
-    key: string;
-    x: number;
-    y: number;
-    ids: string[];
-  } | null>(null);
+  /* From an open bullet's card to the node it names that the pointer is on
+     in that card: the card says what they are, this says where. */
   const [linked, setLinked] = useState<{ lane: string; id: string } | null>(
     null,
   );
 
-  /* The section a reader clicked, zoomed out; see SECTION_PX. */
+  /* The card a click keeps: a section's, zoomed out, or - zoomed in - the
+     one the hover was showing. */
   const [card, setCard] = useState<SectionCard | null>(null);
-
-  /* What the pointer last hovered - a node of the strip, a stretch of a
-     bar - so a click there can keep it open as a card. */
-  const lastHover = useRef<HoverTarget | null>(null);
-  const hoverTo = (target: HoverTarget | null) => {
-    lastHover.current = target;
-    onHover(target);
-  };
-  /** A click where a hover was: the same lines, kept, at the pointer. */
-  const openDetailCard = (at: { clientX: number; clientY: number }) => {
-    const target = lastHover.current;
-    if (!target) return;
-    setCard({
-      x: at.clientX,
-      y: at.clientY,
-      title: target.title,
-      lines: target.lines,
-      groups: [],
-      detail: true,
+  /* Which of the card's nodes are open; a new card starts with none. */
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setOpenItems(new Set());
+    setLinked(null);
+  }, [card]);
+  /* A press anywhere but on a card closes this one: each of the graph's rows
+     is a view of its own, and a card left open in one stayed up beside the
+     card another row opened. */
+  useEffect(() => {
+    if (!card) return;
+    const close = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest?.(".pgv-floating-card")) return;
+      setCard(null);
+    };
+    document.addEventListener("mousedown", close, true);
+    return () => document.removeEventListener("mousedown", close, true);
+  }, [card]);
+  const toggleItem = (key: string) =>
+    setOpenItems((was) => {
+      const next = new Set(was);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
-    /* The card says it now; the tooltip would sit on top of it. */
-    onHover(null);
-  };
 
-  /* Which haplotype's bar a pick came from, where it came from one. A node
-     clicked in the graph belongs to every haplotype carrying it; one clicked
-     in a bar belongs to that bar, and that is the route worth lighting. */
-  const [pickedLane, setPickedLane] = useState<string | null>(null);
-
-  /**
-   * The route a picked node belongs to.
-   *
-   * Picking one asks what it is part of, and the answer is the detour it sits
-   * in: the run of alleles that connect to one another, from where the
-   * haplotype leaves the reference walk to where it rejoins it. Not every
-   * allele the haplotype carries - those are separate detours, each with its
-   * own place - and not the sequence it shares, which is most of the window
-   * and is what every other haplotype has too.
-   */
-  const routeNodes = useMemo(() => {
-    const picked = selectedNode ? model.nodeById.get(selectedNode) : null;
-    /* A stretch of the reference is not a detour, so there is nothing to
-       light: every haplotype has it. */
-    if (!picked || picked.onReference) return null;
-    /* The bar it was picked from, or failing that everything carrying it. */
-    const carrying =
-      pickedLane && picked.lanes.includes(pickedLane)
-        ? new Set([pickedLane])
-        : new Set(picked.lanes);
-    const offReference = (id: string) =>
-      model.nodeById.get(id)?.onReference === false;
-
-    const nodes = new Set<string>();
-    for (const lane of model.lanes) {
-      if (!carrying.has(lane.key)) continue;
-      const steps = lane.steps;
-      steps.forEach((step, index) => {
-        if (step.node !== selectedNode) return;
-        /* Out both ways while the haplotype is still off the reference: the
-           detour this visit belongs to, and no further. A haplotype that
-           passes the same allele twice has each visit answered on its own. */
-        let from = index;
-        let to = index;
-        while (from > 0 && offReference(steps[from - 1].node)) from -= 1;
-        while (to + 1 < steps.length && offReference(steps[to + 1].node)) {
-          to += 1;
-        }
-        for (let at = from; at <= to; at += 1) nodes.add(steps[at].node);
-      });
-    }
-    return nodes.size ? nodes : null;
-  }, [selectedNode, pickedLane, model]);
+  /* Zoomed in, the card a hover shows - the one a click keeps. */
+  const hoverCard = useRef<HoverCardHandle>(null);
+  const hideHover = () => hoverCard.current?.hide();
 
   /**
    * The haplotypes that carry what is lit in the strip.
@@ -421,9 +672,12 @@ function LinearPathView({
      does not spell itself larger than its neighbour. */
   /* The same for the strip's own rows, which are shorter again. */
   const letterSize = Math.min(sequenceSize(scale), NODE_H * 0.7);
+  const keptNode = card?.target?.kind === "node" ? card.target.id : null;
   const spellsOut = (node: { id: string; length: number }, perBase: number) =>
     node.length > 0 &&
-    (sequenceSize(perBase) >= SEQUENCE_MIN_SIZE || nodeIsLit(node.id));
+    (sequenceSize(perBase) >= SEQUENCE_MIN_SIZE ||
+      nodeIsLit(node.id) ||
+      keptNode === node.id);
 
   /* ── Keeping the graph in sight ───────────────────────────────────────
      The graph sits under the reference bar, and scrolling past it leaves
@@ -560,27 +814,89 @@ function LinearPathView({
     null;
 
   const referenceContig =
-    model.lanes.find((lane) => lane.isReference)?.contig ?? "";
+    model.reference?.contig ??
+    model.lanes.find((lane) => lane.isReference)?.contig ??
+    "";
 
   /** The stretch of reference a section covers. */
+  const referenceName = model.reference?.sample ?? "reference";
+  /* A coordinate on the reference, blue as its legend is; one on an alt
+     path, green as its legend is. */
+  const refCoord = (text: string) => (
+    <span className="pgv-coord-ref">{text}</span>
+  );
+  const altCoord = (text: string) => (
+    <span className="pgv-coord-alt">{text}</span>
+  );
+  const coordLabel = (text: string) => (
+    <span className="pgv-coord-label">{text}</span>
+  );
+  /** Where a section is on the reference, labelled as the reference's. */
   const regionLine = (section: StripSection) => {
     const refStart = Math.min(...section.nodes.map((node) => node.refStart));
     const refEnd = Math.max(...section.nodes.map((node) => node.refEnd));
-    return `${referenceContig}:${refStart.toLocaleString()}–${refEnd.toLocaleString()} (${(
-      refEnd - refStart
-    ).toLocaleString()} bp of reference)`;
+    return (
+      <>
+        {coordLabel(`Reference (${referenceName})`)}{" "}
+        {refCoord(
+          `${referenceContig}:${refStart.toLocaleString()}–${refEnd.toLocaleString()}`,
+        )}{" "}
+        · {(refEnd - refStart).toLocaleString()} bp
+      </>
+    );
   };
-  const refNodeLine = (node: GraphNode) =>
-    `node ${node.id} · ${node.length} bp · at ${node.refStart.toLocaleString()}`;
+  const refNodeLine = (node: GraphNode) => (
+    <>
+      node {node.id} · {node.length} bp · ref{" "}
+      {refCoord(node.refStart.toLocaleString())}
+    </>
+  );
   /* An alt node has no place on the reference of its own: what it has is
      the stretch of reference its site stands in for, or the point it is
-     inserted at. A haplotype's card adds where it is in that haplotype. */
-  const altNodeLine = (node: GraphNode, own?: number) =>
-    `node ${node.id} · ${node.length} bp · ref ${nodeInterval(node)}${
-      own === undefined ? "" : ` · own ${own.toLocaleString()}`
-    } · ${node.lanes.length}/${model.lanes.length} haplotypes`;
+     inserted at. */
+  const altNodeLine = (node: GraphNode) => (
+    <>
+      node {node.id} · {node.length} bp · ref {refCoord(nodeInterval(node))}
+    </>
+  );
   const plural = (n: number, word: string) =>
     `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
+  /* How common something is in the whole pangenome - every haplotype with
+     a walk here, not just the rows drawn - said last in what it opens to.
+     Absent for a band fetched before the counts were. */
+  const pangenomeLine = (count: number | undefined): string[] =>
+    model.carriers && count !== undefined
+      ? [
+          `in ${count.toLocaleString()} of ${model.carriers.total.toLocaleString()} haplotypes in the pangenome`,
+        ]
+      : [];
+  const nodeCarriers = (node: GraphNode) =>
+    pangenomeLine(model.carriers?.nodes[node.id]);
+  /* Which of the rows drawn carry a node, by name: a lane is one contig of one. */
+  const carriersLine = (node: GraphNode) => {
+    const names = [
+      ...new Set(node.lanes.map((key) => key.split("#").slice(0, 2).join("#"))),
+    ];
+    return `in the rows shown: ${names.join(", ")}`;
+  };
+  /** A reference node, opening to its sequence and how common it is. */
+  const refNodeItem = (node: GraphNode): CardItem => ({
+    key: node.id,
+    line: refNodeLine(node),
+    details: [cardSequence(node.sequence), ...nodeCarriers(node)],
+  });
+  /** What the reference reads between two of its nodes, in this window. */
+  const referenceBetween = (before: GraphNode, after: GraphNode) =>
+    model.nodes
+      .filter(
+        (node) =>
+          node.onReference &&
+          node.refStart >= before.refEnd &&
+          node.refEnd <= after.refStart,
+      )
+      .sort((a, b) => a.refStart - b.refStart)
+      .map((node) => node.sequence)
+      .join("");
 
   /** The card for a section of the strip: the stretch of reference it
       covers, and its nodes - on the reference walk and off it - named and
@@ -600,21 +916,419 @@ function LinearPathView({
         `${plural(section.nodes.length, "node")}: ${refs.length} reference, ${alts.length} alt`,
       ],
       groups: [
-        { head: `Reference nodes (${refs.length})`, lines: listed(refs.map(refNodeLine)) },
         {
           head: `Alt nodes (${alts.length})`,
-          lines: listed(alts.map((node) => altNodeLine(node))),
+          items: alts.map((node) => ({
+            key: node.id,
+            line: altNodeLine(node),
+            details: [
+              `reads ${cardSequence(node.sequence)}`,
+              carriersLine(node),
+              ...nodeCarriers(node),
+            ],
+          })),
         },
+        { head: `Reference nodes (${refs.length})`, items: refs.map(refNodeItem) },
       ],
     });
   };
 
   /**
-   * The card for one haplotype's bar in a section: what this haplotype
-   * does there. Its own coordinates, how much of it is off the reference,
-   * and each allele it carries - where it leaves the reference walk, what
-   * it reads instead, and where it comes back - followed in its own walk
-   * past the section's edges, so an allele is named whole.
+   * Every way a haplotype's walk differs from the reference: each stretch
+   * it spends off the reference walk - a substitution, an insertion, or
+   * something less tidy - and each jump it makes over part of the
+   * reference, a deletion. Read on the reference's strand, so a walk
+   * running against the reference says the same as one running with it.
+   */
+  const laneVariants = (lane: Lane): Variant[] => {
+    const steps = lane.steps;
+    const nodeAt = (i: number) =>
+      i >= 0 && i < steps.length ? model.nodeById.get(steps[i].node) : undefined;
+    /* Two visits in one walk: a lane's walks meet at seams, not edges. */
+    const joined = (i: number, j: number) =>
+      j >= 0 && j < steps.length && steps[i].segment === steps[j].segment;
+    /* Which way this haplotype reads the reference. */
+    let drift = 0;
+    for (let i = 0; i + 1 < steps.length; i++) {
+      const a = nodeAt(i);
+      const b = nodeAt(i + 1);
+      if (a?.onReference && b?.onReference && joined(i, i + 1)) {
+        drift += b.refStart - a.refStart;
+      }
+    }
+    const forward = drift >= 0;
+    const span = (nodes: GraphNode[]) => ({
+      left: Math.min(...nodes.map((node) => px(node.x))),
+      right: Math.max(...nodes.map((node) => px(node.x + node.length))),
+    });
+
+    /** The reference's own bases over a stretch of it, in this window. */
+    const referenceSpan = (from: number, to: number) =>
+      model.nodes
+        .filter(
+          (node) =>
+            node.onReference && node.refStart >= from && node.refEnd <= to,
+        )
+        .sort((a, b) => a.refStart - b.refStart)
+        .map((node) => node.sequence)
+        .join("");
+    /**
+     * A stretch off the reference, as the changes the graph lines it up
+     * into: each node of it stands in for the reference bases in its
+     * column - a substitution - or for none, an insertion; the reference
+     * it passes no node over is deleted. Null where the nodes do not line
+     * up in order, or say one thing only.
+     */
+    const breakDown = (
+      visits: Array<{ step: LaneStep; node: GraphNode }>,
+      from: number,
+      to: number,
+    ): VariantPart[] | null => {
+      if (!visits.length) return null;
+      /* In reference order; and the haplotype's own coordinate either side
+         of a visit, on the reference's left and right of it. */
+      const ordered = forward ? visits : [...visits].reverse();
+      const ownLeft = (step: LaneStep) => (forward ? step.start : step.end);
+      const ownRight = (step: LaneStep) => (forward ? step.end : step.start);
+      const parts: VariantPart[] = [];
+      const deleted = (refFrom: number, refTo: number, own: number) =>
+        parts.push({
+          kind: "deletion",
+          refFrom,
+          refTo,
+          ownFrom: own,
+          ownTo: own,
+          reads: "",
+          instead: referenceSpan(refFrom, refTo),
+        });
+      let cursor = from;
+      for (const { step, node } of ordered) {
+        if (node.refStart < cursor || node.refEnd > to) return null;
+        if (node.refStart > cursor) deleted(cursor, node.refStart, ownLeft(step));
+        const span = node.refEnd - node.refStart;
+        const there = span > 0 ? referenceSpan(node.refStart, node.refEnd) : "";
+        if (there !== node.sequence) {
+          parts.push({
+            kind:
+              span === 0
+                ? "insertion"
+                : span === node.length
+                  ? "substitution"
+                  : "complex",
+            refFrom: node.refStart,
+            refTo: node.refEnd,
+            ownFrom: Math.min(step.start, step.end),
+            ownTo: Math.max(step.start, step.end),
+            reads: node.sequence,
+            instead: there,
+          });
+        }
+        cursor = Math.max(cursor, node.refEnd);
+      }
+      if (cursor < to) deleted(cursor, to, ownRight(ordered[ordered.length - 1].step));
+      return parts.length > 1 ? parts : null;
+    };
+
+    const out: Variant[] = [];
+    for (let i = 0; i < steps.length; i++) {
+      const node = nodeAt(i);
+      if (!node) continue;
+      if (node.onReference) {
+        /* A jump to a reference node the reference does not go to next. */
+        const next = joined(i, i + 1) ? nodeAt(i + 1) : undefined;
+        if (!next?.onReference) continue;
+        const [low, high] = forward ? [node, next] : [next, node];
+        if (high.refStart === low.refEnd) continue;
+        const deleted = high.refStart > low.refEnd;
+        const left = px(low.x + low.length);
+        const right = px(high.x);
+        out.push({
+          kind: deleted ? "deletion" : "complex",
+          refFrom: deleted ? low.refEnd : high.refStart,
+          refTo: deleted ? high.refStart : low.refEnd,
+          ownFrom: steps[i].end,
+          ownTo: steps[i].end,
+          runFrom: steps[i].end,
+          runTo: steps[i].end,
+          reads: "",
+          instead: deleted ? referenceBetween(low, high) : "",
+          walk: [node.id, next.id],
+          jumpsBack: !deleted,
+          left: Math.min(left, right),
+          right: Math.max(left, right),
+        });
+        continue;
+      }
+
+      /* Off the reference walk: the run to where it comes back. */
+      let end = i;
+      while (
+        end < steps.length &&
+        joined(i, end) &&
+        !nodeAt(end)?.onReference
+      ) {
+        end += 1;
+      }
+      const runSteps = steps.slice(i, end);
+      const run = runSteps
+        .map((step) => model.nodeById.get(step.node))
+        .filter((visited): visited is GraphNode => !!visited);
+      const leaves = joined(i, i - 1) ? nodeAt(i - 1) : undefined;
+      const rejoins = joined(i, end) ? nodeAt(end) : undefined;
+      const onStrand = forward ? run : [...run].reverse();
+      const reads = onStrand.map((visited) => visited.sequence).join("");
+      const ownFrom = Math.min(...runSteps.map((step) => step.start));
+      const ownTo = Math.max(...runSteps.map((step) => step.end));
+      const walk = [
+        ...(leaves ? [leaves.id] : []),
+        ...run.map((visited) => visited.id),
+        ...(rejoins ? [rejoins.id] : []),
+      ];
+      i = end - 1;
+
+      if (!leaves?.onReference || !rejoins?.onReference) {
+        out.push({
+          kind: "unresolved",
+          openAt:
+            !leaves?.onReference && !rejoins?.onReference
+              ? "both"
+              : !leaves?.onReference
+                ? "start"
+                : "end",
+          refFrom: Math.min(...run.map((visited) => visited.refStart)),
+          refTo: Math.max(...run.map((visited) => visited.refEnd)),
+          ownFrom,
+          ownTo,
+          runFrom: ownFrom,
+          runTo: ownTo,
+          reads,
+          instead: "",
+          walk,
+          jumpsBack: false,
+          ...span(run),
+        });
+        continue;
+      }
+      const [low, high] = forward ? [leaves, rejoins] : [rejoins, leaves];
+      const replaced = high.refStart - low.refEnd;
+      if (replaced < 0) {
+        out.push({
+          kind: "complex",
+          refFrom: high.refStart,
+          refTo: low.refEnd,
+          ownFrom,
+          ownTo,
+          runFrom: ownFrom,
+          runTo: ownTo,
+          reads,
+          instead: "",
+          walk,
+          jumpsBack: true,
+          ...span(run),
+        });
+        continue;
+      }
+      /* What changed, as a VCF says it: the bases the two alleles share at
+         either end are not part of it. A graph's allele often keeps one -
+         where the reference reads TCTCT and the haplotype T, four bases are
+         deleted, not five replaced by one. */
+      const whole = replaced > 0 ? referenceBetween(low, high) : "";
+      let head = 0;
+      while (
+        head < whole.length &&
+        head < reads.length &&
+        whole[head] === reads[head]
+      ) {
+        head += 1;
+      }
+      let tail = 0;
+      while (
+        tail < whole.length - head &&
+        tail < reads.length - head &&
+        whole[whole.length - 1 - tail] === reads[reads.length - 1 - tail]
+      ) {
+        tail += 1;
+      }
+      /* The same bases read by other nodes: nothing left to trim to. */
+      if (head + tail >= Math.max(whole.length, reads.length)) {
+        head = 0;
+        tail = 0;
+      }
+      const instead = whole.slice(head, whole.length - tail);
+      const changed = reads.slice(head, reads.length - tail);
+      const kind = !instead
+        ? "insertion"
+        : !changed
+          ? "deletion"
+          : instead.length === changed.length
+            ? "substitution"
+            : "complex";
+      /* Neither one thing nor another: what each of its nodes does, where
+         the graph says so. */
+      const parts =
+        kind === "complex"
+          ? breakDown(
+              runSteps
+                .map((step) => ({ step, node: model.nodeById.get(step.node) }))
+                .filter(
+                  (visit): visit is { step: LaneStep; node: GraphNode } =>
+                    !!visit.node,
+                ),
+              low.refEnd,
+              high.refStart,
+            )
+          : null;
+      out.push({
+        kind: parts ? "multiple" : kind,
+        ...(parts ? { parts } : {}),
+        refFrom: low.refEnd + head,
+        refTo: high.refStart - tail,
+        /* Read against the reference, the haplotype's own coordinates run
+           the other way, so its ends trim the other way round too. */
+        ownFrom: forward ? ownFrom + head : ownFrom + tail,
+        ownTo: forward ? ownTo - tail : ownTo - head,
+        runFrom: ownFrom,
+        runTo: ownTo,
+        reads: changed,
+        instead,
+        graph: head || tail ? { instead: whole, reads } : undefined,
+        walk,
+        jumpsBack: false,
+        ...span(run),
+      });
+    }
+    return out.sort((a, b) => a.refFrom - b.refFrom || a.ownFrom - b.ownFrom);
+  };
+
+  /** A variant's one line - or one of a multiple variant's parts: what it
+      does, where in the haplotype and on the reference, and to what. */
+  const variantLine = (
+    variant: Omit<VariantPart, "kind"> & {
+      kind: Variant["kind"];
+      jumpsBack?: boolean;
+      openAt?: Variant["openAt"];
+      parts?: VariantPart[];
+    },
+    lane: Lane,
+  ) => {
+    const { kind, refFrom, refTo, ownFrom, ownTo, reads, instead } = variant;
+    /* Where in the haplotype: a deletion is a point in it, where it joins
+       across what it skips. */
+    const own = altCoord(
+      ownTo - ownFrom > 1
+        ? `${lane.contig}:${ownFrom.toLocaleString()}–${ownTo.toLocaleString()}`
+        : `${lane.contig}:${ownFrom.toLocaleString()}`,
+    );
+    /* One base is one position, as a VCF would say it. */
+    const where =
+      refTo - refFrom > 1
+        ? `${referenceContig}:${refFrom.toLocaleString()}–${refTo.toLocaleString()}`
+        : `${referenceContig}:${refFrom.toLocaleString()}`;
+    if (kind === "unresolved") {
+      return (
+        <>
+          unresolved · alt {own} · {reads.length.toLocaleString()} bp ·{" "}
+          {variant.openAt === "both"
+            ? "its walk here is all off the reference"
+            : `its walk here ${variant.openAt === "start" ? "starts" : "ends"} off the reference`}
+        </>
+      );
+    }
+    /* Several changes: which, each named in its own colour. */
+    if (kind === "multiple" && variant.parts) {
+      const counts = new Map<VariantPart["kind"], number>();
+      for (const part of variant.parts) {
+        counts.set(part.kind, (counts.get(part.kind) ?? 0) + 1);
+      }
+      return (
+        <>
+          <span className={VARIANT_CLASS.multiple}>multiple</span> · alt {own} ·
+          ref {refCoord(where)} ·{" "}
+          {[...counts].map(([part, count], index) => (
+            <span key={part}>
+              {index ? " + " : ""}
+              <span className={VARIANT_CLASS[part]}>
+                {count > 1 ? `${count} ${part}s` : part}
+              </span>
+            </span>
+          ))}
+        </>
+      );
+    }
+    /* Only what it is takes its colour; where it is stays the reference's
+       blue, as every coordinate in the card does. */
+    const what =
+      kind === "substitution"
+        ? `${shortSequence(instead)} → ${shortSequence(reads)}`
+        : kind === "insertion"
+          ? `+${reads.length.toLocaleString()} bp ${shortSequence(reads)}`
+          : kind === "deletion"
+            ? `−${(refTo - refFrom).toLocaleString()} bp ${shortSequence(instead)}`
+            : variant.jumpsBack
+              ? "jumps back along the reference"
+              : `${(refTo - refFrom).toLocaleString()} bp → ${reads.length.toLocaleString()} bp`;
+    return (
+      <>
+        <span className={VARIANT_CLASS[kind]}>{kind}</span> · alt {own} · ref{" "}
+        {kind === "insertion" ? "at " : ""}
+        {refCoord(where)} · {what}
+      </>
+    );
+  };
+
+  /** What a variant opens to: both sides of it, the walk through the
+      graph, and - last - how common it is. */
+  const variantDetails = (variant: Variant, lane: Lane): ReactNode[] => {
+    const { kind, walk } = variant;
+    const lines: ReactNode[] = [];
+    /* A multiple one, broken down: each change it is made of. */
+    if (variant.parts) {
+      lines.push(`made of ${variant.parts.length} changes:`);
+      for (const part of variant.parts) {
+        lines.push(<span className="pgv-variant-part">{variantLine(part, lane)}</span>);
+      }
+    }
+    if (kind === "unresolved") {
+      lines.push(`haplotype reads ${cardSequence(variant.reads)}`);
+      lines.push(
+        variant.openAt === "start"
+          ? "its walk here starts already off the reference: it left the reference before what was fetched, or its contig starts here - which, the walk here cannot say"
+          : variant.openAt === "end"
+            ? "its walk here ends before it gets back to the reference: it carries on past what was fetched, or its contig ends here - which, the walk here cannot say"
+            : "its walk here never touches the reference: it runs on past both ends of what was fetched, or it is a short contig that never meets the reference - which, the walk here cannot say",
+        "so what it replaces on the reference is not known",
+      );
+    } else if (variant.jumpsBack) {
+      lines.push(
+        "the walk goes back over reference it has already read - a duplication or a rearrangement",
+      );
+      if (variant.reads) lines.push(`reads ${cardSequence(variant.reads)} on the way`);
+    } else {
+      lines.push(
+        `reference reads ${variant.instead ? cardSequence(variant.instead) : "nothing here"}`,
+        `haplotype reads ${variant.reads ? cardSequence(variant.reads) : "nothing here"}`,
+      );
+      /* Where the graph's alleles carry a base they share, what they are
+         before it is trimmed off. */
+      if (variant.graph) {
+        lines.push(
+          `as the graph has it: ${cardSequence(variant.graph.instead)} → ${cardSequence(variant.graph.reads)}`,
+        );
+      }
+    }
+    lines.push(`node walk: ${walk.join(" → ")}`);
+    return [
+      ...lines,
+      ...(kind === "unresolved"
+        ? []
+        : pangenomeLine(model.carriers?.alleles[alleleKey(walk)])),
+    ];
+  };
+
+  /**
+   * The card for one haplotype's bar in a section: where it is in its own
+   * contig and on the reference, and every way it differs from the
+   * reference there, each opening to what it is.
    */
   const openLaneCard = (
     lane: Lane,
@@ -635,80 +1349,342 @@ function LinearPathView({
       return;
     }
 
-    /* Its alleles: runs of visits off the reference walk. */
-    const alleles: Array<{ from: number; to: number }> = [];
-    for (const index of inside) {
-      if (visits[index].onReference) continue;
-      if (alleles.some((run) => index >= run.from && index <= run.to)) continue;
-      let from = index;
-      let to = index;
-      while (from > 0 && !visits[from - 1].onReference) from -= 1;
-      while (to + 1 < visits.length && !visits[to + 1].onReference) to += 1;
-      alleles.push({ from, to });
-    }
-    const alleleLines = alleles.map(({ from, to }) => {
-      const run = visits.slice(from, to + 1);
-      const bp = run.reduce((sum, visit) => sum + visit.length, 0);
-      const before = from > 0 ? model.nodeById.get(visits[from - 1].id) : null;
-      const after =
-        to + 1 < visits.length ? model.nodeById.get(visits[to + 1].id) : null;
-      const ids =
-        run.length <= 3
-          ? run.map((visit) => visit.id).join(" → ")
-          : `${run[0].id} → … → ${run[run.length - 1].id}`;
-      /* What the reference has between the two places this allele hangs
-         from, where both are in the window. */
-      const instead =
-        before && after && after.refStart >= before.refEnd
-          ? ` in place of ${(after.refStart - before.refEnd).toLocaleString()} bp`
-          : "";
-      return `${before ? `from ${before.id}` : "enters the window"} · ${ids} (${plural(
-        run.length,
-        "node",
-      )}, ${bp.toLocaleString()} bp${instead}) · ${
-        after ? `back at ${after.id}` : "leaves the window"
-      }`;
-    });
-
     const here = inside.map((index) => visits[index]);
-    const bp = here.reduce((sum, visit) => sum + visit.length, 0);
-    const altBp = here
-      .filter((visit) => !visit.onReference)
-      .reduce((sum, visit) => sum + visit.length, 0);
     const from = Math.min(...here.map((visit) => visit.start));
     const to = Math.max(...here.map((visit) => visit.start + visit.length));
-    const nodes = [...new Set(here.map((visit) => visit.id))]
+    const refs = [...new Set(here.map((visit) => visit.id))]
       .map((id) => model.nodeById.get(id))
-      .filter((node): node is GraphNode => !!node);
-    const alts = nodes.filter((node) => !node.onReference);
-    const refs = nodes.filter((node) => node.onReference);
+      .filter((node): node is GraphNode => !!node && node.onReference);
+    /* Its variants that touch the section; a deletion is as wide as what
+       it skips. */
+    const variants = laneVariants(lane).filter(
+      (variant) =>
+        variant.left < section.right &&
+        Math.max(variant.right, variant.left + 0.01) > section.left,
+    );
+    const kinds = (
+      [
+        "substitution",
+        "multiple",
+        "complex",
+        "insertion",
+        "deletion",
+        "unresolved",
+      ] as const
+    )
+      .map((kind) => [kind, variants.filter((variant) => variant.kind === kind).length] as const)
+      .filter(([, count]) => count > 0)
+      .map(([kind, count]) =>
+        kind === "multiple" || kind === "complex" || kind === "unresolved"
+          ? `${count} ${kind}`
+          : plural(count, kind),
+      );
 
     setCard({
       x: at.x,
       y: at.y,
       title: lane.label,
       lines: [
+        <>
+          {coordLabel(`Alt path (${lane.label})`)}{" "}
+          {altCoord(
+            `${lane.contig}:${from.toLocaleString()}–${to.toLocaleString()}`,
+          )}{" "}
+          · {(to - from).toLocaleString()} bp
+        </>,
         regionLine(section),
-        `${from.toLocaleString()}–${to.toLocaleString()} in its own coordinates`,
-        `${bp.toLocaleString()} bp here, ${altBp.toLocaleString()} bp of it off the reference`,
-        `${plural(alleles.length, "alt allele")} · ${plural(alts.length, "alt node")} · ${plural(
-          refs.length,
-          "reference node",
-        )}`,
+        variants.length
+          ? `${plural(variants.length, "variant")}: ${kinds.join(" · ")}`
+          : "no variants here: it reads as the reference does",
       ],
       groups: [
-        { head: `Alt alleles (${alleles.length})`, lines: listed(alleleLines) },
         {
-          head: `Alt nodes (${alts.length})`,
-          lines: listed(
-            alts.map((node) =>
-              altNodeLine(node, here.find((visit) => visit.id === node.id)?.start),
-            ),
-          ),
+          head: `Variants (${variants.length})`,
+          items: variants.map((variant) => ({
+            key: `${alleleKey(variant.walk)}@${variant.ownFrom}`,
+            line: variantLine(variant, lane),
+            details: variantDetails(variant, lane),
+          })),
         },
-        { head: `Reference nodes (${refs.length})`, lines: listed(refs.map(refNodeLine)) },
+        { head: `Reference nodes (${refs.length})`, items: refs.map(refNodeItem) },
       ],
     });
+  };
+
+  /* ── Zoomed in: the card a hover shows and a click keeps ──────────────── */
+  const laneByKey = (key: string) =>
+    model.lanes.find((lane) => lane.key === key);
+  /* Each haplotype's variants, worked out the first time a card asks and
+     kept while the drawing stays the same. */
+  /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  const variantCache = useMemo(() => new Map<string, Variant[]>(), [model, axis, pxPerBase, width]);
+  const variantsOf = (lane: Lane) => {
+    let variants = variantCache.get(lane.key);
+    if (!variants) {
+      variants = laneVariants(lane);
+      variantCache.set(lane.key, variants);
+    }
+    return variants;
+  };
+  const refWhere = (node: GraphNode) =>
+    node.refEnd > node.refStart
+      ? `${referenceContig}:${node.refStart.toLocaleString()}–${node.refEnd.toLocaleString()}`
+      : `${referenceContig}:${node.refStart.toLocaleString()}`;
+  /** Where a node is on the reference, said for what it is: its own
+      stretch, the stretch an alternative stands in for, or the point it
+      goes in at. */
+  const referenceLine = (node: GraphNode) => (
+    <>
+      {coordLabel(`Reference (${referenceName})`)} {refCoord(refWhere(node))} ·{" "}
+      {node.onReference
+        ? `${node.length.toLocaleString()} bp`
+        : node.refEnd > node.refStart
+          ? "the stretch it stands in for"
+          : "where it goes in"}
+    </>
+  );
+  /** A node a card lists beside the one it is about: where it is, opening
+      to what it reads and how common it is. `own`, where it is in the
+      haplotype the card is about. */
+  const nearItem = (node: GraphNode, own?: number): CardItem => ({
+    key: own === undefined ? node.id : `${node.id}@${own}`,
+    line: (
+      <>
+        node {node.id} · {node.length} bp ·{" "}
+        {own === undefined ? null : <>alt {altCoord(own.toLocaleString())} · </>}
+        ref{" "}
+        {refCoord(
+          node.onReference ? node.refStart.toLocaleString() : nodeInterval(node),
+        )}
+      </>
+    ),
+    details: [`reads ${cardSequence(node.sequence)}`, ...nodeCarriers(node)],
+  });
+  /**
+   * The visits either side of one in a haplotype's bar: its own steps
+   * before and after it, within the walk it is part of - the step past a
+   * seam is where the haplotype was before it left the window.
+   */
+  const visitNeighbours = (lane: Lane, raster: LaneRaster, index: number) => {
+    /* The raster holds a visit per step whenever every step's node is in
+       the model, which is how it is built; then the steps say the walks. */
+    const aligned = raster.nodes.length === lane.steps.length;
+    const near = (other: number) => {
+      if (other < 0 || other >= raster.nodes.length) return null;
+      if (aligned && lane.steps[other].segment !== lane.steps[index].segment) {
+        return null;
+      }
+      const visit = raster.nodes[other];
+      const node = model.nodeById.get(visit.id);
+      return node ? { visit, node, index: other } : null;
+    };
+    return { prev: near(index - 1), next: near(index + 1) };
+  };
+  /** A node's neighbours in the graph, either side of it in the layout. */
+  const graphNeighbours = (node: GraphNode) => {
+    const ids = new Set<string>();
+    for (const edge of model.edges) {
+      if (edge.to === node.id) ids.add(edge.from);
+      if (edge.from === node.id) ids.add(edge.to);
+    }
+    ids.delete(node.id);
+    const near = [...ids]
+      .map((id) => model.nodeById.get(id))
+      .filter((other): other is GraphNode => !!other)
+      .sort((a, b) => a.x - b.x || a.row - b.row);
+    return {
+      prev: near.filter((other) => other.x < node.x),
+      next: near.filter((other) => other.x > node.x),
+    };
+  };
+  /** The letters under the pointer, and where in the haplotype they are. */
+  const cardZoom = (
+    zoom: NonNullable<LaneHover["zoom"]>,
+    contig: string,
+  ): CardZoom => {
+    /* The pointer is one pixel and a pixel can cover several bases: all of
+       the ones it covers are marked. */
+    const marked = Math.max(0, Math.min(zoom.at, zoom.letters.length - 1));
+    const after =
+      marked +
+      Math.max(1, Math.min(zoom.span ?? 1, zoom.letters.length - marked));
+    const from = zoom.markFrom;
+    const to = zoom.markTo + 1;
+    return {
+      before: `${zoom.clippedLeft ? "…" : ""}${zoom.letters.slice(0, marked).join("")}`,
+      at: zoom.letters.slice(marked, after).join(""),
+      after: `${zoom.letters.slice(after).join("")}${zoom.clippedRight ? "…" : ""}`,
+      where: (
+        <>
+          under the pointer: alt{" "}
+          {altCoord(
+            to - from > 1
+              ? `${contig}:${from.toLocaleString()}–${to.toLocaleString()} · ${to - from} bp`
+              : `${contig}:${from.toLocaleString()}`,
+          )}
+        </>
+      ),
+    };
+  };
+  /** One visit of a haplotype's bar: where it is in the haplotype and on
+      the reference, the variant it is part of, and the visits either side. */
+  const describeVisit = (
+    target: Extract<CardTarget, { kind: "visit" }>,
+  ): CardContent | null => {
+    const lane = laneByKey(target.lane);
+    const raster = rasters.get(target.lane);
+    const visit = raster?.nodes[target.index];
+    const node = visit ? model.nodeById.get(visit.id) : undefined;
+    if (!lane || !raster || !visit || !node) return null;
+    const near = visitNeighbours(lane, raster, target.index);
+    /* The variant this visit is one of the nodes of, if it is off the
+       reference: a node can be read twice, so by where it is read. */
+    const variants = node.onReference
+      ? []
+      : variantsOf(lane).filter(
+          (variant) =>
+            variant.walk.includes(node.id) &&
+            variant.runFrom <= visit.start &&
+            visit.start < Math.max(variant.runTo, variant.runFrom + 1),
+        );
+    return {
+      title: `${lane.label} · node ${node.id}`,
+      zoom: target.zoom ? cardZoom(target.zoom, lane.contig) : undefined,
+      lines: [
+        <>
+          {coordLabel(`Alt path (${lane.label})`)}{" "}
+          {altCoord(
+            `${lane.contig}:${visit.start.toLocaleString()}–${(
+              visit.start + visit.length
+            ).toLocaleString()}`,
+          )}{" "}
+          · {visit.length.toLocaleString()} bp
+        </>,
+        referenceLine(node),
+        node.onReference ? "on the reference walk" : "off the reference walk",
+        ...(() => {
+          /* Where the haplotype reads this place more than once: of the
+             visits sharing it - at the most of them - which this is. */
+          const shared = visitPieces(raster, target.index, BAR_H).reduce<
+            { of: number; slot: number } | null
+          >((most, piece) => (piece.of > (most?.of ?? 1) ? piece : most), null);
+          return shared
+            ? [`copy ${shared.slot + 1} of ${shared.of} drawn here`]
+            : [];
+        })(),
+        `reads ${cardSequence(node.sequence)}`,
+        ...nodeCarriers(node),
+      ],
+      groups: [
+        ...(variants.length
+          ? [
+              {
+                head: variants.length > 1 ? `Variants (${variants.length})` : "Variant",
+                items: variants.map((variant) => ({
+                  key: `${alleleKey(variant.walk)}@${variant.ownFrom}`,
+                  line: variantLine(variant, lane),
+                  details: variantDetails(variant, lane),
+                })),
+              },
+            ]
+          : []),
+        {
+          head: "Previous node",
+          near: true,
+          items: near.prev ? [nearItem(near.prev.node, near.prev.visit.start)] : [],
+          empty: "none: the haplotype enters the window here",
+        },
+        {
+          head: "Next node",
+          near: true,
+          items: near.next ? [nearItem(near.next.node, near.next.visit.start)] : [],
+          empty: "none: the haplotype leaves the window here",
+        },
+      ],
+    };
+  };
+  /** One node of the graph strip: where it is, what it reads, and the
+      nodes it joins either side. */
+  const describeNode = (id: string): CardContent | null => {
+    const node = model.nodeById.get(id);
+    if (!node) return null;
+    const near = graphNeighbours(node);
+    return {
+      title: `node ${node.id}`,
+      lines: [
+        referenceLine(node),
+        node.onReference
+          ? "on the reference walk"
+          : "an alternative to the reference here",
+        `reads ${cardSequence(node.sequence)}`,
+        carriersLine(node),
+        ...sameSequenceLines(node, model),
+        ...nodeCarriers(node),
+      ],
+      groups: [
+        {
+          head: `Previous nodes (${near.prev.length})`,
+          near: true,
+          items: near.prev.map((other) => nearItem(other)),
+          empty: "none in the window",
+        },
+        {
+          head: `Next nodes (${near.next.length})`,
+          near: true,
+          items: near.next.map((other) => nearItem(other)),
+          empty: "none in the window",
+        },
+      ],
+    };
+  };
+  /** The ways into or out of a visit a bullet counts: pointing at one in
+      the card draws a line to where it is. */
+  const describeWays = (
+    target: Extract<CardTarget, { kind: "ways" }>,
+  ): CardContent | null => {
+    const lane = laneByKey(target.lane);
+    const visit = rasters.get(target.lane)?.nodes[target.index];
+    if (!lane || !visit) return null;
+    const nodes = target.ids
+      .map((id) => model.nodeById.get(id))
+      .filter((node): node is GraphNode => !!node);
+    return {
+      title: `${lane.label}: ${target.ids.length} ways ${
+        target.side === "before" ? "into" : "out of"
+      } node ${visit.id}`,
+      lines: ["point at one to see where it is"],
+      groups: [
+        {
+          head: `Nodes (${nodes.length})`,
+          items: nodes.map((node) => ({
+            ...nearItem(node),
+            onPoint: (on: boolean) =>
+              setLinked(on ? { lane: lane.key, id: node.id } : null),
+          })),
+        },
+      ],
+    };
+  };
+  const describe = (target: CardTarget) =>
+    target.kind === "visit"
+      ? describeVisit(target)
+      : target.kind === "node"
+        ? describeNode(target.id)
+        : describeWays(target);
+  /* A hover shows the card a click would keep - unless one is kept. */
+  const showHover = (target: CardTarget, x: number, y: number) => {
+    if (cardKeptOpen()) {
+      hideHover();
+      return;
+    }
+    hoverCard.current?.show(targetKey(target), () => describe(target), x, y);
+  };
+  /* A click keeps it, where the click was. */
+  const pin = (target: CardTarget, x: number, y: number) => {
+    const content = describe(target);
+    hideHover();
+    setLitRun(null);
+    if (content) setCard({ ...content, x, y, target });
   };
 
   const dim = (lane: Lane) =>
@@ -741,16 +1717,65 @@ function LinearPathView({
           x: left,
           width: wide,
           y: top,
-          height: laneHeight.get(lane) ?? LANE_H,
+          height: laneHeight.get(lane) ?? BAR_H,
         });
       }
     }
   }
+  /* What a kept card is about, outlined where it is drawn - in the hover's
+     cyan - and the nodes either side of it in yellow: in a haplotype's bar,
+     its own steps before and after; in the strip, the nodes it joins. */
+  const kept = card?.target ?? null;
+  const openBullet = kept?.kind === "ways" ? kept : null;
+  const keptMarks: Array<{
+    key: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    near: boolean;
+  }> = [];
+  const keptNodes = new Map<string, boolean>();
+  if (kept?.kind === "visit") {
+    const lane = laneByKey(kept.lane);
+    const raster = rasters.get(kept.lane);
+    const top = laneTop.get(kept.lane);
+    const self = raster?.nodes[kept.index];
+    if (lane && raster && self && top !== undefined) {
+      const near = visitNeighbours(lane, raster, kept.index);
+      /* Round every piece of its bar: where it shares the place, its own
+         thinner bar there. */
+      const mark = (_visit: RasterNode, index: number, isNear: boolean) =>
+        visitPieces(raster, index, BAR_H).forEach((piece, k) =>
+          keptMarks.push({
+            key: `${index}:${k}`,
+            x: piece.left,
+            y: top + piece.top,
+            width: Math.max(1, piece.right - piece.left),
+            height: piece.height,
+            near: isNear,
+          }),
+        );
+      if (near.prev) mark(near.prev.visit, near.prev.index, true);
+      if (near.next) mark(near.next.visit, near.next.index, true);
+      mark(self, kept.index, false);
+    }
+  } else if (kept?.kind === "node") {
+    const node = model.nodeById.get(kept.id);
+    if (node) {
+      const near = graphNeighbours(node);
+      for (const other of [...near.prev, ...near.next]) {
+        keptNodes.set(other.id, true);
+      }
+      keptNodes.set(node.id, false);
+    }
+  }
+
   return (
     <div
       className="pgv-linear"
       style={{ width, height }}
-      onMouseLeave={() => hoverTo(null)}
+      onMouseLeave={hideHover}
     >
       {/* ── Haplotype bars ──────────────────────────────────────────────
           Painted, not drawn. Each is a canvas over the whole band, filled
@@ -764,26 +1789,20 @@ function LinearPathView({
           className="pgv-lane-slot"
           style={{
             top: laneTop.get(lane.key),
-            height: laneHeight.get(lane.key) ?? LANE_H,
+            height: laneHeight.get(lane.key) ?? BAR_H,
           }}
-          /* Zoomed in, a click on a bar keeps what its hover said open as a
-             card; zoomed out, the bar's sections open their own. */
-          onClick={sections ? undefined : (event) => openDetailCard(event)}
         >
           <LaneCanvas
             raster={rasters.get(lane.key)!}
             width={width}
-            height={laneHeight.get(lane.key) ?? LANE_H}
-            rowH={LANE_H}
-            color={lane.color}
+            height={laneHeight.get(lane.key) ?? BAR_H}
+            barH={BAR_H}
+            color={ALT_BAR_COLOR}
 
             contig={lane.contig}
             isReference={lane.isReference}
             spellReference={alleleRows}
             dim={dim(lane)}
-            /* The bar that was picked from, and no other: a route is one
-               haplotype's, however many carry the node it was picked by. */
-            route={pickedLane === lane.key ? (routeNodes ?? undefined) : undefined}
             /* Zoomed out, the bar is drawn and read a section at a time:
                what this haplotype does in the section clicked. */
             sections={sections ?? undefined}
@@ -808,7 +1827,6 @@ function LinearPathView({
               const top = laneTop.get(lane.key);
               let from = Infinity;
               let to = -Infinity;
-              let lastCard = 0;
               if (section && raster) {
                 for (const visit of raster.nodes) {
                   if (visit.right <= section.left || visit.left >= section.right) {
@@ -816,7 +1834,6 @@ function LinearPathView({
                   }
                   from = Math.min(from, Math.max(section.left, visit.left));
                   to = Math.max(to, Math.min(section.right, visit.right));
-                  lastCard = Math.max(lastCard, visit.card);
                 }
               }
               if (top === undefined || !(to > from)) {
@@ -826,54 +1843,57 @@ function LinearPathView({
               outline.setAttribute("x", String(from));
               outline.setAttribute("y", String(top));
               outline.setAttribute("width", String(Math.max(1, to - from)));
-              outline.setAttribute("height", String((lastCard + 1) * LANE_H));
+              outline.setAttribute("height", String(BAR_H));
               outline.style.display = "";
             }}
             onHover={(hover) => {
-              hoverTo(
-                hover
-                  ? {
-                      ...hover,
-                      /* What this bar's own path does at the allele under the
-                         pointer - the two the bullets count. */
-                      lines: [
-                        ...hover.lines,
-                        ...laneNeighbourLines(lane, hover.nodeId),
-                      ],
-                    }
-                  : hover,
-              );
-              /* Round the stretch under the pointer, in this bar only. */
               const outline = hoverBoxRef.current;
               const top = laneTop.get(lane.key);
-              if (outline && hover && top !== undefined) {
-                outline.setAttribute("x", String(hover.box.left));
-                outline.setAttribute("y", String(top + hover.box.card * LANE_H));
+              /* While a card is kept, a hover says nothing. */
+              if (!hover || top === undefined || cardKeptOpen()) {
+                if (outline) outline.style.display = "none";
+                hideHover();
+                return;
+              }
+              /* Round the stretch under the pointer, in this bar only - in
+                 a stack, round its own thinner bar. */
+              const raster = rasters.get(lane.key);
+              const piece = raster
+                ? pieceAt(visitPieces(raster, hover.index, BAR_H), hover.at)
+                : null;
+              if (outline && piece) {
+                outline.setAttribute("x", String(piece.left));
+                outline.setAttribute("y", String(top + piece.top));
                 outline.setAttribute(
                   "width",
-                  String(Math.max(1, hover.box.right - hover.box.left)),
+                  String(Math.max(1, piece.right - piece.left)),
                 );
-                outline.setAttribute("height", String(LANE_H));
+                outline.setAttribute("height", String(piece.height));
                 outline.style.display = "";
-              } else if (outline) {
-                outline.style.display = "none";
               }
-              /* Only while a bullet is open, and only for what it names:
-                 anything else leaves the state alone, so an ordinary hover
-                 still costs no render. */
-              if (!openBullet) return;
-              const on =
-                hover && openBullet.ids.includes(hover.nodeId)
-                  ? { lane: lane.key, id: hover.nodeId }
-                  : null;
-              setLinked((was) =>
-                was?.id === on?.id && was?.lane === on?.lane ? was : on,
+              showHover(
+                {
+                  kind: "visit",
+                  lane: lane.key,
+                  index: hover.index,
+                  zoom: hover.zoom,
+                },
+                hover.x,
+                hover.y,
               );
             }}
-            onPick={(id) => {
-              setPickedLane(lane.key);
-              onSelectNode(selectedNode === id ? null : id);
-            }}
+            onPick={(hover) =>
+              pin(
+                {
+                  kind: "visit",
+                  lane: lane.key,
+                  index: hover.index,
+                  zoom: hover.zoom,
+                },
+                hover.x,
+                hover.y,
+              )
+            }
           />
         </div>
         ))}
@@ -889,15 +1909,10 @@ function LinearPathView({
         width={width}
         height={height}
         onMouseLeave={() => {
-          hoverTo(null);
+          hideHover();
           setLitRun(null);
         }}
-        onClick={() => {
-          setOpenBullet(null);
-          setLinked(null);
-          setCard(null);
-          onSelectNode(null);
-        }}
+        onClick={() => setCard(null)}
       >
         <defs>
           <pattern
@@ -952,13 +1967,16 @@ function LinearPathView({
         if (!raster || top === undefined) return null;
         return raster.nodes.map((visit, index) => {
           if (visit.onReference || !(visit.right > visit.left)) return null;
-          const middle = top + visit.card * LANE_H + LANE_H / 2;
+          const own = visitPieces(raster, index, BAR_H);
           const links = laneNeighbours(lane, visit.id);
           const sides = [
             ["before", visit.left, links.prev],
             ["after", visit.right, links.next],
           ] as Array<["before" | "after", number, string[]]>;
           return sides.map(([side, at, ids]) => {
+            /* Level with its bar on that side, whichever piece it is. */
+            const end = side === "before" ? own[0] : own[own.length - 1];
+            const middle = top + (end ? end.top + end.height / 2 : BAR_H / 2);
             /* One way in and one way out is the ordinary case, and says
                nothing worth a mark. */
             if (ids.length < 2) return null;
@@ -967,23 +1985,28 @@ function LinearPathView({
                it stays until they ask for something else. */
             const open = (event: React.MouseEvent) => {
               event.stopPropagation();
-              setOpenBullet({ key, x: at, y: middle, ids });
-              setLinked(null);
-              hoverTo({
-                x: event.clientX,
-                y: event.clientY,
-                title: `${lane.label}: ${ids.length} ways ${
-                  side === "before" ? "into" : "out of"
-                } node ${visit.id}`,
-                lines: neighbourLines(ids),
-              });
+              pin(
+                {
+                  kind: "ways",
+                  lane: lane.key,
+                  index,
+                  side,
+                  ids,
+                  x: at,
+                  y: middle,
+                },
+                event.clientX,
+                event.clientY,
+              );
             };
+            const isOpen =
+              openBullet?.lane === lane.key &&
+              openBullet.index === index &&
+              openBullet.side === side;
             return (
               <g
                 key={key}
-                className={`pgv-bullet pgv-hears${
-                  openBullet?.key === key ? " pgv-bullet-open" : ""
-                }`}
+                className={`pgv-bullet pgv-hears${isOpen ? " pgv-bullet-open" : ""}`}
                 onClick={open}
               >
                 <circle cx={at} cy={middle} r={BULLET_R} />
@@ -1007,6 +2030,17 @@ function LinearPathView({
         style={{ display: "none" }}
       />
 
+      {keptMarks.map((mark) => (
+        <rect
+          key={`kept-${mark.key}`}
+          className={mark.near ? "pgv-kept-near" : "pgv-kept-node"}
+          x={mark.x}
+          y={mark.y}
+          width={mark.width}
+          height={mark.height}
+        />
+      ))}
+
       {/* From an open bullet to whichever of the nodes it names the pointer
           is on: the list says what they are, this says where. */}
       {openBullet &&
@@ -1015,15 +2049,20 @@ function LinearPathView({
           const raster = rasters.get(linked.lane);
           const top = laneTop.get(linked.lane);
           if (!raster || top === undefined) return null;
-          const visit = raster.nodes.find((n) => n.id === linked.id);
+          const index = raster.nodes.findIndex((n) => n.id === linked.id);
+          const visit = raster.nodes[index];
           if (!visit) return null;
+          const piece = pieceAt(
+            visitPieces(raster, index, BAR_H),
+            (visit.left + visit.right) / 2,
+          );
           return (
             <line
               className="pgv-bullet-link"
               x1={openBullet.x}
               y1={openBullet.y}
               x2={(visit.left + visit.right) / 2}
-              y2={top + visit.card * LANE_H + LANE_H / 2}
+              y2={top + (piece ? piece.top + piece.height / 2 : BAR_H / 2)}
             />
           );
         })()}
@@ -1146,19 +2185,17 @@ function LinearPathView({
               key={node.id}
               className={`pgv-node${node.onReference ? "" : " pgv-node-alt"}${
                 lit ? "" : " pgv-dim"
-              }${selectedNode === node.id ? " pgv-node-picked" : ""}${
-                nodeIsLit(node.id) ? " pgv-node-lit" : ""
-              }${routeNodes?.has(node.id) ? " pgv-node-route" : ""}`}
+              }${nodeIsLit(node.id) ? " pgv-node-lit" : ""}`}
               onClick={(event) => {
                 event.stopPropagation();
-                /* Picked from the graph, so it belongs to no one bar. */
-                setPickedLane(null);
-                onSelectNode(selectedNode === node.id ? null : node.id);
-                /* Its detail kept open where it was clicked, as a card. */
-                if (selectedNode === node.id) setCard(null);
-                else openDetailCard(event);
+                pin({ kind: "node", id: node.id }, event.clientX, event.clientY);
               }}
               onMouseMove={(event) => {
+                /* While a card is kept, a hover says nothing. */
+                if (cardKeptOpen()) {
+                  hideHover();
+                  return;
+                }
                 /* Lighting it is what makes it spell itself out when it is
                    too small to have. */
                 if (litRun?.key !== node.id) {
@@ -1168,12 +2205,7 @@ function LinearPathView({
                     nodes: new Set([node.id]),
                   });
                 }
-                hoverTo({
-                  x: event.clientX,
-                  y: event.clientY,
-                  title: `node ${node.id}`,
-                  lines: nodeDetailLines(node, model),
-                });
+                showHover({ kind: "node", id: node.id }, event.clientX, event.clientY);
               }}
             >
               <rect x={left} y={y} width={w} height={NODE_H} />
@@ -1208,6 +2240,23 @@ function LinearPathView({
               </g>
             );
           })}
+        {/* The kept node, and the nodes it joins either side. */}
+        {!sections &&
+          [...keptNodes].map(([id, near]) => {
+            const node = model.nodeById.get(id);
+            if (!node || !(alleleRows || node.onReference)) return null;
+            const left = px(node.x);
+            return (
+              <rect
+                key={`kept-${id}`}
+                className={near ? "pgv-kept-near" : "pgv-kept-node"}
+                x={left}
+                y={stripTop + node.row * NODE_H}
+                width={Math.max(1, px(node.x + node.length) - left)}
+                height={NODE_H}
+              />
+            );
+          })}
         {referenceGaps.map((gap, index) => (
           <rect
             key={`refgap-${index}`}
@@ -1226,11 +2275,7 @@ function LinearPathView({
       {/* A clicked section, until another is clicked, the drawing is, or
           the reader closes it. */}
       {card && (
-        <FloatingCard
-          x={card.x}
-          y={card.y}
-          className={`pgv-section-card${card.detail ? " pgv-detail-card" : ""}`}
-        >
+        <FloatingCard x={card.x} y={card.y} className="pgv-section-card">
           <button
             type="button"
             className="pgv-section-close"
@@ -1239,27 +2284,10 @@ function LinearPathView({
           >
             ×
           </button>
-          <div className="pgv-tooltip-title">{card.title}</div>
-          {card.lines.map((line) => (
-            <div key={line} className="pgv-section-line">
-              {line}
-            </div>
-          ))}
-          {card.groups.map((group) => (
-            <div key={group.head}>
-              <div className="pgv-section-head">{group.head}</div>
-              {group.lines.map((line) => (
-                <div key={line} className="pgv-section-node">
-                  {line}
-                </div>
-              ))}
-              {group.lines.length === 0 && (
-                <div className="pgv-section-line">none</div>
-              )}
-            </div>
-          ))}
+          <CardBody card={card} openItems={openItems} onToggle={toggleItem} />
         </FloatingCard>
       )}
+      <HoverCard ref={hoverCard} />
     </div>
   );
 }

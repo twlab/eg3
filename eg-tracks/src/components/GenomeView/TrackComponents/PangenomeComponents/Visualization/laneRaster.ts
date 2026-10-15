@@ -235,24 +235,44 @@ export function rasteriseLane(
     }
   }
 
-  /* Visits this haplotype makes to one column - its own second copy of a
-     stretch, which the layout puts in the same place. Grouped by column
-     rather than by the pixels they cover, so the same visits stack at every
-     zoom and a pair that merely touches does not. Which row each is drawn
-     in is not decided here but by the walk - see `laneRows` - so the group
-     is only for saying how many visits share a place, and for lifting one
-     clear of the others under the pointer. */
+  /* Visits this haplotype makes to one place - its own second copy of a
+     stretch, which the layout puts where the first is. Found from where
+     the layout puts them, in bases, rather than from the pixels they cover,
+     so the same visits stack at every zoom and a pair that merely touches
+     does not. Not from their columns: a node starts where it is led to,
+     not at its column's start, so two visits in one column need not
+     overlap, and two in different columns can - and in a bar of one row,
+     one would cover the other. Steps one after another never overlap, each
+     starting where the last ends, so what does is a haplotype back where
+     it already was. Which row each is drawn in is not decided here but by
+     the walk - see `laneRows` - so the group is only for saying how many
+     visits share a place, and for giving each its own bar of it. */
   const stacks: number[][] = [];
-  const byColumn = new Map<number, number[]>();
-  nodes.forEach((visit, index) => {
-    const column = model.nodeById.get(visit.id)?.column;
-    if (column === undefined) return;
-    const together = byColumn.get(column);
-    if (together) together.push(index);
-    else byColumn.set(column, [index]);
-  });
-
-  for (const together of byColumn.values()) {
+  const overlapping: number[][] = [];
+  {
+    const placed = nodes
+      .map((visit, index) => {
+        const node = model.nodeById.get(visit.id);
+        return node
+          ? { index, from: node.x, to: node.x + Math.max(1, node.length) }
+          : null;
+      })
+      .filter((visit): visit is { index: number; from: number; to: number } => !!visit)
+      .sort((a, b) => a.from - b.from || a.index - b.index);
+    let cluster: number[] = [];
+    let reach = -Infinity;
+    for (const { index, from, to } of placed) {
+      if (cluster.length && from >= reach) {
+        overlapping.push(cluster);
+        cluster = [];
+        reach = -Infinity;
+      }
+      cluster.push(index);
+      reach = Math.max(reach, to);
+    }
+    if (cluster.length) overlapping.push(cluster);
+  }
+  for (const together of overlapping) {
     if (together.length < 2) continue;
     /* In the order they are drawn down the bar, the top row first. */
     const order = [...together].sort(
@@ -268,6 +288,141 @@ export function rasteriseLane(
   markCopies(nodes);
 
   return { key: lane.key, rows, node, base, alt, bp, nodes, stacks, width: w };
+}
+
+/** One stretch of a visit's bar: across, in the band's pixels; down, in
+    the bar's. `of` is how many of the haplotype's visits share the place
+    there, `slot` which of them this is - 1 and 0 where it is alone. */
+export interface VisitPiece {
+  left: number;
+  right: number;
+  top: number;
+  height: number;
+  of: number;
+  slot: number;
+}
+
+const piecesByRaster = new WeakMap<LaneRaster, Map<string, VisitPiece[]>>();
+
+/**
+ * Where a visit is drawn down its haplotype's bar, `barH` tall, stretch by
+ * stretch along it.
+ *
+ * Alone, the whole bar. Where others of the haplotype's visits are at the
+ * same place - it reads that stretch more than once - the bar there is
+ * split between the visits there and no others: those on the reference
+ * walk first, then by thread (see laneRows), each a slot less a pixel so
+ * they read as stacked. Only there: the rest of the visit is the whole bar
+ * again. Splitting each visit by every one the overlap could reach made a
+ * run of nodes on one thread a row apiece - a staircase of thin bars down
+ * HG00099#1 at chr6:32,365,590, where it reads the stretch three times.
+ */
+export function visitPieces(
+  raster: LaneRaster,
+  index: number,
+  barH: number,
+): VisitPiece[] {
+  let byKey = piecesByRaster.get(raster);
+  if (!byKey) {
+    byKey = new Map();
+    piecesByRaster.set(raster, byKey);
+  }
+  const key = `${index}:${barH}`;
+  const known = byKey.get(key);
+  if (known) return known;
+
+  const visit = raster.nodes[index];
+  const whole = (): VisitPiece[] =>
+    visit
+      ? [{ left: visit.left, right: visit.right, top: 0, height: barH, of: 1, slot: 0 }]
+      : [];
+  const members = visit && visit.group >= 0 ? raster.stacks[visit.group] : null;
+  let pieces: VisitPiece[];
+  if (!visit || !members || members.length < 2) {
+    pieces = whole();
+  } else {
+    /* Where what shares the place changes, along this visit. */
+    const cuts = new Set<number>([visit.left, visit.right]);
+    for (const other of members) {
+      const o = raster.nodes[other];
+      if (o.left > visit.left && o.left < visit.right) cuts.add(o.left);
+      if (o.right > visit.left && o.right < visit.right) cuts.add(o.right);
+    }
+    const edges = [...cuts].sort((a, b) => a - b);
+    pieces = [];
+    for (let k = 0; k + 1 < edges.length; k++) {
+      const from = edges[k];
+      const to = edges[k + 1];
+      if (!(to > from)) continue;
+      const here = members.filter((m) => {
+        const o = raster.nodes[m];
+        return o.left < to && o.right > from;
+      });
+      let piece: VisitPiece;
+      if (here.length < 2) {
+        piece = { left: from, right: to, top: 0, height: barH, of: 1, slot: 0 };
+      } else {
+        const order = [...here].sort(
+          (a, b) =>
+            Number(raster.nodes[b].onReference) -
+              Number(raster.nodes[a].onReference) ||
+            raster.nodes[a].card - raster.nodes[b].card ||
+            a - b,
+        );
+        const share = barH / order.length;
+        const slot = order.indexOf(index);
+        piece = {
+          left: from,
+          right: to,
+          top: slot * share,
+          height: Math.max(1, share - 1),
+          of: order.length,
+          slot,
+        };
+      }
+      const last = pieces[pieces.length - 1];
+      if (last && last.top === piece.top && last.height === piece.height && last.right === from) {
+        last.right = to;
+      } else {
+        pieces.push(piece);
+      }
+    }
+    if (!pieces.length) pieces = whole();
+  }
+  byKey.set(key, pieces);
+  return pieces;
+}
+
+/** The piece of a visit's bar at a point along it - or, off either end,
+    the nearest. */
+export function pieceAt(pieces: VisitPiece[], x: number): VisitPiece | null {
+  if (!pieces.length) return null;
+  return (
+    pieces.find((piece) => x >= piece.left && x < piece.right) ??
+    (x < pieces[0].left ? pieces[0] : pieces[pieces.length - 1])
+  );
+}
+
+/** The visit drawn at a point of the bar: the one whose piece there holds
+    `y`, among the visits at `x`. Its index into `nodes`, or -1. */
+export function visitAt(
+  raster: LaneRaster,
+  x: number,
+  y: number,
+  barH: number,
+): number {
+  const at = Math.round(x);
+  if (at < 0 || at >= raster.width) return -1;
+  let first = -1;
+  for (let r = 0; r < raster.rows; r++) {
+    const index = raster.node[r * raster.width + at];
+    if (index < 0) continue;
+    if (first < 0) first = index;
+    const piece = pieceAt(visitPieces(raster, index, barH), x);
+    /* The pixel between two bars of a stack goes to the one above it. */
+    if (piece && y >= piece.top && y < piece.top + piece.height + 1) return index;
+  }
+  return first;
 }
 
 /** The most rows a bar is given, so a haplotype that leaves its own line

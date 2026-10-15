@@ -100,15 +100,18 @@ function eachJump(
   model: PangenomeModel,
   visit: (lane: string, from: number, to: number) => void,
 ) {
-  const { columns } = model;
   for (const lane of model.lanes) {
     const steps = lane.steps;
     for (let i = 0; i + 1 < steps.length; i++) {
       if (steps[i].segment !== steps[i + 1].segment) continue;
-      const from = model.nodeById.get(steps[i].node)?.column;
-      const to = model.nodeById.get(steps[i + 1].node)?.column;
-      if (from === undefined || to === undefined || to - from < 2) continue;
-      const bp = columns[to].x - (columns[from].x + columns[from].width);
+      const node = model.nodeById.get(steps[i].node);
+      const next = model.nodeById.get(steps[i + 1].node);
+      const from = node?.column;
+      const to = next?.column;
+      if (!node || !next || from === undefined || to === undefined || to - from < 2) continue;
+      /* From where the one node ends to where the next starts: nodes start
+         where each is led to, not at their column's start. */
+      const bp = next.x - (node.x + node.length);
       if (bp > SITE_JUMP_BP) continue;
       visit(lane.key, from, to);
     }
@@ -214,8 +217,12 @@ export function variantSegments(
     kind,
     fromColumn: from,
     toColumn: to,
-    x0: columns[from].x,
-    x1: columns[to].x + columns[to].width,
+    /* As far as any of its columns reaches, either way: a column's nodes
+       start where each is led to. */
+    x0: Math.min(...columns.slice(from, to + 1).map((column) => column.x)),
+    x1: Math.max(
+      ...columns.slice(from, to + 1).map((column) => column.x + column.width),
+    ),
     refStart: siteOf(from)?.refStart ?? 0,
     refEnd: siteOf(to)?.refEnd ?? 0,
     walks: [],
@@ -308,7 +315,15 @@ export function variantSegments(
         sameSpelling: false,
       };
     });
-    walks.sort((a, b) => b.lanes.length - a.lanes.length);
+    /* Ties by the nodes they take, which are the graph's: by the order the
+       haplotypes' walks arrived in, the same site numbered its walks one
+       way loaded there and another panned to. */
+    const path = (walk: { nodes: string[] }) => walk.nodes.join(">");
+    walks.sort(
+      (a, b) =>
+        b.lanes.length - a.lanes.length ||
+        (path(a) < path(b) ? -1 : path(a) > path(b) ? 1 : 0),
+    );
     const spellings = new Map<string, number>();
     for (const walk of walks) {
       spellings.set(walk.sequence, (spellings.get(walk.sequence) ?? 0) + 1);
@@ -376,10 +391,10 @@ const MIN_R = 3;
 /** The narrowest a bubble is drawn, so one over a single base still shows. */
 const MIN_WIDTH = 3;
 const MAX_R = 22;
-/** The ruler, then a strip for the shared stretches' dashes, then the
-    bubbles. */
-export const VARIANT_SAME_Y = 28 + 14;
-export const VARIANT_TOP = 28 + 28;
+/** A strip for the shared stretches' dashes, then the bubbles. No ruler:
+    eg3's ruler track draws the coordinates. */
+export const VARIANT_SAME_Y = 14;
+export const VARIANT_TOP = 28;
 const FOOT = 22;
 
 /**

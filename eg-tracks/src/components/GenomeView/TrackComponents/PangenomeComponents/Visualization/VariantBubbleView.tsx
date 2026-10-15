@@ -2,8 +2,6 @@ import { memo, useEffect, useState } from "react";
 import VariantCard from "./VariantCard";
 import type { BandAxis, DrawFrame, PangenomeModel } from "./pangenomeModel";
 import { REF_COLOR } from "./pangenomeModel";
-import Ruler, { rulerTicks } from "./Ruler";
-import { RULER_H } from "./laneLayout";
 import type { HoverTarget } from "./LinearPathView";
 import { VARIANT_SAME_Y, bpLabel } from "./variantBubbles";
 import type {
@@ -52,7 +50,6 @@ const LINK_COLORS = ["#2e6fc4", "#e07b39", "#3a9e5c", "#a04fc4", "#c4415a"];
 
 function VariantBubbleView({
   model,
-  frame,
   axis,
   segments,
   layout,
@@ -116,23 +113,6 @@ function VariantBubbleView({
         onClick={() => setCard(null)}
         onMouseLeave={() => onHover(null)}
       >
-        <rect
-          className="pgv-ruler-ground"
-          x={0}
-          y={0}
-          width={width}
-          height={RULER_H}
-        />
-        <Ruler
-          ticks={rulerTicks(
-            model,
-            (graphX) => axis.px(graphX),
-            frame ? frame.width / Math.max(1, frame.endBp - frame.startBp) : axis.scale,
-          )}
-          height={RULER_H}
-          from={0}
-          to={width}
-        />
 
         {/* From each walk to the walks its haplotypes take at the next
             site, as thick as how many do; under everything. */}
@@ -141,7 +121,7 @@ function VariantBubbleView({
           /* Past a long deletion, over the top of the sites it skips rather
              than through their bubbles. */
           const lift = link.skips
-            ? Math.max(RULER_H + 12, Math.min(link.y1, link.y2) - 28)
+            ? Math.max(12, Math.min(link.y1, link.y2) - 28)
             : null;
           return (
             <path

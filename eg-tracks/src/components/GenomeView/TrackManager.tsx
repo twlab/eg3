@@ -31,8 +31,13 @@ import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChange
 import {
   fetchPangenomeData,
   isLayoutTrackType,
+  layoutPangenomeBand,
   PANGENOME_TRACK_TYPE,
 } from "./TrackComponents/PangenomeComponents/fetchPangenomeData";
+import { PangenomeViewProvider } from "./TrackComponents/PangenomeComponents/Visualization/pangenomeViewState";
+import type { ViewMode } from "./TrackComponents/PangenomeComponents/Visualization/pangenomeViewState";
+import { GRAPH_PART } from "./TrackComponents/PangenomeComponents/Visualization/VisualizationContainer";
+import PangenomeViewSwitch from "./TrackComponents/PangenomeComponents/PangenomeViewSwitch";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
@@ -343,6 +348,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   /* A pangenome graph lays the band out the way an alignment does, and at
      every zoom: its room for longer alleles is there however far out. */
   const hasPangenome = useRef(false);
+  /* Which view the pangenome graph is drawn in. Held here rather than by the
+     graph's tracks: the toolbar switches it, the graph's rows are drawn in
+     it, and each band is laid out for it - so the tracks under the graph
+     stay under it. */
+  const isPangenome = tracks.some(
+    (track: any) => track.type === PANGENOME_TRACK_TYPE,
+  );
+  const [pangenomeView, setPangenomeView] = useState<ViewMode>("linear");
+  /* Which bubbles are one site, in tube and variants view: the tube map's
+     sets its columns, and so the room each band holds. */
+  const [tubeGrouping, setTubeGrouping] = useState(0);
+  const [variantGrouping, setVariantGrouping] = useState(0);
+  const pangenomeSettings = {
+    mode: pangenomeView,
+    tubeGrouping,
+    variantGrouping,
+  };
+  const pangenomeViewRef = useRef(pangenomeSettings);
+  pangenomeViewRef.current = pangenomeSettings;
+  const pangenomeViewShown = useRef(JSON.stringify(pangenomeSettings));
+  useEffect(() => {
+    const shown = JSON.stringify(pangenomeViewRef.current);
+    if (pangenomeViewShown.current === shown) return;
+    pangenomeViewShown.current = shown;
+    relayoutPangenome();
+  }, [pangenomeView, tubeGrouping, variantGrouping]);
   const isToolSelected = useRef(false);
   const side = useRef("right");
   const isDragging = useRef(false);
@@ -679,7 +710,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         (track: any) => track.type === PANGENOME_TRACK_TYPE,
       )
     ) {
-      fetchPangenomeData(message)
+      fetchPangenomeData(message, pangenomeViewRef.current)
         .then((data) => createGenomeAlignOnMessage({ data }))
         .catch((error) => console.error("Error fetching the pangenome:", error));
       return;
@@ -3047,6 +3078,63 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return true;
   }
 
+  /**
+   * Every band already fetched, laid out again for the view now chosen, and
+   * the one on screen drawn again: the graph's data and the other tracks'
+   * stay as they are - only where each goes changes.
+   */
+  function relayoutPangenome() {
+    if (!hasPangenome.current) return;
+    const genomeName = curGenomeConfig.current?.genome.getName();
+    const graphIds = trackManagerState.current.tracks
+      .filter((track: any) => track.type === PANGENOME_TRACK_TYPE)
+      .map((track: any) => `${track.id}`);
+    for (const key in globalTrackState.current.trackStates) {
+      const trackState = globalTrackState.current.trackStates[key]?.trackState;
+      const primary = trackState?.genomicFetchCoord?.[genomeName];
+      if (!primary || !trackState.visData) continue;
+      const records = graphIds
+        .map((id: string) => trackManagerState.current.caches[id]?.[key]?.dataCache)
+        .find(Boolean);
+      if (!records) continue;
+      const genomicFetchCoord = layoutPangenomeBand(
+        records,
+        {
+          visData: trackState.visData,
+          genomicLoci: primary.genomicLoci,
+          regionExpandLoci: primary.regionExpandLoci,
+          initGenomicLoci: primary.initGenomicLoci,
+          primaryGenName: genomeName,
+        },
+        Object.keys(trackState.genomicFetchCoord).filter(
+          (name) => name !== genomeName,
+        ),
+        pangenomeViewRef.current,
+      );
+      const primaryVisData = genomicFetchCoord[genomeName].primaryVisData;
+      trackState.genomicFetchCoord = genomicFetchCoord;
+      trackState.visWidth = primaryVisData.visWidth;
+      if (trackState.startWindow) {
+        trackState.startWindow = primaryVisData.viewWindow.start;
+      }
+    }
+    const idx = dataIdx.current;
+    const trackToDrawId: { [key: string]: any } = {};
+    for (const track of trackManagerState.current.tracks) {
+      trackToDrawId[`${track.id}`] = false;
+    }
+    completedFetchedRegion.current.key = idx;
+    completedFetchedRegion.current.done = {};
+    completedFetchedRegion.current.groups = {};
+    checkDrawData({
+      curDataIdx: idx,
+      isInitial: 0,
+      trackToDrawId,
+      missingIdx: idx,
+      trackDataIdx: idx,
+    });
+  }
+
   /** A track has committed its drawing of band `drawnIdx`: the handoff's
       scroll correction lands now, before the browser paints, with however
       far the pointer has moved since it was worked out. */
@@ -5266,7 +5354,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   // MARK: render________________________________________
-  return (
+  const content = (
     <div
       style={{
         backgroundColor: "var(--bg-color)",
@@ -5331,7 +5419,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 style={{ width: "1px" }}
                 className="self-stretch bg-gray-300 dark:bg-gray-600"
               />
-              {userViewRegion && (
+              {isPangenome && (
+                <PangenomeViewSwitch
+                  mode={pangenomeView}
+                  onChange={setPangenomeView}
+                  fontSize={fontSize}
+                  tubeGrouping={tubeGrouping}
+                  onTubeGrouping={setTubeGrouping}
+                  variantGrouping={variantGrouping}
+                  onVariantGrouping={setVariantGrouping}
+                />
+              )}
+              {!isPangenome && userViewRegion && (
                 <div
                   style={{
                     display: "flex",
@@ -5370,6 +5469,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 </div>
               )}
 
+              {!isPangenome && (
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div className="MetadataHeader-button" style={{}}>
                   <button
@@ -5430,6 +5530,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   </div>
                 </div>
               </div>
+              )}
             </div>
 
             <div
@@ -5536,6 +5637,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                               ? `${(scrollRunwayWindows * 2 + 1) * windowWidthRef.current + legendWidth}px`
                               : `${windowWidthRef.current + legendWidth}px`,
                             position: "relative",
+                            ...(pangenomeView !== "linear" &&
+                            item.trackModel.type === PANGENOME_TRACK_TYPE &&
+                            item.trackModel.options?.part &&
+                            item.trackModel.options.part !== GRAPH_PART
+                              ? { display: "none" }
+                              : {}),
                           }}
                         >
                           {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
@@ -5711,6 +5818,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) : null}
       </OutsideClickDetector>
     </div>
+  );
+  return isPangenome ? (
+    <PangenomeViewProvider
+      windowWidth={windowWidthRef.current}
+      mode={pangenomeView}
+      onModeChange={setPangenomeView}
+      tubeGrouping={tubeGrouping}
+      setTubeGrouping={setTubeGrouping}
+      variantGrouping={variantGrouping}
+      setVariantGrouping={setVariantGrouping}
+    >
+      {content}
+    </PangenomeViewProvider>
+  ) : (
+    content
   );
 });
 export default memo(TrackManager);

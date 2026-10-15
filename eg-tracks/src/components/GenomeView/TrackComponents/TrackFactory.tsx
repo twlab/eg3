@@ -21,6 +21,7 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
+import { pangenomeLegendColor } from "./PangenomeComponents/fetchPangenomeData";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -650,7 +651,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               ? trackModel.options.legendFontColor
               : trackModel.isSelected
                 ? "black"
-                : "var(--font-color)",
+                : /* The graph's rows: the reference blue, alt paths green. */
+                  (pangenomeLegendColor(trackModel) ?? "var(--font-color)"),
 
             pointerEvents: "auto",
           }}

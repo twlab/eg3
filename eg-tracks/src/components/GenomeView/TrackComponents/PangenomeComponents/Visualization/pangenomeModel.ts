@@ -1,3 +1,5 @@
+import type { Carriers } from "../../../../../getRemoteData/gbz/subgraph";
+
 /* ══════════════════════════════════════════════════════════════════════════
    Shared model behind both pangenome renderings.
 
@@ -119,6 +121,10 @@ export interface GraphEdge {
 export interface Column {
   index: number;
   x: number;
+  /** From its first node's start to its last node's end. Its nodes start
+      where each is led to, not all at x - see buildModel; the tube map
+      keeps a column as wide as its widest node, its nodes at its start:
+      see columnarModel. */
   width: number;
   nodeIds: string[];
 }
@@ -161,7 +167,17 @@ export interface PangenomeModel {
   rowCount: number;
   /** The stretch of the reference this whole subgraph covers. */
   referenceInterval: { start: number; end: number } | null;
+  /** How many haplotypes the graph has, when `lanes` holds only some of
+      them - a track row drawing one haplotype, or the strip alone. */
+  laneCount?: number;
+  /** How common each node and allele is in the whole pangenome, counted
+      over every haplotype in the window rather than the lanes drawn. */
+  carriers?: Carriers;
 }
+
+/** How many haplotypes the graph has, however many lanes this model draws. */
+export const laneTotal = (model: PangenomeModel) =>
+  model.laneCount ?? model.lanes.length;
 
 /* ── Palette ───────────────────────────────────────────────────────────── */
 /* The reference is the line every other haplotype is read against, so it
@@ -338,9 +354,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
   const reference = lanes.find((l) => l.isReference) ?? null;
 
-  /* ── Nodes: which lanes touch them, and where they first appear ──────── */
+  /* ── Nodes: which lanes touch them ───────────────────────────────────── */
   const laneKeys = new Map<string, string[]>();
-  const minRank = new Map<string, number>();
   rawNodes.forEach((n) => laneKeys.set(n.id, []));
 
   /* The lanes are walked one after another, so a node already holds this
@@ -349,15 +364,13 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      and a million and a half steps between them. */
   const lastLane = new Map<string, string>();
   lanes.forEach((lane) => {
-    lane.order.forEach((id, rank) => {
+    lane.order.forEach((id) => {
       const at = laneKeys.get(id);
       if (!at) return; // a step into a node the subgraph does not carry
       if (lastLane.get(id) !== lane.key) {
         lastLane.set(id, lane.key);
         at.push(lane.key);
       }
-      const seen = minRank.get(id);
-      if (seen === undefined || rank < seen) minRank.set(id, rank);
     });
   });
 
@@ -406,14 +419,23 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   });
   const edges = edgeList;
 
-  /* ── Columns: longest-path level, seeded from walk order ──────────────
-     Seeding with the earliest position a node takes on any walk keeps nodes
-     that no edge reaches from collapsing onto column 0; relaxing over the
-     edges then pushes every successor past its predecessors. The pass cap
-     stops a cyclic subgraph from looping forever. */
+  /* ── Columns: longest-path level, from the graph alone ────────────────
+     Where a node is drawn is where the graph puts it against the
+     reference: after everything it is reached from, the reference's own
+     walk in order, and nothing else. Levels used to start from how far
+     into some haplotype's walk a node was, which keeps nodes that no edge
+     reaches off column 0 - but a count of steps is a property of what was
+     fetched, not of the graph: the same allele came out 67 bp from where
+     it joins the reference in one window, and over reference bases past
+     where it leaves in another (the MHC's 2 kb insertion at 4,074,838-849,
+     loaded straight there and panned to). What such a node is tied to is
+     said below instead. The pass cap stops a cyclic subgraph from looping
+     forever. */
   const ids = rawNodes.map((n) => n.id).sort(numericCompare);
   const level = new Map<string, number>();
-  ids.forEach((id) => level.set(id, minRank.get(id) ?? 0));
+  ids.forEach((id) => level.set(id, 0));
+  const onReferenceWalk = reference?.nodeSet ?? new Set<string>();
+  const referenceOrder = reference?.order ?? [];
 
   /* Two constraints have to hold together, so they are applied in turn until
      neither moves anything:
@@ -426,7 +448,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      before, so the edges alone cannot order it and two different reference
      positions collapse into one column. Both rules only ever push levels up,
      so this converges. */
-  const referenceOrder = reference?.order ?? [];
 
   /* Pushing successors past their predecessors, edge after edge, until
      nothing moves took as many sweeps of every edge as the longest chain is
@@ -434,9 +455,61 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      have no cycle, one sweep in an order that puts every node after its
      predecessors reaches the same levels, so that is used; a cyclic
      subgraph keeps the sweeps and their cap. */
+  /* What a haplotype in pieces says about where they go. One piece ending
+     off the reference and the next one starting off it is the haplotype
+     going from the one to the other through sequence the window does not
+     hold - the middle of an insertion longer than the window - so the
+     second is laid out after the first, as one allele: from where the
+     haplotype last left the reference to where it next rejoins it - which
+     can be pieces away, a piece in the middle being the insertion alone
+     (HG002#1 at chr6:32,340,254, in three). Only where that runs forward
+     along the reference; a piece coming back earlier than the last one
+     left is a rearrangement, and tying it would bend the reference to it.
+     For laying out only - it is no edge of the graph's. */
+  const referenceIndex = new Map<string, number>();
+  referenceOrder.forEach((id, index) => {
+    if (!referenceIndex.has(id)) referenceIndex.set(id, index);
+  });
+  const layoutEdges: Array<{ from: string; to: string }> = edges.map(
+    ({ from, to }) => ({ from, to }),
+  );
+  for (const lane of lanes) {
+    if (lane.isReference) continue;
+    const pieces = lane.segments.map((segment) => segment.nodes);
+    /* Where the haplotype was last on the reference by the end of each
+       piece, and where it is next on it from the start of each. */
+    const lastOn: Array<number | undefined> = [];
+    pieces.forEach((nodes, k) => {
+      const own = [...nodes].reverse().find((id) => referenceIndex.has(id));
+      lastOn[k] =
+        own !== undefined ? referenceIndex.get(own) : k > 0 ? lastOn[k - 1] : undefined;
+    });
+    const nextOn: Array<number | undefined> = [];
+    for (let k = pieces.length - 1; k >= 0; k--) {
+      const own = pieces[k].find((id) => referenceIndex.has(id));
+      nextOn[k] =
+        own !== undefined
+          ? referenceIndex.get(own)
+          : k + 1 < pieces.length
+            ? nextOn[k + 1]
+            : undefined;
+    }
+    for (let k = 0; k + 1 < pieces.length; k++) {
+      const last = pieces[k][pieces[k].length - 1];
+      const first = pieces[k + 1][0];
+      if (onReferenceWalk.has(last) || onReferenceWalk.has(first)) continue;
+      if (!level.has(last) || !level.has(first)) continue;
+      const leaves = lastOn[k];
+      const rejoins = nextOn[k + 1];
+      if (leaves === undefined || rejoins === undefined) continue;
+      if (leaves >= rejoins) continue;
+      layoutEdges.push({ from: last, to: first });
+    }
+  }
+
   const successors = new Map<string, string[]>();
   const waiting = new Map<string, number>();
-  for (const edge of edges) {
+  for (const edge of layoutEdges) {
     if (!level.has(edge.from) || !level.has(edge.to)) continue;
     const out = successors.get(edge.from);
     if (out) out.push(edge.to);
@@ -469,7 +542,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     } else {
       for (let pass = 0; pass < ids.length; pass++) {
         let changed = false;
-        for (const edge of edges) {
+        for (const edge of layoutEdges) {
           const from = level.get(edge.from);
           const to = level.get(edge.to);
           if (from === undefined || to === undefined) continue;
@@ -494,6 +567,42 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     }
 
     if (!movedThisRound) break;
+  }
+
+  /* A node nothing on the reference leads to - a haplotype coming into the
+     window off the reference, its way in outside it - is tied only to
+     where it joins. Laid out as late as that allows, so it sits against
+     the node it joins rather than wherever its own predecessors would have
+     started it, which is nowhere: column 0. A node leaving the window off
+     the reference needs nothing of the kind - the longest path already
+     puts it just past where it leaves. */
+  const reached = new Set<string>();
+  const reach = [...onReferenceWalk].filter((id) => level.has(id));
+  for (const id of reach) reached.add(id);
+  while (reach.length) {
+    for (const next of successors.get(reach.pop()!) ?? []) {
+      if (reached.has(next)) continue;
+      reached.add(next);
+      reach.push(next);
+    }
+  }
+  const pullUp = (id: string) => {
+    if (reached.has(id)) return false;
+    const next = successors.get(id);
+    if (!next?.length) return false;
+    const latest = Math.min(...next.map((other) => level.get(other)!)) - 1;
+    if (latest <= level.get(id)!) return false;
+    level.set(id, latest);
+    return true;
+  };
+  if (acyclic) {
+    for (let at = ordered.length - 1; at >= 0; at--) pullUp(ordered[at]);
+  } else {
+    for (let pass = 0; pass < ids.length; pass++) {
+      let changed = false;
+      for (const id of ids) changed = pullUp(id) || changed;
+      if (!changed) break;
+    }
   }
 
   const byLevel = new Map<number, string[]>();
@@ -523,7 +632,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
   const columns: Column[] = [];
   const nodeById = new Map<string, GraphNode>();
-  let x = 0;
   let rowCount = 1;
 
   /* Reference coordinates advance only where the reference actually walks, so
@@ -551,12 +659,78 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   }
   let cursor = referenceOrigin;
 
+  /* ── Where each node starts, in bases ────────────────────────────────
+     Each node on its own: where the latest of what leads into it ends, and
+     the reference's walk in order. A column used to give all its nodes one
+     start, as wide as its widest node, and an allele standing in for more
+     than one reference node could not then lie over them. In the MHC, TG in
+     place of the reference's A, A - two nodes, since other haplotypes read
+     C, A - took the first A's column 2 bp wide and left a base of nothing
+     in the reference and in every bar reading C. Starting columns by bases
+     fixed that one but not two alleles a step apart that start at
+     different bases: at chr6:32,357,609 on the HPRC graph X stands in for
+     B, the reference's 1 bp after P, and Z for P's second base, after Y -
+     one column, so Z started where P ended, a base late, and pushed B on.
+     Placed node by node, X lies over B and Z over P's second base, and the
+     reference moves on only where an allele is longer than what it stands
+     in for - the room an insertion takes. Columns stay, for what is an
+     alternative to what: sites, the strip's rows, the tube map. */
+  const predecessors = new Map<string, string[]>();
+  for (const [from, nexts] of successors) {
+    for (const to of nexts) {
+      const into = predecessors.get(to);
+      if (into) into.push(from);
+      else predecessors.set(to, [from]);
+    }
+  }
+  const referencePrevious = new Map<string, string>();
+  for (let i = 1; i < referenceOrder.length; i++) {
+    if (!referencePrevious.has(referenceOrder[i])) {
+      referencePrevious.set(referenceOrder[i], referenceOrder[i - 1]);
+    }
+  }
+  /* A node of no sequence still takes a base, as a column did. */
+  const roomOf = (id: string) => Math.max(1, (sequences.get(id) ?? "").length);
+  const startOf = new Map<string, number>();
+  /* In column order, which is an order every edge runs forward in - in a
+     cyclic subgraph too, where an edge back is one the levels could not
+     honour, and is left out here as well. */
+  for (const lv of levels) {
+    for (const id of byLevel.get(lv) ?? []) {
+      let at = 0;
+      for (const from of predecessors.get(id) ?? []) {
+        if ((level.get(from) ?? 0) >= lv) continue;
+        at = Math.max(at, (startOf.get(from) ?? 0) + roomOf(from));
+      }
+      const previous = referencePrevious.get(id);
+      if (previous !== undefined && (level.get(previous) ?? 0) < lv) {
+        at = Math.max(at, (startOf.get(previous) ?? 0) + roomOf(previous));
+      }
+      startOf.set(id, at);
+    }
+  }
+  /* What nothing on the reference leads to, as late as where it joins
+     allows - as its column was pulled up, and for the same reason. */
+  for (let at = levels.length - 1; at >= 0; at--) {
+    for (const id of byLevel.get(levels[at]) ?? []) {
+      if (reached.has(id)) continue;
+      let latest = Infinity;
+      for (const next of successors.get(id) ?? []) {
+        if ((level.get(next) ?? 0) <= levels[at]) continue;
+        latest = Math.min(latest, (startOf.get(next) ?? 0) - roomOf(id));
+      }
+      if (latest !== Infinity && latest > startOf.get(id)!) startOf.set(id, latest);
+    }
+  }
+  let totalBp = 0;
+  for (const [id, start] of startOf) totalBp = Math.max(totalBp, start + roomOf(id));
+
   levels.forEach((lv, columnIndex) => {
       const nodeIds = (byLevel.get(lv) ?? []).sort(byRow);
-      const width = Math.max(
-        1,
-        ...nodeIds.map((id) => (sequences.get(id) ?? "").length),
-      );
+      /* A column is as far as its nodes reach. */
+      const x = Math.min(...nodeIds.map((id) => startOf.get(id) ?? 0));
+      const width =
+        Math.max(...nodeIds.map((id) => (startOf.get(id) ?? 0) + roomOf(id))) - x;
 
       const onRef = nodeIds.find((id) => refNodes.has(id));
       const refStart = cursor;
@@ -580,7 +754,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
           sequence,
           length: sequence.length,
           column: columnIndex,
-          x,
+          x: startOf.get(id) ?? x,
           row: position + indent,
           lanes: laneKeys.get(id) ?? [],
           onReference: refNodes.has(id),
@@ -590,7 +764,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       });
       rowCount = Math.max(rowCount, nodeIds.length + indent);
       columns.push({ index: columnIndex, x, width, nodeIds });
-      x += width;
     });
 
   const referenceInterval = reference
@@ -607,10 +780,48 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     lanes,
     edges,
     reference,
-    totalBp: x,
+    totalBp,
     rowCount,
     referenceInterval,
+    carriers: result?.carriers,
   };
+}
+
+/**
+ * The same layout with every column as wide as its widest node, and every
+ * node at its column's start: what the tube map is drawn from. A tube map is
+ * a column at a time - a stack of boxes, and the tubes moving between one
+ * column and the next - so a node there stays in its own column rather
+ * than running on over the next, as it does in the linear view.
+ */
+const columnar = new WeakMap<PangenomeModel, PangenomeModel>();
+export function columnarModel(model: PangenomeModel): PangenomeModel {
+  const known = columnar.get(model);
+  if (known) return known;
+  let x = 0;
+  const nodeById = new Map<string, GraphNode>();
+  const columns: Column[] = model.columns.map((column) => {
+    const width = Math.max(
+      1,
+      ...column.nodeIds.map((id) => model.nodeById.get(id)?.length ?? 0),
+    );
+    for (const id of column.nodeIds) {
+      const node = model.nodeById.get(id);
+      if (node) nodeById.set(id, { ...node, x });
+    }
+    const placed = { ...column, x, width };
+    x += width;
+    return placed;
+  });
+  const out: PangenomeModel = {
+    ...model,
+    nodes: model.nodes.map((node) => nodeById.get(node.id) ?? node),
+    nodeById,
+    columns,
+    totalBp: x,
+  };
+  columnar.set(model, out);
+  return out;
 }
 
 /** How a band converts between the reference and its own pixels. */

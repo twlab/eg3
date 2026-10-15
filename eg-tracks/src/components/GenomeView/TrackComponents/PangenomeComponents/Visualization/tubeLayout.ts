@@ -54,7 +54,7 @@ import { bpAtGraphX, graphXAtBp, referenceTicks } from "./pangenomeModel";
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** Room at the top for the ruler. */
-export const TUBE_RULER_H = 32;
+export const TUBE_RULER_H = 0;
 /** Between the ruler and the top of the stacks. */
 export const TUBE_TOP_PAD = 6;
 /** The strip across the top of a box that carries its sequence. */
@@ -439,6 +439,8 @@ export function junctionGaps(
  * Without a band to fill, the bases are drawn at `pxPerBase` and the gaps are
  * added on top. `gapScale` draws every gap that much wider, and lets the gaps
  * take that much more of a busy window before they are narrowed.
+ * `fixedGaps`, when given, are the gaps in pixels, column by column, used as
+ * they are: the band laid out with them already (see fetchPangenomeData).
  */
 export function tubeAxis(
   model: PangenomeModel,
@@ -453,11 +455,14 @@ export function tubeAxis(
      columns keep the fetched model's layout, so that model's walk reads true
      on them. */
   anchorsFrom?: PangenomeModel,
+  fixedGaps?: number[],
 ): TubeAxis {
   const { columns } = model;
-  const raw = junctionGaps(stacks, columns.length).map(
-    (gap) => gap * gapScale,
-  );
+  const raw =
+    fixedGaps && fixedGaps.length === columns.length
+      ? fixedGaps
+      : junctionGaps(stacks, columns.length).map((gap) => gap * gapScale);
+  const given = raw === fixedGaps;
   const anchors = referenceTicks(anchorsFrom ?? model);
 
   /* The last column starting at or before a place - or, `strict`, before
@@ -508,7 +513,7 @@ export function tubeAxis(
       const inWindow = gapTo(sums, viewTo, true) - gapTo(sums, viewFrom);
       const budget =
         Math.min(TUBE_GAP_BUDGET_MAX, TUBE_GAP_BUDGET * gapScale) * windowPx;
-      const narrow = inWindow > budget ? budget / inWindow : 1;
+      const narrow = !given && inWindow > budget ? budget / inWindow : 1;
       gapBefore = raw.map((gap) => gap * narrow);
       /* What is left once the gaps are paid for, shared by the bases. */
       scale = (windowPx - inWindow * narrow) / (viewTo - viewFrom);

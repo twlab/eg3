@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { bandAxis, buildModel } from "./pangenomeModel";
+import { bandAxis, buildModel, columnarModel } from "./pangenomeModel";
 import LinearPathView, { linearHeight } from "./LinearPathView";
 import type { BandAxis, PangenomeModel } from "./pangenomeModel";
 import type { DrawFrame } from "./pangenomeModel";
@@ -104,6 +104,11 @@ interface VisualizationContainerProps {
       track rows: `GRAPH_PART` for the graph strip, or a haplotype's
       `sample#haplotype` for its bar alone. Everything when absent. */
   part?: string;
+  /** The tube map the band was laid out for (see fetchPangenomeData): the
+      grouping it used - null for every node - and its gaps in pixels, column
+      by column. Drawn with these, the tubes land where the band's other
+      tracks are. */
+  tubeLayout?: { minBp: number | null; gapsPx: number[] };
   /** Accepted so existing callers keep type-checking; unused by these views. */
   viewport?: any;
   setViewport?: (v: any) => void;
@@ -126,8 +131,13 @@ export default function VisualizationContainer({
   isPrimary = false,
   onBandModel,
   part,
+  tubeLayout,
 }: VisualizationContainerProps) {
   const view = usePangenomeView();
+  /* The whole graph - the tube map, the variants view - is drawn by the
+     graph strip's track; a haplotype's row draws its bar in linear view
+     and nothing else, so it lays nothing else out. */
+  const drawsWhole = !part || part === GRAPH_PART;
   /* Zoomed out, a section of the linear view's bars is hatched only where
      more of its bases than this are off the reference, so a scatter of SNPs
      does not hatch the whole bar. It grows with the window: 10 bp at 10 kb. */
@@ -288,20 +298,31 @@ export default function VisualizationContainer({
      per unique walk, every haplotype still a tube of its own through them,
      drawn to the same scale as every node. See compressedTube.ts. */
   const tubeGrouping = view?.tubeGrouping ?? -1;
+  /* A column at a time, as the tube map is drawn: see columnarModel. */
+  const tubeBase = useMemo(
+    () => (model && view?.mode === "tube" && drawsWhole ? columnarModel(model) : null),
+    [model, view?.mode, drawsWhole],
+  );
   const tubeGrouped = useMemo(() => {
-    if (!model || view?.mode !== "tube" || tubeGrouping < 0) return null;
-    const segments = variantSegments(
-      model,
-      separatorBp(model, tubeGrouping, frame?.width ?? 0),
-    );
+    if (!tubeBase) return null;
+    /* The band's own grouping when it was laid out for the tubes: worked out
+       here, from this band's width, it could come out another, and the gaps
+       would belong to other columns. */
+    const minBp = tubeLayout
+      ? tubeLayout.minBp
+      : tubeGrouping < 0
+        ? null
+        : separatorBp(tubeBase, tubeGrouping, frame?.width ?? 0);
+    if (minBp === null) return null;
+    const segments = variantSegments(tubeBase, minBp);
     return {
-      model: compressedModel(model, segments),
+      model: compressedModel(tubeBase, segments),
       labels: boxLabels(segments),
       fills: boxFills(segments),
       segments,
     };
-  }, [model, view?.mode, tubeGrouping, frame?.width]);
-  const tubeModel = tubeGrouped?.model ?? model;
+  }, [tubeBase, tubeGrouping, frame?.width, tubeLayout]);
+  const tubeModel = tubeGrouped?.model ?? tubeBase;
   /* A grouped box clicked: the same card a bubble of the variants view
      opens, for the same site and walk. */
   const [tubeCard, setTubeCard] = useState<{
@@ -354,8 +375,10 @@ export default function VisualizationContainer({
   }, []);
   const tubeStack = useMemo(
     () =>
-      tubeModel && view?.mode === "tube" ? tubeStacks(tubeModel, TUBE_H) : null,
-    [tubeModel, view?.mode],
+      tubeModel && view?.mode === "tube" && drawsWhole
+        ? tubeStacks(tubeModel, TUBE_H)
+        : null,
+    [tubeModel, view?.mode, drawsWhole],
   );
   const tube = useMemo(
     () =>
@@ -370,18 +393,19 @@ export default function VisualizationContainer({
               gapScale,
               /* Coordinates from the fetched model's own reference walk:
                  the drawn one may be grouped. */
-              model ?? undefined,
+              tubeBase ?? undefined,
+              tubeLayout?.gapsPx,
             ),
           }
         : null,
-    [model, tubeModel, tubeStack, frame, pxPerBase, gapScale],
+    [tubeBase, tubeModel, tubeStack, frame, pxPerBase, gapScale, tubeLayout],
   );
 
   /* The variants view: the window as sites and the stretches between them,
      drawn at the same scale as the other views. Nothing of the tube map is
      built for it. */
   const variants = useMemo(() => {
-    if (!model || view?.mode !== "variants") return null;
+    if (!model || view?.mode !== "variants" || !drawsWhole) return null;
     const minBp = separatorBp(model, view.variantGrouping, frame?.width ?? 0);
     const segments = variantSegments(model, minBp);
     return { minBp, segments };
@@ -406,6 +430,7 @@ export default function VisualizationContainer({
     if (!model || !part) return model;
     return {
       ...model,
+      laneCount: model.lanes.length,
       lanes: model.lanes.filter((lane) =>
         part === GRAPH_PART ? lane.isReference : !lane.isReference && lane.label === part,
       ),
@@ -509,6 +534,7 @@ export default function VisualizationContainer({
   );
 
   if (!model || !model.lanes.length || !view || !shared) return null;
+  if (view.mode !== "linear" && !drawsWhole) return null;
 
   return (
     <div className="pgv-shell" style={{ height: shellHeight }}>
@@ -538,7 +564,7 @@ export default function VisualizationContainer({
             <TubeMapView
               {...shared}
               model={tubeModel ?? model}
-              rulerModel={model}
+              rulerModel={tubeBase ?? model}
               boxLabels={tubeGrouped?.labels}
               boxFills={tubeGrouped?.fills}
               onBoxPick={tubeGrouped ? onBoxPick : undefined}

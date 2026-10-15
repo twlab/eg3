@@ -12,8 +12,14 @@ import {
   openRemoteDatabase,
   queryLocalInterval,
 } from "../../../../getRemoteData/gbz/worker/gbzClient";
-import { buildModel, referenceTicks } from "./Visualization/pangenomeModel";
+import { buildModel, columnarModel, referenceTicks } from "./Visualization/pangenomeModel";
 import { GRAPH_PART } from "./Visualization/VisualizationContainer";
+import { TUBE_H } from "./Visualization/TubeMapView";
+import { tubeAxis, tubeStacks } from "./Visualization/tubeLayout";
+import { compressedModel } from "./Visualization/compressedTube";
+import { separatorBp, variantSegments } from "./Visualization/variantBubbles";
+import { DEFAULT_GAP_SCALE } from "./Visualization/pangenomeViewState";
+import type { ViewMode } from "./Visualization/pangenomeViewState";
 
 /* ══════════════════════════════════════════════════════════════════════════
    The pangenome graph, fetched the way a genomealign track is: first, for
@@ -33,6 +39,15 @@ import { GRAPH_PART } from "./Visualization/VisualizationContainer";
    ══════════════════════════════════════════════════════════════════════════ */
 
 export const PANGENOME_TRACK_TYPE = "pangenome";
+
+/** The legend colour of the graph's own rows: the reference's blue, every
+    alt path's green. Undefined for any other track, whose legend stays as
+    it is. */
+export function pangenomeLegendColor(trackModel: any): string | undefined {
+  if (trackModel?.type !== PANGENOME_TRACK_TYPE) return undefined;
+  const part = trackModel.options?.part;
+  return !part || part === GRAPH_PART ? "#2563eb" : "#16a34a";
+}
 
 /** A track whose fetch decides where the others go: an alignment, or the
     graph. The two are never in one view. */
@@ -232,6 +247,9 @@ function haplotypeCoord(
   key: string,
   visRegion: DisplayedRegionModel,
   chr: string | undefined,
+  /** The room let into the band ahead of a place in the layout, in bases,
+      beyond the layout's own: the tube map's, in tube view. */
+  roomBefore: (graphX: number) => number = () => 0,
 ) {
   const total = Math.round(visRegion.getWidth());
   const empty = () =>
@@ -259,7 +277,14 @@ function haplotypeCoord(
   const regionStart = visRegion.getContextCoordinates().start;
   /* From a place in the layout to one in the region drawn across the band. */
   const at = (graphX: number) =>
-    Math.round(graphX - anchors[0].x + first.start - regionStart);
+    Math.round(
+      graphX -
+        anchors[0].x +
+        roomBefore(graphX) -
+        roomBefore(anchors[0].x) +
+        first.start -
+        regionStart,
+    );
 
   /* Its longest unbroken piece. */
   const [sample, haplotype] = key.split("#");
@@ -329,25 +354,206 @@ function haplotypeCoord(
   );
 }
 
-/** What a genomealign fetch returns, for a band of the graph. */
-export async function fetchPangenomeData(data: any): Promise<any> {
-  const {
-    trackToFetch,
-    visData,
-    genomicLoci,
-    regionExpandLoci,
-    initGenomicLoci,
-    primaryGenName,
-    trackDataIdx,
-    missingIdx,
-  } = data;
+/** How the graph is being drawn, which says what room the band holds. */
+export interface PangenomeLayoutSettings {
+  mode: ViewMode;
+  gapScale?: number;
+  /** As the view state's tubeGrouping: -1 every node, 0 auto. */
+  tubeGrouping?: number;
+  /** As the view state's variantGrouping: 0 auto. It moves nothing - the
+      variants view is drawn on the linear layout - but it sets how tall
+      the picture is. */
+  variantGrouping?: number;
+}
 
+/**
+ * The tube map's room in a band: the gaps it lets in ahead of each column
+ * for the tubes to bend, in whole bases at the tube map's own scale, and the
+ * grouping it was laid out with. Worked out on the band as fetched, gapless,
+ * exactly as the tube view works it out (VisualizationContainer).
+ */
+function tubeRoom(
+  model: NonNullable<ReturnType<typeof buildModel>>,
+  visRegion: DisplayedRegionModel,
+  visData: any,
+  chr: string,
+  settings: PangenomeLayoutSettings,
+) {
+  const navContext = visRegion.getNavigationContext();
+  const [chrStart] = navContext.convertGenomeIntervalToBases(
+    new ChromosomeInterval(chr, 0, 1),
+  );
+  const offset = chrStart ? chrStart.start : 0;
+  const [from, to] = [
+    visRegion.getContextCoordinates().start - offset,
+    visRegion.getContextCoordinates().end - offset,
+  ];
+  const frame = {
+    startBp: from,
+    endBp: to,
+    width: visData.visWidth,
+    viewFromPx: visData.viewWindow.start,
+    viewToPx: visData.viewWindow.end,
+  };
+  const grouping = settings.tubeGrouping ?? 0;
+  /* A column at a time, as the tube map is drawn: see columnarModel. */
+  const tubeBase = columnarModel(model);
+  const minBp = grouping < 0 ? null : separatorBp(tubeBase, grouping, frame.width);
+  const tubeModel =
+    minBp === null
+      ? tubeBase
+      : compressedModel(tubeBase, variantSegments(tubeBase, minBp));
+  const stacks = tubeStacks(tubeModel, TUBE_H);
+  const axis = tubeAxis(
+    tubeModel,
+    stacks,
+    frame,
+    1,
+    settings.gapScale ?? DEFAULT_GAP_SCALE,
+    tubeBase,
+  );
+  const bases = axis.gapBefore.map((px) =>
+    axis.scale > 0 ? Math.max(0, Math.round(px / axis.scale)) : 0,
+  );
+  return { minBp, bases, columns: tubeModel.columns };
+}
+
+/**
+ * A band laid out for the view: genomealign's genomicFetchCoord - the
+ * primary's gapped region, and each haplotype as a query genome - from the
+ * band's graph. The room let in is the graph's, and in tube view the tube
+ * map's as well, so every track lands where the view draws the graph.
+ */
+export function layoutPangenomeBand(
+  records: any,
+  data: any,
+  haplotypeKeys: Iterable<string>,
+  settings: PangenomeLayoutSettings,
+) {
+  const { visData, genomicLoci, regionExpandLoci, initGenomicLoci, primaryGenName } =
+    data;
   const visRegion = regionOf(visData.visRegion);
   const viewWindowRegion = regionOf(visData.viewWindowRegion);
   const viewWindow = new OpenInterval(
     visData.viewWindow.start,
     visData.viewWindow.end,
   );
+  const navContext = visRegion.getNavigationContext();
+  const locus = visRegion
+    .getGenomeIntervals()
+    .reduce(
+      (a: ChromosomeInterval | null, b: ChromosomeInterval) =>
+        !a || b.getLength() > a.getLength() ? b : a,
+      null,
+    );
+  const model = records && locus ? buildModel(records) : null;
+  let gaps: Gap[] = model && locus ? graphGaps(model, navContext, locus.chr) : [];
+
+  /* Tube view: the tubes' room ahead of each column as well, placed before
+     the reference base the column reaches - the next one at or after it -
+     the way the graph's own room is. Past the reference's last base the
+     layout and the reference run on together. */
+  const tube =
+    settings.mode === "tube" && model && locus
+      ? tubeRoom(model, visRegion, visData, locus.chr, settings)
+      : null;
+  let roomBefore: ((graphX: number) => number) | undefined;
+  if (tube && model && locus) {
+    const anchors = referenceTicks(model);
+    const contextOf = (bp: number) =>
+      navContext.convertGenomeIntervalToBases(
+        new ChromosomeInterval(locus.chr, bp, bp + 1),
+      )[0]?.start;
+    const tubeGaps: Gap[] = [];
+    let a = 0;
+    tube.columns.forEach((column, c) => {
+      if (!(tube.bases[c] > 0) || !anchors.length) return;
+      while (a < anchors.length && anchors[a].x < column.x) a++;
+      const at =
+        a < anchors.length
+          ? contextOf(anchors[a].bp)
+          : (() => {
+              const last = anchors[anchors.length - 1];
+              const ctx = contextOf(last.bp);
+              return ctx === undefined
+                ? undefined
+                : ctx + Math.round(column.x - last.x);
+            })();
+      if (at !== undefined) tubeGaps.push({ contextBase: at, length: tube.bases[c] });
+    });
+    gaps = gaps.concat(tubeGaps);
+    /* The same room, by place in the layout, for the haplotypes' regions. */
+    const xs = tube.columns.map((column) => column.x);
+    const sums: number[] = [];
+    let sum = 0;
+    for (const base of tube.bases) sums.push((sum += base));
+    roomBefore = (graphX: number) => {
+      let lo = 0;
+      let hi = xs.length - 1;
+      let found = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (xs[mid] <= graphX) {
+          found = mid;
+          lo = mid + 1;
+        } else hi = mid - 1;
+      }
+      return found < 0 ? 0 : sums[found];
+    };
+  }
+
+  /* Without a graph to read gaps off, the band is drawn as it is, so the
+     other tracks still have somewhere to go. */
+  const { primaryVisData, navContextBuilder } = withGaps(
+    visRegion,
+    viewWindowRegion,
+    viewWindow,
+    gaps,
+  );
+
+  /* Each haplotype as a query genome, the way genomealign gives each query
+     its coordinates: a track whose genome is `sample#haplotype` is fetched
+     over that haplotype's own stretches in the band and drawn along its
+     bar. Every one asked for has an entry, so a haplotype this band has
+     none of draws empty rather than failing. */
+  const haplotypes = new Set(haplotypeKeys);
+  for (const lane of model?.lanes ?? []) {
+    if (!lane.isReference) haplotypes.add(lane.label);
+  }
+  const coords: any = {};
+  for (const key of haplotypes) {
+    coords[key] = haplotypeCoord(
+      model,
+      records,
+      key,
+      primaryVisData.visRegion,
+      locus?.chr,
+      roomBefore,
+    );
+  }
+  coords[primaryGenName] = {
+    genomicLoci,
+    regionExpandLoci,
+    initGenomicLoci,
+    primaryVisData,
+    navContextBuilder,
+    /* The view it was laid out for, and what the tube view draws with, to
+       land where this band put it. */
+    pangenomeView: settings.mode,
+    pangenomeVariantGrouping: settings.variantGrouping ?? 0,
+    ...(tube ? { pangenomeTube: { minBp: tube.minBp, bases: tube.bases } } : {}),
+  };
+  return coords;
+}
+
+/** What a genomealign fetch returns, for a band of the graph. */
+export async function fetchPangenomeData(
+  data: any,
+  settings: PangenomeLayoutSettings = { mode: "linear" },
+): Promise<any> {
+  const { trackToFetch, visData, trackDataIdx, missingIdx } = data;
+
+  const visRegion = regionOf(visData.visRegion);
 
   const fetchResults: any = {};
   const trackToDrawId: any = {};
@@ -429,54 +635,16 @@ export async function fetchPangenomeData(data: any): Promise<any> {
     };
   }
 
-  const model = layoutRecords && locus ? buildModel(layoutRecords) : null;
-  const gaps =
-    model && locus
-      ? graphGaps(model, visRegion.getNavigationContext(), locus.chr)
-      : [];
-
-  /* Without a graph to read gaps off, the band is drawn as it is, so the
-     other tracks still have somewhere to go. */
-  const { primaryVisData, navContextBuilder } = withGaps(
-    visRegion,
-    viewWindowRegion,
-    viewWindow,
-    gaps,
-  );
-
-  /* Each haplotype as a query genome, the way genomealign gives each query
-     its coordinates: a track whose genome is \`sample#haplotype\` is fetched
-     over that haplotype's own stretches in the band and drawn along its
-     bar. Every one asked for has an entry, so a haplotype this band has
-     none of draws empty rather than failing. */
-  for (const lane of model?.lanes ?? []) {
-    if (!lane.isReference) haplotypes.add(lane.label);
-  }
-  const queryCoords: any = {};
-  for (const key of haplotypes) {
-    queryCoords[key] = haplotypeCoord(
-      model,
-      layoutRecords,
-      key,
-      primaryVisData.visRegion,
-      locus?.chr,
-    );
-  }
-
   return {
     fetchResults,
     navData: {
       ...data,
-      genomicFetchCoord: {
-        ...queryCoords,
-        [primaryGenName]: {
-          genomicLoci,
-          regionExpandLoci,
-          initGenomicLoci,
-          primaryVisData,
-          navContextBuilder,
-        },
-      },
+      genomicFetchCoord: layoutPangenomeBand(
+        layoutRecords,
+        data,
+        haplotypes,
+        settings,
+      ),
       trackToDrawId,
       trackDataIdx,
       missingIdx,

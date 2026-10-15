@@ -62,6 +62,35 @@ export interface SubgraphJson {
   nodes: JsonNode[];
   edges: JsonEdge[];
   paths: JsonPath[];
+  /** How common each node and allele is in the whole pangenome. */
+  carriers?: Carriers;
+}
+
+/* ── Carriers ──────────────────────────────────────────────────────────
+   How many haplotypes in the whole pangenome take a node or an allele, not
+   just the few asked for. Every walk through the window is extracted
+   anyway - keepHaplotypes only drops them afterwards - so counting them
+   first is one pass over walks already in memory. */
+export interface Carriers {
+  /** Haplotypes with a walk in the window. */
+  total: number;
+  /** Node id -> how many of them visit it. */
+  nodes: Record<string, number>;
+  /** alleleKey -> how many of them take that allele. */
+  alleles: Record<string, number>;
+}
+
+/**
+ * An allele as the nodes a walk takes through it: the reference node it
+ * leaves from, the nodes off the reference walk, and the reference node it
+ * rejoins at - so a deletion is just the two reference nodes it jumps
+ * between. The same either way round, since a walk can run against the
+ * reference.
+ */
+export function alleleKey(ids: string[]): string {
+  const forward = ids.join(">");
+  const backward = [...ids].reverse().join(">");
+  return forward < backward ? forward : backward;
 }
 
 /* ── Node sides ────────────────────────────────────────────────────────
@@ -271,7 +300,111 @@ export function queryInterval(
   nameWalksPastEdge(extracted.paths, cache);
 
   const json = writeJson(source, records, extracted, path, refStart);
-  return query.haplotypes ? keepHaplotypes(json, query.haplotypes) : json;
+  const kept = query.haplotypes ? keepHaplotypes(json, query.haplotypes) : json;
+  return { ...kept, carriers: countCarriers(json, kept) };
+}
+
+/**
+ * How many haplotypes - over every walk in `all` - take each node and each
+ * allele of `kept`: the nodes it holds, and the alleles its walks take.
+ * An allele is a walk leaving the reference walk and coming back to it, or
+ * jumping between two reference nodes the reference does not walk between
+ * (see alleleKey).
+ */
+function countCarriers(all: SubgraphJson, kept: SubgraphJson): Carriers {
+  const reference = all.paths.find((path) => path.is_reference);
+  const refIndex = new Map<string, number>();
+  reference?.path.forEach((step, index) => {
+    if (!refIndex.has(step.id)) refIndex.set(step.id, index);
+  });
+
+  /* Each allele a walk takes, handed to `take` as the ids it runs through
+     - only those leaving from a node `from` admits, so a walk costs a
+     lookup a step and builds no key for an allele nobody asked about. */
+  const eachAllele = (
+    path: JsonPath,
+    from: (id: string) => boolean,
+    take: (walk: string[]) => void,
+  ) => {
+    const steps = path.path;
+    for (let i = 0; i + 1 < steps.length; i++) {
+      const here = refIndex.get(steps[i].id);
+      if (here === undefined) continue;
+      const next = refIndex.get(steps[i + 1].id);
+      if (next !== undefined) {
+        /* Two reference nodes the reference does not walk between. */
+        if (Math.abs(next - here) !== 1 && from(steps[i].id)) {
+          take([steps[i].id, steps[i + 1].id]);
+        }
+        continue;
+      }
+      /* Off the reference walk, to where it comes back. */
+      let back = i + 1;
+      while (back < steps.length && !refIndex.has(steps[back].id)) back += 1;
+      if (back < steps.length && from(steps[i].id)) {
+        take(steps.slice(i, back + 1).map((step) => step.id));
+      }
+      i = back - 1;
+    }
+  };
+
+  /* What is counted: the kept nodes, and the alleles the kept walks take -
+     with the nodes those start or end at, the only places a walk can
+     leave from to take one. */
+  type Tally = { count: number; last: number };
+  const nodeTallies = new Map<string, Tally>();
+  for (const node of kept.nodes) nodeTallies.set(node.id, { count: 0, last: -1 });
+  const alleleTallies = new Map<string, Tally>();
+  const ends = new Set<string>();
+  for (const path of kept.paths) {
+    eachAllele(
+      path,
+      () => true,
+      (walk) => {
+        alleleTallies.set(alleleKey(walk), { count: 0, last: -1 });
+        ends.add(walk[0]);
+        ends.add(walk[walk.length - 1]);
+      },
+    );
+  }
+
+  /* A haplotype's walks read together, so it counts once for anything it
+     reaches more than once: whatever it last counted is marked with it. */
+  const byHaplotype = new Map<string, JsonPath[]>();
+  for (const path of all.paths) {
+    const key = haplotypeKey(path);
+    const walks = byHaplotype.get(key);
+    if (walks) walks.push(path);
+    else byHaplotype.set(key, [path]);
+  }
+  let haplotype = 0;
+  const tally = (entry: Tally | undefined) => {
+    if (!entry || entry.last === haplotype) return;
+    entry.last = haplotype;
+    entry.count += 1;
+  };
+  for (const walks of byHaplotype.values()) {
+    for (const path of walks) {
+      for (const step of path.path) tally(nodeTallies.get(step.id));
+      eachAllele(
+        path,
+        (id) => ends.has(id),
+        (walk) => tally(alleleTallies.get(alleleKey(walk))),
+      );
+    }
+    haplotype += 1;
+  }
+
+  const counts = (tallies: Map<string, Tally>) => {
+    const out: Record<string, number> = {};
+    for (const [key, entry] of tallies) out[key] = entry.count;
+    return out;
+  };
+  return {
+    total: byHaplotype.size,
+    nodes: counts(nodeTallies),
+    alleles: counts(alleleTallies),
+  };
 }
 
 /**

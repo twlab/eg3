@@ -3,7 +3,6 @@ import type { MouseEvent } from "react";
 import type { DrawFrame, GraphNode, PangenomeModel } from "./pangenomeModel";
 import { LANE_H } from "./LinearPathView";
 import type { HoverTarget } from "./LinearPathView";
-import Ruler, { rulerTicks } from "./Ruler";
 import {
   laneDetailLines,
   laneNeighbourLines,
@@ -15,10 +14,8 @@ import { fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
 import {
   TUBE_LABEL_H,
-  TUBE_RULER_H,
   boxAt,
   buildTubeGeometry,
-  rulerPxPerBase,
   tubeAt,
 } from "./tubeLayout";
 import type {
@@ -123,7 +120,6 @@ function TubeMapView({
   model,
   stacks,
   axis,
-  rulerModel,
   boxLabels,
   boxFills,
   onBoxPick,
@@ -141,19 +137,8 @@ function TubeMapView({
     () => buildTubeGeometry(model, axis, stacks),
     [model, axis, stacks],
   );
-  /* Marks on round numbers, placed by the same axis, so they sit on the
-     bases they name with the gaps between them. Which round numbers is
-     chosen from the window rather than from the bases' own scale, so
-     widening the gaps does not change what the ruler reads. */
-  const ticks = useMemo(
-    () =>
-      rulerTicks(
-        rulerModel ?? model,
-        axis.px,
-        rulerPxPerBase(rulerModel ?? model, axis, frame),
-      ),
-    [model, rulerModel, axis, frame],
-  );
+  /* No ruler of its own: eg3's ruler track draws the coordinates, on the
+     band the tubes are laid out on. */
 
   /* The dots and Xs where they are drawn, for the pointer to find. */
   const marks = useMemo(
@@ -311,9 +296,6 @@ function TubeMapView({
           }
         }}
       />
-      <svg className="pgv-svg pgv-over" width={width} height={height}>
-        <Ruler ticks={ticks} height={TUBE_RULER_H} from={0} to={width} />
-      </svg>
     </div>
   );
 }

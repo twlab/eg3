@@ -1,6 +1,6 @@
 import { memo, useCallback, useLayoutEffect, useRef } from "react";
 import type { LaneRaster, RasterNode } from "./laneRaster";
-import { cardAt, laneLetters } from "./laneRaster";
+import { cardAt, laneLetters, visitAt, visitPieces } from "./laneRaster";
 import { sequenceSize } from "./nodeDetail";
 import { fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
@@ -26,8 +26,9 @@ export interface LaneCanvasProps {
   /** The band, in pixels: the canvas is the whole of it. */
   width: number;
   height: number;
-  /** What one card of a stack gets, top to top: the bar's own row. */
-  rowH: number;
+  /** How tall the bar is: one row, split where the haplotype reads a place
+      more than once; see visitPieces. */
+  barH: number;
   /** The haplotype's colour. */
   color: string;
   contig: string;
@@ -47,17 +48,11 @@ export interface LaneCanvasProps {
   spellReference: boolean;
   /** Dimmed when another haplotype is the one being looked at. */
   dim: boolean;
-  /**
-   * The nodes of the route picked in the graph, if one is. A bar's own
-   * stretches on it are drawn in the selection colour: a route runs through
-   * whichever rows of a bar its stretches were threaded into, so it cannot
-   * be shown by lighting a row.
-   */
-  route?: ReadonlySet<string>;
 
   onHover: (hover: LaneHover | null) => void;
-  /** The node under the pointer, when the bar is clicked. */
-  onPick: (id: string) => void;
+  /** What the hover says of the place clicked, when the bar is clicked -
+      the same answer, so a click keeps what the reader was looking at. */
+  onPick: (hover: LaneHover) => void;
   /**
    * Zoomed out, the bar is read a section at a time and only on a click:
    * given this, a click reports where it landed instead of picking a node,
@@ -89,6 +84,12 @@ export interface LaneHover {
   lines: string[];
   /** The node under it, for whoever wants to draw to it. */
   nodeId: string;
+  /** Which of the raster's visits that is, and the haplotype's own
+      coordinate under the pointer. */
+  index: number;
+  bp: number;
+  /** Where along the band the pointer is, in its pixels. */
+  at: number;
   /**
    * Where that visit is drawn: the band's own pixels and which row of the
    * bar. The visit rather than the node, since a haplotype can read the
@@ -120,14 +121,12 @@ const LETTER_HALF = 48;
 /* The bar, the hatching over a diverging stretch, and the letters. Taken from
    the stylesheet's values rather than read back out of it: a canvas has no
    cascade to ask. */
-const HATCH_INK = "#ffffff";
+/* Ivory, to sit with the alt paths' pastel green: see LinearPathView. */
+const HATCH_INK = "#fffff0";
 /** Both in CSS pixels, scaled to the screen's with everything else. */
 const HATCH_PITCH = 6;
 const HATCH_WIDTH = 1.5;
 const CHIP_INK = "#000000";
-/* A stretch on the picked route, in the same blue the graph above draws it
-   in - see `.pgv-node-route`. */
-const ROUTE_INK = "#007aff";
 
 /** The most of a row's height a letter may take, leaving the chip around it
     inside the row. */
@@ -153,13 +152,12 @@ function LaneCanvas({
   raster,
   width,
   height,
-  rowH,
+  barH,
   color,
   contig,
   isReference,
   spellReference,
   dim,
-  route,
   onHover,
   onPick,
   onPress,
@@ -182,22 +180,20 @@ function LaneCanvas({
     paintLane(fitted.current, {
       raster,
       width,
-      rowH,
+      barH,
       color,
       isReference,
       spellReference,
-      route,
       sections,
       sectionAltBp,
     });
   }, [
     raster,
     width,
-    rowH,
+    barH,
     color,
     isReference,
     spellReference,
-    route,
     sections,
     sectionAltBp,
   ]);
@@ -239,6 +235,53 @@ function LaneCanvas({
   }, [repaint, screen, width, height]);
 
 
+  /* What is under the pointer: the visit, its letters, and where it is. */
+  const hoverAt = (
+    event: React.MouseEvent<HTMLCanvasElement>,
+  ): LaneHover | null => {
+    const box = event.currentTarget.getBoundingClientRect();
+    const at = event.clientX - box.left;
+    /* The visit whose bar the pointer is on - in a stack, the one of its
+       thinner bars - answered from the row it was rastered into. */
+    const index = visitAt(raster, at, event.clientY - box.top, barH);
+    const hit = cardAt(raster, at, index >= 0 ? raster.nodes[index].card : 0);
+    if (!hit) return null;
+    const zoom = laneLetters(raster, hit, LETTER_HALF);
+    return {
+      x: event.clientX,
+      y: event.clientY,
+      nodeId: hit.node.id,
+      index: hit.index,
+      bp: hit.bp,
+      at,
+      box: {
+        left: hit.node.left,
+        right: hit.node.right,
+        card: hit.node.card,
+      },
+      /* No name: the bar is already labelled down the side of the
+         view, so the row said what the reader could see. */
+      title: "",
+      lines: [
+        `${hit.bp.toLocaleString()} on ${contig}`,
+        `node ${hit.node.id}, ${hit.node.length} bp`,
+        hit.alt ? "off the reference walk" : "on the reference walk",
+        /* Which of the visits to this place this one is, counted down
+           the bar - not its row, since the rows of a bar are threads of
+           the haplotype and a place is not always visited on the first
+           of them. */
+        ...(hit.node.stack > 1
+          ? [
+              `copy ${
+                (raster.stacks[hit.node.group]?.indexOf(hit.index) ?? 0) + 1
+              } of ${hit.node.stack} drawn here`,
+            ]
+          : []),
+      ],
+      zoom,
+    };
+  };
+
   return (
     <canvas
       ref={ref}
@@ -247,12 +290,10 @@ function LaneCanvas({
          first paint; dimmed as a whole, so a dim is a style change and not a
          repaint. */
       style={{ width, height, opacity: dim ? DIM_ALPHA : 1 }}
-      /* The same question the hover asks, answered on a click: which node
-         is under the pointer. A route can then be picked from the
-         haplotype reading it, which is where a reader is looking. */
+      /* The same question the hover asks, answered on a click. */
       onClick={(event) => {
-        const box = event.currentTarget.getBoundingClientRect();
         if (onPress) {
+          const box = event.currentTarget.getBoundingClientRect();
           onPress({
             x: event.clientX - box.left,
             clientX: event.clientX,
@@ -260,11 +301,8 @@ function LaneCanvas({
           });
           return;
         }
-        const rows = Math.max(1, Math.round(height / rowH));
-        const row = Math.max(0, Math.floor((event.clientY - box.top) / rowH));
-        const shared = !isReference && row >= rows - 1;
-        const hit = cardAt(raster, event.clientX - box.left, shared ? 0 : row);
-        if (hit) onPick(hit.node.id);
+        const hover = hoverAt(event);
+        if (hover) onPick(hover);
       }}
       onMouseMove={(event) => {
         /* A held button is a pan about to happen, and the pan itself stops
@@ -282,48 +320,7 @@ function LaneCanvas({
           }
           return;
         }
-        const box = event.currentTarget.getBoundingClientRect();
-        const at = event.clientX - box.left;
-        /* Each card has a row of the bar, and answers for itself: the same
-           pixels, but its own stretch of the haplotype. */
-        const row = Math.max(0, Math.floor((event.clientY - box.top) / rowH));
-        const hit = cardAt(raster, at, row);
-        if (!hit) {
-          onHover(null);
-          return;
-        }
-        const zoom = laneLetters(raster, hit, LETTER_HALF);
-        onHover({
-          x: event.clientX,
-          y: event.clientY,
-          nodeId: hit.node.id,
-          box: {
-            left: hit.node.left,
-            right: hit.node.right,
-            card: hit.node.card,
-          },
-          /* No name: the bar is already labelled down the side of the
-             view, so the row said what the reader could see. */
-          title: "",
-          lines: [
-            `${hit.bp.toLocaleString()} on ${contig}`,
-            `node ${hit.node.id}, ${hit.node.length} bp`,
-            hit.alt ? "off the reference walk" : "on the reference walk",
-            /* Which of the visits to this place this one is, counted down
-               the bar - not its row, since the rows of a bar are threads of
-               the haplotype and a place is not always visited on the first
-               of them. */
-            ...(hit.node.stack > 1
-              ? [
-                  `copy ${
-                    (raster.stacks[hit.node.group]?.indexOf(hit.index) ?? 0) +
-                    1
-                  } of ${hit.node.stack} drawn here`,
-                ]
-              : []),
-          ],
-          zoom,
-        });
+        onHover(hoverAt(event));
       }}
       onMouseLeave={() => {
         onHover(null);
@@ -337,14 +334,12 @@ function LaneCanvas({
 interface LanePaint {
   raster: LaneRaster;
   width: number;
-  /** What one card of a stack gets, top to top. */
-  rowH: number;
+  /** See `LaneCanvasProps`. */
+  barH: number;
   color: string;
   /** See `LaneCanvasProps` for these two. */
   isReference: boolean;
   spellReference: boolean;
-  /** See `LaneCanvasProps`. */
-  route?: ReadonlySet<string>;
   /** See `LaneCanvasProps` for these two. */
   sections?: ReadonlyArray<{ left: number; right: number }>;
   sectionAltBp?: number;
@@ -356,11 +351,10 @@ function paintLane(
   {
     raster,
     width,
-    rowH,
+    barH,
     color,
     isReference,
     spellReference,
-    route,
     sections,
     sectionAltBp = 0,
   }: LanePaint,
@@ -395,38 +389,48 @@ function paintLane(
        too - at least a screen pixel wide, so it can be seen. Nodes that
        touch are one run, however narrow each is. The reference's strip
        shows its own gaps the same way; see LinearPathView. */
-    const band = rowH * sy;
-    const rowBands: Array<{ top: number; tall: number }> = [];
-    for (let r = 0; r < raster.rows; r++) {
-      const top = r * band;
-      const tall = Math.min(ph - top, band);
-      if (tall <= 0) break;
-      rowBands.push({ top, tall });
+    /* One bar, the whole height, where a visit is alone; where the
+       haplotype reads a place more than once its visits split the bar
+       there into thinner bars - see visitPieces. Painted a band at a time,
+       in screen pixels, so a run joins only what is drawn at one height. */
+    interface Band {
+      key: string;
+      top: number;
+      tall: number;
     }
-
-    /* Twice over where a route is picked: what is on it in the selection
-       colour, the rest in the haplotype's own. A run is joined from
-       touching nodes, so asking separately keeps the two apart. */
-    const onRoute = (node: RasterNode) => route?.has(node.id) ?? false;
-    rowBands.forEach(({ top, tall }, r) => {
-      ctx.fillStyle = color;
-      eachRunKeepingGaps(
-        raster.nodes,
-        (node) => node.card === r && !onRoute(node),
-        sx,
-        pw,
-        (from, to) => ctx.fillRect(from, top, to - from, tall),
-      );
-      if (!route) return;
-      ctx.fillStyle = ROUTE_INK;
-      eachRun(
-        raster.nodes,
-        (node) => node.card === r && onRoute(node),
-        toScreen,
-        pw,
-        (from, to) => ctx.fillRect(from, top, to - from, tall),
-      );
+    interface Piece {
+      node: RasterNode;
+      left: number;
+      right: number;
+      band: Band;
+    }
+    const bands = new Map<string, Band>();
+    const pieces: Piece[] = [];
+    const piecesOf = new Map<RasterNode, Piece[]>();
+    raster.nodes.forEach((node, index) => {
+      const own: Piece[] = [];
+      for (const piece of visitPieces(raster, index, barH)) {
+        const from = Math.round(piece.top * sy);
+        const to = Math.min(ph, Math.round((piece.top + piece.height) * sy));
+        const key = `${from}:${to}`;
+        let band = bands.get(key);
+        if (!band) {
+          band = { key, top: from, tall: Math.max(1, to - from) };
+          bands.set(key, band);
+        }
+        const placed = { node, left: piece.left, right: piece.right, band };
+        pieces.push(placed);
+        own.push(placed);
+      }
+      piecesOf.set(node, own);
     });
+    const inBand = (band: Band) => (piece: Piece) => piece.band === band;
+    ctx.fillStyle = color;
+    for (const band of bands.values()) {
+      eachRunKeepingGaps(pieces, inBand(band), sx, pw, (from, to) =>
+        ctx.fillRect(from, band.top, to - from, band.tall),
+      );
+    }
 
     /* Every base a visit carries is spelled out. */
     const spells = (node: RasterNode, i: number) =>
@@ -443,10 +447,14 @@ function paintLane(
          reference, so the marks line up with the strip's sections above and
          a scatter of SNPs does not hatch the whole bar. A visit belongs to
          the section its middle is in, as the strip's nodes do. */
-      const marks = new Map<number, { from: number; to: number; alt: number }>();
-      for (const node of raster.nodes) {
-        if (!(node.right > node.left)) continue;
-        const middle = (node.left + node.right) / 2;
+      const marks = new Map<
+        string,
+        { from: number; to: number; alt: number; band: Band }
+      >();
+      for (const piece of pieces) {
+        const { node, band } = piece;
+        if (!(piece.right > piece.left)) continue;
+        const middle = (piece.left + piece.right) / 2;
         let lo = 0;
         let hi = sections.length - 1;
         while (lo < hi) {
@@ -456,24 +464,28 @@ function paintLane(
         }
         const section = sections[lo];
         if (section.left > middle) continue;
-        const key = node.card * sections.length + lo;
+        /* A visit split along its bar counts its bases piece by piece. */
+        const share =
+          node.right > node.left ? (piece.right - piece.left) / (node.right - node.left) : 1;
+        const alt = node.onReference ? 0 : node.length * share;
+        const key = `${band.key}|${lo}`;
         const mark = marks.get(key);
         if (!mark) {
           marks.set(key, {
-            from: Math.max(section.left, node.left),
-            to: Math.min(section.right, node.right),
-            alt: node.onReference ? 0 : node.length,
+            from: Math.max(section.left, piece.left),
+            to: Math.min(section.right, piece.right),
+            alt,
+            band,
           });
           continue;
         }
-        mark.from = Math.min(mark.from, Math.max(section.left, node.left));
-        mark.to = Math.max(mark.to, Math.min(section.right, node.right));
-        if (!node.onReference) mark.alt += node.length;
+        mark.from = Math.min(mark.from, Math.max(section.left, piece.left));
+        mark.to = Math.max(mark.to, Math.min(section.right, piece.right));
+        mark.alt += alt;
       }
-      for (const [key, mark] of marks) {
+      for (const mark of marks.values()) {
         if (!(mark.alt > 0 && mark.alt > sectionAltBp)) continue;
-        const band = rowBands[Math.floor(key / sections.length)];
-        if (!band) continue;
+        const { band } = mark;
         const from = Math.max(0, toScreen(mark.from));
         const to = Math.min(pw, toScreen(mark.to));
         if (to > from) {
@@ -481,15 +493,17 @@ function paintLane(
         }
       }
     } else {
-      rowBands.forEach(({ top, tall }, r) =>
+      for (const band of bands.values()) {
+        const keep = inBand(band);
         eachRun(
-          raster.nodes,
-          (node) => !node.onReference && node.card === r,
+          pieces,
+          (piece) => !piece.node.onReference && keep(piece),
           toScreen,
           pw,
-          (from, to) => hatch(ctx, from, to, top, tall, HATCH_PITCH * sx),
-        ),
-      );
+          (from, to) =>
+            hatch(ctx, from, to, band.top, band.tall, HATCH_PITCH * sx),
+        );
+      }
     }
 
     /* The letters, wherever a visit has something the reference strip does
@@ -537,6 +551,7 @@ function paintLane(
        card, so every card has to be known first. */
     interface Card {
       node: RasterNode;
+      own: Piece[];
       fontPx: number;
       advance: number;
       above: number;
@@ -561,7 +576,11 @@ function paintLane(
          in has room for: the chip around a letter is a little over the
          letter itself, and a row shorter than that clipped the tops and
          feet off. */
-      const size = Math.min(sequenceSize(perBase), rowH * LETTER_OF_ROW);
+      const own = piecesOf.get(node) ?? [];
+      if (!own.length) continue;
+      /* One size along the visit, from its thinnest piece. */
+      const thinnest = Math.min(...own.map((piece) => piece.band.tall));
+      const size = Math.min(sequenceSize(perBase), (thinnest / sy) * LETTER_OF_ROW);
       if (size < SEQUENCE_MIN_SIZE) continue;
       /* A whole number of screen pixels, rounded down so a letter never
          outgrows its base: a font's hinting only lines its stems up with the
@@ -575,6 +594,7 @@ function paintLane(
       const margin = Math.max(sy, fontPx * CHIP_MARGIN);
       cards.push({
         node,
+        own,
         fontPx,
         advance,
         above,
@@ -584,27 +604,23 @@ function paintLane(
       });
     }
 
-    /* Each card has a row of the bar to itself, the one in front in the
-       top row - where a visit with nothing stacked on it sits, so nothing
-       moves for having a card behind it. A row keeps its place under the
-       pointer: the hover says what is there without shifting it. */
-    const row = rowH * sy;
-    const shiftOf = (node: RasterNode) => node.card * row;
-
-    /* Back to front, so the card in front is drawn over the rest. */
-    const order = cards
-      .map((card) => ({ card, shift: shiftOf(card.node) }))
-      .sort((a, b) => b.shift - a.shift);
-
-    for (const { card, shift } of order) {
-      const { node, fontPx, advance, above, below, margin } = card;
+    /* Each letter in the piece of its visit's bar it falls in - the whole
+       bar, or its slot where the place is shared - centred on a
+       whole-pixel baseline, the chip kept inside. */
+    for (const card of cards) {
+      const { node, own, fontPx, advance, above, below, margin } = card;
       ctx.font = `${fontPx}px ${MONO_STACK}`;
       const perBase = (node.right - node.left) / node.length;
-      /* The ink centred in the lane on a whole-pixel baseline, its card's
-         own shift added, and the chip around it kept inside the lane. */
-      const baseline = Math.round(row / 2 + (above - below) / 2 + shift);
-      const chipTop = Math.max(0, Math.floor(baseline - above - margin));
-      const chipBottom = Math.min(ph, Math.ceil(baseline + below + margin));
+      const placeIn = (band: Band) => {
+        const baseline = Math.round(band.top + band.tall / 2 + (above - below) / 2);
+        return {
+          baseline,
+          chipTop: Math.max(band.top, Math.floor(baseline - above - margin)),
+          chipBottom: Math.min(band.top + band.tall, Math.ceil(baseline + below + margin)),
+        };
+      };
+      const bandAt = (x: number) =>
+        (own.find((piece) => x >= piece.left && x < piece.right) ?? own[own.length - 1]).band;
 
       /* Each chip runs between its base's edges, rounded the same way the
          bar's are, so the first and last meet the bar's edges exactly. */
@@ -623,6 +639,9 @@ function paintLane(
           ? toScreen(node.left + (i + 1) * perBase)
           : toScreen(node.right);
         if (b <= a) continue;
+        const { baseline, chipTop, chipBottom } = placeIn(
+          bandAt(node.left + (i + 0.5) * perBase),
+        );
         /* Chip to chip with no pixel between them: a run of alleles is one
            black stretch with the letters in it, the way a sequence reads,
            rather than a row of separate boxes. */
@@ -648,9 +667,9 @@ function paintLane(
  * haplotype moving along the axis; one that jumps back starts a run of its
  * own.
  */
-function eachRun(
-  nodes: LaneRaster["nodes"],
-  keep: (node: LaneRaster["nodes"][number]) => boolean,
+function eachRun<T extends { left: number; right: number }>(
+  nodes: T[],
+  keep: (node: T) => boolean,
   toScreen: (x: number) => number,
   limit: number,
   draw: (from: number, to: number) => void,
@@ -682,9 +701,9 @@ function eachRun(
  * screen, a break of a fraction of a pixel closed, and a node of a fraction
  * of one vanished and opened a break that is not there.
  */
-function eachRunKeepingGaps(
-  nodes: LaneRaster["nodes"],
-  keep: (node: LaneRaster["nodes"][number]) => boolean,
+function eachRunKeepingGaps<T extends { left: number; right: number }>(
+  nodes: T[],
+  keep: (node: T) => boolean,
   sx: number,
   limit: number,
   draw: (from: number, to: number) => void,
