@@ -22,6 +22,7 @@ export default function HprcTrackPicker({
   referenceGenome,
   haplotypes,
   onChange,
+  repeatsOff = 0,
 }: {
   /** The sample of the reference path the graph is queried on. */
   referenceGenome: string;
@@ -29,6 +30,10 @@ export default function HprcTrackPicker({
   haplotypes: string[];
   /** The tracks to draw, every time the choice changes. */
   onChange: (tracks: HprcTrack[]) => void;
+  /** Bumped to turn every repeat track off - RepeatMasker - for the
+      haplotypes picked now and any picked after; each can still be
+      turned back on by hand. */
+  repeatsOff?: number;
 }) {
   const reference = hprcReferenceOf(referenceGenome);
   const wanted = reference !== null && haplotypes.length > 0;
@@ -68,10 +73,29 @@ export default function HprcTrackPicker({
   );
   /* What the reader turned on or off by hand, over the site's defaults. */
   const [flipped, setFlipped] = useState<Map<string, boolean>>(new Map());
-  const isOn = (track: HprcTrack) => flipped.get(track.id) ?? track.on;
+  const isRepeat = (track: HprcTrack) =>
+    /repeat/i.test(track.name) || /repeat/i.test(track.dataType);
+  /* Off by default once asked, and what was turned on by hand goes off. */
+  useEffect(() => {
+    if (!repeatsOff) return;
+    setFlipped((was) => {
+      const next = new Map(was);
+      for (const [id] of was) {
+        if (listed.some((track) => track.id === id && isRepeat(track))) next.delete(id);
+      }
+      return next;
+    });
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [repeatsOff]);
+  /* Repeat tracks start off for every haplotype picked - on by the site's
+     rules, they came on with each one and buried the bars - and are a
+     tick away for whoever wants them. */
+  const defaultOn = (track: HprcTrack) => (isRepeat(track) ? false : track.on);
+  const isOn = (track: HprcTrack) => flipped.get(track.id) ?? defaultOn(track);
   const chosen = useMemo(
-    () => listed.filter((track) => flipped.get(track.id) ?? track.on),
-    [listed, flipped],
+    () => listed.filter((track) => flipped.get(track.id) ?? defaultOn(track)),
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    [listed, flipped, repeatsOff],
   );
   useEffect(() => onChange(wanted ? chosen : []), [chosen, wanted, onChange]);
 

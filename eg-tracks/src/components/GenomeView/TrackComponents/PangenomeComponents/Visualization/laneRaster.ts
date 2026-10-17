@@ -1,4 +1,4 @@
-import type { Lane, PangenomeModel } from "./pangenomeModel";
+import type { GraphNode, Lane, PangenomeModel } from "./pangenomeModel";
 
 /* ══════════════════════════════════════════════════════════════════════════
    One haplotype's bar, as an array with one entry per pixel.
@@ -48,6 +48,15 @@ export interface LaneRaster {
   stacks: number[][];
   /** How many pixels wide the band is, so a caller can bound its reads. */
   width: number;
+  /** Where the haplotype jumps over the reference, in the band's pixels;
+      see LaneDeletion. `visit` is the visit it leaves or rejoins at, as an
+      index into `nodes`. */
+  deletions: Array<{
+    left: number | null;
+    right: number | null;
+    bp: number;
+    visit: number;
+  }>;
 }
 
 export interface RasterNode {
@@ -75,13 +84,11 @@ export interface RasterNode {
   /** Which stack, or -1 when it is drawn on its own. */
   group: number;
   /**
-   * The reference's allele at this visit's place - the reference walk's node
-   * in the same column - or null where the reference has nothing there.
-   *
-   * Every node in a column starts at the column's left edge, so base i of
-   * this visit is drawn at the same x as base i of the reference's allele.
-   * That is what makes comparing them letter by letter mean "the same
-   * spot", and lets a lane hide the letters it shares with the reference.
+   * The reference's base under each of this visit's bases - where the
+   * layout draws the reference at the same place - and a space where the
+   * reference has none there, as in an insertion. Base i of the visit is
+   * drawn over character i, which is what lets a bar leave out the letters
+   * it shares with the reference.
    */
   refSequence: string | null;
   /**
@@ -96,21 +103,39 @@ export interface RasterNode {
   copyFrom: -1 | 0 | 1;
 }
 
-/* The reference's allele in each column, worked out once per model rather
-   than once per lane. There is at most one: the reference walk's levels
-   strictly increase, so it never visits a column twice. */
-const referenceByModel = new WeakMap<PangenomeModel, Map<number, string>>();
+/* The reference's nodes along the layout, in order, once per model: what
+   a visit's bases are read against. */
+const referenceByModel = new WeakMap<PangenomeModel, GraphNode[]>();
 
-function referenceAlleles(model: PangenomeModel): Map<number, string> {
-  let byColumn = referenceByModel.get(model);
-  if (!byColumn) {
-    byColumn = new Map();
-    for (const node of model.nodeById.values()) {
-      if (node.onReference) byColumn.set(node.column, node.sequence);
-    }
-    referenceByModel.set(model, byColumn);
+/** The reference's base under each base of a node drawn at `x`, `length`
+    long - a space wherever the reference has none there. */
+function referenceUnder(model: PangenomeModel, x: number, length: number): string {
+  let along = referenceByModel.get(model);
+  if (!along) {
+    along = model.nodes
+      .filter((node) => node.onReference)
+      .sort((p, q) => p.x - q.x);
+    referenceByModel.set(model, along);
   }
-  return byColumn;
+  let out = "";
+  /* The last reference node starting at or before a place. */
+  let lo = 0;
+  let hi = along.length - 1;
+  let at = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (along[mid].x <= x) {
+      at = mid;
+      lo = mid + 1;
+    } else hi = mid - 1;
+  }
+  for (let i = 0; i < length; i++) {
+    const place = x + i;
+    while (at + 1 < along.length && along[at + 1].x <= place) at += 1;
+    const node = at >= 0 ? along[at] : null;
+    out += node && place < node.x + node.length ? node.sequence.charAt(place - node.x) : " ";
+  }
+  return out;
 }
 
 /**
@@ -146,13 +171,16 @@ export function rasteriseLane(
   const alt = new Uint8Array(rows * w);
   const bp = new Float64Array(rows * w);
   const nodes: RasterNode[] = [];
-  const reference = referenceAlleles(model);
 
   let stepIndex = -1;
+  /* Which visit each step drew, for the deletions to find theirs. */
+  const visitOfStep = new Map<number, number>();
   for (const step of lane.steps) {
     stepIndex += 1;
     const graphNode = model.nodeById.get(step.node);
-    if (!graphNode) continue;
+    /* Not drawn where it has no place against the reference. */
+    if (!graphNode || graphNode.untied) continue;
+    visitOfStep.set(stepIndex, nodes.length);
 
     const isAlt = graphNode.onReference ? 0 : 1;
     const drawn = placed?.get(graphNode.id);
@@ -171,7 +199,9 @@ export function rasteriseLane(
       card: rowOf[stepIndex],
       stack: 1,
       group: -1,
-      refSequence: reference.get(graphNode.column) ?? null,
+      refSequence: graphNode.onReference
+        ? graphNode.sequence
+        : referenceUnder(model, graphNode.x, graphNode.length),
       copyFrom: 0,
     });
 
@@ -287,7 +317,25 @@ export function rasteriseLane(
   }
   markCopies(nodes);
 
-  return { key: lane.key, rows, node, base, alt, bp, nodes, stacks, width: w };
+  const deletions = (lane.deletions ?? []).map((deletion) => ({
+    left: deletion.left === null ? null : px(deletion.left),
+    right: deletion.right === null ? null : px(deletion.right),
+    bp: deletion.bp,
+    visit: visitOfStep.get(deletion.step) ?? -1,
+  }));
+
+  return {
+    key: lane.key,
+    rows,
+    node,
+    base,
+    alt,
+    bp,
+    nodes,
+    stacks,
+    width: w,
+    deletions,
+  };
 }
 
 /** One stretch of a visit's bar: across, in the band's pixels; down, in

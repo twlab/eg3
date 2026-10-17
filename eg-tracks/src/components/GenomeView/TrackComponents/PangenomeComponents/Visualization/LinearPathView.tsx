@@ -15,6 +15,7 @@ import type {
   DrawFrame,
   GraphNode,
   Lane,
+  LaneDeletion,
   LaneStep,
   PangenomeModel,
 } from "./pangenomeModel";
@@ -61,10 +62,6 @@ export const GUTTER = 0;
    legend beside it reads too - see there. Re-exported, since the tube map
    sizes its tubes from the height of a bar. */
 export { LANE_HEIGHT, LANE_H } from "./laneLayout";
-/** Every alt path's bar, for now: a pastel green, with its variant
-    stretches hatched in ivory (LaneCanvas). Meant to be the reader's to
-    choose in the config menu, later. */
-const ALT_BAR_COLOR = "#9fd6a4";
 /** The mark on an allele that is one of several ways in or out. */
 const BULLET_R = 3.5;
 /** How far the strip's ground reaches above it, to meet the ruler's own
@@ -196,6 +193,9 @@ interface Variant {
       reference. Whether the walk carries on past what was fetched or its
       contig stops there, the walk here cannot say. */
   openAt?: "start" | "end" | "both";
+  /** For a deletion, that one end of it is outside this band, so the
+      reference it skips was not fetched. */
+  outside?: boolean;
   /** Where on the reference: the stretch it replaces, or the point an
       insertion goes in at. */
   refFrom: number;
@@ -1030,9 +1030,49 @@ function LinearPathView({
     };
 
     const out: Variant[] = [];
+    /* Deletions whose other end is outside the band, by the visit here
+       they leave or rejoin at; see laneDeletions. */
+    const outside = new Map<number, LaneDeletion[]>();
+    for (const deletion of lane.deletions ?? []) {
+      if (deletion.left !== null && deletion.right !== null) continue;
+      const list = outside.get(deletion.step);
+      if (list) list.push(deletion);
+      else outside.set(deletion.step, [deletion]);
+    }
     for (let i = 0; i < steps.length; i++) {
       const node = nodeAt(i);
       if (!node) continue;
+      /* No place here - the reference's path reads it elsewhere, or it is
+         tied to nothing on the reference that was fetched: not drawn, and
+         not one of the haplotype's changes here either. */
+      if (node.untied) continue;
+      for (const deletion of outside.get(i) ?? []) {
+        /* Across the white it leaves, to the band's end: a section it
+           leaves from, or any in the white, lists it - a section is drawn
+           up to where the reference node ends, so the edge alone sits on
+           the line between two. */
+        const edge = px(deletion.right === null ? node.x + node.length : node.x);
+        const [from, to] =
+          deletion.right === null
+            ? [edge - 0.5, px(model.totalBp)]
+            : [px(0), edge + 0.5];
+        out.push({
+          kind: "deletion",
+          refFrom: deletion.refFrom,
+          refTo: deletion.refTo,
+          ownFrom: deletion.right === null ? steps[i].end : steps[i].start,
+          ownTo: deletion.right === null ? steps[i].end : steps[i].start,
+          runFrom: deletion.right === null ? steps[i].end : steps[i].start,
+          runTo: deletion.right === null ? steps[i].end : steps[i].start,
+          reads: "",
+          instead: "",
+          outside: true,
+          walk: deletion.walk,
+          jumpsBack: false,
+          left: from,
+          right: to,
+        });
+      }
       if (node.onReference) {
         /* A jump to a reference node the reference does not go to next. */
         const next = joined(i, i + 1) ? nodeAt(i + 1) : undefined;
@@ -1305,7 +1345,9 @@ function LinearPathView({
       if (variant.reads) lines.push(`reads ${cardSequence(variant.reads)} on the way`);
     } else {
       lines.push(
-        `reference reads ${variant.instead ? cardSequence(variant.instead) : "nothing here"}`,
+        variant.outside
+          ? `it skips ${referenceContig}:${variant.refFrom.toLocaleString()}–${variant.refTo.toLocaleString()}, which runs past what was fetched`
+          : `reference reads ${variant.instead ? cardSequence(variant.instead) : "nothing here"}`,
         `haplotype reads ${variant.reads ? cardSequence(variant.reads) : "nothing here"}`,
       );
       /* Where the graph's alleles carry a base they share, what they are
@@ -1797,7 +1839,9 @@ function LinearPathView({
             width={width}
             height={laneHeight.get(lane.key) ?? BAR_H}
             barH={BAR_H}
-            color={ALT_BAR_COLOR}
+            /* The haplotype's own pastel, from its name - see pastelColor -
+               its variant stretches hatched in ivory (LaneCanvas). */
+            color={lane.color}
 
             contig={lane.contig}
             isReference={lane.isReference}

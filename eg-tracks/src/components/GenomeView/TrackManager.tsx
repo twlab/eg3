@@ -360,10 +360,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
      sets its columns, and so the room each band holds. */
   const [tubeGrouping, setTubeGrouping] = useState(0);
   const [variantGrouping, setVariantGrouping] = useState(0);
+  /* Testing alignment: only the region in view is queried and drawn. A
+     different query, not a relayout, so changing it fetches again. */
+  const [regionOnly, setRegionOnly] = useState(false);
   const pangenomeSettings = {
     mode: pangenomeView,
     tubeGrouping,
     variantGrouping,
+    regionOnly,
   };
   const pangenomeViewRef = useRef(pangenomeSettings);
   pangenomeViewRef.current = pangenomeSettings;
@@ -374,6 +378,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     pangenomeViewShown.current = shown;
     relayoutPangenome();
   }, [pangenomeView, tubeGrouping, variantGrouping]);
+  const regionOnlyShown = useRef(regionOnly);
+  useEffect(() => {
+    if (regionOnlyShown.current === regionOnly) return;
+    regionOnlyShown.current = regionOnly;
+    pangenomeViewShown.current = JSON.stringify(pangenomeViewRef.current);
+    /* Fetched again from where the view is, as a history step is. */
+    const updatedGenomeConfig = _.cloneDeep(genomeConfig);
+    updatedGenomeConfig.defaultRegion = new OpenInterval(
+      userViewRegion._startBase!,
+      userViewRegion._endBase!,
+    );
+    updatedGenomeConfig.navContext = userViewRegion._navContext;
+    curGenomeConfig.current = updatedGenomeConfig;
+    preload.current = true;
+    refreshState();
+    initializeTracks();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [regionOnly]);
   const isToolSelected = useRef(false);
   const side = useRef("right");
   const isDragging = useRef(false);
@@ -1390,6 +1412,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMouseDown(e: any) {
     if (e.button !== 0) {
+      return;
+    }
+    /* Testing alignment: the region in view and nothing else, so no pan. */
+    if (hasPangenome.current && pangenomeViewRef.current.regionOnly) {
       return;
     }
 
@@ -5428,6 +5454,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   onTubeGrouping={setTubeGrouping}
                   variantGrouping={variantGrouping}
                   onVariantGrouping={setVariantGrouping}
+                  regionOnly={regionOnly}
+                  onRegionOnly={setRegionOnly}
                 />
               )}
               {!isPangenome && userViewRegion && (

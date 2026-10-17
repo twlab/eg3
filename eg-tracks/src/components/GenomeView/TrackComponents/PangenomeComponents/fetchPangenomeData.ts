@@ -73,6 +73,9 @@ interface PangenomeOptions {
   /** Which row of the graph this track is: `GRAPH_PART` for the strip, or a
       haplotype's `sample#haplotype` for its bar. */
   part?: string;
+  /** The reference path's range on its contig, as the start page measured
+      it: what a band is clipped to, so it need not be measured again. */
+  range?: { contig: string; start: number; end: number };
 }
 
 /* A database opened from a URL can be opened again; one from disk cannot.
@@ -364,6 +367,10 @@ export interface PangenomeLayoutSettings {
       variants view is drawn on the linear layout - but it sets how tall
       the picture is. */
   variantGrouping?: number;
+  /** For testing alignment: the graph queried for the window on screen
+      alone - none of the band either side of it, with the context the
+      pangenome was opened with - so what is drawn is the region asked for. */
+  regionOnly?: boolean;
 }
 
 /**
@@ -554,12 +561,18 @@ export async function fetchPangenomeData(
   const { trackToFetch, visData, trackDataIdx, missingIdx } = data;
 
   const visRegion = regionOf(visData.visRegion);
+  /* What is queried: the band, or - testing - the window alone. */
+  const queried =
+    settings.regionOnly && visData.viewWindowRegion
+      ? regionOf(visData.viewWindowRegion)
+      : visRegion;
 
   const fetchResults: any = {};
   const trackToDrawId: any = {};
 
-  /* The band's stretch of the reference, on the contig it covers most. */
-  const locus = visRegion
+  /* The band's stretch of the reference, on the contig it covers most -
+     or, testing, of the window alone. */
+  const locus = queried
     .getGenomeIntervals()
     .reduce(
       (a: ChromosomeInterval | null, b: ChromosomeInterval) =>
@@ -583,9 +596,11 @@ export async function fetchPangenomeData(
     if (!query) {
       query = (async () => {
         const database = await liveDatabase(options);
-        const bounds = locus
-          ? await pathBounds(database, options.sample, locus.chr)
-          : null;
+        const bounds = !locus
+          ? null
+          : options.range && options.range.contig === locus.chr
+            ? options.range
+            : await pathBounds(database, options.sample, locus.chr);
         const start = Math.max(locus?.start ?? 0, bounds?.start ?? 0);
         const end = Math.min(locus?.end ?? 0, bounds?.end ?? Infinity);
         return locus && end > start

@@ -35,6 +35,8 @@ export default function PangenomeViewSwitch({
   onTubeGrouping,
   variantGrouping,
   onVariantGrouping,
+  regionOnly,
+  onRegionOnly,
 }: {
   mode: ViewMode;
   onChange: (mode: ViewMode) => void;
@@ -43,6 +45,9 @@ export default function PangenomeViewSwitch({
   onTubeGrouping: (grouping: number) => void;
   variantGrouping: number;
   onVariantGrouping: (grouping: number) => void;
+  /** Testing: draw only the region asked for; see PangenomeLayoutSettings. */
+  regionOnly: boolean;
+  onRegionOnly: (on: boolean) => void;
 }) {
   const grouping =
     mode === "tube"
@@ -95,6 +100,21 @@ export default function PangenomeViewSwitch({
         );
       })}
     </div>
+      <button
+        type="button"
+        aria-pressed={regionOnly}
+        title="Testing alignment: query and draw only the region in view, with its context - no band either side - and turn dragging off"
+        onClick={() => onRegionOnly(!regionOnly)}
+        className="rounded-xs px-2 py-0.5 cursor-pointer transition-colors ml-1"
+        style={{
+          fontSize: `${Math.max(12, fontSize - 1)}px`,
+          border: regionOnly ? "1px solid #b45309" : "1px dashed #d1d5db",
+          backgroundColor: regionOnly ? "#fffbeb" : "transparent",
+          color: regionOnly ? "#b45309" : "var(--font-color)",
+        }}
+      >
+        Region only
+      </button>
       {grouping && (
         <label
           className="flex items-center gap-1 pl-1"

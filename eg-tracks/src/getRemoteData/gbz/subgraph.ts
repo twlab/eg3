@@ -64,6 +64,10 @@ export interface SubgraphJson {
   paths: JsonPath[];
   /** How common each node and allele is in the whole pangenome. */
   carriers?: Carriers;
+  /** Node id -> where on the reference its own path reads that node,
+      for nodes it reads only outside the queried walk; see
+      referenceElsewhere. */
+  referenceAt?: Record<string, number>;
 }
 
 /* ── Carriers ──────────────────────────────────────────────────────────
@@ -194,6 +198,7 @@ export function queryInterval(
   const context = query.context ?? 0;
   const haplotype = query.haplotype ?? 0;
   const length = query.end - query.start;
+  console.log(source, query);
   if (length <= 0) throw new Error("Interval length must be greater than 0");
 
   /* ── find nearest indexed position to query start of the reference genome Start ─────────────── */
@@ -301,7 +306,58 @@ export function queryInterval(
 
   const json = writeJson(source, records, extracted, path, refStart);
   const kept = query.haplotypes ? keepHaplotypes(json, query.haplotypes) : json;
-  return { ...kept, carriers: countCarriers(json, kept) };
+  return {
+    ...kept,
+    carriers: countCarriers(json, kept),
+    referenceAt: referenceElsewhere(json, kept),
+  };
+}
+
+/**
+ * Where on the reference each node of `kept` sits, for the nodes the
+ * reference's own path reads only outside the queried walk.
+ *
+ * The context reaches those through other haplotypes' links: a deletion
+ * jumps from the window straight to where it rejoins, kilobases on, and
+ * that is one step. The reference's walk through them comes back with
+ * everything else, so where they are is known - CHM13's chr6 at 32,370,696
+ * from a window at 32,365,651 - and taken from `all`, before
+ * keepHaplotypes drops the reference's walks other than the queried one.
+ */
+function referenceElsewhere(
+  all: SubgraphJson,
+  kept: SubgraphJson,
+): Record<string, number> {
+  const queried = all.paths.find((path) => path.is_reference);
+  if (!queried) return {};
+  const onQueried = new Set(queried.path.map((step) => step.id));
+  const wanted = new Set(kept.nodes.map((node) => node.id));
+  const lengthOf = new Map(all.nodes.map((node) => [node.id, node.sequence.length]));
+  const out: Record<string, number> = {};
+  for (const walk of all.paths) {
+    if (walk === queried || !walk.interval) continue;
+    if (
+      walk.sample !== queried.sample ||
+      walk.haplotype !== queried.haplotype ||
+      walk.contig !== queried.contig
+    ) {
+      continue;
+    }
+    /* A walk read against its path counts down from its end; see
+       fragmentStartFrom. */
+    const reverse = walk.path[0]?.is_reverse === true;
+    let prefix = 0;
+    for (const step of walk.path) {
+      const length = lengthOf.get(step.id) ?? 0;
+      const at = reverse
+        ? walk.interval.end - prefix - length
+        : walk.interval.start + prefix;
+      prefix += length;
+      if (onQueried.has(step.id) || !wanted.has(step.id)) continue;
+      if (!(step.id in out)) out[step.id] = at;
+    }
+  }
+  return out;
 }
 
 /**
@@ -353,7 +409,8 @@ function countCarriers(all: SubgraphJson, kept: SubgraphJson): Carriers {
      leave from to take one. */
   type Tally = { count: number; last: number };
   const nodeTallies = new Map<string, Tally>();
-  for (const node of kept.nodes) nodeTallies.set(node.id, { count: 0, last: -1 });
+  for (const node of kept.nodes)
+    nodeTallies.set(node.id, { count: 0, last: -1 });
   const alleleTallies = new Map<string, Tally>();
   const ends = new Set<string>();
   for (const path of kept.paths) {
@@ -832,7 +889,9 @@ export function keepHaplotypes(
   }
   return {
     nodes: json.nodes.filter((node) => used.has(node.id)),
-    edges: json.edges.filter((edge) => used.has(edge.from) && used.has(edge.to)),
+    edges: json.edges.filter(
+      (edge) => used.has(edge.from) && used.has(edge.to),
+    ),
     paths,
   };
 }

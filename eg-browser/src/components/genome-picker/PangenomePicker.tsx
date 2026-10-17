@@ -3,8 +3,8 @@ import { useState } from "react";
 import LocalDatabaseCard from "./LocalDatabaseCard";
 import {
   GenomeHubManager,
-  GRAPH_PART,
   localPathBounds,
+  GRAPH_PART,
   PANGENOME_TRACK_TYPE,
 } from "wuepgg3-track";
 import type { DatabaseSummary, IGenome } from "wuepgg3-track";
@@ -39,10 +39,15 @@ export default function PangenomePicker({
     setProblem(null);
     setOpening(true);
     try {
-      const bounds = await localPathBounds(summary.id, {
-        sample: config.sample,
-        contig: config.contig,
-      });
+      /* The picked path's range, which sets how long the contig is - and
+         so how far the view can pan. The start page measures it when the
+         path is picked; only a Load before that has finished measures it. */
+      const bounds =
+        config.range ??
+        (await localPathBounds(summary.id, {
+          sample: config.sample,
+          contig: config.contig,
+        }));
       const [start, end] = config.interval.split("..").map(Number);
       /* Every row of the graph asks the same of the same database, so the
          band is fetched once for all of them. */
@@ -52,6 +57,10 @@ export default function PangenomePicker({
         sample: config.sample,
         context: config.context,
         ...(config.haplotypes ? { haplotypes: config.haplotypes } : {}),
+        /* And handed to the graph's fetches, which clip to it. */
+        ...(bounds
+          ? { range: { contig: config.contig, start: bounds.start, end: bounds.end } }
+          : {}),
       };
       const hprc = config.tracks ?? [];
       const genome: IGenome = {

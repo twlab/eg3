@@ -62,6 +62,8 @@ export interface GraphFetchConfig {
   /** eg3 tracks to draw under the graph, as eg3 describes them - type, url,
       name, options - each fetched over the region the graph shows. */
   tracks?: Array<{ [key: string]: any }>;
+  /** The picked path's range, when the start page has measured it. */
+  range?: { start: number; end: number };
   /** The haplotypes picked, as `sample#haplotype`, every one of them named
       even when all were picked: each is a row of the view. */
   lanes?: string[];
@@ -77,6 +79,10 @@ export interface ExampleRegion {
   contig: string;
   start: number;
   end: number;
+  /** A region for testing alignment: picking it also unpicks the other
+      reference genomes' haplotypes and turns the repeat tracks off, so
+      only the haplotypes against the reference are drawn. */
+  alignmentTest?: boolean;
 }
 
 /**
@@ -91,6 +97,17 @@ export const exampleRegions: ExampleRegion[] = [
   /* Human: 464 haplotypes of 233 samples, from hprc-v2.0-mc-chm13.gbz, on
      CHM13. Counted at context 32 with gbz-base's own query; found by
      scanning 1 kb every 50 kb across the MHC. */
+  {
+    label: "Alignment test",
+    note: "110 bp of HLA-DRB where haplotypes read the stretch more than once - picking it unpicks the other references and turns the repeat tracks off",
+    sample: "CHM13",
+    contig: "chr6",
+    /* A base wider either side than the stretch looked at, 32,365,590-700:
+       Region only reads the window back from the band a base short. */
+    start: 32_365_589,
+    end: 32_365_701,
+    alignmentTest: true,
+  },
   {
     label: "MHC densest",
     note: "588 nodes in 1 kb, and 495 walks: some haplotypes leave the window and come back",

@@ -75,13 +75,11 @@ async function openDatabase(
     tags,
     haplotypes,
     reference,
-    referenceBounds: reference
-      ? pathBounds(source, {
-          sample: reference.sample,
-          contig: reference.contig,
-          haplotype: reference.haplotype,
-        })
-      : null,
+    /* Not measured here: a path's range is a walk to its end, record by
+       record over the network, and the path the reader goes on to pick is
+       often another. The start page measures the one picked; see
+       LocalDatabaseCard. */
+    referenceBounds: null,
   };
 }
 
@@ -141,7 +139,6 @@ async function handle(request: GbzRequest): Promise<GbzResponse> {
 }
 
 self.onmessage = async (event: MessageEvent<GbzRequest>) => {
-  console.log(event);
   const response = await handle(event.data);
   self.postMessage(response);
 };

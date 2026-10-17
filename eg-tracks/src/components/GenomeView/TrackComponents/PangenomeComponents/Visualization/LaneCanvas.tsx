@@ -4,6 +4,7 @@ import { cardAt, laneLetters, visitAt, visitPieces } from "./laneRaster";
 import { sequenceSize } from "./nodeDetail";
 import { fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
+import { niceBpCount } from "../../../../../models/util";
 
 /* ══════════════════════════════════════════════════════════════════════════
    One haplotype's bar, drawn on a canvas.
@@ -147,6 +148,19 @@ const CHIP_MARGIN = 0.14;
 const LETTER_SAMPLE = "ACGTN";
 /** The size the ink is measured at, then scaled from. */
 const INK_PROBE_SIZE = 100;
+
+/* A deletion's size, in the white it leaves. Small and grey: it says what
+   the white is, and is not a mark of the haplotype's own. */
+const DELETION_FONT = 11;
+const DELETION_INK = "#6b7280";
+/** Room either side of the label, inside the white. */
+const DELETION_PAD = 4;
+const SANS_STACK = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+
+/** A size as genomealign gives a gap's: Kb from 10,000, Mb from 750,000;
+    below that the count itself, grouped. */
+const deletionSize = (bp: number) =>
+  bp >= 10000 ? niceBpCount(bp) : `${bp.toLocaleString()} bp`;
 
 function LaneCanvas({
   raster,
@@ -432,9 +446,15 @@ function paintLane(
       );
     }
 
-    /* Every base a visit carries is spelled out. */
-    const spells = (node: RasterNode, i: number) =>
-      !!node.sequence.charAt(i);
+    /* A base is spelled out where it differs from the reference's under it;
+       what matches is left to the reference's own row. The reference's lane
+       spells everything it carries. */
+    const spells = (node: RasterNode, i: number) => {
+      const letter = node.sequence.charAt(i);
+      if (!letter) return false;
+      if (isReference) return true;
+      return letter.toUpperCase() !== (node.refSequence?.charAt(i) ?? " ").toUpperCase();
+    };
 
     /* The diverging stretches, hatched. The diagonals are drawn across the
        whole run and clipped to it, so they line up with their neighbours
@@ -656,6 +676,68 @@ function paintLane(
         );
       }
     }
+
+    /* Each deletion's size, in the white it leaves - the way genomealign
+       labels the gap between two alignment blocks. One that runs out of
+       the band is always labelled at the end that is here, with an arrow
+       the way it goes: the white alone runs to the band's edge and says
+       nothing of how far. One inside the band is drawn to scale, so its
+       label is only added where it fits in the white; one that does not
+       fit is left, not moved outside, so small indels do not crowd the
+       bar. Drawn at the height of the visit it leaves or rejoins at. */
+    if (!isReference && raster.deletions.length) {
+      ctx.font = `${Math.round(DELETION_FONT * sy)}px ${SANS_STACK}`;
+      ctx.fillStyle = DELETION_INK;
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      const pad = DELETION_PAD * sx;
+      for (const deletion of raster.deletions) {
+        const visit = raster.nodes[deletion.visit];
+        const own = visit ? (piecesOf.get(visit) ?? []) : [];
+        if (!own.length) continue;
+        /* The piece at the edge the white starts from. */
+        const piece =
+          deletion.left !== null ? own[own.length - 1] : own[0];
+        const { band } = piece;
+        const across = pieces.filter((other) => other.band === band);
+        /* The white: from where it leaves to the haplotype's next bar at
+           that height, or the band's edge - in what is on the canvas. */
+        const from =
+          deletion.left ??
+          Math.max(
+            0,
+            ...across
+              .filter((other) => other.right <= deletion.right!)
+              .map((other) => other.right),
+          );
+        const to =
+          deletion.right ??
+          Math.min(
+            width,
+            ...across
+              .filter((other) => other.left >= deletion.left!)
+              .map((other) => other.left),
+          );
+        const shownFrom = Math.max(0, from) * sx;
+        const shownTo = Math.min(width, to) * sx;
+        const size = `−${deletionSize(deletion.bp)}`;
+        const text =
+          deletion.left === null
+            ? `← ${size}`
+            : deletion.right === null
+              ? `${size} →`
+              : size;
+        const textWidth = ctx.measureText(text).width;
+        if (textWidth + pad * 2 > shownTo - shownFrom) continue;
+        const x =
+          deletion.left !== null && deletion.right !== null
+            ? (shownFrom + shownTo - textWidth) / 2
+            : deletion.right === null
+              ? shownFrom + pad
+              : shownTo - pad - textWidth;
+        ctx.fillText(text, Math.round(x), Math.round(band.top + band.tall / 2));
+      }
+    }
   }
 }
 
@@ -678,7 +760,9 @@ function eachRun<T extends { left: number; right: number }>(
 ) {
   let from = 0;
   let to = -1;
-  for (const node of nodes) {
+  /* Left to right: a haplotype read against the reference walks its nodes
+     right to left, and taken in that order every run clipped the last. */
+  for (const node of [...nodes].sort((a, b) => a.left - b.left)) {
     if (!keep(node)) continue;
     const a = Math.max(0, toScreen(node.left));
     const b = Math.min(limit, toScreen(node.right));
@@ -730,7 +814,9 @@ function eachRunKeepingGaps<T extends { left: number; right: number }>(
     flush(a);
     held = [a, Math.max(a + 1, Math.round(end * sx))];
   };
-  for (const node of nodes) {
+  /* Left to right, as above: in walk order a haplotype against the
+     reference left its bar unfilled but for the letters. */
+  for (const node of [...nodes].sort((a, b) => a.left - b.left)) {
     if (!keep(node) || !(node.right >= node.left)) continue;
     if (node.left <= end + 1e-6 && node.right >= start) {
       start = Math.min(start, node.left);

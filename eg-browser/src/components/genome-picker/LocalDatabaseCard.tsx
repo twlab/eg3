@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 
 import FileInput from "../ui/input/FileInput";
 import {
-  closeLocalDatabase,
   localPathBounds,
+  closeLocalDatabase,
   openLocalDatabase,
   openRemoteDatabase,
 } from "wuepgg3-track";
@@ -126,7 +126,9 @@ export default function LocalDatabaseCard({
     for (const h of summary?.haplotypes ?? []) {
       if (h.sample !== referenceGenome) keys.add(`${h.sample}#${h.haplotype}`);
     }
-    return [...keys].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    return [...keys].sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true }),
+    );
   }, [summary, referenceGenome]);
   /* Null is every one of them, which asks for no filter at all. */
   const [picked, setPicked] = useState<Set<string> | null>(() => new Set());
@@ -142,7 +144,10 @@ export default function LocalDatabaseCard({
     : alternates;
   useEffect(() => setAltPage(0), [altQuery, summary, referenceGenome]);
   const altPages = Math.max(1, Math.ceil(altListed.length / ALT_PAGE));
-  const altShown = altListed.slice(altPage * ALT_PAGE, (altPage + 1) * ALT_PAGE);
+  const altShown = altListed.slice(
+    altPage * ALT_PAGE,
+    (altPage + 1) * ALT_PAGE,
+  );
   const isPicked = (key: string) => picked === null || picked.has(key);
   const pickedCount = picked === null ? alternates.length : picked.size;
   /* Some of them on or off together - one, a page, or all of them. */
@@ -162,6 +167,19 @@ export default function LocalDatabaseCard({
     [picked, alternates],
   );
   const [hprcTracks, setHprcTracks] = useState<HprcTrack[]>([]);
+  /* Bumped by the alignment test region: the repeat tracks go off. */
+  const [repeatsOff, setRepeatsOff] = useState(0);
+  /* The alignment test region: the other reference genomes' haplotypes
+     unpicked - GRCh38 against CHM13 - and the repeat tracks off. */
+  const pickForTest = () => {
+    const references = new Set(referenceGenomes);
+    const isReference = (key: string) => references.has(key.split("#")[0]);
+    setPicked((was) => {
+      const from = was === null ? alternates : [...was];
+      return new Set(from.filter((key) => !isReference(key)));
+    });
+    setRepeatsOff((n) => n + 1);
+  };
 
   /* Only the regions this file can answer: it has to carry that sample and
      contig on a path an interval query can start from. */
@@ -176,47 +194,29 @@ export default function LocalDatabaseCard({
     [queryable],
   );
 
-  /* The range each queryable path covers in this file. The worker measures
-     the reference on open; the rest are asked for once the file is open,
-     one at a time and each shown as it arrives - HPRC v2 has 198 of them,
-     and waiting for the lot showed none for minutes. The path picked in the
-     form jumps the queue. */
+  /* The range of the path picked, and only that: each is a walk to the end
+     of its path, record by record over the network. Measuring every one -
+     198 in HPRC v2, one after another - took minutes after a file was
+     picked, and Load waited behind them in the worker. Measured when the
+     reader picks the path in the dropdown, once per path, and kept for Load
+     and the graph's fetches to reuse; a path never picked there (the first,
+     or a preset's) is measured by Load. */
   const [rangeOf, setRangeOf] = useState<Map<string, PathBounds>>(new Map());
-  const [measured, setMeasured] = useState(0);
-  const wanted = useRef<string | null>(null);
-  wanted.current = form.path;
+  const asked = useRef(new Set<string>());
   useEffect(() => {
-    const first = new Map<string, PathBounds>();
-    if (summary?.reference && summary.referenceBounds) {
-      first.set(pathKey(summary.reference), summary.referenceBounds);
-    }
-    setRangeOf(first);
-    setMeasured(first.size);
-    if (!summary) return;
-    let live = true;
-    void (async () => {
-      const left = new Map(
-        queryable
-          .filter((h) => !first.has(pathKey(h)))
-          .map((h) => [pathKey(h), h]),
-      );
-      while (live && left.size) {
-        const key =
-          wanted.current && left.has(wanted.current)
-            ? wanted.current
-            : left.keys().next().value!;
-        const h = left.get(key)!;
-        left.delete(key);
-        const found = await localPathBounds(summary.id, h).catch(() => null);
-        if (!live) return;
+    setRangeOf(new Map());
+    asked.current = new Set();
+  }, [summary]);
+  const measure = (key: string) => {
+    const path = queryable.find((h) => pathKey(h) === key);
+    if (!summary || !path || asked.current.has(key)) return;
+    asked.current.add(key);
+    void localPathBounds(summary.id, path)
+      .catch(() => null)
+      .then((found) => {
         if (found) setRangeOf((was) => new Map(was).set(key, found));
-        setMeasured((n) => n + 1);
-      }
-    })();
-    return () => {
-      live = false;
-    };
-  }, [summary, queryable]);
+      });
+  };
 
   const bounds = selected ? (rangeOf.get(pathKey(selected)) ?? null) : null;
 
@@ -225,7 +225,7 @@ export default function LocalDatabaseCard({
   useEffect(() => {
     if (!summary?.reference) return;
     const window = initialWindow(summary.reference, summary.referenceBounds);
-    console.log(window, summary);
+
     setForm({
       path: pathKey(summary.reference),
       start: String(window.start),
@@ -309,6 +309,8 @@ export default function LocalDatabaseCard({
       /* Named either way: each is a row of the view. */
       lanes: pickedKeys,
       ...(hprcTracks.length ? { tracks: hprcTracks.map(toEgTrack) } : {}),
+      /* Measured already, so Load need not measure it again. */
+      ...(bounds ? { range: { start: bounds.start, end: bounds.end } } : {}),
     });
   };
 
@@ -345,7 +347,9 @@ export default function LocalDatabaseCard({
                       : "border-gray-300 dark:border-gray-600 hover:border-tint hover:bg-gray-50 dark:hover:bg-gray-800"
                   }`}
                 >
-                  {opening === hosted.url ? `Opening ${hosted.label}…` : hosted.label}
+                  {opening === hosted.url
+                    ? `Opening ${hosted.label}…`
+                    : hosted.label}
                 </button>
               ))}
             </div>
@@ -384,8 +388,7 @@ export default function LocalDatabaseCard({
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
               A GBZ-base database (<code>.gbz.db</code>), built from a{" "}
               <code>.gbz</code> with <code>gbz2db</code>, from disk. It is read
-              in your browser, a page at a time, and never leaves your
-              computer.
+              in your browser, a page at a time, and never leaves your computer.
             </p>
             <FileInput
               accept=".db"
@@ -444,9 +447,11 @@ export default function LocalDatabaseCard({
                   id="pgv-path"
                   className={field}
                   value={form.path}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, path: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const key = e.target.value;
+                    setForm((f) => ({ ...f, path: key }));
+                    measure(key);
+                  }}
                 >
                   {genomePaths.map((h) => (
                     <option key={pathKey(h)} value={pathKey(h)}>
@@ -564,6 +569,7 @@ export default function LocalDatabaseCard({
                 referenceGenome={referenceGenome}
                 haplotypes={pickedKeys}
                 onChange={setHprcTracks}
+                repeatsOff={repeatsOff}
               />
 
               <div>
@@ -618,9 +624,9 @@ export default function LocalDatabaseCard({
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {bounds
                     ? `${selected?.contig} covers ${formatRange(bounds)}`
-                    : measured < queryable.length
-                      ? `Measuring ranges… ${measured} of ${queryable.length}`
-                      : "Region unknown for this path"}
+                    : selected && asked.current.has(pathKey(selected))
+                      ? "Measuring this path's range…"
+                      : "Range measured on Load"}
                   {end > start ? ` · ${(end - start).toLocaleString()} bp` : ""}
                 </p>
               </div>
@@ -640,14 +646,15 @@ export default function LocalDatabaseCard({
                       <button
                         key={`${key}:${region.start}`}
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
                           setForm((f) => ({
                             ...f,
                             path: key,
                             start: String(region.start),
                             end: String(region.end),
-                          }))
-                        }
+                          }));
+                          if (region.alignmentTest) pickForTest();
+                        }}
                         className={`rounded-md border px-2 py-1 text-xs cursor-pointer ${
                           on
                             ? "border-tint bg-tint text-white"

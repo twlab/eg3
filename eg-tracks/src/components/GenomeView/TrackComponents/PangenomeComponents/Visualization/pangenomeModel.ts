@@ -67,6 +67,34 @@ export interface GraphNode {
    */
   refStart: number;
   refEnd: number;
+  /** Nothing on the reference leads to it and it leads to nothing on the
+      reference, in what was fetched: it has no place against the
+      reference here, and is not drawn in the bars. */
+  untied?: boolean;
+  /** Where on the reference the reference's own path reads this node,
+      when that is outside this band: its place is there, not here. Such a
+      node is untied here too. */
+  elsewhere?: number;
+}
+
+/**
+ * A haplotype jumping over reference: the white in its bar, and how much
+ * it skips. An end is null where it lies outside the band - a deletion
+ * running to a node the reference's path only reads elsewhere.
+ */
+export interface LaneDeletion {
+  /** Where the white starts and ends, along the layout. */
+  left: number | null;
+  right: number | null;
+  /** The reference it skips: `refFrom` up to `refTo`. */
+  refFrom: number;
+  refTo: number;
+  bp: number;
+  /** The visit on the reference here it leaves or rejoins at, as an index
+      into the lane's steps, and the two nodes the jump is between, in
+      walk order. */
+  step: number;
+  walk: [string, string];
 }
 
 export interface LaneSegment {
@@ -100,6 +128,8 @@ export interface Lane {
   bp: number;
   /** First to last position this haplotype occupies here, in its own coordinates. */
   interval: { start: number; end: number } | null;
+  /** Where it jumps over the reference; see laneDeletions. */
+  deletions?: LaneDeletion[];
 }
 
 /** One node visit by one haplotype, placed in that haplotype's coordinates. */
@@ -175,6 +205,58 @@ export interface PangenomeModel {
   carriers?: Carriers;
 }
 
+/**
+ * Where a lane jumps over the reference: from a node on it to the next one
+ * it reads further along - inside the band, or outside it where the next
+ * is a node the reference's path reads elsewhere. Read on the reference's
+ * strand, so a walk against the reference says the same; a jump back
+ * along it is a rearrangement, not a deletion, and is left out.
+ */
+function laneDeletions(
+  lane: Lane,
+  nodeById: Map<string, GraphNode>,
+): LaneDeletion[] {
+  const steps = lane.steps;
+  const at = (i: number) => nodeById.get(steps[i].node);
+  const known = (node: GraphNode | undefined): node is GraphNode =>
+    !!node && (node.onReference || node.elsewhere !== undefined);
+  const startOn = (node: GraphNode) =>
+    node.onReference ? node.refStart : node.elsewhere!;
+  const endOn = (node: GraphNode) =>
+    node.onReference ? node.refEnd : node.elsewhere! + node.length;
+  const joined = (i: number) => steps[i].segment === steps[i + 1].segment;
+  /* Which way this haplotype reads the reference. */
+  let drift = 0;
+  for (let i = 0; i + 1 < steps.length; i++) {
+    const a = at(i);
+    const b = at(i + 1);
+    if (joined(i) && known(a) && known(b)) drift += startOn(b) - startOn(a);
+  }
+  const forward = drift >= 0;
+  const out: LaneDeletion[] = [];
+  for (let i = 0; i + 1 < steps.length; i++) {
+    if (!joined(i)) continue;
+    const a = at(i);
+    const b = at(i + 1);
+    if (!known(a) || !known(b)) continue;
+    /* Both elsewhere: nothing of it is here. */
+    if (!a.onReference && !b.onReference) continue;
+    const [low, high] = forward ? [a, b] : [b, a];
+    const bp = startOn(high) - endOn(low);
+    if (bp <= 0) continue;
+    out.push({
+      left: low.onReference ? low.x + low.length : null,
+      right: high.onReference ? high.x : null,
+      refFrom: endOn(low),
+      refTo: startOn(high),
+      bp,
+      step: a.onReference ? i : i + 1,
+      walk: [a.id, b.id],
+    });
+  }
+  return out;
+}
+
 /** How many haplotypes the graph has, however many lanes this model draws. */
 export const laneTotal = (model: PangenomeModel) =>
   model.laneCount ?? model.lanes.length;
@@ -184,32 +266,52 @@ export const laneTotal = (model: PangenomeModel) =>
    gets the one colour nothing else is allowed near. */
 export const REF_COLOR = "#30afff";
 
-/* Everything else, in the order it is handed out. The blues that used to
-   sit near the front were too close to the reference to tell apart at a
-   glance; what blue is left is muted and comes late, once the loud hues
-   are spent. */
-export const HAP_COLORS = [
-  "#2a9d5c", // green
-  "#8338ec", // violet
-  "#e63946", // red
-  "#0e9594", // teal
-  "#f4a261", // sand
-  "#ef476f", // pink
-  "#7b2d8b", // plum
-  "#fb5607", // orange
-  "#06d6a0", // mint
-  "#5c6f82", // slate
-  "#c77dff", // lilac
-  "#4ecdc4", // aqua
-  "#ff6b6b", // coral
-  "#96ceb4", // sage
-  "#a29bfe", // periwinkle
-  "#ff9f43", // amber
-  "#8d6e63", // clay
-  "#b5179e", // magenta
-  "#4a7c94", // muted steel
-  "#6a994e", // olive
-];
+/**
+ * A haplotype's own pastel, from its name: the same name gets the same
+ * colour whatever else is loaded, in whatever order, in any session. Colours
+ * used to be handed out from a list in the order haplotypes arrived, so
+ * loading one more changed everybody's.
+ *
+ * The name is hashed (FNV-1a, then mixed so names a character apart land
+ * far apart) and the hash picks the hue - leaving out the 25 degrees around
+ * the reference's blue, so no haplotype is taken for it - and nudges the
+ * saturation and lightness within a pastel's range, so two names of near
+ * hues still differ. Light enough to read the letters' black chips on, dark
+ * enough for the ivory hatching to show.
+ */
+export function pastelColor(name: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < name.length; i++) {
+    hash ^= name.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  hash ^= hash >>> 16;
+  hash = Math.imul(hash, 0x85ebca6b);
+  hash ^= hash >>> 13;
+  hash = Math.imul(hash, 0xc2b2ae35);
+  hash ^= hash >>> 16;
+  hash >>>= 0;
+  let hue = hash % 335;
+  if (hue >= 188) hue += 25;
+  const saturation = 45 + ((hash >>> 12) % 21);
+  const lightness = 68 + ((hash >>> 20) % 11);
+  return hslToHex(hue, saturation, lightness);
+}
+
+/** An HSL colour - degrees, per cent, per cent - as #rrggbb. */
+function hslToHex(hue: number, saturation: number, lightness: number): string {
+  const s = saturation / 100;
+  const l = lightness / 100;
+  const a = s * Math.min(l, 1 - l);
+  const channel = (n: number) => {
+    const k = (n + hue / 30) % 12;
+    const value = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(value * 255)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${channel(0)}${channel(8)}${channel(4)}`;
+}
 
 const numericCompare = (a: string, b: string) =>
   String(a).localeCompare(String(b), undefined, { numeric: true });
@@ -243,8 +345,10 @@ function parseWalkName(raw: RawPath, fallback: string) {
  * the queried haplotype.
  */
 export function buildModel(queryResult: any): PangenomeModel | null {
+  console.log(queryResult);
   const result = queryResult?.result ?? queryResult;
-  const rawNodes: Array<{ id: string; sequence?: string }> = result?.nodes ?? [];
+  const rawNodes: Array<{ id: string; sequence?: string }> =
+    result?.nodes ?? [];
   const rawPaths: RawPath[] = result?.paths ?? [];
   const rawEdges: RawEdge[] = result?.edges ?? [];
   if (!rawNodes.length) return null;
@@ -264,11 +368,27 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
   const drafts = new Map<string, Draft>();
 
+  /* gbz-base emits the queried reference walk first. */
+  const isQueried = (raw: RawPath, i: number) =>
+    raw.is_reference === true || i === 0;
+  const referenceKey = (() => {
+    const i = rawPaths.findIndex(isQueried);
+    if (i < 0) return null;
+    const parsed = parseWalkName(rawPaths[i], `walk-${i}`);
+    return `${parsed.sample}#${parsed.haplotype}#${parsed.contig}`;
+  })();
+
   rawPaths.forEach((raw, i) => {
     const parsed = parseWalkName(raw, `walk-${i}`);
-    const key = `${parsed.sample}#${parsed.haplotype}#${parsed.contig}`;
-    /* gbz-base emits the queried reference walk first. */
-    const isReference = raw.is_reference === true || i === 0;
+    const isReference = isQueried(raw, i);
+    const pathKey = `${parsed.sample}#${parsed.haplotype}#${parsed.contig}`;
+    /* The reference is the walk over the queried region, and only that.
+       The same path can come back elsewhere through context - CHM13's own
+       chr6 at 32,370,665, a repeat of 32,365,933 - and joined to the
+       reference lane it was numbered as if it went on from there, 4.7 kb
+       out. It is a walk like any haplotype's, placed by the graph. */
+    const key =
+      !isReference && pathKey === referenceKey ? `${pathKey}#elsewhere` : pathKey;
 
     let draft = drafts.get(key);
     if (!draft) {
@@ -290,7 +410,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     });
   });
 
-  let hapIdx = 0;
   const lanes: Lane[] = Array.from(drafts.entries())
     /* Reference first, then in the order the walks arrived. */
     .sort(([, a], [, b]) => {
@@ -341,7 +460,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         isReference: draft.isReference,
         color: draft.isReference
           ? REF_COLOR
-          : HAP_COLORS[hapIdx++ % HAP_COLORS.length],
+          : pastelColor(`${draft.sample}#${draft.haplotype}`),
         index,
         segments,
         order,
@@ -470,9 +589,21 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   referenceOrder.forEach((id, index) => {
     if (!referenceIndex.has(id)) referenceIndex.set(id, index);
   });
-  const layoutEdges: Array<{ from: string; to: string }> = edges.map(
-    ({ from, to }) => ({ from, to }),
-  );
+  /* Nodes the reference's own path reads outside this band, and where;
+     see referenceElsewhere in subgraph.ts. Their place is there, so they
+     tie nothing here: a haplotype that took a 5 kb deletion out of the
+     window carried on into them, and laid out from where it left they
+     were drawn as 5 kb of novel sequence, spelled against the wrong
+     reference. Without their edges they are untied, and so is whatever
+     only they tie, and the haplotype's bar is white past where it left. */
+  const referenceAt: Record<string, number> = result?.referenceAt ?? {};
+  const elsewhereAt = new Map<string, number>();
+  for (const [id, at] of Object.entries(referenceAt)) {
+    if (level.has(id) && !onReferenceWalk.has(id)) elsewhereAt.set(id, at);
+  }
+  const layoutEdges: Array<{ from: string; to: string }> = edges
+    .filter(({ from, to }) => !elsewhereAt.has(from) && !elsewhereAt.has(to))
+    .map(({ from, to }) => ({ from, to }));
   for (const lane of lanes) {
     if (lane.isReference) continue;
     const pieces = lane.segments.map((segment) => segment.nodes);
@@ -482,7 +613,11 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     pieces.forEach((nodes, k) => {
       const own = [...nodes].reverse().find((id) => referenceIndex.has(id));
       lastOn[k] =
-        own !== undefined ? referenceIndex.get(own) : k > 0 ? lastOn[k - 1] : undefined;
+        own !== undefined
+          ? referenceIndex.get(own)
+          : k > 0
+            ? lastOn[k - 1]
+            : undefined;
     });
     const nextOn: Array<number | undefined> = [];
     for (let k = pieces.length - 1; k >= 0; k--) {
@@ -498,6 +633,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       const last = pieces[k][pieces[k].length - 1];
       const first = pieces[k + 1][0];
       if (onReferenceWalk.has(last) || onReferenceWalk.has(first)) continue;
+      if (elsewhereAt.has(last) || elsewhereAt.has(first)) continue;
       if (!level.has(last) || !level.has(first)) continue;
       const leaves = lastOn[k];
       const rejoins = nextOn[k + 1];
@@ -584,6 +720,31 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       if (reached.has(next)) continue;
       reached.add(next);
       reach.push(next);
+    }
+  }
+  /* And what leads to the reference: with what it leads from, what is
+     tied to it at all. A node tied to neither has no place against it in
+     what was fetched - in a small window, HG002#1 at chr6:32,365,590 had a
+     piece of itself from 180 kb on, joined only to its own nodes, which
+     the longest path started at the window's left edge. */
+  const leadsTo = new Set<string>();
+  {
+    const into = new Map<string, string[]>();
+    for (const [from, nexts] of successors) {
+      for (const to of nexts) {
+        const list = into.get(to);
+        if (list) list.push(from);
+        else into.set(to, [from]);
+      }
+    }
+    const back = [...onReferenceWalk].filter((id) => level.has(id));
+    for (const id of back) leadsTo.add(id);
+    while (back.length) {
+      for (const from of into.get(back.pop()!) ?? []) {
+        if (leadsTo.has(from)) continue;
+        leadsTo.add(from);
+        back.push(from);
+      }
     }
   }
   const pullUp = (id: string) => {
@@ -719,52 +880,56 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         if ((level.get(next) ?? 0) <= levels[at]) continue;
         latest = Math.min(latest, (startOf.get(next) ?? 0) - roomOf(id));
       }
-      if (latest !== Infinity && latest > startOf.get(id)!) startOf.set(id, latest);
+      if (latest !== Infinity && latest > startOf.get(id)!)
+        startOf.set(id, latest);
     }
   }
   let totalBp = 0;
-  for (const [id, start] of startOf) totalBp = Math.max(totalBp, start + roomOf(id));
+  for (const [id, start] of startOf)
+    totalBp = Math.max(totalBp, start + roomOf(id));
 
   levels.forEach((lv, columnIndex) => {
-      const nodeIds = (byLevel.get(lv) ?? []).sort(byRow);
-      /* A column is as far as its nodes reach. */
-      const x = Math.min(...nodeIds.map((id) => startOf.get(id) ?? 0));
-      const width =
-        Math.max(...nodeIds.map((id) => (startOf.get(id) ?? 0) + roomOf(id))) - x;
+    const nodeIds = (byLevel.get(lv) ?? []).sort(byRow);
+    /* A column is as far as its nodes reach. */
+    const x = Math.min(...nodeIds.map((id) => startOf.get(id) ?? 0));
+    const width =
+      Math.max(...nodeIds.map((id) => (startOf.get(id) ?? 0) + roomOf(id))) - x;
 
-      const onRef = nodeIds.find((id) => refNodes.has(id));
-      const refStart = cursor;
-      const refEnd = onRef
-        ? cursor + (sequences.get(onRef) ?? "").length
-        : cursor;
-      cursor = refEnd;
+    const onRef = nodeIds.find((id) => refNodes.has(id));
+    const refStart = cursor;
+    const refEnd = onRef
+      ? cursor + (sequences.get(onRef) ?? "").length
+      : cursor;
+    cursor = refEnd;
 
-      /* Row 0 belongs to the reference and to nothing else. Where the
+    /* Row 0 belongs to the reference and to nothing else. Where the
          reference walks straight past a site - an insertion, which it has no
          allele for - the alternatives would otherwise take row 0 and be drawn
          level with the reference elsewhere. Pushing them down by one keeps the
          rule true everywhere: anything below row 0 is an alternative, and an
          alternative is always below the reference. */
-      const indent = onRef ? 0 : 1;
+    const indent = onRef ? 0 : 1;
 
-      nodeIds.forEach((id, position) => {
-        const sequence = sequences.get(id) ?? "";
-        nodeById.set(id, {
-          id,
-          sequence,
-          length: sequence.length,
-          column: columnIndex,
-          x: startOf.get(id) ?? x,
-          row: position + indent,
-          lanes: laneKeys.get(id) ?? [],
-          onReference: refNodes.has(id),
-          refStart,
-          refEnd,
-        });
+    nodeIds.forEach((id, position) => {
+      const sequence = sequences.get(id) ?? "";
+      nodeById.set(id, {
+        id,
+        sequence,
+        length: sequence.length,
+        column: columnIndex,
+        x: startOf.get(id) ?? x,
+        row: position + indent,
+        lanes: laneKeys.get(id) ?? [],
+        onReference: refNodes.has(id),
+        refStart,
+        refEnd,
+        ...(reached.has(id) || leadsTo.has(id) ? {} : { untied: true }),
+        ...(elsewhereAt.has(id) ? { elsewhere: elsewhereAt.get(id) } : {}),
       });
-      rowCount = Math.max(rowCount, nodeIds.length + indent);
-      columns.push({ index: columnIndex, x, width, nodeIds });
     });
+    rowCount = Math.max(rowCount, nodeIds.length + indent);
+    columns.push({ index: columnIndex, x, width, nodeIds });
+  });
 
   const referenceInterval = reference
     ? {
@@ -772,6 +937,10 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         end: cursor,
       }
     : null;
+
+  for (const lane of lanes) {
+    if (!lane.isReference) lane.deletions = laneDeletions(lane, nodeById);
+  }
 
   return {
     nodes: ids.map((id) => nodeById.get(id)!).filter(Boolean),
@@ -1023,7 +1192,8 @@ function longestPiece(lane: Lane | null): LaneSegment | null {
   let best: LaneSegment | null = null;
   for (const piece of lane?.segments ?? []) {
     if (piece.start === null || piece.end === null) continue;
-    if (!best || piece.end - piece.start > best.end! - best.start!) best = piece;
+    if (!best || piece.end - piece.start > best.end! - best.start!)
+      best = piece;
   }
   return best;
 }
