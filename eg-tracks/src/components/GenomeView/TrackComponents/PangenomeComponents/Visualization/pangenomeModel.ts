@@ -1,4 +1,5 @@
 import type { Carriers } from "../../../../../getRemoteData/gbz/subgraph";
+import { niceBpCount } from "../../../../../models/util";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Shared model behind both pangenome renderings.
@@ -95,6 +96,28 @@ export interface LaneDeletion {
       walk order. */
   step: number;
   walk: [string, string];
+  /** Which end is outside the band, if either: the end whose white runs
+      to the band's edge. */
+  open: "left" | "right" | null;
+  /** Whether the haplotype reads the reference forwards here, its walk
+      running left to right along the layout. */
+  forward: boolean;
+}
+
+/** A deletion's size, as genomealign gives a gap's: Kb from 10,000, Mb
+    from 750,000, below that the count itself. */
+export function deletionSize(bp: number): string {
+  return bp >= 10000 ? niceBpCount(bp) : `${bp.toLocaleString()} bp`;
+}
+
+/** A deletion's label: "−5,045 bp →" for one running out of the band to
+    the right, "← −980 bp" to the left, "−12 bp" for one inside it. */
+export function deletionText(
+  bp: number,
+  open: "left" | "right" | null,
+): string {
+  const size = `−${deletionSize(bp)}`;
+  return open === "left" ? `← ${size}` : open === "right" ? `${size} →` : size;
 }
 
 export interface LaneSegment {
@@ -252,6 +275,8 @@ function laneDeletions(
       bp,
       step: a.onReference ? i : i + 1,
       walk: [a.id, b.id],
+      open: !low.onReference ? "left" : !high.onReference ? "right" : null,
+      forward,
     });
   }
   return out;
@@ -345,8 +370,8 @@ function parseWalkName(raw: RawPath, fallback: string) {
  * the queried haplotype.
  */
 export function buildModel(queryResult: any): PangenomeModel | null {
-  console.log(queryResult);
   const result = queryResult?.result ?? queryResult;
+  console.log(result);
   const rawNodes: Array<{ id: string; sequence?: string }> =
     result?.nodes ?? [];
   const rawPaths: RawPath[] = result?.paths ?? [];
@@ -368,27 +393,38 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
   const drafts = new Map<string, Draft>();
 
-  /* gbz-base emits the queried reference walk first. */
+  /* The queried reference walk is the one flagged is_reference. A result
+     without the flag falls back on its first walk, which is where
+     gbz-base writes it. */
+  const flaggedAt = rawPaths.findIndex((raw) => raw.is_reference === true);
+  const queriedAt = flaggedAt >= 0 ? flaggedAt : rawPaths.length ? 0 : -1;
   const isQueried = (raw: RawPath, i: number) =>
-    raw.is_reference === true || i === 0;
-  const referenceKey = (() => {
-    const i = rawPaths.findIndex(isQueried);
-    if (i < 0) return null;
-    const parsed = parseWalkName(rawPaths[i], `walk-${i}`);
-    return `${parsed.sample}#${parsed.haplotype}#${parsed.contig}`;
-  })();
+    flaggedAt >= 0 ? raw.is_reference === true : i === 0;
+  /** Which path a walk is on: its sample, haplotype and contig. */
+  const pathKeyOf = (walk: {
+    sample: string;
+    haplotype: number;
+    contig: string;
+  }) => `${walk.sample}#${walk.haplotype}#${walk.contig}`;
+  console.log(rawPaths);
+  const referenceKey =
+    queriedAt < 0
+      ? null
+      : pathKeyOf(parseWalkName(rawPaths[queriedAt], `walk-${queriedAt}`));
 
   rawPaths.forEach((raw, i) => {
     const parsed = parseWalkName(raw, `walk-${i}`);
     const isReference = isQueried(raw, i);
-    const pathKey = `${parsed.sample}#${parsed.haplotype}#${parsed.contig}`;
+    const pathKey = pathKeyOf(parsed);
     /* The reference is the walk over the queried region, and only that.
        The same path can come back elsewhere through context - CHM13's own
        chr6 at 32,370,665, a repeat of 32,365,933 - and joined to the
        reference lane it was numbered as if it went on from there, 4.7 kb
        out. It is a walk like any haplotype's, placed by the graph. */
     const key =
-      !isReference && pathKey === referenceKey ? `${pathKey}#elsewhere` : pathKey;
+      !isReference && pathKey === referenceKey
+        ? `${pathKey}#elsewhere`
+        : pathKey;
 
     let draft = drafts.get(key);
     if (!draft) {
@@ -409,7 +445,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       end: parsed.end,
     });
   });
-
+  console.log(drafts);
   const lanes: Lane[] = Array.from(drafts.entries())
     /* Reference first, then in the order the walks arrived. */
     .sort(([, a], [, b]) => {
@@ -492,7 +528,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       }
     });
   });
-
+  console.log(lanes);
   /* ── Edges ───────────────────────────────────────────────────────────── */
   /* Found by where it starts and then where it ends, rather than by its key:
      every step of every haplotype asks, millions in a busy window, and
@@ -537,7 +573,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     });
   });
   const edges = edgeList;
-
+  console.log(edges);
   /* ── Columns: longest-path level, from the graph alone ────────────────
      Where a node is drawn is where the graph puts it against the
      reference: after everything it is reached from, the reference's own
@@ -550,9 +586,10 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      loaded straight there and panned to). What such a node is tied to is
      said below instead. The pass cap stops a cyclic subgraph from looping
      forever. */
-  const ids = rawNodes.map((n) => n.id).sort(numericCompare);
+  const ids = rawNodes.map((n) => n.id);
   const level = new Map<string, number>();
   ids.forEach((id) => level.set(id, 0));
+  console.log(level, rawNodes);
   const onReferenceWalk = reference?.nodeSet ?? new Set<string>();
   const referenceOrder = reference?.order ?? [];
 
@@ -601,9 +638,11 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   for (const [id, at] of Object.entries(referenceAt)) {
     if (level.has(id) && !onReferenceWalk.has(id)) elsewhereAt.set(id, at);
   }
+
   const layoutEdges: Array<{ from: string; to: string }> = edges
     .filter(({ from, to }) => !elsewhereAt.has(from) && !elsewhereAt.has(to))
     .map(({ from, to }) => ({ from, to }));
+
   for (const lane of lanes) {
     if (lane.isReference) continue;
     const pieces = lane.segments.map((segment) => segment.nodes);
@@ -957,34 +996,152 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 }
 
 /**
+ * The model without the nodes that have no place against the reference in
+ * this band - the untied ones, among them those the reference's own path
+ * reads outside it: what the tube map and the variants view are drawn
+ * from. The bars leave such nodes out as they draw (see laneRaster); these
+ * views lay out every node they are given, so they are given only the
+ * placed ones. Left in, the tube map gave them boxes at the band's left
+ * edge and ran a haplotype's tube back across the band to them, and the
+ * variants view made a site of them there.
+ *
+ * A haplotype's walk is cut where it went through one, as where it leaves
+ * the window, so nothing is joined across it; its deletions are carried
+ * over to the steps that are left.
+ */
+const placedByModel = new WeakMap<PangenomeModel, PangenomeModel>();
+export function placedModel(model: PangenomeModel): PangenomeModel {
+  const known = placedByModel.get(model);
+  if (known) return known;
+  if (!model.nodes.some((node) => node.untied)) {
+    placedByModel.set(model, model);
+    return model;
+  }
+  /* The columns that still hold a node, numbered again, each as far as its
+     nodes reach. */
+  const nodeById = new Map<string, GraphNode>();
+  const columns: Column[] = [];
+  for (const column of model.columns) {
+    const nodes = column.nodeIds
+      .map((id) => model.nodeById.get(id))
+      .filter((node): node is GraphNode => !!node && !node.untied);
+    if (!nodes.length) continue;
+    const index = columns.length;
+    for (const node of nodes) nodeById.set(node.id, { ...node, column: index });
+    const x = Math.min(...nodes.map((node) => node.x));
+    columns.push({
+      ...column,
+      index,
+      x,
+      width: Math.max(...nodes.map((node) => node.x + node.length)) - x,
+      nodeIds: nodes.map((node) => node.id),
+    });
+  }
+  const lanes = model.lanes.map((lane): Lane => {
+    if (lane.steps.every((step) => nodeById.has(step.node))) return lane;
+    const steps: LaneStep[] = [];
+    /* Where each step that is left went, for the deletions. */
+    const moved = new Map<number, number>();
+    let piece = -1;
+    let walk = -1;
+    let cut = true;
+    lane.steps.forEach((step, i) => {
+      if (!nodeById.has(step.node)) {
+        cut = true;
+        return;
+      }
+      if (cut || step.segment !== walk) piece += 1;
+      cut = false;
+      walk = step.segment;
+      moved.set(i, steps.length);
+      steps.push({ ...step, segment: piece });
+    });
+    const segments: LaneSegment[] = [];
+    for (const step of steps) {
+      const at = segments[step.segment];
+      if (at) {
+        at.nodes.push(step.node);
+        at.end = step.end;
+      } else {
+        segments[step.segment] = {
+          nodes: [step.node],
+          start: step.start,
+          end: step.end,
+        };
+      }
+    }
+    const order = steps.map((step) => step.node);
+    const nodeSet = new Set(order);
+    let bp = 0;
+    nodeSet.forEach((id) => {
+      bp += nodeById.get(id)?.length ?? 0;
+    });
+    return {
+      ...lane,
+      segments,
+      order,
+      steps,
+      nodeSet,
+      bp,
+      interval: steps.length
+        ? { start: steps[0].start, end: steps[steps.length - 1].end }
+        : null,
+      deletions: lane.deletions?.flatMap((deletion) => {
+        const step = moved.get(deletion.step);
+        return step === undefined ? [] : [{ ...deletion, step }];
+      }),
+    };
+  });
+  const out: PangenomeModel = {
+    ...model,
+    nodes: model.nodes.flatMap((node) => {
+      const kept = nodeById.get(node.id);
+      return kept ? [kept] : [];
+    }),
+    nodeById,
+    columns,
+    lanes,
+    edges: model.edges.filter(
+      (edge) => nodeById.has(edge.from) && nodeById.has(edge.to),
+    ),
+    reference: lanes.find((lane) => lane.isReference) ?? null,
+  };
+  placedByModel.set(model, out);
+  return out;
+}
+
+/**
  * The same layout with every column as wide as its widest node, and every
  * node at its column's start: what the tube map is drawn from. A tube map is
  * a column at a time - a stack of boxes, and the tubes moving between one
  * column and the next - so a node there stays in its own column rather
- * than running on over the next, as it does in the linear view.
+ * than running on over the next, as it does in the linear view. Of the
+ * placed nodes only; see placedModel. The lanes' deletions keep their
+ * steps, but their `left` and `right` are the linear view's.
  */
 const columnar = new WeakMap<PangenomeModel, PangenomeModel>();
 export function columnarModel(model: PangenomeModel): PangenomeModel {
   const known = columnar.get(model);
   if (known) return known;
+  const base = placedModel(model);
   let x = 0;
   const nodeById = new Map<string, GraphNode>();
-  const columns: Column[] = model.columns.map((column) => {
+  const columns: Column[] = base.columns.map((column) => {
     const width = Math.max(
       1,
-      ...column.nodeIds.map((id) => model.nodeById.get(id)?.length ?? 0),
+      ...column.nodeIds.map((id) => base.nodeById.get(id)?.length ?? 0),
     );
     for (const id of column.nodeIds) {
-      const node = model.nodeById.get(id);
+      const node = base.nodeById.get(id);
       if (node) nodeById.set(id, { ...node, x });
     }
-    const placed = { ...column, x, width };
+    const at = { ...column, x, width };
     x += width;
-    return placed;
+    return at;
   });
   const out: PangenomeModel = {
-    ...model,
-    nodes: model.nodes.map((node) => nodeById.get(node.id) ?? node),
+    ...base,
+    nodes: base.nodes.map((node) => nodeById.get(node.id) ?? node),
     nodeById,
     columns,
     totalBp: x,

@@ -7,7 +7,12 @@ import {
   PangenomeViewProvider,
   usePangenomeView,
 } from "./Visualization/pangenomeViewState";
-import { bandAxis, buildModel, columnarModel } from "./Visualization/pangenomeModel";
+import {
+  bandAxis,
+  buildModel,
+  columnarModel,
+  placedModel,
+} from "./Visualization/pangenomeModel";
 import type { ViewMode } from "./Visualization/pangenomeViewState";
 import { TUBE_H } from "./Visualization/TubeMapView";
 import { tubeStacks } from "./Visualization/tubeLayout";
@@ -71,9 +76,11 @@ export function pangenomeTrackHeight(
     const frame = bandFrame(primaryVisData);
     const axis = frame ? bandAxis(model, frame) : null;
     if (!axis) return 40;
+    /* Of the nodes with a place here, as the view draws them. */
+    const placed = placedModel(model);
     const segments = variantSegments(
-      model,
-      separatorBp(model, variantGrouping, frame?.width ?? 0),
+      placed,
+      separatorBp(placed, variantGrouping, frame?.width ?? 0),
     );
     return variantLayout(segments, axis).height;
   }

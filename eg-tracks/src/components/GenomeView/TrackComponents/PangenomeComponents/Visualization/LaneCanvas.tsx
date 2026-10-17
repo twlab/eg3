@@ -4,7 +4,7 @@ import { cardAt, laneLetters, visitAt, visitPieces } from "./laneRaster";
 import { sequenceSize } from "./nodeDetail";
 import { fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
-import { niceBpCount } from "../../../../../models/util";
+import { deletionText } from "./pangenomeModel";
 
 /* ══════════════════════════════════════════════════════════════════════════
    One haplotype's bar, drawn on a canvas.
@@ -156,11 +156,6 @@ const DELETION_INK = "#6b7280";
 /** Room either side of the label, inside the white. */
 const DELETION_PAD = 4;
 const SANS_STACK = 'system-ui, -apple-system, "Segoe UI", sans-serif';
-
-/** A size as genomealign gives a gap's: Kb from 10,000, Mb from 750,000;
-    below that the count itself, grouped. */
-const deletionSize = (bp: number) =>
-  bp >= 10000 ? niceBpCount(bp) : `${bp.toLocaleString()} bp`;
 
 function LaneCanvas({
   raster,
@@ -720,13 +715,10 @@ function paintLane(
           );
         const shownFrom = Math.max(0, from) * sx;
         const shownTo = Math.min(width, to) * sx;
-        const size = `−${deletionSize(deletion.bp)}`;
-        const text =
-          deletion.left === null
-            ? `← ${size}`
-            : deletion.right === null
-              ? `${size} →`
-              : size;
+        const text = deletionText(
+          deletion.bp,
+          deletion.left === null ? "left" : deletion.right === null ? "right" : null,
+        );
         const textWidth = ctx.measureText(text).width;
         if (textWidth + pad * 2 > shownTo - shownFrom) continue;
         const x =

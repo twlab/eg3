@@ -1,6 +1,7 @@
 import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import type { MouseEvent } from "react";
 import type { DrawFrame, GraphNode, PangenomeModel } from "./pangenomeModel";
+import { deletionSize } from "./pangenomeModel";
 import { LANE_H } from "./LinearPathView";
 import type { HoverTarget } from "./LinearPathView";
 import {
@@ -84,6 +85,14 @@ const MONO_STACK =
 const LETTER_SAMPLE = "ACGTN";
 /** How much of a node's sequence the tooltip will show before cutting it. */
 const LETTER_CAP = 150;
+/* A deletion's size, on the stretch of tube passing over what it skips:
+   small and grey, on a chip of the ground so the line breaks for it, as
+   the bars write it in their white; see LaneCanvas. Small enough for its
+   chip to stay inside the tube's own slot. */
+const DELETION_FONT = 9;
+const DELETION_INK = "#6b7280";
+const DELETION_PAD = 4;
+const SANS_STACK = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
 
 interface TubeMapViewProps {
@@ -326,6 +335,27 @@ function tubeHover(
   const node = entry.node ?? entry.item.node;
 
   if (!node || entry.start === null) {
+    /* Passing over what a deletion skips: how much, and where. */
+    const deletion = geometry.stacks.deletions.find(
+      (mark) =>
+        mark.lane === laneIndex &&
+        entryIndex >= mark.from &&
+        entryIndex <= mark.to,
+    );
+    if (deletion) {
+      const contig = model.reference?.contig ?? "";
+      return {
+        x: event.clientX,
+        y: event.clientY,
+        title: lane.label,
+        lines: [
+          `a deletion of ${deletionSize(deletion.bp)}: its walk skips ${contig}:${deletion.refFrom.toLocaleString()}–${deletion.refTo.toLocaleString()}`,
+          ...(deletion.open ? ["which runs past this band"] : []),
+          ...repeatLines,
+          ...laneDetailLines(lane),
+        ],
+      };
+    }
     /* Carried across this column by a step of the walk that jumps it: from
        the node it last read to the next. */
     const track = geometry.stacks.tracks[laneIndex];
@@ -590,6 +620,37 @@ function paint(
     if (!inView(x - half, x + half)) continue;
     ctx.globalAlpha = dimPass(end.lane, end.pass) ? DIM_ALPHA : 1;
     passNumber(ctx, end.pass, x, end.y, model.lanes[end.lane].color, true);
+  }
+
+  /* Each deletion's size on its stretch of tube, where it fits there: at
+     the end where the haplotype leaves the reference, or rejoins it, for
+     one whose other end is outside the band; in the middle for one inside
+     it. */
+  ctx.font = `${DELETION_FONT}px ${SANS_STACK}`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  for (const label of geometry.deletionLabels) {
+    const { deletion } = label;
+    const x0 = Math.max(0, label.x0);
+    const x1 = Math.min(width, label.x1);
+    const w = ctx.measureText(deletion.text).width;
+    if (w + DELETION_PAD * 2 > x1 - x0) continue;
+    const x =
+      deletion.align === "start"
+        ? x0 + DELETION_PAD
+        : deletion.align === "end"
+          ? x1 - DELETION_PAD - w
+          : (x0 + x1 - w) / 2;
+    ctx.globalAlpha = dimPass(
+      deletion.lane,
+      passOf[deletion.lane]?.[deletion.from] ?? 1,
+    )
+      ? DIM_ALPHA
+      : 1;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(x - 2, label.y - DELETION_FONT / 2 - 1, w + 4, DELETION_FONT + 2);
+    ctx.fillStyle = DELETION_INK;
+    ctx.fillText(deletion.text, x, label.y + 0.5);
   }
 
   /* The sequence, in screen pixels so each letter starts on a whole one, and

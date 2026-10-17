@@ -7,7 +7,12 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { bandAxis, buildModel, columnarModel } from "./pangenomeModel";
+import {
+  bandAxis,
+  buildModel,
+  columnarModel,
+  placedModel,
+} from "./pangenomeModel";
 import LinearPathView, { linearHeight } from "./LinearPathView";
 import type { BandAxis, PangenomeModel } from "./pangenomeModel";
 import type { DrawFrame } from "./pangenomeModel";
@@ -25,6 +30,7 @@ import VariantCard from "./VariantCard";
 import VariantBubbleView from "./VariantBubbleView";
 import {
   separatorBp,
+  variantDeletions,
   variantLayout,
   variantSegments,
 } from "./variantBubbles";
@@ -406,9 +412,11 @@ export default function VisualizationContainer({
      built for it. */
   const variants = useMemo(() => {
     if (!model || view?.mode !== "variants" || !drawsWhole) return null;
-    const minBp = separatorBp(model, view.variantGrouping, frame?.width ?? 0);
-    const segments = variantSegments(model, minBp);
-    return { minBp, segments };
+    /* Of the nodes with a place here, as the tube map is; see placedModel. */
+    const placed = placedModel(model);
+    const minBp = separatorBp(placed, view.variantGrouping, frame?.width ?? 0);
+    const segments = variantSegments(placed, minBp);
+    return { minBp, segments, model: placed };
   }, [model, view?.mode, view?.variantGrouping, frame?.width]);
   const variantAxis = useMemo(
     () => (model && variants ? bandAxis(model, frame) : null),
@@ -420,6 +428,18 @@ export default function VisualizationContainer({
         ? variantLayout(variants.segments, variantAxis)
         : null,
     [variants, variantAxis],
+  );
+  const variantMarks = useMemo(
+    () =>
+      variants && variantShape && variantAxis
+        ? variantDeletions(
+            variants.model,
+            variants.segments,
+            variantShape,
+            variantAxis,
+          )
+        : null,
+    [variants, variantShape, variantAxis],
   );
 
   /* The part of the linear view this draws. The model keeps its layout, so
@@ -579,11 +599,12 @@ export default function VisualizationContainer({
           variantShape &&
           frame && (
             <VariantBubbleView
-              model={model}
+              model={variants.model}
               frame={frame}
               axis={variantAxis}
               segments={variants.segments}
               layout={variantShape}
+              deletions={variantMarks ?? undefined}
               width={frame.width}
               onHover={showTip}
             />

@@ -2,9 +2,15 @@ import type {
   BandAxis,
   DrawFrame,
   GraphNode,
+  LaneDeletion,
   PangenomeModel,
 } from "./pangenomeModel";
-import { bpAtGraphX, graphXAtBp, referenceTicks } from "./pangenomeModel";
+import {
+  bpAtGraphX,
+  deletionText,
+  graphXAtBp,
+  referenceTicks,
+} from "./pangenomeModel";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Where the tube map puts things. No drawing here, so it can be tested.
@@ -51,6 +57,12 @@ import { bpAtGraphX, graphXAtBp, referenceTicks } from "./pangenomeModel";
    Inside a gap the tubes are drawn in turns: a couple from each bundle of
    tubes going between the same two items, then a couple from the next.
    Where bundles cross, neither lies wholly over the other.
+
+   A deletion whose far end is outside the band - the haplotype leaving the
+   reference for a place kilobases on, or coming back from one - is drawn
+   as one inside it is: its tube keeps a place over every column it skips,
+   out to the band's edge. Each deletion's size goes on that stretch of its
+   tube, as the bars write it in their white; see TubeDeletion.
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** Room at the top for the ruler. */
@@ -115,6 +127,25 @@ export interface TrackEntry {
   joined: boolean;
 }
 
+/** A deletion along a haplotype's tube: the entries of its track passing
+    over what it skips, and what is written on them. */
+export interface TubeDeletion {
+  lane: number;
+  from: number;
+  to: number;
+  /** "−5,045 bp →"; see deletionText. */
+  text: string;
+  /** Which end of the stretch the label keeps to: the one where the
+      haplotype leaves the reference, or rejoins it, when the other is
+      outside the band. */
+  align: "start" | "end" | "center";
+  bp: number;
+  refFrom: number;
+  refTo: number;
+  /** Its far end is outside the band. */
+  open: boolean;
+}
+
 export interface TubeStacks {
   /** Each column's items, top to bottom. */
   columns: TubeItem[][];
@@ -122,6 +153,7 @@ export interface TubeStacks {
   tracks: TrackEntry[][];
   tubeH: number;
   height: number;
+  deletions: TubeDeletion[];
 }
 
 /** The tube map's axis: the linear view's arithmetic, with the gaps let in. */
@@ -189,6 +221,15 @@ export interface TubeSpan {
   right: number;
 }
 
+/** Where a deletion's label can go: the straight stretch of its tube at
+    the end the label keeps to, in pixels. */
+export interface TubeDeletionLabel {
+  deletion: TubeDeletion;
+  x0: number;
+  x1: number;
+  y: number;
+}
+
 export interface TubeGeometry {
   tubeH: number;
   stacks: TubeStacks;
@@ -205,6 +246,7 @@ export interface TubeGeometry {
   seams: TubeSeam[];
   /** Each lane's pieces, left to right, for the hover. */
   byLane: TubePiece[][];
+  deletionLabels: TubeDeletionLabel[];
 }
 
 interface Visit {
@@ -225,15 +267,21 @@ const movesOn = (a: Visit, b: Visit) =>
 export function tubeStacks(model: PangenomeModel, tubeH: number): TubeStacks {
   const laneIndex = new Map(model.lanes.map((lane) => [lane.key, lane.index]));
   const columnCount = model.columns.length;
+  const lastColumn = columnCount - 1;
 
-  const visits: Visit[][] = model.lanes.map((lane) => {
+  /* Each lane's visits, and which visit each of its steps is. */
+  const visitOfStep: Array<Map<number, number>> = [];
+  const visits: Visit[][] = model.lanes.map((lane, l) => {
     const list: Visit[] = [];
-    for (const step of lane.steps) {
+    const of = new Map<number, number>();
+    lane.steps.forEach((step, i) => {
       const node = model.nodeById.get(step.node);
       if (node) {
+        of.set(i, list.length);
         list.push({ node, start: step.start, end: step.end, segment: step.segment });
       }
-    }
+    });
+    visitOfStep[l] = of;
     return list;
   });
 
@@ -260,6 +308,41 @@ export function tubeStacks(model: PangenomeModel, tubeH: number): TubeStacks {
         if (!inColumn[c].has(lane)) passing[c].add(lane);
       }
     }
+  });
+
+  /* A deletion running out of the band keeps its haplotype a place over
+     every column from the node it leaves the reference at to the band's
+     edge - or from the edge to the node it rejoins at - as one inside the
+     band does over the columns it skips. Only for a haplotype reading the
+     reference forwards, whose tube runs left to right, and only where it
+     reads nothing further that way in the band, which the tube would run
+     into. */
+  const outFrom: Array<Map<number, LaneDeletion>> = [];
+  const inTo: Array<Map<number, LaneDeletion>> = [];
+  visits.forEach((list, lane) => {
+    const out = new Map<number, LaneDeletion>();
+    const into = new Map<number, LaneDeletion>();
+    for (const deletion of model.lanes[lane].deletions ?? []) {
+      if (deletion.open === null || !deletion.forward) continue;
+      const v = visitOfStep[lane].get(deletion.step);
+      if (v === undefined) continue;
+      const column = list[v].node.column;
+      const right = deletion.open === "right";
+      if (
+        list.some((other) =>
+          right ? other.node.column > column : other.node.column < column,
+        )
+      ) {
+        continue;
+      }
+      (right ? out : into).set(v, deletion);
+      const [from, to] = right ? [column + 1, lastColumn] : [0, column - 1];
+      for (let c = from; c <= to; c++) {
+        if (!inColumn[c].has(lane)) passing[c].add(lane);
+      }
+    }
+    outFrom[lane] = out;
+    inTo[lane] = into;
   });
 
   const top = TUBE_RULER_H + TUBE_TOP_PAD;
@@ -332,7 +415,9 @@ export function tubeStacks(model: PangenomeModel, tubeH: number): TubeStacks {
   });
 
   /* Each lane's tube: its visits, with an entry for every column stepped
-     over in between. */
+     over in between - and its deletions, by the entries passing over what
+     each skips. */
+  const deletions: TubeDeletion[] = [];
   const tracks: TrackEntry[][] = visits.map((list, lane) => {
     const track: TrackEntry[] = [];
     const add = (
@@ -357,35 +442,105 @@ export function tubeStacks(model: PangenomeModel, tubeH: number): TubeStacks {
       return true;
     };
 
-    list.forEach((visit, i) => {
-      const previous = list[i - 1];
-      if (!previous || !movesOn(previous, visit) || !track.length) {
-        add(
-          visit.node.column,
-          itemByNode.get(visit.node.id),
-          visit.node,
-          visit,
-          visit.start,
-        );
-        return;
-      }
-      /* Carried on column by column: over each one stepped past, then into
-         this visit's node. Should a column have no place for it, the tube
-         stops there and resumes at the next visit, as a seam. */
-      for (let c = previous.node.column + 1; c <= visit.node.column; c++) {
-        const into = c === visit.node.column;
-        const node = into ? visit.node : inColumn[c].get(lane);
+    /* Over columns `from` to `to` without entering them, each entry joined
+       on from the one before - and from the entry already last, when
+       `joinFirst`. The entries added, or null. */
+    const passOver = (
+      from: number,
+      to: number,
+      visit: Visit,
+      joinFirst: boolean,
+    ) => {
+      const first = track.length;
+      for (let c = from; c <= to; c++) {
+        const node = inColumn[c].get(lane);
         const item = node ? itemByNode.get(node.id) : passItem[c];
-        const last = track[track.length - 1];
-        const walked = into ? visit.node : null;
-        if (!add(c, item, walked, visit, into ? visit.start : null)) return;
-        last.joined = true;
+        const before = track[track.length - 1];
+        if (!add(c, item, null, visit, null)) break;
+        if (before && (track.length - 1 > first || joinFirst)) before.joined = true;
+      }
+      return track.length > first ? { from: first, to: track.length - 1 } : null;
+    };
+    const mark = (
+      deletion: LaneDeletion,
+      from: number,
+      to: number,
+      align: TubeDeletion["align"],
+    ) =>
+      deletions.push({
+        lane,
+        from,
+        to,
+        text: deletionText(deletion.bp, deletion.open),
+        align,
+        bp: deletion.bp,
+        refFrom: deletion.refFrom,
+        refTo: deletion.refTo,
+        open: deletion.open !== null,
+      });
+    /* Which entry each visit is, -1 where its tube had no place for it. */
+    const entryOf: number[] = [];
+
+    list.forEach((visit, i) => {
+      entryOf[i] = -1;
+      const previous = list[i - 1];
+      const into = itemByNode.get(visit.node.id);
+      /* In from the band's edge, over what a deletion skips. */
+      const comingIn = inTo[lane].get(i);
+      const passedIn =
+        comingIn && visit.node.column > 0
+          ? passOver(0, visit.node.column - 1, visit, false)
+          : null;
+      if (passedIn) {
+        const before = track[track.length - 1];
+        if (!add(visit.node.column, into, visit.node, visit, visit.start)) return;
+        before.joined = true;
+        mark(comingIn!, passedIn.from, passedIn.to, "end");
+      } else if (!previous || !movesOn(previous, visit) || !track.length) {
+        if (!add(visit.node.column, into, visit.node, visit, visit.start)) return;
+      } else {
+        /* Carried on column by column: over each one stepped past, then
+           into this visit's node. Should a column have no place for it, the
+           tube stops there and resumes at the next visit, as a seam. */
+        for (let c = previous.node.column + 1; c <= visit.node.column; c++) {
+          const here = c === visit.node.column;
+          const node = here ? visit.node : inColumn[c].get(lane);
+          const item = node ? itemByNode.get(node.id) : passItem[c];
+          const last = track[track.length - 1];
+          const walked = here ? visit.node : null;
+          if (!add(c, item, walked, visit, here ? visit.start : null)) return;
+          last.joined = true;
+        }
+      }
+      entryOf[i] = track.length - 1;
+      /* Out to the band's edge, over what a deletion skips. */
+      const goingOut = outFrom[lane].get(i);
+      if (goingOut && visit.node.column < lastColumn) {
+        const passed = passOver(visit.node.column + 1, lastColumn, visit, true);
+        if (passed) mark(goingOut, passed.from, passed.to, "start");
       }
     });
+
+    /* A deletion inside the band, on the entries between the visits either
+       side of it - where its tube does pass over what it skips, joined
+       through nothing but such entries. */
+    for (const deletion of model.lanes[lane].deletions ?? []) {
+      if (deletion.open !== null || !deletion.forward) continue;
+      const v = visitOfStep[lane].get(deletion.step);
+      if (v === undefined) continue;
+      const a = entryOf[v];
+      const b = entryOf[v + 1];
+      if (!(a >= 0) || !(b > a + 1)) continue;
+      let through = true;
+      for (let k = a; k < b && through; k++) {
+        if (!track[k].joined || (k > a && track[k].node !== null)) through = false;
+      }
+      if (through) mark(deletion, a + 1, b - 1, "center");
+    }
     return track;
   });
 
-  return { columns, tracks, tubeH, height: deepest + TUBE_FOOT_PAD };
+  return { columns, tracks, tubeH, height: deepest + TUBE_FOOT_PAD, deletions };
 }
 
 /**
@@ -818,6 +973,34 @@ export function buildTubeGeometry(
   }
   for (const list of byLane) list.sort((p, q) => p.x0 - q.x0 || p.x1 - q.x1);
 
+  /* Where each deletion's label can go: the straight stretch of its tube
+     at the end it keeps to - on from its first entry for one leaving the
+     reference, back from its last for one rejoining it, and all of one
+     height for one inside the band. */
+  const deletionLabels: TubeDeletionLabel[] = [];
+  for (const deletion of stacks.deletions) {
+    const track = tracks[deletion.lane];
+    let from = deletion.from;
+    let to = deletion.to;
+    if (deletion.align === "start") {
+      to = from;
+      while (to < deletion.to && track[to + 1].y === track[from].y) to += 1;
+    } else if (deletion.align === "end") {
+      from = to;
+      while (from > deletion.from && track[from - 1].y === track[to].y) from -= 1;
+    } else if (
+      track.slice(from, to + 1).some((entry) => entry.y !== track[from].y)
+    ) {
+      continue;
+    }
+    deletionLabels.push({
+      deletion,
+      x0: spans[deletion.lane][from].left,
+      x1: spans[deletion.lane][to].right,
+      y: track[from].y,
+    });
+  }
+
   return {
     tubeH,
     stacks,
@@ -829,6 +1012,7 @@ export function buildTubeGeometry(
     crossings,
     seams,
     byLane,
+    deletionLabels,
   };
 }
 

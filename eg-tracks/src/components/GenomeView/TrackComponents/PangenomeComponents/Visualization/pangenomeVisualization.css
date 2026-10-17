@@ -1190,6 +1190,19 @@
   stroke-dasharray: 5 3;
 }
 
+/* A deletion's size: after its line out of the band, or on its arc.
+   Grey and small, as the bars write it in their white, with a halo of the
+   ground so the lines under it do not run through it. */
+.pgv-variant-exit {
+  font-size: 10px;
+  fill: #6b7280;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
 /* A walk's length under its bubble, a stretch's over its dash. */
 .pgv-variant-length {
   font-size: 9px;

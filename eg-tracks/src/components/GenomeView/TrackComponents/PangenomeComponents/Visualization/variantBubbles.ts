@@ -1,4 +1,5 @@
 import type { BandAxis, PangenomeModel } from "./pangenomeModel";
+import { deletionText } from "./pangenomeModel";
 
 /* ══════════════════════════════════════════════════════════════════════════
    The variants view: each site drawn once, as its unique walks.
@@ -207,6 +208,22 @@ export function variantSegments(
   const shared = sharedColumns(model);
   const ranges = siteRanges(model, shared, minBp);
 
+  /* Where a deletion running out of the band leaves the reference, or
+     rejoins it, a shared stretch is cut in two: the haplotypes taking it
+     are in the stretch on one side and gone on the other, and grouped as
+     one box the tube map ran them through all of it. The columns a stretch
+     ends at. */
+  const cutAfter = new Set<number>();
+  for (const lane of model.lanes) {
+    for (const deletion of lane.deletions ?? []) {
+      if (deletion.open === null) continue;
+      const id = lane.steps[deletion.step]?.node;
+      const column = id === undefined ? undefined : model.nodeById.get(id)?.column;
+      if (column === undefined) continue;
+      cutAfter.add(deletion.open === "right" ? column : column - 1);
+    }
+  }
+
   const siteOf = (column: number) =>
     model.nodeById.get(columns[column].nodeIds[0]);
   const make = (
@@ -233,16 +250,23 @@ export function variantSegments(
   /* Sites and the shared stretches between them, covering every column. */
   const segments: VariantSegment[] = [];
   const segmentOfColumn = new Int32Array(columns.length).fill(-1);
+  const same = (from: number, to: number) => {
+    let start = from;
+    for (let c = from; c < to; c++) {
+      if (!cutAfter.has(c)) continue;
+      segments.push(make("same", start, c));
+      start = c + 1;
+    }
+    segments.push(make("same", start, to));
+  };
   let next = 0;
   for (const [from, to] of ranges) {
-    if (from > next) segments.push(make("same", next, from - 1));
+    if (from > next) same(next, from - 1);
     for (let c = from; c <= to; c++) segmentOfColumn[c] = segments.length;
     segments.push(make("site", from, to));
     next = to + 1;
   }
-  if (next < columns.length) {
-    segments.push(make("same", next, columns.length - 1));
-  }
+  if (next < columns.length) same(next, columns.length - 1);
 
   /* Every haplotype's walk through every site, in one pass over its steps. */
   const keys = segments.map(() => new Map<string, string[]>());
@@ -374,6 +398,14 @@ export interface VariantLayout {
     from: number;
     /** Goes over sites between, past a long deletion. */
     skips: boolean;
+    /** How high an arc over the sites it skips rises to; null for a link
+        that skips none. */
+    lift: number | null;
+    /** The haplotypes taking it, and the two sites it joins, as indices
+        into the segments. */
+    lanes: string[];
+    fromSegment: number;
+    toSegment: number;
   }>;
   /** Where the most common walks sit, and the shared stretches with them. */
   spineY: number;
@@ -487,6 +519,7 @@ export function variantLayout(
   const most = Math.max(1, ...sites.map(({ segment }) => segment.haplotypes));
   const lastSeen = new Map<string, string>();
   const counts = new Map<string, number>();
+  const lanesOf = new Map<string, string[]>();
   for (const { segment, i } of sites) {
     for (const walk of segment.walks) {
       const here = `${i}:${walk.index}`;
@@ -495,6 +528,9 @@ export function variantLayout(
         if (before !== undefined) {
           const key = `${before}>${here}`;
           counts.set(key, (counts.get(key) ?? 0) + 1);
+          const list = lanesOf.get(key);
+          if (list) list.push(lane);
+          else lanesOf.set(key, [lane]);
         }
         lastSeen.set(lane, here);
       }
@@ -506,6 +542,12 @@ export function variantLayout(
     const from = circleAt.get(a);
     const to = circleAt.get(b);
     if (!from || !to) continue;
+    /* Over sites it skips: drawn as an arc, so it does not run through
+       the bubbles between. */
+    const skips =
+      sites.findIndex(({ i }) => i === to.segment) -
+        sites.findIndex(({ i }) => i === from.segment) >
+      1;
     links.push({
       x1: from.cx + from.rx,
       y1: from.cy,
@@ -514,12 +556,158 @@ export function variantLayout(
       haplotypes,
       width: Math.max(1, LINK_MAX * Math.sqrt(haplotypes / most)),
       from: from.walk.index,
-      /* Over sites it skips: drawn as an arc, so it does not run through
-         the bubbles between. */
-      skips: sites.findIndex(({ i }) => i === to.segment) -
-        sites.findIndex(({ i }) => i === from.segment) > 1,
+      skips,
+      lift: skips ? Math.max(12, Math.min(from.cy, to.cy) - 28) : null,
+      lanes: lanesOf.get(key) ?? [],
+      fromSegment: from.segment,
+      toSegment: to.segment,
     });
   }
   return { circles, more, links, spineY, height: Math.ceil(bottom + FOOT) };
+}
+
+/**
+ * A deletion whose far end is outside the band, as the variants view marks
+ * it: a line out of the bubble its haplotypes last took to where they leave
+ * the reference, and its size after it - or the size, then a line in to
+ * where they rejoin it and on into the bubble they take next.
+ */
+export interface VariantExit {
+  side: "left" | "right";
+  /** Where they leave or rejoin the reference, in the band's pixels. */
+  x: number;
+  /** The edge of the bubble the line comes out of or goes into, and that
+      walk's number, for its colour; null where the haplotypes are on the
+      reference there, in a stretch everyone shares. */
+  from: { x: number; y: number; walk: number } | null;
+  text: string;
+  bp: number;
+  refFrom: number;
+  refTo: number;
+  lanes: string[];
+  width: number;
+}
+
+/** A long deletion's size, at the top of its arc over the sites it skips;
+    `room` is how wide the arc is, for whether it fits. */
+export interface VariantArcLabel {
+  x: number;
+  y: number;
+  text: string;
+  room: number;
+}
+
+/** Between the strip of shared stretches and the bubbles: where the lines
+    out of the band run and their sizes are written. */
+export const VARIANT_EXIT_Y = VARIANT_TOP - 6;
+
+/**
+ * The deletions the variants view marks: each running out of the band,
+ * from the haplotypes' deletions (see laneDeletions), grouped where they
+ * leave from one bubble at one place by the same jump; and the size of each
+ * long one inside the band, on its arc, where every haplotype taking the
+ * arc skips the same.
+ */
+export function variantDeletions(
+  model: PangenomeModel,
+  segments: VariantSegment[],
+  layout: VariantLayout,
+  axis: BandAxis,
+): { exits: VariantExit[]; arcs: VariantArcLabel[] } {
+  const most = Math.max(1, ...segments.map((segment) => segment.haplotypes));
+  /* The bubbles each haplotype is drawn in, left to right. */
+  const circlesOf = new Map<string, WalkCircle[]>();
+  for (const circle of layout.circles) {
+    for (const lane of circle.walk.lanes) {
+      const list = circlesOf.get(lane);
+      if (list) list.push(circle);
+      else circlesOf.set(lane, [circle]);
+    }
+  }
+
+  const exits = new Map<string, VariantExit>();
+  for (const lane of model.lanes) {
+    if (lane.isReference) continue;
+    for (const deletion of lane.deletions ?? []) {
+      if (deletion.open === null) continue;
+      const right = deletion.open === "right";
+      const at = right ? deletion.left : deletion.right;
+      if (at === null) continue;
+      /* Out of its last bubble before where it leaves, or into its first
+         after where it rejoins. */
+      const circles = circlesOf.get(lane.key) ?? [];
+      const circle = right
+        ? [...circles].reverse().find((c) => segments[c.segment].x1 <= at + 0.5)
+        : circles.find((c) => segments[c.segment].x0 >= at - 0.5);
+      const x = axis.px(at);
+      const key = [
+        deletion.open,
+        Math.round(x),
+        deletion.refFrom,
+        deletion.refTo,
+        circle ? `${circle.segment}:${circle.walk.index}` : "",
+      ].join("|");
+      const known = exits.get(key);
+      if (known) {
+        known.lanes.push(lane.key);
+        continue;
+      }
+      exits.set(key, {
+        side: deletion.open,
+        x,
+        from: circle
+          ? {
+              x: right ? circle.cx + circle.rx : circle.cx - circle.rx,
+              y: circle.cy,
+              walk: circle.walk.index,
+            }
+          : null,
+        text: deletionText(deletion.bp, deletion.open),
+        bp: deletion.bp,
+        refFrom: deletion.refFrom,
+        refTo: deletion.refTo,
+        lanes: [lane.key],
+        width: 1,
+      });
+    }
+  }
+  for (const exit of exits.values()) {
+    exit.width = Math.max(1, LINK_MAX * Math.sqrt(exit.lanes.length / most));
+  }
+
+  /* A long deletion's size on its arc, where every haplotype taking the
+     arc makes one jump between its two sites and they all skip as much. */
+  const deletionsOf = new Map(
+    model.lanes.map((lane) => [lane.key, lane.deletions ?? []]),
+  );
+  const arcs: VariantArcLabel[] = [];
+  for (const link of layout.links) {
+    if (link.lift === null) continue;
+    const from = segments[link.fromSegment];
+    const to = segments[link.toSegment];
+    const sizes = new Set<number>();
+    for (const lane of link.lanes) {
+      const jumps = (deletionsOf.get(lane) ?? []).filter(
+        (deletion) =>
+          deletion.open === null &&
+          deletion.left !== null &&
+          deletion.right !== null &&
+          deletion.left >= from.x0 - 0.5 &&
+          deletion.right <= to.x1 + 0.5 &&
+          deletion.bp > SITE_JUMP_BP,
+      );
+      sizes.add(jumps.length === 1 ? jumps[0].bp : -1);
+    }
+    if (sizes.size !== 1 || sizes.has(-1)) continue;
+    const [bp] = [...sizes];
+    arcs.push({
+      x: (link.x1 + link.x2) / 2,
+      /* The top of the arc: its curve at half way. */
+      y: 0.75 * link.lift + 0.125 * (link.y1 + link.y2),
+      text: deletionText(bp, null),
+      room: link.x2 - link.x1 - 24,
+    });
+  }
+  return { exits: [...exits.values()], arcs };
 }
 

@@ -115,9 +115,12 @@ export function compressedModel(
   const edges = new Map<string, GraphEdge>();
   const lanes: Lane[] = model.lanes.map((lane) => {
     const steps: LaneStep[] = [];
+    /* Which grouped step each of the lane's own steps went into, for its
+       deletions. */
+    const moved = new Map<number, number>();
     const push = (id: string, start: number, piece: number, end: number) => {
       const node = nodeById.get(id);
-      if (!node) return;
+      if (!node) return false;
       const last = steps[steps.length - 1];
       /* The same box twice running is one visit, whatever piece of the walk
          each came from: the band's windows overlap, and a walk ending in a
@@ -125,7 +128,7 @@ export function compressedModel(
          the last of the haplotype's own bases in it does. */
       if (last && last.node === id) {
         last.end = Math.max(last.end, end);
-        return;
+        return true;
       }
       if (last && last.segment === piece) {
         const key = `${last.node}>${id}`;
@@ -143,13 +146,14 @@ export function compressedModel(
       if (node.lanes[node.lanes.length - 1] !== lane.key) {
         node.lanes.push(lane.key);
       }
+      return true;
     };
     let previous = -1;
-    for (const step of lane.steps) {
+    lane.steps.forEach((step, i) => {
       const column = model.nodeById.get(step.node)?.column;
-      if (column === undefined) continue;
+      if (column === undefined) return;
       const at = segmentOfColumn[column];
-      if (at < 0) continue;
+      if (at < 0) return;
       /* Sites jumped over between the last segment and this one, read as
          the walk that takes nothing. */
       const last = steps[steps.length - 1];
@@ -163,14 +167,14 @@ export function compressedModel(
         }
       }
       const segment = segments[at];
-      if (segment.kind === "same") {
-        push(sameId(at), step.start, step.segment, step.end);
-      } else {
-        const index = walkOf[at].get(lane.key);
-        if (index) push(walkId(at, index), step.start, step.segment, step.end);
-      }
+      const index = segment.kind === "same" ? 0 : walkOf[at].get(lane.key);
+      const pushed =
+        segment.kind === "same"
+          ? push(sameId(at), step.start, step.segment, step.end)
+          : !!index && push(walkId(at, index), step.start, step.segment, step.end);
+      if (pushed) moved.set(i, steps.length - 1);
       previous = at;
-    }
+    });
 
     /* Its pieces, as the model's lanes carry them. */
     const pieces: LaneSegment[] = [];
@@ -188,8 +192,21 @@ export function compressedModel(
       }
     }
     const order = steps.map((step) => step.node);
+    /* Its deletions, on the boxes they leave from and rejoin at. One whose
+       two ends went into one box - inside a shared stretch, or a site - is
+       not one the boxes show. */
+    const deletions = (lane.deletions ?? []).flatMap((deletion) => {
+      const step = moved.get(deletion.step);
+      if (step === undefined) return [];
+      if (deletion.open === null) {
+        const other = moved.get(deletion.forward ? deletion.step + 1 : deletion.step - 1);
+        if (other === undefined || other === step) return [];
+      }
+      return [{ ...deletion, step }];
+    });
     return {
       ...lane,
+      deletions,
       segments: pieces.filter(Boolean),
       order,
       steps,

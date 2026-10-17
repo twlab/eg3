@@ -1,10 +1,12 @@
 import { memo, useEffect, useState } from "react";
 import VariantCard from "./VariantCard";
 import type { BandAxis, DrawFrame, PangenomeModel } from "./pangenomeModel";
-import { REF_COLOR } from "./pangenomeModel";
+import { REF_COLOR, deletionSize } from "./pangenomeModel";
 import type { HoverTarget } from "./LinearPathView";
-import { VARIANT_SAME_Y, bpLabel } from "./variantBubbles";
+import { VARIANT_EXIT_Y, VARIANT_SAME_Y, bpLabel } from "./variantBubbles";
 import type {
+  VariantArcLabel,
+  VariantExit,
   VariantLayout,
   VariantSegment,
   VariantWalk,
@@ -24,6 +26,13 @@ import type {
 const LABEL_CHAR_PX = 5.5;
 /** A circle this small has no room for its count inside it. */
 const LABEL_MIN_R = 7;
+/** How far a line out of the band runs level before its size, and how far
+    from a bubble it turns up to that level at the least. */
+const EXIT_STUB = 10;
+const EXIT_TURN = 8;
+/** The line out of the band where its haplotypes are on the reference, in
+    a stretch everyone shares: the shared stretches' own grey. */
+const EXIT_SHARED = "#8a8f97";
 
 interface VariantBubbleViewProps {
   model: PangenomeModel;
@@ -31,6 +40,9 @@ interface VariantBubbleViewProps {
   axis: BandAxis;
   segments: VariantSegment[];
   layout: VariantLayout;
+  /** The deletions running out of the band, and the long ones' sizes on
+      their arcs; see variantDeletions. */
+  deletions?: { exits: VariantExit[]; arcs: VariantArcLabel[] };
   /** The drawing's width: the band. */
   width: number;
   onHover: (target: HoverTarget | null) => void;
@@ -53,6 +65,7 @@ function VariantBubbleView({
   axis,
   segments,
   layout,
+  deletions,
   width,
   onHover,
 }: VariantBubbleViewProps) {
@@ -67,6 +80,57 @@ function VariantBubbleView({
     ).toLocaleString()} bp of reference)`;
 
   const height = layout.height;
+
+  /* Each line out of the band: from its bubble up to the level the sizes
+     are written at, and on a little past where the haplotypes leave the
+     reference - or in from there and down into the bubble they take next.
+     Where they are on the reference there, it starts from the strip of
+     shared stretches instead. With where its size goes, kept clear of the
+     sizes already placed. */
+  const exitY = VARIANT_EXIT_Y;
+  const placedText: Array<[number, number]> = [];
+  const exitShapes = (deletions?.exits ?? []).map((exit) => {
+    const right = exit.side === "right";
+    const turn = exit.from
+      ? right
+        ? Math.max(exit.x, exit.from.x + EXIT_TURN)
+        : Math.min(exit.x, exit.from.x - EXIT_TURN)
+      : exit.x;
+    const end = right ? turn + EXIT_STUB : turn - EXIT_STUB;
+    let d: string;
+    if (exit.from) {
+      const mid = (exit.from.x + turn) / 2;
+      const bend = `C${mid} ${exit.from.y} ${mid} ${exitY} ${turn} ${exitY}`;
+      d = right
+        ? `M${exit.from.x} ${exit.from.y} ${bend} L${end} ${exitY}`
+        : `M${end} ${exitY} L${turn} ${exitY} C${mid} ${exitY} ${mid} ${exit.from.y} ${exit.from.x} ${exit.from.y}`;
+    } else {
+      d = right
+        ? `M${turn} ${VARIANT_SAME_Y + 3} L${turn} ${exitY} L${end} ${exitY}`
+        : `M${end} ${exitY} L${turn} ${exitY} L${turn} ${VARIANT_SAME_Y + 3}`;
+    }
+    const textX = right ? end + 3 : end - 3;
+    const span: [number, number] = right
+      ? [textX, textX + exit.text.length * LABEL_CHAR_PX]
+      : [textX - exit.text.length * LABEL_CHAR_PX, textX];
+    const clear = !placedText.some(([a, b]) => span[0] < b + 4 && a < span[1] + 4);
+    if (clear) placedText.push(span);
+    return { exit, d, textX, showText: clear };
+  });
+  const exitTip = (event: React.MouseEvent, exit: VariantExit) =>
+    onHover({
+      x: event.clientX,
+      y: event.clientY,
+      title: `${exit.lanes.length} haplotype${exit.lanes.length === 1 ? "" : "s"}`,
+      lines: [
+        `a deletion of ${deletionSize(exit.bp)}: ${exit.lanes.length === 1 ? "its" : "their"} walk skips ${contig}:${exit.refFrom.toLocaleString()}–${exit.refTo.toLocaleString()}`,
+        `which runs past this band, to the ${exit.side}`,
+        ...exit.lanes
+          .slice(0, 8)
+          .map((key) => model.lanes.find((lane) => lane.key === key)?.label ?? key),
+        ...(exit.lanes.length > 8 ? [`and ${exit.lanes.length - 8} more`] : []),
+      ],
+    });
 
   const open = (
     segment: number,
@@ -120,9 +184,7 @@ function VariantBubbleView({
           const bend = (link.x2 - link.x1) / 2;
           /* Past a long deletion, over the top of the sites it skips rather
              than through their bubbles. */
-          const lift = link.skips
-            ? Math.max(12, Math.min(link.y1, link.y2) - 28)
-            : null;
+          const lift = link.lift;
           return (
             <path
               key={`link-${i}`}
@@ -139,6 +201,23 @@ function VariantBubbleView({
             </path>
           );
         })}
+
+        {/* Out of the band, past a deletion running to its edge: under the
+            bubbles, as the links are. */}
+        {exitShapes.map(({ exit, d }, i) => (
+          <path
+            key={`exit-${i}`}
+            className="pgv-variant-link pgv-variant-skip"
+            stroke={
+              exit.from
+                ? LINK_COLORS[(exit.from.walk - 1) % LINK_COLORS.length]
+                : EXIT_SHARED
+            }
+            d={d}
+            strokeWidth={exit.width}
+            onMouseMove={(event) => exitTip(event, exit)}
+          />
+        ))}
 
         {/* Stretches everyone shares: a dash, much shorter than the stretch. */}
         {segments.map((segment, i) => {
@@ -266,6 +345,36 @@ function VariantBubbleView({
             </text>
           );
         })}
+
+        {/* Each deletion's size: after the line out of the band, and at
+            the top of a long one's arc where it fits there. */}
+        {exitShapes.map(({ exit, textX, showText }, i) =>
+          showText ? (
+            <text
+              key={`exit-len-${i}`}
+              className="pgv-variant-exit"
+              x={textX}
+              y={exitY}
+              textAnchor={exit.side === "right" ? "start" : "end"}
+              onMouseMove={(event) => exitTip(event, exit)}
+            >
+              {exit.text}
+            </text>
+          ) : null,
+        )}
+        {(deletions?.arcs ?? []).map((arc, i) =>
+          arc.text.length * LABEL_CHAR_PX < arc.room ? (
+            <text
+              key={`arc-len-${i}`}
+              className="pgv-variant-exit"
+              x={arc.x}
+              y={arc.y}
+              textAnchor="middle"
+            >
+              {arc.text}
+            </text>
+          ) : null,
+        )}
 
         {layout.more.map(({ segment: at, cx, y, count }) => (
           <text
