@@ -36,6 +36,9 @@ export interface RawPath {
   haplotype?: number;
   is_reference?: boolean;
   path?: RawStep[];
+  /** The GBZ path the walk is a piece of: one continuous walk, whatever
+      the window cut it into. */
+  path_handle?: string;
 }
 
 export interface RawEdge {
@@ -76,6 +79,9 @@ export interface GraphNode {
       when that is outside this band: its place is there, not here. Such a
       node is untied here too. */
   elsewhere?: number;
+  /** For a copy - a walk's second time or more over a node, within one
+      piece of it - the node it copies; see buildModel. */
+  copyOf?: string;
 }
 
 /**
@@ -125,6 +131,9 @@ export interface LaneSegment {
   /** Haplotype coordinates of the walk, when the walk name carries them. */
   start: number | null;
   end: number | null;
+  /** The contig they are coordinates on - the lane's own, unless the lane
+      joins a haplotype's contigs; see oneLanePerHaplotype. */
+  contig?: string;
 }
 
 export interface Lane {
@@ -380,6 +389,10 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
   const sequences = new Map<string, string>();
   rawNodes.forEach((n) => sequences.set(n.id, n.sequence ?? ""));
+  /* Every node, and the copies walks are given of nodes they read again
+     (see the lanes below); a copy's own id is `node~pass`. */
+  const nodeList: Array<{ id: string; sequence?: string }> = [...rawNodes];
+  const copyOf = new Map<string, string>();
 
   /* ── Lanes: stitch each haplotype's walks back together ──────────────── */
   interface Draft {
@@ -388,7 +401,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     haplotype: number;
     isReference: boolean;
     firstSeen: number;
-    segments: LaneSegment[];
+    segments: Array<LaneSegment & { path?: string }>;
   }
 
   const drafts = new Map<string, Draft>();
@@ -443,6 +456,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       nodes: (raw.path ?? []).map((s) => s.id),
       start: parsed.start,
       end: parsed.end,
+      path: raw.path_handle,
     });
   });
   console.log(drafts);
@@ -454,10 +468,51 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     })
     .map(([key, draft], index) => {
       /* Walks of one haplotype arrive out of order; genomic start restores it. */
-      const segments = draft.segments
+      const sorted = draft.segments
         .slice()
         .sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
         .filter((s) => s.nodes.length > 0);
+      /* A walk that comes back over nodes it has already passed - a stretch
+         the haplotype has twice in a row - reads them the
+         second time as copies: the same bases, nodes of their own, so the
+         second pass is laid out where it is in the haplotype, after the
+         first, as the insertion it is, and the reference makes room for it.
+         Laid over the first pass, as it was, the haplotype read as having
+         two alleles at one place, and whatever it read between the passes
+         could land as an alternative to the reference's next node: A B A C
+         against the reference's A C put B in C's column, a substitution,
+         where it is an insertion of B and A again. Copies are numbered by
+         pass, not by haplotype, so haplotypes carrying the same
+         duplication share them and line up. Passes are counted along the
+         GBZ path, across the pieces the window cuts it into: zoomed in, the
+         two passes of HG02074#2's 14 kb duplication at chr14:99,979,807 are
+         pieces of their own, and counted per piece they were laid over each
+         other where the wider view had the second as an insertion. A stretch
+         read again on another GBZ path is left as it is: where that path
+         lies against this one, the graph does not say. */
+      const passesOn = new Map<string, Map<string, number>>();
+      const segments = sorted.map(({ path, ...segment }, k) => {
+        const along = path ?? `piece ${k}`;
+        const passes = passesOn.get(along) ?? new Map<string, number>();
+        passesOn.set(along, passes);
+        return {
+          ...segment,
+          contig: draft.contig,
+          nodes: segment.nodes.map((id) => {
+            const pass = (passes.get(id) ?? 0) + 1;
+            passes.set(id, pass);
+            if (pass === 1) return id;
+            const copy = `${id}~${pass}`;
+            if (!copyOf.has(copy)) {
+              copyOf.set(copy, id);
+              const sequence = sequences.get(id) ?? "";
+              sequences.set(copy, sequence);
+              nodeList.push({ id: copy, sequence });
+            }
+            return copy;
+          }),
+        };
+      });
       /* Each walk carries its own start, so positions are counted from there
          rather than from the reference. A walk whose name had no coordinates
          continues from wherever the previous one ended. */
@@ -511,7 +566,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
   /* ── Nodes: which lanes touch them ───────────────────────────────────── */
   const laneKeys = new Map<string, string[]>();
-  rawNodes.forEach((n) => laneKeys.set(n.id, []));
+  nodeList.forEach((n) => laneKeys.set(n.id, []));
 
   /* The lanes are walked one after another, so a node already holds this
      lane exactly when this lane was the last to add itself. Asking that
@@ -593,7 +648,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      where it leaves in another (the MHC's 2 kb insertion at 4,074,838-849,
      loaded straight there and panned to). What such a node is tied to is
      said below instead. */
-  const ids = rawNodes.map((n) => n.id);
+  const ids = nodeList.map((n) => n.id);
   const level = new Map<string, number>();
   ids.forEach((id) => level.set(id, 0));
 
@@ -627,9 +682,43 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   for (const [id, at] of Object.entries(referenceAt)) {
     if (level.has(id) && !onReferenceWalk.has(id)) elsewhereAt.set(id, at);
   }
+  /* A copy is where its walk reads it: right after the node before it.
+     Read after a node the reference has outside this band, it is out there
+     too, and so is the copy after it, the walk carrying on there; read after
+     one in the band, it is an insertion here. Taken from its original, as
+     this was, every copy of a node outside the band went outside with it: a
+     query of B-C, on the reference's A B C D E, of a haplotype reading
+     A B A C A D A E drew neither the A it reads between B and C nor the one
+     after C, and the haplotype read as the reference across B|C. */
+  for (const lane of lanes) {
+    for (const segment of lane.segments) {
+      for (let i = 1; i < segment.nodes.length; i++) {
+        const id = segment.nodes[i];
+        if (!copyOf.has(id) || onReferenceWalk.has(id)) continue;
+        const at = elsewhereAt.get(segment.nodes[i - 1]);
+        if (at !== undefined) elsewhereAt.set(id, at);
+      }
+    }
+  }
+
+  /* A walk going back into a stretch it has read before steps into a copy -
+     X → A~2 - where the graph's link is X → A, which no walk here takes as
+     it is. Laid out, that link tied X in front of the first pass. In a
+     window holding both passes it closes a loop and is cut below, but
+     zoomed in on where the second pass starts - HG02074#2 at
+     chr14:99,965,778 - nothing cut it, and the reference made room there
+     for what the wider view lays 14 kb on. */
+  const original = (id: string) => copyOf.get(id) ?? id;
+  const intoRepeat = new Set<string>();
+  for (const edge of edges) {
+    if (copyOf.has(edge.to)) {
+      intoRepeat.add(`${original(edge.from)}>${original(edge.to)}`);
+    }
+  }
 
   const layoutEdges: Array<{ from: string; to: string }> = edges
     .filter(({ from, to }) => !elsewhereAt.has(from) && !elsewhereAt.has(to))
+    .filter((edge) => edge.lanes.length > 0 || !intoRepeat.has(edge.key))
     .map(({ from, to }) => ({ from, to }));
   console.log(layoutEdges, lanes);
   for (const lane of lanes) {
@@ -964,6 +1053,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         refEnd,
         ...(reached.has(id) || leadsTo.has(id) ? {} : { untied: true }),
         ...(elsewhereAt.has(id) ? { elsewhere: elsewhereAt.get(id) } : {}),
+        ...(copyOf.has(id) ? { copyOf: copyOf.get(id) } : {}),
       });
     });
     rowCount = Math.max(rowCount, nodeIds.length + indent);
@@ -981,7 +1071,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     if (!lane.isReference) lane.deletions = laneDeletions(lane, nodeById);
   }
 
-  /* DEBUG-PROBE */ const __debugModel = {
+  return {
     nodes: ids.map((id) => nodeById.get(id)!).filter(Boolean),
     nodeById,
     columns,
@@ -993,12 +1083,72 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     referenceInterval,
     carriers: result?.carriers,
   };
-  /* DEBUG-PROBE */ ((globalThis as any).__pgvDebug ??= []).push({
-    raw: result,
-    model: __debugModel,
-  });
-  ((globalThis as any).__pgvModels ??= []).push(__debugModel);
-  /* DEBUG-PROBE */ return __debugModel;
+}
+
+/**
+ * The model with each haplotype's contigs in one lane: what its row of the
+ * linear view draws, one bar. A haplotype comes as a lane per contig, and
+ * where two of its contigs read one place - HG02074#2's 061 and 045 over
+ * chr14:99,966,113 on - its row was two bars, one a dupe of the other.
+ * Joined, the bar draws one reading there and the cards list the rest as
+ * the place's dupes. The contig with the most bases here goes first, so its
+ * reading is the one drawn where they meet; each piece keeps its contig, for
+ * the cards to say whose coordinates are whose. Every haplotype's lane is
+ * keyed by its name, joined or not, so the view can match a bar to the
+ * lanes a node lists - per contig - by name.
+ */
+const joinedByModel = new WeakMap<PangenomeModel, PangenomeModel>();
+export function oneLanePerHaplotype(model: PangenomeModel): PangenomeModel {
+  const known = joinedByModel.get(model);
+  if (known) return known;
+  const byLabel = new Map<string, Lane[]>();
+  for (const lane of model.lanes) {
+    if (lane.isReference) continue;
+    const group = byLabel.get(lane.label);
+    if (group) group.push(lane);
+    else byLabel.set(lane.label, [lane]);
+  }
+  const lanes: Lane[] = [];
+  for (const lane of model.lanes) {
+    if (lane.isReference) {
+      lanes.push(lane);
+      continue;
+    }
+    const group = byLabel.get(lane.label);
+    if (!group || group[0] !== lane) continue;
+    const ordered = [...group].sort((a, b) => b.bp - a.bp || a.index - b.index);
+    lanes.push(joinLanes(ordered));
+  }
+  const joined = { ...model, lanes };
+  joinedByModel.set(model, joined);
+  return joined;
+}
+
+/** A haplotype's lanes as one, the first given first: its pieces, its
+    steps renumbered to them, its deletions to its steps. */
+function joinLanes(lanes: Lane[]): Lane {
+  const [main] = lanes;
+  const segments: LaneSegment[] = [];
+  const steps: LaneStep[] = [];
+  const order: string[] = [];
+  const deletions: LaneDeletion[] = [];
+  const nodeSet = new Set<string>();
+  let bp = 0;
+  for (const lane of lanes) {
+    const pieces = segments.length;
+    const before = steps.length;
+    for (const segment of lane.segments) {
+      segments.push({ ...segment, contig: segment.contig ?? lane.contig });
+    }
+    for (const step of lane.steps) steps.push({ ...step, segment: step.segment + pieces });
+    order.push(...lane.order);
+    for (const deletion of lane.deletions ?? []) {
+      deletions.push({ ...deletion, step: deletion.step + before });
+    }
+    lane.nodeSet.forEach((id) => nodeSet.add(id));
+    bp += lane.bp;
+  }
+  return { ...main, key: main.label, segments, steps, order, nodeSet, bp, deletions };
 }
 
 /**

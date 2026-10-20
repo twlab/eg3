@@ -83,6 +83,9 @@ export interface ExampleRegion {
       reference genomes' haplotypes and turns the repeat tracks off, so
       only the haplotypes against the reference are drawn. */
   alignmentTest?: boolean;
+  /** The haplotypes to pick, as `sample#haplotype`: picking the region
+      picks these alone. */
+  haplotypes?: string[];
 }
 
 /**
@@ -115,6 +118,50 @@ export const exampleRegions: ExampleRegion[] = [
     contig: "chr6",
     start: 32_340_200,
     end: 32_340_320,
+  },
+  {
+    label: "Same-bp duplicate in HG01943#1",
+    note: "HG01943#1 covers this stretch on two contigs: its main chr6 contig (JBHIIK010000009.1) and an unplaced one (JBHIIK010000061.1), which leaves here for 70,591,310, 109 kb back. The contigs were never joined, so nothing orders one copy against the other: its bar shows them as two rows",
+    sample: "CHM13",
+    contig: "chr6",
+    start: 70_699_900,
+    end: 70_701_300,
+  },
+  {
+    label: "Tandem duplication in HG02074#2",
+    note: "HG02074#2's contig JBHIGL010000061.1 reads about 14 kb of 99,965,778-99,979,807 twice in a row, in one walk: the second pass is drawn after the first, as an insertion at 99,979,807: the hatched stretch on its first row, across the room the reference makes. Its second row is another contig (JBHIGL010000045.1) on the same bases, a same-bp duplicate. Picking it picks HG02074#2 alone",
+    sample: "CHM13",
+    contig: "chr14",
+    start: 99_955_000,
+    end: 99_985_000,
+    haplotypes: ["HG02074#2"],
+  },
+  {
+    label: "Tandem duplication in HG02074#2, the stretch",
+    note: "The stretch HG02074#2 reads twice, 99,965,778-99,979,806, with 100 bp either side: contig JBHIGL010000061.1 walks P > A > ... > E > N > X > A > ... > E > F, the first time along the reference, the second - after 100 N and 465 bp not on CHM13 - hatched in the room the reference makes before 99,979,807. Picking it picks HG02074#2 alone",
+    sample: "CHM13",
+    contig: "chr14",
+    start: 99_965_700,
+    end: 99_979_900,
+    haplotypes: ["HG02074#2"],
+  },
+  {
+    label: "Tandem duplication in HG02074#2, in place",
+    note: "100 bp inside the stretch HG02074#2 has more than once: its bar draws one reading, and a node's card lists all four as its dupes - contig 061's first pass, its second (its place the insertion at 99,979,807, outside this view), 061 again 216 kb on with a C at 99,970,475 where the others read G, and contig 045. Picking it picks HG02074#2 alone",
+    sample: "CHM13",
+    contig: "chr14",
+    start: 99_970_475,
+    end: 99_970_575,
+    haplotypes: ["HG02074#2"],
+  },
+  {
+    label: "Tandem duplication in HG02074#2, close in",
+    note: "Where the first pass ends: contig JBHIGL010000061.1 reads the reference to 99,979,807, then 100 N, then goes back to 99,965,778 for the second pass. The hatched insertion before 99,979,807 is the 100 N, then the end of the second pass. HG02074#2 has these bases four times - 061's first pass, its second, 061 again 216 kb on, and contig 045 - one bar drawing one of them; a node's card lists the rest as its dupes. Picking it picks HG02074#2 alone",
+    sample: "CHM13",
+    contig: "chr14",
+    start: 99_979_770,
+    end: 99_979_850,
+    haplotypes: ["HG02074#2"],
   },
   {
     label: "MHC densest",

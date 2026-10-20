@@ -60,11 +60,17 @@ export interface LaneCanvasProps {
    * and moving over the bar says nothing.
    */
   /* Where along the band it was clicked, and where on the screen - for a
-     card opened at the pointer. */
-  onPress?: (at: { x: number; clientX: number; clientY: number }) => void;
-  /** Where the pointer is over the bar in that mode, or null once it
-      leaves - for outlining the section it would open. */
-  onPoint?: (x: number | null) => void;
+     card opened at the pointer - and which row of the bar, when it was on
+     one: a haplotype stacked in a section is a row per thread of it. */
+  onPress?: (at: {
+    x: number;
+    row: number | null;
+    clientX: number;
+    clientY: number;
+  }) => void;
+  /** Where the pointer is over the bar in that mode, and on which row, or
+      null once it leaves - for outlining the section it would open. */
+  onPoint?: (at: { x: number; row: number | null } | null) => void;
   /**
    * Zoomed out, the stretches of the band read as one; see SECTION_PX in
    * LinearPathView. Given these, a section where this haplotype is off the
@@ -244,6 +250,14 @@ function LaneCanvas({
   }, [repaint, screen, width, height]);
 
 
+  /* The row of the bar under the pointer, if a visit is drawn there. */
+  const rowAt = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - box.left;
+    const index = visitAt(raster, x, event.clientY - box.top, barH);
+    return { x, row: index >= 0 ? raster.nodes[index].card : null };
+  };
+
   /* What is under the pointer: the visit, its letters, and where it is. */
   const hoverAt = (
     event: React.MouseEvent<HTMLCanvasElement>,
@@ -302,9 +316,8 @@ function LaneCanvas({
       /* The same question the hover asks, answered on a click. */
       onClick={(event) => {
         if (onPress) {
-          const box = event.currentTarget.getBoundingClientRect();
           onPress({
-            x: event.clientX - box.left,
+            ...rowAt(event),
             clientX: event.clientX,
             clientY: event.clientY,
           });
@@ -321,11 +334,7 @@ function LaneCanvas({
         if (event.buttons !== 0 || onPress) {
           onHover(null);
           if (onPress) {
-            onPoint?.(
-              event.buttons !== 0
-                ? null
-                : event.clientX - event.currentTarget.getBoundingClientRect().left,
-            );
+            onPoint?.(event.buttons !== 0 ? null : rowAt(event));
           }
           return;
         }
@@ -619,8 +628,7 @@ function paintLane(
       });
     }
 
-    /* Each letter in the piece of its visit's bar it falls in - the whole
-       bar, or its slot where the place is shared - centred on a
+    /* Each letter in the piece of its visit's bar it falls in, centred on a
        whole-pixel baseline, the chip kept inside. */
     for (const card of cards) {
       const { node, own, fontPx, advance, above, below, margin } = card;

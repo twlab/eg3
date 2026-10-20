@@ -66,6 +66,8 @@ export interface RasterNode {
   onReference: boolean;
   /** Where it starts in the haplotype's own coordinates. */
   start: number;
+  /** Which piece of the lane's walk it is in - and so on which contig. */
+  piece: number;
   /* The pixels it is drawn between. Kept so the letters can be laid out by
      walking the nodes rather than the band: a letter belongs to a base, and
      whether there is room for one is a question about this node and not about
@@ -166,11 +168,9 @@ export function rasteriseLane(
      drawn so that the bar's height is settled: see `laneRows`. */
   const rowOf = laneRows(lane.steps, layoutSpan(model));
   const rows = rowOf.reduce((deepest, row) => Math.max(deepest, row + 1), 1);
-  const node = new Int32Array(rows * w).fill(-1);
-  const base = new Int32Array(rows * w).fill(-1);
-  const alt = new Uint8Array(rows * w);
-  const bp = new Float64Array(rows * w);
   const nodes: RasterNode[] = [];
+  /* Where along the layout each visit is drawn, for the stacks below. */
+  const spans: Array<{ from: number; to: number }> = [];
 
   let stepIndex = -1;
   /* Which visit each step drew, for the deletions to find theirs. */
@@ -181,21 +181,16 @@ export function rasteriseLane(
     /* Not drawn where it has no place against the reference. */
     if (!graphNode || graphNode.untied) continue;
     visitOfStep.set(stepIndex, nodes.length);
-
-    const isAlt = graphNode.onReference ? 0 : 1;
     const drawn = placed?.get(graphNode.id);
-    const left = drawn ? drawn.left : px(graphNode.x);
-    const right = drawn ? drawn.right : px(graphNode.x + graphNode.length);
-
-    const index = nodes.length;
     nodes.push({
       id: graphNode.id,
       sequence: graphNode.sequence,
       length: graphNode.length,
       onReference: graphNode.onReference,
       start: step.start,
-      left,
-      right,
+      piece: step.segment,
+      left: drawn ? drawn.left : px(graphNode.x),
+      right: drawn ? drawn.right : px(graphNode.x + graphNode.length),
       card: rowOf[stepIndex],
       stack: 1,
       group: -1,
@@ -204,32 +199,41 @@ export function rasteriseLane(
         : referenceUnder(model, graphNode.x, graphNode.length),
       copyFrom: 0,
     });
+    spans.push({
+      from: graphNode.x,
+      to: graphNode.x + Math.max(1, graphNode.length),
+    });
+  }
 
-    if (!(right > left)) continue;
+  const node = new Int32Array(rows * w).fill(-1);
+  const base = new Int32Array(rows * w).fill(-1);
+  const alt = new Uint8Array(rows * w);
+  const bp = new Float64Array(rows * w);
+  nodes.forEach((visit, index) => {
+    const { left, right } = visit;
+    if (!(right > left)) return;
 
     /* Clipped to the band before the loop, so a node hanging off either end -
        the extraction returns whole nodes, so the first and last always do -
        costs nothing to skip. */
     const from = Math.max(0, Math.floor(left));
     const to = Math.min(w, Math.ceil(right));
-    const perBase = (right - left) / graphNode.length;
+    const perBase = (right - left) / visit.length;
+    const isAlt = visit.onReference ? 0 : 1;
 
     /* Into its own row of the arrays. */
-    const at = rowOf[stepIndex] * w;
+    const at = visit.card * w;
     for (let x = from; x < to; x++) {
       /* The centre of the pixel, so a base that only just covers one is not
          claimed by its neighbour. */
       const into = (x + 0.5 - left) / perBase;
-      const offset = Math.min(
-        graphNode.length - 1,
-        Math.max(0, Math.floor(into)),
-      );
+      const offset = Math.min(visit.length - 1, Math.max(0, Math.floor(into)));
       node[at + x] = index;
       base[at + x] = offset;
       alt[at + x] = isAlt;
-      bp[at + x] = step.start + offset;
+      bp[at + x] = visit.start + offset;
     }
-  }
+  });
 
   /* The seams, once every visit has been placed: their pixels go to
      whichever side of the seam they are nearer, so the pointer crossing one
@@ -274,20 +278,14 @@ export function rasteriseLane(
      overlap, and two in different columns can - and in a bar of one row,
      one would cover the other. Steps one after another never overlap, each
      starting where the last ends, so what does is a haplotype back where
-     it already was. Which row each is drawn in is not decided here but by
-     the walk - see `laneRows` - so the group is only for saying how many
-     visits share a place, and for giving each its own bar of it. */
+     it already was. Which row each is in is not decided here but by the
+     walk - see `laneRows` - so the group is only for saying how many
+     visits share a place, and which of them the bar draws there. */
   const stacks: number[][] = [];
   const overlapping: number[][] = [];
   {
-    const placed = nodes
-      .map((visit, index) => {
-        const node = model.nodeById.get(visit.id);
-        return node
-          ? { index, from: node.x, to: node.x + Math.max(1, node.length) }
-          : null;
-      })
-      .filter((visit): visit is { index: number; from: number; to: number } => !!visit)
+    const placed = spans
+      .map((span, index) => ({ index, ...span }))
       .sort((a, b) => a.from - b.from || a.index - b.index);
     let cluster: number[] = [];
     let reach = -Infinity;
@@ -304,10 +302,8 @@ export function rasteriseLane(
   }
   for (const together of overlapping) {
     if (together.length < 2) continue;
-    /* In the order they are drawn down the bar, the top row first. */
-    const order = [...together].sort(
-      (a, b) => nodes[a].card - nodes[b].card || a - b,
-    );
+    /* The one the bar draws first: see `drawnFirst`. */
+    const order = [...together].sort((a, b) => drawnFirst(nodes, a, b));
     const group = stacks.length;
     stacks.push(order);
     for (const index of order) {
@@ -315,7 +311,33 @@ export function rasteriseLane(
       nodes[index].group = group;
     }
   }
+  /* The rest of a stack is not drawn where its first reading is - see
+     visitPieces - and is taken off the arrays there too, so the pointer
+     finds only what is drawn. A reading kept anywhere in full is the
+     haplotype in place where it is drawn. */
+  const behind = new Set<number>();
+  for (const members of stacks) {
+    for (const m of members) {
+      for (const o of members) {
+        if (o === m || drawnFirst(nodes, o, m) >= 0) continue;
+        if (!(spans[o].from < spans[m].to && spans[o].to > spans[m].from)) continue;
+        behind.add(m);
+        const at = nodes[m].card * w;
+        const from = Math.max(0, Math.floor(Math.max(nodes[m].left, nodes[o].left)));
+        const to = Math.min(w, Math.ceil(Math.min(nodes[m].right, nodes[o].right)));
+        for (let x = from; x < to; x++) {
+          if (node[at + x] !== m) continue;
+          node[at + x] = -1;
+          base[at + x] = -1;
+          alt[at + x] = 0;
+        }
+      }
+    }
+  }
   markCopies(nodes);
+  for (const members of stacks) {
+    for (const m of members) if (!behind.has(m)) nodes[m].copyFrom = 0;
+  }
 
   const deletions = (lane.deletions ?? []).map((deletion) => ({
     left: deletion.left === null ? null : px(deletion.left),
@@ -339,16 +361,26 @@ export function rasteriseLane(
 }
 
 /** One stretch of a visit's bar: across, in the band's pixels; down, in
-    the bar's. `of` is how many of the haplotype's visits share the place
-    there, `slot` which of them this is - 1 and 0 where it is alone. */
+    the bar's. */
 export interface VisitPiece {
   left: number;
   right: number;
   top: number;
   height: number;
-  of: number;
-  slot: number;
 }
+
+/**
+ * Of a haplotype's visits to one place, the one its bar draws: the first of
+ * its pieces - its main contig's before another's, see oneLanePerHaplotype,
+ * and along a contig in order - so it is the same reading in every band and
+ * at every zoom; by the rows the band's pieces happened to take, it was not.
+ * The rest are not drawn there; a card lists them as the place's dupes.
+ */
+const drawnFirst = (nodes: RasterNode[], a: number, b: number) =>
+  nodes[a].piece - nodes[b].piece ||
+  nodes[a].start - nodes[b].start ||
+  nodes[a].card - nodes[b].card ||
+  a - b;
 
 const piecesByRaster = new WeakMap<LaneRaster, Map<string, VisitPiece[]>>();
 
@@ -357,13 +389,12 @@ const piecesByRaster = new WeakMap<LaneRaster, Map<string, VisitPiece[]>>();
  * stretch along it.
  *
  * Alone, the whole bar. Where others of the haplotype's visits are at the
- * same place - it reads that stretch more than once - the bar there is
- * split between the visits there and no others: those on the reference
- * walk first, then by thread (see laneRows), each a slot less a pixel so
- * they read as stacked. Only there: the rest of the visit is the whole bar
- * again. Splitting each visit by every one the overlap could reach made a
- * run of nodes on one thread a row apiece - a staircase of thin bars down
- * HG00099#1 at chr6:32,365,590, where it reads the stretch three times.
+ * same place - it reads that stretch more than once - only the first of
+ * them along its contig is drawn there (see `drawnFirst`), the whole bar,
+ * and the rest not at all: one bar, its dupes in the cards. Split between
+ * them, a bar was as many thin rows as the haplotype had copies - twenty
+ * and fifty in the amylase cluster and on chr17 at 38.9 Mb. Only there:
+ * the rest of a visit is drawn as any other.
  */
 export function visitPieces(
   raster: LaneRaster,
@@ -382,7 +413,7 @@ export function visitPieces(
   const visit = raster.nodes[index];
   const whole = (): VisitPiece[] =>
     visit
-      ? [{ left: visit.left, right: visit.right, top: 0, height: barH, of: 1, slot: 0 }]
+      ? [{ left: visit.left, right: visit.right, top: 0, height: barH }]
       : [];
   const members = visit && visit.group >= 0 ? raster.stacks[visit.group] : null;
   let pieces: VisitPiece[];
@@ -406,28 +437,11 @@ export function visitPieces(
         const o = raster.nodes[m];
         return o.left < to && o.right > from;
       });
-      let piece: VisitPiece;
-      if (here.length < 2) {
-        piece = { left: from, right: to, top: 0, height: barH, of: 1, slot: 0 };
-      } else {
-        const order = [...here].sort(
-          (a, b) =>
-            Number(raster.nodes[b].onReference) -
-              Number(raster.nodes[a].onReference) ||
-            raster.nodes[a].card - raster.nodes[b].card ||
-            a - b,
-        );
-        const share = barH / order.length;
-        const slot = order.indexOf(index);
-        piece = {
-          left: from,
-          right: to,
-          top: slot * share,
-          height: Math.max(1, share - 1),
-          of: order.length,
-          slot,
-        };
+      if (here.length > 1) {
+        const first = here.reduce((a, b) => (drawnFirst(raster.nodes, b, a) < 0 ? b : a));
+        if (first !== index) continue;
       }
+      const piece: VisitPiece = { left: from, right: to, top: 0, height: barH };
       const last = pieces[pieces.length - 1];
       if (last && last.top === piece.top && last.height === piece.height && last.right === from) {
         last.right = to;
@@ -435,7 +449,9 @@ export function visitPieces(
         pieces.push(piece);
       }
     }
-    if (!pieces.length) pieces = whole();
+    /* None where the visit is all behind the first reading of its stack:
+       the bar does not draw it. A visit of no width still gets its bar. */
+    if (!pieces.length && !(visit.right > visit.left)) pieces = whole();
   }
   byKey.set(key, pieces);
   return pieces;

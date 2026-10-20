@@ -11,6 +11,7 @@ import {
   bandAxis,
   buildModel,
   columnarModel,
+  oneLanePerHaplotype,
   placedModel,
 } from "./pangenomeModel";
 import LinearPathView, { linearHeight } from "./LinearPathView";
@@ -444,14 +445,17 @@ export default function VisualizationContainer({
 
   /* The part of the linear view this draws. The model keeps its layout, so
      a haplotype's bar lands where it would in the whole drawing; only the
-     lanes drawn are cut down to the part's. */
+     lanes drawn are cut down to the part's - a lane per haplotype, its
+     contigs joined into one bar (see oneLanePerHaplotype). */
   const strip = !part || part === GRAPH_PART;
   const linearModel = useMemo(() => {
-    if (!model || !part) return model;
+    if (!model) return model;
+    const joined = oneLanePerHaplotype(model);
+    if (!part) return joined;
     return {
-      ...model,
-      laneCount: model.lanes.length,
-      lanes: model.lanes.filter((lane) =>
+      ...joined,
+      laneCount: joined.lanes.length,
+      lanes: joined.lanes.filter((lane) =>
         part === GRAPH_PART ? lane.isReference : !lane.isReference && lane.label === part,
       ),
     };

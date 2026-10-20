@@ -654,6 +654,8 @@ export default function LocalDatabaseCard({
                             end: String(region.end),
                           }));
                           if (region.alignmentTest) pickForTest();
+                          if (region.haplotypes)
+                            setPicked(new Set(region.haplotypes));
                         }}
                         className={`rounded-md border px-2 py-1 text-xs cursor-pointer ${
                           on

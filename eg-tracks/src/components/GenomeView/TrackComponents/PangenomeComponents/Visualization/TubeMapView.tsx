@@ -416,6 +416,7 @@ function tubeHover(
                 length: node.length,
                 onReference: node.onReference,
                 start: entry.start,
+                piece: 0,
                 left,
                 right,
                 /* The tube map draws no cards and no letters of its own,

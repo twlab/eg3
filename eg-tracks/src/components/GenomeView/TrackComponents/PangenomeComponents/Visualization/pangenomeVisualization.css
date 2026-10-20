@@ -1009,6 +1009,9 @@
   transform: translateX(-50%);
   margin-top: 4px;
   min-width: 220px;
+  /* Never wider than the window: a line too long for it wraps rather than
+     running off the card's edge, where the rest of it could not be read. */
+  max-width: min(560px, calc(100vw - 16px));
   max-height: 320px;
   overflow-y: auto;
   padding: 6px 22px 7px 9px;
@@ -1016,8 +1019,34 @@
   line-height: 1.45;
   color: #f2f3f4;
   background: rgba(27, 29, 33, 0.96);
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
   cursor: default;
+}
+
+/* A kept card is read and copied from: everything in it can be selected,
+   unlike the drawing it was opened from. */
+.pgv-floating-card,
+.pgv-floating-card * {
+  user-select: text;
+}
+
+/* A sequence in a card, all of it: inline while short, and past that in a
+   box of its own that scrolls - see cardSequence in LinearPathView. */
+.pgv-card-seq {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
+    monospace;
+  word-break: break-all;
+}
+
+.pgv-card-seq-long {
+  display: block;
+  max-height: 6.4em;
+  overflow-y: auto;
+  margin: 1px 0 2px;
+  padding: 1px 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
 }
 
 .pgv-section-line {
@@ -1277,7 +1306,7 @@
   padding-right: 4px;
 }
 
-button.pgv-section-item {
+.pgv-section-item {
   display: block;
   width: 100%;
   padding: 0;
@@ -1286,12 +1315,11 @@ button.pgv-section-item {
   text-align: left;
   font-size: inherit;
   line-height: inherit;
-  white-space: nowrap;
   cursor: pointer;
 }
 
-button.pgv-section-item:hover,
-button.pgv-section-item[aria-expanded="true"] {
+.pgv-section-item:hover,
+.pgv-section-item[aria-expanded="true"] {
   color: #fff;
 }
 

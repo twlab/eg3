@@ -11,6 +11,7 @@ import {
   bandAxis,
   buildModel,
   columnarModel,
+  oneLanePerHaplotype,
   placedModel,
 } from "./Visualization/pangenomeModel";
 import type { ViewMode } from "./Visualization/pangenomeViewState";
@@ -84,7 +85,8 @@ export function pangenomeTrackHeight(
     );
     return variantLayout(segments, axis).height;
   }
-  const lanes = model.lanes.filter((lane) =>
+  /* A bar per haplotype, its contigs joined, as the linear view draws them. */
+  const lanes = oneLanePerHaplotype(model).lanes.filter((lane) =>
     part === GRAPH_PART ? lane.isReference : !lane.isReference && lane.label === part,
   );
   /* A haplotype with nothing in this band still holds its row. */

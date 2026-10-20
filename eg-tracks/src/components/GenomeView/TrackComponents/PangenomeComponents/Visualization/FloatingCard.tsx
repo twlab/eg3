@@ -104,8 +104,15 @@ export default function FloatingCard({
         /* Measured first, then shown. */
         visibility: place ? "visible" : "hidden",
       }}
+      /* Its presses and scrolls are its own. A portal's events still go up
+         the component tree it was opened from, and there a press on the card
+         reached eg3's pan (DragAcrossDiv's onPointerDown): the view panned
+         under the card, and the press could not select the card's text. */
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
+      onWheel={(event) => event.stopPropagation()}
     >
       {children}
     </div>,
