@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import FileInput from "../ui/input/FileInput";
@@ -15,9 +15,11 @@ import type {
 } from "wuepgg3-track";
 import { exampleRegions, initialWindow } from "../genome-view/graphFetchConfig";
 import type { GraphFetchConfig } from "../genome-view/graphFetchConfig";
-import { toEgTrack } from "@/core/hprc/hprcCatalog";
+import { hprcReferenceOf, toEgTrack } from "@/core/hprc/hprcCatalog";
 import type { HprcTrack } from "@/core/hprc/hprcCatalog";
 import HprcTrackPicker from "./HprcTrackPicker";
+import type { HprcTrackState } from "./HprcTrackPicker";
+import { parseQuickQuery, QUICK_LAYERS } from "./quickQuery";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Opens a GBZ-base database from disk and asks what to query.
@@ -134,8 +136,13 @@ export default function LocalDatabaseCard({
   const [picked, setPicked] = useState<Set<string> | null>(() => new Set());
   const [altQuery, setAltQuery] = useState("");
   const [altPage, setAltPage] = useState(0);
+  /* What a quick query picks when it also switches the genome: a switch
+     starts the picks again, so they are put in once it has. */
+  const picksAfterSwitch = useRef<Set<string> | null | undefined>(undefined);
   useEffect(() => {
-    setPicked(new Set());
+    const next = picksAfterSwitch.current;
+    picksAfterSwitch.current = undefined;
+    setPicked(next === undefined ? new Set() : next);
     setAltQuery("");
   }, [summary, referenceGenome]);
   const altNeedle = altQuery.trim().toLowerCase();
@@ -167,6 +174,16 @@ export default function LocalDatabaseCard({
     [picked, alternates],
   );
   const [hprcTracks, setHprcTracks] = useState<HprcTrack[]>([]);
+  /* And what the picker last chose them from - see the quick query. */
+  const [trackState, setTrackState] = useState<HprcTrackState>({
+    ready: true,
+    haplotypes: "",
+    layers: "",
+  });
+  const onTracks = useCallback((tracks: HprcTrack[], state: HprcTrackState) => {
+    setHprcTracks(tracks);
+    setTrackState(state);
+  }, []);
   /* Bumped by the alignment test region: the repeat tracks go off. */
   const [repeatsOff, setRepeatsOff] = useState(0);
   /* The alignment test region: the other reference genomes' haplotypes
@@ -201,7 +218,8 @@ export default function LocalDatabaseCard({
      reader picks the path in the dropdown, once per path, and kept for Load
      and the graph's fetches to reuse; a path never picked there (the first,
      or a preset's) is measured by Load. */
-  const [rangeOf, setRangeOf] = useState<Map<string, PathBounds>>(new Map());
+  /* Null where the path was measured and has no range here. */
+  const [rangeOf, setRangeOf] = useState<Map<string, PathBounds | null>>(new Map());
   const asked = useRef(new Set<string>());
   useEffect(() => {
     setRangeOf(new Map());
@@ -213,9 +231,7 @@ export default function LocalDatabaseCard({
     asked.current.add(key);
     void localPathBounds(summary.id, path)
       .catch(() => null)
-      .then((found) => {
-        if (found) setRangeOf((was) => new Map(was).set(key, found));
-      });
+      .then((found) => setRangeOf((was) => new Map(was).set(key, found)));
   };
 
   const bounds = selected ? (rangeOf.get(pathKey(selected)) ?? null) : null;
@@ -313,6 +329,67 @@ export default function LocalDatabaseCard({
       ...(bounds ? { range: { start: bounds.start, end: bounds.end } } : {}),
     });
   };
+
+  /* ── The quick query: a line in place of the form ──────────────────
+     Region, haplotypes, tracks - see quickQuery.ts - put into the form
+     below as if picked there, then loaded. The tracks are chosen by the
+     picker from the HPRC catalog as it comes in, so Load waits until the
+     picker has chosen them for what was asked. */
+  const [quick, setQuick] = useState("");
+  const [quickProblems, setQuickProblems] = useState<string[]>([]);
+  const [requestLayers, setRequestLayers] = useState<{ ids: string[]; bump: number }>();
+  const [pending, setPending] = useState<{
+    path: string;
+    haplotypes: string;
+    layers: string;
+  } | null>(null);
+  const applyQuick = () => {
+    if (!summary) return;
+    const { query, problems: found } = parseQuickQuery(quick, {
+      queryable,
+      haplotypes: summary.haplotypes,
+      genome: referenceGenome,
+    });
+    setQuickProblems(found);
+    if (!query) return;
+    const key = pathKey(query.path);
+    setForm((f) => ({ ...f, path: key, start: String(query.start), end: String(query.end) }));
+    measure(key);
+    const picks = query.haplotypes === null ? null : new Set(query.haplotypes);
+    if (query.path.sample !== referenceGenome) picksAfterSwitch.current = picks;
+    else setPicked(picks);
+    /* Only on a reference the HPRC catalog has tracks on. */
+    const layers = hprcReferenceOf(query.path.sample) ? query.layers : [];
+    setRequestLayers((was) => ({ ids: layers, bump: (was?.bump ?? 0) + 1 }));
+    const every = [
+      ...new Set(
+        summary.haplotypes
+          .filter((h) => h.sample !== query.path.sample)
+          .map((h) => `${h.sample}#${h.haplotype}`),
+      ),
+    ].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    setPending({
+      path: key,
+      haplotypes: (query.haplotypes ?? every).join(","),
+      layers: [...layers].sort().join(","),
+    });
+  };
+  useEffect(() => {
+    if (!pending) return;
+    /* And for the path's range, measured above: Load would measure it
+       again if it went first. */
+    if (
+      !rangeOf.has(pending.path) ||
+      !trackState.ready ||
+      trackState.haplotypes !== pending.haplotypes ||
+      trackState.layers !== pending.layers
+    ) {
+      return;
+    }
+    setPending(null);
+    if (!problem) handleLoad();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [pending, trackState, problem, rangeOf]);
 
   const field =
     "w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-tint";
@@ -421,6 +498,45 @@ export default function LocalDatabaseCard({
               {summary.haplotypes.length === 1 ? "" : "s"}
             </p>
 
+            <form
+              className="mt-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                applyQuick();
+              }}
+            >
+              <label className={label} htmlFor="pgv-quick">
+                Quick query
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="pgv-quick"
+                  className={`${field} font-mono`}
+                  spellCheck={false}
+                  placeholder="CHM13#0#chr14:99,954,999-99,985,000 | HG005#1 HG005#2 | methylation expression"
+                  value={quick}
+                  onChange={(event) => setQuick(event.target.value)}
+                />
+                <button
+                  type="submit"
+                  disabled={!quick.trim() || !!pending}
+                  className="shrink-0 rounded-md bg-tint px-3 py-1.5 text-sm text-white disabled:opacity-50 cursor-pointer disabled:cursor-default"
+                >
+                  {pending ? "Loading…" : "Load"}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                The region, then haplotypes and tracks, split by |. A haplotype
+                as HG005#1, a sample for all of its haplotypes, or all; tracks:{" "}
+                {QUICK_LAYERS.join(", ")}. Fills in the form below and loads it.
+              </p>
+              {quickProblems.map((text) => (
+                <p key={text} className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                  {text}
+                </p>
+              ))}
+            </form>
+
             <div className="mt-3 grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <span className={label}>Reference genome</span>
@@ -456,7 +572,7 @@ export default function LocalDatabaseCard({
                   {genomePaths.map((h) => (
                     <option key={pathKey(h)} value={pathKey(h)}>
                       {h.sample} · haplotype {h.haplotype} · {h.contig}
-                      {rangeOf.has(pathKey(h))
+                      {rangeOf.get(pathKey(h))
                         ? ` · ${formatRange(rangeOf.get(pathKey(h))!)}`
                         : ""}
                     </option>
@@ -568,8 +684,9 @@ export default function LocalDatabaseCard({
               <HprcTrackPicker
                 referenceGenome={referenceGenome}
                 haplotypes={pickedKeys}
-                onChange={setHprcTracks}
+                onChange={onTracks}
                 repeatsOff={repeatsOff}
+                requestLayers={requestLayers}
               />
 
               <div>

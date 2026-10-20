@@ -18,22 +18,35 @@ import type { HprcTrack } from "@/core/hprc/hprcCatalog";
    CHM13 or GRCh38.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/** What the tracks handed to onChange are for: whether the catalog is in
+    yet, and the haplotypes and layers they were chosen from - so a caller
+    loading straight away can wait until they are the ones it asked for. */
+export interface HprcTrackState {
+  ready: boolean;
+  haplotypes: string;
+  layers: string;
+}
+
 export default function HprcTrackPicker({
   referenceGenome,
   haplotypes,
   onChange,
   repeatsOff = 0,
+  requestLayers,
 }: {
   /** The sample of the reference path the graph is queried on. */
   referenceGenome: string;
   /** The haplotypes picked, as `sample#haplotype`. */
   haplotypes: string[];
   /** The tracks to draw, every time the choice changes. */
-  onChange: (tracks: HprcTrack[]) => void;
+  onChange: (tracks: HprcTrack[], state: HprcTrackState) => void;
   /** Bumped to turn every repeat track off - RepeatMasker - for the
       haplotypes picked now and any picked after; each can still be
       turned back on by hand. */
   repeatsOff?: number;
+  /** Layers asked for from outside - the start page's quick query: set
+      each time `bump` changes, as if picked here. */
+  requestLayers?: { ids: string[]; bump: number };
 }) {
   const reference = hprcReferenceOf(referenceGenome);
   const wanted = reference !== null && haplotypes.length > 0;
@@ -56,6 +69,10 @@ export default function HprcTrackPicker({
   }, [wanted, catalog]);
 
   const [layers, setLayers] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    if (requestLayers) setLayers(new Set(requestLayers.ids));
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [requestLayers?.bump]);
   const toggleLayer = (id: string) =>
     setLayers((was) => {
       const next = new Set(was);
@@ -97,7 +114,15 @@ export default function HprcTrackPicker({
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
     [listed, flipped, repeatsOff],
   );
-  useEffect(() => onChange(wanted ? chosen : []), [chosen, wanted, onChange]);
+  useEffect(
+    () =>
+      onChange(wanted ? chosen : [], {
+        ready: !wanted || !!catalog || !!problem,
+        haplotypes: haplotypes.join(","),
+        layers: [...layers].sort().join(","),
+      }),
+    [chosen, wanted, onChange, catalog, problem, haplotypes, layers],
+  );
 
   /* How many tracks each layer would add, for the picked haplotypes. */
   const perLayer = useMemo(() => {
