@@ -86,7 +86,11 @@ async function liveDatabase(options: PangenomeOptions): Promise<string> {
   if (options.url) {
     let id = reopened.get(options.url);
     if (!id) {
-      id = openRemoteDatabase(options.url).then((summary) => summary.id);
+      /* For its queries alone: the start page's haplotype list is not
+         needed here. */
+      id = openRemoteDatabase(options.url, { listPaths: false }).then(
+        (summary) => summary.id,
+      );
       id.catch(() => reopened.delete(options.url!));
       reopened.set(options.url, id);
     }

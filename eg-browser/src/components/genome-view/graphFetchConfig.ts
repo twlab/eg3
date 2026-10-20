@@ -109,6 +109,14 @@ export const exampleRegions: ExampleRegion[] = [
     alignmentTest: true,
   },
   {
+    label: "Insertion in pieces",
+    note: "HG002#1's insertion of 571 bp or more at 32,340,254, longer than the context reaches: its walk comes back in three pieces, laid end to end by the seam links",
+    sample: "CHM13",
+    contig: "chr6",
+    start: 32_340_200,
+    end: 32_340_320,
+  },
+  {
     label: "MHC densest",
     note: "588 nodes in 1 kb, and 495 walks: some haplotypes leave the window and come back",
     sample: "CHM13",

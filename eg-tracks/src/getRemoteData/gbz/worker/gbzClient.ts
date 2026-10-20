@@ -89,11 +89,20 @@ export async function openLocalDatabase(file: File): Promise<DatabaseSummary> {
  * have read. The server has to answer range requests and allow this page
  * (CORS); both are checked on open, so a server that cannot fails here with a
  * reason rather than halfway through a query.
+ *
+ * `listPaths: false` opens it for queries alone: no list of its haplotypes,
+ * which is a read of the whole Paths table - 18,088 rows in HPRC v2, most of
+ * a page refresh's requests - and which only the start page shows.
  */
-export async function openRemoteDatabase(url: string): Promise<DatabaseSummary> {
+export async function openRemoteDatabase(
+  url: string,
+  { listPaths = true }: { listPaths?: boolean } = {},
+): Promise<DatabaseSummary> {
   const id = `url:${crypto.randomUUID()}`;
   const name = decodeURIComponent(new URL(url).pathname.split("/").pop() || url);
-  const response = unwrap(await send({ type: "openUrl", id, name, url }));
+  const response = unwrap(
+    await send({ type: "openUrl", id, name, url, listPaths }),
+  );
   if (response.ok && response.type === "open") {
     opened.set(id, response.summary);
     return response.summary;

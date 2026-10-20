@@ -44,6 +44,10 @@ async function openDatabase(
   name: string,
   reader: SliceReader,
   url?: string,
+  /* False when opened again only to query, as a page refresh does: the
+     haplotype list is a read of the whole Paths table, and only the start
+     page shows it. A query finds its own path. */
+  listPaths = true,
 ): Promise<DatabaseSummary> {
   const { sqlite3, vfs } = await loadEngine();
   open.get(id)?.close();
@@ -63,7 +67,7 @@ async function openDatabase(
     throw new Error(`${name} is missing the GBZ-base version tag`);
   }
 
-  const haplotypes = listHaplotypes(source);
+  const haplotypes = listPaths ? listHaplotypes(source) : [];
   const reference = haplotypes.find((h) => h.isReference) ?? null;
   open.set(id, source);
 
@@ -108,6 +112,7 @@ async function handle(request: GbzRequest): Promise<GbzResponse> {
             request.name,
             urlReader(request.url, await urlSize(request.url)),
             request.url,
+            request.listPaths ?? true,
           ),
         };
       case "close":

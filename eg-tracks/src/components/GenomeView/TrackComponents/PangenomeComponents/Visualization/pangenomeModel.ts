@@ -553,7 +553,15 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   };
 
   rawEdges.forEach((e) => {
-    if (sequences.has(e.from) && sequences.has(e.to)) touchEdge(e.from, e.to);
+    /* A link read on the other strand at both ends is the same link read
+       forwards the other way round - 118− → 863− is 863+ → 118+ - and the
+       worker writes each link in one of its two forms. Taken as written it
+       ran backwards: at chr6:70,700,000 it made a loop with the walk that
+       really goes 863 → 118, and the layout cut that walk's step. A link
+       reversed at one end only is an inversion, which is left as it is. */
+    const [from, to] =
+      e.from_is_reverse && e.to_is_reverse ? [e.to, e.from] : [e.from, e.to];
+    if (sequences.has(from) && sequences.has(to)) touchEdge(from, to);
   });
   /* As for the nodes: the last lane to cross an edge is the only one it
      could already list. */
@@ -584,33 +592,14 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      it joins the reference in one window, and over reference bases past
      where it leaves in another (the MHC's 2 kb insertion at 4,074,838-849,
      loaded straight there and panned to). What such a node is tied to is
-     said below instead. The pass cap stops a cyclic subgraph from looping
-     forever. */
+     said below instead. */
   const ids = rawNodes.map((n) => n.id);
   const level = new Map<string, number>();
   ids.forEach((id) => level.set(id, 0));
-  console.log(level, rawNodes);
+
   const onReferenceWalk = reference?.nodeSet ?? new Set<string>();
   const referenceOrder = reference?.order ?? [];
 
-  /* Two constraints have to hold together, so they are applied in turn until
-     neither moves anything:
-
-       - a successor sits after its predecessor (the edges)
-       - the reference's own walk order is strictly increasing
-
-     The second matters across a seam. Where the reference leaves the window
-     and comes back, the returning node has no edge tying it to what came
-     before, so the edges alone cannot order it and two different reference
-     positions collapse into one column. Both rules only ever push levels up,
-     so this converges. */
-
-  /* Pushing successors past their predecessors, edge after edge, until
-     nothing moves took as many sweeps of every edge as the longest chain is
-     long - thousands, in a window of thousands of nodes. Where the edges
-     have no cycle, one sweep in an order that puts every node after its
-     predecessors reaches the same levels, so that is used; a cyclic
-     subgraph keeps the sweeps and their cap. */
   /* What a haplotype in pieces says about where they go. One piece ending
      off the reference and the next one starting off it is the haplotype
      going from the one to the other through sequence the window does not
@@ -642,15 +631,17 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   const layoutEdges: Array<{ from: string; to: string }> = edges
     .filter(({ from, to }) => !elsewhereAt.has(from) && !elsewhereAt.has(to))
     .map(({ from, to }) => ({ from, to }));
-
+  console.log(layoutEdges, lanes);
   for (const lane of lanes) {
     if (lane.isReference) continue;
     const pieces = lane.segments.map((segment) => segment.nodes);
     /* Where the haplotype was last on the reference by the end of each
        piece, and where it is next on it from the start of each. */
+
     const lastOn: Array<number | undefined> = [];
     pieces.forEach((nodes, k) => {
       const own = [...nodes].reverse().find((id) => referenceIndex.has(id));
+
       lastOn[k] =
         own !== undefined
           ? referenceIndex.get(own)
@@ -658,9 +649,11 @@ export function buildModel(queryResult: any): PangenomeModel | null {
             ? lastOn[k - 1]
             : undefined;
     });
+
     const nextOn: Array<number | undefined> = [];
     for (let k = pieces.length - 1; k >= 0; k--) {
       const own = pieces[k].find((id) => referenceIndex.has(id));
+
       nextOn[k] =
         own !== undefined
           ? referenceIndex.get(own)
@@ -668,12 +661,14 @@ export function buildModel(queryResult: any): PangenomeModel | null {
             ? nextOn[k + 1]
             : undefined;
     }
+
     for (let k = 0; k + 1 < pieces.length; k++) {
       const last = pieces[k][pieces[k].length - 1];
       const first = pieces[k + 1][0];
       if (onReferenceWalk.has(last) || onReferenceWalk.has(first)) continue;
       if (elsewhereAt.has(last) || elsewhereAt.has(first)) continue;
       if (!level.has(last) || !level.has(first)) continue;
+
       const leaves = lastOn[k];
       const rejoins = nextOn[k + 1];
       if (leaves === undefined || rejoins === undefined) continue;
@@ -683,65 +678,92 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   }
 
   const successors = new Map<string, string[]>();
-  const waiting = new Map<string, number>();
+  console.log(layoutEdges, lanes);
   for (const edge of layoutEdges) {
     if (!level.has(edge.from) || !level.has(edge.to)) continue;
     const out = successors.get(edge.from);
     if (out) out.push(edge.to);
     else successors.set(edge.from, [edge.to]);
-    waiting.set(edge.to, (waiting.get(edge.to) ?? 0) + 1);
+  }
+
+  /* Each node's arrows reference first, in the reference's order, for the
+     search below. The reference's own order needs no arrows of its own: it
+     is one walk, the one over the region asked for, and every step it
+     takes is an edge. */
+  const alongReference = (id: string) => referenceIndex.get(id) ?? Infinity;
+  for (const list of successors.values()) {
+    list.sort((a, b) => {
+      const x = alongReference(a);
+      const y = alongReference(b);
+      return x === y ? 0 : x < y ? -1 : 1;
+    });
+  }
+
+  /* Arrows that loop back - a repeat a haplotype reads more than once, its
+     walk going C → B after B → C - leave its nodes no column: B would have
+     to come both before and after C. Laid out around, the levels climbed
+     until a cap stopped them, a site's alleles landed columns apart and an
+     insertion lost its room. So they are left out of the layout, and only
+     the layout: the walk still takes them, and the bars draw its second
+     time round over the first.
+
+     Found by a depth-first search that keeps the path it is on: an arrow
+     into a node still on that path is one that loops back. It starts from
+     the reference's nodes in their own order and follows the reference's
+     arrows first, so what is cut is the arrow going back, never one of the
+     reference's own. */
+  const loopsBack = new Set<string>();
+  {
+    const state = new Map<string, "on" | "done">();
+    for (const start of [...referenceOrder, ...ids]) {
+      if (!level.has(start) || state.has(start)) continue;
+      state.set(start, "on");
+      const path = [{ id: start, next: 0 }];
+      while (path.length) {
+        const top = path[path.length - 1];
+        const nexts = successors.get(top.id) ?? [];
+        if (top.next === nexts.length) {
+          state.set(top.id, "done");
+          path.pop();
+          continue;
+        }
+        const next = nexts[top.next++];
+        const seen = state.get(next);
+        if (seen === "on") loopsBack.add(`${top.id}>${next}`);
+        else if (seen === undefined) {
+          state.set(next, "on");
+          path.push({ id: next, next: 0 });
+        }
+      }
+    }
+  }
+  if (loopsBack.size) {
+    for (const [from, nexts] of successors) {
+      successors.set(
+        from,
+        nexts.filter((to) => !loopsBack.has(`${from}>${to}`)),
+      );
+    }
+  }
+
+  /* With nothing looping back every node has a place in an order where it
+     comes after all that lead to it, and each one's level is one past the
+     furthest of those - all of it in one pass, a node being placed only
+     once all its arrows in have been counted. */
+  const waiting = new Map<string, number>();
+  for (const nexts of successors.values()) {
+    for (const to of nexts) waiting.set(to, (waiting.get(to) ?? 0) + 1);
   }
   const ordered: string[] = ids.filter((id) => !waiting.has(id));
   for (let at = 0; at < ordered.length; at++) {
-    for (const next of successors.get(ordered[at]) ?? []) {
+    const id = ordered[at];
+    const from = level.get(id)!;
+    for (const next of successors.get(id) ?? []) {
+      if (level.get(next)! < from + 1) level.set(next, from + 1);
       const left = waiting.get(next)! - 1;
       waiting.set(next, left);
       if (left === 0) ordered.push(next);
     }
-  }
-  const acyclic = ordered.length === ids.length;
-
-  for (let round = 0; round < 8; round++) {
-    let movedThisRound = false;
-
-    if (acyclic) {
-      for (const id of ordered) {
-        const from = level.get(id)!;
-        for (const next of successors.get(id) ?? []) {
-          if (level.get(next)! < from + 1) {
-            level.set(next, from + 1);
-            movedThisRound = true;
-          }
-        }
-      }
-    } else {
-      for (let pass = 0; pass < ids.length; pass++) {
-        let changed = false;
-        for (const edge of layoutEdges) {
-          const from = level.get(edge.from);
-          const to = level.get(edge.to);
-          if (from === undefined || to === undefined) continue;
-          if (to < from + 1) {
-            level.set(edge.to, from + 1);
-            changed = true;
-          }
-        }
-        if (!changed) break;
-        movedThisRound = true;
-      }
-    }
-
-    for (let i = 1; i < referenceOrder.length; i++) {
-      const previous = level.get(referenceOrder[i - 1]);
-      const current = level.get(referenceOrder[i]);
-      if (previous === undefined || current === undefined) continue;
-      if (current <= previous) {
-        level.set(referenceOrder[i], previous + 1);
-        movedThisRound = true;
-      }
-    }
-
-    if (!movedThisRound) break;
   }
 
   /* A node nothing on the reference leads to - a haplotype coming into the
@@ -795,15 +817,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     level.set(id, latest);
     return true;
   };
-  if (acyclic) {
-    for (let at = ordered.length - 1; at >= 0; at--) pullUp(ordered[at]);
-  } else {
-    for (let pass = 0; pass < ids.length; pass++) {
-      let changed = false;
-      for (const id of ids) changed = pullUp(id) || changed;
-      if (!changed) break;
-    }
-  }
+  for (let at = ordered.length - 1; at >= 0; at--) pullUp(ordered[at]);
 
   const byLevel = new Map<number, string[]>();
   ids.forEach((id) => {
@@ -883,28 +897,15 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       else predecessors.set(to, [from]);
     }
   }
-  const referencePrevious = new Map<string, string>();
-  for (let i = 1; i < referenceOrder.length; i++) {
-    if (!referencePrevious.has(referenceOrder[i])) {
-      referencePrevious.set(referenceOrder[i], referenceOrder[i - 1]);
-    }
-  }
   /* A node of no sequence still takes a base, as a column did. */
   const roomOf = (id: string) => Math.max(1, (sequences.get(id) ?? "").length);
   const startOf = new Map<string, number>();
-  /* In column order, which is an order every edge runs forward in - in a
-     cyclic subgraph too, where an edge back is one the levels could not
-     honour, and is left out here as well. */
+  /* In column order, which is an order every edge runs forward in. */
   for (const lv of levels) {
     for (const id of byLevel.get(lv) ?? []) {
       let at = 0;
       for (const from of predecessors.get(id) ?? []) {
-        if ((level.get(from) ?? 0) >= lv) continue;
         at = Math.max(at, (startOf.get(from) ?? 0) + roomOf(from));
-      }
-      const previous = referencePrevious.get(id);
-      if (previous !== undefined && (level.get(previous) ?? 0) < lv) {
-        at = Math.max(at, (startOf.get(previous) ?? 0) + roomOf(previous));
       }
       startOf.set(id, at);
     }
@@ -916,7 +917,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       if (reached.has(id)) continue;
       let latest = Infinity;
       for (const next of successors.get(id) ?? []) {
-        if ((level.get(next) ?? 0) <= levels[at]) continue;
         latest = Math.min(latest, (startOf.get(next) ?? 0) - roomOf(id));
       }
       if (latest !== Infinity && latest > startOf.get(id)!)
@@ -981,7 +981,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     if (!lane.isReference) lane.deletions = laneDeletions(lane, nodeById);
   }
 
-  return {
+  /* DEBUG-PROBE */ const __debugModel = {
     nodes: ids.map((id) => nodeById.get(id)!).filter(Boolean),
     nodeById,
     columns,
@@ -993,6 +993,12 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     referenceInterval,
     carriers: result?.carriers,
   };
+  /* DEBUG-PROBE */ ((globalThis as any).__pgvDebug ??= []).push({
+    raw: result,
+    model: __debugModel,
+  });
+  ((globalThis as any).__pgvModels ??= []).push(__debugModel);
+  /* DEBUG-PROBE */ return __debugModel;
 }
 
 /**

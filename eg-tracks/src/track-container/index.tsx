@@ -245,7 +245,13 @@ export function TrackContainerRepresentable({
   );
   function currentRegionAsString(segments: FeatureSegment[]): string {
     if (segments.length === 1) {
-      return segments[0].toString();
+      /* With its start 1-based, as a region is typed and shown: parse reads
+         a one-chromosome region's start back a base lower (see
+         NavigationContext.parse), so the segment's own 0-based string came
+         back a base short - on every save and reload, since the region is
+         kept as this string. */
+      const locus = segments[0].getLocus();
+      return `${segments[0].getName()}:${locus.start + 1}-${locus.end}`;
     } else {
       const first = segments[0];
       const last = segments[segments.length - 1];

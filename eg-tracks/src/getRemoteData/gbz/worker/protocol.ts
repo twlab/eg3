@@ -25,7 +25,15 @@ export interface DatabaseSummary {
 
 export type GbzRequest =
   | { token: number; type: "open"; id: string; name: string; file: File }
-  | { token: number; type: "openUrl"; id: string; name: string; url: string }
+  | {
+      token: number;
+      type: "openUrl";
+      id: string;
+      name: string;
+      url: string;
+      /** False to skip listing the paths; see openRemoteDatabase. */
+      listPaths?: boolean;
+    }
   | { token: number; type: "close"; id: string }
   | { token: number; type: "interval"; id: string; query: IntervalQuery }
   | {
