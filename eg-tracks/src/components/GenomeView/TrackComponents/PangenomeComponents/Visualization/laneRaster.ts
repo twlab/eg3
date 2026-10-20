@@ -905,10 +905,16 @@ const SEAM_PX = 1;
  * bases either side. The shape is `genomealignFine`'s in eg-tracks, which
  * shows ten bases either side of the cursor and highlights the middle.
  *
- * What is marked, though, stays inside the visit the pointer was answered
- * with, so the node named above the sequence, the coordinate beside it and
- * the marked letters are all the same node's. Marking across the boundary
- * as well left those three disagreeing.
+ * What is marked stays inside the visit the pointer was answered with
+ * while a base is a pixel or wider, so the node named above the sequence,
+ * the coordinate beside it and the marked letters are all the same node's;
+ * marking across the boundary as well left those three disagreeing. Zoomed
+ * out to several bases a pixel, though, the pixel holds the bases of the
+ * visits either side too, and the run it means goes on into them - as
+ * genomealign's tooltip marks round(basesPerPixel) bases whatever they
+ * belong to: a 1 bp SNP under the pointer at 5 bp a pixel marked only
+ * itself, where the pixel is 5 bp of the haplotype. The coordinates beside
+ * the letters are the run's own.
  *
  * It stops where the walk stops being one stretch of the haplotype: next to
  * a copy from elsewhere the neighbouring visit is a thousand bases away in
@@ -923,33 +929,59 @@ export function laneLetters(
   const { index, pixel } = hit;
   const nodes = raster.nodes;
 
-  /* The bases of this visit that the pixel covers - only this visit's: see
-     above. */
+  /* The bases of this visit that the pixel covers, and of the visits either
+     side where the pixel holds them too: see above. */
   const { first: firstBase, last: lastBase } = coveredBases(
     hit.node,
     pixel,
     hit.offset,
   );
-  const firstIndex = index;
-  const lastIndex = index;
-  const marked = hit.node.sequence.slice(firstBase, lastBase + 1);
+  let firstIndex = index;
+  let lastIndex = index;
+  let markStart = firstBase;
+  let markEnd = lastBase;
+  let marked = hit.node.sequence.slice(firstBase, lastBase + 1);
+  const perBase =
+    hit.node.length > 0 ? (hit.node.right - hit.node.left) / hit.node.length : 0;
+  if (perBase > 0 && perBase < 1) {
+    for (let i = index - 1; i >= 0; i--) {
+      const visit = nodes[i];
+      if (visit.length <= 0 || !follows(visit, nodes[i + 1])) break;
+      if (!(visit.right > pixel)) break;
+      const { first } = coveredBases(visit, pixel, visit.length - 1);
+      marked = visit.sequence.slice(first) + marked;
+      firstIndex = i;
+      markStart = first;
+      if (visit.left <= pixel) break;
+    }
+    for (let i = index + 1; i < nodes.length; i++) {
+      const visit = nodes[i];
+      if (visit.length <= 0 || !follows(nodes[i - 1], visit)) break;
+      if (!(visit.left < pixel + 1)) break;
+      const { last } = coveredBases(visit, pixel, 0);
+      marked += visit.sequence.slice(0, last + 1);
+      lastIndex = i;
+      markEnd = last;
+      if (visit.right >= pixel + 1) break;
+    }
+  }
 
   const head = nodes[firstIndex];
-  let before = head.sequence.slice(Math.max(0, firstBase - half), firstBase);
+  let before = head.sequence.slice(Math.max(0, markStart - half), markStart);
   for (let i = firstIndex - 1; before.length < half && i >= 0; i--) {
     if (!follows(nodes[i], nodes[i + 1])) break;
     before = nodes[i].sequence.slice(-(half - before.length)) + before;
   }
 
   const tail = nodes[lastIndex];
-  let after = tail.sequence.slice(lastBase + 1, lastBase + 1 + half);
+  let after = tail.sequence.slice(markEnd + 1, markEnd + 1 + half);
   for (let i = lastIndex + 1; after.length < half && i < nodes.length; i++) {
     if (!follows(nodes[i - 1], nodes[i])) break;
     after += nodes[i].sequence.slice(0, half - after.length);
   }
 
-  const markFrom = head.start + firstBase;
-  const markTo = tail.start + lastBase;
+  const markFrom = head.start + markStart;
+  const markTo = tail.start + markEnd;
   return {
     letters: (before + marked + after).split(""),
     at: before.length,

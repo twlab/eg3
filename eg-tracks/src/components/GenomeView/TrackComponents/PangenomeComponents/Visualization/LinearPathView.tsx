@@ -81,9 +81,18 @@ const SEQUENCE_MIN_SIZE = 4;
 /* Zoomed out past the point where a letter can be drawn, a node is a few
    pixels or less and a window holds thousands of them: an element and a
    hover each, none of which can be read on its own. So the strip and the
-   bars are read a section at a time instead - neighbouring nodes joined
-   until the section is at least this wide - and only on a click. */
+   bars are drawn a section at a time instead - neighbouring nodes joined
+   until the section is at least this wide - and the strip is read a
+   section at a time too, on a click. */
 const SECTION_PX = 16;
+/* A bar is read node by node further out than that - to this many bases a
+   pixel, as genomealign's fine mode is (MAX_FINE_MODE_BASES_PER_PIXEL in
+   eg-tracks' MultiAlignmentViewCalculator): its pointer answers with the
+   node under it, the card marking every base the pixel covers. A bar is a
+   canvas and its hover a lookup in it, so this costs nothing like the
+   strip's element per node would. Past it, a bar is read a section at a
+   time. */
+const BAR_NODE_BASES_PER_PX = 10;
 /** Past this many bases a card's sequence gets a box of its own. */
 const SEQUENCE_INLINE = 60;
 
@@ -854,6 +863,8 @@ function LinearPathView({
 
   /* A card drawn for a zoom that is gone would point at the wrong place. */
   useEffect(() => setCard(null), [sections]);
+  /* Whether the bars are read node by node: see BAR_NODE_BASES_PER_PX. */
+  const barsByNode = !sections || 1 / scale < BAR_NODE_BASES_PER_PX;
 
   const sectionAt = (x: number) =>
     sections?.find((section) => x >= section.left && x < section.right) ??
@@ -2130,12 +2141,13 @@ function LinearPathView({
             isReference={lane.isReference}
             spellReference={alleleRows}
             dim={dim(lane)}
-            /* Zoomed out, the bar is drawn and read a section at a time:
-               what this haplotype does in the section clicked. */
+            /* Zoomed out, the bar is drawn a section at a time, and past
+               BAR_NODE_BASES_PER_PX read one too: what this haplotype does
+               in the section clicked. */
             sections={sections ?? undefined}
             sectionAltBp={sectionAltBp}
             onPress={
-              sections
+              sections && !barsByNode
                 ? ({ x, row, clientX, clientY }) => {
                     const section = sectionAt(x);
                     if (section) {
