@@ -33,15 +33,11 @@ export interface IntervalQuery {
   haplotypes?: string[];
 }
 
-export interface JsonNode {
-  id: string;
-  sequence: string;
-}
-
-export interface JsonEdge {
-  from: string;
-  from_is_reverse: boolean;
+/** A link out of a node, listed under the node it leaves - see
+    SubgraphJson.edges: where it goes, and the strand each end is read on. */
+export interface JsonLink {
   to: string;
+  from_is_reverse: boolean;
   to_is_reverse: boolean;
 }
 
@@ -58,9 +54,19 @@ export interface JsonPath {
   interval?: { start: number; end: number };
 }
 
+/**
+ * One window of the graph. Nodes and edges are keyed by node id - a node's
+ * bases under its id, the links leaving a node under its - rather than
+ * listed, as gbz-base's `query --format json` lists them, so whatever
+ * reads them looks a node up instead of building its own index first. Node
+ * ids are integers, so the keys come out in id order, the order they are
+ * written in.
+ */
 export interface SubgraphJson {
-  nodes: JsonNode[];
-  edges: JsonEdge[];
+  /** Node id -> its sequence. */
+  nodes: Record<string, string>;
+  /** Node id -> the links that leave it. */
+  edges: Record<string, JsonLink[]>;
   paths: JsonPath[];
   /** How common each node and allele is in the whole pangenome. */
   carriers?: Carriers;
@@ -334,8 +340,6 @@ function referenceElsewhere(
   const queried = all.paths.find((path) => path.is_reference);
   if (!queried) return {};
   const onQueried = new Set(queried.path.map((step) => step.id));
-  const wanted = new Set(kept.nodes.map((node) => node.id));
-  const lengthOf = new Map(all.nodes.map((node) => [node.id, node.sequence.length]));
   const out: Record<string, number> = {};
   for (const walk of all.paths) {
     if (walk === queried || !walk.interval) continue;
@@ -350,10 +354,10 @@ function referenceElsewhere(
        start. */
     let prefix = 0;
     for (const step of walk.path) {
-      const length = lengthOf.get(step.id) ?? 0;
+      const length = all.nodes[step.id]?.length ?? 0;
       const at = walk.interval.start + prefix;
       prefix += length;
-      if (onQueried.has(step.id) || !wanted.has(step.id)) continue;
+      if (onQueried.has(step.id) || !(step.id in kept.nodes)) continue;
       if (!(step.id in out)) out[step.id] = at;
     }
   }
@@ -409,8 +413,7 @@ function countCarriers(all: SubgraphJson, kept: SubgraphJson): Carriers {
      leave from to take one. */
   type Tally = { count: number; last: number };
   const nodeTallies = new Map<string, Tally>();
-  for (const node of kept.nodes)
-    nodeTallies.set(node.id, { count: 0, last: -1 });
+  for (const id in kept.nodes) nodeTallies.set(id, { count: 0, last: -1 });
   const alleleTallies = new Map<string, Tally>();
   const ends = new Set<string>();
   for (const path of kept.paths) {
@@ -734,26 +737,22 @@ function writeJson(
 ): SubgraphJson {
   const handles = [...records.keys()].sort((a, b) => a - b);
 
-  const nodes: JsonNode[] = [];
+  const nodes: Record<string, string> = {};
   for (const handle of handles) {
-    if (isReverse(handle)) continue;
-    nodes.push({
-      id: String(nodeId(handle)),
-      sequence: records.get(handle)!.sequence,
-    });
+    if (!isReverse(handle)) nodes[nodeId(handle)] = records.get(handle)!.sequence;
   }
 
-  const edges: JsonEdge[] = [];
+  /* Each link in one of its two forms - see edgeIsCanonical - under the
+     node it leaves. */
+  const edges: Record<string, JsonLink[]> = {};
   for (const handle of handles) {
     for (const successor of records.get(handle)!.successors()) {
-      if (records.has(successor) && edgeIsCanonical(handle, successor)) {
-        edges.push({
-          from: String(nodeId(handle)),
-          from_is_reverse: isReverse(handle),
-          to: String(nodeId(successor)),
-          to_is_reverse: isReverse(successor),
-        });
-      }
+      if (!records.has(successor) || !edgeIsCanonical(handle, successor)) continue;
+      (edges[nodeId(handle)] ??= []).push({
+        to: String(nodeId(successor)),
+        from_is_reverse: isReverse(handle),
+        to_is_reverse: isReverse(successor),
+      });
     }
   }
 
@@ -913,15 +912,17 @@ export function keepHaplotypes(
   const paths = json.paths.filter(
     (path) => path.is_reference || wanted.has(haplotypeKey(path)),
   );
-  const used = new Set<string>();
+  const nodes: Record<string, string> = {};
   for (const path of paths) {
-    for (const step of path.path) used.add(step.id);
+    for (const step of path.path) {
+      if (step.id in json.nodes) nodes[step.id] = json.nodes[step.id];
+    }
   }
-  return {
-    nodes: json.nodes.filter((node) => used.has(node.id)),
-    edges: json.edges.filter(
-      (edge) => used.has(edge.from) && used.has(edge.to),
-    ),
-    paths,
-  };
+  const edges: Record<string, JsonLink[]> = {};
+  for (const [from, links] of Object.entries(json.edges)) {
+    if (!(from in nodes)) continue;
+    const kept = links.filter((link) => link.to in nodes);
+    if (kept.length) edges[from] = kept;
+  }
+  return { nodes, edges, paths };
 }

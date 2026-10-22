@@ -618,7 +618,7 @@ export async function fetchPangenomeData(
                 : DEFAULT_CONTEXT_BP,
               haplotypes: options.haplotypes,
             })
-          : { nodes: [], edges: [], paths: [] };
+          : { nodes: {}, edges: {}, paths: [] };
       })();
       queries.set(key, query);
     }

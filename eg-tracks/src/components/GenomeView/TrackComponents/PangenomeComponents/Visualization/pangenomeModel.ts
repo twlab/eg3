@@ -41,8 +41,9 @@ export interface RawPath {
   path_handle?: string;
 }
 
-export interface RawEdge {
-  from: string;
+/** A link out of a node, listed under the node it leaves: where it goes,
+    and the strand each end is read on. */
+export interface RawLink {
   to: string;
   from_is_reverse?: boolean;
   to_is_reverse?: boolean;
@@ -641,17 +642,18 @@ function parseWalkName(raw: RawPath, fallback: string) {
 export function buildModel(queryResult: any): PangenomeModel | null {
   const result = queryResult?.result ?? queryResult;
   console.log(result);
-  const rawNodes: Array<{ id: string; sequence?: string }> =
-    result?.nodes ?? [];
+  /* Node id to its bases; node id to the links that leave it. */
+  const rawNodes: Record<string, string> = result?.nodes ?? {};
+  const rawEdges: Record<string, RawLink[]> = result?.edges ?? {};
   const rawPaths: RawPath[] = result?.paths ?? [];
-  const rawEdges: RawEdge[] = result?.edges ?? [];
-  if (!rawNodes.length) return null;
 
-  const sequences = new Map<string, string>();
-  rawNodes.forEach((n) => sequences.set(n.id, n.sequence ?? ""));
-  /* Every node, and the copies walks are given of nodes they read again
-     (see the lanes below); a copy's own id is `node~pass`. */
-  const nodeList: Array<{ id: string; sequence?: string }> = [...rawNodes];
+  /* Every node's bases, and the copies' - the copies walks are given of
+     nodes they read again (see the lanes below), a copy's own id being
+     `node~pass`. In id order, the copies after: the order the levels
+     below are worked out in. */
+  const sequences = new Map<string, string>(Object.entries(rawNodes));
+  if (!sequences.size) return null;
+  const ids = [...sequences.keys()];
   const copyOf = new Map<string, string>();
 
   /* ── Lanes: stitch each haplotype's walks back together ──────────────── */
@@ -808,9 +810,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
             const copy = `${id}~${pass}`;
             if (!copyOf.has(copy)) {
               copyOf.set(copy, id);
-              const sequence = sequences.get(id) ?? "";
-              sequences.set(copy, sequence);
-              nodeList.push({ id: copy, sequence });
+              sequences.set(copy, sequences.get(id) ?? "");
+              ids.push(copy);
             }
             return copy;
           }),
@@ -870,7 +871,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
   /* ── Nodes: which lanes touch them ───────────────────────────────────── */
   const laneKeys = new Map<string, string[]>();
-  nodeList.forEach((n) => laneKeys.set(n.id, []));
+  for (const id of ids) laneKeys.set(id, []);
 
   /* The lanes are walked one after another, so a node already holds this
      lane exactly when this lane was the last to add itself. Asking that
@@ -919,20 +920,23 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      linked both ways, so only an edge nothing reads end to start. */
   const turns = new Set<GraphEdge>();
   const straight = new Set<GraphEdge>();
-  rawEdges.forEach((e) => {
-    /* A link read on the other strand at both ends is the same link read
-       forwards the other way round - 118− → 863− is 863+ → 118+ - and the
-       worker writes each link in one of its two forms. Taken as written it
-       ran backwards: at chr6:70,700,000 it made a loop with the walk that
-       really goes 863 → 118, and the layout cut that walk's step. A link
-       reversed at one end only is an inversion, which is left as it is. */
-    const [from, to] =
-      e.from_is_reverse && e.to_is_reverse ? [e.to, e.from] : [e.from, e.to];
-    if (sequences.has(from) && sequences.has(to)) {
+  for (const [node, links] of Object.entries(rawEdges)) {
+    for (const link of links) {
+      /* A link read on the other strand at both ends is the same link read
+         forwards the other way round - 118− → 863− is 863+ → 118+ - and the
+         worker writes each link in one of its two forms. Taken as written
+         it ran backwards: at chr6:70,700,000 it made a loop with the walk
+         that really goes 863 → 118, and the layout cut that walk's step. A
+         link reversed at one end only is an inversion, which is left as it
+         is. */
+      const bothReversed = link.from_is_reverse && link.to_is_reverse;
+      const [from, to] = bothReversed ? [link.to, node] : [node, link.to];
+      if (!sequences.has(from) || !sequences.has(to)) continue;
       const edge = touchEdge(from, to);
-      (!e.from_is_reverse !== !e.to_is_reverse ? turns : straight).add(edge);
+      const turning = !link.from_is_reverse !== !link.to_is_reverse;
+      (turning ? turns : straight).add(edge);
     }
-  });
+  }
   /* As for the nodes: the last lane to cross an edge is the only one it
      could already list. */
   const lastCrossed = new Map<GraphEdge, string>();
@@ -970,7 +974,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      where it leaves in another (the MHC's 2 kb insertion at 4,074,838-849,
      loaded straight there and panned to). What such a node is tied to is
      said below instead. */
-  const ids = nodeList.map((n) => n.id);
   const level = new Map<string, number>();
   ids.forEach((id) => level.set(id, 0));
 
@@ -1043,7 +1046,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     .filter((edge) => edge.lanes.length > 0 || !intoRepeat.has(edge.key))
     .filter((edge) => !turns.has(edge) || straight.has(edge))
     .map(({ from, to }) => ({ from, to }));
-  console.log(layoutEdges, lanes, sequences, copyOf, nodeList);
+  console.log(layoutEdges, lanes, sequences, copyOf, ids);
   for (const lane of lanes) {
     if (lane.isReference) continue;
     const pieces = lane.segments.map((segment) => segment.nodes);
