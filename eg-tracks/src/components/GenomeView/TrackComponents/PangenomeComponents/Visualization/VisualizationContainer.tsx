@@ -9,8 +9,8 @@ import {
 import { createPortal } from "react-dom";
 import {
   bandAxis,
-  buildModel,
   columnarModel,
+  modelOf,
   oneLanePerHaplotype,
   placedModel,
 } from "./pangenomeModel";
@@ -153,7 +153,8 @@ export default function VisualizationContainer({
       Math.max(1, frame.width)
     : 0;
   const sectionAltBp = autoBp(windowBp / 1000);
-  const built = useMemo(() => buildModel(queryResult), [queryResult]);
+  /* The band's one model, shared with the graph's other rows. */
+  const built = modelOf(queryResult);
 
   /* A colour the reader picked wins over the one the palette handed out.
      Applied here rather than in each view, so every drawing and the legend

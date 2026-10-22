@@ -9,8 +9,8 @@ import {
 } from "./Visualization/pangenomeViewState";
 import {
   bandAxis,
-  buildModel,
   columnarModel,
+  modelOf,
   oneLanePerHaplotype,
   placedModel,
 } from "./Visualization/pangenomeModel";
@@ -23,7 +23,7 @@ import {
   variantLayout,
   variantSegments,
 } from "./Visualization/variantBubbles";
-import type { DrawFrame, PangenomeModel } from "./Visualization/pangenomeModel";
+import type { DrawFrame } from "./Visualization/pangenomeModel";
 import { linearHeight } from "./Visualization/LinearPathView";
 import { BAR_H, LANE_H } from "./Visualization/laneLayout";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
@@ -40,15 +40,6 @@ import LinearDrawingModel from "../../../../models/LinearDrawingModel";
    window to show. This is the frame that puts each place in the layout on
    the pixel the band gives it, so the graph and the tracks under it agree.
    ══════════════════════════════════════════════════════════════════════════ */
-
-/* A model per fetched graph: the height is needed before the drawing makes
-   its own. */
-const models = new WeakMap<object, PangenomeModel | null>();
-function modelOf(queryResult: any): PangenomeModel | null {
-  if (!queryResult || typeof queryResult !== "object") return null;
-  if (!models.has(queryResult)) models.set(queryResult, buildModel(queryResult));
-  return models.get(queryResult) ?? null;
-}
 
 /** How tall a part of the graph is drawn in the view the band was laid out
     for: the graph strip, or one haplotype's bar - which only linear view

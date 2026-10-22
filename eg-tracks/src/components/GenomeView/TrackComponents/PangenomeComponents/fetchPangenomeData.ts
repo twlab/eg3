@@ -12,7 +12,7 @@ import {
   openRemoteDatabase,
   queryLocalInterval,
 } from "../../../../getRemoteData/gbz/worker/gbzClient";
-import { buildModel, columnarModel, referenceTicks } from "./Visualization/pangenomeModel";
+import { buildModel, columnarModel, modelOf, referenceTicks } from "./Visualization/pangenomeModel";
 import { GRAPH_PART } from "./Visualization/VisualizationContainer";
 import { TUBE_H } from "./Visualization/TubeMapView";
 import { tubeAxis, tubeStacks } from "./Visualization/tubeLayout";
@@ -457,7 +457,7 @@ export function layoutPangenomeBand(
         !a || b.getLength() > a.getLength() ? b : a,
       null,
     );
-  const model = records && locus ? buildModel(records) : null;
+  const model = records && locus ? modelOf(records) : null;
   let gaps: Gap[] = model && locus ? graphGaps(model, navContext, locus.chr) : [];
 
   /* Tube view: the tubes' room ahead of each column as well, placed before

@@ -634,6 +634,18 @@ function parseWalkName(raw: RawPath, fallback: string) {
   };
 }
 
+/* A model per fetched graph. A band is queried once for all of the graph's
+   rows - its strip and each haplotype's bar, tracks of their own - and the
+   band's layout, each row's height and each row's drawing read that one
+   result, so it is built once and shared by them all. Kept as long as the
+   result is. */
+const models = new WeakMap<object, PangenomeModel | null>();
+export function modelOf(queryResult: any): PangenomeModel | null {
+  if (!queryResult || typeof queryResult !== "object") return null;
+  if (!models.has(queryResult)) models.set(queryResult, buildModel(queryResult));
+  return models.get(queryResult) ?? null;
+}
+
 /**
  * Builds the layout. Returns null when there is nothing to draw, which is the
  * normal answer for a tile that falls outside the part of the graph covered by
