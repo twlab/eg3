@@ -26,7 +26,7 @@ import { pieceAt, rasteriseLanes, visitPieces } from "./laneRaster";
 import type { LaneRaster, RasterNode } from "./laneRaster";
 import { laneLayout } from "./laneLayout";
 import { BAR_H, FOOT_PAD, NODE_H } from "./laneLayout";
-import { bandAxis } from "./pangenomeModel";
+import { bandAxis, reverseComplement } from "./pangenomeModel";
 import { alleleKey } from "../../../../../getRemoteData/gbz/subgraph";
 import {
   baseCentres,
@@ -188,13 +188,15 @@ interface Variant {
       stands in for. */
   /* Multiple: several changes in one stretch off the reference - see
      parts. Complex: a change the graph does not line up base by base, or a
-     walk jumping back along the reference. */
+     walk jumping back along the reference. Inversion: a stretch of the
+     reference read on the other strand from what is either side of it. */
   kind:
     | "substitution"
     | "multiple"
     | "complex"
     | "insertion"
     | "deletion"
+    | "inversion"
     | "unresolved";
   /** For a multiple one, the changes it is made of, in reference order. */
   parts?: VariantPart[];
@@ -232,6 +234,10 @@ interface Variant {
   walk: string[];
   /** A walk jumping back along the reference rather than over some of it. */
   jumpsBack: boolean;
+  /** The haplotype reads the reference backwards here - on the reverse
+      strand either side of it - so what it reads is turned over to be said
+      on the reference's strand. */
+  backward?: boolean;
   /** The pixels it is drawn across. */
   left: number;
   right: number;
@@ -255,6 +261,7 @@ const VARIANT_CLASS: Record<Variant["kind"], string> = {
   complex: "pgv-var-sub",
   insertion: "pgv-var-ins",
   deletion: "pgv-var-del",
+  inversion: "pgv-var-inv",
   unresolved: "",
 };
 
@@ -532,6 +539,8 @@ export interface HoverTarget {
     clippedLeft?: boolean;
     clippedRight?: boolean;
     length?: number;
+    /** Read on the reverse strand; see `NodeLetters`. */
+    reverse?: boolean;
   } | null;
 }
 
@@ -990,12 +999,28 @@ function LinearPathView({
     });
   };
 
+  /** What some steps of a walk read, on the reference's strand: each on
+      its own, then all turned over where the haplotype reads the
+      reference backwards. */
+  const readsOf = (run: LaneStep[], backward: boolean) => {
+    const own = run
+      .map((step) => {
+        const sequence = model.nodeById.get(step.node)?.sequence ?? "";
+        return step.reverse ? reverseComplement(sequence) : sequence;
+      })
+      .join("");
+    return backward ? reverseComplement(own) : own;
+  };
+
   /**
    * Every way a haplotype's walk differs from the reference: each stretch
    * it spends off the reference walk - a substitution, an insertion, or
-   * something less tidy - and each jump it makes over part of the
-   * reference, a deletion. Read on the reference's strand, so a walk
-   * running against the reference says the same as one running with it.
+   * something less tidy - each jump it makes over part of the reference, a
+   * deletion, and each stretch it reads on the other strand, an inversion.
+   * Read on the reference's strand, so a walk running against the
+   * reference says the same as one running with it - which way, from each
+   * step's own strand: one way for the whole lane, an inversion's steps
+   * were read the wrong way round.
    */
   const laneVariants = (lane: Lane): Variant[] => {
     const steps = lane.steps;
@@ -1004,16 +1029,6 @@ function LinearPathView({
     /* Two visits in one walk: a lane's walks meet at seams, not edges. */
     const joined = (i: number, j: number) =>
       j >= 0 && j < steps.length && steps[i].segment === steps[j].segment;
-    /* Which way this haplotype reads the reference. */
-    let drift = 0;
-    for (let i = 0; i + 1 < steps.length; i++) {
-      const a = nodeAt(i);
-      const b = nodeAt(i + 1);
-      if (a?.onReference && b?.onReference && joined(i, i + 1)) {
-        drift += b.refStart - a.refStart;
-      }
-    }
-    const forward = drift >= 0;
     const span = (nodes: GraphNode[]) => ({
       left: Math.min(...nodes.map((node) => px(node.x))),
       right: Math.max(...nodes.map((node) => px(node.x + node.length))),
@@ -1040,6 +1055,7 @@ function LinearPathView({
       visits: Array<{ step: LaneStep; node: GraphNode }>,
       from: number,
       to: number,
+      forward: boolean,
     ): VariantPart[] | null => {
       if (!visits.length) return null;
       /* In reference order; and the haplotype's own coordinate either side
@@ -1133,9 +1149,13 @@ function LinearPathView({
         });
       }
       if (node.onReference) {
-        /* A jump to a reference node the reference does not go to next. */
+        /* A jump to a reference node the reference does not go to next -
+           on the pair's own strand; turning over between the two is an
+           inversion's end, which the inversion says. */
         const next = joined(i, i + 1) ? nodeAt(i + 1) : undefined;
         if (!next?.onReference) continue;
+        if (!steps[i].reverse !== !steps[i + 1].reverse) continue;
+        const forward = !steps[i].reverse;
         const [low, high] = forward ? [node, next] : [next, node];
         if (high.refStart === low.refEnd) continue;
         const deleted = high.refStart > low.refEnd;
@@ -1154,6 +1174,7 @@ function LinearPathView({
           instead: deleted ? referenceBetween(low, high) : "",
           walk: [node.id, next.id],
           jumpsBack: !deleted,
+          backward: !forward,
           left: Math.min(left, right),
           right: Math.max(left, right),
         });
@@ -1175,8 +1196,14 @@ function LinearPathView({
         .filter((visited): visited is GraphNode => !!visited);
       const leaves = joined(i, i - 1) ? nodeAt(i - 1) : undefined;
       const rejoins = joined(i, end) ? nodeAt(end) : undefined;
-      const onStrand = forward ? run : [...run].reverse();
-      const reads = onStrand.map((visited) => visited.sequence).join("");
+      /* Which way the haplotype reads the reference here: by the strand it
+         leaves it and rejoins it on. */
+      const strands = [
+        ...(leaves ? [!!steps[i - 1].reverse] : []),
+        ...(rejoins ? [!!steps[end].reverse] : []),
+      ];
+      const forward = !(strands[0] ?? !!steps[i].reverse);
+      const reads = readsOf(runSteps, !forward);
       const ownFrom = Math.min(...runSteps.map((step) => step.start));
       const ownTo = Math.max(...runSteps.map((step) => step.end));
       const walk = [
@@ -1185,6 +1212,9 @@ function LinearPathView({
         ...(rejoins ? [rejoins.id] : []),
       ];
       i = end - 1;
+      /* Turning over between the two: an inversion's end, which the
+         inversion says - see below. */
+      if (strands.length === 2 && strands[0] !== strands[1]) continue;
 
       if (!leaves?.onReference || !rejoins?.onReference) {
         out.push({
@@ -1206,6 +1236,7 @@ function LinearPathView({
           instead: "",
           walk,
           jumpsBack: false,
+          backward: !forward,
           ...span(run),
         });
         continue;
@@ -1226,6 +1257,7 @@ function LinearPathView({
           instead: "",
           walk,
           jumpsBack: true,
+          backward: !forward,
           ...span(run),
         });
         continue;
@@ -1278,6 +1310,7 @@ function LinearPathView({
                 ),
               low.refEnd,
               high.refStart,
+              forward,
             )
           : null;
       out.push({
@@ -1297,7 +1330,96 @@ function LinearPathView({
         graph: head || tail ? { instead: whole, reads } : undefined,
         walk,
         jumpsBack: false,
+        backward: !forward,
         ...span(run),
+      });
+    }
+
+    /* Deletions where the walk switches strand, inside the band - from
+       where one stretch ends to where the next starts; see laneDeletions.
+       One with an end outside it is listed with the others above. */
+    for (const deletion of lane.deletions ?? []) {
+      if (deletion.turn === undefined) continue;
+      if (deletion.left === null || deletion.right === null) continue;
+      const step = steps[deletion.turn];
+      out.push({
+        contig: lane.segments[step.segment]?.contig ?? lane.contig,
+        kind: "deletion",
+        refFrom: deletion.refFrom,
+        refTo: deletion.refTo,
+        ownFrom: step.end,
+        ownTo: step.end,
+        runFrom: step.end,
+        runTo: step.end,
+        reads: "",
+        instead: referenceSpan(deletion.refFrom, deletion.refTo),
+        walk: deletion.walk,
+        jumpsBack: false,
+        left: px(deletion.left),
+        right: px(deletion.right),
+      });
+    }
+
+    /* Inversions: a run of steps on one strand amid steps on the other,
+       read the other way along the reference from the way the haplotype
+       goes on across it - which the reference nodes either side of it say,
+       as the layout reads it; see buildModel. A contig read backwards as a
+       whole has none, nor do its first and last runs here, with nothing
+       past them to say which way it goes. Only over reference it reads:
+       an insertion read on the other strand is the insertion. */
+    const placedAt = (i: number) => {
+      const node = nodeAt(i);
+      return node?.onReference && !node.untied ? node : undefined;
+    };
+    for (let next = 0; next < steps.length; ) {
+      const from = next;
+      let to = from + 1;
+      while (
+        to < steps.length &&
+        joined(from, to) &&
+        !steps[to].reverse === !steps[from].reverse
+      ) {
+        to += 1;
+      }
+      next = to;
+      if (!joined(from, from - 1) || !joined(from, to)) continue;
+      let before = from - 1;
+      while (joined(from, before) && !placedAt(before)) before -= 1;
+      let after = to;
+      while (joined(from, after) && !placedAt(after)) after += 1;
+      const left = joined(from, before) ? placedAt(before) : undefined;
+      const right = joined(from, after) ? placedAt(after) : undefined;
+      if (!left || !right || left.refStart === right.refStart) continue;
+      const reverse = !!steps[from].reverse;
+      if (reverse !== right.refStart > left.refStart) continue;
+      const runSteps = steps.slice(from, to);
+      const nodes = runSteps
+        .map((step) => model.nodeById.get(step.node))
+        .filter((node): node is GraphNode => !!node && !node.untied);
+      if (!nodes.some((node) => node.onReference)) continue;
+      const refFrom = Math.min(...nodes.map((node) => node.refStart));
+      const refTo = Math.max(...nodes.map((node) => node.refEnd));
+      const ownFrom = Math.min(...runSteps.map((step) => step.start));
+      const ownTo = Math.max(...runSteps.map((step) => step.end));
+      out.push({
+        contig: lane.segments[steps[from].segment]?.contig ?? lane.contig,
+        kind: "inversion",
+        refFrom,
+        refTo,
+        ownFrom,
+        ownTo,
+        runFrom: ownFrom,
+        runTo: ownTo,
+        reads: readsOf(runSteps, !reverse),
+        instead: referenceSpan(refFrom, refTo),
+        walk: [
+          steps[from - 1].node,
+          ...runSteps.map((step) => step.node),
+          steps[to].node,
+        ],
+        jumpsBack: false,
+        backward: !reverse,
+        ...span(nodes),
       });
     }
     return out.sort((a, b) => a.refFrom - b.refFrom || a.ownFrom - b.ownFrom);
@@ -1368,7 +1490,9 @@ function LinearPathView({
           ? <>+{reads.length.toLocaleString()} bp {cardSequence(reads)}</>
           : kind === "deletion"
             ? <>−{(refTo - refFrom).toLocaleString()} bp {cardSequence(instead)}</>
-            : variant.jumpsBack
+            : kind === "inversion"
+              ? `${(refTo - refFrom).toLocaleString()} bp read on the other strand`
+              : variant.jumpsBack
               ? "jumps back along the reference"
               : `${(refTo - refFrom).toLocaleString()} bp → ${reads.length.toLocaleString()} bp`;
     return (
@@ -1414,8 +1538,12 @@ function LinearPathView({
     within: { from: number; to: number },
   ) => {
     if (variant.runFrom >= within.from && variant.runTo <= within.to) return null;
+    /* Its nodes off the reference - an inversion's, all it reads on the
+       other strand. */
     const off = new Set(
-      variant.walk.filter((id) => !model.nodeById.get(id)?.onReference),
+      variant.kind === "inversion"
+        ? variant.walk.slice(1, -1)
+        : variant.walk.filter((id) => !model.nodeById.get(id)?.onReference),
     );
     const steps = lane.steps.filter(
       (step) =>
@@ -1424,16 +1552,12 @@ function LinearPathView({
         Math.min(step.start, step.end) < within.to,
     );
     if (!steps.length) return null;
-    /* On the reference's strand: in the order they are drawn. */
-    const nodes = steps
-      .map((step) => model.nodeById.get(step.node))
-      .filter((node): node is GraphNode => !!node)
-      .sort((a, b) => a.x - b.x);
     return {
       from: Math.min(...steps.map((step) => Math.min(step.start, step.end))),
       to: Math.max(...steps.map((step) => Math.max(step.start, step.end))),
       ids: steps.map((step) => step.node),
-      reads: nodes.map((node) => node.sequence).join(""),
+      /* On the reference's strand, as the variant's own are. */
+      reads: readsOf(steps, !!variant.backward),
     };
   };
 
@@ -1483,6 +1607,11 @@ function LinearPathView({
       );
       if (variant.reads) lines.push(<>reads {cardSequence(variant.reads)} on the way</>);
     } else {
+      if (kind === "inversion") {
+        lines.push(
+          "the haplotype reads this stretch on the other strand from what is either side of it: reverse-complemented, its bases the other way round",
+        );
+      }
       lines.push(
         variant.outside
           ? `it skips ${referenceContig}:${variant.refFrom.toLocaleString()}–${variant.refTo.toLocaleString()}, which runs past what was fetched`
@@ -1501,7 +1630,7 @@ function LinearPathView({
     }
     lines.push(
       here
-        ? `node walk here, the insertion going on either side of it: ${here.ids.join(" → ")}`
+        ? `node walk here, the ${kind === "inversion" ? "inversion" : "insertion"} going on either side of it: ${here.ids.join(" → ")}`
         : `node walk: ${walk.join(" → ")}`,
       ...copiesLine(here ? here.ids : walk),
     );
@@ -1572,6 +1701,7 @@ function LinearPathView({
         "complex",
         "insertion",
         "deletion",
+        "inversion",
         "unresolved",
       ] as const
     )
@@ -1596,6 +1726,15 @@ function LinearPathView({
           · {(to - from).toLocaleString()} bp
         </>,
         regionLine(section),
+        ...(() => {
+          const reversed = here.filter((visit) => visit.reverse).length;
+          if (!reversed) return [];
+          return [
+            reversed === here.length
+              ? "read on the reverse strand here: drawn on the reference's, so its own coordinates count down left to right"
+              : `${reversed} of its ${here.length} nodes here read on the reverse strand`,
+          ];
+        })(),
         variants.length
           ? `${plural(variants.length, "variant")}: ${kinds.join(" · ")}`
           : "no variants here: it reads as the reference does",
@@ -1632,7 +1771,10 @@ function LinearPathView({
             const visit = visits[index];
             const node = model.nodeById.get(visit.id);
             if (!node) return [];
-            const near = nearItem(node, visit.start);
+            const listed = nearItem(node, visit.start);
+            const near = visit.reverse
+              ? { ...listed, line: <>{listed.line} · reverse strand</> }
+              : listed;
             const dupes = dupeItems(node, lane, visit.start);
             const item = dupes.length
               ? {
@@ -1753,6 +1895,7 @@ function LinearPathView({
             <>inserted at {refCoord(refWhere(visited))}</>
           )}{" "}
           · {cardSequence(visited.sequence)}
+          {step.reverse ? " · reverse strand" : ""}
           {of.key === lane.key && step.start === own ? " · this one" : ""}
         </>
       ),
@@ -1853,6 +1996,7 @@ function LinearPathView({
               ? `${contig}:${from.toLocaleString()}–${to.toLocaleString()} · ${to - from} bp`
               : `${contig}:${from.toLocaleString()}`,
           )}
+          {zoom.reverse ? " · on the reverse strand, counting down" : ""}
         </>
       ),
     };
@@ -1869,15 +2013,15 @@ function LinearPathView({
     if (!lane || !raster || !visit || !node) return null;
     const near = visitNeighbours(lane, raster, target.index);
     /* The variant this visit is one of the nodes of, if it is off the
-       reference: a node can be read twice, so by where it is read. */
-    const variants = node.onReference
-      ? []
-      : variantsOf(lane).filter(
-          (variant) =>
-            variant.walk.includes(node.id) &&
-            variant.runFrom <= visit.start &&
-            visit.start < Math.max(variant.runTo, variant.runFrom + 1),
-        );
+       reference or inverted: a node can be read twice, so by where it is
+       read. */
+    const variants = variantsOf(lane).filter(
+      (variant) =>
+        (!node.onReference || variant.kind === "inversion") &&
+        variant.walk.includes(node.id) &&
+        variant.runFrom <= visit.start &&
+        visit.start < Math.max(variant.runTo, variant.runFrom + 1),
+    );
     const dupes = dupeItems(node, lane, visit.start);
     return {
       title: `${lane.label} · node ${node.id}`,
@@ -1893,6 +2037,15 @@ function LinearPathView({
           · {visit.length.toLocaleString()} bp
           {dupes.length ? ` · ${dupes.length} dupes` : ""}
         </>,
+        ...(visit.reverse
+          ? [
+              <>
+                read on the reverse strand: drawn on the reference's, so its own
+                coordinates count down left to right; on its own strand it reads{" "}
+                {cardSequence(reverseComplement(node.sequence))}
+              </>,
+            ]
+          : []),
         referenceLine(node),
         node.onReference ? "on the reference walk" : "off the reference walk",
         ...(() => {

@@ -66,6 +66,9 @@ export interface RasterNode {
   onReference: boolean;
   /** Where it starts in the haplotype's own coordinates. */
   start: number;
+  /** Read on the reverse strand: drawn on the reference's, as every node
+      is, so its own coordinates count down along it - see `ownAt`. */
+  reverse?: boolean;
   /** Which piece of the lane's walk it is in - and so on which contig. */
   piece: number;
   /* The pixels it is drawn between. Kept so the letters can be laid out by
@@ -104,6 +107,14 @@ export interface RasterNode {
    */
   copyFrom: -1 | 0 | 1;
 }
+
+/** The haplotype's own coordinate of a visit's base, counted along its bar:
+    read on the reverse strand, its first base is at the right end, as
+    genomealign counts a query on the minus strand down. */
+const ownAt = (visit: RasterNode, offset: number) =>
+  visit.reverse
+    ? visit.start + visit.length - 1 - offset
+    : visit.start + offset;
 
 /* The reference's nodes along the layout, in order, once per model: what
    a visit's bases are read against. */
@@ -188,6 +199,7 @@ export function rasteriseLane(
       length: graphNode.length,
       onReference: graphNode.onReference,
       start: step.start,
+      reverse: !!step.reverse,
       piece: step.segment,
       left: drawn ? drawn.left : px(graphNode.x),
       right: drawn ? drawn.right : px(graphNode.x + graphNode.length),
@@ -231,7 +243,7 @@ export function rasteriseLane(
       node[at + x] = index;
       base[at + x] = offset;
       alt[at + x] = isAlt;
-      bp[at + x] = visit.start + offset;
+      bp[at + x] = ownAt(visit, offset);
     }
   });
 
@@ -239,9 +251,13 @@ export function rasteriseLane(
      whichever side of the seam they are nearer, so the pointer crossing one
      goes from the base before it to the base after it. */
   for (let i = 0; i + 1 < nodes.length; i++) {
-    const before = nodes[i];
-    const after = nodes[i + 1];
-    if (!follows(before, after)) continue;
+    if (!follows(nodes[i], nodes[i + 1])) continue;
+    /* Read backwards, the walk goes on to the left; turning over between
+       the two, they are not side by side. */
+    if (!nodes[i].reverse !== !nodes[i + 1].reverse) continue;
+    const [l, r] = nodes[i].reverse ? [i + 1, i] : [i, i + 1];
+    const before = nodes[l];
+    const after = nodes[r];
     const gap = after.left - before.right;
     if (!(gap > 0) || before.length <= 0) continue;
     const perBase = (before.right - before.left) / before.length;
@@ -259,13 +275,13 @@ export function rasteriseLane(
     for (let x = from; x < to; x++) {
       /* Only what neither visit's own bases reached. */
       if (node[at + x] >= 0) continue;
-      const near = x + 0.5 < middle ? i : i + 1;
+      const near = x + 0.5 < middle ? l : r;
       const visit = nodes[near];
-      const offset = near === i ? visit.length - 1 : 0;
+      const offset = near === l ? visit.length - 1 : 0;
       node[at + x] = near;
       base[at + x] = offset;
       alt[at + x] = visit.onReference ? 0 : 1;
-      bp[at + x] = visit.start + offset;
+      bp[at + x] = ownAt(visit, offset);
     }
   }
 
@@ -674,13 +690,20 @@ function markCopies(nodes: RasterNode[]): void {
         break;
       }
     }
+    /* Read on the reverse strand, the line counts down to the right. */
     if (before) {
       const perBase = (before.right - before.left) / before.length;
-      return before.start + before.length + (x - before.right) / perBase;
+      const past = (x - before.right) / perBase;
+      return before.reverse
+        ? before.start - past
+        : before.start + before.length + past;
     }
     if (after) {
       const perBase = (after.right - after.left) / after.length;
-      return after.start - (after.left - x) / perBase;
+      const short = (after.left - x) / perBase;
+      return after.reverse
+        ? after.start + after.length + short
+        : after.start - short;
     }
     return NaN;
   };
@@ -821,12 +844,17 @@ export interface NodeLetters {
    * so shortening a stretch raises it by itself.
    */
   span: number;
-  /** The coordinate of the first and last letter shown. */
+  /** The lowest and highest coordinate of the letters shown - the first
+      and last, unless they are read on the reverse strand. */
   from: number;
   to: number;
-  /** The coordinate of the first and last letter marked. */
+  /** And of the letters marked. */
   markFrom: number;
   markTo: number;
+  /** Read on the reverse strand: the letters are the reference's strand,
+      as the bar is, and the haplotype's own coordinates count down along
+      them. */
+  reverse?: boolean;
 
   /** Whether the node runs on past what is shown. */
   clippedLeft: boolean;
@@ -873,6 +901,19 @@ function coveredBases(
 /** Whether one visit is the very next stretch of the haplotype after another. */
 const follows = (before: RasterNode, after: RasterNode) =>
   before.start + before.length === after.start;
+
+/**
+ * The visit drawn next to visit `j`, to its left (`side` -1) or right (1),
+ * that the haplotype carries on into: the step before or after it - read on
+ * the reverse strand, the other way round - and not across a turn of
+ * strand. -1 where there is none.
+ */
+function beside(nodes: RasterNode[], j: number, side: -1 | 1): number {
+  const k = nodes[j].reverse ? j - side : j + side;
+  const other = nodes[k];
+  if (!other || !other.reverse !== !nodes[j].reverse) return -1;
+  return follows(nodes[Math.min(j, k)], nodes[Math.max(j, k)]) ? k : -1;
+}
 
 /**
  * How wide a space between two such visits the pointer can still be said to
@@ -944,9 +985,9 @@ export function laneLetters(
   const perBase =
     hit.node.length > 0 ? (hit.node.right - hit.node.left) / hit.node.length : 0;
   if (perBase > 0 && perBase < 1) {
-    for (let i = index - 1; i >= 0; i--) {
+    for (let i = beside(nodes, index, -1); i >= 0; i = beside(nodes, i, -1)) {
       const visit = nodes[i];
-      if (visit.length <= 0 || !follows(visit, nodes[i + 1])) break;
+      if (visit.length <= 0) break;
       if (!(visit.right > pixel)) break;
       const { first } = coveredBases(visit, pixel, visit.length - 1);
       marked = visit.sequence.slice(first) + marked;
@@ -954,9 +995,9 @@ export function laneLetters(
       markStart = first;
       if (visit.left <= pixel) break;
     }
-    for (let i = index + 1; i < nodes.length; i++) {
+    for (let i = beside(nodes, index, 1); i >= 0; i = beside(nodes, i, 1)) {
       const visit = nodes[i];
-      if (visit.length <= 0 || !follows(nodes[i - 1], visit)) break;
+      if (visit.length <= 0) break;
       if (!(visit.left < pixel + 1)) break;
       const { last } = coveredBases(visit, pixel, 0);
       marked += visit.sequence.slice(0, last + 1);
@@ -968,28 +1009,40 @@ export function laneLetters(
 
   const head = nodes[firstIndex];
   let before = head.sequence.slice(Math.max(0, markStart - half), markStart);
-  for (let i = firstIndex - 1; before.length < half && i >= 0; i--) {
-    if (!follows(nodes[i], nodes[i + 1])) break;
+  for (
+    let i = beside(nodes, firstIndex, -1);
+    before.length < half && i >= 0;
+    i = beside(nodes, i, -1)
+  ) {
     before = nodes[i].sequence.slice(-(half - before.length)) + before;
   }
 
   const tail = nodes[lastIndex];
   let after = tail.sequence.slice(markEnd + 1, markEnd + 1 + half);
-  for (let i = lastIndex + 1; after.length < half && i < nodes.length; i++) {
-    if (!follows(nodes[i - 1], nodes[i])) break;
+  for (
+    let i = beside(nodes, lastIndex, 1);
+    after.length < half && i >= 0;
+    i = beside(nodes, i, 1)
+  ) {
     after += nodes[i].sequence.slice(0, half - after.length);
   }
 
-  const markFrom = head.start + markStart;
-  const markTo = tail.start + markEnd;
+  /* Left to right along the bar: read on the reverse strand, counting
+     down. */
+  const reverse = !!hit.node.reverse;
+  const markLeft = ownAt(head, markStart);
+  const markRight = ownAt(tail, markEnd);
+  const shownLeft = reverse ? markLeft + before.length : markLeft - before.length;
+  const shownRight = reverse ? markRight - after.length : markRight + after.length;
   return {
     letters: (before + marked + after).split(""),
     at: before.length,
     span: marked.length,
-    from: markFrom - before.length,
-    to: markTo + after.length,
-    markFrom,
-    markTo,
+    from: Math.min(shownLeft, shownRight),
+    to: Math.max(shownLeft, shownRight),
+    markFrom: Math.min(markLeft, markRight),
+    markTo: Math.max(markLeft, markRight),
+    ...(reverse ? { reverse } : {}),
     /* Whether the haplotype runs on past what is shown. */
     clippedLeft: before.length >= half,
     clippedRight: after.length >= half,

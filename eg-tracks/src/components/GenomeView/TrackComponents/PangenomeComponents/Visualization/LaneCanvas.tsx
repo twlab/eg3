@@ -117,6 +117,8 @@ export interface LaneHover {
     clippedLeft: boolean;
     clippedRight: boolean;
     length: number;
+    /** Read on the reverse strand; see `NodeLetters`. */
+    reverse?: boolean;
   } | null;
 }
 
@@ -134,6 +136,15 @@ const HATCH_INK = "#fffff0";
 const HATCH_PITCH = 6;
 const HATCH_WIDTH = 1.5;
 const CHIP_INK = "#000000";
+/* What is read on the reverse strand: arrows pointing left, as
+   AnnotationArrows draws a minus-strand query in genomealign - five pixels
+   long, sixteen apart, and thirteen tall, a pixel inside its 15 px blocks,
+   however tall the bar. Dark, where genomealign's are white: a pastel bar
+   under ivory hatching would lose white ones. */
+const STRAND_INK = "rgba(0, 0, 0, 0.55)";
+const ARROW_WIDTH = 5;
+const ARROW_SEPARATION = 16;
+const ARROW_HEIGHT = 13;
 
 /** The most of a row's height a letter may take, leaving the chip around it
     inside the row. */
@@ -630,6 +641,40 @@ function paintLane(
 
     /* Each letter in the piece of its visit's bar it falls in, centred on a
        whole-pixel baseline, the chip kept inside. */
+    /* What the haplotype reads on the reverse strand, arrowed: the bar is
+       drawn on the reference's strand whichever way it is read, and an
+       inversion matching the reference base for base is otherwise drawn
+       as if it were not one. At every zoom, by the step's own strand - what
+       the window says around it does not change it. Across the middle of
+       the bar, and over a visit whose letters are spelled in the room above
+       them: across the middle, their chips covered the arrows, and an
+       insertion read backwards - TOY02#2's Y - showed no strand at all. */
+    const spelled = new Map(cards.map((card) => [card.node, card]));
+    ctx.strokeStyle = STRAND_INK;
+    ctx.lineWidth = Math.max(1, Math.round(sx));
+    for (const band of bands.values()) {
+      const keep = inBand(band);
+      eachRun(
+        pieces,
+        (piece) => !!piece.node.reverse && keep(piece) && !spelled.has(piece.node),
+        toScreen,
+        pw,
+        (from, to) => arrows(ctx, from, to, band.top, band.tall, sx),
+      );
+    }
+    for (const piece of pieces) {
+      const card = spelled.get(piece.node);
+      if (!card || !piece.node.reverse) continue;
+      const { band } = piece;
+      /* Down to where the chips start, as placeIn below sets them. */
+      const baseline = Math.round(band.top + band.tall / 2 + (card.above - card.below) / 2);
+      const room = Math.floor(baseline - card.above - card.margin) - band.top;
+      if (room < 4 * sx) continue;
+      const from = Math.max(0, toScreen(piece.left));
+      const to = Math.min(pw, toScreen(piece.right));
+      if (to > from) arrows(ctx, from, to, band.top, room, sx);
+    }
+
     for (const card of cards) {
       const { node, own, fontPx, advance, above, below, margin } = card;
       ctx.font = `${fontPx}px ${MONO_STACK}`;
@@ -829,6 +874,34 @@ function eachRunKeepingGaps<T extends { left: number; right: number }>(
   }
   close();
   flush(null);
+}
+
+/** Arrows pointing left across a span, `<`, tip to the left: as
+    AnnotationArrows lays them, but started from a multiple of their
+    spacing, so a run broken by a gap stays in step. */
+function arrows(
+  ctx: CanvasRenderingContext2D,
+  from: number,
+  to: number,
+  top: number,
+  height: number,
+  sx: number,
+) {
+  const width = ARROW_WIDTH * sx;
+  if (to - from < width) return;
+  const step = ARROW_SEPARATION * sx;
+  let first = Math.ceil(from / step) * step;
+  /* One, in the middle, where the run is shorter than the spacing. */
+  if (first + width > to) first = (from + to - width) / 2;
+  const tall = Math.min(height - 2 * sx, ARROW_HEIGHT * sx);
+  const middle = top + height / 2;
+  ctx.beginPath();
+  for (let tip = first; tip + width <= to; tip += step) {
+    ctx.moveTo(tip + width, middle - tall / 2);
+    ctx.lineTo(tip, middle);
+    ctx.lineTo(tip + width, middle + tall / 2);
+  }
+  ctx.stroke();
 }
 
 /** Diagonals across a span, clipped to it. */

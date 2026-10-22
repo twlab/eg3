@@ -734,7 +734,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       fetchPangenomeData(message, pangenomeViewRef.current)
         .then((data) => createGenomeAlignOnMessage({ data }))
-        .catch((error) => console.error("Error fetching the pangenome:", error));
+        .catch((error) =>
+          console.error("Error fetching the pangenome:", error),
+        );
       return;
     }
     if (fetchGenomeAlignWorker.current) {
@@ -1014,9 +1016,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           try {
             segment = drawModel.xToSegmentCoordinate(newRegionXoffset);
-          } catch (error) {
-
-          }
+          } catch (error) {}
           if (NavigationContext.isGapFeature(segment.feature)) {
             /* The edge is in a gap: room the band lets in, with no base of
                its own to land on. Anchor on the first base after it instead,
@@ -3120,7 +3120,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const primary = trackState?.genomicFetchCoord?.[genomeName];
       if (!primary || !trackState.visData) continue;
       const records = graphIds
-        .map((id: string) => trackManagerState.current.caches[id]?.[key]?.dataCache)
+        .map(
+          (id: string) =>
+            trackManagerState.current.caches[id]?.[key]?.dataCache,
+        )
         .find(Boolean);
       if (!records) continue;
       const genomicFetchCoord = layoutPangenomeBand(
@@ -5378,7 +5381,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setConfigMenu(null);
     }
   }
-
+  console.log(trackManagerState.current);
   // MARK: render________________________________________
   const content = (
     <div
@@ -5498,66 +5501,66 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               )}
 
               {!isPangenome && (
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <div className="MetadataHeader-button" style={{}}>
-                  <button
-                    onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
-                    className="flex items-center rounded-xs px-1"
-                    style={{
-                      border: isShowingEditMenu
-                        ? "1px solid #1e40af"
-                        : "1px solid #1d4ed8",
-                      backgroundColor: "#eff6ff",
-                      color: isShowingEditMenu ? "#1d4ed8" : "#2563eb",
-                      transition: "all 0.2s",
-                    }}
-                    title="Metadata options"
-                  >
-                    <span className="text-xs">Metadata</span>
-                    <div
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div className="MetadataHeader-button" style={{}}>
+                    <button
+                      onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
+                      className="flex items-center rounded-xs px-1"
                       style={{
-                        display: "flex",
-                        transform: isShowingEditMenu
-                          ? "rotate(90deg)"
-                          : "rotate(0deg)",
-                        transition: "transform 0.2s",
+                        border: isShowingEditMenu
+                          ? "1px solid #1e40af"
+                          : "1px solid #1d4ed8",
+                        backgroundColor: "#eff6ff",
+                        color: isShowingEditMenu ? "#1d4ed8" : "#2563eb",
+                        transition: "all 0.2s",
                       }}
+                      title="Metadata options"
                     >
-                      <ChevronRightIcon />
-                    </div>
-                  </button>
-                  <div>
-                    <MetadataSelectionMenu
-                      terms={metaSets.terms}
-                      style={
-                        isShowingEditMenu ? undefined : { display: "none" }
-                      }
-                      onNewTerms={onNewTerms}
-                      suggestedMetaSets={metaSets.suggestedMetaSets}
-                      onRemoveTerm={onRemoveTerm}
-                      tracks={trackManagerState.current.tracks}
-                      onTracksChange={(updatedTracks) => {
-                        const asTrackModels = updatedTracks.map((t: any) =>
-                          t instanceof TrackModel ? t : new TrackModel(t),
-                        );
-                        trackManagerState.current.tracks = asTrackModels;
-                        onTracksChange(asTrackModels);
-                        addTermToMetaSets(asTrackModels);
+                      <span className="text-xs">Metadata</span>
+                      <div
+                        style={{
+                          display: "flex",
+                          transform: isShowingEditMenu
+                            ? "rotate(90deg)"
+                            : "rotate(0deg)",
+                          transition: "transform 0.2s",
+                        }}
+                      >
+                        <ChevronRightIcon />
+                      </div>
+                    </button>
+                    <div>
+                      <MetadataSelectionMenu
+                        terms={metaSets.terms}
+                        style={
+                          isShowingEditMenu ? undefined : { display: "none" }
+                        }
+                        onNewTerms={onNewTerms}
+                        suggestedMetaSets={metaSets.suggestedMetaSets}
+                        onRemoveTerm={onRemoveTerm}
+                        tracks={trackManagerState.current.tracks}
+                        onTracksChange={(updatedTracks) => {
+                          const asTrackModels = updatedTracks.map((t: any) =>
+                            t instanceof TrackModel ? t : new TrackModel(t),
+                          );
+                          trackManagerState.current.tracks = asTrackModels;
+                          onTracksChange(asTrackModels);
+                          addTermToMetaSets(asTrackModels);
 
-                        setTrackComponents((prev) =>
-                          prev.map((component) => ({
-                            ...component,
-                            trackModel:
-                              asTrackModels.find(
-                                (t: any) => t.id === component.trackModel.id,
-                              ) ?? component.trackModel,
-                          })),
-                        );
-                      }}
-                    />
+                          setTrackComponents((prev) =>
+                            prev.map((component) => ({
+                              ...component,
+                              trackModel:
+                                asTrackModels.find(
+                                  (t: any) => t.id === component.trackModel.id,
+                                ) ?? component.trackModel,
+                            })),
+                          );
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
               )}
             </div>
 

@@ -1369,6 +1369,10 @@
   color: #f6b0b0;
 }
 
+.pgv-var-inv {
+  color: #f8c78f;
+}
+
 /* Several changes in one stretch: lavender, none of the three it is made
    of, which its line names in their own colours. */
 .pgv-var-multi {

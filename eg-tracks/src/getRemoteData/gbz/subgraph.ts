@@ -184,6 +184,9 @@ interface PathInfo {
   len: number;
   pathHandle: number | null;
   fragmentStart: number | null;
+  /* Stitched from its path's reverse sequence - an odd sequence id: the
+     path read backwards. See toJson. */
+  backward: boolean;
   /* Where the sequence leaves the subgraph after the walk's last node, if it
      leaves rather than ends. A walk that met no anchor inside the subgraph
      follows its sequence on from here to one. */
@@ -343,15 +346,12 @@ function referenceElsewhere(
     ) {
       continue;
     }
-    /* A walk read against its path counts down from its end; see
-       fragmentStartFrom. */
-    const reverse = walk.path[0]?.is_reverse === true;
+    /* In its path's own direction - see toJson - so counted on from its
+       start. */
     let prefix = 0;
     for (const step of walk.path) {
       const length = lengthOf.get(step.id) ?? 0;
-      const at = reverse
-        ? walk.interval.end - prefix - length
-        : walk.interval.start + prefix;
+      const at = walk.interval.start + prefix;
       prefix += length;
       if (onQueried.has(step.id) || !wanted.has(step.id)) continue;
       if (!(step.id in out)) out[step.id] = at;
@@ -574,6 +574,7 @@ function nameWalksPastEdge(paths: PathInfo[], cache: RecordCache): void {
       const anchor = record.anchorAt(pos.offset);
       if (anchor) {
         info.pathHandle = Math.floor(anchor.seqId / 2);
+        info.backward = anchor.seqId % 2 === 1;
         info.fragmentStart = fragmentStartFrom(
           anchor.seqId,
           anchor.bpOffset,
@@ -705,7 +706,14 @@ function extractPaths(
       }
 
       if (isRef || pathIsCanonical(walk)) {
-        paths.push({ path: walk, len, pathHandle, fragmentStart, exit });
+        paths.push({
+          path: walk,
+          len,
+          pathHandle,
+          fragmentStart,
+          backward: anchorSeqId !== null && anchorSeqId % 2 === 1,
+          exit,
+        });
       }
     }
   }
@@ -780,11 +788,20 @@ function writeJson(
     name: string,
     fragment: number,
   ): JsonPath => {
+    /* In its own path's direction - the haplotype's. Every path is in the
+       GBWT both ways round, and the walk kept is the canonical one (see
+       pathIsCanonical), which for a walk on the reverse strand at both ends
+       is its path read backwards. Given that way, with its path's
+       coordinates, it counted up along a stretch its contig runs down, and
+       read forwards: a contig read backwards, or the middle of an inversion
+       - HG002#1 at chr14:54,815,000, where a wider window has it on the
+       reverse strand. Not as gbz-base's `query` writes it, for these. */
+    const steps = info.backward ? [...info.path].reverse() : info.path;
     const value: JsonPath = {
       name,
-      path: info.path.map((handle) => ({
+      path: steps.map((handle) => ({
         id: String(nodeId(handle)),
-        is_reverse: isReverse(handle),
+        is_reverse: isReverse(handle) !== info.backward,
       })),
       is_reference: id === refId,
       length: info.len,
@@ -836,9 +853,22 @@ function writeJson(
      one, which the dense encoding hid because walks were almost never
      anonymous. */
   let anonymousHaplotype = 1;
+  /* A walk that reads the same backwards - a hairpin's turn, u+ u-, cut
+     down to its two steps by the window's edge - is canonical both ways
+     round, and the GBWT gives it twice: the same stretch of its path, once
+     from each orientation. Kept once; twice, the bar read it as a dupe. */
+  const kept = new Set<string>();
   for (let id = 0; id < infos.length; id++) {
     if (id === refId) continue;
     const info = infos[id];
+    if (info.pathHandle !== null && info.fragmentStart !== null) {
+      const key = `${info.pathHandle}:${info.fragmentStart}:${info.len}`;
+      if (kept.has(key)) {
+        anonymousHaplotype += 1;
+        continue;
+      }
+      kept.add(key);
+    }
     const named =
       info.pathHandle !== null ? names.get(info.pathHandle) : undefined;
     let name: string;
