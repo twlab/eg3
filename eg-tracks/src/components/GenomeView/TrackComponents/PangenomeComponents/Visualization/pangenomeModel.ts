@@ -432,8 +432,6 @@ function laneDeletions(
   const endOn = (node: GraphNode) =>
     node.onReference ? node.refEnd : node.elsewhere! + node.length;
   const joined = (i: number) => steps[i].segment === steps[i + 1].segment;
-  const same = (i: number, j: number) =>
-    j >= 0 && j < steps.length && steps[j].segment === steps[i].segment;
   /* Each step's stretch on one strand, within its piece: where it starts
      and ends in the walk. */
   const runFrom: number[] = [];
@@ -472,13 +470,38 @@ function laneDeletions(
   /* Drawn in this band, rather than read where the reference reads it
      outside it. */
   const here = (node: GraphNode) => node.elsewhere === undefined;
+  /* Each step's nearest on the reference, at or before it and at or after
+     it, within its piece - -1 for none - worked out the first time a switch
+     asks. Walked from each switch instead, a run of copies off the
+     reference was gone over again for every switch in it: a third of the
+     build at HG002's duplications on chr17. */
+  let nearest: { before: number[]; after: number[] } | null = null;
+  const nearestReference = () => {
+    if (nearest) return nearest;
+    const before: number[] = [];
+    const after: number[] = [];
+    for (let i = 0; i < steps.length; i++) {
+      before[i] = at(i)?.onReference
+        ? i
+        : i > 0 && joined(i - 1)
+          ? before[i - 1]
+          : -1;
+    }
+    for (let i = steps.length - 1; i >= 0; i--) {
+      after[i] = at(i)?.onReference
+        ? i
+        : i + 1 < steps.length && joined(i)
+          ? after[i + 1]
+          : -1;
+    }
+    return (nearest = { before, after });
+  };
   const acrossSwitch = (i: number): LaneDeletion | null => {
-    let p = i;
-    while (same(i, p) && !at(p)?.onReference) p -= 1;
-    let q = i + 1;
-    while (same(i, q) && !at(q)?.onReference) q += 1;
-    const leaves = same(i, p) ? at(p) : undefined;
-    const rejoins = same(i, q) ? at(q) : undefined;
+    const reference = nearestReference();
+    const p = reference.before[i];
+    const q = reference.after[i + 1];
+    const leaves = p >= 0 ? at(p) : undefined;
+    const rejoins = q >= 0 ? at(q) : undefined;
     if (!leaves || !rejoins || leaves.refStart === rejoins.refStart) return null;
     const onward = rejoins.refStart > leaves.refStart;
     const before = [runFrom[i], i];
@@ -610,6 +633,16 @@ function hslToHex(hue: number, saturation: number, lightness: number): string {
 
 const numericCompare = (a: string, b: string) =>
   String(a).localeCompare(String(b), undefined, { numeric: true });
+
+/* A node id as numbers - its own, and a copy's pass after the `~` (0 for
+   none) - for ids of that form: compared so, they come out in
+   numericCompare's order without its collation, which took a sixth of the
+   build in the amylase cluster. Null for any other id. */
+const ID_FORM = /^(0|[1-9]\d{0,14})(?:~([1-9]\d{0,14}))?$/;
+function idNumbers(id: string): [number, number] | null {
+  const match = ID_FORM.exec(id);
+  return match ? [Number(match[1]), match[2] ? Number(match[2]) : 0] : null;
+}
 
 /** `MHC-GRCh38#0#MHC[4073899-4074353]` -> its parts. */
 const WALK_NAME = /^(.*?)#(\d+)#([^[\]]+?)(?:\[(\d+)-(\d+)\])?$/;
@@ -804,20 +837,39 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       /* Each piece's steps' strands, for its steps below. */
       const strands: boolean[][] = [];
       /* No two readings of a node by one path one name, whatever the
-         passes above made of them. */
-      const named = new Map<string, Set<number>>();
+         passes above made of them. Per path, the passes each node is named
+         by: the one most nodes are read in as a number, a set from the
+         second on. */
+      const named = new Map<string, Map<string, number | Set<number>>>();
+      const nameOf = (
+        taken: Map<string, number | Set<number>>,
+        id: string,
+        pass: number,
+      ) => {
+        const used = taken.get(id);
+        if (used === undefined) {
+          taken.set(id, pass);
+          return pass;
+        }
+        if (typeof used === "number") {
+          if (pass === used) pass += 1;
+          taken.set(id, new Set([used, pass]));
+          return pass;
+        }
+        while (used.has(pass)) pass += 1;
+        used.add(pass);
+        return pass;
+      };
       const segments = sorted.map(({ path, reverse, ...segment }, k) => {
         strands[k] = reverse ?? [];
         const along = path ?? `piece ${k}`;
+        const taken = named.get(along) ?? new Map<string, number | Set<number>>();
+        named.set(along, taken);
         return {
           ...segment,
           contig: draft.contig,
           nodes: segment.nodes.map((id, j) => {
-            const used = named.get(`${along}\t${id}`) ?? new Set<number>();
-            named.set(`${along}\t${id}`, used);
-            let pass = passOf[k][j];
-            while (used.has(pass)) pass += 1;
-            used.add(pass);
+            const pass = nameOf(taken, id, passOf[k][j]);
             if (pass === 1) return id;
             const copy = `${id}~${pass}`;
             if (!copyOf.has(copy)) {
@@ -1344,12 +1396,21 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      instead would keep the rows shallower, but it lets the reference itself
      get bumped down wherever it is the minority allele, and then the spine of
      the picture wanders. Alternatives are ranked by traffic among themselves. */
+  const numbersOf = new Map<string, [number, number] | null>();
+  const numbers = (id: string) => {
+    let found = numbersOf.get(id);
+    if (found === undefined) numbersOf.set(id, (found = idNumbers(id)));
+    return found;
+  };
   const byRow = (a: string, b: string) => {
     const aRef = refNodes.has(a);
     const bRef = refNodes.has(b);
     if (aRef !== bRef) return aRef ? -1 : 1;
     const d = (laneKeys.get(b)?.length ?? 0) - (laneKeys.get(a)?.length ?? 0);
     if (d !== 0) return d;
+    const x = numbers(a);
+    const y = numbers(b);
+    if (x && y) return x[0] - y[0] || x[1] - y[1];
     return numericCompare(a, b);
   };
 
