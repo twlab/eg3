@@ -62,13 +62,20 @@ export interface SliceReader {
  * SQLite asks for one page at a time - 4 KB in the databases gbz2db writes -
  * but the pages a query wants are consecutive, so a page-sized read would be
  * tens of separate reads where one would do. Reading a block around each miss
- * turns the 27 pages of a 10 kb window into two or three reads. 512 blocks of
- * 64 KB is a 32 MB ceiling on what a database costs in memory, which is the
- * whole point of the exercise, and enough that panning back over somewhere
- * just visited touches no file at all.
+ * turns the 27 pages of a 10 kb window into two or three reads.
+ *
+ * What is kept is held to a budget in bytes, not blocks: 2 GB per open
+ * database, the least recently read going first. A band of the browser is
+ * three windows, fetched whole each time the view moves on by one, so two of
+ * them are read again at every step; kept, they cost no read at all - one
+ * window right of a three-window band at chr14:54.81 Mb asked the hosted
+ * HPRC file for 64 KB where the first band took 896 KB. The budget is what
+ * lets a session's worth of HPRC bands, megabytes each in a duplicated
+ * region, stay put; the blocks are ArrayBuffers in the worker, outside the
+ * JavaScript heap, but a tab still has to have the memory.
  */
 export const BLOCK_SIZE = 64 * 1024;
-export const MAX_BLOCKS = 512;
+export const MAX_CACHE_BYTES = 2 * 1024 * 1024 * 1024;
 
 /**
  * What is held for one open file: the blocks read from it so far, and the way
@@ -82,6 +89,8 @@ interface CachedFileData {
   reader: SliceReader;
   /** Block index to its bytes. Insertion order is the eviction order. */
   blocks: Map<number, Uint8Array>;
+  /** What `blocks` holds, in bytes: what MAX_CACHE_BYTES is held to. */
+  bytesHeld: number;
   reads: number;
   bytesRead: number;
 }
@@ -91,6 +100,7 @@ export interface FileVfsStats {
   reads: number;
   bytesRead: number;
   blocksHeld: number;
+  bytesHeld: number;
 }
 
 /**
@@ -125,11 +135,13 @@ function readThrough(
       cached.reads++;
       cached.bytesRead += block.length;
       cached.blocks.set(index, block);
+      cached.bytesHeld += block.length;
       /* Oldest first: Map iterates in insertion order. */
-      while (cached.blocks.size > MAX_BLOCKS) {
-        const oldest = cached.blocks.keys().next();
+      while (cached.bytesHeld > MAX_CACHE_BYTES) {
+        const oldest = cached.blocks.entries().next();
         if (oldest.done) break;
-        cached.blocks.delete(oldest.value);
+        cached.blocks.delete(oldest.value[0]);
+        cached.bytesHeld -= oldest.value[1].length;
       }
     }
 
@@ -206,7 +218,10 @@ export function installFileVfs(
     xClose(pFile: number) {
       const cached = byPointer.get(pFile);
       byPointer.delete(pFile);
-      if (cached) cached.blocks.clear();
+      if (cached) {
+        cached.blocks.clear();
+        cached.bytesHeld = 0;
+      }
       return 0;
     },
     xRead(pFile: number, pDest: number, n: number, offset64: bigint | number) {
@@ -283,6 +298,7 @@ export function installFileVfs(
       const cached: CachedFileData = byPath.get(path) ?? {
         reader,
         blocks: new Map(),
+        bytesHeld: 0,
         reads: 0,
         bytesRead: 0,
       };
@@ -359,7 +375,10 @@ export function installFileVfs(
     remove(path: string) {
       readers.delete(path);
       const cached = byPath.get(path);
-      if (cached) cached.blocks.clear();
+      if (cached) {
+        cached.blocks.clear();
+        cached.bytesHeld = 0;
+      }
       byPath.delete(path);
     },
     stats(path: string) {
@@ -369,6 +388,7 @@ export function installFileVfs(
             reads: cached.reads,
             bytesRead: cached.bytesRead,
             blocksHeld: cached.blocks.size,
+            bytesHeld: cached.bytesHeld,
           }
         : null;
     },

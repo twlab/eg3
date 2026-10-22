@@ -348,6 +348,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   /* A pangenome graph lays the band out the way an alignment does, and at
      every zoom: its room for longer alleles is there however far out. */
   const hasPangenome = useRef(false);
+  /* The band whose pangenome data is held: see queueRegionToFetch. */
+  const pangenomeBand = useRef<number | null>(null);
   /* Which view the pangenome graph is drawn in. Held here rather than by the
      graph's tracks: the toolbar switches it, the graph's rows are drawn in
      it, and each band is laid out for it - so the tracks under the graph
@@ -2788,6 +2790,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 releaseInFlightMarkers(curTrackState.fetchAfterGenAlignTracks);
               }
             } else {
+              /* Nothing else to fetch: every other track has this band
+                 already - a pangenome band queried again on coming back to
+                 it, which this manager does not keep (see
+                 queueRegionToFetch) - so all of them draw now, as after a
+                 relayout. Asked of the graph alone, the rest were never
+                 drawn and the band stayed at "Loading View". */
+              if (hasPangenome.current) {
+                for (const track of trackManagerState.current.tracks) {
+                  trackToDrawId[`${track.id}`] = false;
+                }
+                completedFetchedRegion.current.key = curTrackState.trackDataIdx;
+                completedFetchedRegion.current.done = {};
+                completedFetchedRegion.current.groups = {};
+              }
               checkDrawData({
                 curDataIdx: curTrackState.trackDataIdx,
                 isInitial: 0,
@@ -2871,6 +2887,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function queueRegionToFetch(regionIdx: number) {
     if (!curGenomeConfig.current) {
       return;
+    }
+    /* The pangenome's bands are not cached here: a band arrived at is
+       queried again, and the gbz worker's block cache serves the bytes it
+       read before (see fileVfs.ts) - one window right of a band at
+       chr14:54.81 Mb asked the hosted file for 64 KB of its 23 kb. Only
+       the band being left is held, as what is on screen until the new one
+       is drawn; the rest are dropped, so a session's bands are not kept
+       twice, as records here and as blocks there. */
+    if (hasPangenome.current && pangenomeBand.current !== regionIdx) {
+      const leaving = pangenomeBand.current;
+      for (const curTrackCache of Object.values(
+        trackManagerState.current.caches,
+      ) as any[]) {
+        if (curTrackCache?.trackType !== PANGENOME_TRACK_TYPE) continue;
+        for (const idx in curTrackCache) {
+          if (!isInteger(idx) || Number(idx) === leaving) continue;
+          if (curTrackCache[idx] && "dataCache" in curTrackCache[idx]) {
+            delete curTrackCache[idx].dataCache;
+          }
+        }
+      }
+      pangenomeBand.current = regionIdx;
     }
     const trackToDrawId: { [key: string]: any } = {};
 
