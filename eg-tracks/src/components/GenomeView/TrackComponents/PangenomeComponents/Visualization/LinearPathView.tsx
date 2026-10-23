@@ -154,6 +154,9 @@ type CardTarget =
   | { kind: "visit"; lane: string; index: number; zoom: LaneHover["zoom"] }
   /* One node of the graph strip. */
   | { kind: "node"; id: string }
+  /* Where a haplotype's bar skips the reference - a deletion has no node
+     to point at - and its variants that skip it there, by their keys. */
+  | { kind: "gap"; lane: string; at: number; keys: string }
   /* The ways into or out of a visit a bullet counts, and where the bullet
      is drawn. */
   | {
@@ -172,7 +175,9 @@ const targetKey = (target: CardTarget) =>
     ? `visit:${target.lane}:${target.index}:${target.zoom?.markFrom ?? ""}:${target.zoom?.markTo ?? ""}`
     : target.kind === "node"
       ? `node:${target.id}`
-      : `ways:${target.lane}:${target.index}:${target.side}`;
+      : target.kind === "gap"
+        ? `gap:${target.lane}:${target.keys}`
+        : `ways:${target.lane}:${target.index}:${target.side}`;
 
 /** Whether a card is kept open anywhere on the page. Each of the graph's
     rows is a view of its own, and while any of them keeps a card, no
@@ -2113,6 +2118,127 @@ function LinearPathView({
       ],
     };
   };
+  /* The reference's nodes as the band draws them, left to right. */
+  const referenceDrawn = useMemo(
+    () =>
+      model.nodes
+        .filter((node) => node.onReference && !node.untied)
+        .sort((a, b) => a.x - b.x),
+    [model],
+  );
+  /** The reference's base drawn at a pixel of the band, or null where it
+      has none - room for another haplotype's insertion. */
+  const referenceBaseAt = (at: number): number | null => {
+    let low = 0;
+    let high = referenceDrawn.length - 1;
+    while (low <= high) {
+      const mid = (low + high) >> 1;
+      const node = referenceDrawn[mid];
+      const left = px(node.x);
+      const right = px(node.x + node.length);
+      if (at < left) high = mid - 1;
+      else if (at >= right) low = mid + 1;
+      else {
+        const into = Math.floor(((at - left) / Math.max(right - left, 1e-9)) * node.length);
+        return node.refStart + Math.min(node.length - 1, into);
+      }
+    }
+    return null;
+  };
+  /**
+   * A haplotype's own variants that leave out the reference's base at a
+   * pixel its bar skips: a deletion, a change that deletes as part of it,
+   * a complex one shorter than what it stands in for, the inversion it is
+   * inside. Room the bar only crosses, for another haplotype's insertion,
+   * has no base of the reference, and nothing of this haplotype's.
+   */
+  const gapVariants = (lane: Lane, at: number) => {
+    const base = referenceBaseAt(at);
+    if (base === null) return [];
+    const over = (from: number, to: number) => from <= base && base < to;
+    return variantsOf(lane).filter((variant) =>
+      variant.kind === "multiple"
+        ? (variant.parts ?? []).some(
+            (part) => part.kind === "deletion" && over(part.refFrom, part.refTo),
+          )
+        : (variant.kind === "deletion" ||
+            variant.kind === "complex" ||
+            variant.kind === "inversion") &&
+          over(variant.refFrom, variant.refTo),
+    );
+  };
+  /** The visits either side of a pixel a bar skips, as it draws them. */
+  const gapNeighbours = (raster: LaneRaster, at: number) => {
+    let left = -1;
+    let right = -1;
+    raster.nodes.forEach((visit, index) => {
+      if (visit.card !== 0) return;
+      if (visit.right <= at + 0.5 && (left < 0 || visit.right > raster.nodes[left].right)) {
+        left = index;
+      }
+      if (visit.left >= at - 0.5 && (right < 0 || visit.left < raster.nodes[right].left)) {
+        right = index;
+      }
+    });
+    const near = (index: number) => {
+      if (index < 0) return null;
+      const visit = raster.nodes[index];
+      const node = model.nodeById.get(visit.id);
+      return node ? { visit, node, index } : null;
+    };
+    return { left: near(left), right: near(right) };
+  };
+  /** Where a haplotype's bar skips the reference: what it leaves out
+      there - the lines its section's card has, zoomed out - and the
+      visits either side. */
+  const describeGap = (
+    target: Extract<CardTarget, { kind: "gap" }>,
+  ): CardContent | null => {
+    const lane = laneByKey(target.lane);
+    const raster = rasters.get(target.lane);
+    if (!lane || !raster) return null;
+    const variants = gapVariants(lane, target.at);
+    if (!variants.length) return null;
+    const near = gapNeighbours(raster, target.at);
+    const join =
+      variants.find((variant) => variant.kind === "deletion") ?? variants[0];
+    return {
+      title: `${lane.label} · ${
+        variants.length > 1 ? `${variants.length} variants` : variants[0].kind
+      }`,
+      lines: [
+        <>
+          {coordLabel(`Alt path (${lane.label})`)}{" "}
+          {altCoord(
+            `${join.contig ?? lane.contig}:${join.ownFrom.toLocaleString()}`,
+          )}{" "}
+          · where it goes on past what it leaves out
+        </>,
+      ],
+      groups: [
+        {
+          head: variants.length > 1 ? `Variants (${variants.length})` : "Variant",
+          items: variants.map((variant) => ({
+            key: `${alleleKey(variant.walk)}@${variant.ownFrom}`,
+            line: variantLine(variant, lane),
+            details: variantDetails(variant, lane),
+          })),
+        },
+        {
+          head: "Node to its left",
+          near: true,
+          items: near.left ? [nearItem(near.left.node, near.left.visit.start)] : [],
+          empty: "none: the haplotype enters the window here",
+        },
+        {
+          head: "Node to its right",
+          near: true,
+          items: near.right ? [nearItem(near.right.node, near.right.visit.start)] : [],
+          empty: "none: the haplotype leaves the window here",
+        },
+      ],
+    };
+  };
   /** One node of the graph strip: where it is, what it reads, and the
       nodes it joins either side. */
   const describeNode = (id: string): CardContent | null => {
@@ -2180,7 +2306,9 @@ function LinearPathView({
       ? describeVisit(target)
       : target.kind === "node"
         ? describeNode(target.id)
-        : describeWays(target);
+        : target.kind === "gap"
+          ? describeGap(target)
+          : describeWays(target);
   /* A hover shows the card a click would keep - unless one is kept. */
   const showHover = (target: CardTarget, x: number, y: number) => {
     if (cardKeptOpen()) {
@@ -2278,6 +2406,36 @@ function LinearPathView({
         keptNodes.set(other.id, true);
       }
       keptNodes.set(node.id, false);
+    }
+  } else if (kept?.kind === "gap") {
+    /* The stretch the bar skips, and the visits either side of it. */
+    const raster = rasters.get(kept.lane);
+    const top = laneTop.get(kept.lane);
+    if (raster && top !== undefined) {
+      const near = gapNeighbours(raster, kept.at);
+      const from = near.left ? near.left.visit.right : 0;
+      const to = near.right ? near.right.visit.left : width;
+      keptMarks.push({
+        key: "gap",
+        x: from,
+        y: top,
+        width: Math.max(1, to - from),
+        height: BAR_H,
+        near: false,
+      });
+      for (const side of [near.left, near.right]) {
+        if (!side) continue;
+        visitPieces(raster, side.index, BAR_H).forEach((piece, k) =>
+          keptMarks.push({
+            key: `${side.index}:${k}`,
+            x: piece.left,
+            y: top + piece.top,
+            width: Math.max(1, piece.right - piece.left),
+            height: piece.height,
+            near: true,
+          }),
+        );
+      }
     }
   }
 
@@ -2417,6 +2575,40 @@ function LinearPathView({
                 hover.y,
               )
             }
+            /* Between visits: what the haplotype leaves out there, if it
+               is anything of its own. */
+            onGap={(gap, picked) => {
+              const variants = gapVariants(lane, gap.at);
+              if (!variants.length) return;
+              const target: CardTarget = {
+                kind: "gap",
+                lane: lane.key,
+                at: gap.at,
+                keys: variants
+                  .map((variant) => `${alleleKey(variant.walk)}@${variant.ownFrom}`)
+                  .join(" "),
+              };
+              if (picked) {
+                pin(target, gap.x, gap.y);
+                return;
+              }
+              if (cardKeptOpen()) return;
+              /* Round the stretch it skips, in this bar. */
+              const outline = hoverBoxRef.current;
+              const raster = rasters.get(lane.key);
+              const top = laneTop.get(lane.key);
+              if (outline && raster && top !== undefined) {
+                const near = gapNeighbours(raster, gap.at);
+                const from = near.left ? near.left.visit.right : 0;
+                const to = near.right ? near.right.visit.left : width;
+                outline.setAttribute("x", String(from));
+                outline.setAttribute("y", String(top));
+                outline.setAttribute("width", String(Math.max(1, to - from)));
+                outline.setAttribute("height", String(BAR_H));
+                outline.style.display = "";
+              }
+              showHover(target, gap.x, gap.y);
+            }}
           />
         </div>
         ))}

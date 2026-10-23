@@ -265,6 +265,14 @@ export function rasteriseLane(
     if (!(perBase > 0) || gap > Math.max(perBase * SEAM_BASES, SEAM_PX)) {
       continue;
     }
+    /* Room only: over the reference's own bases the haplotype is skipping
+       them, a deletion, and the pointer there is on what it leaves out -
+       see LinearPathView's gap cards. Filled, a 1 bp deletion had no
+       place to point at. */
+    const skipped = spans[r].from - spans[l].to;
+    if (skipped > 0 && referenceUnder(model, spans[l].to, skipped).trim()) {
+      continue;
+    }
 
     const middle = (before.right + after.left) / 2;
     const from = Math.max(0, Math.ceil(before.right));

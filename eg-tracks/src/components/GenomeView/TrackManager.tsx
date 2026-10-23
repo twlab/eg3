@@ -3354,8 +3354,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             globalTrackState.current.newRegionBpStart,
           );
 
-          onNewRegion(prevBpStart, prevBpStart + windowWidthRef.current);
-
           // recalcualte the actual windowView, because gaps in each region are different
           // so we use the actual genomic locus and bp to find the exact pixel in the new region
           const landedLocus = globalTrackState.current.newRegionLocus;
@@ -3395,6 +3393,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const start = stripX - (landedLocus?.pxFromEdge ?? 0);
           const end = start + windowWidthRef.current;
           curViewWindow = new OpenInterval(start, end);
+
+          /* The region shown, for the navigation bar: the window's two edges
+             in this band's bases, out of the gaps the band lets in, as
+             getRegionOffsetByX gives them on any other move. It was the
+             landed base, in the band left behind's bases - so off by every
+             gap before it there - and that plus the window's width in
+             pixels: a 68 bp window panned to read as 1,244 bp. */
+          const navContext = curViewRegion?.getNavigationContext();
+          if (navContext) {
+            const lastBase = navContext.getTotalBases() - 1;
+            const genomeBaseAt = (x: number) =>
+              navContext.toGaplessCoordinate(
+                Math.max(0, Math.min(Math.round(drawModel.xToBase(x)), lastBase)),
+              );
+            onNewRegion(genomeBaseAt(start), genomeBaseAt(end));
+          }
 
           // dragX still describes the region we came from not the new region gaps and region data. The two strips
           // inflate by different gap counts, so carrying the same scroll offset

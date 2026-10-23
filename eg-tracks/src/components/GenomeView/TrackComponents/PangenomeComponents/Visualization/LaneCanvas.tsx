@@ -55,6 +55,15 @@ export interface LaneCanvasProps {
       the same answer, so a click keeps what the reader was looking at. */
   onPick: (hover: LaneHover) => void;
   /**
+   * Where the pointer is on the bar between two of its visits - what the
+   * haplotype skips there, a deletion, has nothing of its own to point at -
+   * after onHover has said null; and with `picked` on a click there.
+   */
+  onGap?: (
+    gap: { at: number; x: number; y: number },
+    picked: boolean,
+  ) => void;
+  /**
    * Zoomed out, the bar is read a section at a time and only on a click:
    * given this, a click reports where it landed instead of picking a node,
    * and moving over the bar says nothing.
@@ -186,6 +195,7 @@ function LaneCanvas({
   dim,
   onHover,
   onPick,
+  onGap,
   onPress,
   onPoint,
   sections,
@@ -316,6 +326,12 @@ function LaneCanvas({
     };
   };
 
+  const gapAt = (event: React.MouseEvent<HTMLCanvasElement>) => ({
+    at: event.clientX - event.currentTarget.getBoundingClientRect().left,
+    x: event.clientX,
+    y: event.clientY,
+  });
+
   return (
     <canvas
       ref={ref}
@@ -336,6 +352,7 @@ function LaneCanvas({
         }
         const hover = hoverAt(event);
         if (hover) onPick(hover);
+        else onGap?.(gapAt(event), true);
       }}
       onMouseMove={(event) => {
         /* A held button is a pan about to happen, and the pan itself stops
@@ -349,7 +366,9 @@ function LaneCanvas({
           }
           return;
         }
-        onHover(hoverAt(event));
+        const hover = hoverAt(event);
+        onHover(hover);
+        if (!hover) onGap?.(gapAt(event), false);
       }}
       onMouseLeave={() => {
         onHover(null);
