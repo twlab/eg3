@@ -814,17 +814,37 @@ export function buildModel(queryResult: any): PangenomeModel | null {
          read again on another GBZ path is left as it is: where that path
          lies against this one, the graph does not say. What a pass reads
          that the earlier ones did not is on that pass too: see
-         wholePasses. */
+         wholePasses.
+
+         Counted along the reference's strand: a run the walk reads on the
+         reverse strand is counted from its far end. Counted the way the
+         walk goes, a contig stored backwards made its first pass the copy
+         on the right and its second the one on the left - and a copy is
+         laid after what it copies, so the left one was drawn on the right:
+         ONE05#1's bar in the one-base toy ran over its second copy, back
+         to its first and on again, and its card put the copy before the
+         stretch while the bar drew it after. */
       const passesOn = new Map<string, Map<string, number>>();
       const passOf = sorted.map((segment, k) => {
         const along = segment.path ?? `piece ${k}`;
         const passes = passesOn.get(along) ?? new Map<string, number>();
         passesOn.set(along, passes);
-        return segment.nodes.map((id) => {
+        const reverse = segment.reverse ?? [];
+        const counted = new Array<number>(segment.nodes.length);
+        const count = (j: number) => {
+          const id = segment.nodes[j];
           const pass = (passes.get(id) ?? 0) + 1;
           passes.set(id, pass);
-          return pass;
-        });
+          counted[j] = pass;
+        };
+        for (let j = 0; j < segment.nodes.length; ) {
+          let end = j + 1;
+          while (end < segment.nodes.length && !reverse[end] === !reverse[j]) end += 1;
+          if (reverse[j]) for (let i = end - 1; i >= j; i--) count(i);
+          else for (let i = j; i < end; i++) count(i);
+          j = end;
+        }
+        return counted;
       });
       if (!draft.isReference) {
         wholePasses(
@@ -1380,6 +1400,81 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   };
   for (let at = ordered.length - 1; at >= 0; at--) pullUp(ordered[at]);
 
+  const predecessors = new Map<string, string[]>();
+  for (const [from, nexts] of successors) {
+    for (const to of nexts) {
+      const into = predecessors.get(to);
+      if (into) into.push(from);
+      else predecessors.set(to, [from]);
+    }
+  }
+  /* Alternatives at one site share its column, and below its start. Two
+     nodes with a node into both and a node out of both are alleles of each
+     other, but one can be led to a longer way as well - another
+     haplotype's insertion before it - and the longest path then put it a
+     column, and bases, past the other: in the one-base toy pis.C stayed
+     beside pi1 while pis.A, which ONE03#1 reads after pix, went 3 bp on,
+     and an insertion before P took P past its alleles, which were drawn
+     under the insertion and said to be inserted. So each moves on to its
+     latest alternative, where all that follows it is past there - all the
+     way or not at all. One leading to the other is no pair of alternatives
+     - a deletion joins a node to both ends of what it skips - and then
+     what follows leaves no room. Nor is one that the graph shares with an
+     insertion's way: a 1 bp C read for chr6:70,701,770's T by 13
+     haplotypes is the last base of 2 bp two others insert after that T,
+     and lies there. */
+  /* Worked out once: what each node leads to, grouped by where that
+     leads. Few nodes have any - none in most real windows. */
+  const siblings = new Map<string, Set<string>>();
+  const pair = (a: string, b: string) => {
+    for (const [one, other] of [[a, b], [b, a]]) {
+      const found = siblings.get(one);
+      if (found) found.add(other);
+      else siblings.set(one, new Set([other]));
+    }
+  };
+  /* By where they lead: the first kid seen, then all of them once two. */
+  const byNext = new Map<string, string | string[]>();
+  for (const kids of successors.values()) {
+    if (kids.length < 2) continue;
+    byNext.clear();
+    for (const kid of kids) {
+      for (const next of successors.get(kid) ?? []) {
+        const seen = byNext.get(next);
+        if (seen === undefined) byNext.set(next, kid);
+        else if (typeof seen === "string") {
+          if (seen === kid) continue;
+          pair(seen, kid);
+          byNext.set(next, [seen, kid]);
+        } else if (!seen.includes(kid)) {
+          for (const other of seen) pair(other, kid);
+          seen.push(kid);
+        }
+      }
+    }
+  }
+  const siblingsOf = (id: string) => siblings.get(id) ?? new Set<string>();
+  const withSiblings = ordered.filter((id) => siblings.has(id));
+  for (let round = 0; round < 8; round++) {
+    let moved = false;
+    for (const id of withSiblings) {
+      let target = level.get(id)!;
+      for (const other of siblingsOf(id)) {
+        target = Math.max(target, level.get(other) ?? 0);
+      }
+      if (target === level.get(id)) continue;
+      let room = Infinity;
+      for (const next of successors.get(id) ?? []) {
+        room = Math.min(room, level.get(next)! - 1);
+      }
+      if (target <= room) {
+        level.set(id, target);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
   const byLevel = new Map<number, string[]>();
   ids.forEach((id) => {
     const lv = level.get(id) ?? 0;
@@ -1459,14 +1554,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      reference moves on only where an allele is longer than what it stands
      in for - the room an insertion takes. Columns stay, for what is an
      alternative to what: sites, the strip's rows, the tube map. */
-  const predecessors = new Map<string, string[]>();
-  for (const [from, nexts] of successors) {
-    for (const to of nexts) {
-      const into = predecessors.get(to);
-      if (into) into.push(from);
-      else predecessors.set(to, [from]);
-    }
-  }
   /* A node of no sequence still takes a base, as a column did. */
   const roomOf = (id: string) => Math.max(1, (sequences.get(id) ?? "").length);
   const startOf = new Map<string, number>();
@@ -1492,6 +1579,30 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       if (latest !== Infinity && latest > startOf.get(id)!)
         startOf.set(id, latest);
     }
+  }
+  /* And alternatives at one site start together, as they share a column -
+     see siblingsOf: the one led to a longer way starts later. */
+  const bySiblingLevel = withSiblings
+    .slice()
+    .sort((a, b) => level.get(a)! - level.get(b)!);
+  for (let round = 0; round < 8; round++) {
+    let moved = false;
+    for (const id of bySiblingLevel) {
+      let target = startOf.get(id)!;
+      for (const other of siblingsOf(id)) {
+        target = Math.max(target, startOf.get(other) ?? 0);
+      }
+      if (target === startOf.get(id)) continue;
+      let room = Infinity;
+      for (const next of successors.get(id) ?? []) {
+        room = Math.min(room, (startOf.get(next) ?? 0) - roomOf(id));
+      }
+      if (target <= room) {
+        startOf.set(id, target);
+        moved = true;
+      }
+    }
+    if (!moved) break;
   }
   let totalBp = 0;
   for (const [id, start] of startOf)

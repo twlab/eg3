@@ -1081,20 +1081,41 @@ function LinearPathView({
         const span = node.refEnd - node.refStart;
         const there = span > 0 ? referenceSpan(node.refStart, node.refEnd) : "";
         if (there !== node.sequence) {
-          parts.push({
-            kind:
-              span === 0
-                ? "insertion"
-                : span === node.length
-                  ? "substitution"
-                  : "complex",
-            refFrom: node.refStart,
-            refTo: node.refEnd,
-            ownFrom: Math.min(step.start, step.end),
-            ownTo: Math.max(step.start, step.end),
-            reads: node.sequence,
-            instead: there,
-          });
+          const kind =
+            span === 0
+              ? "insertion"
+              : span === node.length
+                ? "substitution"
+                : "complex";
+          const ownFrom = Math.min(step.start, step.end);
+          const ownTo = Math.max(step.start, step.end);
+          /* An insertion or a substitution the graph has cut into nodes is
+             one change: the 5 bp the one-base toy inserts after P, on three
+             nodes, read as three insertions. */
+          const last = parts[parts.length - 1];
+          if (
+            last &&
+            kind !== "complex" &&
+            last.kind === kind &&
+            last.refTo === node.refStart &&
+            (forward ? last.ownTo === ownFrom : last.ownFrom === ownTo)
+          ) {
+            last.refTo = node.refEnd;
+            last.reads += node.sequence;
+            last.instead += there;
+            if (forward) last.ownTo = ownTo;
+            else last.ownFrom = ownFrom;
+          } else {
+            parts.push({
+              kind,
+              refFrom: node.refStart,
+              refTo: node.refEnd,
+              ownFrom,
+              ownTo,
+              reads: node.sequence,
+              instead: there,
+            });
+          }
         }
         cursor = Math.max(cursor, node.refEnd);
       }
