@@ -15,6 +15,29 @@
   overflow: hidden;
 }
 
+/* A pangenome haplotype's "Show walks" button, under its name. */
+.TrackLegend-walks {
+  margin-top: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  line-height: 1.3;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.TrackLegend-walks:hover {
+  background: rgba(127, 127, 127, 0.15);
+}
+
+.TrackLegend-walks-note {
+  margin-top: 2px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
 [data-theme="dark"] {
   --font-color: var(--dark-fg-color);
   --bg-color: var(--dark-bg-color);

@@ -51,4 +51,10 @@ export interface TrackProps {
   initialLoad: any;
   selectedRegionSet: any;
   legendWidth: number;
+  /** Changes one of this track's options, as the config menu does. */
+  onConfigChange?: (
+    key: string,
+    value: string | number | boolean,
+    trackId: string | null,
+  ) => void;
 }

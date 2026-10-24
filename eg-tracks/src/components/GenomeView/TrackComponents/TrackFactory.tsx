@@ -51,6 +51,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   initialLoad,
   selectedRegionSet,
   legendWidth,
+  onConfigChange,
 }) {
   function getConfigOptions() {
     try {
@@ -691,6 +692,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackWidth={legend?.trackWidth}
             noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
             legendWidth={legendWidth}
+            walks={
+              legend?.walks && onConfigChange
+                ? {
+                    ...legend.walks,
+                    onToggle: () =>
+                      onConfigChange("showWalks", !legend.walks.on, `${id}`),
+                  }
+                : undefined
+            }
           />
           {legend?.reverseStrandLegendProps && (
             <TrackLegend

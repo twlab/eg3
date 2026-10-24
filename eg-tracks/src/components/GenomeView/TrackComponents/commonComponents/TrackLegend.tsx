@@ -29,6 +29,10 @@ interface TrackLegendProps {
   axisLegend?: any;
   label?: string;
   legendWidth?: number;
+  /** A pangenome haplotype's row: its "Show walks" button - whether the walk
+      is asked for, whether this band is zoomed in enough to draw it, and
+      what the button does. */
+  walks?: { on: boolean; shown: boolean; onToggle: () => void };
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
@@ -184,6 +188,7 @@ class TrackLegend extends React.PureComponent<
       selectedRegion,
       label,
       forceSvg,
+      walks,
     } = this.props;
     if (height <= 0) {
       return null;
@@ -293,6 +298,19 @@ class TrackLegend extends React.PureComponent<
       );
     }
 
+    const labelText = (
+      <p
+        className="TrackLegend-label"
+        style={{ ...pStyle, wordWrap: "break-word", whiteSpace: "normal" }}
+      >
+        {trackModel?.options?.label
+          ? trackModel?.options?.label
+          : label
+            ? label
+            : ""}
+      </p>
+    );
+
     return (
       <div ref={this.containerRef} style={{ ...divStyle, cursor: "pointer" }}>
         <div
@@ -304,16 +322,35 @@ class TrackLegend extends React.PureComponent<
             .filter(Boolean)
             .join("\n")}
         >
-          <p
-            className="TrackLegend-label"
-            style={{ ...pStyle, wordWrap: "break-word", whiteSpace: "normal" }}
-          >
-            {trackModel?.options?.label
-              ? trackModel?.options?.label
-              : label
-                ? label
-                : ""}
-          </p>
+          {walks ? (
+            <div>
+              {labelText}
+              {/* A press here is the button's, not the start of a drag or a
+                  pick of the track. */}
+              <button
+                type="button"
+                className="TrackLegend-walks"
+                title={
+                  walks.on && !walks.shown
+                    ? "Zoom in to 10 bp per pixel or closer to see the walk"
+                    : "Draw this haplotype's walk: a row for each time it reads the reference here"
+                }
+                onPointerDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  walks.onToggle();
+                }}
+              >
+                {walks.on ? "Hide walks" : "Show walks"}
+              </button>
+              {walks.on && !walks.shown ? (
+                <div className="TrackLegend-walks-note">zoom in to see them</div>
+              ) : null}
+            </div>
+          ) : (
+            labelText
+          )}
           <div
             style={{ display: "flex", alignItems: "center", fontSize: "12px" }}
           >

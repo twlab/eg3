@@ -799,7 +799,9 @@ export function buildModel(queryResult: any): PangenomeModel | null {
          the haplotype has twice in a row - reads them the
          second time as copies: the same bases, nodes of their own, so the
          second pass is laid out where it is in the haplotype, after the
-         first, as the insertion it is, and the reference makes room for it.
+         first, as the insertion it is, and the reference makes room for it -
+         where it is one; a copy that is no insertion where it is read is
+         laid on what it copies (see onOriginal).
          Laid over the first pass, as it was, the haplotype read as having
          two alleles at one place, and whatever it read between the passes
          could land as an alternative to the reference's next node: A B A C
@@ -1110,6 +1112,114 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     }
   }
 
+  /* Read where it is no insertion, though, a copy is laid on what it
+     copies. It is the same nodes read again, and against the reference
+     they are where the reference has them. Laid one after the other where
+     the walk reads them, a run of copies drifted with every allele it
+     carries: HG002#1's copy 1 of chr17:38,924,489-38,982,866, read
+     backwards after the turn and never back on the reference in its piece,
+     lay 9 kb on, over its own reading of 38,989,511 - which its bar then
+     drew as copy 1's bases, and HG002#2's copy 2, 26 bp off, filled 21 bp
+     its own reading leaves out. An insertion is a run the walk reads
+     between two of the reference's nodes, going on along the reference
+     from the one to the other, and copying none of what lies between them -
+     A B A C's second A, a tandem copy - and stays where it is read, the
+     reference making room for it. A run copying the reference between the
+     two is the walk reading that stretch again, not an insertion: a long
+     copy reads now and then a node for the first time - where the walk's
+     own reading of the stretch left it out - and the copies between two of
+     those are of the reference between them. Each run is
+     judged by the nearest steps on the reference either side of it - in
+     its piece, or across to the next where two pieces are one insertion
+     longer than the window, as below: NA21093#2's 11 kb second pass at
+     chr9:53,810,417 comes in pieces - and a copy any walk reads as an
+     insertion keeps its place. Not one the reference has outside this
+     band; see above. */
+  const onOriginal = new Set<string>();
+  {
+    const inserted = new Set<string>();
+    const elsewhere = new Set<string>();
+    for (const lane of lanes) {
+      if (lane.isReference) continue;
+      const steps = lane.steps;
+      const onWalk = (i: number) =>
+        onReferenceWalk.has(steps[i].node) && !copyOf.has(steps[i].node);
+      /* The walk's pieces, first step to past the last. */
+      const pieces: Array<[number, number]> = [];
+      for (let first = 0; first < steps.length; ) {
+        let end = first;
+        while (end < steps.length && steps[end].segment === steps[first].segment) end += 1;
+        pieces.push([first, end]);
+        first = end;
+      }
+      /* Whether a piece and the next are one stretch off the reference -
+         ending and starting off it, here. */
+      const joined = (k: number) => {
+        const last = steps[pieces[k][1] - 1].node;
+        const next = steps[pieces[k + 1][0]].node;
+        return (
+          !onWalk(pieces[k][1] - 1) &&
+          !onWalk(pieces[k + 1][0]) &&
+          !elsewhereAt.has(last) &&
+          !elsewhereAt.has(next)
+        );
+      };
+      /* The nearest step on the reference before a piece, across pieces
+         joined to it, and after one. */
+      const onBefore = (k: number) => {
+        for (let p = k - 1; p >= 0 && joined(p); p--) {
+          for (let i = pieces[p][1] - 1; i >= pieces[p][0]; i--) if (onWalk(i)) return i;
+        }
+        return -1;
+      };
+      const onAfter = (k: number) => {
+        for (let p = k + 1; p < pieces.length && joined(p - 1); p++) {
+          for (let i = pieces[p][0]; i < pieces[p][1]; i++) if (onWalk(i)) return i;
+        }
+        return -1;
+      };
+      const along = (id: string) => referenceIndex.get(id) ?? 0;
+      pieces.forEach(([first, end], k) => {
+        /* The stretches between one step on the reference and the next. */
+        let before = -1;
+        for (let at = first; at <= end; at++) {
+          if (at < end && !onWalk(at)) continue;
+          const from = before >= 0 ? before + 1 : first;
+          const copies: string[] = [];
+          for (let s = from; s < at; s++) {
+            if (copyOf.has(steps[s].node)) copies.push(steps[s].node);
+          }
+          if (copies.length) {
+            const left = before >= 0 ? before : onBefore(k);
+            const right = at < end ? at : onAfter(k);
+            const a = left >= 0 ? steps[left] : null;
+            const b = right >= 0 ? steps[right] : null;
+            const low = a && b ? Math.min(along(a.node), along(b.node)) : 0;
+            const high = a && b ? Math.max(along(a.node), along(b.node)) : 0;
+            const between = (id: string) => {
+              const at = referenceIndex.get(copyOf.get(id)!);
+              return at !== undefined && at > low && at < high;
+            };
+            const insertion =
+              !!a &&
+              !!b &&
+              !a.reverse === !b.reverse &&
+              (a.reverse ? along(b.node) < along(a.node) : along(b.node) > along(a.node)) &&
+              !copies.some(between);
+            for (const id of copies) (insertion ? inserted : elsewhere).add(id);
+          }
+          before = at;
+        }
+      });
+    }
+    for (const id of elsewhere) {
+      const of = copyOf.get(id)!;
+      if (inserted.has(id) || elsewhereAt.has(id) || elsewhereAt.has(of)) continue;
+      if (!level.has(of) || !laneKeys.get(of)?.length) continue;
+      onOriginal.add(id);
+    }
+  }
+
   /* A walk going back into a stretch it has read before steps into a copy -
      X → A~2 - where the graph's link is X → A, which no walk here takes as
      it is. Laid out, that link tied X in front of the first pass. In a
@@ -1262,6 +1372,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   console.log(layoutEdges, lanes);
   for (const edge of layoutEdges) {
     if (!level.has(edge.from) || !level.has(edge.to)) continue;
+    /* A copy laid on what it copies is placed by that, not by its links. */
+    if (onOriginal.has(edge.from) || onOriginal.has(edge.to)) continue;
     const out = successors.get(edge.from);
     if (out) out.push(edge.to);
     else successors.set(edge.from, [edge.to]);
@@ -1474,6 +1586,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     }
     if (!moved) break;
   }
+  /* In the column of what it copies. */
+  for (const id of onOriginal) level.set(id, level.get(copyOf.get(id)!) ?? 0);
 
   const byLevel = new Map<number, string[]>();
   ids.forEach((id) => {
@@ -1604,6 +1718,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     }
     if (!moved) break;
   }
+  /* And at its bases. */
+  for (const id of onOriginal) startOf.set(id, startOf.get(copyOf.get(id)!) ?? 0);
   let totalBp = 0;
   for (const [id, start] of startOf)
     totalBp = Math.max(totalBp, start + roomOf(id));
@@ -1632,6 +1748,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
 
     nodeIds.forEach((id, position) => {
       const sequence = sequences.get(id) ?? "";
+      /* A copy laid on what it copies has a place where that has. */
+      const tie = onOriginal.has(id) ? copyOf.get(id)! : id;
       nodeById.set(id, {
         id,
         sequence,
@@ -1643,7 +1761,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         onReference: refNodes.has(id),
         refStart,
         refEnd,
-        ...(reached.has(id) || leadsTo.has(id) ? {} : { untied: true }),
+        ...(reached.has(tie) || leadsTo.has(tie) ? {} : { untied: true }),
         ...(elsewhereAt.has(id) ? { elsewhere: elsewhereAt.get(id) } : {}),
         ...(copyOf.has(id) ? { copyOf: copyOf.get(id) } : {}),
       });

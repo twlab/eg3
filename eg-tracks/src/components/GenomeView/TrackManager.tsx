@@ -1741,7 +1741,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function onConfigChange(
     key: string,
-    value: string | number,
+    value: string | number | boolean,
     trackId: string | null = null,
   ) {
     let newSelected: { [key: string]: any } = {};
@@ -1750,7 +1750,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     let groupChange = false;
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
-      setConfigMenu(createConfigMenuData(trackId, key, value));
+      setConfigMenu(createConfigMenuData(trackId, key, value as string | number));
     }
     // separate label because we don't to apply label to all tracks
     if (key === "label" && trackId) {
@@ -1762,6 +1762,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           newSelected[`${trackId}`] = { [key]: value };
         }
       });
+    } else if (key === "showWalks" && trackId) {
+      /* A pangenome haplotype's row drawn as its walk, from the button on
+         that row's own legend: that track alone, not every selected one. */
+      const item = trackManagerState.current.tracks.find(
+        (t: any) => `${t.id}` === `${trackId}`,
+      );
+      if (item) {
+        item.options = { ...item.options, [key]: value };
+        newSelected[`${trackId}`] = { [key]: value };
+        const global = trackManagerState.current.globalConfig?.[`${trackId}`];
+        updateGlobalTrackConfig({
+          configOptions: {
+            ...(global?.configOptions ?? {
+              ...(trackOptionMap[item.type]?.defaultOptions ?? {}),
+            }),
+            ...item.options,
+          },
+          trackModel: item,
+          id: `${trackId}`,
+          trackIdx: trackManagerState.current.tracks.indexOf(item),
+        });
+      }
     } else {
       trackManagerState.current.tracks.map((item) => {
         if (item.isSelected) {
@@ -5789,6 +5811,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             initialLoad={initialLoad}
                             selectedRegionSet={selectedRegionSet}
                             legendWidth={legendWidth}
+                            onConfigChange={onConfigChange}
                           />
                         </div>
                       </SortableList.Item>

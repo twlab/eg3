@@ -189,8 +189,15 @@ export function rasteriseLane(
   for (const step of lane.steps) {
     stepIndex += 1;
     const graphNode = model.nodeById.get(step.node);
-    /* Not drawn where it has no place against the reference. */
+    /* Not drawn where it has no place against the reference. Nor a copy
+       laid on what it copies (see buildModel): a bar is the haplotype's
+       own reading, and drawn there the copy was a dupe over that reading -
+       or over what it leaves out: HG002#2's copy 2 filled the 21 bp at
+       chr17:38,982,608 its own reading skips. Show walks draws it, a row
+       of its own; the cards list it with the place's dupes. */
     if (!graphNode || graphNode.untied) continue;
+    const original = graphNode.copyOf ? model.nodeById.get(graphNode.copyOf) : undefined;
+    if (original && original.x === graphNode.x) continue;
     visitOfStep.set(stepIndex, nodes.length);
     const drawn = placed?.get(graphNode.id);
     nodes.push({

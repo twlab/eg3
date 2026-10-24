@@ -92,7 +92,7 @@ const SECTION_PX = 16;
    canvas and its hover a lookup in it, so this costs nothing like the
    strip's element per node would. Past it, a bar is read a section at a
    time. */
-const BAR_NODE_BASES_PER_PX = 10;
+export const BAR_NODE_BASES_PER_PX = 10;
 /** Past this many bases a card's sequence gets a box of its own. */
 const SEQUENCE_INLINE = 60;
 

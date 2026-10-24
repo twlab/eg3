@@ -25,6 +25,7 @@ import {
 } from "./Visualization/variantBubbles";
 import type { DrawFrame } from "./Visualization/pangenomeModel";
 import { linearHeight } from "./Visualization/LinearPathView";
+import { walksHeight, walksShown } from "./Visualization/WalksView";
 import { BAR_H, LANE_H } from "./Visualization/laneLayout";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
 import LinearDrawingModel from "../../../../models/LinearDrawingModel";
@@ -52,6 +53,8 @@ export function pangenomeTrackHeight(
   primaryVisData?: any,
   tube?: { minBp: number | null; bases: number[] },
   variantGrouping = 0,
+  /** A haplotype's row drawn as its walk: see WalksView. */
+  walks = false,
 ): number {
   const model = modelOf(queryResult);
   if (!model) return 40;
@@ -82,7 +85,22 @@ export function pangenomeTrackHeight(
   );
   /* A haplotype with nothing in this band still holds its row. */
   if (!lanes.length) return part === GRAPH_PART ? 40 : BAR_H;
+  if (walks && walksDrawn(queryResult, part, primaryVisData)) {
+    return walksHeight({ ...model, lanes });
+  }
   return linearHeight({ ...model, lanes }, false, part === GRAPH_PART);
+}
+
+/** Whether a haplotype's row, asked to show its walk, can in this band:
+    see WalksView. Linear view only - the row is hidden in the others. */
+export function walksDrawn(queryResult: any, part: string, primaryVisData?: any): boolean {
+  if (part === GRAPH_PART) return false;
+  const model = modelOf(queryResult);
+  if (!model) return false;
+  const lanes = oneLanePerHaplotype(model).lanes.filter(
+    (lane) => !lane.isReference && lane.label === part,
+  );
+  return lanes.length > 0 && walksShown({ ...model, lanes }, bandFrame(primaryVisData));
 }
 
 /**
@@ -137,6 +155,7 @@ export default function PangenomeTrackView({
   windowWidth,
   part,
   tube,
+  walks = false,
 }: {
   queryResult: any;
   primaryVisData: any;
@@ -146,6 +165,8 @@ export default function PangenomeTrackView({
   /** The tube map the band was laid out for, in tube view: its grouping and
       its room ahead of each column, in bases. */
   tube?: { minBp: number | null; bases: number[] };
+  /** A haplotype's row drawn as its walk: see WalksView. */
+  walks?: boolean;
 }) {
   const frame = useMemo(() => bandFrame(primaryVisData), [primaryVisData]);
   /* The room in pixels, at the band's own scale. */
@@ -163,6 +184,7 @@ export default function PangenomeTrackView({
         frame={frame}
         part={part}
         tubeLayout={tubeLayout}
+        walks={walks}
       />
     </div>
   );
