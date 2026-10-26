@@ -22,11 +22,19 @@ import type {
 import LaneCanvas from "./LaneCanvas";
 import type { LaneHover } from "./LaneCanvas";
 import FloatingCard from "./FloatingCard";
-import { pieceAt, rasteriseLanes, visitPieces } from "./laneRaster";
+import { pieceAt, rasteriseLane, rasteriseLanes, visitPieces } from "./laneRaster";
 import type { LaneRaster, RasterNode } from "./laneRaster";
 import { laneLayout } from "./laneLayout";
 import { BAR_H, FOOT_PAD, NODE_H } from "./laneLayout";
-import { bandAxis, reverseComplement } from "./pangenomeModel";
+import { bandAxis, onItsOriginal, reverseComplement } from "./pangenomeModel";
+import { walkRows } from "./walkRows";
+import WalksView, {
+  WALK_ROW_H,
+  walkRowTop,
+  walkSectionLines,
+  walksHeight,
+  walkVisitLines,
+} from "./WalksView";
 import { alleleKey } from "../../../../../getRemoteData/gbz/subgraph";
 import {
   baseCentres,
@@ -568,6 +576,10 @@ interface LinearPathViewProps {
   /** Whether the graph strip is drawn. Off, only the model's haplotype bars
       are: one haplotype as a track row of its own. */
   strip?: boolean;
+  /** One haplotype's row drawn as its walk, "Show walks": its readings a
+      row each in place of its bar, each row drawn and read as a bar is -
+      see WalksView. */
+  walks?: boolean;
 }
 
 /* The bars used to be split into runs here and drawn as rects. They are
@@ -583,6 +595,7 @@ function LinearPathView({
   alleleRows,
   sectionAltBp = 0,
   strip = true,
+  walks = false,
 }: LinearPathViewProps) {
   /* Several of these can share a page, so the hatch needs its own id. */
   const hatchId = `pgv-hatch-${useId().replace(/[^\w-]/g, "")}`;
@@ -613,16 +626,18 @@ function LinearPathView({
   }, [card]);
   /* A press anywhere but on a card closes this one: each of the graph's rows
      is a view of its own, and a card left open in one stayed up beside the
-     card another row opened. */
+     card another row opened. On the pointer's press, not the mouse's: over
+     the tracks eg3's pan takes the press first, and no mousedown follows -
+     a press on the ruler's label left the card up. */
   useEffect(() => {
     if (!card) return;
-    const close = (event: MouseEvent) => {
+    const close = (event: PointerEvent) => {
       const target = event.target as Element | null;
       if (target?.closest?.(".pgv-floating-card")) return;
       setCard(null);
     };
-    document.addEventListener("mousedown", close, true);
-    return () => document.removeEventListener("mousedown", close, true);
+    document.addEventListener("pointerdown", close, true);
+    return () => document.removeEventListener("pointerdown", close, true);
   }, [card]);
   const toggleItem = (key: string) =>
     setOpenItems((was) => {
@@ -675,7 +690,31 @@ function LinearPathView({
     laneTop.set(row.key, row.top);
     laneHeight.set(row.key, row.height);
   }
-  const height = layout.height;
+
+  /* Show walks: the haplotype's readings, a row each, drawn in place of its
+     bar as bars are - painted, pointed at and opened the same way at every
+     zoom, so a row's cards are a bar's. A row's variants are its own - what
+     that reading differs from the reference by - but a place's dupes are
+     every reading of it, which the haplotype's own lane has; see
+     haplotypeLane. */
+  const walkLane = walks && !strip ? model.lanes.find((lane) => !lane.isReference) : undefined;
+  const walk = walkLane ? walkRows(model, walkLane) : null;
+  if (walk) {
+    laneTop.clear();
+    laneHeight.clear();
+    walk.rowLanes.forEach((rowLane, row) => {
+      laneTop.set(rowLane.key, walkRowTop(row));
+      laneHeight.set(rowLane.key, WALK_ROW_H);
+    });
+  }
+  /** The lanes drawn as bars: the haplotypes', or a walk's rows. */
+  const barLanes = walk ? walk.rowLanes : model.lanes.filter((lane) => !lane.isReference);
+  /** How tall a bar is drawn: a walk's rows are thinner than a bar. */
+  const barHeight = walk ? WALK_ROW_H : BAR_H;
+  /** Which row of the walk a lane is, or -1 for a haplotype's own bar. */
+  const walkRowOf = (key: string) =>
+    walk ? walk.rowLanes.findIndex((rowLane) => rowLane.key === key) : -1;
+  const height = walk ? walksHeight(model) : layout.height;
   /* ── The axis ────────────────────────────────────────────────────────
      The graph is drawn as it is laid out: every node gets room for the
      sequence it carries, so an allele longer than the reference's is
@@ -826,6 +865,14 @@ function LinearPathView({
      the point of it. */
   const rasters = useMemo(() => {
     const byKey = new Map<string, ReturnType<typeof rasteriseLanes>[number]>();
+    /* A walk's rows from the walk's own model: a copy's allele drawn over
+       what it replaces is a node of the walk's; see walkRows. */
+    if (walk) {
+      for (const rowLane of walk.rowLanes) {
+        byKey.set(rowLane.key, rasteriseLane(rowLane, walk.model, px, width));
+      }
+      return byKey;
+    }
     for (const raster of rasteriseLanes(model, px, width)) {
       byKey.set(raster.key, raster);
     }
@@ -833,7 +880,7 @@ function LinearPathView({
     /* px is rebuilt every render, but it is the axis's own function or a
        plain scaling of it - so the axis and the width are what change it. */
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [model, axis, pxPerBase, width]);
+  }, [model, axis, pxPerBase, width, walk]);
 
   /* ── Sections, zoomed out ─────────────────────────────────────────────
      Only once a letter no longer fits a base: before that a node is wide
@@ -849,7 +896,7 @@ function LinearPathView({
   const sections = useMemo<StripSection[] | null>(() => {
     if (sequenceSize(scale) >= SEQUENCE_MIN_SIZE) return null;
     const placed = model.nodes
-      .filter((node) => !node.untied)
+      .filter((node) => !node.untied && !onItsOriginal(model, node))
       .map((node) => ({
         node,
         left: px(node.x),
@@ -883,6 +930,30 @@ function LinearPathView({
   const sectionAt = (x: number) =>
     sections?.find((section) => x >= section.left && x < section.right) ??
     null;
+  /** The strip's node under the pointer in a section, where the strip is
+      read node by node: the one drawn there on the row pointed at - or,
+      where a pixel falls between two, the nearer. */
+  const stripNodeAt = (
+    section: StripSection,
+    event: React.MouseEvent<SVGRectElement>,
+  ) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    const x = section.left + (event.clientX - box.left);
+    const row = Math.floor((event.clientY - box.top) / NODE_H);
+    let best: GraphNode | null = null;
+    let away = Infinity;
+    for (const node of section.nodes) {
+      if (node.row !== row || !(alleleRows || node.onReference)) continue;
+      const left = px(node.x);
+      const right = px(node.x + node.length);
+      const off = x < left ? left - x : x >= right ? x - right : 0;
+      if (off < away) {
+        best = node;
+        away = off;
+      }
+    }
+    return best;
+  };
 
   const referenceContig =
     model.reference?.contig ??
@@ -1030,7 +1101,7 @@ function LinearPathView({
   const laneVariants = (lane: Lane): Variant[] => {
     const steps = lane.steps;
     const nodeAt = (i: number) =>
-      i >= 0 && i < steps.length ? model.nodeById.get(steps[i].node) : undefined;
+      i >= 0 && i < steps.length ? nodeOf(steps[i].node) : undefined;
     /* Two visits in one walk: a lane's walks meet at seams, not edges. */
     const joined = (i: number, j: number) =>
       j >= 0 && j < steps.length && steps[i].segment === steps[j].segment;
@@ -1218,7 +1289,7 @@ function LinearPathView({
       }
       const runSteps = steps.slice(i, end);
       const run = runSteps
-        .map((step) => model.nodeById.get(step.node))
+        .map((step) => nodeOf(step.node))
         .filter((visited): visited is GraphNode => !!visited);
       const leaves = joined(i, i - 1) ? nodeAt(i - 1) : undefined;
       const rejoins = joined(i, end) ? nodeAt(end) : undefined;
@@ -1329,7 +1400,7 @@ function LinearPathView({
         kind === "complex"
           ? breakDown(
               runSteps
-                .map((step) => ({ step, node: model.nodeById.get(step.node) }))
+                .map((step) => ({ step, node: nodeOf(step.node) }))
                 .filter(
                   (visit): visit is { step: LaneStep; node: GraphNode } =>
                     !!visit.node,
@@ -1420,7 +1491,7 @@ function LinearPathView({
       if (reverse !== right.refStart > left.refStart) continue;
       const runSteps = steps.slice(from, to);
       const nodes = runSteps
-        .map((step) => model.nodeById.get(step.node))
+        .map((step) => nodeOf(step.node))
         .filter((node): node is GraphNode => !!node && !node.untied);
       if (!nodes.some((node) => node.onReference)) continue;
       const refFrom = Math.min(...nodes.map((node) => node.refStart));
@@ -1569,7 +1640,7 @@ function LinearPathView({
     const off = new Set(
       variant.kind === "inversion"
         ? variant.walk.slice(1, -1)
-        : variant.walk.filter((id) => !model.nodeById.get(id)?.onReference),
+        : variant.walk.filter((id) => !nodeOf(id)?.onReference),
     );
     const steps = lane.steps.filter(
       (step) =>
@@ -1713,7 +1784,9 @@ function LinearPathView({
     const to = Math.max(...here.map((visit) => visit.start + visit.length));
     /* Its variants that touch the section, on the visits picked; a deletion
        is as wide as what it skips. */
-    const variants = laneVariants(lane).filter(
+    const whole = haplotypeLane(lane);
+    const changes = variantLaneOf(lane);
+    const variants = variantsOf(changes).filter(
       (variant) =>
         variant.left < section.right &&
         Math.max(variant.right, variant.left + 0.01) > section.left &&
@@ -1752,6 +1825,9 @@ function LinearPathView({
           · {(to - from).toLocaleString()} bp
         </>,
         regionLine(section),
+        ...(walk && walkRowOf(lane.key) >= 0
+          ? walkSectionLines(walk, walkRowOf(lane.key), here, section, px)
+          : []),
         ...(() => {
           const reversed = here.filter((visit) => visit.reverse).length;
           if (!reversed) return [];
@@ -1771,21 +1847,21 @@ function LinearPathView({
           items: variants.map((variant) => {
             /* A variant running past the section is listed as the part of
                it here, with how big it is in all. */
-            const here = variantHere(variant, lane, { from, to });
+            const here = variantHere(variant, changes, { from, to });
             return {
               key: `${alleleKey(variant.walk)}@${variant.ownFrom}`,
               line: here ? (
                 <>
                   {variantLine(
                     { ...variant, ownFrom: here.from, ownTo: here.to, reads: here.reads },
-                    lane,
+                    changes,
                   )}{" "}
                   · part of {(variant.runTo - variant.runFrom).toLocaleString()} bp
                 </>
               ) : (
-                variantLine(variant, lane)
+                variantLine(variant, changes)
               ),
-              details: variantDetails(variant, lane, { from, to }),
+              details: variantDetails(variant, changes, { from, to }),
             };
           }),
         },
@@ -1795,13 +1871,13 @@ function LinearPathView({
           head: `Nodes (${inside.length})`,
           items: inside.flatMap((index) => {
             const visit = visits[index];
-            const node = model.nodeById.get(visit.id);
+            const node = nodeOf(visit.id);
             if (!node) return [];
             const listed = nearItem(node, visit.start);
             const near = visit.reverse
               ? { ...listed, line: <>{listed.line} · reverse strand</> }
               : listed;
-            const dupes = dupeItems(node, lane, visit.start);
+            const dupes = dupeItems(node, whole, visit.start);
             const item = dupes.length
               ? {
                   ...near,
@@ -1849,7 +1925,71 @@ function LinearPathView({
 
   /* ── Zoomed in: the card a hover shows and a click keeps ──────────────── */
   const laneByKey = (key: string) =>
-    model.lanes.find((lane) => lane.key === key);
+    model.lanes.find((lane) => lane.key === key) ??
+    walk?.rowLanes.find((lane) => lane.key === key);
+  /** A node a bar draws: the band's, or a walk's stand-in for a copy's
+      allele, drawn over what it replaces. */
+  const nodeOf = (id: string) => model.nodeById.get(id) ?? walk?.model.nodeById.get(id);
+  /** The lane a card reads a place's dupes from - every reading of it: a
+      bar's own, and for a walk's row its haplotype's. */
+  const haplotypeLane = (lane: Lane) => (walkLane && walkRowOf(lane.key) >= 0 ? walkLane : lane);
+  /* What a walk's row differs from the reference by: its readings as the
+     haplotype walks them - every step from each one's first to its last, a
+     copy's alleles with them, those the row draws as a stand-in or marks
+     for want of room - on the graph's own nodes, a copy's on the ones it
+     copies. As the row draws it, a stand-in is no allele the graph lines up
+     with its site: HG002#2's copy SNP at chr17:38,970,944 read as the G
+     deleted. */
+  const variantLanes = useMemo(() => {
+    const out = new Map<string, Lane>();
+    if (!walk || !walkLane) return out;
+    walk.rowLanes.forEach((rowLane, row) => {
+      const steps: LaneStep[] = [];
+      const deletions: LaneDeletion[] = [];
+      for (const reading of walk.rows[row]) {
+        const own = reading.steps.filter((k) => k >= 0);
+        const first = Math.min(...own);
+        const last = Math.max(...own);
+        const base = steps.length;
+        for (let k = first; k <= last; k++) {
+          const step = walkLane.steps[k];
+          const copyOf = model.nodeById.get(step.node)?.copyOf;
+          steps.push({ ...step, node: copyOf && model.nodeById.has(copyOf) ? copyOf : step.node });
+        }
+        /* A jump out of the band from its last node, for its card to say
+           as a bar's does: see laneVariants and walkRows' `out`. */
+        const end = model.nodeById.get(steps[base + last - first].node);
+        if (reading.out && end) {
+          deletions.push({
+            left: reading.reverse ? null : end.x + end.length,
+            right: reading.reverse ? end.x : null,
+            refFrom: reading.out.refFrom,
+            refTo: reading.out.refTo,
+            bp: reading.out.bp,
+            step: base + last - first,
+            walk: [end.id, reading.out.to],
+            open: reading.reverse ? "left" : "right",
+            forward: !reading.reverse,
+          });
+        }
+      }
+      out.set(rowLane.key, {
+        ...rowLane,
+        key: `${rowLane.key} variants`,
+        steps,
+        order: steps.map((step) => step.node),
+        nodeSet: new Set(steps.map((step) => step.node)),
+        deletions,
+      });
+    });
+    return out;
+  }, [walk, walkLane, model]);
+  /** The lane a card reads variants from: a bar's own, a walk's row's
+      readings. */
+  const variantLaneOf = (lane: Lane) => variantLanes.get(lane.key) ?? lane;
+  /** A node as the walk has it: a copy's original, a stand-in's first
+      allele's - what a variant names. */
+  const baseId = (id: string) => id.split("@walk")[0].split("~")[0];
   /* Each haplotype's variants, worked out the first time a card asks and
      kept while the drawing stays the same. */
   /* eslint-disable-next-line react-hooks/exhaustive-deps */
@@ -1904,6 +2044,8 @@ function LinearPathView({
       reference - in place, standing in for a stretch, inserted, or outside
       this view - and what it reads. `own` is the one the card is about. */
   const dupeItems = (node: GraphNode, lane: Lane, own: number): CardItem[] => {
+    /* A walk's stand-in is no node of the graph's, at no site of its own. */
+    if (!model.nodeById.has(node.id)) return [];
     const dupes = dupesOf(node, lane.label);
     if (dupes.length < 2) return [];
     return dupes.map(({ lane: of, step, node: visited }) => ({
@@ -1975,7 +2117,7 @@ function LinearPathView({
         return null;
       }
       const visit = raster.nodes[other];
-      const node = model.nodeById.get(visit.id);
+      const node = nodeOf(visit.id);
       return node ? { visit, node, index: other } : null;
     };
     return { prev: near(index - 1), next: near(index + 1) };
@@ -2035,22 +2177,27 @@ function LinearPathView({
     const lane = laneByKey(target.lane);
     const raster = rasters.get(target.lane);
     const visit = raster?.nodes[target.index];
-    const node = visit ? model.nodeById.get(visit.id) : undefined;
+    const node = visit ? nodeOf(visit.id) : undefined;
     if (!lane || !raster || !visit || !node) return null;
     const near = visitNeighbours(lane, raster, target.index);
+    const whole = haplotypeLane(lane);
+    const row = walkRowOf(lane.key);
     /* The variant this visit is one of the nodes of, if it is off the
        reference or inverted: a node can be read twice, so by where it is
-       read. */
-    const variants = variantsOf(lane).filter(
+       read. By the node it is of, past its pass: a bar can draw a copy
+       where its run is an insertion, and its variant names the copy. */
+    const variants = variantsOf(variantLaneOf(lane)).filter(
       (variant) =>
         (!node.onReference || variant.kind === "inversion") &&
-        variant.walk.includes(node.id) &&
+        variant.walk.some((id) => baseId(id) === baseId(node.id)) &&
         variant.runFrom <= visit.start &&
         visit.start < Math.max(variant.runTo, variant.runFrom + 1),
     );
-    const dupes = dupeItems(node, lane, visit.start);
+    const dupes = dupeItems(node, whole, visit.start);
     return {
-      title: `${lane.label} · node ${node.id}`,
+      title: `${lane.label} · ${
+        node.id.includes("@walk") ? "an allele of a copy" : `node ${node.id}`
+      }`,
       zoom: target.zoom ? cardZoom(target.zoom, contigOf(lane, visit.piece)) : undefined,
       lines: [
         <>
@@ -2063,6 +2210,8 @@ function LinearPathView({
           · {visit.length.toLocaleString()} bp
           {dupes.length ? ` · ${dupes.length} dupes` : ""}
         </>,
+        /* On a walk's row, which reading this is. */
+        ...(walk && row >= 0 ? walkVisitLines(walk, row, visit) : []),
         ...(visit.reverse
           ? [
               <>
@@ -2096,8 +2245,8 @@ function LinearPathView({
                 head: variants.length > 1 ? `Variants (${variants.length})` : "Variant",
                 items: variants.map((variant) => ({
                   key: `${alleleKey(variant.walk)}@${variant.ownFrom}`,
-                  line: variantLine(variant, lane),
-                  details: variantDetails(variant, lane),
+                  line: variantLine(variant, variantLaneOf(lane)),
+                  details: variantDetails(variant, variantLaneOf(lane)),
                 })),
               },
             ]
@@ -2183,7 +2332,7 @@ function LinearPathView({
     const near = (index: number) => {
       if (index < 0) return null;
       const visit = raster.nodes[index];
-      const node = model.nodeById.get(visit.id);
+      const node = nodeOf(visit.id);
       return node ? { visit, node, index } : null;
     };
     return { left: near(left), right: near(right) };
@@ -2197,7 +2346,7 @@ function LinearPathView({
     const lane = laneByKey(target.lane);
     const raster = rasters.get(target.lane);
     if (!lane || !raster) return null;
-    const variants = gapVariants(lane, target.at);
+    const variants = gapVariants(variantLaneOf(lane), target.at);
     if (!variants.length) return null;
     const near = gapNeighbours(raster, target.at);
     const join =
@@ -2220,8 +2369,8 @@ function LinearPathView({
           head: variants.length > 1 ? `Variants (${variants.length})` : "Variant",
           items: variants.map((variant) => ({
             key: `${alleleKey(variant.walk)}@${variant.ownFrom}`,
-            line: variantLine(variant, lane),
-            details: variantDetails(variant, lane),
+            line: variantLine(variant, variantLaneOf(lane)),
+            details: variantDetails(variant, variantLaneOf(lane)),
           })),
         },
         {
@@ -2325,9 +2474,10 @@ function LinearPathView({
     if (content) setCard({ ...content, x, y, target });
   };
 
+  /* A walk's rows are lit or dimmed as their haplotype is. */
   const dim = (lane: Lane) =>
-    (highlight !== null && haplotypeOf(highlight) !== haplotypeOf(lane.key)) ||
-    (litLanes !== null && !litLanes.has(haplotypeOf(lane.key)));
+    (highlight !== null && haplotypeOf(highlight) !== haplotypeOf(haplotypeLane(lane).key)) ||
+    (litLanes !== null && !litLanes.has(haplotypeOf(haplotypeLane(lane).key)));
 
   /* Where the lit allele sits in the bar of each haplotype that carries
      it. Worked out here rather than held: it is one node against a dozen
@@ -2355,7 +2505,7 @@ function LinearPathView({
           x: left,
           width: wide,
           y: top,
-          height: laneHeight.get(lane) ?? BAR_H,
+          height: laneHeight.get(lane) ?? barHeight,
         });
       }
     }
@@ -2384,7 +2534,7 @@ function LinearPathView({
       /* Round every piece of its bar: where it shares the place, its own
          thinner bar there. */
       const mark = (_visit: RasterNode, index: number, isNear: boolean) =>
-        visitPieces(raster, index, BAR_H).forEach((piece, k) =>
+        visitPieces(raster, index, barHeight).forEach((piece, k) =>
           keptMarks.push({
             key: `${index}:${k}`,
             x: piece.left,
@@ -2420,12 +2570,12 @@ function LinearPathView({
         x: from,
         y: top,
         width: Math.max(1, to - from),
-        height: BAR_H,
+        height: barHeight,
         near: false,
       });
       for (const side of [near.left, near.right]) {
         if (!side) continue;
-        visitPieces(raster, side.index, BAR_H).forEach((piece, k) =>
+        visitPieces(raster, side.index, barHeight).forEach((piece, k) =>
           keptMarks.push({
             key: `${side.index}:${k}`,
             x: piece.left,
@@ -2449,22 +2599,21 @@ function LinearPathView({
           Painted, not drawn. Each is a canvas over the whole band, filled
           from its raster - see laneRaster.ts for why, and for how a hover
           finds what is under the pointer without anything to hit. */}
-      {model.lanes
-        .filter((lane) => !lane.isReference)
+      {barLanes
         .map((lane) => (
         <div
           key={lane.key}
           className="pgv-lane-slot"
           style={{
             top: laneTop.get(lane.key),
-            height: laneHeight.get(lane.key) ?? BAR_H,
+            height: laneHeight.get(lane.key) ?? barHeight,
           }}
         >
           <LaneCanvas
             raster={rasters.get(lane.key)!}
             width={width}
-            height={laneHeight.get(lane.key) ?? BAR_H}
-            barH={BAR_H}
+            height={laneHeight.get(lane.key) ?? barHeight}
+            barH={barHeight}
             /* The haplotype's own pastel, from its name - see pastelColor -
                its variant stretches hatched in ivory (LaneCanvas). */
             color={lane.color}
@@ -2505,7 +2654,7 @@ function LinearPathView({
                   const visit = raster.nodes[index];
                   from = Math.min(from, Math.max(section.left, visit.left));
                   to = Math.max(to, Math.min(section.right, visit.right));
-                  for (const piece of visitPieces(raster, index, BAR_H)) {
+                  for (const piece of visitPieces(raster, index, barHeight)) {
                     if (piece.right <= section.left || piece.left >= section.right) {
                       continue;
                     }
@@ -2524,7 +2673,7 @@ function LinearPathView({
               outline.setAttribute("x", String(from));
               outline.setAttribute("y", String(y));
               outline.setAttribute("width", String(Math.max(1, to - from)));
-              outline.setAttribute("height", String(low > high ? low - high : BAR_H));
+              outline.setAttribute("height", String(low > high ? low - high : barHeight));
               outline.style.display = "";
             }}
             onHover={(hover) => {
@@ -2540,7 +2689,7 @@ function LinearPathView({
                  a stack, round its own thinner bar. */
               const raster = rasters.get(lane.key);
               const piece = raster
-                ? pieceAt(visitPieces(raster, hover.index, BAR_H), hover.at)
+                ? pieceAt(visitPieces(raster, hover.index, barHeight), hover.at)
                 : null;
               if (outline && piece) {
                 outline.setAttribute("x", String(piece.left));
@@ -2578,7 +2727,7 @@ function LinearPathView({
             /* Between visits: what the haplotype leaves out there, if it
                is anything of its own. */
             onGap={(gap, picked) => {
-              const variants = gapVariants(lane, gap.at);
+              const variants = gapVariants(variantLaneOf(lane), gap.at);
               if (!variants.length) return;
               const target: CardTarget = {
                 kind: "gap",
@@ -2604,7 +2753,7 @@ function LinearPathView({
                 outline.setAttribute("x", String(from));
                 outline.setAttribute("y", String(top));
                 outline.setAttribute("width", String(Math.max(1, to - from)));
-                outline.setAttribute("height", String(BAR_H));
+                outline.setAttribute("height", String(barHeight));
                 outline.style.display = "";
               }
               showHover(target, gap.x, gap.y);
@@ -2612,6 +2761,21 @@ function LinearPathView({
           />
         </div>
         ))}
+
+      {/* A walk's rows' names, the walk's lines from one reading to the
+          next, and what has no room or no place: see WalksView. Under the
+          outlines a hover and a kept card draw. */}
+      {walk && walkLane && (
+        <WalksView
+          lane={walkLane}
+          walks={walk}
+          px={px}
+          width={width}
+          height={height}
+          viewFromPx={frame?.viewFromPx ?? 0}
+          bySection={!barsByNode}
+        />
+      )}
 
       {/* The ruler and the graph, still drawn: one is a handful of lines and
           the other is a single row, and the row has to be an element to be
@@ -2655,7 +2819,8 @@ function LinearPathView({
       {/* The foot of each row, carried on from the rule under its name.
           It lands in the gap under the bar, where nothing is drawn, so it
           bounds the band without crossing anything in it. */}
-      {layout.rows.map((row) => (
+      {/* A walk's rows are one row of the track, ruled once under them all. */}
+      {(walkLane ? [{ key: walkLane.key, top: 0, height }] : layout.rows).map((row) => (
         <line
           key={`rule-${row.key}`}
           className="pgv-row-rule"
@@ -2682,7 +2847,7 @@ function LinearPathView({
         if (!raster || top === undefined) return null;
         return raster.nodes.map((visit, index) => {
           if (visit.onReference || !(visit.right > visit.left)) return null;
-          const own = visitPieces(raster, index, BAR_H);
+          const own = visitPieces(raster, index, barHeight);
           if (!own.length) return null;
           const links = laneNeighbours(lane, visit.id);
           const sides = [
@@ -2692,7 +2857,7 @@ function LinearPathView({
           return sides.map(([side, at, ids]) => {
             /* Level with its bar on that side, whichever piece it is. */
             const end = side === "before" ? own[0] : own[own.length - 1];
-            const middle = top + (end ? end.top + end.height / 2 : BAR_H / 2);
+            const middle = top + (end ? end.top + end.height / 2 : barHeight / 2);
             /* One way in and one way out is the ordinary case, and says
                nothing worth a mark. */
             if (ids.length < 2) return null;
@@ -2769,7 +2934,7 @@ function LinearPathView({
           const visit = raster.nodes[index];
           if (!visit) return null;
           const piece = pieceAt(
-            visitPieces(raster, index, BAR_H),
+            visitPieces(raster, index, barHeight),
             (visit.left + visit.right) / 2,
           );
           return (
@@ -2778,7 +2943,7 @@ function LinearPathView({
               x1={openBullet.x}
               y1={openBullet.y}
               x2={(visit.left + visit.right) / 2}
-              y2={top + (piece ? piece.top + piece.height / 2 : BAR_H / 2)}
+              y2={top + (piece ? piece.top + piece.height / 2 : barHeight / 2)}
             />
           );
         })()}
@@ -2867,13 +3032,40 @@ function LinearPathView({
                   y2={stripTop + NODE_H}
                 />
                 <rect
-                  className="pgv-section-hit"
+                  className={`pgv-section-hit${barsByNode ? " pgv-section-hit-nodes" : ""}`}
                   x={section.left}
                   y={stripTop}
                   width={Math.max(1, section.right - section.left)}
                   height={stripH}
+                  /* Closer in than BAR_NODE_BASES_PER_PX the strip is read
+                     node by node, as the bars are there: what the pointer
+                     is on says what it does zoomed in. */
+                  onMouseMove={
+                    barsByNode
+                      ? (event) => {
+                          if (cardKeptOpen()) {
+                            hideHover();
+                            return;
+                          }
+                          const node = stripNodeAt(section, event);
+                          if (!node) {
+                            hideHover();
+                            return;
+                          }
+                          if (litRun?.key !== node.id) {
+                            setLitRun({ key: node.id, lane: "", nodes: new Set([node.id]) });
+                          }
+                          showHover({ kind: "node", id: node.id }, event.clientX, event.clientY);
+                        }
+                      : undefined
+                  }
                   onClick={(event) => {
                     event.stopPropagation();
+                    if (barsByNode) {
+                      const node = stripNodeAt(section, event);
+                      if (node) pin({ kind: "node", id: node.id }, event.clientX, event.clientY);
+                      return;
+                    }
                     openStripCard(section, {
                       x: event.clientX,
                       y: event.clientY,
@@ -2890,7 +3082,12 @@ function LinearPathView({
            filtering on the row would leave those alleles in the strip even
            with the button off. An untied node has no place here; see the
            sections. */
-        .filter((node) => !node.untied && (alleleRows || node.onReference))
+        .filter(
+          (node) =>
+            !node.untied &&
+            (alleleRows || node.onReference) &&
+            !onItsOriginal(model, node),
+        )
         .map((node) => {
           const y = stripTop + node.row * NODE_H;
           /* From the axis at both ends, so a node in a closed gap is drawn
@@ -2961,8 +3158,29 @@ function LinearPathView({
               </g>
             );
           })}
+        {/* Read node by node over sections, the node the pointer is on,
+            outlined in the hover's cyan: its section is drawn as one. */}
+        {sections &&
+          barsByNode &&
+          litRun &&
+          !litRun.lane &&
+          [...litRun.nodes].map((id) => {
+            const node = model.nodeById.get(id);
+            if (!node || !(alleleRows || node.onReference)) return null;
+            const left = px(node.x);
+            return (
+              <rect
+                key={`lit-${id}`}
+                className="pgv-hover-node"
+                x={left}
+                y={stripTop + node.row * NODE_H}
+                width={Math.max(1, px(node.x + node.length) - left)}
+                height={NODE_H}
+              />
+            );
+          })}
         {/* The kept node, and the nodes it joins either side. */}
-        {!sections &&
+        {barsByNode &&
           [...keptNodes].map(([id, near]) => {
             const node = model.nodeById.get(id);
             if (!node || !(alleleRows || node.onReference)) return null;

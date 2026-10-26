@@ -1348,7 +1348,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel: drawData.trackModel,
         label: drawData.trackModel.options?.label ?? drawData.trackModel.name,
         /* A haplotype's row has a button for its walk on its legend: whether
-           it is on, and whether this band is zoomed in enough to draw it. */
+           it is on, and whether this band has any of the haplotype to draw
+           it from. */
         walks:
           part !== GRAPH_PART && (primary?.pangenomeView ?? "linear") === "linear"
             ? {

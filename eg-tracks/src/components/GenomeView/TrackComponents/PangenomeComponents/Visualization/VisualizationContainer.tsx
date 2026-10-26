@@ -15,7 +15,7 @@ import {
   placedModel,
 } from "./pangenomeModel";
 import LinearPathView, { linearHeight } from "./LinearPathView";
-import WalksView, { walksHeight, walksShown } from "./WalksView";
+import { walksHeight, walksShown } from "./WalksView";
 import type { BandAxis, PangenomeModel } from "./pangenomeModel";
 import type { DrawFrame } from "./pangenomeModel";
 import type { HoverTarget } from "./LinearPathView";
@@ -117,8 +117,8 @@ interface VisualizationContainerProps {
       by column. Drawn with these, the tubes land where the band's other
       tracks are. */
   tubeLayout?: { minBp: number | null; gapsPx: number[] };
-  /** A haplotype's row drawn as its walk - see WalksView - where the band
-      is zoomed in far enough; its bar otherwise. */
+  /** A haplotype's row drawn as its walk - see WalksView - wherever the
+      band has the haplotype to draw it from; its bar otherwise. */
   walks?: boolean;
   /** Accepted so existing callers keep type-checking; unused by these views. */
   viewport?: any;
@@ -590,20 +590,14 @@ export default function VisualizationContainer({
         ref={wrapRef}
         onMouseOut={() => showTip(null)}
       >
-        {walksOn && linearModel && frame ? (
-          <WalksView
-            model={linearModel}
-            frame={frame}
-            onHover={showTip}
-            sectionAltBp={sectionAltBp}
-          />
-        ) : view.mode === "linear" ? (
+        {view.mode === "linear" ? (
           <LinearPathView
             {...shared}
             model={linearModel ?? shared.model}
             strip={strip}
             alleleRows={view.alleleRows}
             sectionAltBp={sectionAltBp}
+            walks={walksOn}
           />
         ) : view.mode === "tube" ? (
           tube && (

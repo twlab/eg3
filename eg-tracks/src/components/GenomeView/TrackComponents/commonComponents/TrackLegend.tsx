@@ -30,8 +30,8 @@ interface TrackLegendProps {
   label?: string;
   legendWidth?: number;
   /** A pangenome haplotype's row: its "Show walks" button - whether the walk
-      is asked for, whether this band is zoomed in enough to draw it, and
-      what the button does. */
+      is asked for, whether this band has any of the haplotype to draw it
+      from, and what the button does. */
   walks?: { on: boolean; shown: boolean; onToggle: () => void };
 }
 
@@ -332,7 +332,7 @@ class TrackLegend extends React.PureComponent<
                 className="TrackLegend-walks"
                 title={
                   walks.on && !walks.shown
-                    ? "Zoom in to 10 bp per pixel or closer to see the walk"
+                    ? "This haplotype has nothing in this region to draw a walk from"
                     : "Draw this haplotype's walk: a row for each time it reads the reference here"
                 }
                 onPointerDown={(event) => event.stopPropagation()}
@@ -345,7 +345,7 @@ class TrackLegend extends React.PureComponent<
                 {walks.on ? "Hide walks" : "Show walks"}
               </button>
               {walks.on && !walks.shown ? (
-                <div className="TrackLegend-walks-note">zoom in to see them</div>
+                <div className="TrackLegend-walks-note">nothing here</div>
               ) : null}
             </div>
           ) : (

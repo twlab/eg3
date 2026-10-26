@@ -667,6 +667,15 @@ function parseWalkName(raw: RawPath, fallback: string) {
   };
 }
 
+/** A copy laid on what it copies (see buildModel): that node read again, in
+    its place. A haplotype's walk draws it; its bar and the strip leave it
+    out, as a dupe of what they draw there. */
+export function onItsOriginal(model: PangenomeModel, node: GraphNode): boolean {
+  if (!node.copyOf) return false;
+  const original = model.nodeById.get(node.copyOf);
+  return !!original && original.x === node.x;
+}
+
 /* A model per fetched graph. A band is queried once for all of the graph's
    rows - its strip and each haplotype's bar, tracks of their own - and the
    band's layout, each row's height and each row's drawing read that one
@@ -1138,7 +1147,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   const onOriginal = new Set<string>();
   {
     const inserted = new Set<string>();
-    const elsewhere = new Set<string>();
+    const readAgain = new Set<string>();
     for (const lane of lanes) {
       if (lane.isReference) continue;
       const steps = lane.steps;
@@ -1206,13 +1215,13 @@ export function buildModel(queryResult: any): PangenomeModel | null {
               !a.reverse === !b.reverse &&
               (a.reverse ? along(b.node) < along(a.node) : along(b.node) > along(a.node)) &&
               !copies.some(between);
-            for (const id of copies) (insertion ? inserted : elsewhere).add(id);
+            for (const id of copies) (insertion ? inserted : readAgain).add(id);
           }
           before = at;
         }
       });
     }
-    for (const id of elsewhere) {
+    for (const id of readAgain) {
       const of = copyOf.get(id)!;
       if (inserted.has(id) || elsewhereAt.has(id) || elsewhereAt.has(of)) continue;
       if (!level.has(of) || !laneKeys.get(of)?.length) continue;
@@ -1746,17 +1755,32 @@ export function buildModel(queryResult: any): PangenomeModel | null {
          alternative is always below the reference. */
     const indent = onRef ? 0 : 1;
 
-    nodeIds.forEach((id, position) => {
+    /* A copy laid on what it copies takes no row of its own: it is that
+       node read again, in its row. Each of the rest takes the next one -
+       the ones with a place first. One with none is drawn nowhere, and the
+       strip is not made taller for it: the band's first column held 162 of
+       them at chr17:38.92 Mb, and the strip's alleles were 163 rows tall. */
+    const tieOf = (id: string) => (onOriginal.has(id) ? copyOf.get(id)! : id);
+    const tied = (id: string) => reached.has(tieOf(id)) || leadsTo.has(tieOf(id));
+    const own = nodeIds.filter((id) => !onOriginal.has(id));
+    const placed = own.filter(tied);
+    const rowOf = new Map(
+      [...placed, ...own.filter((id) => !tied(id))].map((id, position) => [id, position + indent]),
+    );
+    for (const id of nodeIds) {
+      if (onOriginal.has(id)) rowOf.set(id, rowOf.get(copyOf.get(id)!) ?? indent);
+    }
+    for (const id of nodeIds) {
       const sequence = sequences.get(id) ?? "";
-      /* A copy laid on what it copies has a place where that has. */
-      const tie = onOriginal.has(id) ? copyOf.get(id)! : id;
+      /* And has a place where that has. */
+      const tie = tieOf(id);
       nodeById.set(id, {
         id,
         sequence,
         length: sequence.length,
         column: columnIndex,
         x: startOf.get(id) ?? x,
-        row: position + indent,
+        row: rowOf.get(id)!,
         lanes: laneKeys.get(id) ?? [],
         onReference: refNodes.has(id),
         refStart,
@@ -1765,8 +1789,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         ...(elsewhereAt.has(id) ? { elsewhere: elsewhereAt.get(id) } : {}),
         ...(copyOf.has(id) ? { copyOf: copyOf.get(id) } : {}),
       });
-    });
-    rowCount = Math.max(rowCount, nodeIds.length + indent);
+    }
+    rowCount = Math.max(rowCount, placed.length + indent);
     columns.push({ index: columnIndex, x, width, nodeIds });
   });
 

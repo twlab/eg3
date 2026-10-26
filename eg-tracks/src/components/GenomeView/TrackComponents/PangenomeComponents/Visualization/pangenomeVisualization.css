@@ -1001,6 +1001,13 @@
   stroke-width: 1;
 }
 
+/* Read node by node, a section is not what a click opens: the node under
+   the pointer is outlined instead. */
+.pgv-section-hit.pgv-section-hit-nodes:hover {
+  fill: transparent;
+  stroke: none;
+}
+
 /* What a clicked section was made from. Placed in the band's own
    coordinates, under the section, so it moves with a pan. */
 .pgv-section-card {
