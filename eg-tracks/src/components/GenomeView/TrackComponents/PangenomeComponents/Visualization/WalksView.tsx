@@ -16,7 +16,7 @@ import type { WalkReading, WalkRows } from "./walkRows";
    is, at every zoom, so its cards are a bar's - with what the reading adds,
    from here. What this draws is what lies between the rows: their names,
    the walk's lines from one reading to the next, a copy's alleles with no
-   room, where the walk leaves, and the pieces with no place.
+   room, and where the walk leaves.
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** A row's bar, and the room above it - where its name and the walk's lines
@@ -78,13 +78,11 @@ export function walksShown(model: PangenomeModel, frame: DrawFrame | undefined):
   return !!frame && frame.endBp > frame.startBp && frame.width > 0;
 }
 
-/** How many rows the walks take: one per row of readings, and one per piece
-    with nothing on the reference here, which says where it is instead. */
+/** How many rows the walks take: one per row of readings. */
 const rowCount = (model: PangenomeModel) => {
   const lane = laneOf(model);
   if (!lane) return 1;
-  const walks = walkRows(model, lane);
-  return Math.max(1, walks.rows.length + walks.unplaced.length);
+  return Math.max(1, walkRows(model, lane).rows.length);
 };
 
 /** How tall the walks are, for the track to make room. */
@@ -151,6 +149,8 @@ export function walkVisitLines(
   walks: WalkRows,
   row: number,
   visit: Pick<RasterNode, "id" | "piece" | "start">,
+  /** Which step of its row it is: the row's lane's, as the raster has them. */
+  step: number,
 ): string[] {
   const reading = readingOfVisit(walks, row, visit);
   if (!reading) return [];
@@ -158,6 +158,32 @@ export function walkVisitLines(
   const reads = walks.readsOf.get(visit.id) ?? [];
   const nth = reads.indexOf(index) + 1;
   const standIn = visit.id.includes("@walk") ? walks.model.nodeById.get(visit.id) : undefined;
+  /* The reading's last node, as the walk goes: there it says where the walk
+     goes next - out of the region, or on into the next reading, which may
+     be a copy outside the window, its row empty in view. */
+  let last = -1;
+  (walks.rowLanes[row]?.steps ?? []).forEach((s, k) => {
+    if (s.segment === reading.segment && s.start >= reading.ownFrom && s.start < reading.ownTo) last = k;
+  });
+  const next = walks.readings[index + 1];
+  const onward =
+    step !== last
+      ? reading.leaves
+        ? [leaveLine(reading)]
+        : []
+      : reading.leaves
+        ? [
+            reading.out
+              ? `here the walk goes on ${deletionSize(reading.out.bp)} further along the reference, past this region: a deletion`
+              : "here the walk leaves this region",
+          ]
+        : next
+          ? [
+              `here the walk goes on to ${
+                next.row === 0 ? walkRowName(walks, 0) : `row ${next.row} (${walkRowName(walks, next.row)})`
+              }: ${next.copy ? "a copy" : "read first"}, read ${next.reverse ? "backwards" : "forward"}, over reference ${next.lo.toLocaleString()}–${next.hi.toLocaleString()}`,
+            ]
+          : [];
   return [
     readingLine(walks, row, reading),
     reading.copy
@@ -177,7 +203,7 @@ export function walkVisitLines(
           ).toLocaleString()} bp of reference`,
         ]
       : []),
-    ...(reading.leaves ? [leaveLine(reading)] : []),
+    ...onward,
   ];
 }
 
@@ -460,27 +486,6 @@ function WalksView({ lane, walks, px, width, height, viewFromPx, bySection }: Wa
           {label.text}
         </text>
       ))}
-      {/* A piece with nothing on the reference here has no place along it:
-          its row says where it is in the haplotype instead. */}
-      {walks.unplaced.map((piece, k) => {
-        const row = walks.rows.length + k;
-        const contig = lane.segments[piece.segment]?.contig ?? lane.contig;
-        return (
-          <g key={`unplaced ${k}`}>
-            <text x={nameX} y={walkRowTop(row) - 3} fontSize={NAME_FONT} fill={NAME_INK}>
-              {ownRange(piece.ownFrom, piece.ownTo)}
-            </text>
-            <text
-              x={nameX}
-              y={walkRowTop(row) + WALK_ROW_H / 2 + 4}
-              fontSize={NAME_FONT}
-              fill={NAME_INK}
-            >
-              {`${contig}: nothing on the reference here - position unknown`}
-            </text>
-          </g>
-        );
-      })}
     </svg>
   );
 }

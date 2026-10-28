@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type {
   DrawFrame,
+  GraphEdge,
   GraphNode,
   Lane,
   LaneDeletion,
@@ -294,6 +295,65 @@ const readingsByModel = new WeakMap<
 /** The haplotype a lane is of, from its key: a bar draws one haplotype -
     see oneLanePerHaplotype - and a node lists its lanes per contig. */
 const haplotypeOf = (key: string) => key.split("#").slice(0, 2).join("#");
+
+/** A node joined to one end of another, and the lanes that walk the join. */
+interface EndJoin {
+  id: string;
+  lanes: Set<string>;
+  /** An inversion's end: it joins the same end of both nodes. */
+  turn: boolean;
+}
+
+/**
+ * Every node joined to each end of a node - its left end, what comes
+ * before it along the reference, and its right - by the graph's links and
+ * the walks' steps, the whole of what the band holds: a node can be led
+ * into from several, and every one of them is a way in. By the graph's own
+ * node, a copy (`id~2`) being its original read again. A turn joins the
+ * same end of both nodes, so A+ → C− puts each at the other's right end.
+ * Worked out once per model, the first time a card asks.
+ */
+const endsByModel = new WeakMap<
+  PangenomeModel,
+  { left: Map<string, Map<string, EndJoin>>; right: Map<string, Map<string, EndJoin>> }
+>();
+function nodeEnds(model: PangenomeModel) {
+  const known = endsByModel.get(model);
+  if (known) return known;
+  const left = new Map<string, Map<string, EndJoin>>();
+  const right = new Map<string, Map<string, EndJoin>>();
+  const graphId = (id: string) => model.nodeById.get(id)?.copyOf ?? id;
+  const join = (
+    at: Map<string, Map<string, EndJoin>>,
+    id: string,
+    other: string,
+    edge: GraphEdge,
+  ) => {
+    let joins = at.get(id);
+    if (!joins) at.set(id, (joins = new Map()));
+    let found = joins.get(other);
+    if (!found) joins.set(other, (found = { id: other, lanes: new Set(), turn: false }));
+    for (const lane of edge.lanes) found.lanes.add(lane);
+    if (edge.turn) found.turn = true;
+  };
+  for (const edge of model.edges) {
+    const from = graphId(edge.from);
+    const to = graphId(edge.to);
+    if (edge.turn === "right") {
+      join(right, from, to, edge);
+      join(right, to, from, edge);
+    } else if (edge.turn === "left") {
+      join(left, from, to, edge);
+      join(left, to, from, edge);
+    } else {
+      join(right, from, to, edge);
+      join(left, to, from, edge);
+    }
+  }
+  const ends = { left, right };
+  endsByModel.set(model, ends);
+  return ends;
+}
 
 /** A sequence for a card: all of it. A long one in a box of its own that
     scrolls - a 14 kb insertion's bases all there to read and to select -
@@ -2096,8 +2156,13 @@ function LinearPathView({
         {own === undefined ? null : <>alt {altCoord(own.toLocaleString())} · </>}
         ref{" "}
         {refCoord(
-          node.onReference ? node.refStart.toLocaleString() : nodeInterval(node),
+          node.elsewhere !== undefined
+            ? `${node.elsewhere.toLocaleString()}, outside this band`
+            : node.onReference
+              ? node.refStart.toLocaleString()
+              : nodeInterval(node),
         )}
+        {node.untied && node.elsewhere === undefined ? " · no place in this band" : ""}
       </>
     ),
     details: [<>reads {cardSequence(node.sequence)}</>, ...nodeCarriers(node)],
@@ -2122,22 +2187,70 @@ function LinearPathView({
     };
     return { prev: near(index - 1), next: near(index + 1) };
   };
-  /** A node's neighbours in the graph, either side of it in the layout. */
-  const graphNeighbours = (node: GraphNode) => {
-    const ids = new Set<string>();
-    for (const edge of model.edges) {
-      if (edge.to === node.id) ids.add(edge.from);
-      if (edge.from === node.id) ids.add(edge.to);
+  /** Every node joined to one end of a graph node, for a card - see
+      nodeEnds - each saying who walks the join here: this walk, the
+      reference, how many haplotypes, or none, a link of the graph's only.
+      `walked`, the walk's own step through that end: first, and marked. */
+  const joinItems = (
+    id: string,
+    side: "left" | "right",
+    walked?: { node: GraphNode; own: number },
+  ): CardItem[] => {
+    const referenceKey = model.reference?.key;
+    const walkedId = walked ? baseId(walked.node.id) : undefined;
+    const joins = [...(nodeEnds(model)[side].get(id)?.values() ?? [])]
+      .map((join) => ({ join, node: model.nodeById.get(join.id) }))
+      .filter((entry): entry is { join: EndJoin; node: GraphNode } => !!entry.node)
+      .sort(
+        (a, b) =>
+          Number(b.join.id === walkedId) - Number(a.join.id === walkedId) ||
+          a.node.x - b.node.x ||
+          a.node.row - b.node.row,
+      );
+    const items = joins.map(({ join, node }) => {
+      const mine = join.id === walkedId;
+      const item = nearItem(node, mine ? walked!.own : undefined);
+      const haplotypes = [
+        ...new Set(
+          [...join.lanes].filter((lane) => lane !== referenceKey).map(haplotypeOf),
+        ),
+      ];
+      const byReference = !!referenceKey && join.lanes.has(referenceKey);
+      const who = [
+        ...(mine ? ["this walk"] : []),
+        ...(byReference ? ["the reference"] : []),
+        ...(haplotypes.length
+          ? [`${haplotypes.length} haplotype${haplotypes.length > 1 ? "s" : ""} here`]
+          : []),
+      ];
+      return {
+        ...item,
+        key: `${side}:${item.key}`,
+        line: (
+          <>
+            {item.line} · {who.length ? who.join(", ") : "no walk here: a link of the graph's"}
+            {join.id === id ? " · itself, read again straight after" : ""}
+            {join.turn ? " · an inversion's end" : ""}
+          </>
+        ),
+        details: [
+          ...item.details,
+          who.length
+            ? `walked here by ${[
+                ...(byReference ? [`${referenceName} (the reference)`] : []),
+                ...haplotypes,
+              ].join(", ")}`
+            : "no haplotype in this band walks it",
+        ],
+      };
+    });
+    /* The walk's own step is a join too, so always listed - unless its node
+       has no place in the graph's lists, a walk's stand-in. */
+    if (walked && walkedId !== undefined && !joins.some(({ join }) => join.id === walkedId)) {
+      const item = nearItem(walked.node, walked.own);
+      items.unshift({ ...item, line: <>{item.line} · this walk</> });
     }
-    ids.delete(node.id);
-    const near = [...ids]
-      .map((id) => model.nodeById.get(id))
-      .filter((other): other is GraphNode => !!other)
-      .sort((a, b) => a.x - b.x || a.row - b.row);
-    return {
-      prev: near.filter((other) => other.x < node.x),
-      next: near.filter((other) => other.x > node.x),
-    };
+    return items;
   };
   /** The letters under the pointer, and where in the haplotype they are. */
   const cardZoom = (
@@ -2211,7 +2324,7 @@ function LinearPathView({
           {dupes.length ? ` · ${dupes.length} dupes` : ""}
         </>,
         /* On a walk's row, which reading this is. */
-        ...(walk && row >= 0 ? walkVisitLines(walk, row, visit) : []),
+        ...(walk && row >= 0 ? walkVisitLines(walk, row, visit, target.index) : []),
         ...(visit.reverse
           ? [
               <>
@@ -2252,18 +2365,43 @@ function LinearPathView({
             ]
           : []),
         ...(dupes.length ? [{ head: `Dupes (${dupes.length})`, items: dupes }] : []),
-        {
-          head: "Previous node",
-          near: true,
-          items: near.prev ? [nearItem(near.prev.node, near.prev.visit.start)] : [],
-          empty: "none: the haplotype enters the window here",
-        },
-        {
-          head: "Next node",
-          near: true,
-          items: near.next ? [nearItem(near.next.node, near.next.visit.start)] : [],
-          empty: "none: the haplotype leaves the window here",
-        },
+        /* Every node joined to the end the walk comes in by, and to the
+           one it goes out by: its left and right, or the other way round
+           where it reads the node backwards. */
+        ...(() => {
+          const id = baseId(node.id);
+          const [into, outOf] = visit.reverse
+            ? (["right", "left"] as const)
+            : (["left", "right"] as const);
+          const prev = joinItems(
+            id,
+            into,
+            near.prev ? { node: near.prev.node, own: near.prev.visit.start } : undefined,
+          );
+          const next = joinItems(
+            id,
+            outOf,
+            near.next ? { node: near.next.node, own: near.next.visit.start } : undefined,
+          );
+          return [
+            {
+              head: `Previous nodes (${prev.length})${
+                near.prev || !prev.length ? "" : " · this walk enters the window here"
+              }`,
+              near: true,
+              items: prev,
+              empty: "none: the haplotype enters the window here",
+            },
+            {
+              head: `Next nodes (${next.length})${
+                near.next || !next.length ? "" : " · this walk leaves the window here"
+              }`,
+              near: true,
+              items: next,
+              empty: "none: the haplotype leaves the window here",
+            },
+          ];
+        })(),
       ],
     };
   };
@@ -2393,7 +2531,10 @@ function LinearPathView({
   const describeNode = (id: string): CardContent | null => {
     const node = model.nodeById.get(id);
     if (!node) return null;
-    const near = graphNeighbours(node);
+    const near = {
+      prev: joinItems(node.copyOf ?? node.id, "left"),
+      next: joinItems(node.copyOf ?? node.id, "right"),
+    };
     return {
       title: `node ${node.id}`,
       lines: [
@@ -2410,13 +2551,13 @@ function LinearPathView({
         {
           head: `Previous nodes (${near.prev.length})`,
           near: true,
-          items: near.prev.map((other) => nearItem(other)),
+          items: near.prev,
           empty: "none in the window",
         },
         {
           head: `Next nodes (${near.next.length})`,
           near: true,
-          items: near.next.map((other) => nearItem(other)),
+          items: near.next,
           empty: "none in the window",
         },
       ],
@@ -2551,9 +2692,10 @@ function LinearPathView({
   } else if (kept?.kind === "node") {
     const node = model.nodeById.get(kept.id);
     if (node) {
-      const near = graphNeighbours(node);
-      for (const other of [...near.prev, ...near.next]) {
-        keptNodes.set(other.id, true);
+      const ends = nodeEnds(model);
+      const id = node.copyOf ?? node.id;
+      for (const side of [ends.left, ends.right]) {
+        for (const other of side.get(id)?.keys() ?? []) keptNodes.set(other, true);
       }
       keptNodes.set(node.id, false);
     }

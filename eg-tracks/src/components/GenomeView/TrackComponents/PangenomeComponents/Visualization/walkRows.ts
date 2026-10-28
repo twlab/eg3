@@ -27,6 +27,15 @@ import type { GraphNode, Lane, LaneDeletion, LaneStep, PangenomeModel } from "./
    order the walk reads them. Each reading is drawn where the reference
    bases it reads are - a copy over the stretch it copies - which is why it
    needs no room of its own.
+
+   A piece of the walk with nothing on the reference here has no reading,
+   and is not drawn: the haplotype is drawn against the reference, and its
+   own walk does not reach such a piece from it. The fetch brings one in
+   through another haplotype - its allele beside the reference sharing
+   nodes with the middle of this one's insertion, too long for the fetch's
+   context: HG002#1's 93 bp from inside its 705 bp at chr6:32,340,254,
+   2 bp from the reference by others' steps - or through a jump along the
+   reference out of the band, see `out`.
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** A run of the walk's alleles with no room where the reading draws them:
@@ -82,9 +91,6 @@ export interface WalkRows {
   /** Readings by row, row 0 first; each in walk order. None when nothing
       of the haplotype here is on the reference. */
   rows: WalkReading[][];
-  /** Pieces of the walk with nothing on the reference here, nor outside
-      it: no place to draw them, only where they are in the haplotype. */
-  unplaced: Array<{ segment: number; ownFrom: number; ownTo: number }>;
   /** A lane per row, for laneRaster to draw: its steps on the nodes the row
       draws, a copy's on the node it copies. */
   rowLanes: Lane[];
@@ -112,8 +118,11 @@ export function walkRows(model: PangenomeModel, lane: Lane): WalkRows {
 
 function buildWalkRows(model: PangenomeModel, lane: Lane): WalkRows {
   const node = (id: string) => model.nodeById.get(id);
-  /* The node a step is drawn on: a copy's original. */
-  const original = (n: GraphNode) => (n.copyOf ? (node(n.copyOf) ?? n) : n);
+  /* The node a step is drawn on: a copy's original - unless the reference
+     reads the copy itself, its own stretch read twice: then it is reference
+     in its own place (see buildModel). */
+  const original = (n: GraphNode) =>
+    n.copyOf && !n.onReference ? (node(n.copyOf) ?? n) : n;
   const placedOnReference = (n: GraphNode) => n.onReference && !n.untied;
 
   /* The reference's nodes in reference order, for what a reading passes
@@ -337,7 +346,15 @@ function buildWalkRows(model: PangenomeModel, lane: Lane): WalkRows {
       const edge: boolean = !cur || !prev || away || prev.step.segment !== step.segment;
       if (cur) {
         if (edge) close(cur);
-        else readings.push(cur);
+        else {
+          /* The alleles it reads before the next reading starts, laid
+             against its end: A B C E B C against A B C D drops to a copy
+             after reading E for D, and E is this reading's last base. */
+          const tail = flank(prev!, true);
+          cur.steps.push(...tail);
+          widen(cur, tail);
+          readings.push(cur);
+        }
       }
       const entry: WalkReading["entry"] = edge ? "start" : along ? "continues" : "jump";
       const head: number[] = edge ? flank({ index: i, o, step }, false) : [];
@@ -387,33 +404,6 @@ function buildWalkRows(model: PangenomeModel, lane: Lane): WalkRows {
     r.row = rows.length;
     rows.push([r]);
   }
-
-  /* The pieces no reading came from - but not those that read the
-     reference outside this band. The fetch reaches those through jumps
-     along the reference, a step for the context however far they go:
-     HG02698#1's deletions carry it from chr17:38,989,375, in the band, to
-     38,990,440, 38,991,637 and 38,994,525, and every haplotype reading the
-     reference there comes back with a scrap of it - HG002#1 three, in place
-     and none a copy. What lies outside the band has no row here; a jump
-     out to it is drawn as the deletion it is, see `out`. */
-  const placedPieces = new Set(readings.map((r) => r.segment));
-  const unplaced: Array<WalkRows["unplaced"][number] & { outside: boolean }> = [];
-  for (const step of steps) {
-    if (placedPieces.has(step.segment)) continue;
-    const n = node(step.node);
-    const outside = !!n && (n.elsewhere !== undefined || original(n).elsewhere !== undefined);
-    const last = unplaced[unplaced.length - 1];
-    if (last && last.segment === step.segment) {
-      last.ownFrom = Math.min(last.ownFrom, step.start);
-      last.ownTo = Math.max(last.ownTo, step.end);
-      last.outside = last.outside || outside;
-    } else {
-      unplaced.push({ segment: step.segment, ownFrom: step.start, ownTo: step.end, outside });
-    }
-  }
-  const unknown = unplaced
-    .filter((piece) => !piece.outside)
-    .map(({ segment, ownFrom, ownTo }) => ({ segment, ownFrom, ownTo }));
 
   /* An inversion in place stays in its row, unlined. */
   readings.forEach((r, k) => {
@@ -521,5 +511,5 @@ function buildWalkRows(model: PangenomeModel, lane: Lane): WalkRows {
      inverted stretch than of the haplotype in place. */
   const inPlace = !rows[0]?.[0]?.reverse;
 
-  return { readings, rows, unplaced: unknown, rowLanes, model: drawn, readsOf, inPlace };
+  return { readings, rows, rowLanes, model: drawn, readsOf, inPlace };
 }

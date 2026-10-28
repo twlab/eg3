@@ -243,7 +243,9 @@ export function TrackContainerRepresentable({
 
     [onTracksChange, convertTrackModelToITrackModel, selectedRegionSet],
   );
-  function currentRegionAsString(segments: FeatureSegment[]): string {
+  function currentRegionAsString(segments: FeatureSegment[]): string | null {
+    /* Nothing of the genome in the interval: past its end. */
+    if (segments.length === 0) return null;
     if (segments.length === 1) {
       /* With its start 1-based, as a region is typed and shown: parse reads
          a one-chromosome region's start back a base lower (see
@@ -286,6 +288,8 @@ export function TrackContainerRepresentable({
         ) as GenomeCoordinate;
       }
 
+      /* Past the genome's end there is no region to go to: stay. */
+      if (!newCoordinate) return;
       onNewRegion(newCoordinate);
     },
     [onNewRegion, selectedRegionSet],
@@ -332,6 +336,8 @@ export function TrackContainerRepresentable({
         ) as GenomeCoordinate;
       }
 
+      /* Past the genome's end there is no region to go to: stay. */
+      if (!newCoordinate) return;
       onNewRegionSelect(newCoordinate as GenomeCoordinate);
 
       if (highlightSearch) {

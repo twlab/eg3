@@ -1455,6 +1455,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function currentRegionAsString(segments: FeatureSegment[]): string {
+    /* Nothing of the genome in the interval: past its end. */
+    if (segments.length === 0) return "";
     if (segments.length === 1) {
       return segments[0].toString();
     } else {
@@ -3784,16 +3786,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const newSelectedTool: { [key: string]: any } = {};
     newSelectedTool["isSelected"] = false;
 
-    if (toolTitle === Tool.PanLeft) {
-      onRegionSelected(
-        Math.round(bpX.current - bpRegionSize.current),
-        Math.round(bpX.current),
-        toolTitle,
+    if (toolTitle === Tool.PanLeft || toolTitle === Tool.PanRight) {
+      /* Through the region model, as a zoom is: it keeps the window inside
+         the genome, so a step past either end stops at it. Past chr1's end
+         in the HPRC pangenome there was nothing to show, and the region
+         string came back from no segments at all - the view crashed. */
+      const region = new DisplayedRegionModel(
+        curGenomeConfig.current?.navContext,
+        bpX.current,
+        bpX.current + bpRegionSize.current,
       );
-    } else if (toolTitle === Tool.PanRight) {
+      if (toolTitle === Tool.PanLeft) region.panLeft();
+      else region.panRight();
       onRegionSelected(
-        Math.round(bpX.current + bpRegionSize.current),
-        Math.round(bpX.current + bpRegionSize.current * 2),
+        region._startBase as number,
+        region._endBase as number,
         toolTitle,
       );
     } else if (String(toolTitle) in zoomFactors) {

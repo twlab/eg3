@@ -211,6 +211,11 @@ export interface GraphEdge {
   from: string;
   to: string;
   lanes: string[];
+  /** A link between a node read forwards and one read backwards - an
+      inversion's end - joins the same end of both: "right" from's right
+      end to to's right end (from+ → to−), "left" their left ends
+      (from− → to+). Any other link joins from's right end to to's left. */
+  turn?: "left" | "right";
 }
 
 export interface Column {
@@ -314,7 +319,13 @@ function wholePasses(
 ): void {
   /* Whether every step from `from` to `to` that is on the reference lies
      between `low` and `high` along it. */
-  const between = (k: number, from: number, to: number, low: number, high: number) => {
+  const between = (
+    k: number,
+    from: number,
+    to: number,
+    low: number,
+    high: number,
+  ) => {
     for (let j = from; j <= to; j++) {
       const rank = ranks[k][j];
       if (rank !== undefined && !(rank > low && rank < high)) return false;
@@ -327,7 +338,11 @@ function wholePasses(
   const anchored = (k: number, from: number, to: number) => {
     const piece = passes[k];
     for (const step of [-1, 1]) {
-      for (let j = step < 0 ? from - 1 : to + 1; j >= 0 && j < piece.length; j += step) {
+      for (
+        let j = step < 0 ? from - 1 : to + 1;
+        j >= 0 && j < piece.length;
+        j += step
+      ) {
         if (piece[j] !== 1) continue;
         if (ranks[k][j] !== undefined) return true;
       }
@@ -385,26 +400,32 @@ function wholePasses(
     });
   passes.forEach((piece, k) => {
     for (const end of ["start", "end"] as const) {
-      if (!piece.length || piece[end === "start" ? 0 : piece.length - 1] !== 1) continue;
+      if (!piece.length || piece[end === "start" ? 0 : piece.length - 1] !== 1)
+        continue;
       /* The run of first readings from the piece's end to the copy. */
       const step = end === "start" ? 1 : -1;
       let at = end === "start" ? 0 : piece.length - 1;
       while (at >= 0 && at < piece.length && piece[at] === 1) at += step;
       if (at < 0 || at >= piece.length) continue;
-      const [from, to] = end === "start" ? [0, at - 1] : [at + 1, piece.length - 1];
+      const [from, to] =
+        end === "start" ? [0, at - 1] : [at + 1, piece.length - 1];
       const copy = ranks[k][at];
       if (copy === undefined) continue;
       /* Before a copy read forwards, its near side is to the left; after
          it, to the right; read backwards, the other way. */
       const left = (end === "start") !== !!reverse[k][at];
-      if (!between(k, from, to, left ? -Infinity : copy, left ? copy : Infinity)) continue;
+      if (
+        !between(k, from, to, left ? -Infinity : copy, left ? copy : Infinity)
+      )
+        continue;
       if (!anchored(k, from, to)) continue;
       const ground = inPlace(k, from, to);
       let inside = true;
       for (let j = from; j <= to; j++) {
         const rank = ranks[k][j];
         if (rank === undefined) continue;
-        if (!ground.some(({ low, high }) => rank >= low && rank <= high)) inside = false;
+        if (!ground.some(({ low, high }) => rank >= low && rank <= high))
+          inside = false;
       }
       if (!inside) continue;
       for (let j = from; j <= to; j++) piece[j] = piece[at];
@@ -444,7 +465,9 @@ function laneDeletions(
   });
   for (let i = steps.length - 1; i >= 0; i--) {
     runTo[i] =
-      i + 1 < steps.length && joined(i) && !steps[i + 1].reverse === !steps[i].reverse
+      i + 1 < steps.length &&
+      joined(i) &&
+      !steps[i + 1].reverse === !steps[i].reverse
         ? runTo[i + 1]
         : i;
   }
@@ -465,8 +488,7 @@ function laneDeletions(
     node.onReference || node.elsewhere !== undefined;
   const from = (node: GraphNode) =>
     onPath(node) ? startOn(node) : node.refStart;
-  const until = (node: GraphNode) =>
-    onPath(node) ? endOn(node) : node.refEnd;
+  const until = (node: GraphNode) => (onPath(node) ? endOn(node) : node.refEnd);
   /* Drawn in this band, rather than read where the reference reads it
      outside it. */
   const here = (node: GraphNode) => node.elsewhere === undefined;
@@ -502,7 +524,8 @@ function laneDeletions(
     const q = reference.after[i + 1];
     const leaves = p >= 0 ? at(p) : undefined;
     const rejoins = q >= 0 ? at(q) : undefined;
-    if (!leaves || !rejoins || leaves.refStart === rejoins.refStart) return null;
+    if (!leaves || !rejoins || leaves.refStart === rejoins.refStart)
+      return null;
     const onward = rejoins.refStart > leaves.refStart;
     const before = [runFrom[i], i];
     const after = [i + 1, runTo[i + 1]];
@@ -684,7 +707,8 @@ export function onItsOriginal(model: PangenomeModel, node: GraphNode): boolean {
 const models = new WeakMap<object, PangenomeModel | null>();
 export function modelOf(queryResult: any): PangenomeModel | null {
   if (!queryResult || typeof queryResult !== "object") return null;
-  if (!models.has(queryResult)) models.set(queryResult, buildModel(queryResult));
+  if (!models.has(queryResult))
+    models.set(queryResult, buildModel(queryResult));
   return models.get(queryResult) ?? null;
 }
 
@@ -850,7 +874,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         };
         for (let j = 0; j < segment.nodes.length; ) {
           let end = j + 1;
-          while (end < segment.nodes.length && !reverse[end] === !reverse[j]) end += 1;
+          while (end < segment.nodes.length && !reverse[end] === !reverse[j])
+            end += 1;
           if (reverse[j]) for (let i = end - 1; i >= j; i--) count(i);
           else for (let i = j; i < end; i++) count(i);
           j = end;
@@ -860,7 +885,9 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       if (!draft.isReference) {
         wholePasses(
           passOf,
-          sorted.map((segment) => segment.nodes.map((id) => referenceRank.get(id))),
+          sorted.map((segment) =>
+            segment.nodes.map((id) => referenceRank.get(id)),
+          ),
           sorted.map((segment) => segment.reverse ?? []),
           sorted.map((segment, k) => segment.path ?? `piece ${k}`),
         );
@@ -894,7 +921,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       const segments = sorted.map(({ path, reverse, ...segment }, k) => {
         strands[k] = reverse ?? [];
         const along = path ?? `piece ${k}`;
-        const taken = named.get(along) ?? new Map<string, number | Set<number>>();
+        const taken =
+          named.get(along) ?? new Map<string, number | Set<number>>();
         named.set(along, taken);
         return {
           ...segment,
@@ -1015,6 +1043,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      linked both ways, so only an edge nothing reads end to start. */
   const turns = new Set<GraphEdge>();
   const straight = new Set<GraphEdge>();
+  /* Which ends a turn joins, for the cards: see GraphEdge's `turn`. */
+  const turnSide = new Map<GraphEdge, "left" | "right">();
   for (const [node, links] of Object.entries(rawEdges)) {
     for (const link of links) {
       /* A link read on the other strand at both ends is the same link read
@@ -1030,6 +1060,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       const edge = touchEdge(from, to);
       const turning = !link.from_is_reverse !== !link.to_is_reverse;
       (turning ? turns : straight).add(edge);
+      if (turning) turnSide.set(edge, link.from_is_reverse ? "left" : "right");
     }
   }
   /* As for the nodes: the last lane to cross an edge is the only one it
@@ -1049,13 +1080,16 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         a.reverse && b.reverse
           ? touchEdge(b.node, a.node)
           : touchEdge(a.node, b.node);
-      (!a.reverse !== !b.reverse ? turns : straight).add(edge);
+      const turning = !a.reverse !== !b.reverse;
+      (turning ? turns : straight).add(edge);
+      if (turning) turnSide.set(edge, a.reverse ? "left" : "right");
       if (lastCrossed.get(edge) !== lane.key) {
         lastCrossed.set(edge, lane.key);
         edge.lanes.push(lane.key);
       }
     }
   });
+  for (const [edge, side] of turnSide) if (!straight.has(edge)) edge.turn = side;
   const edges = edgeList;
 
   /* ── Columns: longest-path level, from the graph alone ────────────────
@@ -1080,12 +1114,15 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      going from the one to the other through sequence the window does not
      hold - the middle of an insertion longer than the window - so the
      second is laid out after the first, as one allele: from where the
-     haplotype last left the reference to where it next rejoins it - which
-     can be pieces away, a piece in the middle being the insertion alone
-     (HG002#1 at chr6:32,340,254, in three). Only where that runs forward
-     along the reference; a piece coming back earlier than the last one
-     left is a rearrangement, and tying it would bend the reference to it.
-     For laying out only - it is no edge of the graph's. */
+     haplotype last left the reference to where it next rejoins it. Only
+     where that runs forward along the reference; a piece coming back
+     earlier than the last one left is a rearrangement, and tying it would
+     bend the reference to it. And only between pieces that read the
+     reference here: one in between that reads none is in the fetch through
+     other haplotypes' alleles, not this haplotype's walk, and is drawn
+     nowhere (see piecesOnReference) - HG002#1 at chr6:32,340,254 came in
+     three, and tied in, the middle one's 93 bp took room of their own,
+     empty in every bar. For laying out only - it is no edge of the graph's. */
   const referenceIndex = new Map<string, number>();
   referenceOrder.forEach((id, index) => {
     if (!referenceIndex.has(id)) referenceIndex.set(id, index);
@@ -1143,7 +1180,11 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      longer than the window, as below: NA21093#2's 11 kb second pass at
      chr9:53,810,417 comes in pieces - and a copy any walk reads as an
      insertion keeps its place. Not one the reference has outside this
-     band; see above. */
+     band; see above. Nor one the reference's own walk reads: where the
+     reference has a stretch twice - A B C D B C - its second B C is
+     reference, 111-114 of 100-114, and a haplotype reading A B C E B C
+     reads it in place. Laid on the first, the reference lost its last
+     3 bp and the haplotype's second B C went to a copy's row. */
   const onOriginal = new Set<string>();
   {
     const inserted = new Set<string>();
@@ -1151,13 +1192,16 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     for (const lane of lanes) {
       if (lane.isReference) continue;
       const steps = lane.steps;
-      const onWalk = (i: number) =>
-        onReferenceWalk.has(steps[i].node) && !copyOf.has(steps[i].node);
+      const onWalk = (i: number) => onReferenceWalk.has(steps[i].node);
       /* The walk's pieces, first step to past the last. */
       const pieces: Array<[number, number]> = [];
       for (let first = 0; first < steps.length; ) {
         let end = first;
-        while (end < steps.length && steps[end].segment === steps[first].segment) end += 1;
+        while (
+          end < steps.length &&
+          steps[end].segment === steps[first].segment
+        )
+          end += 1;
         pieces.push([first, end]);
         first = end;
       }
@@ -1177,13 +1221,15 @@ export function buildModel(queryResult: any): PangenomeModel | null {
          joined to it, and after one. */
       const onBefore = (k: number) => {
         for (let p = k - 1; p >= 0 && joined(p); p--) {
-          for (let i = pieces[p][1] - 1; i >= pieces[p][0]; i--) if (onWalk(i)) return i;
+          for (let i = pieces[p][1] - 1; i >= pieces[p][0]; i--)
+            if (onWalk(i)) return i;
         }
         return -1;
       };
       const onAfter = (k: number) => {
         for (let p = k + 1; p < pieces.length && joined(p - 1); p++) {
-          for (let i = pieces[p][0]; i < pieces[p][1]; i++) if (onWalk(i)) return i;
+          for (let i = pieces[p][0]; i < pieces[p][1]; i++)
+            if (onWalk(i)) return i;
         }
         return -1;
       };
@@ -1213,7 +1259,9 @@ export function buildModel(queryResult: any): PangenomeModel | null {
               !!a &&
               !!b &&
               !a.reverse === !b.reverse &&
-              (a.reverse ? along(b.node) < along(a.node) : along(b.node) > along(a.node)) &&
+              (a.reverse
+                ? along(b.node) < along(a.node)
+                : along(b.node) > along(a.node)) &&
               !copies.some(between);
             for (const id of copies) (insertion ? inserted : readAgain).add(id);
           }
@@ -1223,7 +1271,13 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     }
     for (const id of readAgain) {
       const of = copyOf.get(id)!;
-      if (inserted.has(id) || elsewhereAt.has(id) || elsewhereAt.has(of)) continue;
+      if (
+        inserted.has(id) ||
+        onReferenceWalk.has(id) ||
+        elsewhereAt.has(id) ||
+        elsewhereAt.has(of)
+      )
+        continue;
       if (!level.has(of) || !laneKeys.get(of)?.length) continue;
       onOriginal.add(id);
     }
@@ -1289,21 +1343,26 @@ export function buildModel(queryResult: any): PangenomeModel | null {
             : undefined;
     }
 
-    for (let k = 0; k + 1 < pieces.length; k++) {
+    const onHere = pieces.flatMap((nodes, k) =>
+      nodes.some((id) => referenceIndex.has(copyOf.get(id) ?? id)) ? [k] : [],
+    );
+    for (let p = 0; p + 1 < onHere.length; p++) {
+      const k = onHere[p];
+      const next = onHere[p + 1];
       const last = pieces[k][pieces[k].length - 1];
-      const first = pieces[k + 1][0];
+      const first = pieces[next][0];
       if (onReferenceWalk.has(last) || onReferenceWalk.has(first)) continue;
       if (elsewhereAt.has(last) || elsewhereAt.has(first)) continue;
       if (!level.has(last) || !level.has(first)) continue;
 
       const leaves = lastOn[k];
-      const rejoins = nextOn[k + 1];
+      const rejoins = nextOn[next];
       if (leaves === undefined || rejoins === undefined) continue;
       /* Read backwards, the haplotype goes on to the left, the next piece
          before this one; turning over across the gap, which way is not
          known. */
       const backward = strandOf[k]?.last;
-      if (backward !== strandOf[k + 1]?.first) continue;
+      if (backward !== strandOf[next]?.first) continue;
       if (backward ? leaves <= rejoins : leaves >= rejoins) continue;
       layoutEdges.push(
         backward ? { from: first, to: last } : { from: last, to: first },
@@ -1548,7 +1607,10 @@ export function buildModel(queryResult: any): PangenomeModel | null {
      leads. Few nodes have any - none in most real windows. */
   const siblings = new Map<string, Set<string>>();
   const pair = (a: string, b: string) => {
-    for (const [one, other] of [[a, b], [b, a]]) {
+    for (const [one, other] of [
+      [a, b],
+      [b, a],
+    ]) {
       const found = siblings.get(one);
       if (found) found.add(other);
       else siblings.set(one, new Set([other]));
@@ -1728,7 +1790,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     if (!moved) break;
   }
   /* And at its bases. */
-  for (const id of onOriginal) startOf.set(id, startOf.get(copyOf.get(id)!) ?? 0);
+  for (const id of onOriginal)
+    startOf.set(id, startOf.get(copyOf.get(id)!) ?? 0);
   let totalBp = 0;
   for (const [id, start] of startOf)
     totalBp = Math.max(totalBp, start + roomOf(id));
@@ -1761,14 +1824,19 @@ export function buildModel(queryResult: any): PangenomeModel | null {
        strip is not made taller for it: the band's first column held 162 of
        them at chr17:38.92 Mb, and the strip's alleles were 163 rows tall. */
     const tieOf = (id: string) => (onOriginal.has(id) ? copyOf.get(id)! : id);
-    const tied = (id: string) => reached.has(tieOf(id)) || leadsTo.has(tieOf(id));
+    const tied = (id: string) =>
+      reached.has(tieOf(id)) || leadsTo.has(tieOf(id));
     const own = nodeIds.filter((id) => !onOriginal.has(id));
     const placed = own.filter(tied);
     const rowOf = new Map(
-      [...placed, ...own.filter((id) => !tied(id))].map((id, position) => [id, position + indent]),
+      [...placed, ...own.filter((id) => !tied(id))].map((id, position) => [
+        id,
+        position + indent,
+      ]),
     );
     for (const id of nodeIds) {
-      if (onOriginal.has(id)) rowOf.set(id, rowOf.get(copyOf.get(id)!) ?? indent);
+      if (onOriginal.has(id))
+        rowOf.set(id, rowOf.get(copyOf.get(id)!) ?? indent);
     }
     for (const id of nodeIds) {
       const sequence = sequences.get(id) ?? "";

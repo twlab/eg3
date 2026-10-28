@@ -113,7 +113,7 @@ export const exampleRegions: ExampleRegion[] = [
   },
   {
     label: "Insertion in pieces",
-    note: "HG002#1's insertion of 571 bp or more at 32,340,254, longer than the context reaches: its walk comes back in three pieces, laid end to end by the seam links",
+    note: "HG002#1's 705 bp insertion at 32,340,254, longer than the context reaches: its walk comes back in three pieces. The two ends are laid end to end by the seam links; the 93 bp middle piece, reached only through other haplotypes' alleles, is not drawn",
     sample: "CHM13",
     contig: "chr6",
     start: 32_340_200,

@@ -153,6 +153,27 @@ function referenceUnder(model: PangenomeModel, x: number, length: number): strin
 }
 
 /**
+ * The pieces of a haplotype's walk that read the reference here - a copy by
+ * what it copies - by `segment`. A bar draws only those. A haplotype is drawn
+ * against the reference, and a piece that reads none of it is not reached
+ * from it by the haplotype's own walk: the fetch brought it in through other
+ * haplotypes' alleles beside the reference, and the layout put it where
+ * their links go. HG002#2's 148 bp node 62396236 is 13 kb on in its own
+ * sequence from where it leaves the reference at chr17:38,984,162, and 37 kb
+ * before a copy of 38,924,489, but was drawn at 39,031,810, where another
+ * haplotype goes into it. Show walks leaves such pieces out too; see walkRows.
+ */
+export function piecesOnReference(model: PangenomeModel, lane: Lane): Set<number> {
+  const pieces = new Set<number>();
+  for (const step of lane.steps) {
+    const node = model.nodeById.get(step.node);
+    const original = node?.copyOf ? model.nodeById.get(node.copyOf) : node;
+    if (original?.onReference && !original.untied) pieces.add(step.segment);
+  }
+  return pieces;
+}
+
+/**
  * Reduce a lane's walk to one entry per pixel of the band.
  *
  * A node covers the pixels its bases are drawn at, which is the axis's own
@@ -176,9 +197,10 @@ export function rasteriseLane(
   placed?: Map<string, { left: number; right: number }>,
 ): LaneRaster {
   const w = Math.max(0, Math.ceil(width));
+  const here = piecesOnReference(model, lane);
   /* One row per thread of the haplotype, worked out before anything is
      drawn so that the bar's height is settled: see `laneRows`. */
-  const rowOf = laneRows(lane.steps, layoutSpan(model));
+  const rowOf = laneRows(lane.steps, layoutSpan(model), (step) => here.has(step.segment));
   const rows = rowOf.reduce((deepest, row) => Math.max(deepest, row + 1), 1);
   const nodes: RasterNode[] = [];
   /* Where along the layout each visit is drawn, for the stacks below. */
@@ -195,8 +217,15 @@ export function rasteriseLane(
        own reading, and drawn there the copy was a dupe over that reading -
        or over what it leaves out: HG002#2's copy 1 filled the 21 bp at
        chr17:38,982,608 its own reading skips. Show walks draws it, a row
-       of its own; the cards list it with the place's dupes. */
-    if (!graphNode || graphNode.untied || onItsOriginal(model, graphNode)) continue;
+       of its own; the cards list it with the place's dupes. Nor a piece of
+       the walk with nothing on the reference here: see piecesOnReference. */
+    if (
+      !graphNode ||
+      graphNode.untied ||
+      onItsOriginal(model, graphNode) ||
+      !here.has(step.segment)
+    )
+      continue;
     visitOfStep.set(stepIndex, nodes.length);
     const drawn = placed?.get(graphNode.id);
     nodes.push({
@@ -552,6 +581,8 @@ export function laneRows(
   /** Where a step is drawn, in the layout's own coordinates. Without it no
       row is ever reused, which is the roomier reading of the same rule. */
   spanOf?: (step: Lane["steps"][number]) => Span | null,
+  /** Whether a step is drawn at all; one that is not takes no row. */
+  drawn?: (step: Lane["steps"][number]) => boolean,
 ): number[] {
   /* The walk in threads: runs of visits that carry on from one another. */
   interface Thread {
@@ -564,6 +595,7 @@ export function laneRows(
   }
   const threads: Thread[] = [];
   steps.forEach((step, index) => {
+    if (drawn && !drawn(step)) return;
     const span = spanOf ? spanOf(step) : null;
     const open = threads[threads.length - 1];
     if (open && open.end === step.start) {
@@ -644,12 +676,13 @@ export function stackDepths(model: PangenomeModel): number[] {
   const known = depthsByModel.get(model);
   if (known) return known;
   const spanOf = layoutSpan(model);
-  const depths = model.lanes.map((lane) =>
-    laneRows(lane.steps, spanOf).reduce(
+  const depths = model.lanes.map((lane) => {
+    const here = piecesOnReference(model, lane);
+    return laneRows(lane.steps, spanOf, (step) => here.has(step.segment)).reduce(
       (deepest, row) => Math.max(deepest, row + 1),
       1,
-    ),
-  );
+    );
+  });
   depthsByModel.set(model, depths);
   return depths;
 }
