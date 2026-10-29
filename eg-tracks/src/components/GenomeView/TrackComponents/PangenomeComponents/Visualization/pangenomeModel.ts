@@ -134,7 +134,8 @@ export function deletionText(
   instead?: number,
 ): string {
   const size = `−${deletionSize(bp)}`;
-  if (open === "span") return `← ${size}${instead ? ` · ${deletionSize(instead)} instead` : ""} →`;
+  if (open === "span")
+    return `← ${size}${instead ? ` · ${deletionSize(instead)} instead` : ""} →`;
   return open === "left" ? `← ${size}` : open === "right" ? `${size} →` : size;
 }
 
@@ -1093,7 +1094,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       }
     }
   });
-  for (const [edge, side] of turnSide) if (!straight.has(edge)) edge.turn = side;
+  for (const [edge, side] of turnSide)
+    if (!straight.has(edge)) edge.turn = side;
   const edges = edgeList;
 
   /* ── Columns: longest-path level, from the graph alone ────────────────

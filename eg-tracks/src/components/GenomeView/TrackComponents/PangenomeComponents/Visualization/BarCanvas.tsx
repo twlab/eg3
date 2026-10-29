@@ -44,7 +44,6 @@ export interface BarCanvasProps {
   dim: boolean;
   /** The haplotype's own strand runs backwards along the whole bar: a piece
       aligned flipped as a whole, drawn arrowed end to end. */
-  reversed?: boolean;
   onHover: (target: BarTarget | null) => void;
   /** What the hover says of the place clicked. */
   onPick: (target: BarTarget) => void;
@@ -57,6 +56,9 @@ export interface BarCanvasProps {
    */
   sections?: ReadonlyArray<{ left: number; right: number }>;
   sectionAltBp?: number;
+  /** The band's pixels in view when it was laid out, for a label that
+      should sit where it can be seen. */
+  view?: [number, number];
   onPress?: (at: { x: number; clientX: number; clientY: number }) => void;
   onPoint?: (at: { x: number } | null) => void;
 }
@@ -108,11 +110,11 @@ function BarCanvas({
   height,
   color,
   dim,
-  reversed = false,
   onHover,
   onPick,
   sections,
   sectionAltBp = 0,
+  view,
   onPress,
   onPoint,
 }: BarCanvasProps) {
@@ -123,8 +125,8 @@ function BarCanvas({
 
   const repaint = useCallback(() => {
     if (!fitted.current) return;
-    paintBar(fitted.current, { raster, width, height, color, reversed, sections, sectionAltBp });
-  }, [raster, width, height, color, reversed, sections, sectionAltBp]);
+    paintBar(fitted.current, { raster, width, height, color, sections, sectionAltBp, view });
+  }, [raster, width, height, color, sections, sectionAltBp, view]);
 
   /* Painted again only for a new size or something new to draw: the
      observer's exact size usually matches the first paint's guess. */
@@ -212,9 +214,9 @@ interface BarPaint {
   width: number;
   height: number;
   color: string;
-  reversed: boolean;
   sections?: ReadonlyArray<{ left: number; right: number }>;
   sectionAltBp: number;
+  view?: [number, number];
 }
 
 /** The kinds that take room on the bar, and so are painted in its colour. */
@@ -228,7 +230,7 @@ const roomy = (part: RasterPart) =>
 /** One haplotype's bar: its runs, the hatching, the arrows, the letters,
     the whites' sizes and the marks. */
 function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
-  const { raster, width, height, color, reversed, sections, sectionAltBp } = paint;
+  const { raster, width, height, color, sections, sectionAltBp, view } = paint;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, pw, ph);
   const toScreen = (x: number) => Math.round(x * sx);
@@ -290,19 +292,21 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
     );
   }
 
-  /* Arrows pointing left over what is read on the other strand. */
+  /* Arrows pointing left over what is read on the other strand: an
+     inverted span, or every roomy part of a reading read backwards as a
+     whole - the same on a haplotype's bar as on its walk rows. The parts
+     inside an inversion are drawn over its span and take no arrows of
+     their own. */
   ctx.strokeStyle = STRAND_INK;
   ctx.lineWidth = Math.max(1, Math.round(sx));
-  if (reversed) {
-    eachRun(raster.parts, roomy, sx, pw, (from, to) => arrows(ctx, from, to, top, tall, sx));
-  } else {
-    eachRun(raster.parts, (part) => part.kind === "inverted", sx, pw, (from, to) =>
-      arrows(ctx, from, to, top, tall, sx),
-    );
-  }
+  eachRun(raster.parts, (part) => part.arrowed && !part.inverted && roomy(part), sx, pw, (from, to) =>
+    arrows(ctx, from, to, top, tall, sx),
+  );
 
   /* The letters, where a base is wide enough for one: a mismatch's on a
-     chip, a replacement's on the hatching. Not zoomed out. */
+     chip, a replacement's on the hatching. A mismatch keeps its chip
+     where its letter would not fit - a dark tick a base wide, at mid
+     zoom. Not zoomed out. */
   if (!sections?.length) {
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
@@ -315,16 +319,23 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
       if (part.right <= 0 || part.left >= width) continue;
       const perBase = (part.right - part.left) / part.len;
       const size = Math.min(sequenceSize(perBase), (tall / sy) * LETTER_OF_BAR);
-      if (size < SEQUENCE_MIN_SIZE) continue;
-      const fontPx = Math.floor(size * sy);
-      ctx.font = `${fontPx}px ${MONO_STACK}`;
-      const advance = ctx.measureText(LETTER_SAMPLE).width / LETTER_SAMPLE.length;
-      const above = inkAbove * fontPx;
-      const below = inkBelow * fontPx;
-      const margin = Math.max(sy, fontPx * CHIP_MARGIN);
-      const baseline = Math.round(top + tall / 2 + (above - below) / 2);
-      const chipTop = Math.max(top, Math.floor(baseline - above - margin));
-      const chipBottom = Math.min(top + tall, Math.ceil(baseline + below + margin));
+      const spell = size >= SEQUENCE_MIN_SIZE;
+      if (!spell && part.kind !== "mismatch") continue;
+      let advance = 0;
+      let baseline = 0;
+      let chipTop = Math.round(top + tall * 0.25);
+      let chipBottom = Math.round(top + tall * 0.75);
+      if (spell) {
+        const fontPx = Math.floor(size * sy);
+        ctx.font = `${fontPx}px ${MONO_STACK}`;
+        advance = ctx.measureText(LETTER_SAMPLE).width / LETTER_SAMPLE.length;
+        const above = inkAbove * fontPx;
+        const below = inkBelow * fontPx;
+        const margin = Math.max(sy, fontPx * CHIP_MARGIN);
+        baseline = Math.round(top + tall / 2 + (above - below) / 2);
+        chipTop = Math.max(top, Math.floor(baseline - above - margin));
+        chipBottom = Math.min(top + tall, Math.ceil(baseline + below + margin));
+      }
       const first = Math.max(0, Math.floor(-part.left / perBase));
       const last = Math.min(part.len, Math.ceil((width - part.left) / perBase));
       for (let i = first; i < last; i++) {
@@ -340,7 +351,7 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
         } else {
           ctx.fillStyle = REPLACED_LETTER;
         }
-        ctx.fillText(letter, Math.round((part.left + (i + 0.5) * perBase) * sx - advance / 2), baseline);
+        if (spell) ctx.fillText(letter, Math.round((part.left + (i + 0.5) * perBase) * sx - advance / 2), baseline);
       }
     }
   }
@@ -355,9 +366,16 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
     ctx.textAlign = "left";
     const pad = DELETION_PAD * sx;
     for (const white of raster.whites) {
-      const [from, to] = clip(white.left * sx, white.right * sx);
+      let [from, to] = clip(white.left * sx, white.right * sx);
       const textWidth = ctx.measureText(white.text).width;
       if (textWidth + pad * 2 > to - from) continue;
+      /* A white across the band carries its size in the middle of what is
+         in view, not of the whole band, where it could be off screen. */
+      if (white.open === "span" && view) {
+        const a = Math.max(from, view[0] * sx);
+        const b = Math.min(to, view[1] * sx);
+        if (b - a >= textWidth + pad * 2) [from, to] = [a, b];
+      }
       const x =
         white.open === null || white.open === "span"
           ? (from + to - textWidth) / 2

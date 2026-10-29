@@ -27,6 +27,23 @@ const GROUPINGS: Array<[number, string]> = [
 ];
 const TUBE_GROUPINGS: Array<[number, string]> = [[-1, "every node"], ...GROUPINGS];
 
+/** The view's scale in words: how many pixels a base gets while it gets
+    at least one, and how many bases a pixel holds once it does not. */
+function scaleText(basePerPixel: number): { text: string; narrow: boolean } {
+  if (!(basePerPixel > 0)) return { text: "", narrow: false };
+  if (basePerPixel <= 1) {
+    const px = 1 / basePerPixel;
+    return { text: `1 bp = ${px >= 10 ? Math.round(px) : px.toFixed(1)} px`, narrow: false };
+  }
+  const bp =
+    basePerPixel >= 10000
+      ? `${(basePerPixel / 1000).toFixed(basePerPixel >= 100000 ? 0 : 1)} Kb`
+      : basePerPixel >= 100
+        ? `${Math.round(basePerPixel)} bp`
+        : `${basePerPixel.toFixed(1)} bp`;
+  return { text: `1 px = ${bp}`, narrow: true };
+}
+
 export default function PangenomeViewSwitch({
   mode,
   onChange,
@@ -37,10 +54,13 @@ export default function PangenomeViewSwitch({
   onVariantGrouping,
   regionOnly,
   onRegionOnly,
+  basePerPixel,
 }: {
   mode: ViewMode;
   onChange: (mode: ViewMode) => void;
   fontSize: number;
+  /** Bases per pixel in the view, for the scale readout. */
+  basePerPixel?: number;
   tubeGrouping: number;
   onTubeGrouping: (grouping: number) => void;
   variantGrouping: number;
@@ -67,6 +87,7 @@ export default function PangenomeViewSwitch({
               "Which bubbles count as one site. Bubbles closer together than this are one site, and their combinations are its walks. Auto picks what fits the window.",
           }
         : null;
+  const scale = scaleText(basePerPixel ?? 0);
   return (
     <div
       className="flex items-center gap-1 px-2"
@@ -100,6 +121,24 @@ export default function PangenomeViewSwitch({
         );
       })}
     </div>
+      {scale.text && (
+        <span
+          title={
+            scale.narrow
+              ? "A base is narrower than a pixel now: the bars are drawn by sections, not base by base"
+              : "Each base of the view gets at least this many pixels"
+          }
+          className="px-1"
+          style={{
+            fontSize: `${Math.max(12, fontSize - 1)}px`,
+            fontStyle: "italic",
+            fontVariantNumeric: "tabular-nums",
+            color: scale.narrow ? "#b45309" : "var(--font-color)",
+          }}
+        >
+          {scale.text}
+        </span>
+      )}
       <button
         type="button"
         aria-pressed={regionOnly}

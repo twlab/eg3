@@ -26,6 +26,9 @@ export interface RasterPart extends PlacedPart {
   index: number;
   left: number;
   right: number;
+  /** Drawn arrowed, as read on the other strand: an inverted span, or any
+      part of a reading read backwards as a whole; both at once cancel. */
+  arrowed: boolean;
 }
 
 /** A mark's glyph: one or more marks within a glyph's width of each other,
@@ -98,7 +101,9 @@ export function rasteriseBar(
     const leftward = part.kind === "open" && part.side === "left";
     const left = leftward ? px(part.ref - part.len) : px(part.ref);
     const right = leftward ? px(part.ref) : px(part.ref + part.len);
-    return { ...part, index, left, right };
+    const inverted = part.kind === "inverted" || !!part.inverted;
+    const arrowed = inverted !== !!readings[part.reading]?.reversed;
+    return { ...part, index, left, right, arrowed };
   });
   const partAt = new Int32Array(w).fill(-1);
   const baseAt = new Int32Array(w).fill(-1);
@@ -154,8 +159,8 @@ export function rasteriseBar(
   }
   for (const out of outOfBand) {
     whites.push({
-      left: out.side === "right" ? px(out.ref) : px(startBp),
-      right: out.side === "right" ? px(endBp) : px(out.ref),
+      left: out.side === "right" ? px(out.ref) : px(out.until ?? startBp),
+      right: out.side === "right" ? px(out.until ?? endBp) : px(out.ref),
       bp: out.bp,
       open: out.side,
       text: deletionText(out.bp, out.side),

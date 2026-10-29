@@ -16,52 +16,63 @@ import {
 import type { Context } from "./walkOn";
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Finding a shown haplotype that has no walk through the fetched nodes.
+   Finding each shown haplotype's path across the window along the
+   reference.
 
    A haplotype that lacks the band's reference, or has other sequence in
    its place, passes through none of the window's nodes, and unless some
    edge within the context happens to lead to a node on its path it is not
    extracted at all: its lane is empty, which is also what no data looks
-   like. Every node's record lists its sampled visits - one visit in a
-   hundred along each path, and each path's last - with the path they
-   belong to, so the haplotype can be looked for along the reference:
-   outward from the window, a stretch at a time on each side, reading
-   each node's record for a visit of one of its paths. From the visit
-   found nearest the window its path is followed toward the window -
-   forward through LF from the left, backward through its inverse from
-   the right - and on to the first node the reference reads past the
-   window. Cut to the last reference node before it leaves the reference,
-   that is a fragment of the shape the walk-on makes, and the lane draws
-   it: white across the band, the reference it lacks and its own bases in
-   place of it.
+   like. One that reads the window only as copies, stretches of its own
+   that read this reference from elsewhere in its sequence, is extracted,
+   but what it has here in place is not. Every node's record lists its
+   sampled visits - one visit in a hundred along each path, and each
+   path's last - with the path they belong to, so a haplotype can be
+   looked for along the reference: outward from the window, a stretch at
+   a time on each side, reading each node's record for a visit of one of
+   its paths. From each visit found, nearest first, its path is followed
+   toward the window - forward through LF from the left, backward through
+   its inverse from the right - and on to the first node the reference
+   reads past the window. A path that turns back, as a copy's does at a
+   hairpin, or ends, or runs past the limit, is given up, and the next
+   visit tried. Cut to the last reference node before it leaves the
+   reference, what crossed is a fragment of the shape the walk-on makes:
+   for a haplotype already here, the same walk seen from its visit, which
+   merges away; for one that was absent, the lane's one reading, white
+   across the band with the reference it lacks and its own bases in place.
 
    The search stops at a cap either side. What was searched and what was
    found is reported per haplotype, so a lane left empty can say so. The
-   stretches searched in vain and the visits found are kept per source, so
-   a pan reads each stretch once.
+   stretches searched in vain, the visits found and the visits that led
+   nowhere are kept per source, so a pan reads each stretch once.
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** What the search found for one haplotype. */
 export interface Located {
   /** found: a fragment was made from a sampled visit. notSeen: no visit
-      in the stretch searched. lost: a visit was found, but its path could
-      not be followed to the reference past the window. */
+      in the stretch searched. lost: visits were found, but none of their
+      paths could be followed to the reference past the window. */
   state: "found" | "notSeen" | "lost";
   /** The reference searched, contig coordinates. */
   from: number;
   to: number;
-  /** The visit followed: where the reference reads that node, and which
-      side of the window it is on. */
+  /** The visit followed - for lost, the nearest tried: where the reference
+      reads that node, and which side of the window it is on. */
   seenAt?: number;
   side?: "left" | "right";
-  /** For lost: why. */
-  reason?: "contig ends" | "limit";
+  /** For lost: why that path could not be followed across. */
+  reason?: "contig ends" | "limit" | "turns back";
 }
 
 /** The search goes this much further out each round, each side. */
 const SEARCH_STEP_BP = 2_000;
 /** How far it goes either side before giving up. */
 export const SEARCH_CAP_BP = 100_000;
+/** A path followed toward the window that falls this far back behind the
+    furthest reference position it reached is turning back - a hairpin's
+    return - and is given up; an inversion inside a path reads backward
+    for less than this. */
+const TURN_BACK_BP = 10_000;
 
 /* ── Per source: each haplotype's paths, and what was searched ───────── */
 
@@ -90,6 +101,8 @@ interface Visit {
   /** The reference's handle for it; the visit is in that record. */
   node: number;
   anchor: PathAnchor;
+  /** Followed before and led nowhere. */
+  failed?: boolean;
 }
 
 /** What earlier searches found for a haplotype along one reference path. */
@@ -118,11 +131,12 @@ const isClear = (clear: Array<[number, number]>, a: number, b: number): boolean 
 
 /**
  * Looks for each haplotype in `keys` along the reference, outward from the
- * window, and makes a fragment of each one found, with the nodes walked
- * added through `addNode`. Returns what was found per haplotype, the
- * fragments, and where the reference reads each reference node in them.
+ * window, and makes a fragment of each one whose path crosses it, with
+ * the nodes walked added through `addNode`. Returns what was found per
+ * haplotype, the fragments, and where the reference reads each reference
+ * node in them.
  */
-export function locateAbsent(
+export function locateHaplotypes(
   ctx: Context,
   keys: string[],
   addNode: (id: number) => void,
@@ -132,7 +146,13 @@ export function locateAbsent(
   const located = new Map<string, Located>();
   const fragments: PathInfo[] = [];
   const referenceAt = new Map<number, number>();
-  const targets = new Map<string, { handles: Set<number>; searched: Searched }>();
+  interface Target {
+    handles: Set<number>;
+    searched: Searched;
+    /** The nearest visit that led nowhere, and why, for the report. */
+    nearestFailure?: { visit: Visit; side: "left" | "right"; reason: Located["reason"] };
+  }
+  const targets = new Map<string, Target>();
   for (const key of keys) {
     const handles = handlesOf(source, key);
     if (handles.size) {
@@ -150,36 +170,36 @@ export function locateAbsent(
       const b = side === "left" ? winFrom - reach : winTo + reach + SEARCH_STEP_BP;
       if (b <= a) continue;
 
-      /* What earlier searches know of this stretch, and what is left to read. */
-      const hits = new Map<string, Visit>();
+      /* The visits in this stretch: what earlier searches found, and what
+         is read now for the rest. */
+      const visits = new Map<string, Visit[]>();
       const toScan = new Map<string, Set<number>>();
       for (const [key, target] of targets) {
         const known = target.searched.seen.filter((visit) => visit.at >= a && visit.at < b);
-        if (known.length) hits.set(key, side === "left" ? known[known.length - 1] : known[0]);
+        if (known.length) visits.set(key, known);
         else if (!isClear(target.searched.clear, a, b)) toScan.set(key, target.handles);
       }
       if (toScan.size) {
+        const found = new Map<string, Visit[]>();
         enumerateReference(ctx, a, b, (_id, record, at, pos) => {
           for (const anchor of record.pathAnchors) {
             const handle = Math.floor(anchor.seqId / 2);
             for (const [key, handles] of toScan) {
               if (!handles.has(handle)) continue;
-              const hit = hits.get(key);
-              /* The visit nearest the window: to the left the last met, to
-                 the right the first. */
-              if (!hit || (side === "left" ? at > hit.at : at < hit.at)) {
-                hits.set(key, { at, node: pos.node, anchor });
-              }
+              const list = found.get(key);
+              const visit = { at, node: pos.node, anchor };
+              if (list) list.push(visit);
+              else found.set(key, [visit]);
             }
           }
-          return side === "right" && [...toScan.keys()].every((key) => hits.has(key));
         });
         for (const key of toScan.keys()) {
           const { searched } = targets.get(key)!;
-          const hit = hits.get(key);
-          if (hit) {
-            searched.seen.push(hit);
+          const list = found.get(key);
+          if (list) {
+            searched.seen.push(...list);
             searched.seen.sort((p, q) => p.at - q.at);
+            visits.set(key, list);
           } else {
             addCovered(searched.clear, a, b);
           }
@@ -188,16 +208,42 @@ export function locateAbsent(
       if (side === "left") leftDone = winFrom - a;
       else rightDone = b - winTo;
 
-      for (const [key, hit] of hits) {
-        targets.delete(key);
-        const outcome = cross(ctx, hit, side, addNode, fragments, referenceAt);
-        located.set(key, { ...outcome, from: winFrom - leftDone, to: winTo + rightDone });
+      /* Each visit followed, the nearest the window first, until one
+         crosses it. */
+      for (const [key, list] of visits) {
+        const target = targets.get(key)!;
+        const ordered = list
+          .filter((visit) => !visit.failed)
+          .sort((p, q) => (side === "left" ? q.at - p.at : p.at - q.at));
+        for (const visit of ordered) {
+          const outcome = cross(ctx, visit, side, addNode, fragments, referenceAt);
+          if (outcome.state === "found") {
+            targets.delete(key);
+            located.set(key, { ...outcome, from: winFrom - leftDone, to: winTo + rightDone });
+            break;
+          }
+          visit.failed = true;
+          if (!target.nearestFailure) target.nearestFailure = { visit, side, reason: outcome.reason };
+        }
       }
     }
     reach += SEARCH_STEP_BP;
   }
-  for (const key of targets.keys()) {
-    located.set(key, { state: "notSeen", from: winFrom - leftDone, to: winTo + rightDone });
+  for (const [key, target] of targets) {
+    const failure = target.nearestFailure;
+    located.set(
+      key,
+      failure
+        ? {
+            state: "lost",
+            from: winFrom - leftDone,
+            to: winTo + rightDone,
+            seenAt: failure.visit.at,
+            side: failure.side,
+            reason: failure.reason,
+          }
+        : { state: "notSeen", from: winFrom - leftDone, to: winTo + rightDone },
+    );
   }
   return { located, fragments, referenceAt };
 }
@@ -206,11 +252,12 @@ export function locateAbsent(
  * From a visit found on one side of the window, follows the haplotype's
  * path toward the window and on to the first node the reference reads
  * past it, and makes a fragment of the nodes walked, cut to the last
- * reference node before the path leaves the reference.
+ * reference node before the path leaves the reference. A path that turns
+ * back, ends, or runs past the limit before crossing makes nothing.
  */
 function cross(
   ctx: Context,
-  hit: Visit,
+  visit: Visit,
   side: "left" | "right",
   addNode: (id: number) => void,
   fragments: PathInfo[],
@@ -225,8 +272,9 @@ function cross(
   const handles: number[] = [];
   const positions: Pos[] = [];
   let bp = 0;
-  let pos: Pos | null = { node: hit.node, offset: hit.anchor.nodeOffset };
-  let outcome: "crossed" | "limit" | "contig ends" = "contig ends";
+  let furthest = forward ? -Infinity : Infinity;
+  let pos: Pos | null = { node: visit.node, offset: visit.anchor.nodeOffset };
+  let outcome: "crossed" | "limit" | "contig ends" | "turns back" = "contig ends";
   while (pos) {
     const record = cache.get(pos.node);
     if (!record) break;
@@ -240,6 +288,12 @@ function cross(
         outcome = "crossed";
         break;
       }
+      /* Reading the reference away from the window again: turning back. */
+      if (forward ? at + record.sequenceLength < furthest - TURN_BACK_BP : at > furthest + TURN_BACK_BP) {
+        outcome = "turns back";
+        break;
+      }
+      furthest = forward ? Math.max(furthest, at + record.sequenceLength) : Math.min(furthest, at);
     } else {
       /* A reference node beyond what is enumerated names itself by one of
          the reference's anchors; the path may then have been on the
@@ -270,14 +324,18 @@ function cross(
     pos = forward ? after(cache, pos) : before(cache, pos);
   }
   if (outcome !== "crossed") {
-    return { state: "lost", seenAt: hit.at, side, reason: outcome };
+    return { state: "lost", seenAt: visit.at, side, reason: outcome };
   }
 
-  /* Cut to the last reference node before the path leaves the reference. */
+  /* Cut to one node before the path leaves the reference or enters the
+     window's walk, whichever comes first: the approach along the reference
+     from the visit says nothing the band does not know. */
   const onReference = (handle: number) =>
     ctx.onWalk.has(nodeId(handle)) || readAt(ctx, nodeId(handle)) !== undefined;
   const leaves = handles.findIndex((handle) => !onReference(handle));
-  const keepFrom = leaves > 0 ? leaves - 1 : 0;
+  const enters = handles.findIndex((handle) => ctx.onWalk.has(nodeId(handle)));
+  const firsts = [leaves, enters].filter((k) => k >= 0);
+  const keepFrom = firsts.length ? Math.max(0, Math.min(...firsts) - 1) : 0;
   const walked = handles.slice(keepFrom);
   const walkedAt = positions.slice(keepFrom);
   const dropped = handles.slice(0, keepFrom).reduce((n, handle) => n + lenOf(handle), 0);
@@ -286,14 +344,14 @@ function cross(
   /* The fragment in its sequence's order, placed from the visit: `prefix`
      is the bases of the fragment before the anchored node along its
      sequence, negative where the node was cut away before it. */
-  const seqId = hit.anchor.seqId;
-  const anchorLen = lenOf(hit.node);
+  const seqId = visit.anchor.seqId;
+  const anchorLen = lenOf(visit.node);
   const prefix = forward ? -dropped : len + dropped - anchorLen;
   const info: PathInfo = {
     path: forward ? walked : [...walked].reverse(),
     len,
     pathHandle: Math.floor(seqId / 2),
-    fragmentStart: fragmentStartFrom(seqId, hit.anchor.bpOffset, prefix, anchorLen, len),
+    fragmentStart: fragmentStartFrom(seqId, visit.anchor.bpOffset, prefix, anchorLen, len),
     backward: seqId % 2 === 1,
     start: forward ? walkedAt[0] : walkedAt[walkedAt.length - 1],
     exit: after(cache, forward ? walkedAt[walkedAt.length - 1] : walkedAt[0]),
@@ -305,5 +363,5 @@ function cross(
     if (at !== undefined && !ctx.onWalk.has(id)) referenceAt.set(id, at);
   }
   fragments.push(info);
-  return { state: "found", seenAt: hit.at, side };
+  return { state: "found", seenAt: visit.at, side };
 }

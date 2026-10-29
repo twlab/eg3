@@ -5548,6 +5548,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   mode={pangenomeView}
                   onChange={setPangenomeView}
                   fontSize={fontSize}
+                  basePerPixel={basePerPixel.current}
                   tubeGrouping={tubeGrouping}
                   onTubeGrouping={setTubeGrouping}
                   variantGrouping={variantGrouping}

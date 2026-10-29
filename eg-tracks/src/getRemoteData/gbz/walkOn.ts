@@ -43,6 +43,10 @@ const REFERENCE_REACH_BP = 5_000;
 export const MAX_WALK_ON_BP = 100_000;
 export const MAX_WALK_ON_NODES = 3_000;
 
+/** Two fragments of one path at most this far apart are joined by walking
+    the gap between them. */
+const GAP_JOIN_BP = 2_000;
+
 /** When an end is placed by one of the reference's anchors, the reference
     is enumerated back over the stretch walked and this much more: the walk
     may have rejoined, left and rejoined again before the anchor, with a
@@ -303,19 +307,54 @@ function placeByAnchor(ctx: Context, tail: Tail, anchor: PathAnchor, forward: bo
 const forwardOrder = (info: PathInfo): number[] =>
   info.backward ? info.path.map(flip).reverse() : info.path;
 
+/** How a gap between two fragments of one path is walked to join them. */
+export interface GapWalk {
+  cache: RecordCache;
+  addNode: (id: number) => void;
+  /** The widest gap walked, in bases. */
+  maxGap: number;
+}
+
+/**
+ * The nodes of a path over the `bp` bases after a fragment's end, in the
+ * path's forward order, by following the fragment's sequence - on from
+ * its exit, or back from its start where it was stitched from the
+ * reverse sequence. Null when the sequence ends first or the bases do not
+ * come out even.
+ */
+function walkGap(info: PathInfo, bp: number, cache: RecordCache): number[] | null {
+  const onward = !info.backward;
+  let pos = onward ? info.exit : before(cache, info.start);
+  const out: number[] = [];
+  let walked = 0;
+  while (pos && walked < bp) {
+    const record = cache.get(pos.node);
+    if (!record) return null;
+    out.push(onward ? pos.node : flip(pos.node));
+    walked += record.sequenceLength;
+    pos = onward ? after(cache, pos) : before(cache, pos);
+  }
+  return walked === bp ? out : null;
+}
+
 /**
  * Fragments of one path that cover the same stretch of it, or - once
  * followed on - meet or overlap, made one. A fragment inside another is
  * dropped: a hairpin's turn stitched from both orientations, or a scrap a
  * longer walk has been followed through. Two that meet are joined, in the
  * path's forward order, the overlap - the node the first stopped at -
- * taken once; the joined walk's `start` is then no longer its position.
+ * taken once. With `gapWalk`, two a short gap apart are joined too, by
+ * walking the gap along the path: the fetch cuts a walk at the subgraph's
+ * edge, and a walk that steps out for a few nodes and back in - a
+ * hairpin's turn just past the context - arrives as two fragments. The
+ * joined walk's `start` is then no longer its position.
  */
-function mergeFragments(
+export function mergeFragments(
   paths: PathInfo[],
   keep: PathInfo,
   lenOf: (handle: number) => number,
   join: boolean,
+  gapWalk?: GapWalk,
 ): PathInfo[] {
   const groups = new Map<number, PathInfo[]>();
   for (const info of paths) {
@@ -337,24 +376,37 @@ function mergeFragments(
         continue;
       }
       const overlap = end - next.fragmentStart!;
-      if (overlap < 0 || !join) {
+      if (!join || overlap < -(gapWalk?.maxGap ?? 0)) {
         current = next;
         continue;
       }
       const a = forwardOrder(current);
       const b = forwardOrder(next);
+      let between: number[] = [];
+      if (overlap < 0) {
+        /* A gap: walked along the path, and it must come out at the next
+           fragment's first node. */
+        const walked = gapWalk ? walkGap(current, -overlap, gapWalk.cache) : null;
+        const landing = walked ? walkGap(current, -overlap + lenOf(b[0]), gapWalk!.cache) : null;
+        if (!walked || !landing || nodeId(landing[landing.length - 1]) !== nodeId(b[0])) {
+          current = next;
+          continue;
+        }
+        between = walked;
+        for (const handle of between) gapWalk!.addNode(nodeId(handle));
+      }
       let shared = 0;
       let bp = 0;
       while (bp < overlap && shared < b.length) bp += lenOf(b[shared++]);
       const same =
-        bp === overlap &&
+        bp === Math.max(0, overlap) &&
         shared <= a.length &&
         b.slice(0, shared).every((h, i) => h === a[a.length - shared + i]);
       if (!same) {
         current = next;
         continue;
       }
-      current.path = [...a, ...b.slice(shared)];
+      current.path = [...a, ...between, ...b.slice(shared)];
       current.backward = false;
       current.len += next.len - overlap;
       current.exit = next.backward ? null : next.exit;
@@ -438,8 +490,21 @@ export function walkOn(
     }
   }
 
-  paths = mergeFragments(paths, walk, lenOf, true);
+  paths = mergeFragments(paths, walk, lenOf, true, { cache, addNode, maxGap: GAP_JOIN_BP });
   extracted.refId = paths.indexOf(walk);
   extracted.paths = paths;
   return referenceAt;
+}
+
+/** Where the reference reads each of `ids` off the window's walk, as far
+    as it has been enumerated: for every node the fetch holds, once the
+    walks have been followed and joined. */
+export function referenceReads(ctx: Context, ids: Iterable<number>): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const id of ids) {
+    if (ctx.onWalk.has(id)) continue;
+    const at = readAt(ctx, id);
+    if (at !== undefined) out.set(id, at);
+  }
+  return out;
 }

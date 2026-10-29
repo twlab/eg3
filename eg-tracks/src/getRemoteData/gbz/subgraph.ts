@@ -8,12 +8,12 @@ import {
   pathIsCanonical,
 } from "./codec";
 import type { Pos } from "./codec";
-import { locateAbsent } from "./locate";
+import { locateHaplotypes } from "./locate";
 import type { Located } from "./locate";
 import { GbzRecord } from "./record";
 import { RecordCache } from "./store";
 import type { GbzPath, GbzSource } from "./store";
-import { makeContext, walkOn } from "./walkOn";
+import { makeContext, mergeFragments, referenceReads, walkOn } from "./walkOn";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Interval query against a GBZ-base database, ported from gbz-base's
@@ -94,6 +94,10 @@ export interface SubgraphJson {
   /** For each shown haplotype with no walk through the fetched nodes, what
       the search along the reference found; see locate.ts. */
   located?: Record<string, Located>;
+  /** The kept nodes' links to fetched nodes no shown walk uses, and those
+      nodes' lengths, so a card can list every fetched neighbour of a node;
+      see aroundKept. Their carriers are counted with the rest. */
+  around?: { edges: Record<string, JsonLink[]>; lengths: Record<string, number> };
 }
 
 /* ── Carriers ──────────────────────────────────────────────────────────
@@ -372,40 +376,65 @@ export function queryInterval(
       extend,
     );
 
-    /* ── The shown haplotypes with no walk at all ─────────────────── */
+    /* ── Each shown haplotype's path across the window ───────────── */
     if (keep && extracted.refId !== null) {
-      const present = new Set<string>();
+      const walk = extracted.paths[extracted.refId];
+      /* A haplotype with a walk through both ends of the window's walk is
+         here in place already; the rest are looked for. */
+      const ends = [walk.path[0], walk.path[walk.path.length - 1]].map(nodeId);
+      const crossing = new Set<string>();
       for (const info of extracted.paths) {
-        const own = info.pathHandle === null ? null : nameOf(info.pathHandle);
-        if (own) present.add(`${own.sample}#${own.haplotype}`);
+        if (info === walk || info.pathHandle === null) continue;
+        const ids = new Set(info.path.map(nodeId));
+        if (!ends.every((id) => ids.has(id))) continue;
+        const own = nameOf(info.pathHandle);
+        if (own) crossing.add(`${own.sample}#${own.haplotype}`);
       }
-      const absent = [...keep].filter(
-        (key) => !present.has(key) && key !== `${path.sample}#${path.haplotype}`,
+      const shown = [...keep].filter(
+        (key) => key !== `${path.sample}#${path.haplotype}` && !crossing.has(key),
       );
-      if (absent.length) {
-        const ctx = makeContext(cache, source, path, extracted.paths[extracted.refId], [
-          query.start,
-          query.end,
-        ]);
-        const found = locateAbsent(ctx, absent, addNode, query.locateCapBp);
-        extracted.paths.push(...found.fragments);
+      if (shown.length) {
+        const ctx = makeContext(cache, source, path, walk, [query.start, query.end]);
+        const found = locateHaplotypes(ctx, shown, addNode, query.locateCapBp);
         for (const [id, at] of found.referenceAt) walkedTo.set(id, at);
         located = Object.fromEntries(found.located);
+        if (found.fragments.length) {
+          /* A fragment of a haplotype already here is the same walk seen
+             from its sampled visit, and merges away. */
+          extracted.paths.push(...found.fragments);
+          const lenOf = (handle: number) =>
+            records.get(handle)?.sequenceLength ?? cache.get(handle)?.sequenceLength ?? 0;
+          extracted.paths = mergeFragments(extracted.paths, walk, lenOf, true, {
+            cache,
+            addNode,
+            maxGap: 2_000,
+          });
+          extracted.refId = extracted.paths.indexOf(walk);
+        }
       }
+      /* Every node the fetch now holds that the reference reads off the
+         window's walk, placed: the nodes walked to, the joins, the ends. */
+      const placed = referenceReads(
+        makeContext(cache, source, path, extracted.paths[extracted.refId], [query.start, query.end]),
+        new Set([...records.keys()].map(nodeId)),
+      );
+      for (const [id, at] of placed) walkedTo.set(id, at);
     }
   }
 
   const json = writeJson(source, records, extracted, path, refStart);
   const kept = query.haplotypes ? keepHaplotypes(json, query.haplotypes) : json;
+  const around = query.haplotypes ? aroundKept(json, kept) : undefined;
   const referenceAt = referenceElsewhere(json, kept);
   for (const [id, at] of walkedTo) {
     if (String(id) in kept.nodes) referenceAt[String(id)] = at;
   }
   return {
     ...kept,
-    carriers: countCarriers(json, kept),
+    carriers: countCarriers(json, kept, around ? Object.keys(around.lengths) : []),
     referenceAt,
     ...(located ? { located } : {}),
+    ...(around ? { around } : {}),
   };
 }
 
@@ -458,7 +487,11 @@ function referenceElsewhere(
  * jumping between two reference nodes the reference does not walk between
  * (see alleleKey).
  */
-function countCarriers(all: SubgraphJson, kept: SubgraphJson): Carriers {
+function countCarriers(
+  all: SubgraphJson,
+  kept: SubgraphJson,
+  alsoNodes: Iterable<string> = [],
+): Carriers {
   const reference = all.paths.find((path) => path.is_reference);
   const refIndex = new Map<string, number>();
   reference?.path.forEach((step, index) => {
@@ -501,6 +534,7 @@ function countCarriers(all: SubgraphJson, kept: SubgraphJson): Carriers {
   type Tally = { count: number; last: number };
   const nodeTallies = new Map<string, Tally>();
   for (const id in kept.nodes) nodeTallies.set(id, { count: 0, last: -1 });
+  for (const id of alsoNodes) nodeTallies.set(id, { count: 0, last: -1 });
   const alleleTallies = new Map<string, Tally>();
   const ends = new Set<string>();
   for (const path of kept.paths) {
@@ -950,6 +984,31 @@ function writeJson(
   }
 
   return { nodes, edges, paths };
+}
+
+/**
+ * The kept nodes' links to fetched nodes no shown walk uses, with those
+ * nodes' lengths: a card lists every fetched neighbour of a node, the
+ * alternatives other haplotypes take included, not only the shown
+ * haplotypes' (which is all keepHaplotypes leaves in `edges`).
+ */
+function aroundKept(
+  all: SubgraphJson,
+  kept: SubgraphJson,
+): { edges: Record<string, JsonLink[]>; lengths: Record<string, number> } {
+  const edges: Record<string, JsonLink[]> = {};
+  const lengths: Record<string, number> = {};
+  for (const [from, links] of Object.entries(all.edges)) {
+    for (const link of links) {
+      const fromKept = from in kept.nodes;
+      const toKept = link.to in kept.nodes;
+      if (fromKept === toKept) continue;
+      (edges[from] ??= []).push(link);
+      const other = fromKept ? link.to : from;
+      lengths[other] = all.nodes[other]?.length ?? 0;
+    }
+  }
+  return { edges, lengths };
 }
 
 /** A walk's haplotype as `sample#haplotype`, from its fields or its name. */

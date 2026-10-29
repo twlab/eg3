@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { LinearLane, LinearModel, Reading, StripNode } from "./linearModel";
+import type { Jump, LinearLane, LinearModel, Reading, StripNode } from "./linearModel";
 import type { LinearAxis } from "./linearAxis";
 import { rasteriseBar } from "./barRaster";
 import type { BarRaster, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
@@ -28,17 +28,22 @@ import type { BrowserClass, Bubble } from "./alignment";
    nodes at their coordinates and, when asked, the alleles under them,
    each where the first reading that takes it puts its bases.
 
-   A hover shows a card and a click keeps it. Zoomed out past a letter a
-   base, the strip is read a section at a time, and so are the bars.
+   A hover shows a card and a click keeps it. Zoomed in and at mid zoom -
+   while a base has a pixel - the strip is drawn node by node and the
+   bars part by part, lettered where a letter fits. Zoomed out past a
+   pixel a base, the strip is read a section at a time, and so are the
+   bars.
 
    "Show walks" draws a haplotype's readings a row each instead of its one
    bar: the same parts, each reading's own, over the reference it anchors
    to, in walk order.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* Below this a letter is a smudge, so none is drawn and the strip is read
-   in sections. */
+/* Below this a letter is a smudge, so none is drawn. */
 const SEQUENCE_MIN_SIZE = 4;
+/* Below a pixel a base, the strip and the bars are read in sections; above
+   it a base is drawn as itself, lettered or not: that is what mid zoom is. */
+const SECTIONS_BELOW_PX_PER_BASE = 1;
 /* Neighbouring nodes are joined into a section until it is this wide. */
 const SECTION_PX = 16;
 /* A bar is read part by part out to this many bases a pixel, as
@@ -236,7 +241,7 @@ function LinearView({
     return nodes.sort((a, b) => a.ref - b.ref || a.row - b.row);
   }, [model, alleleRows]);
   const sections = useMemo<StripSection[] | null>(() => {
-    if (sequenceSize(scale) >= SEQUENCE_MIN_SIZE) return null;
+    if (scale >= SECTIONS_BELOW_PX_PER_BASE) return null;
     const placed = stripNodes
       .map((node) => ({ node, left: px(node.ref), right: px(node.ref + Math.max(node.width, 0)) }))
       .sort((a, b) => a.left - b.left || a.right - b.right);
@@ -279,6 +284,37 @@ function LinearView({
       ? [`in ${count.toLocaleString()} of ${model.carriers.total.toLocaleString()} haplotypes in the pangenome`]
       : [];
   };
+  /** What a node links to on each side as drawn - left of it and right of
+      it - among the fetched edges: each neighbour with the strand it is
+      read on there, its length, and whether the reference walks it. */
+  const linkLines = (node: StripNode): string[] => {
+    const links = model.links.get(node.id);
+    if (!links) return [];
+    const left = node.reverse ? links.after : links.before;
+    const right = node.reverse ? links.before : links.after;
+    const show = (list: Array<{ id: string; reverse: boolean }>): string => {
+      if (!list.length) return "none fetched";
+      const named = list.slice(0, 8).map((n) => {
+        const reverse = node.reverse ? !n.reverse : n.reverse;
+        const len = model.lengths.get(n.id);
+        const onRef = model.nodes.get(n.id)?.onReference;
+        const count = model.carriers?.nodes[n.id];
+        const notes = [
+          ...(len !== undefined ? [`${len.toLocaleString()} bp`] : []),
+          ...(onRef ? ["ref"] : []),
+          ...(count !== undefined ? [`${count.toLocaleString()} hap`] : []),
+        ];
+        return `${n.id}${reverse ? "−" : "+"}${notes.length ? ` (${notes.join(", ")})` : ""}`;
+      });
+      return named.join(", ") + (list.length > 8 ? `, +${list.length - 8} more` : "");
+    };
+    return [`before, to the left: ${show(left)}`, `after, to the right: ${show(right)}`];
+  };
+  /** Where a reading's walk goes on past one of its ends, in words. */
+  const jumpLine = (jump: Jump): string =>
+    `${jump.before ? "the walk comes from" : "the walk goes on at"} ${where(jump.to)}${jump.reverse ? ", read backward" : ""}${
+      jump.reading !== undefined ? ` (reading ${jump.reading + 1})` : ", past what this reading reads"
+    }`;
   /** The bubble a part came from. */
   const bubbleOf = (reading: Reading, path: number[]): Bubble | null => {
     let bubble: Bubble | undefined = reading.alignment.bubbles[path[0]];
@@ -410,7 +446,9 @@ function LinearView({
       ...(part.inverted ? ["inside an inversion: aligned on the other strand"] : []),
       ...(step ? [<>node {step.node} · {(step.end - step.start).toLocaleString()} bp · reads {cardSequence(model.graph.seq.get(step.node) ?? "")}</>] : []),
       ...(step ? carriersLine(step.node) : []),
+      ...(node ? linkLines(node) : []),
       ...(row.reading ? [`reading ${reading.index + 1} of ${readingsOf(lane).length}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`] : []),
+      ...reading.jumps.map(jumpLine),
     ];
     const dupes = refAt !== null ? dupesAt(lane, reading.index, refAt) : [];
     return {
@@ -427,8 +465,9 @@ function LinearView({
     const items: CardItem[] = parts.map((part) => {
       const reading = lane.readings[part.reading];
       const bubble = bubbleOf(reading, part.bubble);
-      const why =
-        bubble?.cls === "open"
+      const why = part.jump
+        ? "the haplotype's own bases before its walk jumps"
+        : bubble?.cls === "open"
           ? "the haplotype's own bases before it leaves the band"
           : bubble?.cls === "insertion"
             ? "an insertion"
@@ -456,6 +495,7 @@ function LinearView({
               ]
             : []),
           ...(part.nodes.length ? [`node${part.nodes.length === 1 ? "" : "s"} ${part.nodes.join(" → ")}`] : []),
+          ...(part.jump ? [jumpLine(part.jump)] : []),
           ...(bubble ? [bubbleLine(bubble, reading, lane)] : []),
           ...part.nodes.flatMap((id) => carriersLine(id)),
         ],
@@ -556,6 +596,7 @@ function LinearView({
               : "inserted here, no room"}
         </>,
         node.onReference ? "on the reference walk" : "an alternative to the reference here",
+        ...linkLines(node),
         ...(node.placedBy ? [`placed by ${node.placedBy.lane}'s reading ${node.placedBy.reading + 1}`] : []),
         <>reads {cardSequence(node.sequence)}</>,
         `in the rows shown: ${names.length ? names.join(", ") : "none"}`,
@@ -826,8 +867,8 @@ function LinearView({
             width={width}
             height={row.height}
             color={row.lane.color}
+            view={[axis.viewFromPx, axis.viewToPx]}
             dim={dim(row.lane)}
-            reversed={row.reading?.reversed ?? false}
             sections={sections ?? undefined}
             sectionAltBp={sectionAltBp}
             onPress={
@@ -875,9 +916,9 @@ function LinearView({
 
         {/* A walk's rows' names: which reading each is. */}
         {walkLane &&
-          rows.map((row, k) => (
+          rows.map((row) => (
             <text key={`name-${row.key}`} x={axis.viewFromPx + 4} y={row.top - 3} className="pgv-strip-label">
-              {k === 0 ? "in place" : `own ${row.reading?.ownFrom.toLocaleString()}–${row.reading?.ownTo.toLocaleString()}`}
+              {`own ${row.reading?.ownFrom.toLocaleString()}–${row.reading?.ownTo.toLocaleString()}`}
               {row.reading?.reversed ? " · read backwards" : ""}
             </text>
           ))}
@@ -965,6 +1006,7 @@ function LinearView({
                 return (
                   <g
                     key={node.id}
+                    data-node={node.id}
                     className={`pgv-node${node.onReference ? "" : " pgv-node-alt"}${lit ? "" : " pgv-dim"}${
                       nodeLit(node.id) ? " pgv-node-lit" : ""
                     }`}
