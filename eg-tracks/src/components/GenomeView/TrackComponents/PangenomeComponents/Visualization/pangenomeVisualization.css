@@ -1458,3 +1458,24 @@
   stroke-width: 2;
   pointer-events: none;
 }
+
+/* The strip's marks: an allele with no room, drawn as a small triangle in
+   its row where its bases go in, in the marks' colour (BarCanvas). */
+.pgv-node polygon {
+  fill: #c2410c;
+  stroke: none;
+}
+
+/* A haplotype's row with nothing drawn: what the search for it along the
+   reference found, in words. */
+.pgv-absent {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  cursor: default;
+}

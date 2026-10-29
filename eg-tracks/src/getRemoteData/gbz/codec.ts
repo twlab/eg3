@@ -255,3 +255,29 @@ export function pathIsCanonical(path: number[]): boolean {
   if (isReverse(first) === isReverse(last)) return !isReverse(first);
   return edgeIsCanonical(first, last);
 }
+
+/**
+ * Where a walk starts on its path, from an anchor found `prefix` bp into it.
+ *
+ * Offsets are stored in forward-path coordinates, so a walk running forward
+ * along the path sees them grow and one running backward sees them shrink:
+ *
+ *   forward:  bp(step i) = fragmentStart + prefix(i)
+ *   reverse:  bp(step i) = fragmentStart + len - prefix(i) - nodeLen(i)
+ *
+ * Solving each for fragmentStart gives the two cases. `prefix` may run past
+ * `len`: an anchor found by following the sequence on past the subgraph lies
+ * after the walk, and both equations hold for it unchanged. Mirrors
+ * `fragment_start_from_anchor` in gbz-base.
+ */
+export function fragmentStartFrom(
+  seqId: number,
+  bpOffset: number,
+  prefix: number,
+  nodeLen: number,
+  len: number,
+): number {
+  return seqId % 2 === 0
+    ? Math.max(0, bpOffset - prefix)
+    : Math.max(0, bpOffset + prefix + nodeLen - len);
+}

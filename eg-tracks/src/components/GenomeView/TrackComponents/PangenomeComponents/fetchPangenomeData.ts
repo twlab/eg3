@@ -13,6 +13,8 @@ import {
   queryLocalInterval,
 } from "../../../../getRemoteData/gbz/worker/gbzClient";
 import { buildModel, columnarModel, modelOf, referenceTicks } from "./Visualization/pangenomeModel";
+import { linearModelOf } from "./Visualization/linearModel";
+import type { LinearModel } from "./Visualization/linearModel";
 import { GRAPH_PART } from "./Visualization/VisualizationContainer";
 import { TUBE_H } from "./Visualization/TubeMapView";
 import { tubeAxis, tubeStacks } from "./Visualization/tubeLayout";
@@ -361,6 +363,93 @@ function haplotypeCoord(
   );
 }
 
+/**
+ * A haplotype as a query genome of the band in linear view: the loci its
+ * tracks are fetched over, and the region they are drawn across - its own
+ * bases wherever its bar gives them room, in reference order, and gaps
+ * everywhere else. Bases with no room, the bar's marks, are left out: a
+ * track along the haplotype has nowhere to draw them.
+ */
+function haplotypeCoordLinear(
+  model: LinearModel | null,
+  graph: any,
+  key: string,
+  visRegion: DisplayedRegionModel,
+  chr: string | undefined,
+) {
+  const total = Math.round(visRegion.getWidth());
+  const empty = () =>
+    new DisplayedRegionModel(
+      new NavigationContext(key, [NavigationContext.makeGap(total, "gap 1")]),
+      0,
+      total,
+    );
+  const coord = (queryRegion: DisplayedRegionModel) => ({
+    queryGenomicCoord: haplotypeLoci(graph, key).map((locus) => locus.serialize()),
+    queryRegion,
+    id: key,
+  });
+  const lane = model?.lanes.find((candidate) => !candidate.isReference && candidate.label === key);
+  if (!model || !chr || !lane) return coord(empty());
+  const navContext = visRegion.getNavigationContext();
+  const regionStart = visRegion.getContextCoordinates().start;
+  /* From a reference coordinate to a place in the region drawn across the band. */
+  const at = (bp: number) => {
+    const [found] = navContext.convertGenomeIntervalToBases(
+      new ChromosomeInterval(chr, bp, bp + 1),
+    );
+    return found ? Math.round(found.start - regionStart) : null;
+  };
+  const [sample, haplotype] = key.split("#");
+  type Run = { start: number; end: number; contig: string } | { gap: number };
+  const runs: Run[] = [];
+  let cursor = 0;
+  let last: { start: number; end: number; contig: string } | null = null;
+  for (const part of lane.drawn) {
+    if (part.len <= 0 || !part.own || part.kind === "white" || part.kind === "mark") continue;
+    const reading = lane.readings[part.reading];
+    const contig = altContig(sample, haplotype, reading.contig);
+    /* A left open end runs leftward from its junction. */
+    const refFrom = part.kind === "open" && part.side === "left" ? part.ref - part.len : part.ref;
+    const from = at(refFrom);
+    if (from === null) continue;
+    const length = Math.min(part.len, part.own.to - part.own.from);
+    if (from + length <= cursor) continue;
+    if (from >= total) break;
+    if (from > cursor) {
+      runs.push({ gap: from - cursor });
+      cursor = from;
+      last = null;
+    }
+    const skip = cursor - from;
+    const keep = Math.min(length - skip, total - cursor);
+    if (keep <= 0) continue;
+    /* Its own bases, lowest first: a stretch read backwards is drawn on the
+       reference's strand with its coordinates counting down, and a track
+       along it is laid the same way. */
+    const start = part.own.reverse ? part.own.to - skip - keep : part.own.from + skip;
+    if (last && last.end === start && last.contig === contig) {
+      last.end = start + keep;
+    } else {
+      last = { start, end: start + keep, contig };
+      runs.push(last);
+    }
+    cursor += keep;
+  }
+  if (total > cursor) runs.push({ gap: total - cursor });
+  if (!runs.some((run) => !("gap" in run))) return coord(empty());
+  let gapCount = 0;
+  const features = runs.map((run) =>
+    "gap" in run
+      ? NavigationContext.makeGap(run.gap, `gap ${++gapCount}`)
+      : new Feature(
+          `${run.contig}:${run.start}-${run.end}`,
+          new ChromosomeInterval(run.contig, run.start, run.end),
+        ),
+  );
+  return coord(new DisplayedRegionModel(new NavigationContext(key, features), 0, total));
+}
+
 /** How the graph is being drawn, which says what room the band holds. */
 export interface PangenomeLayoutSettings {
   mode: ViewMode;
@@ -458,7 +547,13 @@ export function layoutPangenomeBand(
       null,
     );
   const model = records && locus ? modelOf(records) : null;
-  let gaps: Gap[] = model && locus ? graphGaps(model, navContext, locus.chr) : [];
+  /* Linear view: the reference's own scale, no room let in for anyone's
+     longer allele - the bars show such bases as marks (linearModel.ts), so
+     every track under the graph is drawn to the reference. The other views
+     still draw the column layout, with its room. */
+  const linear = settings.mode === "linear" && records && locus ? linearModelOf(records) : null;
+  let gaps: Gap[] =
+    settings.mode === "linear" ? [] : model && locus ? graphGaps(model, navContext, locus.chr) : [];
 
   /* Tube view: the tubes' room ahead of each column as well, placed before
      the reference base the column reaches - the next one at or after it -
@@ -533,14 +628,10 @@ export function layoutPangenomeBand(
   }
   const coords: any = {};
   for (const key of haplotypes) {
-    coords[key] = haplotypeCoord(
-      model,
-      records,
-      key,
-      primaryVisData.visRegion,
-      locus?.chr,
-      roomBefore,
-    );
+    coords[key] =
+      settings.mode === "linear"
+        ? haplotypeCoordLinear(linear, records, key, primaryVisData.visRegion, locus?.chr)
+        : haplotypeCoord(model, records, key, primaryVisData.visRegion, locus?.chr, roomBefore);
   }
   coords[primaryGenName] = {
     genomicLoci,
@@ -617,6 +708,12 @@ export async function fetchPangenomeData(
                 ? options.context!
                 : DEFAULT_CONTEXT_BP,
               haplotypes: options.haplotypes,
+              /* The bars place every allele against the reference's own
+                 coordinates, so each is wanted whole, to the node it
+                 rejoins at. The tube and variants views still lay the band
+                 out with room for whatever arrives, so there the walks stay
+                 cut at the context. */
+              walkOn: settings.mode === "linear",
             })
           : { nodes: {}, edges: {}, paths: [] };
       })();

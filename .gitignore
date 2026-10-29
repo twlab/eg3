@@ -7,3 +7,8 @@ dist
 build/
 .DS_Store
 dist-lib
+
+# Local pangenome test data and Claude's working notes for the pangenome mode
+# (see claude-memory/README.md); both are kept out of the repository
+databases/
+claude-memory/

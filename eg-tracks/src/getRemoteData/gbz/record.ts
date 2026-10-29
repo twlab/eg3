@@ -111,4 +111,28 @@ export class GbzRecord {
     }
     return null;
   }
+
+  /**
+   * The offset here of the walk whose successor position is `target`, or
+   * null if no walk through this node goes there: `lf` inverted, over the
+   * same runs. The walks taking one edge land in its destination in the
+   * order they sit here, from the edge's offset on, so the target's rank
+   * among them says which run it falls in.
+   */
+  inverseLf(target: Pos): number | null {
+    const edge = this.edges.findIndex((e) => e.node === target.node);
+    if (edge < 0) return null;
+    let rank = target.offset - this.edges[edge].offset;
+    if (rank < 0) return null;
+    let offset = 0;
+    const iter = new RLEIter(this.bwt, this.edges.length);
+    for (let run = iter.next(); run !== null; run = iter.next()) {
+      if (run.value === edge) {
+        if (rank < run.len) return offset + rank;
+        rank -= run.len;
+      }
+      offset += run.len;
+    }
+    return null;
+  }
 }

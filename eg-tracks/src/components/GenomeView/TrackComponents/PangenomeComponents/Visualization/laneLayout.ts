@@ -1,4 +1,8 @@
-import type { PangenomeModel } from "./pangenomeModel";
+/** What the layout reads of a model: its lanes, and the strip's rows. */
+export interface LayoutModel {
+  lanes: ReadonlyArray<{ key: string; label: string; color: string; isReference: boolean }>;
+  rowCount: number;
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    Where the rows of the linear view sit.
@@ -67,7 +71,7 @@ export interface LaneLayout {
  * row of its own.
  */
 export function laneLayout(
-  model: PangenomeModel,
+  model: LayoutModel,
   alleleRows: boolean,
   strip = true,
 ): LaneLayout {

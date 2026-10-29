@@ -2,14 +2,18 @@ import {
   edgeIsCanonical,
   encodeNode,
   ENDMARKER,
+  fragmentStartFrom,
   isReverse,
   nodeId,
   pathIsCanonical,
 } from "./codec";
 import type { Pos } from "./codec";
+import { locateAbsent } from "./locate";
+import type { Located } from "./locate";
 import { GbzRecord } from "./record";
 import { RecordCache } from "./store";
 import type { GbzPath, GbzSource } from "./store";
+import { makeContext, walkOn } from "./walkOn";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Interval query against a GBZ-base database, ported from gbz-base's
@@ -31,6 +35,14 @@ export interface IntervalQuery {
   /** Only these haplotypes' walks, as `sample#haplotype` keys - with the
       reference's, always. Absent, every walk through the region. */
   haplotypes?: string[];
+  /** Follow each shown haplotype's cut walks on along their paths to the
+      next node the reference reads, so that an allele longer than the
+      context arrives whole, with the node it rejoins at (walkOn.ts); and
+      look for a shown haplotype with no walk at all along the reference
+      either side of the window (locate.ts). */
+  walkOn?: boolean;
+  /** How far either side that search goes; locate.ts has the default. */
+  locateCapBp?: number;
 }
 
 /** A link out of a node, listed under the node it leaves - see
@@ -46,6 +58,11 @@ export interface JsonPath {
   path: Array<{ id: string; is_reverse: boolean }>;
   is_reference: boolean;
   path_handle?: string;
+  /** The walk is its path read backwards: a contig stored on the other
+      strand from the reference, or a window inside an inversion. Its steps
+      are written in the path's own direction either way (see writeJson),
+      so this says which way that is. */
+  backward?: boolean;
   sample?: string;
   contig?: string;
   haplotype?: number;
@@ -74,6 +91,9 @@ export interface SubgraphJson {
       for nodes it reads only outside the queried walk; see
       referenceElsewhere. */
   referenceAt?: Record<string, number>;
+  /** For each shown haplotype with no walk through the fetched nodes, what
+      the search along the reference found; see locate.ts. */
+  located?: Record<string, Located>;
 }
 
 /* ── Carriers ──────────────────────────────────────────────────────────
@@ -185,7 +205,7 @@ class MinHeap {
 }
 
 /** A walk recovered from the subgraph. */
-interface PathInfo {
+export interface PathInfo {
   path: number[];
   len: number;
   pathHandle: number | null;
@@ -193,6 +213,9 @@ interface PathInfo {
   /* Stitched from its path's reverse sequence - an odd sequence id: the
      path read backwards. See toJson. */
   backward: boolean;
+  /* The GBWT position of the walk's first node, to follow its sequence
+     back from (walkOn.ts). */
+  start: Pos;
   /* Where the sequence leaves the subgraph after the walk's last node, if it
      leaves rather than ends. A walk that met no anchor inside the subgraph
      follows its sequence on from here to one. */
@@ -207,7 +230,6 @@ export function queryInterval(
   const context = query.context ?? 0;
   const haplotype = query.haplotype ?? 0;
   const length = query.end - query.start;
-  console.log(source, query);
   if (length <= 0) throw new Error("Interval length must be greater than 0");
 
   /* ── find nearest indexed position to query start of the reference genome Start ─────────────── */
@@ -313,12 +335,77 @@ export function queryInterval(
   path until we find one to identify it and calculate its actual bp interval location*/
   nameWalksPastEdge(extracted.paths, cache);
 
+  /* ── On past the cut, to the reference ───────────────────────────── */
+  let walkedTo = new Map<number, number>();
+  let located: Record<string, Located> | undefined;
+  if (query.walkOn) {
+    const keep = query.haplotypes ? new Set(query.haplotypes) : null;
+    const named = new Map<number, GbzPath | null>();
+    const nameOf = (handle: number) => {
+      if (!named.has(handle)) named.set(handle, source.getPath(handle));
+      return named.get(handle)!;
+    };
+    /* The walks followed: the shown haplotypes' - every haplotype's when
+       none is picked - and never the reference path's own, whose every
+       node is a reference node. */
+    const extend = (info: PathInfo) => {
+      if (info.pathHandle === null) return false;
+      const own = nameOf(info.pathHandle);
+      if (!own) return false;
+      if (
+        own.sample === path.sample &&
+        own.contig === path.contig &&
+        own.haplotype === path.haplotype
+      ) {
+        return false;
+      }
+      return !keep || keep.has(`${own.sample}#${own.haplotype}`);
+    };
+    walkedTo = walkOn(
+      extracted,
+      records,
+      cache,
+      source,
+      path,
+      [query.start, query.end],
+      addNode,
+      extend,
+    );
+
+    /* ── The shown haplotypes with no walk at all ─────────────────── */
+    if (keep && extracted.refId !== null) {
+      const present = new Set<string>();
+      for (const info of extracted.paths) {
+        const own = info.pathHandle === null ? null : nameOf(info.pathHandle);
+        if (own) present.add(`${own.sample}#${own.haplotype}`);
+      }
+      const absent = [...keep].filter(
+        (key) => !present.has(key) && key !== `${path.sample}#${path.haplotype}`,
+      );
+      if (absent.length) {
+        const ctx = makeContext(cache, source, path, extracted.paths[extracted.refId], [
+          query.start,
+          query.end,
+        ]);
+        const found = locateAbsent(ctx, absent, addNode, query.locateCapBp);
+        extracted.paths.push(...found.fragments);
+        for (const [id, at] of found.referenceAt) walkedTo.set(id, at);
+        located = Object.fromEntries(found.located);
+      }
+    }
+  }
+
   const json = writeJson(source, records, extracted, path, refStart);
   const kept = query.haplotypes ? keepHaplotypes(json, query.haplotypes) : json;
+  const referenceAt = referenceElsewhere(json, kept);
+  for (const [id, at] of walkedTo) {
+    if (String(id) in kept.nodes) referenceAt[String(id)] = at;
+  }
   return {
     ...kept,
     carriers: countCarriers(json, kept),
-    referenceAt: referenceElsewhere(json, kept),
+    referenceAt,
+    ...(located ? { located } : {}),
   };
 }
 
@@ -519,32 +606,6 @@ function insertContext(
   }
 }
 
-/**
- * Where a walk starts on its path, from an anchor found `prefix` bp into it.
- *
- * Offsets are stored in forward-path coordinates, so a walk running forward
- * along the path sees them grow and one running backward sees them shrink:
- *
- *   forward:  bp(step i) = fragmentStart + prefix(i)
- *   reverse:  bp(step i) = fragmentStart + len - prefix(i) - nodeLen(i)
- *
- * Solving each for fragmentStart gives the two cases. `prefix` may run past
- * `len`: an anchor found by following the sequence on past the subgraph lies
- * after the walk, and both equations hold for it unchanged. Mirrors
- * `fragment_start_from_anchor` in gbz-base.
- */
-function fragmentStartFrom(
-  seqId: number,
-  bpOffset: number,
-  prefix: number,
-  nodeLen: number,
-  len: number,
-): number {
-  return seqId % 2 === 0
-    ? Math.max(0, bpOffset - prefix)
-    : Math.max(0, bpOffset + prefix + nodeLen - len);
-}
-
 /* The most records a walk is followed through past the subgraph's edge. The
    next anchor is at most ANCHOR_INTERVAL - 1 visits away, so this has to be at
    least the interval - the two are equal, and checking this many consecutive
@@ -715,6 +776,7 @@ function extractPaths(
           pathHandle,
           fragmentStart,
           backward: anchorSeqId !== null && anchorSeqId % 2 === 1,
+          start: { node: handle, offset },
           exit,
         });
       }
@@ -803,6 +865,7 @@ function writeJson(
         is_reverse: isReverse(handle) !== info.backward,
       })),
       is_reference: id === refId,
+      backward: info.backward,
       length: info.len,
     };
     if (info.pathHandle !== null) value.path_handle = String(info.pathHandle);

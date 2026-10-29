@@ -27,7 +27,7 @@ export interface PathBounds {
    listing them all again for every one of 198 references was most of the
    time those answers took. */
 const pathLists = new WeakMap<GbzSource, GbzPath[]>();
-function pathsOf(source: GbzSource): GbzPath[] {
+export function pathsOf(source: GbzSource): GbzPath[] {
   let paths = pathLists.get(source);
   if (!paths) {
     paths = source.listPaths();

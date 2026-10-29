@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from "react";
 import VariantCard from "./VariantCard";
 import type { BandAxis, DrawFrame, PangenomeModel } from "./pangenomeModel";
 import { REF_COLOR, deletionSize } from "./pangenomeModel";
-import type { HoverTarget } from "./LinearPathView";
+import type { HoverTarget } from "./hoverTarget";
 import { VARIANT_EXIT_Y, VARIANT_SAME_Y, bpLabel } from "./variantBubbles";
 import type {
   VariantArcLabel,

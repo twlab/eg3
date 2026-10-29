@@ -1,7 +1,7 @@
 import Ruler, { rulerTicks } from "./Ruler";
 import { useMemo, memo } from "react";
 import type { GraphNode, PangenomeModel } from "./pangenomeModel";
-import type { HoverTarget } from "./LinearPathView";
+import type { HoverTarget } from "./hoverTarget";
 import { baseCentres, nodeDetailLines, sequenceSize } from "./nodeDetail";
 
 /* ══════════════════════════════════════════════════════════════════════════

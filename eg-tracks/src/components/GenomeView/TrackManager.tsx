@@ -374,18 +374,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const pangenomeViewRef = useRef(pangenomeSettings);
   pangenomeViewRef.current = pangenomeSettings;
   const pangenomeViewShown = useRef(JSON.stringify(pangenomeSettings));
-  useEffect(() => {
-    const shown = JSON.stringify(pangenomeViewRef.current);
-    if (pangenomeViewShown.current === shown) return;
-    pangenomeViewShown.current = shown;
-    relayoutPangenome();
-  }, [pangenomeView, tubeGrouping, variantGrouping]);
-  const regionOnlyShown = useRef(regionOnly);
-  useEffect(() => {
-    if (regionOnlyShown.current === regionOnly) return;
-    regionOnlyShown.current = regionOnly;
-    pangenomeViewShown.current = JSON.stringify(pangenomeViewRef.current);
-    /* Fetched again from where the view is, as a history step is. */
+  /** Fetches the band again from where the view is, as a history step
+      does. */
+  function refetchPangenomeFromView() {
     const updatedGenomeConfig = _.cloneDeep(genomeConfig);
     updatedGenomeConfig.defaultRegion = new OpenInterval(
       userViewRegion._startBase!,
@@ -396,6 +387,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     preload.current = true;
     refreshState();
     initializeTracks();
+  }
+  useEffect(() => {
+    const shown = JSON.stringify(pangenomeViewRef.current);
+    if (pangenomeViewShown.current === shown) return;
+    const wasLinear = JSON.parse(pangenomeViewShown.current).mode === "linear";
+    pangenomeViewShown.current = shown;
+    /* The linear view fetches each walk followed on to the next node the
+       reference reads, the other views the walks cut at the context
+       (fetchPangenomeData), so a change between them fetches again;
+       otherwise what is cached is laid out again. */
+    if (wasLinear !== (pangenomeViewRef.current.mode === "linear")) {
+      refetchPangenomeFromView();
+      return;
+    }
+    relayoutPangenome();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [pangenomeView, tubeGrouping, variantGrouping]);
+  const regionOnlyShown = useRef(regionOnly);
+  useEffect(() => {
+    if (regionOnlyShown.current === regionOnly) return;
+    regionOnlyShown.current = regionOnly;
+    pangenomeViewShown.current = JSON.stringify(pangenomeViewRef.current);
+    refetchPangenomeFromView();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [regionOnly]);
   const isToolSelected = useRef(false);

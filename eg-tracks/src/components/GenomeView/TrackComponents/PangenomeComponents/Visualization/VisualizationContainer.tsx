@@ -11,14 +11,14 @@ import {
   bandAxis,
   columnarModel,
   modelOf,
-  oneLanePerHaplotype,
   placedModel,
 } from "./pangenomeModel";
-import LinearPathView, { linearHeight } from "./LinearPathView";
-import { walksHeight, walksShown } from "./WalksView";
+import LinearView, { linearHeight, walksHeight, walksShown } from "./LinearView";
+import { linearModelOf } from "./linearModel";
+import { linearAxis, toBandAxis } from "./linearAxis";
 import type { BandAxis, PangenomeModel } from "./pangenomeModel";
 import type { DrawFrame } from "./pangenomeModel";
-import type { HoverTarget } from "./LinearPathView";
+import type { HoverTarget } from "./hoverTarget";
 import TubeMapView, { TUBE_H } from "./TubeMapView";
 import { tubeAxis, tubeStacks } from "./tubeLayout";
 import NodeGraphView from "./NodeGraphView";
@@ -454,36 +454,48 @@ export default function VisualizationContainer({
      lanes drawn are cut down to the part's - a lane per haplotype, its
      contigs joined into one bar (see oneLanePerHaplotype). */
   const strip = !part || part === GRAPH_PART;
+  /* The linear view's own model: the band aligned to the reference (see
+     linearModel.ts), cut down to the lanes this row draws - the strip's
+     reference, or one haplotype's lane with it. */
+  const linearWhole = linearModelOf(queryResult);
   const linearModel = useMemo(() => {
-    if (!model) return model;
-    const joined = oneLanePerHaplotype(model);
-    if (!part) return joined;
+    if (!linearWhole) return null;
+    if (!part) return linearWhole;
     return {
-      ...joined,
-      laneCount: joined.lanes.length,
-      lanes: joined.lanes.filter((lane) =>
-        part === GRAPH_PART ? lane.isReference : !lane.isReference && lane.label === part,
+      ...linearWhole,
+      laneCount: linearWhole.lanes.length - 1,
+      lanes: linearWhole.lanes.filter(
+        (lane) => lane.isReference || (part !== GRAPH_PART && lane.label === part),
       ),
     };
-  }, [model, part]);
+  }, [linearWhole, part]);
+  const linAxis = useMemo(
+    () => (linearModel ? linearAxis(linearModel, frame, pxPerBase) : null),
+    [linearModel, frame, pxPerBase],
+  );
+  /* In development, the band's model by part on the window, for the check
+     harness to read what the page drew from: see claude-memory/rule. */
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === "undefined" || !linearModel) return;
+    const w = window as unknown as { __pgvLinear?: Record<string, unknown> };
+    (w.__pgvLinear ??= {})[part ?? "all"] = { model: linearModel, axis: linAxis };
+  }, [linearModel, linAxis, part]);
+  const linearBand = useMemo(() => (linAxis ? toBandAxis(linAxis) : null), [linAxis]);
 
   /* The box is the height of what is in it. The linear view and the tube
      map can say in advance - a bar or a tube is a known height each - so
      they are asked; the node graph lays itself out before it knows, and
      keeps the given default. */
   const walksOn =
-    walks &&
-    !strip &&
-    view?.mode === "linear" &&
-    !!linearModel &&
-    !!frame &&
-    walksShown(linearModel, frame);
+    walks && !strip && view?.mode === "linear" && !!linearModel && walksShown(linearModel);
   const shellHeight = !model
     ? height
     : walksOn && linearModel
       ? walksHeight(linearModel)
       : view?.mode === "linear"
-      ? linearHeight(linearModel ?? model, view.alleleRows, strip)
+      ? linearModel
+        ? linearHeight(linearModel, view.alleleRows, strip)
+        : 40
       : view?.mode === "variants"
         ? (variantShape?.height ?? height)
         : tube
@@ -492,12 +504,8 @@ export default function VisualizationContainer({
 
   /* The band the pan has to hand over to, and the room it needs, once both
      are known. Each view reports the axis its own drawing uses. */
-  const linearAxis = useMemo(
-    () => (model ? bandAxis(model, frame) : null),
-    [model, frame],
-  );
   const drawnAxis =
-    view?.mode === "variants" ? variantAxis : tube ? tube.axis : linearAxis;
+    view?.mode === "variants" ? variantAxis : tube ? tube.axis : linearBand;
 
   /* What was last reported, so that the same data drawn again to a
      different scale - the gaps widened, the view switched - can say which
@@ -591,14 +599,18 @@ export default function VisualizationContainer({
         onMouseOut={() => showTip(null)}
       >
         {view.mode === "linear" ? (
-          <LinearPathView
-            {...shared}
-            model={linearModel ?? shared.model}
-            strip={strip}
-            alleleRows={view.alleleRows}
-            sectionAltBp={sectionAltBp}
-            walks={walksOn}
-          />
+          linearModel &&
+          linAxis && (
+            <LinearView
+              model={linearModel}
+              axis={linAxis}
+              highlight={view.highlight}
+              strip={strip}
+              alleleRows={view.alleleRows}
+              sectionAltBp={sectionAltBp}
+              walks={walksOn}
+            />
+          )
         ) : view.mode === "tube" ? (
           tube && (
             <TubeMapView

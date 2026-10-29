@@ -11,9 +11,9 @@ import {
   bandAxis,
   columnarModel,
   modelOf,
-  oneLanePerHaplotype,
   placedModel,
 } from "./Visualization/pangenomeModel";
+import { linearModelOf } from "./Visualization/linearModel";
 import type { ViewMode } from "./Visualization/pangenomeViewState";
 import { TUBE_H } from "./Visualization/TubeMapView";
 import { tubeStacks } from "./Visualization/tubeLayout";
@@ -24,8 +24,7 @@ import {
   variantSegments,
 } from "./Visualization/variantBubbles";
 import type { DrawFrame } from "./Visualization/pangenomeModel";
-import { linearHeight } from "./Visualization/LinearPathView";
-import { walksHeight, walksShown } from "./Visualization/WalksView";
+import { linearHeight, walksHeight, walksShown } from "./Visualization/LinearView";
 import { BAR_H, LANE_H } from "./Visualization/laneLayout";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
 import LinearDrawingModel from "../../../../models/LinearDrawingModel";
@@ -79,28 +78,28 @@ export function pangenomeTrackHeight(
     );
     return variantLayout(segments, axis).height;
   }
-  /* A bar per haplotype, its contigs joined, as the linear view draws them. */
-  const lanes = oneLanePerHaplotype(model).lanes.filter((lane) =>
-    part === GRAPH_PART ? lane.isReference : !lane.isReference && lane.label === part,
+  /* The linear view: the strip, or one haplotype's bar, from the band
+     aligned to the reference (linearModel.ts). */
+  const linear = linearModelOf(queryResult);
+  if (!linear) return 40;
+  const lanes = linear.lanes.filter(
+    (lane) => lane.isReference || (part !== GRAPH_PART && lane.label === part),
   );
   /* A haplotype with nothing in this band still holds its row. */
-  if (!lanes.length) return part === GRAPH_PART ? 40 : BAR_H;
-  if (walks && walksDrawn(queryResult, part, primaryVisData)) {
-    return walksHeight({ ...model, lanes });
-  }
-  return linearHeight({ ...model, lanes }, false, part === GRAPH_PART);
+  if (part !== GRAPH_PART && lanes.length < 2) return BAR_H;
+  const cut = { ...linear, lanes };
+  if (walks && walksDrawn(queryResult, part, primaryVisData)) return walksHeight(cut);
+  return linearHeight(cut, false, part === GRAPH_PART);
 }
 
 /** Whether a haplotype's row, asked to show its walk, can in this band:
     see WalksView. Linear view only - the row is hidden in the others. */
-export function walksDrawn(queryResult: any, part: string, primaryVisData?: any): boolean {
+export function walksDrawn(queryResult: any, part: string, _primaryVisData?: any): boolean {
   if (part === GRAPH_PART) return false;
-  const model = modelOf(queryResult);
-  if (!model) return false;
-  const lanes = oneLanePerHaplotype(model).lanes.filter(
-    (lane) => !lane.isReference && lane.label === part,
-  );
-  return lanes.length > 0 && walksShown({ ...model, lanes }, bandFrame(primaryVisData));
+  const linear = linearModelOf(queryResult);
+  if (!linear) return false;
+  const lanes = linear.lanes.filter((lane) => lane.isReference || lane.label === part);
+  return lanes.length > 1 && walksShown({ ...linear, lanes });
 }
 
 /**

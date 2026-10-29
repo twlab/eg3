@@ -125,12 +125,16 @@ export function deletionSize(bp: number): string {
 }
 
 /** A deletion's label: "−5,045 bp →" for one running out of the band to
-    the right, "← −980 bp" to the left, "−12 bp" for one inside it. */
+    the right, "← −980 bp" to the left, "−12 bp" for one inside it, and
+    "← −60,635 bp · 32,206 bp instead →" for one running out at both
+    ends with the haplotype's own bases in its place. */
 export function deletionText(
   bp: number,
-  open: "left" | "right" | null,
+  open: "left" | "right" | "span" | null,
+  instead?: number,
 ): string {
   const size = `−${deletionSize(bp)}`;
+  if (open === "span") return `← ${size}${instead ? ` · ${deletionSize(instead)} instead` : ""} →`;
   return open === "left" ? `← ${size}` : open === "right" ? `${size} →` : size;
 }
 

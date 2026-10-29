@@ -2,15 +2,15 @@ import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import type { MouseEvent } from "react";
 import type { DrawFrame, GraphNode, PangenomeModel } from "./pangenomeModel";
 import { deletionSize } from "./pangenomeModel";
-import { LANE_H } from "./LinearPathView";
-import type { HoverTarget } from "./LinearPathView";
+import { LANE_H } from "./laneLayout";
+import type { HoverTarget } from "./hoverTarget";
 import {
   laneDetailLines,
   laneNeighbourLines,
   nodeDetailLines,
   sequenceSize,
 } from "./nodeDetail";
-import { nodeLetters } from "./laneRaster";
+import { nodeLetters } from "./letters";
 import { fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
 import {
@@ -410,29 +410,13 @@ function tubeHover(
       node.length > 0
         ? nodeLetters(
             {
-              node: {
-                id: node.id,
-                sequence: node.sequence,
-                length: node.length,
-                onReference: node.onReference,
-                start: entry.start,
-                piece: 0,
-                left,
-                right,
-                /* The tube map draws no cards and no letters of its own,
-                   so the fields the bars keep for those are inert here. */
-                card: 0,
-                stack: 1,
-                group: -1,
-                refSequence: null,
-                copyFrom: 0,
-              },
-              index: 0,
+              sequence: node.sequence,
+              length: node.length,
+              left,
+              right,
+              start: entry.start,
               offset,
               pixel: Math.round(x),
-              letter: node.sequence.charAt(offset),
-              bp,
-              alt: !node.onReference,
             },
             LETTER_CAP,
           )
