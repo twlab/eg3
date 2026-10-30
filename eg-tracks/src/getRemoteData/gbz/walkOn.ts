@@ -315,16 +315,23 @@ export interface GapWalk {
   maxGap: number;
 }
 
+/** Where a fragment's path goes on past its forward end: the next
+    position, read onward through LF where the fragment was stitched from
+    the forward sequence, back through its inverse where from the reverse
+    one; or what a join recorded. */
+function tailOf(info: PathInfo, cache: RecordCache): { next: Pos | null; onward: boolean } {
+  if (info.tail) return info.tail;
+  return info.backward ? { next: before(cache, info.start), onward: false } : { next: info.exit, onward: true };
+}
+
 /**
- * The nodes of a path over the `bp` bases after a fragment's end, in the
- * path's forward order, by following the fragment's sequence - on from
- * its exit, or back from its start where it was stitched from the
- * reverse sequence. Null when the sequence ends first or the bases do not
- * come out even.
+ * The nodes of a path over the `bp` bases after a fragment's forward end,
+ * in the path's forward order, by following its sequence from there. Null
+ * when the sequence ends first or the bases do not come out even.
  */
 function walkGap(info: PathInfo, bp: number, cache: RecordCache): number[] | null {
-  const onward = !info.backward;
-  let pos = onward ? info.exit : before(cache, info.start);
+  const { onward } = tailOf(info, cache);
+  let pos = tailOf(info, cache).next;
   const out: number[] = [];
   let walked = 0;
   while (pos && walked < bp) {
@@ -355,10 +362,12 @@ export function mergeFragments(
   lenOf: (handle: number) => number,
   join: boolean,
   gapWalk?: GapWalk,
+  only?: (info: PathInfo) => boolean,
 ): PathInfo[] {
   const groups = new Map<number, PathInfo[]>();
   for (const info of paths) {
     if (info === keep || info.pathHandle === null || info.fragmentStart === null) continue;
+    if (only && !only(info)) continue;
     const group = groups.get(info.pathHandle);
     if (group) group.push(info);
     else groups.set(info.pathHandle, [info]);
@@ -409,7 +418,8 @@ export function mergeFragments(
       current.path = [...a, ...between, ...b.slice(shared)];
       current.backward = false;
       current.len += next.len - overlap;
-      current.exit = next.backward ? null : next.exit;
+      if (gapWalk) current.tail = tailOf(next, gapWalk.cache);
+      else current.exit = next.backward ? null : next.exit;
       dropped.add(next);
     }
   }
@@ -444,7 +454,7 @@ export function walkOn(
     records.get(handle)?.sequenceLength ?? cache.get(handle)?.sequenceLength ?? 0;
 
   /* A stretch stitched twice is followed once. */
-  let paths = mergeFragments(extracted.paths, walk, lenOf, false);
+  let paths = mergeFragments(extracted.paths, walk, lenOf, false, undefined, extend);
 
   for (const info of paths) {
     if (info === walk || !extend(info)) continue;
@@ -490,7 +500,7 @@ export function walkOn(
     }
   }
 
-  paths = mergeFragments(paths, walk, lenOf, true, { cache, addNode, maxGap: GAP_JOIN_BP });
+  paths = mergeFragments(paths, walk, lenOf, true, { cache, addNode, maxGap: GAP_JOIN_BP }, extend);
   extracted.refId = paths.indexOf(walk);
   extracted.paths = paths;
   return referenceAt;

@@ -202,10 +202,13 @@ export interface StripNode {
   row: number;
   /** Which lanes read it. */
   lanes: string[];
-  /** The reading that placed it, for an allele. */
-  placedBy: { lane: string; reading: number } | null;
-  /** Read on its reverse strand where it is drawn: by the reference, or
-      by the reading that placed it. */
+  /** The reading that placed it, for an allele: its index, and its number
+      among the lane's drawn readings as the cards give it (from 1). */
+  placedBy: { lane: string; reading: number; no: number } | null;
+  /** Drawn on its reverse strand: the bar shows the node's bases reverse
+      complemented, on the reference's strand. By the reference's walk, or
+      by the reading that placed it - its step's strand, turned again for a
+      reading aligned flipped as a whole and again inside an inversion. */
   reverse: boolean;
 }
 
@@ -465,7 +468,9 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       bp: ordered.reduce((n, draft) => n + bpOf(draft), 0),
     };
     for (const piece of pieces) {
-      for (const run of cutAtJumps(piece.steps, (id) => refPos.get(id), lenOf)) {
+      /* Cut by where the reference reads each node, on the band's walk or
+         elsewhere, so that a cut names the node the walk goes to first. */
+      for (const run of cutAtJumps(piece.steps, (id) => referenceAt[id] ?? refPos.get(id), lenOf)) {
         const reading = readPiece(graph, refWalk, piece, run, lane.readings.length, origin, refOffset, referenceAt, refPos, lenOf);
         lane.readings.push(reading);
         if (!reading.drawn) lane.scraps += 1;
@@ -617,18 +622,26 @@ function cutAtJumps(
     span[0] = Math.min(span[0], at);
     span[1] = Math.max(span[1], at + lenOf(step.node));
   };
-  /* The strand of the last step the reference reads, and where the
-     current run of one strand began. */
+  /* The strand of the last step the reference reads, where it sits in the
+     run, and where the current run of one strand began: right after the
+     last reference-read step of the other strand, the haplotype's own
+     nodes between counted with the run whichever way they are read. */
   let lastStrand: boolean | null = null;
+  let lastRead = -1;
   let strandStart = 0;
   for (const step of steps) {
-    if (run.length && run[run.length - 1].reverse !== step.reverse) strandStart = run.length;
     const at = refAt(step.node);
     if (at !== undefined) {
+      if (lastStrand !== null && step.reverse !== lastStrand) strandStart = lastRead + 1;
       const len = lenOf(step.node);
-      const overlap = Math.max(...spans.map(([lo, hi]) => Math.min(at + len, hi) - Math.max(at, lo)));
+      const [onForward, onReverse] = spans.map(([lo, hi]) => Math.min(at + len, hi) - Math.max(at, lo));
+      const overlap = Math.max(onForward, onReverse);
       if (overlap > JUMP_BACK_BP && run.length) {
-        const cutAt = lastStrand !== null && step.reverse !== lastStrand ? strandStart : run.length;
+        /* Read again on the other strand - a hairpin's return - the whole
+           strand run goes, from its first node; on the same strand - a
+           tandem's second pass - the cut is here. */
+        const otherStrand = step.reverse ? onForward > JUMP_BACK_BP : onReverse > JUMP_BACK_BP;
+        const cutAt = otherStrand ? strandStart : run.length;
         const kept = run.slice(0, cutAt);
         const moved = run.slice(cutAt);
         const first = moved.find((s) => refAt(s.node) !== undefined);
@@ -640,16 +653,19 @@ function cutAtJumps(
         run = moved;
         spans = fresh();
         lastStrand = null;
-        for (const s of moved) {
+        lastRead = -1;
+        moved.forEach((s, k) => {
           const there = refAt(s.node);
-          if (there === undefined) continue;
+          if (there === undefined) return;
           widen(s, there);
           lastStrand = s.reverse;
-        }
+          lastRead = k;
+        });
         strandStart = 0;
       }
       widen(step, at);
       lastStrand = step.reverse;
+      lastRead = run.length;
     }
     run.push(step);
   }
@@ -1038,11 +1054,19 @@ function drawnParts(readings: Reading[]): PlacedPart[] {
           continue;
         }
         /* Part of it: the same part, cut to what is free. Its bases are
-           cut with it where they are drawn one to a reference base. */
+           cut with it where they are drawn one to a reference base - an
+           open stub's too, which runs left to right from its far end on
+           the left and from the junction on the right - and so is where
+           they are in the haplotype's own coordinates, which count down
+           along the bar where they run backwards. */
         const offset = x - span[0];
-        const cut: PlacedPart = { ...part, ref: part.kind === "open" && part.side === "left" ? y : x, len: y - x };
-        if (part.seq !== undefined && part.kind !== "open") {
-          cut.seq = part.seq.slice(offset, offset + (y - x));
+        const len = y - x;
+        const cut: PlacedPart = { ...part, ref: part.kind === "open" && part.side === "left" ? y : x, len };
+        if (part.seq !== undefined) cut.seq = part.seq.slice(offset, offset + len);
+        if (part.own) {
+          cut.own = part.own.reverse
+            ? { from: part.own.to - offset - len, to: part.own.to - offset, reverse: true }
+            : { from: part.own.from + offset, to: part.own.from + offset + len, reverse: false };
         }
         out.push(cut);
       }
@@ -1061,19 +1085,28 @@ function drawnParts(readings: Reading[]): PlacedPart[] {
  * junction. The walk rows draw each reading's own, uncut.
  */
 function outOfBandDrawn(readings: Reading[]): OutOfBand[] {
-  const spans = readings.filter((reading) => reading.drawn).map((reading) => [reading.refFrom, reading.refTo]);
+  const spans = readings
+    .filter((reading) => reading.drawn)
+    .map((reading) => ({ from: reading.refFrom, to: reading.refTo, index: reading.index }));
   const out: OutOfBand[] = [];
+  /* Two readings leaving at one junction the same way - dupes of one
+     place - draw one white there: the first's. */
+  const taken = new Set<string>();
   for (const reading of readings) {
     for (const white of reading.outOfBand) {
+      const others = spans.filter((span) => span.index !== reading.index);
+      const at = `${white.side}:${white.ref}`;
+      if (taken.has(at)) continue;
       if (white.side === "right") {
-        if (spans.some(([from, to]) => from <= white.ref && white.ref < to && !(from === reading.refFrom && to === reading.refTo))) continue;
-        const next = spans.filter(([from]) => from > white.ref).map(([from]) => from);
+        if (others.some(({ from, to }) => from <= white.ref && white.ref < to)) continue;
+        const next = others.filter(({ from }) => from > white.ref).map(({ from }) => from);
         out.push(next.length ? { ...white, until: Math.min(...next) } : white);
       } else {
-        if (spans.some(([from, to]) => from < white.ref && white.ref <= to && !(from === reading.refFrom && to === reading.refTo))) continue;
-        const previous = spans.filter(([, to]) => to < white.ref).map(([, to]) => to);
+        if (others.some(({ from, to }) => from < white.ref && white.ref <= to)) continue;
+        const previous = others.filter(({ to }) => to < white.ref).map(({ to }) => to);
         out.push(previous.length ? { ...white, until: Math.max(...previous) } : white);
       }
+      taken.add(at);
     }
   }
   return out;
@@ -1124,17 +1157,21 @@ function stripNodes(
      of the part it is in: a node spanning two parts reaches across both. */
   const reach = new Map<
     string,
-    { from: number; to: number; mark: boolean; reverse: boolean; by: { lane: string; reading: number } }
+    { from: number; to: number; mark: boolean; reverse: boolean; by: { lane: string; reading: number; no: number } }
   >();
   for (const lane of lanes) {
     if (lane.isReference) continue;
+    let no = 0;
     for (const reading of lane.readings) {
       if (!reading.drawn) continue;
+      no += 1;
       /* The strand the reading reads each node on, at its first visit. */
       const strand = new Map<string, boolean>();
       for (const step of reading.steps) if (!strand.has(step.node)) strand.set(step.node, step.reverse);
       for (const part of reading.parts) {
         if (part.kind === "white" || part.kind === "inverted" || !part.nodes.length) continue;
+        /* As drawn: the bar shows every base on the reference's strand. */
+        const drawnReverse = (id: string) => (strand.get(id) ?? false) !== reading.reversed !== !!part.inverted;
         /* Where each node's bases fall along the part. */
         let at = 0;
         for (const id of part.nodes) {
@@ -1175,8 +1212,8 @@ function stripNodes(
             from: lo,
             to: hi,
             mark,
-            reverse: strand.get(id) ?? false,
-            by: { lane: lane.key, reading: reading.index },
+            reverse: drawnReverse(id),
+            by: { lane: lane.key, reading: reading.index, no },
           });
         }
       }

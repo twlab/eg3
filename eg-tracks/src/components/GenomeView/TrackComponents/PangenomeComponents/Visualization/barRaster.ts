@@ -55,6 +55,9 @@ export interface WhiteRun {
   part: number | null;
   /** Spanning: the haplotype's own bases in place of the reference. */
   instead?: number;
+  /** Running out of the band: the node outside it the walk goes to or
+      comes from, which the reference reads at the far end. */
+  node?: string;
 }
 
 export interface BarRaster {
@@ -168,6 +171,7 @@ export function rasteriseBar(
       refTo: out.refTo,
       reading: out.reading,
       part: null,
+      node: out.node,
     });
   }
   whites.sort((a, b) => a.left - b.left);

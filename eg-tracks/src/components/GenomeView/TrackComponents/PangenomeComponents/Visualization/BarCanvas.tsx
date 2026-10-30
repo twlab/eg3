@@ -369,9 +369,11 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
       let [from, to] = clip(white.left * sx, white.right * sx);
       const textWidth = ctx.measureText(white.text).width;
       if (textWidth + pad * 2 > to - from) continue;
-      /* A white across the band carries its size in the middle of what is
-         in view, not of the whole band, where it could be off screen. */
-      if (white.open === "span" && view) {
+      /* A white carries its size in what of it is in view, not in the
+         whole of it, where it could be off screen: a white across the band
+         in the middle of that, one running out of the band from where its
+         junction is or, off screen, from the edge of the view. */
+      if (view) {
         const a = Math.max(from, view[0] * sx);
         const b = Math.min(to, view[1] * sx);
         if (b - a >= textWidth + pad * 2) [from, to] = [a, b];
@@ -409,7 +411,9 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
       const textWidth = ctx.measureText(text).width;
       const next = raster.marks[k + 1];
       const room = (next ? next.x * sx - half : pw) - (x + half + 2 * sx);
-      if (textWidth <= room) ctx.fillText(text, Math.round(x + half + 2 * sx), Math.round(base - 1 * sy));
+      /* Beside the glyph, its foot on the bar: above the glyph it would
+         run off the top of the canvas. */
+      if (textWidth <= room) ctx.fillText(text, Math.round(x + half + 2 * sx), Math.round(tip - 1 * sy));
     });
   }
 }

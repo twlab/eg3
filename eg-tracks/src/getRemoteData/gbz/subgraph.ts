@@ -224,6 +224,11 @@ export interface PathInfo {
      leaves rather than ends. A walk that met no anchor inside the subgraph
      follows its sequence on from here to one. */
   exit: Pos | null;
+  /* Once joined with the next fragment of its path (walkOn.ts): where the
+     path goes on past the joined walk's forward end - the next position,
+     and whether that is read onward through LF or back through its
+     inverse - in place of `exit` and `start`, which are then stale. */
+  tail?: { next: Pos | null; onward: boolean };
 }
 
 export function queryInterval(
@@ -404,11 +409,14 @@ export function queryInterval(
           extracted.paths.push(...found.fragments);
           const lenOf = (handle: number) =>
             records.get(handle)?.sequenceLength ?? cache.get(handle)?.sequenceLength ?? 0;
-          extracted.paths = mergeFragments(extracted.paths, walk, lenOf, true, {
-            cache,
-            addNode,
-            maxGap: 2_000,
-          });
+          extracted.paths = mergeFragments(
+            extracted.paths,
+            walk,
+            lenOf,
+            true,
+            { cache, addNode, maxGap: 2_000 },
+            extend,
+          );
           extracted.refId = extracted.paths.indexOf(walk);
         }
       }

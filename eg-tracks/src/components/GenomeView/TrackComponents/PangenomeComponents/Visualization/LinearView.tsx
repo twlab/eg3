@@ -13,6 +13,7 @@ import { FOOT_PAD, NODE_H, laneLayout } from "./laneLayout";
 import { baseCentres, sequenceSize } from "./nodeDetail";
 import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
+import { reverseComplement } from "./alignment";
 import type { BrowserClass, Bubble } from "./alignment";
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -72,6 +73,13 @@ const laneOf = (model: LinearModel) => model.lanes.find((lane) => !lane.isRefere
 
 /** A haplotype's readings in walk order, those the bar draws. */
 const readingsOf = (lane: LinearLane) => lane.readings.filter((reading) => reading.drawn);
+/** A reading's number as the cards and the walk rows give it: its place
+    among the readings drawn, from 1, scraps left out. Null for a scrap,
+    which has no row and so no number. */
+const readingNo = (lane: LinearLane, index: number): number | null => {
+  const at = readingsOf(lane).findIndex((reading) => reading.index === index);
+  return at >= 0 ? at + 1 : null;
+};
 
 /** Whether "Show walks" has anything to draw for this band's haplotype. */
 export function walksShown(model: LinearModel): boolean {
@@ -298,10 +306,13 @@ function LinearView({
         const reverse = node.reverse ? !n.reverse : n.reverse;
         const len = model.lengths.get(n.id);
         const onRef = model.nodes.get(n.id)?.onReference;
+        /* A node the reference reads outside the band: where a deletion
+           running out of it, or a jump, goes. */
+        const elsewhere = onRef ? undefined : model.referenceAt[n.id];
         const count = model.carriers?.nodes[n.id];
         const notes = [
           ...(len !== undefined ? [`${len.toLocaleString()} bp`] : []),
-          ...(onRef ? ["ref"] : []),
+          ...(onRef ? ["ref"] : elsewhere !== undefined ? [`ref at ${where(elsewhere)}`] : []),
           ...(count !== undefined ? [`${count.toLocaleString()} hap`] : []),
         ];
         return `${n.id}${reverse ? "−" : "+"}${notes.length ? ` (${notes.join(", ")})` : ""}`;
@@ -311,10 +322,16 @@ function LinearView({
     return [`before, to the left: ${show(left)}`, `after, to the right: ${show(right)}`];
   };
   /** Where a reading's walk goes on past one of its ends, in words. */
-  const jumpLine = (jump: Jump): string =>
-    `${jump.before ? "the walk comes from" : "the walk goes on at"} ${where(jump.to)}${jump.reverse ? ", read backward" : ""}${
-      jump.reading !== undefined ? ` (reading ${jump.reading + 1})` : ", past what this reading reads"
-    }`;
+  const jumpLine = (lane: LinearLane, jump: Jump): string => {
+    const no = jump.reading !== undefined ? readingNo(lane, jump.reading) : null;
+    const which =
+      jump.reading === undefined
+        ? ", past what this reading reads"
+        : no !== null
+          ? ` (reading ${no})`
+          : ", in a stretch with nothing on the reference here";
+    return `${jump.before ? "the walk comes from" : "the walk goes on at"} ${where(jump.to)}${jump.reverse ? ", read backward" : ""}${which}`;
+  };
   /** The bubble a part came from. */
   const bubbleOf = (reading: Reading, path: number[]): Bubble | null => {
     let bubble: Bubble | undefined = reading.alignment.bubbles[path[0]];
@@ -404,15 +421,20 @@ function LinearView({
       ),
     };
   };
-  /** The other readings of a lane that read a reference position: dupes. */
+  /** The other readings of a lane that read a reference position: dupes.
+      A spanning reading reads none of the band, though its span is all of
+      it. */
   const dupesAt = (lane: LinearLane, reading: number, ref: number): CardItem[] =>
     lane.readings
-      .filter((other) => other.drawn && other.index !== reading && other.refFrom <= ref && ref < other.refTo)
+      .filter(
+        (other) =>
+          other.drawn && !other.spanning && other.index !== reading && other.refFrom <= ref && ref < other.refTo,
+      )
       .map((other) => ({
         key: `${other.index}`,
         line: (
           <>
-            reading {other.index + 1} · {altCoord(`${other.contig}:${other.ownFrom.toLocaleString()}–${other.ownTo.toLocaleString()}`)}{" "}
+            reading {readingNo(lane, other.index)} · {altCoord(`${other.contig}:${other.ownFrom.toLocaleString()}–${other.ownTo.toLocaleString()}`)}{" "}
             · reads {refCoord(span(other.refFrom, other.refTo))}
           </>
         ),
@@ -447,8 +469,8 @@ function LinearView({
       ...(step ? [<>node {step.node} · {(step.end - step.start).toLocaleString()} bp · reads {cardSequence(model.graph.seq.get(step.node) ?? "")}</>] : []),
       ...(step ? carriersLine(step.node) : []),
       ...(node ? linkLines(node) : []),
-      ...(row.reading ? [`reading ${reading.index + 1} of ${readingsOf(lane).length}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`] : []),
-      ...reading.jumps.map(jumpLine),
+      ...(row.reading ? [`reading ${readingNo(lane, reading.index)} of ${readingsOf(lane).length}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`] : []),
+      ...reading.jumps.map((jump) => jumpLine(lane, jump)),
     ];
     const dupes = refAt !== null ? dupesAt(lane, reading.index, refAt) : [];
     return {
@@ -465,10 +487,16 @@ function LinearView({
     const items: CardItem[] = parts.map((part) => {
       const reading = lane.readings[part.reading];
       const bubble = bubbleOf(reading, part.bubble);
+      /* At an end that runs out of the band, the bases between the
+         junction and the node the walk goes to or comes from there. */
       const why = part.jump
-        ? "the haplotype's own bases before its walk jumps"
+        ? `the haplotype's own bases between here and ${where(part.jump.to)}, where its walk ${
+            part.jump.before ? "comes from" : "goes on"
+          }`
         : bubble?.cls === "open"
-          ? "the haplotype's own bases before it leaves the band"
+          ? bubble.open === "left"
+            ? "the haplotype's own bases between where it leaves the reference before the band and here"
+            : "the haplotype's own bases between here and where it comes back to the reference past the band"
           : bubble?.cls === "insertion"
             ? "an insertion"
             : bubble?.cls === "mismatch+gap"
@@ -495,7 +523,7 @@ function LinearView({
               ]
             : []),
           ...(part.nodes.length ? [`node${part.nodes.length === 1 ? "" : "s"} ${part.nodes.join(" → ")}`] : []),
-          ...(part.jump ? [jumpLine(part.jump)] : []),
+          ...(part.jump ? [jumpLine(lane, part.jump)] : []),
           ...(bubble ? [bubbleLine(bubble, reading, lane)] : []),
           ...part.nodes.flatMap((id) => carriersLine(id)),
         ],
@@ -527,11 +555,15 @@ function LinearView({
               white.instead ? `${white.instead.toLocaleString()} bp of its own` : "nothing"
             } in between`
           : white.open === "right"
-            ? `the haplotype leaves the reference at ${where(white.refFrom)} for ${where(white.refTo)}, past what was fetched`
+            ? `the haplotype reads the reference up to ${where(white.refFrom - 1)} and next at ${where(white.refTo)}${
+                white.node ? ` (node ${white.node})` : ""
+              }, past the band`
             : white.open === "left"
-              ? `the haplotype comes to ${where(white.refTo)} from ${where(white.refFrom)}, before what was fetched`
+              ? `the haplotype reads the reference at ${where(white.refFrom - 1)}${
+                  white.node ? ` (node ${white.node})` : ""
+                }, before the band, and next at ${where(white.refTo)}`
               : <>reference reads {cardSequence(skipped)}; the haplotype reads nothing here</>,
-        `reading ${reading.index + 1}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
+        `reading ${readingNo(lane, reading.index)}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
       ],
       groups: [],
     };
@@ -539,17 +571,23 @@ function LinearView({
 
   /** What a lane with nothing drawn says of the search for its haplotype
       along the reference (locate.ts). */
+  /** Why the search gave a path up, in words. */
+  const lostWhy = (reason: string | undefined) =>
+    reason === "contig ends"
+      ? "its contig ends"
+      : reason === "turns back"
+        ? "its path turns back before crossing"
+        : "too much of its own sequence";
   const absentText = (lane: LinearLane): string => {
     const found = lane.located!;
-    const reach = Math.max(model.origin - found.from, found.to - model.end);
-    if (found.state === "notSeen") return `not seen on the reference within ${deletionSize(reach)}`;
+    if (found.state === "notSeen") {
+      return `not seen on the reference from ${where(found.from)} to ${where(found.to)}`;
+    }
     const off =
       found.seenAt === undefined
         ? ""
         : ` ${deletionSize(found.side === "left" ? model.origin - found.seenAt : found.seenAt - model.end)} to the ${found.side}`;
-    if (found.state === "lost") {
-      return `seen${off}, not followed across: ${found.reason === "contig ends" ? "its contig ends" : "too much of its own sequence"}`;
-    }
+    if (found.state === "lost") return `seen${off}, not followed across: ${lostWhy(found.reason)}`;
     return `seen${off}`;
   };
   const describeAbsent = (lane: LinearLane): CardContent => {
@@ -563,9 +601,11 @@ function LinearView({
         }`,
         ...(found.state === "lost"
           ? [
-              `followed from there, its path ${
-                found.reason === "contig ends" ? "ended" : "ran more than 100 kb of its own sequence"
-              } before reaching the reference past the band`,
+              found.reason === "turns back"
+                ? "followed from there, its path turned back along the reference before crossing the band"
+                : `followed from there, its path ${
+                    found.reason === "contig ends" ? "ended" : "ran more than 100 kb of its own sequence"
+                  } before reaching the reference past the band`,
             ]
           : []),
         "a path's visits are sampled one in a hundred, so a haplotype that reads the reference only briefly in the stretch searched can be missed",
@@ -597,7 +637,7 @@ function LinearView({
         </>,
         node.onReference ? "on the reference walk" : "an alternative to the reference here",
         ...linkLines(node),
-        ...(node.placedBy ? [`placed by ${node.placedBy.lane}'s reading ${node.placedBy.reading + 1}`] : []),
+        ...(node.placedBy ? [`placed by ${node.placedBy.lane}'s reading ${node.placedBy.no}`] : []),
         <>reads {cardSequence(node.sequence)}</>,
         `in the rows shown: ${names.length ? names.join(", ") : "none"}`,
         ...carriersLine(node.id),
@@ -1001,7 +1041,9 @@ function LinearView({
                 const perBase = node.width > 0 ? w / node.width : scale;
                 const lit =
                   highlight === null || node.lanes.some((key) => key === highlight) || node.onReference;
-                const shown = node.width > 0 ? node.sequence.slice(0, node.width) : "";
+                /* As the bar shows it: on the reference's strand. */
+                const shown =
+                  node.width > 0 ? (node.reverse ? reverseComplement(node.sequence) : node.sequence).slice(0, node.width) : "";
                 const spell = shown.length > 0 && (sequenceSize(perBase) >= SEQUENCE_MIN_SIZE || nodeLit(node.id));
                 return (
                   <g
