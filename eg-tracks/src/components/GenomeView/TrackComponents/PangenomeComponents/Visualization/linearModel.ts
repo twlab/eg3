@@ -1,5 +1,5 @@
 import type { Located } from "../../../../../getRemoteData/gbz/locate";
-import type { Carriers } from "../../../../../getRemoteData/gbz/subgraph";
+import type { Carriers, JsonStop } from "../../../../../getRemoteData/gbz/subgraph";
 import { REF_COLOR, pastelColor } from "./pangenomeModel";
 import { alignWalk } from "./alignment";
 import type { Bubble, Graph, Part, Step, Walk, WalkAlignment } from "./alignment";
@@ -25,7 +25,11 @@ import type { Bubble, Graph, Part, Step, Walk, WalkAlignment } from "./alignment
    the band is not sequence of the haplotype's own but the far side of a
    deletion that runs out of the band, and is drawn as that: white from the
    junction to the band's edge, with the size the reference's own position
-   of that node gives. Only a run that reaches no such node is an open end.
+   of that node gives. Only a run that reaches no such node is an open end,
+   and an open end is missing data, not an allele: the walk leaves the
+   reference there and, in the graph, never comes back, so nothing says
+   what reference it replaces. The bar stops at the junction and draws
+   nothing past it (OpenEnd).
 
    The graph strip is placed from the same readings. A reference node is
    at its coordinate; an allele node is where the first reading that takes
@@ -55,6 +59,9 @@ export interface Piece {
   /** The worker found it through its path's reverse sequence; it is
       written in the path's own direction either way. */
   backward: boolean;
+  /** Why the walk stops short of the reference at its start and its end,
+      in its own direction, where the fetch followed it (walkOn.ts). */
+  ends?: { head?: JsonStop; tail?: JsonStop };
 }
 
 export type PartKind = Part["kind"];
@@ -125,6 +132,43 @@ export interface OutOfBand {
   until?: number;
 }
 
+/**
+ * Where a reading stops short of the reference with nothing after it: its
+ * walk leaves the reference at the junction and, in the graph, never comes
+ * back - the run past the junction holds no node the reference reads, and
+ * the fetch followed it as far as it goes. Not an allele, since nothing
+ * says what reference it replaces: missing data. The bar stops at the
+ * junction and draws nothing past it; the card says where the walk goes
+ * and why it was not followed further. vg deconstruct does the same: a
+ * haplotype whose path does not cross a site from its start to its end
+ * has no allele there.
+ */
+export interface OpenEnd {
+  side: "left" | "right";
+  /** The junction: where the reading's last reference base on that side
+      ends (right) or its first starts (left). */
+  ref: number;
+  /** The reference node the walk leaves the reference by. */
+  from: string;
+  /** The run's first node, the one the walk goes into from `from`, with
+      the strand it is drawn on. */
+  into: { id: string; reverse: boolean } | null;
+  /** The run: its bases, its nodes in order away from the junction, and
+      where they are in the haplotype's own coordinates. */
+  bases: number;
+  nodes: string[];
+  own: { from: number; to: number; reverse: boolean };
+  reading: number;
+  /** Which end of the walk, in its own direction, the run is at. */
+  at: "start" | "end";
+  /** Why it was not followed further, when the fetch followed it: "end",
+      its path in the graph starts or ends there - `more` when the
+      haplotype has another fragment of the contig beyond, the graph build
+      having left out the stretch between; "cap", `bp` more bases walked
+      past the run without meeting the reference. */
+  stop?: JsonStop;
+}
+
 /** One piece aligned: what the bar, the walk rows and the cards read. */
 export interface Reading {
   index: number;
@@ -154,6 +198,8 @@ export interface Reading {
   /** Where the walk goes on past the reading's ends by a jump the band
       cannot follow; see Jump. */
   jumps: Jump[];
+  /** Where it stops short of the reference for good; see OpenEnd. */
+  openEnds: OpenEnd[];
   /** Aligned flipped as a whole: drawn arrowed, own coordinates counting
       down along the reference. */
   reversed: boolean;
@@ -177,6 +223,9 @@ export interface LinearLane {
       to where no earlier reading of the lane is drawn. */
   drawn: PlacedPart[];
   outOfBand: OutOfBand[];
+  /** The open ends the bar shows: each reading's, where no other reading
+      of the haplotype reads the reference past the junction. */
+  openEnds: OpenEnd[];
   /** Pieces with nothing on the reference here, which are not drawn. */
   scraps: number;
   /** Bases of the haplotype in the band. */
@@ -266,6 +315,7 @@ interface RawPath {
   is_reference?: boolean;
   backward?: boolean;
   path?: Array<{ id: string; is_reverse?: boolean }>;
+  ends?: { head?: JsonStop; tail?: JsonStop };
 }
 
 function parseWalkName(raw: RawPath, fallback: string) {
@@ -354,6 +404,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       start: parsed.start,
       end: parsed.end,
       backward: raw.backward === true,
+      ...(raw.ends ? { ends: raw.ends } : {}),
       steps: (raw.path ?? []).map((s) => ({
         node: String(s.id),
         start: 0,
@@ -426,6 +477,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     readings: [],
     drawn: [],
     outOfBand: [],
+    openEnds: [],
     scraps: 0,
     bp: end - origin,
   };
@@ -464,6 +516,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       readings: [],
       drawn: [],
       outOfBand: [],
+      openEnds: [],
       scraps: 0,
       bp: ordered.reduce((n, draft) => n + bpOf(draft), 0),
     };
@@ -478,6 +531,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     }
     lane.drawn = drawnParts(lane.readings);
     lane.outOfBand = outOfBandDrawn(lane.readings);
+    lane.openEnds = openEndsDrawn(lane.readings);
     lanes.push(lane);
   }
 
@@ -505,6 +559,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       readings: [],
       drawn: [],
       outOfBand: [],
+      openEnds: [],
       scraps: 0,
       bp: 0,
       located: found,
@@ -777,6 +832,7 @@ function readPiece(
     parts: [],
     outOfBand: [],
     jumps: [],
+    openEnds: [],
     reversed: alignment.reversed,
   };
   if (spanned) {
@@ -944,18 +1000,29 @@ function readPiece(
         markBefore(away.length, jump);
         return;
       }
-      /* A true open end: placed outward from the junction, no class. */
+      /* A true open end: missing data. The walk leaves the reference at
+         the junction and, in the graph, never comes back, so the run says
+         nothing of what reference it replaces: nothing of it is drawn and
+         the bar stops at the junction (OpenEnd). With no cut at this end,
+         the run is at the piece's own start or end, and why the fetch
+         stopped following it there is the piece's. */
       if (hapLen > 0) {
-        reading.parts.push({
-          kind: "open",
+        const anchorAt = bubble.open === "right" ? bubble.ref[0] - 1 : bubble.ref[1];
+        const first = away[0];
+        const stop = before ? piece.ends?.head : piece.ends?.tail;
+        reading.openEnds.push({
+          side: bubble.open,
           ref: junction,
-          len: hapLen,
-          seq: bubble.hapSeq,
+          from: refWalk.steps[anchorAt]?.id ?? "",
+          /* As drawn: on the reference's strand, the step's own turned
+             where the reading is aligned flipped as a whole. */
+          into: first ? { id: first.node, reverse: first.reverse !== alignment.reversed } : null,
+          bases: hapLen,
+          nodes: away.map((s) => s.node),
           own: ownRange(0, hapLen),
           reading: index,
-          bubble: here,
-          nodes: steps.map((s) => s.node),
-          side: bubble.open,
+          at: before ? "start" : "end",
+          ...(stop ? { stop } : {}),
         });
       }
     });
@@ -1009,16 +1076,10 @@ function readPiece(
  * Each reading's parts clipped to where no earlier reading of the lane is
  * drawn: a lane's readings are in walk order, its main contig's first, so
  * where two cover the same reference the first is the one drawn and the
- * rest are dupes. An open end's stub shows only over reference no reading
- * of the haplotype reads at all, earlier or later: HG002#2's first reading
- * at chr17:38,975,000 ends at 38,982,866 and goes on 95 bp off the
- * reference, where its next reading reads the reference in place.
+ * rest are dupes.
  */
 function drawnParts(readings: Reading[]): PlacedPart[] {
   const claimed: Array<[number, number]> = [];
-  const spans: Array<[number, number]> = readings
-    .filter((reading) => reading.drawn)
-    .map((reading) => [reading.refFrom, reading.refTo]);
   const out: PlacedPart[] = [];
   const free = (from: number, to: number, against: Array<[number, number]>): Array<[number, number]> => {
     let gaps: Array<[number, number]> = [[from, to]];
@@ -1044,24 +1105,19 @@ function drawnParts(readings: Reading[]): PlacedPart[] {
         if (!claimed.some(([a, b]) => part.ref > a && part.ref < b)) out.push(part);
         continue;
       }
-      const span: [number, number] =
-        part.kind === "open" && part.side === "left"
-          ? [part.ref - part.len, part.ref]
-          : [part.ref, part.ref + part.len];
-      for (const [x, y] of free(span[0], span[1], part.kind === "open" ? spans : claimed)) {
+      const span: [number, number] = [part.ref, part.ref + part.len];
+      for (const [x, y] of free(span[0], span[1], claimed)) {
         if (x === span[0] && y === span[1]) {
           out.push(part);
           continue;
         }
         /* Part of it: the same part, cut to what is free. Its bases are
-           cut with it where they are drawn one to a reference base - an
-           open stub's too, which runs left to right from its far end on
-           the left and from the junction on the right - and so is where
-           they are in the haplotype's own coordinates, which count down
-           along the bar where they run backwards. */
+           cut with it where they are drawn one to a reference base, and so
+           is where they are in the haplotype's own coordinates, which count
+           down along the bar where they run backwards. */
         const offset = x - span[0];
         const len = y - x;
-        const cut: PlacedPart = { ...part, ref: part.kind === "open" && part.side === "left" ? y : x, len };
+        const cut: PlacedPart = { ...part, ref: x, len };
         if (part.seq !== undefined) cut.seq = part.seq.slice(offset, offset + len);
         if (part.own) {
           cut.own = part.own.reverse
@@ -1071,7 +1127,7 @@ function drawnParts(readings: Reading[]): PlacedPart[] {
         out.push(cut);
       }
     }
-    /* The reading's anchored span is now spoken for, as is any open stub. */
+    /* The reading's anchored span is now spoken for. */
     claimed.push([reading.refFrom, reading.refTo]);
   }
   return out.sort((a, b) => a.ref - b.ref || a.len - b.len);
@@ -1107,6 +1163,30 @@ function outOfBandDrawn(readings: Reading[]): OutOfBand[] {
         out.push(previous.length ? { ...white, until: Math.max(...previous) } : white);
       }
       taken.add(at);
+    }
+  }
+  return out;
+}
+
+/**
+ * The open ends a lane's bar shows: each reading's, unless another reading
+ * of the haplotype reads the reference past the junction - there the bar
+ * draws that reading, as it draws the first reading of any place. The walk
+ * rows show each reading's own.
+ */
+function openEndsDrawn(readings: Reading[]): OpenEnd[] {
+  const spans = readings
+    .filter((reading) => reading.drawn)
+    .map((reading) => ({ from: reading.refFrom, to: reading.refTo, index: reading.index }));
+  const out: OpenEnd[] = [];
+  for (const reading of readings) {
+    for (const end of reading.openEnds) {
+      const others = spans.filter((span) => span.index !== reading.index);
+      const covered =
+        end.side === "right"
+          ? others.some(({ from, to }) => from <= end.ref && end.ref < to)
+          : others.some(({ from, to }) => from < end.ref && end.ref <= to);
+      if (!covered) out.push(end);
     }
   }
   return out;
@@ -1189,9 +1269,6 @@ function stripNodes(
           if (part.kind === "mark") {
             lo = hi = part.ref;
             mark = true;
-          } else if (part.kind === "open") {
-            lo = part.side === "left" ? part.ref - (part.len - from) : part.ref + from;
-            hi = lo + len;
           } else {
             /* Over the reference it replaces, as far as the part's room
                goes; any base past it is at the mark after the room. */

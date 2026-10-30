@@ -145,5 +145,6 @@ async function handle(request: GbzRequest): Promise<GbzResponse> {
 
 self.onmessage = async (event: MessageEvent<GbzRequest>) => {
   const response = await handle(event.data);
+  console.log(response);
   self.postMessage(response);
 };

@@ -1,4 +1,4 @@
-import type { OutOfBand, PlacedPart, Reading } from "./linearModel";
+import type { OpenEnd, OutOfBand, PlacedPart, Reading } from "./linearModel";
 import { reverseComplement, stepSeq } from "./alignment";
 import type { Graph } from "./alignment";
 import { deletionText } from "./pangenomeModel";
@@ -15,10 +15,12 @@ import type { NodeLetters } from "./letters";
 
    What a pixel holds is the part of the alignment drawn there (see
    linearModel.ts: a run of matching bases, letters over the reference they
-   replace, a replacement, an inverted stretch, an open end) and which of
-   the part's bases. White - reference the haplotype skips - leaves the
-   pixel empty and is listed with its size. Marks, the bases with no room,
-   are a list of glyphs: each sits at a pixel and takes none.
+   replace, a replacement, an inverted stretch) and which of the part's
+   bases. White - reference the haplotype skips - leaves the pixel empty
+   and is listed with its size. Marks, the bases with no room, are a list
+   of glyphs: each sits at a pixel and takes none. So are the bar's ends
+   where a walk leaves the reference for good: a cap at the junction, and
+   the empty stretch past it that says missing data.
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** A part placed on the band's pixels. */
@@ -60,6 +62,17 @@ export interface WhiteRun {
   node?: string;
 }
 
+/** Where the bar stops because the walk leaves the reference for good
+    (OpenEnd): the cap at the junction, and the empty stretch past it, up to
+    the next thing drawn, that carries the words and answers the pointer. */
+export interface EndCap {
+  x: number;
+  side: "left" | "right";
+  end: OpenEnd;
+  left: number;
+  right: number;
+}
+
 export interface BarRaster {
   key: string;
   width: number;
@@ -70,6 +83,7 @@ export interface BarRaster {
   parts: RasterPart[];
   marks: MarkGlyph[];
   whites: WhiteRun[];
+  caps: EndCap[];
   /** A reading's own sequence, in its own order, and its first base's
       coordinate - for the letters round the pointer. */
   own: (reading: number) => { seq: string; from: number };
@@ -79,9 +93,13 @@ export interface BarRaster {
 export const MARK_MERGE_PX = 8;
 /** How far from a glyph's centre the pointer still means it. */
 export const MARK_HIT_PX = 6;
+/** How far past a bar's end its "missing data" reaches, at most, and how
+    near the cap the pointer still means it. */
+export const END_LABEL_PX = 96;
+export const END_HIT_PX = 5;
 
 /** The kinds that take room on the bar. */
-const ROOMY = new Set<PlacedPart["kind"]>(["match", "mismatch", "replaced", "inverted", "open"]);
+const ROOMY = new Set<PlacedPart["kind"]>(["match", "mismatch", "replaced", "inverted"]);
 
 /**
  * A bar from its parts. `px` is the axis's own, so the bar cannot drift
@@ -92,6 +110,7 @@ export function rasteriseBar(
   key: string,
   placed: PlacedPart[],
   outOfBand: OutOfBand[],
+  openEnds: OpenEnd[],
   readings: Reading[],
   graph: Graph,
   px: (bp: number) => number,
@@ -101,9 +120,8 @@ export function rasteriseBar(
 ): BarRaster {
   const w = Math.max(0, Math.ceil(width));
   const parts: RasterPart[] = placed.map((part, index) => {
-    const leftward = part.kind === "open" && part.side === "left";
-    const left = leftward ? px(part.ref - part.len) : px(part.ref);
-    const right = leftward ? px(part.ref) : px(part.ref + part.len);
+    const left = px(part.ref);
+    const right = px(part.ref + part.len);
     const inverted = part.kind === "inverted" || !!part.inverted;
     const arrowed = inverted !== !!readings[part.reading]?.reversed;
     return { ...part, index, left, right, arrowed };
@@ -176,6 +194,22 @@ export function rasteriseBar(
   }
   whites.sort((a, b) => a.left - b.left);
 
+  /* The bar's ends where a walk leaves the reference for good: the empty
+     pixels past each, up to the next part drawn. */
+  const caps: EndCap[] = openEnds
+    .map((end) => {
+      const x = px(end.ref);
+      let left = x;
+      let right = x;
+      if (end.side === "right") {
+        for (let k = Math.max(0, Math.ceil(x)); k < Math.min(w, Math.ceil(x) + END_LABEL_PX) && partAt[k] < 0; k++) right = k + 1;
+      } else {
+        for (let k = Math.min(w, Math.floor(x)) - 1; k >= Math.max(0, Math.floor(x) - END_LABEL_PX) && partAt[k] < 0; k--) left = k;
+      }
+      return { x, side: end.side, end, left, right };
+    })
+    .sort((a, b) => a.x - b.x);
+
   const owns = new Map<number, { seq: string; from: number }>();
   const own = (reading: number) => {
     let known = owns.get(reading);
@@ -190,7 +224,7 @@ export function rasteriseBar(
     return known;
   };
 
-  return { key, width: w, part: partAt, base: baseAt, parts, marks, whites, own };
+  return { key, width: w, part: partAt, base: baseAt, parts, marks, whites, caps, own };
 }
 
 /** What the pointer is on, in a part of the bar. */
@@ -234,6 +268,16 @@ export function markAt(raster: BarRaster, at: number): MarkGlyph | null {
 /** The white at a pixel, or null. */
 export function whiteAt(raster: BarRaster, at: number): WhiteRun | null {
   return raster.whites.find((white) => at >= white.left && at < white.right) ?? null;
+}
+
+/** The bar's end at a pixel - its cap, or the empty stretch past it - or
+    null. */
+export function capAt(raster: BarRaster, at: number): EndCap | null {
+  return (
+    raster.caps.find(
+      (cap) => Math.abs(at - cap.x) <= END_HIT_PX || (at >= cap.left && at < cap.right),
+    ) ?? null
+  );
 }
 
 /**

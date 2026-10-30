@@ -1,6 +1,6 @@
 import { memo, useCallback, useLayoutEffect, useRef } from "react";
-import type { BarRaster, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
-import { hitAt, lettersAround, markAt, whiteAt } from "./barRaster";
+import type { BarRaster, EndCap, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
+import { capAt, hitAt, lettersAround, markAt, whiteAt } from "./barRaster";
 import type { NodeLetters } from "./letters";
 import { sequenceSize } from "./nodeDetail";
 import { fitCanvas, useScreenSize } from "./canvasScreen";
@@ -13,11 +13,13 @@ import type { FittedCanvas } from "./canvasScreen";
    where the haplotype reads what the reference reads, letters where it
    reads other bases over the same reference, hatched where it replaces a
    stretch with no base pairing claimed (its letters still spelled, in the
-   hatched style) and over an open end, white with the size written in it
-   where it skips reference, arrowed where it reads the reference on the
-   other strand. Bases with no room on the reference are marks: a glyph
-   above the bar at the point they go in, with "+n" when it fits, taking no
-   room. So the bar is the reference's length, like every other bar.
+   hatched style), white with the size written in it where it skips
+   reference, arrowed where it reads the reference on the other strand.
+   Bases with no room on the reference are marks: a glyph above the bar at
+   the point they go in, with "+n" when it fits, taking no room. So the bar
+   is the reference's length, like every other bar. Where the walk leaves
+   the reference and never comes back, the bar stops at a cap, with
+   "missing data" past it where it fits: nothing there is an allele.
 
    Painted, not drawn: one pass over the raster onto a canvas, and the
    pointer's x is the index into the raster, so a hover is a lookup and not
@@ -31,7 +33,8 @@ export const MARK_BAND = 12;
 export type BarTarget =
   | { kind: "base"; part: RasterPart; offset: number; bp: number; zoom: NodeLetters | null; x: number; y: number; at: number }
   | { kind: "mark"; glyph: MarkGlyph; x: number; y: number; at: number }
-  | { kind: "white"; white: WhiteRun; x: number; y: number; at: number };
+  | { kind: "white"; white: WhiteRun; x: number; y: number; at: number }
+  | { kind: "end"; cap: EndCap; x: number; y: number; at: number };
 
 export interface BarCanvasProps {
   raster: BarRaster;
@@ -103,6 +106,11 @@ const INK_PROBE_SIZE = 100;
 const DELETION_FONT = 11;
 const DELETION_INK = "#6b7280";
 const DELETION_PAD = 4;
+/* A bar's end where the walk leaves the reference for good: a dark cap,
+   and "missing data" past it in the deletion's grey, set in italics. */
+const END_INK = "#374151";
+const END_WIDTH = 2;
+const END_TEXT = "missing data";
 
 function BarCanvas({
   raster,
@@ -167,6 +175,8 @@ function BarCanvas({
         at,
       };
     }
+    const cap = capAt(raster, at);
+    if (cap) return { kind: "end", cap, x, y: clientY, at };
     const glyph = markAt(raster, at);
     if (glyph) return { kind: "mark", glyph, x, y: clientY, at };
     const white = whiteAt(raster, at);
@@ -221,11 +231,7 @@ interface BarPaint {
 
 /** The kinds that take room on the bar, and so are painted in its colour. */
 const roomy = (part: RasterPart) =>
-  part.kind === "match" ||
-  part.kind === "mismatch" ||
-  part.kind === "replaced" ||
-  part.kind === "inverted" ||
-  part.kind === "open";
+  part.kind === "match" || part.kind === "mismatch" || part.kind === "replaced" || part.kind === "inverted";
 
 /** One haplotype's bar: its runs, the hatching, the arrows, the letters,
     the whites' sizes and the marks. */
@@ -255,9 +261,9 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
     if (to > from) ctx.clearRect(from, top, to - from, tall);
   }
 
-  /* The hatching: replacements and open ends - or, zoomed out, whole
-     sections where more than sectionAltBp of the haplotype's bases there
-     are off the reference. */
+  /* The hatching: replacements - or, zoomed out, whole sections where more
+     than sectionAltBp of the haplotype's bases there are off the
+     reference. */
   ctx.strokeStyle = HATCH_INK;
   ctx.lineWidth = HATCH_WIDTH * sx;
   if (sections?.length) {
@@ -265,7 +271,7 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
       let alt = 0;
       for (const part of raster.parts) {
         if (part.right <= section.left || part.left >= section.right) continue;
-        if (part.kind === "mismatch" || part.kind === "replaced" || part.kind === "open" || part.kind === "mark") {
+        if (part.kind === "mismatch" || part.kind === "replaced" || part.kind === "mark") {
           alt += part.len;
         }
       }
@@ -285,7 +291,7 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
   } else {
     eachRun(
       raster.parts,
-      (part) => part.kind === "replaced" || part.kind === "open",
+      (part) => part.kind === "replaced",
       sx,
       pw,
       (from, to) => hatch(ctx, from, to, top, tall, HATCH_PITCH * sx),
@@ -415,6 +421,31 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
          run off the top of the canvas. */
       if (textWidth <= room) ctx.fillText(text, Math.round(x + half + 2 * sx), Math.round(tip - 1 * sy));
     });
+  }
+
+  /* The bar's ends where the walk leaves the reference for good: a cap at
+     the junction, a little proud of the bar, and "missing data" in the
+     empty stretch past it where it fits. */
+  if (raster.caps.length) {
+    ctx.strokeStyle = END_INK;
+    ctx.lineWidth = Math.max(1, Math.round(END_WIDTH * sx));
+    ctx.font = `italic ${Math.round(DELETION_FONT * sy)}px ${SANS_STACK}`;
+    ctx.fillStyle = DELETION_INK;
+    ctx.textBaseline = "middle";
+    const pad = DELETION_PAD * sx;
+    const textWidth = ctx.measureText(END_TEXT).width;
+    for (const cap of raster.caps) {
+      const x = Math.round(cap.x * sx);
+      if (x < -pad || x > pw + pad) continue;
+      ctx.beginPath();
+      ctx.moveTo(x, top - Math.round(2 * sy));
+      ctx.lineTo(x, top + tall + Math.round(1 * sy));
+      ctx.stroke();
+      const room = (cap.side === "right" ? cap.right - cap.x : cap.x - cap.left) * sx;
+      if (textWidth + 2 * pad > room) continue;
+      ctx.textAlign = cap.side === "right" ? "left" : "right";
+      ctx.fillText(END_TEXT, cap.side === "right" ? x + pad : x - pad, Math.round(top + tall / 2));
+    }
   }
 }
 

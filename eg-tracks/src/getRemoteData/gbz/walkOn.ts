@@ -301,6 +301,22 @@ function placeByAnchor(ctx: Context, tail: Tail, anchor: PathAnchor, forward: bo
   return { ...tail, at };
 }
 
+/**
+ * Keeps why a followed end stopped short of the reference, in the path's
+ * own direction: the end a walk stitched from its path's reverse sequence
+ * leaves by is the path's start. "end": the sequence stops there - where a
+ * fragment of the path starts or ends, the graph build having left out
+ * what lay beyond, or where the contig itself does; "cap": walked as far
+ * as the walk-on goes without meeting the reference. The linear view says
+ * which for an end that never comes back to the reference (OpenEnd in
+ * linearModel.ts).
+ */
+function noteStop(info: PathInfo, which: "exit" | "start", walked: { stop: Tail["stop"]; bp: number }): void {
+  if (walked.stop !== "end" && walked.stop !== "cap") return;
+  const side = (which === "exit") !== info.backward ? "tail" : "head";
+  (info.stops ??= {})[side] = { stop: walked.stop, bp: walked.bp };
+}
+
 /* ── Fragments of one path made one ─────────────────────────────────── */
 
 /** A walk's handles in its path's forward order - see toJson. */
@@ -418,6 +434,10 @@ export function mergeFragments(
       current.path = [...a, ...between, ...b.slice(shared)];
       current.backward = false;
       current.len += next.len - overlap;
+      /* The joined walk's ends are the first's start and the second's end. */
+      const head = current.stops?.head;
+      const tail = next.stops?.tail;
+      current.stops = head || tail ? { ...(head ? { head } : {}), ...(tail ? { tail } : {}) } : undefined;
       if (gapWalk) current.tail = tailOf(next, gapWalk.cache);
       else current.exit = next.backward ? null : next.exit;
       dropped.add(next);
@@ -476,6 +496,10 @@ export function walkOn(
             referenceAt.set(nodeId(tail.handles[tail.handles.length - 1]), tail.at);
           }
         }
+        noteStop(info, "exit", tail);
+      } else {
+        /* Its sequence ends at the walk's last node. */
+        noteStop(info, "exit", { stop: "end", bp: 0 });
       }
     }
 
@@ -496,6 +520,7 @@ export function walkOn(
             referenceAt.set(nodeId(head.handles[head.handles.length - 1]), head.at);
           }
         }
+        noteStop(info, "start", head);
       }
     }
   }

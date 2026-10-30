@@ -69,6 +69,28 @@ export interface JsonPath {
   fragment_start?: number;
   length: number;
   interval?: { start: number; end: number };
+  /** Why the walk stops short of the reference at either end, where the
+      fetch followed it (walkOn.ts): `head` before its first step and
+      `tail` after its last, in the path's own direction. See JsonStop. */
+  ends?: { head?: JsonStop; tail?: JsonStop };
+}
+
+/** An end of a walk the walk-on followed and that never reached the
+    reference. "end": its path in the graph starts or ends there - `more`
+    when the haplotype has another fragment of the contig on that side,
+    the graph build having left out the stretch between; "cap": `bp`
+    bases walked past the fetch without meeting the reference. */
+export interface JsonStop {
+  stop: "end" | "cap";
+  bp: number;
+  more?: boolean;
+}
+
+/** Why a followed end of a walk stopped short of the reference, and the
+    bases walked past it: see noteStop in walkOn.ts. */
+export interface WalkStop {
+  stop: "end" | "cap";
+  bp: number;
 }
 
 /**
@@ -229,6 +251,9 @@ export interface PathInfo {
      and whether that is read onward through LF or back through its
      inverse - in place of `exit` and `start`, which are then stale. */
   tail?: { next: Pos | null; onward: boolean };
+  /* Why the walk-on stopped at either end short of the reference, in the
+     path's forward order (walkOn.ts, noteStop). */
+  stops?: { head?: WalkStop; tail?: WalkStop };
 }
 
 export function queryInterval(
@@ -871,6 +896,19 @@ function writeJson(
 
   const { paths: infos, refId, refOffset } = extracted;
 
+  /* Whether the haplotype has another fragment of the contig on one side
+     of this one: the graph build left out the stretch between them. */
+  const moreFragments = (path: GbzPath, side: "head" | "tail"): boolean => {
+    if (side === "head") {
+      return (
+        path.fragment > 0 &&
+        source.findPath(path.sample, path.contig, path.haplotype, path.fragment - 1) !== null
+      );
+    }
+    const last = source.findPath(path.sample, path.contig, path.haplotype, Number.MAX_SAFE_INTEGER);
+    return !!last && last.fragment > path.fragment;
+  };
+
   /* The reference walk's interval is the query interval grown to whole nodes;
      it is recovered by measuring back from the query position to the start of
      the walk. */
@@ -920,6 +958,19 @@ function writeJson(
       value.haplotype = meta.haplotype;
     }
     if (info.fragmentStart !== null) value.fragment_start = info.fragmentStart;
+    if (info.stops) {
+      const ends: NonNullable<JsonPath["ends"]> = {};
+      for (const side of ["head", "tail"] as const) {
+        const stop = info.stops[side];
+        if (!stop) continue;
+        ends[side] = {
+          stop: stop.stop,
+          bp: stop.bp,
+          ...(stop.stop === "end" && named ? { more: moreFragments(named, side) } : {}),
+        };
+      }
+      value.ends = ends;
+    }
 
     if (id === refId && refInterval) {
       value.interval = {

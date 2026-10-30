@@ -1362,6 +1362,14 @@
   font-weight: 600;
 }
 
+/* Where a walk leaves the reference and never comes back: the node it
+   went into, and why the rest is missing data - red, to read on the
+   card's dark ground. */
+.pgv-open-end {
+  color: #ff7b72;
+  font-weight: 600;
+}
+
 /* A haplotype's variants in its card, by what each does to the reference:
    pastel, to read on the card's dark ground. */
 .pgv-var-sub {

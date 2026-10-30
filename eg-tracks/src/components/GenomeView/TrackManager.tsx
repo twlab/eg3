@@ -412,6 +412,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     refetchPangenomeFromView();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [regionOnly]);
+  // TESTING no-sync (start): the toolbar's "No sync" button turns
+  // syncScrollState off, so a pan updates neither the region nor the band.
+  // A ref too, as a pan's settle runs from a timer an earlier render set.
+  const [noSync, setNoSync] = useState(false);
+  const noSyncRef = useRef(noSync);
+  noSyncRef.current = noSync;
+  // TESTING no-sync (end)
   const isToolSelected = useRef(false);
   const side = useRef("right");
   const isDragging = useRef(false);
@@ -909,6 +916,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function syncScrollState(commitRegion: boolean, overrideDragX?: number) {
+    if (noSyncRef.current) return; // TESTING no-sync
     if (!curGenomeConfig.current) {
       return;
     }
@@ -5539,6 +5547,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   )}
                 </div>
               </div>
+              {/* TESTING no-sync (start) */}
+              <button
+                type="button"
+                aria-pressed={noSync}
+                title="Testing: turn syncScrollState off, so panning updates neither the region nor the band"
+                onClick={() => setNoSync(!noSync)}
+                className="rounded-xs px-2 py-0.5 mx-1 cursor-pointer transition-colors"
+                style={{
+                  fontSize: `${Math.max(12, fontSize - 1)}px`,
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  border: noSync ? "1px solid #b45309" : "1px dashed #d1d5db",
+                  backgroundColor: noSync ? "#fffbeb" : "transparent",
+                  color: noSync ? "#b45309" : "var(--font-color)",
+                }}
+              >
+                No sync
+              </button>
+              {/* TESTING no-sync (end) */}
               <span
                 style={{ width: "1px" }}
                 className="self-stretch bg-gray-300 dark:bg-gray-600"

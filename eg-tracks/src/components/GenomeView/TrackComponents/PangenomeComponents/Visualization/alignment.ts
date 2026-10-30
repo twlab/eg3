@@ -22,11 +22,16 @@
 
    And three rules of the browser's own, which gbz-base does not have:
 
-     A. Open ends. The run before the first anchor, or after the last, is
-        placed outward from the junction and gets no alignment and no class:
-        gbz-base pads it against whatever reference is in the window, which
-        is noise. The ops gbz-base would write are still produced, for the
-        check, and `closedCigar` leaves them out.
+     A. Open ends. The run before the first anchor, or after the last,
+        touches the reference at one end only. It gets no alignment and no
+        class: gbz-base pads it against whatever reference is in the window,
+        which is noise. It is missing data, not an allele, since nothing
+        says what reference it replaces, and the linear view draws none of
+        it past the junction (OpenEnd in linearModel.ts; decided 2026-10-30,
+        before which it was drawn hatched, outward from the junction). Its
+        "open" part still records the run for the model to read. The ops
+        gbz-base would write are still produced, for the check, and
+        `closedCigar` leaves them out.
      B. Inversions. A closed bubble whose haplotype side anchors to the
         reference side only when flipped (read back to front, each node on
         the other strand) is an inversion: the reference span between its

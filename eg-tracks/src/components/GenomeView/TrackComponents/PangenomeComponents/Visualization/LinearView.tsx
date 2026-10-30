@@ -1,9 +1,9 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Jump, LinearLane, LinearModel, Reading, StripNode } from "./linearModel";
+import type { Jump, LinearLane, LinearModel, OpenEnd, Reading, StripNode } from "./linearModel";
 import type { LinearAxis } from "./linearAxis";
 import { rasteriseBar } from "./barRaster";
-import type { BarRaster, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
+import type { BarRaster, EndCap, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
 import BarCanvas, { MARK_BAND } from "./BarCanvas";
 import type { BarTarget } from "./BarCanvas";
 import { CardBody, HoverCard, cardKeptOpen, cardSequence } from "./Cards";
@@ -23,8 +23,9 @@ import type { BrowserClass, Bubble } from "./alignment";
    Every bar is the reference's length. What a haplotype has that the
    reference does not is a mark that takes no room; what it lacks is white;
    what differs over the same bases is letters; a stretch read backwards is
-   arrowed; a run that touches the reference at one end only is hatched
-   out from the junction. See linearModel.ts for how that is worked out and
+   arrowed; where a walk leaves the reference and never comes back, the bar
+   stops at a cap and says missing data, and the card names the node the
+   walk went into, in red. See linearModel.ts for how that is worked out and
    BarCanvas.tsx for how it is painted. The strip shows the reference's
    nodes at their coordinates and, when asked, the alleles under them,
    each where the first reading that takes it puts its bases.
@@ -106,6 +107,7 @@ type CardTarget =
   | { kind: "base"; row: string; part: number }
   | { kind: "mark"; row: string; glyph: number }
   | { kind: "white"; row: string; white: number }
+  | { kind: "end"; row: string; cap: number }
   | { kind: "node"; id: string }
   | { kind: "section"; row: string; left: number; right: number };
 
@@ -219,6 +221,7 @@ function LinearView({
         key,
         reading ? reading.parts : lane.drawn,
         reading ? reading.outOfBand : lane.outOfBand,
+        reading ? reading.openEnds : lane.openEnds,
         lane.readings,
         model.graph,
         px,
@@ -294,15 +297,17 @@ function LinearView({
   };
   /** What a node links to on each side as drawn - left of it and right of
       it - among the fetched edges: each neighbour with the strand it is
-      read on there, its length, and whether the reference walks it. */
-  const linkLines = (node: StripNode): string[] => {
+      read on there, its length, and whether the reference walks it. A
+      neighbour a walk went into and never came back from (`gone`) is in
+      red. */
+  const linkLines = (node: StripNode, gone?: string): ReactNode[] => {
     const links = model.links.get(node.id);
     if (!links) return [];
     const left = node.reverse ? links.after : links.before;
     const right = node.reverse ? links.before : links.after;
-    const show = (list: Array<{ id: string; reverse: boolean }>): string => {
+    const show = (list: Array<{ id: string; reverse: boolean }>): ReactNode => {
       if (!list.length) return "none fetched";
-      const named = list.slice(0, 8).map((n) => {
+      const named = list.slice(0, 8).map((n): ReactNode => {
         const reverse = node.reverse ? !n.reverse : n.reverse;
         const len = model.lengths.get(n.id);
         const onRef = model.nodes.get(n.id)?.onReference;
@@ -315,11 +320,55 @@ function LinearView({
           ...(onRef ? ["ref"] : elsewhere !== undefined ? [`ref at ${where(elsewhere)}`] : []),
           ...(count !== undefined ? [`${count.toLocaleString()} hap`] : []),
         ];
-        return `${n.id}${reverse ? "−" : "+"}${notes.length ? ` (${notes.join(", ")})` : ""}`;
+        const text = `${n.id}${reverse ? "−" : "+"}${notes.length ? ` (${notes.join(", ")})` : ""}`;
+        return n.id === gone ? (
+          <span key={n.id} className="pgv-open-end">
+            {text}
+          </span>
+        ) : (
+          text
+        );
       });
-      return named.join(", ") + (list.length > 8 ? `, +${list.length - 8} more` : "");
+      return (
+        <>
+          {named.map((item, k) => (
+            <span key={k}>
+              {k ? ", " : ""}
+              {item}
+            </span>
+          ))}
+          {list.length > 8 ? `, +${list.length - 8} more` : ""}
+        </>
+      );
     };
-    return [`before, to the left: ${show(left)}`, `after, to the right: ${show(right)}`];
+    return [<>before, to the left: {show(left)}</>, <>after, to the right: {show(right)}</>];
+  };
+  /** Where a walk leaves the reference and never comes back, in words, in
+      red: the node it went into, how far it was followed, and why not
+      further. Then the missing stretch, when the graph left it out. */
+  const openEndLines = (lane: LinearLane, end: OpenEnd): ReactNode[] => {
+    const into = end.into ? `${end.into.id}${end.into.reverse ? "−" : "+"}` : "its own sequence";
+    const followed = (end.bases + (end.stop?.stop === "cap" ? end.stop.bp : 0)).toLocaleString();
+    const ownLow = Math.min(end.own.from, end.own.to);
+    const why = !end.stop
+      ? `not followed past the fetch (${followed} bp)`
+      : end.stop.stop === "cap"
+        ? `followed for ${followed} bp, the most the browser follows`
+        : end.at === "start" && ownLow === 0
+          ? `followed for ${followed} bp, to the start of its contig`
+          : `followed for ${followed} bp, to where its path in this graph ${end.at === "start" ? "starts" : "ends"}`;
+    const lines: ReactNode[] = [
+      <span className="pgv-open-end">
+        {lane.label} leaves {referenceName} here, into {into}, and never comes back:
+      </span>,
+      <span className="pgv-open-end">{why}. Missing data from here.</span>,
+    ];
+    if (end.stop?.stop === "end" && end.stop.more) {
+      lines.push(
+        `the graph build left out the stretch of ${lane.label} that joins this to its ${end.at === "start" ? "previous" : "next"} piece of ${lane.readings[end.reading]?.contig ?? "its contig"}`,
+      );
+    }
+    return lines;
   };
   /** Where a reading's walk goes on past one of its ends, in words. */
   const jumpLine = (lane: LinearLane, jump: Jump): string => {
@@ -448,6 +497,8 @@ function LinearView({
     const node = step ? model.nodes.get(step.node) ?? null : null;
     const refAt = part.kind === "open" ? null : part.ref + offset;
     const bubble = bubbleOf(reading, part.bubble);
+    /* The node the reading leaves the reference by, for good. */
+    const openEnd = step ? reading.openEnds.find((end) => end.from === step.node) : undefined;
     const lines: ReactNode[] = [
       <>
         {coordLabel(`Alt path (${lane.label})`)}{" "}
@@ -468,7 +519,8 @@ function LinearView({
       ...(part.inverted ? ["inside an inversion: aligned on the other strand"] : []),
       ...(step ? [<>node {step.node} · {(step.end - step.start).toLocaleString()} bp · reads {cardSequence(model.graph.seq.get(step.node) ?? "")}</>] : []),
       ...(step ? carriersLine(step.node) : []),
-      ...(node ? linkLines(node) : []),
+      ...(node ? linkLines(node, openEnd?.into?.id) : []),
+      ...(openEnd ? openEndLines(lane, openEnd) : []),
       ...(row.reading ? [`reading ${readingNo(lane, reading.index)} of ${readingsOf(lane).length}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`] : []),
       ...reading.jumps.map((jump) => jumpLine(lane, jump)),
     ];
@@ -564,6 +616,32 @@ function LinearView({
                 }, before the band, and next at ${where(white.refTo)}`
               : <>reference reads {cardSequence(skipped)}; the haplotype reads nothing here</>,
         `reading ${readingNo(lane, reading.index)}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
+      ],
+      groups: [],
+    };
+  };
+
+  /** A bar's end where the walk leaves the reference for good. */
+  const describeEnd = (row: BarRow, cap: EndCap): CardContent => {
+    const { lane } = row;
+    const end = cap.end;
+    const reading = lane.readings[end.reading];
+    const ownLow = Math.min(end.own.from, end.own.to);
+    const ownHigh = Math.max(end.own.from, end.own.to);
+    return {
+      title: `${lane.label} · missing data`,
+      lines: [
+        <>
+          {coordLabel(`Reference (${referenceName})`)} {refCoord(where(end.ref))} · node {end.from}, where {lane.label} leaves
+          the reference
+        </>,
+        ...openEndLines(lane, end),
+        <>
+          {coordLabel(`Alt path (${lane.label})`)} {altCoord(`${reading.contig}:${ownLow.toLocaleString()}–${ownHigh.toLocaleString()}`)} ·{" "}
+          {plural(end.nodes.length, "node")} past the junction, none of them the reference's
+        </>,
+        "not an allele: nothing says what reference these bases stand in for, so the bar draws none of them",
+        `reading ${readingNo(lane, reading.index)} of ${readingsOf(lane).length}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
       ],
       groups: [],
     };
@@ -753,6 +831,11 @@ function LinearView({
     element.setAttribute("height", String(box.height));
     element.style.display = "";
   };
+  /** A bar's end and the empty stretch past it, outlined. */
+  const capBox = (row: BarRow, cap: EndCap) => {
+    const x = Math.min(cap.left, cap.x - 3);
+    return { x, y: row.top + MARK_BAND, width: Math.max(cap.right, cap.x + 3) - x, height: row.height - MARK_BAND - 1 };
+  };
   const boxOf = (row: BarRow, target: BarTarget) => {
     if (target.kind === "base") {
       return { x: target.part.left, y: row.top + MARK_BAND, width: target.part.right - target.part.left, height: row.height - MARK_BAND - 1 };
@@ -760,6 +843,7 @@ function LinearView({
     if (target.kind === "mark") {
       return { x: target.glyph.x - 5, y: row.top, width: 10, height: MARK_BAND + 2 };
     }
+    if (target.kind === "end") return capBox(row, target.cap);
     return { x: target.white.left, y: row.top + MARK_BAND, width: target.white.right - target.white.left, height: row.height - MARK_BAND - 1 };
   };
   const onBarHover = (row: BarRow, target: BarTarget | null) => {
@@ -774,6 +858,8 @@ function LinearView({
       showHover(`base:${row.key}:${part.index}:${offset}`, () => describeBase(row, part, offset, bp, zoom), target.x, target.y);
     } else if (target.kind === "mark") {
       showHover(`mark:${row.key}:${target.glyph.x}`, () => describeMark(row, target.glyph), target.x, target.y);
+    } else if (target.kind === "end") {
+      showHover(`end:${row.key}:${target.cap.x}`, () => describeEnd(row, target.cap), target.x, target.y);
     } else {
       showHover(`white:${row.key}:${target.white.left}`, () => describeWhite(row, target.white), target.x, target.y);
     }
@@ -783,6 +869,8 @@ function LinearView({
       keep(describeBase(row, target.part, target.offset, target.bp, target.zoom), { kind: "base", row: row.key, part: target.part.index }, target.x, target.y);
     } else if (target.kind === "mark") {
       keep(describeMark(row, target.glyph), { kind: "mark", row: row.key, glyph: row.raster.marks.indexOf(target.glyph) }, target.x, target.y);
+    } else if (target.kind === "end") {
+      keep(describeEnd(row, target.cap), { kind: "end", row: row.key, cap: row.raster.caps.indexOf(target.cap) }, target.x, target.y);
     } else {
       keep(describeWhite(row, target.white), { kind: "white", row: row.key, white: row.raster.whites.indexOf(target.white) }, target.x, target.y);
     }
@@ -830,6 +918,10 @@ function LinearView({
     if (kept.kind === "white") {
       const white = row.raster.whites[kept.white];
       return white ? { x: white.left, y: row.top + MARK_BAND, width: white.right - white.left, height: row.height - MARK_BAND - 1 } : null;
+    }
+    if (kept.kind === "end") {
+      const cap = row.raster.caps[kept.cap];
+      return cap ? capBox(row, cap) : null;
     }
     return { x: kept.left, y: row.top, width: kept.right - kept.left, height: row.height };
   })();
