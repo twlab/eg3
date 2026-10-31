@@ -16,6 +16,7 @@ import {
 import LinearView, { linearHeight, walksHeight, walksShown } from "./LinearView";
 import { linearModelOf } from "./linearModel";
 import { linearAxis, toBandAxis } from "./linearAxis";
+import { GRAPH_ROW_H } from "./laneLayout";
 import type { BandAxis, PangenomeModel } from "./pangenomeModel";
 import type { DrawFrame } from "./pangenomeModel";
 import type { HoverTarget } from "./hoverTarget";
@@ -109,7 +110,8 @@ interface VisualizationContainerProps {
       path can be laid where the graph draws that path. */
   onBandModel?: (model: PangenomeModel, axis: BandAxis, frame: DrawFrame) => void;
   /** Which part of the linear view to draw, when the graph is laid out as
-      track rows: `GRAPH_PART` for the graph strip, or a haplotype's
+      track rows: `GRAPH_PART` for the graph's own row - empty in linear
+      view, the whole graph in tube and variants view - or a haplotype's
       `sample#haplotype` for its bar alone. Everything when absent. */
   part?: string;
   /** The tube map the band was laid out for (see fetchPangenomeData): the
@@ -125,7 +127,7 @@ interface VisualizationContainerProps {
   setViewport?: (v: any) => void;
 }
 
-/** The `part` that is the graph strip rather than a haplotype's bar. */
+/** The `part` that is the graph's own row rather than a haplotype's bar. */
 export const GRAPH_PART = "graph";
 
 /** Room left for the tooltip so it does not run off the right of the window. */
@@ -147,7 +149,7 @@ export default function VisualizationContainer({
 }: VisualizationContainerProps) {
   const view = usePangenomeView();
   /* The whole graph - the tube map, the variants view - is drawn by the
-     graph strip's track; a haplotype's row draws its bar in linear view
+     graph's own track row; a haplotype's row draws its bar in linear view
      and nothing else, so it lays nothing else out. */
   const drawsWhole = !part || part === GRAPH_PART;
   /* Zoomed out, a section of the linear view's bars is hatched only where
@@ -452,11 +454,13 @@ export default function VisualizationContainer({
   /* The part of the linear view this draws. The model keeps its layout, so
      a haplotype's bar lands where it would in the whole drawing; only the
      lanes drawn are cut down to the part's - a lane per haplotype, its
-     contigs joined into one bar (see oneLanePerHaplotype). */
-  const strip = !part || part === GRAPH_PART;
-  /* The linear view's own model: the band aligned to the reference (see
-     linearModel.ts), cut down to the lanes this row draws - the strip's
-     reference, or one haplotype's lane with it. */
+     contigs joined into one bar (see oneLanePerHaplotype).
+
+     The linear view's own model: the band aligned to the reference (see
+     linearModel.ts), cut down to the lanes this row draws - the reference
+     alone for the graph's own row, which draws nothing in linear view but
+     still gives the band its axis and the dev hook its model, or one
+     haplotype's lane with it. */
   const linearWhole = linearModelOf(queryResult);
   const linearModel = useMemo(() => {
     if (!linearWhole) return null;
@@ -487,14 +491,16 @@ export default function VisualizationContainer({
      they are asked; the node graph lays itself out before it knows, and
      keeps the given default. */
   const walksOn =
-    walks && !strip && view?.mode === "linear" && !!linearModel && walksShown(linearModel);
+    walks && !drawsWhole && view?.mode === "linear" && !!linearModel && walksShown(linearModel);
   const shellHeight = !model
     ? height
     : walksOn && linearModel
       ? walksHeight(linearModel)
       : view?.mode === "linear"
       ? linearModel
-        ? linearHeight(linearModel, view.alleleRows, strip)
+        ? part === GRAPH_PART
+          ? GRAPH_ROW_H
+          : linearHeight(linearModel)
         : 40
       : view?.mode === "variants"
         ? (variantShape?.height ?? height)
@@ -599,14 +605,15 @@ export default function VisualizationContainer({
         onMouseOut={() => showTip(null)}
       >
         {view.mode === "linear" ? (
+          /* The graph's own row draws nothing in linear view: it keeps its
+             place for its name. */
+          part !== GRAPH_PART &&
           linearModel &&
           linAxis && (
             <LinearView
               model={linearModel}
               axis={linAxis}
               highlight={view.highlight}
-              strip={strip}
-              alleleRows={view.alleleRows}
               sectionAltBp={sectionAltBp}
               walks={walksOn}
             />

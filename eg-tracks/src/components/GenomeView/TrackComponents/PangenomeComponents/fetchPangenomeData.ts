@@ -72,8 +72,8 @@ interface PangenomeOptions {
   context?: number;
   /** Only these haplotypes' walks, as `sample#haplotype`; all when absent. */
   haplotypes?: string[];
-  /** Which row of the graph this track is: `GRAPH_PART` for the strip, or a
-      haplotype's `sample#haplotype` for its bar. */
+  /** Which row of the graph this track is: `GRAPH_PART` for the graph's own
+      row, or a haplotype's `sample#haplotype` for its bar. */
   part?: string;
   /** The reference path's range on its contig, as the start page measured
       it: what a band is clipped to, so it need not be measured again. */
@@ -675,7 +675,7 @@ export async function fetchPangenomeData(
       null,
     );
 
-  /* The graph's rows - its strip and a bar per haplotype - are tracks of
+  /* The graph's rows - its own row and a bar per haplotype - are tracks of
      their own that draw from one graph, so the band is queried once for
      all of them that ask the same of the same database. */
   const queries = new Map<string, Promise<any>>();

@@ -103,8 +103,8 @@ const ROOMY = new Set<PlacedPart["kind"]>(["match", "mismatch", "replaced", "inv
 
 /**
  * A bar from its parts. `px` is the axis's own, so the bar cannot drift
- * from the strip or the ruler; `startBp`/`endBp` are the band's, where a
- * deletion running out of it ends.
+ * from the ruler or the other bars; `startBp`/`endBp` are the band's, where
+ * a deletion running out of it ends.
  */
 export function rasteriseBar(
   key: string,

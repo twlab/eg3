@@ -25,7 +25,7 @@ import {
 } from "./Visualization/variantBubbles";
 import type { DrawFrame } from "./Visualization/pangenomeModel";
 import { linearHeight, walksHeight, walksShown } from "./Visualization/LinearView";
-import { BAR_H, LANE_H } from "./Visualization/laneLayout";
+import { BAR_H, GRAPH_ROW_H, LANE_H } from "./Visualization/laneLayout";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
 import LinearDrawingModel from "../../../../models/LinearDrawingModel";
 
@@ -42,9 +42,10 @@ import LinearDrawingModel from "../../../../models/LinearDrawingModel";
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** How tall a part of the graph is drawn in the view the band was laid out
-    for: the graph strip, or one haplotype's bar - which only linear view
-    draws - and in tube and variants view the whole picture, which the strip's
-    track draws. Worked out as VisualizationContainer works it out. */
+    for: the graph's own row, which is empty in linear view, or one
+    haplotype's bar, which only linear view draws; and in tube and variants
+    view the whole picture, which the graph's own track draws. Worked out
+    as VisualizationContainer works it out. */
 export function pangenomeTrackHeight(
   queryResult: any,
   part: string,
@@ -78,18 +79,18 @@ export function pangenomeTrackHeight(
     );
     return variantLayout(segments, axis).height;
   }
-  /* The linear view: the strip, or one haplotype's bar, from the band
-     aligned to the reference (linearModel.ts). */
+  /* The linear view: one haplotype's bar, from the band aligned to the
+     reference (linearModel.ts). The graph's own row draws nothing there and
+     is only as tall as its legend needs (GRAPH_ROW_H). */
   const linear = linearModelOf(queryResult);
   if (!linear) return 40;
-  const lanes = linear.lanes.filter(
-    (lane) => lane.isReference || (part !== GRAPH_PART && lane.label === part),
-  );
+  if (part === GRAPH_PART) return GRAPH_ROW_H;
+  const lanes = linear.lanes.filter((lane) => lane.isReference || lane.label === part);
   /* A haplotype with nothing in this band still holds its row. */
-  if (part !== GRAPH_PART && lanes.length < 2) return BAR_H;
+  if (lanes.length < 2) return BAR_H;
   const cut = { ...linear, lanes };
   if (walks && walksDrawn(queryResult, part, primaryVisData)) return walksHeight(cut);
-  return linearHeight(cut, false, part === GRAPH_PART);
+  return linearHeight(cut);
 }
 
 /** Whether a haplotype's row, asked to show its walk, can in this band:
@@ -159,7 +160,7 @@ export default function PangenomeTrackView({
   queryResult: any;
   primaryVisData: any;
   windowWidth: number;
-  /** The graph strip, or a haplotype's bar: see VisualizationContainer. */
+  /** The graph's own row, or a haplotype's bar: see VisualizationContainer. */
   part: string;
   /** The tube map the band was laid out for, in tube view: its grouping and
       its room ahead of each column, in bases. */

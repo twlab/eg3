@@ -72,7 +72,7 @@ export default function PangenomePicker({
         defaultRegion: `${config.contig}:${start}-${end}`,
         defaultTracks: [
           { type: "ruler", name: "Ruler" },
-          /* The graph strip, on the reference. */
+          /* The graph's own row, on the reference. */
           {
             type: PANGENOME_TRACK_TYPE,
             name: config.sample,

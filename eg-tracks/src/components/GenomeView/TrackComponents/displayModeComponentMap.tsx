@@ -1323,7 +1323,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackState.primaryGenName ?? drawData.genomeName
       ];
     const primaryVisData = primary?.primaryVisData;
-    /* Which row of the graph: its strip, or one haplotype's bar. */
+    /* Which row of the graph: its own row, or one haplotype's bar. */
     const part = drawData.trackModel.options?.part ?? GRAPH_PART;
     /* A haplotype's row drawn as its walk, from the button on its legend;
        see WalksView. */

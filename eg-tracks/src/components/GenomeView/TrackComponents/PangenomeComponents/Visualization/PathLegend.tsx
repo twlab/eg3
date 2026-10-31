@@ -21,12 +21,8 @@ import { usePangenomeView } from "./pangenomeViewState";
 export default function PathLegend() {
   const view = usePangenomeView();
   const model = view?.model ?? null;
-  const alleleRows = view?.alleleRows ?? false;
 
-  const layout = useMemo(
-    () => (model ? laneLayout(model, alleleRows) : null),
-    [model, alleleRows],
-  );
+  const layout = useMemo(() => (model ? laneLayout(model) : null), [model]);
   const byKey = useMemo(
     () => new Map((model?.lanes ?? []).map((lane) => [lane.key, lane])),
     [model],
@@ -71,7 +67,6 @@ export default function PathLegend() {
               }
             >
               <span className="pgv-legend-text">{row.label}</span>
-              {row.isReference && <span className="pgv-ref-tag">ref</span>}
             </button>
           </div>
         );

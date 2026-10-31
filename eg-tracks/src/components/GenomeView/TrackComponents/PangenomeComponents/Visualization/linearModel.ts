@@ -31,11 +31,10 @@ import type { Bubble, Graph, Part, Step, Walk, WalkAlignment } from "./alignment
    what reference it replaces. The bar stops at the junction and draws
    nothing past it (OpenEnd).
 
-   The graph strip is placed from the same readings. A reference node is
-   at its coordinate; an allele node is where the first reading that takes
-   it puts its bases - over the reference they stand in for, or at the
-   mark where they have no room - and alternatives at one place take rows
-   under the reference's in order of how many haplotypes carry them.
+   The same readings set the strand each node is drawn on, and a card
+   reads a node's neighbours against it. The reference's walk sets it for
+   the reference's nodes; the first reading that draws a node sets it for
+   any other (nodesDrawn).
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** One step of a walk, in the haplotype's own coordinates. */
@@ -236,28 +235,16 @@ export interface LinearLane {
   located?: Located;
 }
 
-/** A node as the strip draws it. */
-export interface StripNode {
+/** A node as the cards read it: whether the reference walks it here, and
+    which way the bars draw it. */
+export interface LinearNode {
   id: string;
-  sequence: string;
-  length: number;
   onReference: boolean;
-  /** Absolute reference coordinate, and the room it has there. A node
-      with no room - inside a mark - has width 0 and `mark` set. */
-  ref: number;
-  width: number;
-  mark: boolean;
-  /** 0 for the reference's own row; alternatives below it. */
-  row: number;
-  /** Which lanes read it. */
-  lanes: string[];
-  /** The reading that placed it, for an allele: its index, and its number
-      among the lane's drawn readings as the cards give it (from 1). */
-  placedBy: { lane: string; reading: number; no: number } | null;
   /** Drawn on its reverse strand: the bar shows the node's bases reverse
       complemented, on the reference's strand. By the reference's walk, or
-      by the reading that placed it - its step's strand, turned again for a
-      reading aligned flipped as a whole and again inside an inversion. */
+      by the first reading that draws it - its step's strand, turned again
+      for a reading aligned flipped as a whole and again inside an
+      inversion. */
   reverse: boolean;
 }
 
@@ -286,8 +273,9 @@ export interface LinearModel {
       starts along it. */
   refSteps: Step[];
   refOffset: number[];
-  nodes: Map<string, StripNode>;
-  stripRows: number;
+  /** Node id -> the node as the cards read it: the reference's nodes, and
+      every other node a drawn reading holds. */
+  nodes: Map<string, LinearNode>;
   lanes: LinearLane[];
   /** How many haplotypes the graph has, when `lanes` holds only some. */
   laneCount?: number;
@@ -566,8 +554,8 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     });
   }
 
-  /* ── The strip ──────────────────────────────────────────────────────── */
-  const { nodes, stripRows } = stripNodes(seq, refSteps, refOffset, origin, lanes);
+  /* ── Which way each node is drawn, for the cards ───────────────────── */
+  const nodes = nodesDrawn(refSteps, lanes);
 
   return {
     contig,
@@ -577,7 +565,6 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     refSteps,
     refOffset,
     nodes,
-    stripRows,
     lanes,
     carriers: result?.carriers,
     referenceAt,
@@ -1192,150 +1179,35 @@ function openEndsDrawn(readings: Reading[]): OpenEnd[] {
   return out;
 }
 
-/* ── The strip ───────────────────────────────────────────────────────── */
+/* ── Which way each node is drawn ────────────────────────────────────── */
 
-function stripNodes(
-  seq: Map<string, string>,
-  refSteps: Step[],
-  refOffset: number[],
-  origin: number,
-  lanes: LinearLane[],
-): { nodes: Map<string, StripNode>; stripRows: number } {
-  const nodes = new Map<string, StripNode>();
-  const lanesOf = new Map<string, string[]>();
-  for (const lane of lanes) {
-    const seen = new Set<string>();
-    for (const piece of lane.pieces) {
-      for (const step of piece.steps) {
-        if (seen.has(step.node)) continue;
-        seen.add(step.node);
-        const list = lanesOf.get(step.node);
-        if (list) list.push(lane.key);
-        else lanesOf.set(step.node, [lane.key]);
-      }
-    }
+/**
+ * The reference's nodes, each by its walk where it first reads it, then
+ * every other node by the first reading that draws it, in the lanes'
+ * order: the strand a card reads the node's neighbours against.
+ */
+function nodesDrawn(refSteps: Step[], lanes: LinearLane[]): Map<string, LinearNode> {
+  const nodes = new Map<string, LinearNode>();
+  for (const step of refSteps) {
+    if (!nodes.has(step.id)) nodes.set(step.id, { id: step.id, onReference: true, reverse: step.reverse });
   }
-  /* The reference's own nodes, at their coordinates. */
-  refSteps.forEach((step, k) => {
-    if (nodes.has(step.id)) return;
-    const sequence = seq.get(step.id) ?? "";
-    nodes.set(step.id, {
-      id: step.id,
-      sequence,
-      length: sequence.length,
-      onReference: true,
-      ref: origin + refOffset[k],
-      width: sequence.length,
-      mark: false,
-      row: 0,
-      lanes: lanesOf.get(step.id) ?? [],
-      placedBy: null,
-      reverse: step.reverse,
-    });
-  });
-  /* Every other node by the first reading that takes it, over the bases
-     of the part it is in: a node spanning two parts reaches across both. */
-  const reach = new Map<
-    string,
-    { from: number; to: number; mark: boolean; reverse: boolean; by: { lane: string; reading: number; no: number } }
-  >();
   for (const lane of lanes) {
     if (lane.isReference) continue;
-    let no = 0;
     for (const reading of lane.readings) {
       if (!reading.drawn) continue;
-      no += 1;
       /* The strand the reading reads each node on, at its first visit. */
       const strand = new Map<string, boolean>();
       for (const step of reading.steps) if (!strand.has(step.node)) strand.set(step.node, step.reverse);
       for (const part of reading.parts) {
-        if (part.kind === "white" || part.kind === "inverted" || !part.nodes.length) continue;
-        /* As drawn: the bar shows every base on the reference's strand. */
-        const drawnReverse = (id: string) => (strand.get(id) ?? false) !== reading.reversed !== !!part.inverted;
-        /* Where each node's bases fall along the part. */
-        let at = 0;
+        if (part.kind === "white" || part.kind === "inverted") continue;
         for (const id of part.nodes) {
-          if (nodes.has(id)) {
-            at += (seq.get(id) ?? "").length;
-            continue;
-          }
-          const len = (seq.get(id) ?? "").length;
-          const from = at;
-          const to = at + len;
-          at = to;
-          let lo: number;
-          let hi: number;
-          let mark = false;
-          if (part.kind === "mark") {
-            lo = hi = part.ref;
-            mark = true;
-          } else {
-            /* Over the reference it replaces, as far as the part's room
-               goes; any base past it is at the mark after the room. */
-            lo = part.ref + Math.min(from, part.len);
-            hi = part.ref + Math.min(to, part.len);
-            if (to > part.len) mark = true;
-          }
-          const known = reach.get(id);
-          if (known) {
-            if (known.by.lane === lane.key && known.by.reading === reading.index) {
-              known.from = Math.min(known.from, lo);
-              known.to = Math.max(known.to, hi);
-              known.mark = known.mark || mark;
-            }
-            continue;
-          }
-          reach.set(id, {
-            from: lo,
-            to: hi,
-            mark,
-            reverse: drawnReverse(id),
-            by: { lane: lane.key, reading: reading.index, no },
-          });
+          if (nodes.has(id)) continue;
+          /* As drawn: the bar shows every base on the reference's strand. */
+          const reverse = (strand.get(id) ?? false) !== reading.reversed !== !!part.inverted;
+          nodes.set(id, { id, onReference: false, reverse });
         }
       }
     }
   }
-  const alleles: StripNode[] = [];
-  for (const [id, placed] of reach) {
-    const sequence = seq.get(id) ?? "";
-    const node: StripNode = {
-      id,
-      sequence,
-      length: sequence.length,
-      onReference: false,
-      ref: placed.from,
-      width: Math.max(0, placed.to - placed.from),
-      mark: placed.mark && placed.to - placed.from < sequence.length,
-      row: 1,
-      lanes: lanesOf.get(id) ?? [],
-      placedBy: placed.by,
-      reverse: placed.reverse,
-    };
-    nodes.set(id, node);
-    alleles.push(node);
-  }
-  /* Rows under the reference: the most carried first, each in the first
-     row with room for it. A mark takes a base's width of a row, and the
-     marks at one junction share it: an insertion of hundreds of nodes
-     is one glyph there, as it is one mark on the bar. */
-  alleles.sort((a, b) => b.lanes.length - a.lanes.length || a.ref - b.ref);
-  const rowEnd: Array<Array<[number, number]>> = [];
-  const rowMarks: Array<Set<number>> = [];
-  for (const node of alleles) {
-    const from = node.ref;
-    const to = node.ref + Math.max(1, node.width);
-    const glyph = node.width === 0;
-    let row = 0;
-    for (;;) {
-      if (glyph && rowMarks[row]?.has(from)) break;
-      const taken = rowEnd[row] ?? [];
-      if (!taken.some(([a, b]) => from < b && to > a)) break;
-      row += 1;
-    }
-    (rowEnd[row] ??= []).push([from, to]);
-    if (glyph) (rowMarks[row] ??= new Set()).add(from);
-    node.row = row + 1;
-  }
-  return { nodes, stripRows: rowEnd.length + 1 };
+  return nodes;
 }

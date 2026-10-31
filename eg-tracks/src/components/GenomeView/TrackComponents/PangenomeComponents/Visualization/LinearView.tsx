@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Jump, LinearLane, LinearModel, OpenEnd, Reading, StripNode } from "./linearModel";
+import type { Jump, LinearLane, LinearModel, LinearNode, OpenEnd, Reading } from "./linearModel";
 import type { LinearAxis } from "./linearAxis";
 import { rasteriseBar } from "./barRaster";
 import type { BarRaster, EndCap, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
@@ -9,16 +9,13 @@ import type { BarTarget } from "./BarCanvas";
 import { CardBody, HoverCard, cardKeptOpen, cardSequence } from "./Cards";
 import type { CardContent, CardItem, CardZoom, HoverCardHandle } from "./Cards";
 import FloatingCard from "./FloatingCard";
-import { FOOT_PAD, NODE_H, laneLayout } from "./laneLayout";
-import { baseCentres, sequenceSize } from "./nodeDetail";
+import { laneLayout } from "./laneLayout";
 import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
-import { reverseComplement } from "./alignment";
 import type { BrowserClass, Bubble } from "./alignment";
 
 /* ══════════════════════════════════════════════════════════════════════════
-   The linear view: the graph strip under the ruler, and a bar per
-   haplotype under it, on the reference's own axis.
+   The linear view: a bar per haplotype, on the reference's own axis.
 
    Every bar is the reference's length. What a haplotype has that the
    reference does not is a mark that takes no room; what it lacks is white;
@@ -26,33 +23,30 @@ import type { BrowserClass, Bubble } from "./alignment";
    arrowed; where a walk leaves the reference and never comes back, the bar
    stops at a cap and says missing data, and the card names the node the
    walk went into, in red. See linearModel.ts for how that is worked out and
-   BarCanvas.tsx for how it is painted. The strip shows the reference's
-   nodes at their coordinates and, when asked, the alleles under them,
-   each where the first reading that takes it puts its bases.
+   BarCanvas.tsx for how it is painted. The reference has no bar: it is
+   what every bar is drawn against, and the graph's own track row draws
+   nothing in this view (VisualizationContainer).
 
    A hover shows a card and a click keeps it. Zoomed in and at mid zoom -
-   while a base has a pixel - the strip is drawn node by node and the
-   bars part by part, lettered where a letter fits. Zoomed out past a
-   pixel a base, the strip is read a section at a time, and so are the
-   bars.
+   while a base has a pixel - the bars are drawn part by part, lettered
+   where a letter fits. Zoomed out past a pixel a base, they are hatched
+   and, further out, read a section at a time: a section is a run of the
+   reference's nodes, joined until it is SECTION_PX wide.
 
    "Show walks" draws a haplotype's readings a row each instead of its one
    bar: the same parts, each reading's own, over the reference it anchors
    to, in walk order.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* Below this a letter is a smudge, so none is drawn. */
-const SEQUENCE_MIN_SIZE = 4;
-/* Below a pixel a base, the strip and the bars are read in sections; above
-   it a base is drawn as itself, lettered or not: that is what mid zoom is. */
+/* Below a pixel a base, the bars are hatched in sections; above it a base
+   is drawn as itself, lettered or not: that is what mid zoom is. */
 const SECTIONS_BELOW_PX_PER_BASE = 1;
-/* Neighbouring nodes are joined into a section until it is this wide. */
+/* Neighbouring reference nodes are joined into a section until it is this
+   wide. */
 const SECTION_PX = 16;
 /* A bar is read part by part out to this many bases a pixel, as
    genomealign's fine mode is; past it, a section at a time. */
 export const BAR_NODE_BASES_PER_PX = 10;
-/** How far the strip's ground reaches above it, to meet the ruler's own. */
-const STRIP_GROUND_PAD = 4;
 /** A walk row's bar, and the room above it for its name. */
 export const WALK_ROW_H = 36;
 const WALK_ROW_GAP = 14;
@@ -60,13 +54,9 @@ const WALK_FOOT = 6;
 
 export const walkRowTop = (row: number) => WALK_ROW_GAP + row * (WALK_ROW_H + WALK_ROW_GAP);
 
-/** The rows the layout is built on: the lanes, and the strip's rows. */
-const layoutOf = (model: LinearModel, alleleRows: boolean, strip: boolean) =>
-  laneLayout({ lanes: model.lanes, rowCount: model.stripRows }, alleleRows, strip);
-
-/** How tall the drawing comes out: the strip and a bar per haplotype. */
-export function linearHeight(model: LinearModel, alleleRows: boolean, strip = true): number {
-  return layoutOf(model, alleleRows, strip).height;
+/** How tall the drawing comes out: a bar per haplotype. */
+export function linearHeight(model: LinearModel): number {
+  return laneLayout(model).height;
 }
 
 /** The haplotype a model drawn as one track row holds. */
@@ -95,11 +85,11 @@ export function walksHeight(model: LinearModel): number {
   return walkRowTop(rows) - WALK_ROW_GAP + WALK_FOOT;
 }
 
-/** A section of the strip, zoomed out: neighbouring nodes read as one. */
-interface StripSection {
+/** A section of the band, zoomed out: neighbouring reference nodes read as
+    one. */
+interface Section {
   left: number;
   right: number;
-  nodes: StripNode[];
 }
 
 /** What a kept card is about, outlined in the drawing. */
@@ -108,7 +98,6 @@ type CardTarget =
   | { kind: "mark"; row: string; glyph: number }
   | { kind: "white"; row: string; white: number }
   | { kind: "end"; row: string; cap: number }
-  | { kind: "node"; id: string }
   | { kind: "section"; row: string; left: number; right: number };
 
 interface KeptCard extends CardContent {
@@ -133,14 +122,9 @@ interface LinearViewProps {
   axis: LinearAxis;
   /** Lane key to keep lit; every other lane is dimmed. */
   highlight: string | null;
-  /** Draw the alleles under the reference in the strip. */
-  alleleRows: boolean;
   /** Zoomed out, a haplotype's section is hatched only where more than
       this many of its bases there are off the reference. */
   sectionAltBp?: number;
-  /** Whether the graph strip is drawn. Off, only the bars: one haplotype
-      as a track row of its own. */
-  strip?: boolean;
   /** One haplotype's row drawn as its readings, a row each. */
   walks?: boolean;
 }
@@ -166,9 +150,7 @@ function LinearView({
   model,
   axis,
   highlight,
-  alleleRows,
   sectionAltBp = 0,
-  strip = true,
   walks = false,
 }: LinearViewProps) {
   const { px, width, scale } = axis;
@@ -202,14 +184,11 @@ function LinearView({
     });
   const hoverCard = useRef<HoverCardHandle>(null);
   const hideHover = () => hoverCard.current?.hide();
-  /* The strip's node under the pointer: lit in every bar that carries it. */
-  const [litNode, setLitNode] = useState<string | null>(null);
   const hoverBoxRef = useRef<SVGRectElement>(null);
 
   /* ── Rows ────────────────────────────────────────────────────────────── */
-  const layout = useMemo(() => layoutOf(model, alleleRows, strip), [model, alleleRows, strip]);
-  const { stripTop, stripH } = layout;
-  const walkLane = walks && !strip ? laneOf(model) : undefined;
+  const layout = useMemo(() => laneLayout(model), [model]);
+  const walkLane = walks ? laneOf(model) : undefined;
   const rows = useMemo<BarRow[]>(() => {
     const make = (key: string, lane: LinearLane, reading: Reading | null, top: number, height: number): BarRow => ({
       key,
@@ -237,7 +216,6 @@ function LinearView({
     }
     const out: BarRow[] = [];
     for (const row of layout.rows) {
-      if (row.isReference) continue;
       const lane = model.lanes.find((candidate) => candidate.key === row.key);
       if (lane) out.push(make(lane.key, lane, null, row.top, row.height));
     }
@@ -246,29 +224,30 @@ function LinearView({
   const rowByKey = useMemo(() => new Map(rows.map((row) => [row.key, row])), [rows]);
   const height = walkLane ? walksHeight(model) : layout.height;
 
-  /* ── The strip's nodes, and its sections zoomed out ─────────────────── */
-  const stripNodes = useMemo(() => {
-    const nodes = [...model.nodes.values()].filter((node) => alleleRows || node.onReference);
-    return nodes.sort((a, b) => a.ref - b.ref || a.row - b.row);
-  }, [model, alleleRows]);
-  const sections = useMemo<StripSection[] | null>(() => {
+  /* ── Sections, zoomed out ───────────────────────────────────────────── */
+  /* The reference's nodes, each where its walk first reads it, joined
+     until a section is SECTION_PX wide: zoomed out, the bars are hatched
+     by section and, past BAR_NODE_BASES_PER_PX, read a section at a time. */
+  const sections = useMemo<Section[] | null>(() => {
     if (scale >= SECTIONS_BELOW_PX_PER_BASE) return null;
-    const placed = stripNodes
-      .map((node) => ({ node, left: px(node.ref), right: px(node.ref + Math.max(node.width, 0)) }))
-      .sort((a, b) => a.left - b.left || a.right - b.right);
-    const out: StripSection[] = [];
-    let open: StripSection | null = null;
-    for (const { node, left, right } of placed) {
+    const out: Section[] = [];
+    const seen = new Set<string>();
+    let open: Section | null = null;
+    for (let k = 0; k < model.refSteps.length; k++) {
+      const id = model.refSteps[k].id;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const left = px(model.origin + model.refOffset[k]);
+      const right = px(model.origin + model.refOffset[k + 1]);
       if (open && (left < open.right - 0.5 || open.right - open.left < SECTION_PX)) {
-        open.nodes.push(node);
         open.right = Math.max(open.right, right);
         continue;
       }
-      open = { left, right: Math.max(right, left + 1), nodes: [node] };
+      open = { left, right: Math.max(right, left + 1) };
       out.push(open);
     }
     return out;
-  }, [stripNodes, px, scale]);
+  }, [model, px, scale]);
   useEffect(() => setCard(null), [sections]);
   const barsByNode = !sections || 1 / scale < BAR_NODE_BASES_PER_PX;
   const sectionAt = (x: number) =>
@@ -300,7 +279,7 @@ function LinearView({
       read on there, its length, and whether the reference walks it. A
       neighbour a walk went into and never came back from (`gone`) is in
       red. */
-  const linkLines = (node: StripNode, gone?: string): ReactNode[] => {
+  const linkLines = (node: LinearNode, gone?: string): ReactNode[] => {
     const links = model.links.get(node.id);
     if (!links) return [];
     const left = node.reverse ? links.after : links.before;
@@ -692,38 +671,6 @@ function LinearView({
     };
   };
 
-  const describeNode = (node: StripNode): CardContent => {
-    const names = [...new Set(node.lanes)];
-    return {
-      title: `node ${node.id}`,
-      lines: [
-        <>
-          {coordLabel(`Reference (${referenceName})`)}{" "}
-          {refCoord(
-            node.onReference
-              ? span(node.ref, node.ref + node.length)
-              : node.width > 0
-                ? span(node.ref, node.ref + node.width)
-                : where(node.ref),
-          )}{" "}
-          ·{" "}
-          {node.onReference
-            ? `${node.length.toLocaleString()} bp`
-            : node.width > 0
-              ? `the ${node.width.toLocaleString()} bp it stands in for${node.mark ? ", the rest inserted" : ""}`
-              : "inserted here, no room"}
-        </>,
-        node.onReference ? "on the reference walk" : "an alternative to the reference here",
-        ...linkLines(node),
-        ...(node.placedBy ? [`placed by ${node.placedBy.lane}'s reading ${node.placedBy.no}`] : []),
-        <>reads {cardSequence(node.sequence)}</>,
-        `in the rows shown: ${names.length ? names.join(", ") : "none"}`,
-        ...carriersLine(node.id),
-      ],
-      groups: [],
-    };
-  };
-
   /** Zoomed out: what a haplotype does in a section of the band. */
   const describeSection = (row: BarRow, section: { left: number; right: number }): CardContent => {
     const { lane, raster } = row;
@@ -773,35 +720,6 @@ function LinearView({
     };
   };
 
-  const describeStripSection = (section: StripSection): CardContent => {
-    const refs = section.nodes.filter((node) => node.onReference);
-    const alts = section.nodes.filter((node) => !node.onReference);
-    const refFrom = Math.min(...section.nodes.map((node) => node.ref));
-    const refTo = Math.max(...section.nodes.map((node) => node.ref + Math.max(node.width, 1)));
-    const item = (node: StripNode): CardItem => ({
-      key: node.id,
-      line: (
-        <>
-          node {node.id} · {node.length.toLocaleString()} bp · {refCoord(node.width > 0 ? span(node.ref, node.ref + node.width) : where(node.ref))}
-        </>
-      ),
-      details: [<>reads {cardSequence(node.sequence)}</>, `in the rows shown: ${[...new Set(node.lanes)].join(", ") || "none"}`, ...carriersLine(node.id)],
-    });
-    return {
-      title: "graph",
-      lines: [
-        <>
-          {coordLabel(`Reference (${referenceName})`)} {refCoord(span(refFrom, refTo))} · {(refTo - refFrom).toLocaleString()} bp
-        </>,
-        `${plural(section.nodes.length, "node")}: ${refs.length} reference, ${alts.length} alt`,
-      ],
-      groups: [
-        { head: `Alt nodes (${alts.length})`, items: alts.map(item) },
-        { head: `Reference nodes (${refs.length})`, items: refs.map(item) },
-      ],
-    };
-  };
-
   const showHover = (key: string, build: () => CardContent | null, x: number, y: number) => {
     if (cardKeptOpen()) {
       hideHover();
@@ -811,7 +729,6 @@ function LinearView({
   };
   const keep = (content: CardContent | null, target: CardTarget, x: number, y: number) => {
     hideHover();
-    setLitNode(null);
     if (content) setCard({ ...content, x, y, target });
   };
 
@@ -879,32 +796,10 @@ function LinearView({
   /* A walk's rows are lit or dimmed as their haplotype is. */
   const dim = (lane: LinearLane) => highlight !== null && highlight !== lane.key;
 
-  /* Where a lit strip node is drawn in each bar. */
-  const litSpans: Array<{ key: string; x: number; width: number; y: number; height: number }> = [];
-  if (litNode) {
-    for (const row of rows) {
-      for (const part of row.raster.parts) {
-        if (!part.nodes.includes(litNode) || !(part.right > part.left)) continue;
-        litSpans.push({
-          key: `${row.key}:${part.index}`,
-          x: part.left,
-          width: part.right - part.left,
-          y: row.top + MARK_BAND,
-          height: row.height - MARK_BAND - 1,
-        });
-      }
-    }
-  }
   /* What a kept card is about, outlined where it is drawn. */
   const kept = card?.target ?? null;
   const keptBox = (() => {
     if (!kept) return null;
-    if (kept.kind === "node") {
-      const node = model.nodes.get(kept.id);
-      if (!node || !(alleleRows || node.onReference)) return null;
-      const x = px(node.ref);
-      return { x, y: stripTop + node.row * NODE_H, width: Math.max(1, px(node.ref + node.width) - x), height: NODE_H };
-    }
     const row = rowByKey.get(kept.row);
     if (!row) return null;
     if (kept.kind === "base") {
@@ -925,58 +820,6 @@ function LinearView({
     }
     return { x: kept.left, y: row.top, width: kept.right - kept.left, height: row.height };
   })();
-
-  /* ── Keeping the strip in sight ─────────────────────────────────────── */
-  const svgRef = useRef<SVGSVGElement>(null);
-  const stickyRef = useRef<SVGGElement>(null);
-  useEffect(() => {
-    const svg = svgRef.current;
-    const group = stickyRef.current;
-    if (!svg || !group) return;
-    let queued = 0;
-    const place = () => {
-      queued = 0;
-      const box = svg.getBoundingClientRect();
-      const panel = document.querySelector(".pgv-panel");
-      const pinTop = Math.max(0, panel ? panel.getBoundingClientRect().bottom : 0);
-      const room = height - FOOT_PAD - (stripTop + stripH);
-      const shift = Math.max(0, Math.min(pinTop - box.top, room));
-      group.setAttribute("transform", shift > 0 ? `translate(0, ${Math.round(shift)})` : "");
-    };
-    const onMove = () => {
-      if (!queued) queued = requestAnimationFrame(place);
-    };
-    place();
-    window.addEventListener("scroll", onMove, { passive: true, capture: true });
-    window.addEventListener("resize", onMove);
-    return () => {
-      if (queued) cancelAnimationFrame(queued);
-      window.removeEventListener("scroll", onMove, { capture: true });
-      window.removeEventListener("resize", onMove);
-    };
-  }, [stripTop, stripH, height]);
-
-  const letterSize = Math.min(sequenceSize(scale), NODE_H * 0.7);
-  const keptNode = kept?.kind === "node" ? kept.id : null;
-  const nodeLit = (id: string) => litNode === id || keptNode === id;
-  const stripNodeAt = (section: StripSection, event: React.MouseEvent<SVGRectElement>) => {
-    const box = event.currentTarget.getBoundingClientRect();
-    const x = section.left + (event.clientX - box.left);
-    const row = Math.floor((event.clientY - box.top) / NODE_H);
-    let best: StripNode | null = null;
-    let away = Infinity;
-    for (const node of section.nodes) {
-      if (node.row !== row) continue;
-      const left = px(node.ref);
-      const right = px(node.ref + node.width);
-      const off = x < left ? left - x : x >= right ? x - right : 0;
-      if (off < away) {
-        best = node;
-        away = off;
-      }
-    }
-    return best;
-  };
 
   return (
     <div className="pgv-linear" style={{ width, height }} onMouseLeave={hideHover}>
@@ -1023,17 +866,7 @@ function LinearView({
         </div>
       ))}
 
-      <svg
-        className="pgv-svg pgv-over"
-        ref={svgRef}
-        width={width}
-        height={height}
-        onMouseLeave={() => {
-          hideHover();
-          setLitNode(null);
-        }}
-        onClick={() => setCard(null)}
-      >
+      <svg className="pgv-svg pgv-over" width={width} height={height}>
         {/* The foot of each row. */}
         {(walkLane ? [{ key: walkLane.key, top: 0, height }] : layout.rows).map((row) => (
           <line
@@ -1049,7 +882,7 @@ function LinearView({
         {/* A walk's rows' names: which reading each is. */}
         {walkLane &&
           rows.map((row) => (
-            <text key={`name-${row.key}`} x={axis.viewFromPx + 4} y={row.top - 3} className="pgv-strip-label">
+            <text key={`name-${row.key}`} x={axis.viewFromPx + 4} y={row.top - 3} className="pgv-walk-label">
               {`own ${row.reading?.ownFrom.toLocaleString()}–${row.reading?.ownTo.toLocaleString()}`}
               {row.reading?.reversed ? " · read backwards" : ""}
             </text>
@@ -1057,130 +890,6 @@ function LinearView({
 
         <rect className="pgv-hover-node" ref={hoverBoxRef} x={0} y={0} width={0} height={0} style={{ display: "none" }} />
         {keptBox && <rect className="pgv-kept-node" x={keptBox.x} y={keptBox.y} width={keptBox.width} height={keptBox.height} />}
-        {litSpans.map((lit) => (
-          <rect key={lit.key} className="pgv-lit-span" x={lit.x} y={lit.y} width={lit.width} height={lit.height} />
-        ))}
-
-        {/* ── The graph strip ─────────────────────────────────────────── */}
-        {strip && (
-          <g className="pgv-strip pgv-hears" ref={stickyRef}>
-            <rect className="pgv-strip-ground" x={0} y={stripTop - STRIP_GROUND_PAD} width={width} height={stripH + STRIP_GROUND_PAD} />
-            <text className="pgv-strip-label" x={6} y={stripTop + 12}>
-              graph
-            </text>
-            {sections &&
-              sections.map((section, index) => {
-                const byRow = new Map<number, { left: number; right: number; alt: boolean }>();
-                for (const node of section.nodes) {
-                  const left = px(node.ref);
-                  const right = Math.max(left + 1, px(node.ref + node.width));
-                  const row = byRow.get(node.row);
-                  if (!row) byRow.set(node.row, { left, right, alt: !node.onReference });
-                  else {
-                    row.left = Math.min(row.left, left);
-                    row.right = Math.max(row.right, right);
-                  }
-                }
-                return (
-                  <g key={`section-${index}`}>
-                    {[...byRow].map(([r, row]) => (
-                      <g key={r} className={`pgv-node${row.alt ? " pgv-node-alt" : ""}`}>
-                        <rect x={row.left} y={stripTop + r * NODE_H} width={row.right - row.left} height={NODE_H} />
-                      </g>
-                    ))}
-                    <line className="pgv-node-edge" x1={section.left} x2={section.left} y1={stripTop} y2={stripTop + NODE_H} />
-                    <rect
-                      className={`pgv-section-hit${barsByNode ? " pgv-section-hit-nodes" : ""}`}
-                      x={section.left}
-                      y={stripTop}
-                      width={Math.max(1, section.right - section.left)}
-                      height={stripH}
-                      onMouseMove={
-                        barsByNode
-                          ? (event) => {
-                              if (cardKeptOpen()) {
-                                hideHover();
-                                return;
-                              }
-                              const node = stripNodeAt(section, event);
-                              if (!node) {
-                                hideHover();
-                                return;
-                              }
-                              if (litNode !== node.id) setLitNode(node.id);
-                              showHover(`node:${node.id}`, () => describeNode(node), event.clientX, event.clientY);
-                            }
-                          : undefined
-                      }
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        if (barsByNode) {
-                          const node = stripNodeAt(section, event);
-                          if (node) keep(describeNode(node), { kind: "node", id: node.id }, event.clientX, event.clientY);
-                          return;
-                        }
-                        keep(describeStripSection(section), { kind: "section", row: "graph", left: section.left, right: section.right }, event.clientX, event.clientY);
-                      }}
-                    />
-                  </g>
-                );
-              })}
-            {!sections &&
-              stripNodes.map((node) => {
-                const y = stripTop + node.row * NODE_H;
-                const left = px(node.ref);
-                const w = Math.max(1, px(node.ref + node.width) - left);
-                const perBase = node.width > 0 ? w / node.width : scale;
-                const lit =
-                  highlight === null || node.lanes.some((key) => key === highlight) || node.onReference;
-                /* As the bar shows it: on the reference's strand. */
-                const shown =
-                  node.width > 0 ? (node.reverse ? reverseComplement(node.sequence) : node.sequence).slice(0, node.width) : "";
-                const spell = shown.length > 0 && (sequenceSize(perBase) >= SEQUENCE_MIN_SIZE || nodeLit(node.id));
-                return (
-                  <g
-                    key={node.id}
-                    data-node={node.id}
-                    className={`pgv-node${node.onReference ? "" : " pgv-node-alt"}${lit ? "" : " pgv-dim"}${
-                      nodeLit(node.id) ? " pgv-node-lit" : ""
-                    }`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      keep(describeNode(node), { kind: "node", id: node.id }, event.clientX, event.clientY);
-                    }}
-                    onMouseMove={(event) => {
-                      if (cardKeptOpen()) {
-                        hideHover();
-                        return;
-                      }
-                      if (litNode !== node.id) setLitNode(node.id);
-                      showHover(`node:${node.id}`, () => describeNode(node), event.clientX, event.clientY);
-                    }}
-                  >
-                    {node.width > 0 ? (
-                      <rect x={left} y={y} width={w} height={NODE_H} />
-                    ) : (
-                      /* No room: a mark in its row, pointing at where it goes in. */
-                      <polygon points={`${left - 4},${y + 2} ${left + 4},${y + 2} ${left},${y + NODE_H - 3}`} />
-                    )}
-                    <line className="pgv-node-edge" x1={left} x2={left} y1={y} y2={y + NODE_H} />
-                    {spell && (
-                      <text
-                        className="pgv-seq"
-                        x={baseCentres(left, shown.length, perBase)}
-                        y={y + NODE_H / 2}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fontSize={Math.min(letterSize, sequenceSize(perBase))}
-                      >
-                        {shown}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-          </g>
-        )}
       </svg>
 
       {card && (

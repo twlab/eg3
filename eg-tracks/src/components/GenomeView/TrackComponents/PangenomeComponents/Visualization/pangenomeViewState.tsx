@@ -64,8 +64,6 @@ export interface PangenomeViewState {
   setSelectedNode: React.Dispatch<React.SetStateAction<string | null>>;
   expandEdges: boolean;
   setExpandEdges: React.Dispatch<React.SetStateAction<boolean>>;
-  alleleRows: boolean;
-  setAlleleRows: React.Dispatch<React.SetStateAction<boolean>>;
   /** How the variants view groups bubbles into sites: the shortest shared
       stretch that separates two, in bases - 1 is every bubble alone - or 0
       for auto, which picks one that fits the zoom. */
@@ -138,10 +136,6 @@ export function PangenomeViewProvider({
   const [highlight, setHighlight] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [expandEdges, setExpandEdges] = useState(false);
-  /* Off from the start. On: a bar that only says where a haplotype differs is
-     half the answer, and the other half costs nothing now that it is
-     spelled into the bar rather than given a row of its own. */
-  const [alleleRows, setAlleleRows] = useState(false);
   /* Auto, so the variants view draws no more sites than there is room for. */
   const [ownVariantGrouping, setOwnVariantGrouping] = useState(0);
   const [ownTubeGrouping, setOwnTubeGrouping] = useState(0);
@@ -192,8 +186,6 @@ export function PangenomeViewProvider({
       setSelectedNode,
       expandEdges,
       setExpandEdges,
-      alleleRows,
-      setAlleleRows,
       variantGrouping,
       setVariantGrouping,
       tubeGrouping,
@@ -212,7 +204,6 @@ export function PangenomeViewProvider({
       highlight,
       selectedNode,
       expandEdges,
-      alleleRows,
       variantGrouping,
       tubeGrouping,
       model,

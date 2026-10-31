@@ -271,8 +271,8 @@
   fill: #007aff;
 }
 
-/* The stretch under the pointer, in the bar it is drawn in. The colour the
-   graph lights a node with, since it is the same act of pointing. */
+/* The stretch under the pointer, in the bar it is drawn in. Cyan: the one
+   hue the haplotype palette does not use, so it reads on any bar. */
 .pgv-hover-node {
   fill: none;
   stroke: #22d3ee;
@@ -295,15 +295,6 @@
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
-}
-
-/* The reference lane already reads as the reference from its swatch, so this
-   is a label, not a badge. */
-.pgv-ref-tag {
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pgv-ink-3);
 }
 
 /* ── Detail readout ───────────────────────────────────────────────────── */
@@ -510,16 +501,12 @@
 }
 
 /* Laid over the bars, and deaf - or it would take every hover meant for
-   the canvas beneath it. The graph inside turns its own hearing back on. */
+   the canvas beneath it. */
 .pgv-over {
   position: absolute;
   top: 0;
   left: 0;
   pointer-events: none;
-}
-
-.pgv-hears {
-  pointer-events: auto;
 }
 
 .pgv-svg {
@@ -675,10 +662,6 @@
   pointer-events: none;
 }
 
-/* Inside the drawing rather than in a gutter to its left, so it reads from
-   its own x rather than back towards it. */
-/* What the strip floats over on its way down the page. The canvas colour, so
-   it cannot be seen while the strip is sitting in its own slot. */
 /* Under the ruler: the shell's own colour, so it is invisible where the
    ruler is sitting in its own slot and hides the bars when it floats. */
 .pgv-ruler-ground {
@@ -686,42 +669,14 @@
   pointer-events: none;
 }
 
-/* The reference's own band, a shade off the paper either side of it: it is
-   one of the bars now, and the one every other bar is read against, so it is
-   worth telling from them at a glance. */
-.pgv-strip-ground {
-  fill: #e9eef8;
-  pointer-events: none;
-}
-
-.pgv-strip-label {
+/* A walk row's name: which reading the row is. Inside the drawing rather
+   than in a gutter to its left, so it reads from its own x rather than
+   back towards it. */
+.pgv-walk-label {
   font-size: 11px;
   font-style: italic;
   fill: #8794ab;
   text-anchor: start;
-}
-
-/* Square and unstroked, so a run of nodes is one unbroken bar as a
-   haplotype's is: what breaks it is the layout leaving room, not a
-   boundary between two nodes. Those are `.pgv-node-edge` below. */
-.pgv-node rect {
-  fill: #5b6b8c;
-  stroke: none;
-}
-
-/* Where one node ends and the next begins. A mid tone, not white: white is
-   the colour of the hatching and of the paper either side of the bar, and a
-   white line between two nodes was read as a gap in the sequence. Thin, and
-   only a little darker than the allele rows and a little lighter than the
-   reference row, so it separates them without drawing the eye. */
-.pgv-node-edge {
-  stroke: #7d8db0;
-  stroke-width: 0.5;
-  pointer-events: none;
-}
-
-.pgv-node-alt rect {
-  fill: #93a3c2;
 }
 
 /* Size is set per-render from the zoom so a glyph is exactly one base wide;
@@ -840,13 +795,11 @@
 }
 
 /* ── Picked node ──────────────────────────────────────────────────────── */
-.pgv-node.pgv-node-picked rect,
 .pgv-tube-node.pgv-node-picked rect {
   stroke: #2e6fc4;
   stroke-width: 2.5;
 }
 
-.pgv-node,
 .pgv-tube-node {
   cursor: pointer;
 }
@@ -957,57 +910,15 @@
 }
 
 /* ── Nodes belonging to the stretch of bar under the pointer ──────────── */
-/* What is under the pointer, in the strip and in the bars that carry it.
-   Cyan: the one hue the haplotype palette does not use, so it reads on a
-   green bar as well as on a plum one, and on the strip's own slate. The
-   amber it replaces was the sand lane's own colour. */
-.pgv-node.pgv-node-lit rect,
+/* What is under the pointer. Cyan: the one hue the haplotype palette does
+   not use, so it reads on a green bar as well as on a plum one. The amber
+   it replaces was the sand lane's own colour. */
 .pgv-allele.pgv-node-lit .pgv-allele-hit {
   stroke: #22d3ee;
   stroke-width: 2.5;
 }
 
-/* The same allele, outlined where a haplotype carries it. Thinner than the
-   strip's, a bar being the shorter of the two. */
-.pgv-lit-span {
-  fill: none;
-  stroke: #22d3ee;
-  stroke-width: 2;
-  pointer-events: none;
-}
-
-.pgv-node.pgv-node-lit rect {
-  fill: #3f4d69;
-}
-
-/* The detour a picked node sits in: the run of alleles connecting to one
-   another around it. After the hover's own fill, since a node can be both
-   and what was picked outranks what the pointer happens to be over. */
-.pgv-node.pgv-node-route rect {
-  fill: #007aff;
-}
-
 /* ── Sections, zoomed out ─────────────────────────────────────────────── */
-/* One target over a section of the strip; see SECTION_PX in
-   LinearPathView. Invisible until the pointer is on it. */
-.pgv-section-hit {
-  fill: transparent;
-  cursor: pointer;
-}
-
-.pgv-section-hit:hover {
-  fill: rgba(46, 111, 196, 0.12);
-  stroke: #2e6fc4;
-  stroke-width: 1;
-}
-
-/* Read node by node, a section is not what a click opens: the node under
-   the pointer is outlined instead. */
-.pgv-section-hit.pgv-section-hit-nodes:hover {
-  fill: transparent;
-  stroke: none;
-}
-
 /* What a clicked section was made from. Placed in the band's own
    coordinates, under the section, so it moves with a pan. */
 .pgv-section-card {
@@ -1297,13 +1208,6 @@
   overflow-wrap: anywhere;
 }
 
-/* A gap in the reference's walk, drawn over the strip in its own ground
-   colour, at least a screen pixel wide (LinearPathView). */
-.pgv-reference-gap {
-  fill: #e9eef8;
-  pointer-events: none;
-}
-
 /* A list in a clicked section's card: every node of its kind, scrolling
    on its own, each opening in place to what it is (LinearPathView). */
 .pgv-section-list {
@@ -1465,13 +1369,6 @@
   stroke: #facc15;
   stroke-width: 2;
   pointer-events: none;
-}
-
-/* The strip's marks: an allele with no room, drawn as a small triangle in
-   its row where its bases go in, in the marks' colour (BarCanvas). */
-.pgv-node polygon {
-  fill: #c2410c;
-  stroke: none;
 }
 
 /* A haplotype's row with nothing drawn: what the search for it along the
