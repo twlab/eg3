@@ -29,8 +29,6 @@ export const BAR_H = 60;
     from the next is the rule under it, and a gap as well left every bar
     looking as though it had been pushed down from its own name. */
 export const LANE_GAP = 0;
-/** Top to top, which is the bar itself now that nothing sits between two. */
-export const LANE_HEIGHT = LANE_H + LANE_GAP;
 /** Nothing under the last bar: the rule under it is where the drawing ends,
     and room past that read as a gap belonging to something. */
 export const FOOT_PAD = 0;
