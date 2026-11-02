@@ -33,6 +33,10 @@ interface TrackLegendProps {
       is asked for, whether this band has any of the haplotype to draw it
       from, and what the button does. */
   walks?: { on: boolean; shown: boolean; onToggle: () => void };
+  /** A short line under the label, and under the walks button where there
+      is one. Only the pangenome gives one: below a pixel a base, how many
+      deletions in view are too small to see. */
+  note?: string;
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
@@ -189,6 +193,7 @@ class TrackLegend extends React.PureComponent<
       label,
       forceSvg,
       walks,
+      note,
     } = this.props;
     if (height <= 0) {
       return null;
@@ -310,6 +315,9 @@ class TrackLegend extends React.PureComponent<
             : ""}
       </p>
     );
+    const noteText = note ? (
+      <div className="TrackLegend-note">{note}</div>
+    ) : null;
 
     return (
       <div ref={this.containerRef} style={{ ...divStyle, cursor: "pointer" }}>
@@ -347,6 +355,12 @@ class TrackLegend extends React.PureComponent<
               {walks.on && !walks.shown ? (
                 <div className="TrackLegend-walks-note">nothing here</div>
               ) : null}
+              {noteText}
+            </div>
+          ) : noteText ? (
+            <div>
+              {labelText}
+              {noteText}
             </div>
           ) : (
             labelText

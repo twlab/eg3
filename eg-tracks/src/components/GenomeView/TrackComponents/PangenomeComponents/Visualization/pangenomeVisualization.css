@@ -1,274 +1,17 @@
 /* ── Pangenome subgraph views (linear paths / tube map) ────────────────── */
 
-/* Hue carries meaning in the drawing — one colour per haplotype, orange for
-   the reference — so the chrome around it is built from value alone: ink,
-   hairlines, and one inverted state for "on".  Nothing in the panel competes
-   with a swatch for attention. */
-.pgv-panel,
+/* Hue carries meaning in the drawing — one colour per haplotype, blue for
+   the reference — so the chrome around it is built from value alone: greys
+   for its text and hairlines. */
 .pgv-shell,
 .pgv-tooltip,
 .pgv-floating-card {
-  --pgv-ink: #1b1d21;
   --pgv-ink-2: #565b63;
   --pgv-ink-3: #8a8f97;
   --pgv-rule: #d2d5da;
   --pgv-rule-soft: #e6e8ec;
-  --pgv-paper: #fdfdfd;
-  --pgv-paper-2: #f1f2f4;
   --pgv-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
     monospace;
-}
-
-/* ── Control panel ─────────────────────────────────────────────────────── */
-/* Two rows: how you are looking at it, then what you are looking at.  The
-   window's size used to be stated twice, in the toolbar and again in the
-   detail bar; it is stated once now, in the second row. */
-.pgv-panel {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  color: var(--pgv-ink);
-  background: var(--pgv-paper);
-  border: 1px solid var(--pgv-rule);
-  font:
-    400 11px/1.4 ui-sans-serif,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    Arial,
-    sans-serif;
-  user-select: none;
-}
-
-.pgv-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 10px;
-  min-height: 24px;
-  padding: 0 7px;
-}
-
-.pgv-row + .pgv-row {
-  border-top: 1px solid var(--pgv-rule-soft);
-}
-
-.pgv-row-ctx {
-  background: var(--pgv-paper-2);
-  padding-top: 1px;
-  padding-bottom: 1px;
-}
-
-.pgv-grow {
-  flex: 1;
-}
-
-/* A hairline the height of its row. */
-.pgv-vr {
-  align-self: stretch;
-  width: 1px;
-  margin: 5px 0;
-  background: var(--pgv-rule);
-}
-
-/* ── Mode picker ───────────────────────────────────────────────────────── */
-.pgv-modes {
-  display: flex;
-  margin-left: -6px;
-}
-
-.pgv-mode {
-  padding: 5px 6px;
-  font: inherit;
-  color: var(--pgv-ink-3);
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-}
-
-.pgv-mode:hover {
-  color: var(--pgv-ink);
-}
-
-.pgv-mode-on {
-  font-weight: 600;
-  color: var(--pgv-ink);
-  border-bottom-color: var(--pgv-ink);
-}
-
-/* ── Buttons ───────────────────────────────────────────────────────────── */
-.pgv-btn {
-  height: 17px;
-  min-width: 17px;
-  padding: 0 5px;
-  font: inherit;
-  color: var(--pgv-ink-2);
-  background: var(--pgv-paper);
-  border: 1px solid var(--pgv-rule);
-  border-radius: 0;
-  cursor: pointer;
-}
-
-.pgv-btn:hover {
-  color: var(--pgv-ink);
-  border-color: var(--pgv-ink-3);
-}
-
-.pgv-btn-on,
-.pgv-btn-on:hover {
-  color: var(--pgv-paper);
-  background: var(--pgv-ink);
-  border-color: var(--pgv-ink);
-}
-
-/* Butted together, so a pair reads as one stepper. */
-.pgv-group {
-  display: flex;
-}
-
-.pgv-group .pgv-btn + .pgv-btn {
-  margin-left: -1px;
-}
-
-.pgv-zoom {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* The swatch doubles as the colour picker: the input itself is hidden
-   behind it, so the square the reader already reads as the colour is the
-   square they click to change it. */
-.pgv-swatch-pick {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.pgv-swatch-pick input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: none;
-  cursor: pointer;
-}
-
-.pgv-chip-name {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-
-.pgv-chip-reset {
-  font: inherit;
-  color: var(--pgv-ink-3);
-  background: none;
-  border: none;
-  padding: 0 4px;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* A picker in the bar, worn like the buttons beside it. */
-.pgv-field {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--pgv-ink-3);
-  cursor: pointer;
-}
-
-.pgv-select {
-  height: 17px;
-  padding: 0 2px;
-  font: inherit;
-  font-family: var(--pgv-mono);
-  color: var(--pgv-ink-2);
-  background: var(--pgv-paper);
-  border: 1px solid var(--pgv-rule);
-  border-radius: 0;
-  cursor: pointer;
-}
-
-/* eg3's zoom tools: out, then in, each a sign and its three folds. */
-.pgv-zoom-tools {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.pgv-zoom-sign {
-  font-family: var(--pgv-mono);
-  color: var(--pgv-ink-3);
-}
-
-/* ── Haplotype legend, doubling as the highlight control ───────────────── */
-.pgv-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  min-width: 0;
-}
-
-.pgv-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 6px;
-  font: inherit;
-  white-space: nowrap;
-  color: var(--pgv-ink-2);
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-}
-
-.pgv-chip:hover {
-  color: var(--pgv-ink);
-}
-
-.pgv-chip-on {
-  font-weight: 600;
-  color: var(--pgv-ink);
-  border-bottom-color: var(--pgv-ink);
-}
-
-/* The drawing dims hard; a chip only has to recede. */
-.pgv-chip.pgv-dim {
-  opacity: 0.45;
-}
-
-.pgv-swatch {
-  width: 9px;
-  height: 9px;
-  border-radius: 1px;
-  flex-shrink: 0;
-}
-
-/* An allele that is one of several ways in or out says so on the side it
-   branches at. Dark enough to read over the node it sits on and over the
-   paper either side of it, since it straddles the edge. */
-.pgv-bullet {
-  cursor: pointer;
-}
-
-.pgv-bullet circle {
-  fill: #2b3550;
-  stroke: #f6f8fc;
-  stroke-width: 1;
-}
-
-.pgv-bullet:hover circle,
-.pgv-bullet-open circle {
-  fill: #007aff;
 }
 
 /* The stretch under the pointer, in the bar it is drawn in. Cyan: the one
@@ -278,107 +21,6 @@
   stroke: #22d3ee;
   stroke-width: 1.5;
   pointer-events: none;
-}
-
-/* From an open bullet to the node it names that the pointer is on. */
-.pgv-bullet-link {
-  stroke: #007aff;
-  stroke-width: 1.5;
-  stroke-dasharray: 3 2;
-  pointer-events: none;
-}
-
-.pgv-bullet text {
-  font-size: 5.5px;
-  font-weight: 600;
-  fill: #fff;
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
-}
-
-/* ── Detail readout ───────────────────────────────────────────────────── */
-/* Sits at the right of the legend row, and drops to a line of its own when
-   there are too many haplotypes to share one. */
-.pgv-detail {
-  display: flex;
-  align-items: center;
-  gap: 0 7px;
-  min-width: 0;
-  margin-left: auto;
-  padding: 3px 0;
-}
-
-.pgv-detail > * + *::before {
-  content: "·";
-  margin-right: 7px;
-  color: var(--pgv-rule);
-}
-
-.pgv-detail-key {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: var(--pgv-ink);
-}
-
-.pgv-detail-val {
-  font-family: var(--pgv-mono);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  color: var(--pgv-ink);
-}
-
-.pgv-detail-note {
-  white-space: nowrap;
-  color: var(--pgv-ink-2);
-}
-
-/* An instruction, not another field, so it stays out of the dotted run. */
-.pgv-detail-hint {
-  margin-left: 4px;
-  color: var(--pgv-ink-3);
-}
-
-.pgv-detail-hint::before {
-  content: none !important;
-}
-
-.pgv-detail-seq {
-  max-width: 24ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--pgv-mono);
-  color: var(--pgv-ink-2);
-  background: var(--pgv-paper);
-  border: 1px solid var(--pgv-rule-soft);
-  padding: 0 4px;
-}
-
-/* Drops the current pick and goes back to describing the whole window. */
-.pgv-x {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  font-size: 12px;
-  line-height: 1;
-  color: var(--pgv-ink-3);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.pgv-x:hover {
-  color: var(--pgv-ink);
-}
-
-.pgv-x::before {
-  content: none !important;
 }
 
 /* ── Canvas ────────────────────────────────────────────────────────────── */
@@ -402,17 +44,6 @@
   overflow: hidden;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-}
-
-/* ── The names down the left ───────────────────────────────────────────
-   Pinned over the drawing rather than drawn into it, so panning and
-   zooming leave it where it is. It paints the page colour behind itself
-   because the bars run underneath. */
-/* The row that holds the legend and the drawing side by side. */
-.pgv-canvas-row {
-  display: flex;
-  align-items: stretch;
-  width: max-content;
 }
 
 /* The bars are canvases, stacked down the drawing at the offsets the
@@ -446,37 +77,15 @@
   pointer-events: none;
 }
 
-/* While the band is being moved the drawing is a picture, not a set of
-   targets: a pointer crossing forty nodes on its way past should not
-   light them up, and the release that ends the drag is not a click on
-   whatever happened to be underneath. The tooltip goes with them - with
-   no pointer events there is no mouseout to clear it, so it would hang
-   on the last thing hovered before the drag began.
-
-   Everything in the drawing, not the SVG layer alone: the bars are
-   canvases of their own now, and a rule naming the layer over them left
-   every bar still taking hovers and the click that ends a pan. The second
-   selector reaches the pieces that turn their own hearing back on, which
-   one level of selector could not outrank. */
-.pgv-dragging .pgv-canvas,
-.pgv-dragging .pgv-canvas * {
-  pointer-events: none;
-}
-
-.pgv-dragging .pgv-tooltip {
-  display: none !important;
-}
-
 /* Never scrolls sideways. The drawing is exactly the band wide and the band
-   is moved by translating it, so there is nothing here to scroll to - but the
-   shell around it is width:100% with a 1px border, and box-sizing is
-   border-box the whole way down, so its content box comes out two pixels
-   narrower than the drawing it holds. Two pixels is all an auto overflow needs
-   to put a scrollbar across the foot of the view.
+   is moved by translating it, so there is nothing here to scroll to. The
+   shell's outline takes no room (see .pgv-shell), so the drawing fits; the
+   clip makes sure it always does, as a pixel too wide is all an auto
+   overflow needs to put a scrollbar across the foot of the view.
 
    Clipped rather than fixed by narrowing the drawing: its width is the band
    width the pan offset and the window slot are both measured in, and taking
-   two pixels off it would move every one of those by a base or so. */
+   pixels off it would move every one of those by a base or so. */
 .pgv-canvas {
   position: relative;
   flex: 1;
@@ -493,18 +102,10 @@
    A bar gives a base two or three pixels, so its letters are unreadable
    long before the data stops being interesting. This is where they can be
    read: a line of sequence around wherever the pointer is, with that one
-   base picked out. */
-.pgv-zoom {
-  margin-top: 5px;
-  padding-top: 5px;
-  border-top: 1px solid var(--pgv-rule-soft);
-}
+   base picked out. A card's is styled with the cards, below.
 
-/* The toolbar has a control of the same name, and it is a flex row. This one
-   stacks - the sequence, then where it is - and a row put them side by side
-   and squeezed the sequence to nothing once it began clipping its overflow.
-
-   It comes first in the tooltip, so the rule that separates it from the rest
+   In the tooltip: the sequence, then where it is, one under the other. It
+   comes first in the tooltip, so the rule that separates it from the rest
    goes under it rather than over it. */
 .pgv-tooltip .pgv-zoom {
   display: block;
@@ -546,62 +147,7 @@
   color: var(--pgv-ink-3);
 }
 
-/* ── Ruler ─────────────────────────────────────────────────────────────── */
-.pgv-ruler line {
-  stroke: #b9c4d6;
-  stroke-width: 1;
-}
-
-/* A labelled mark stands taller than the nine between it and the next. */
-.pgv-tick-major {
-  stroke: #8a8f97;
-  stroke-width: 1;
-}
-
-.pgv-tick-minor {
-  stroke: #c2c6cc;
-  stroke-width: 1;
-}
-
-.pgv-ruler text {
-  font-size: 10.5px;
-  fill: #6b7a93;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Linear path view ──────────────────────────────────────────────────── */
-.pgv-lane {
-  cursor: pointer;
-}
-
-.pgv-lane-track {
-  fill: #e3e9f4;
-}
-
-.pgv-lane-label {
-  font-size: 11.5px;
-  fill: #46536c;
-  text-anchor: end;
-  dominant-baseline: auto;
-}
-
-/* The dot that marks the reference, in the reference colour. The amber
-   elsewhere means "under the pointer", which is a different thing. */
-.pgv-ref-dot {
-  fill: #30afff;
-}
-
-.pgv-alt-hatch {
-  pointer-events: none;
-}
-
-/* Under the ruler: the shell's own colour, so it is invisible where the
-   ruler is sitting in its own slot and hides the bars when it floats. */
-.pgv-ruler-ground {
-  fill: #f6f8fc;
-  pointer-events: none;
-}
-
+/* ── Linear view ───────────────────────────────────────────────────────── */
 /* A walk row's name: which reading the row is. Inside the drawing rather
    than in a gutter to its left, so it reads from its own x rather than
    back towards it. */
@@ -612,36 +158,10 @@
   text-anchor: start;
 }
 
-/* Size is set per-render from the zoom so a glyph is exactly one base wide;
-   see sequenceFontSize in nodeDetail.ts. */
-.pgv-seq {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  fill: #fff;
-  pointer-events: none;
-  letter-spacing: 0;
-}
-
 /* ── Tube map view ─────────────────────────────────────────────────────── */
-.pgv-tube-node rect {
-  fill: #e7ecf6;
-  stroke: #9dabc6;
-  stroke-width: 1;
-}
-
-.pgv-tube-node.pgv-node-alt rect {
-  fill: #f3eadf;
-  stroke: #c9ab7e;
-  stroke-dasharray: 3 2;
-}
-
-.pgv-node-id {
-  font-size: 10.5px;
-  fill: #7a879e;
-  text-anchor: middle;
-}
-
-/* The tube map: one canvas, with the ruler drawn over it in the same
-   coordinates - the arrangement the linear view uses for its bars. */
+/* The tube map: one canvas on the band, as the linear view's bars are, so
+   eg3's ruler track above it gives its coordinates. It has no ruler of its
+   own. */
 .pgv-tube {
   position: relative;
 }
@@ -656,33 +176,6 @@
   stroke: var(--pgv-rule-soft, #e6e8ec);
   stroke-width: 1;
   pointer-events: none;
-}
-
-.pgv-tube-line {
-  stroke-width: 2.75;
-  stroke-linecap: round;
-  fill: none;
-}
-
-.pgv-tube-seam {
-  stroke-width: 1.5;
-  stroke-dasharray: 3 4;
-  opacity: 0.55;
-  fill: none;
-}
-
-/* Sequences sit under the node boxes, where tubes dipping to a minority
-   allele cross them; the halo keeps the letters readable through a tube. */
-.pgv-seq-over {
-  fill: #26314a;
-  stroke: #f6f8fc;
-  stroke-width: 2.5px;
-  paint-order: stroke fill;
-}
-
-/* ── Dimming when one haplotype is picked out ──────────────────────────── */
-.pgv-dim {
-  opacity: 0.18;
 }
 
 /* ── Tooltip ───────────────────────────────────────────────────────────── */
@@ -727,133 +220,13 @@
   overflow-wrap: anywhere;
 }
 
-/* ── Picked node ──────────────────────────────────────────────────────── */
-.pgv-tube-node.pgv-node-picked rect {
-  stroke: #2e6fc4;
-  stroke-width: 2.5;
-}
-
-.pgv-tube-node {
-  cursor: pointer;
-}
-
-/* ── Node graph view ──────────────────────────────────────────────────── */
-.pgv-graph-node rect {
-  fill: #e7ecf6;
-  stroke: #7b8db0;
-  stroke-width: 1.5;
-}
-
-.pgv-graph-node.pgv-node-alt rect {
-  fill: #f3eadf;
-  stroke: #c9ab7e;
-}
-
-.pgv-graph-edge {
-  fill: none;
-  stroke: #7b8db0;
-  stroke-linecap: round;
-  opacity: 0.75;
-  cursor: pointer;
-}
-
-.pgv-graph-edge:hover {
-  stroke: #2e6fc4;
-  opacity: 1;
-}
-
-/* A connection that jumps over other nodes, drawn above the row. */
-.pgv-graph-skip {
-  stroke: #b8863a;
-  stroke-dasharray: 5 3;
-  opacity: 0.85;
-}
-
-/* Expanded mode: one strand per haplotype, and the short run inside a node
-   that keeps a strand looking continuous when it lands and leaves at
-   different heights. */
-.pgv-graph-strand {
-  fill: none;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  cursor: pointer;
-}
-
-.pgv-graph-strand-skip {
-  stroke-dasharray: 5 3;
-  opacity: 0.9;
-}
-
-/* Only drawn for a picked node or haplotype, so it can be full strength. */
-.pgv-graph-through {
-  fill: none;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  pointer-events: none;
-}
-
-/* An opened node is a container for its strands, so it recedes. */
-.pgv-graph-node-open rect {
-  fill: #eef2f9;
-  stroke: #aab6cc;
-}
-
-.pgv-graph-node-open.pgv-node-alt rect {
-  fill: #f7f1e7;
-  stroke: #cdb389;
-}
-
-/* ── Alleles shown under their own haplotype's bar ────────────────────── */
-.pgv-allele {
-  cursor: pointer;
-}
-
-/* The allele box is gone - what it said is spelled into the hatching now -
-   so all that is left under .pgv-allele is the span that takes the pointer.
-   These have to name it rather than its rects: the chips the letters stand on
-   are rects too, and a descendant selector outranks their own class, which
-   painted every one of them slate blue. */
-.pgv-allele-hit {
-  fill: transparent;
-  stroke-width: 2;
-  /* A transparent fill is painted with no colour, and whether that counts as
-     a target is left to the browser under the default visiblePainted. Saying
-     so outright settles it. */
-  pointer-events: all;
-}
-
-.pgv-allele.pgv-node-picked .pgv-allele-hit {
-  stroke: #2e6fc4;
-  stroke-width: 2.5;
-}
-
-/* A letter sits in a box of its own, painted over the hatching so that no
-   diagonal crosses the glyph. Black behind white: 21:1, which still holds
-   at the four pixels a letter shrinks to at a wide zoom. */
-.pgv-seq-chip {
-  fill: #000;
-  pointer-events: none;
-}
-
-/* The face comes from .pgv-seq, which every sequence in the drawing shares:
-   monospace, so a glyph is the width of the base it spells. */
-.pgv-allele-seq {
-  fill: #fff;
-  pointer-events: none;
-}
-
-/* ── Nodes belonging to the stretch of bar under the pointer ──────────── */
-/* What is under the pointer. Cyan: the one hue the haplotype palette does
-   not use, so it reads on a green bar as well as on a plum one. The amber
-   it replaces was the sand lane's own colour. */
-.pgv-allele.pgv-node-lit .pgv-allele-hit {
-  stroke: #22d3ee;
-  stroke-width: 2.5;
-}
-
-/* ── Sections, zoomed out ─────────────────────────────────────────────── */
-/* What a clicked section was made from. Placed in the band's own
-   coordinates, under the section, so it moves with a pan. */
+/* ── Cards ─────────────────────────────────────────────────────────────── */
+/* What every card shares: what a hover shows and a click keeps in the
+   linear view (Cards.tsx), and the card a site opens in the variants view
+   or the grouped tube map (VariantCard.tsx). Each is placed against the
+   window: see .pgv-floating-card and .pgv-hover-card below. The class
+   names, pgv-section-..., are left from the zoomed-out sections' card,
+   which is gone. */
 .pgv-section-card {
   position: absolute;
   z-index: 15;
@@ -883,7 +256,7 @@
 }
 
 /* A sequence in a card, all of it: inline while short, and past that in a
-   box of its own that scrolls - see cardSequence in LinearPathView. */
+   box of its own that scrolls - see cardSequence in Cards.tsx. */
 .pgv-card-seq {
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
     monospace;
@@ -931,6 +304,21 @@
 
 .pgv-section-close:hover {
   color: #fff;
+}
+
+/* A card's button, under its lines: "Zoom in here" on a zoomed-out bar's
+   bin (Cards.tsx), in the card's own colours. Only a kept card has it:
+   the hover card lets clicks through, so it could not be pressed there. */
+.pgv-section-card .pgv-card-action {
+  display: block;
+  margin: 5px 0 1px;
+  padding: 1px 8px;
+  font: inherit;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+  cursor: pointer;
 }
 
 /* ── Variants view ─────────────────────────────────────────────────────── */
@@ -1103,46 +491,8 @@
   pointer-events: none;
 }
 
-/* ── eg3's tracks: their names in the legend column (VisualManager) ──── */
-.pgv-eg-legend {
-  box-sizing: border-box;
-  padding: 2px 6px;
-  overflow: hidden;
-  border-top: 1px solid #d2d5da;
-  font: 600 11px/14px ui-sans-serif, system-ui, sans-serif;
-  color: #3a4150;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  background: #fff;
-}
-.pgv-eg-track {
-  border-top: 1px solid #d2d5da;
-  background: #fff;
-}
-.pgv-eg-error {
-  padding: 4px 6px;
-  font: 11px/14px ui-sans-serif, system-ui, sans-serif;
-  color: #b42318;
-}
-.pgv-eg-legend-path {
-  display: block;
-  font-weight: 500;
-  font-size: 9px;
-  line-height: 11px;
-  color: #8a8f97;
-  letter-spacing: 0.02em;
-}
-
-/* A hover kept open by a click (LinearPathView): its lines can carry a
-   node's whole sequence, so they wrap rather than run the card off wide. */
-.pgv-section-card.pgv-detail-card {
-  white-space: pre-wrap;
-  max-width: 440px;
-  overflow-wrap: anywhere;
-}
-
-/* A list in a clicked section's card: every node of its kind, scrolling
-   on its own, each opening in place to what it is (LinearPathView). */
+/* A list in a card, scrolling on its own, each item opening in place to
+   what it is (Cards.tsx). */
 .pgv-section-list {
   max-height: 168px;
   overflow-y: auto;
@@ -1231,22 +581,8 @@
   color: #d9c6f7;
 }
 
-/* One of a multiple variant's changes, in what it opens to: set in from
-   the line that says what it is made of. */
-.pgv-variant-part {
-  display: inline-block;
-  padding-left: 1.1em;
-}
-
-/* On one line, as the variant's own line is: wrapped, a coordinate broke
-   in two. */
-.pgv-section-detail:has(> .pgv-variant-part) {
-  max-width: none;
-  white-space: nowrap;
-}
-
-/* The card a hover shows in the zoomed-in linear view, following the
-   pointer; a click keeps it as a floating card (LinearPathView). */
+/* The card a hover shows in the linear view, following the pointer; a
+   click keeps it as a floating card (Cards.tsx and LinearView.tsx). */
 .pgv-section-card.pgv-hover-card {
   position: fixed;
   z-index: 99998;
@@ -1282,25 +618,12 @@
   color: #8f959c;
 }
 
-/* The nodes either side of the one a card is about, headed in the yellow
-   they are outlined in. */
-.pgv-section-head.pgv-head-near {
-  color: #facc15;
-}
-
-/* What a kept card is about, outlined where it is drawn: the node itself
-   in the hover's cyan, the nodes either side of it in yellow. */
+/* What a kept card is about, outlined where it is drawn, in the hover's
+   cyan. */
 .pgv-kept-node {
   fill: none;
   stroke: #22d3ee;
   stroke-width: 2.5;
-  pointer-events: none;
-}
-
-.pgv-kept-near {
-  fill: none;
-  stroke: #facc15;
-  stroke-width: 2;
   pointer-events: none;
 }
 
@@ -1316,4 +639,32 @@
   color: #64748b;
   white-space: nowrap;
   cursor: default;
+}
+
+/* A haplotype's row past the size limit, where nothing was fetched: a box
+   the band's width, so a pan shows no blank stretch, in the colours of
+   eg3's own "Please zoom in" box (displayModeComponentMap.tsx), which is
+   as wide; the words over the view. A click does nothing: zooming in is
+   what fetches. The track's own cursor stays, as the view still pans. */
+.pgv-zoom-in {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  background: #dff1f1;
+  color: #254c53;
+  border-radius: 8px;
+  font-family: "Google Sans", Roboto, sans-serif;
+  font-size: 16px;
+}
+
+.pgv-zoom-in > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }

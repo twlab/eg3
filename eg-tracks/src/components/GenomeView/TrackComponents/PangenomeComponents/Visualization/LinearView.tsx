@@ -1,15 +1,19 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Jump, LinearLane, LinearModel, LinearNode, OpenEnd, Reading } from "./linearModel";
+import type { Copy, Jump, LinearLane, LinearModel, LinearNode, OpenEnd, Reading } from "./linearModel";
 import type { LinearAxis } from "./linearAxis";
-import { rasteriseBar } from "./barRaster";
-import type { BarRaster, EndCap, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
-import BarCanvas, { MARK_BAND } from "./BarCanvas";
-import type { BarTarget } from "./BarCanvas";
+import { hitAt, rasteriseBar } from "./barRaster";
+import type { BarRaster, EndCap, MarkGlyph, RasterKeep, RasterPart, WhiteRun } from "./barRaster";
+import { binBpAt, modelBins } from "./bins";
+import type { BinVariant, Bins, CopyRun, ModelBins, VariantKind } from "./bins";
+import { barRow, barTiers, dupDrawing, hiddenWhites, walkRow } from "./barTiers";
+import type { BarTiers, CopyDrawing, TierAxis, TierWhite } from "./barTiers";
+import BarCanvas, { DUP_BAND, MARK_BAND } from "./BarCanvas";
+import type { BarTarget, DupHit } from "./BarCanvas";
 import { CardBody, HoverCard, cardKeptOpen, cardSequence } from "./Cards";
 import type { CardContent, CardItem, CardZoom, HoverCardHandle } from "./Cards";
 import FloatingCard from "./FloatingCard";
-import { laneLayout } from "./laneLayout";
+import { dupRowsOf, laneLayout } from "./laneLayout";
 import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
 import type { BrowserClass, Bubble } from "./alignment";
@@ -29,24 +33,42 @@ import type { BrowserClass, Bubble } from "./alignment";
 
    A hover shows a card and a click keeps it. Zoomed in and at mid zoom -
    while a base has a pixel - the bars are drawn part by part, lettered
-   where a letter fits. Zoomed out past a pixel a base, they are hatched
-   and, further out, read a section at a time: a section is a run of the
-   reference's nodes, joined until it is SECTION_PX wide.
+   where a letter fits, and the card is of the part under the pointer.
+   Zoomed out past a pixel a base, each row is added up into bins (bins.ts)
+   and drawn from what barTiers.ts says it draws of them: white gaps at
+   their true width, ticks, grey stripes, big variants as themselves,
+   arrows. There a hover or a click reads the bin round the pointer, the
+   smallest grid bin at least HOVER_BIN_PX wide: its card adds up what the
+   haplotype does there, lists its variants, and can zoom in on it. A
+   variant drawn as itself keeps its own card, as at mid zoom.
 
-   "Show walks" draws a haplotype's readings a row each instead of its one
-   bar: the same parts, each reading's own, over the reference it anchors
-   to, in walk order.
+   A duplication is a stretch of the walk that reads again nodes it read
+   before (linearModel.ts, Copy; PLAN-duplications.md). The bar draws the
+   walk aligned whole, so a copy shows where the walk has it: inserted, or
+   in place of other reference. At a pixel a base or more the rule's marks
+   go in a band below the bar (BarCanvas.tsx's DUP_BAND): a border round
+   the original, a dotted line with one number under both an original and
+   its dispersed copy, and a pointer where a copy is inserted, "tandem ×2".
+   Zoomed out, the copies line along the bar's bottom edge says how many
+   times the haplotype has a stretch (barTiers.ts's copyDrawing, from
+   bins.ts's copy runs).
+
+   "Show walks" draws a row per dispersed copy instead of the haplotype's
+   one bar: the copy aligned on its own, lined up on its original. A walk
+   row has no copies line and no band below.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* Below a pixel a base, the bars are hatched in sections; above it a base
-   is drawn as itself, lettered or not: that is what mid zoom is. */
-const SECTIONS_BELOW_PX_PER_BASE = 1;
-/* Neighbouring reference nodes are joined into a section until it is this
-   wide. */
-const SECTION_PX = 16;
-/* A bar is read part by part out to this many bases a pixel, as
-   genomealign's fine mode is; past it, a section at a time. */
-export const BAR_NODE_BASES_PER_PX = 10;
+/* Below a pixel a base the view is zoomed out: each row is added up into
+   bins, and drawn and read by them. At a pixel a base or more a base is
+   drawn as itself, lettered or not: that is what mid zoom is. */
+const ZOOMED_OUT_BELOW_PX_PER_BASE = 1;
+/** Zoomed out, a hover or a click reads the bin round the pointer: the
+    smallest grid bin at least this many pixels wide (bins.ts's binBpAt),
+    so it is easy to hit, and the same stretch of the reference from any
+    band. */
+const HOVER_BIN_PX = 16;
+/** How many variants each of a bin card's lists shows, the largest first. */
+const BIN_CARD_VARIANTS = 6;
 /** A walk row's bar, and the room above it for its name. */
 export const WALK_ROW_H = 36;
 const WALK_ROW_GAP = 14;
@@ -62,34 +84,53 @@ export function linearHeight(model: LinearModel): number {
 /** The haplotype a model drawn as one track row holds. */
 const laneOf = (model: LinearModel) => model.lanes.find((lane) => !lane.isReference);
 
-/** A haplotype's readings in walk order, those the bar draws. */
+/** A haplotype's readings in walk order, those the bar draws: one per
+    piece of its walk. */
 const readingsOf = (lane: LinearLane) => lane.readings.filter((reading) => reading.drawn);
-/** A reading's number as the cards and the walk rows give it: its place
-    among the readings drawn, from 1, scraps left out. Null for a scrap,
-    which has no row and so no number. */
+/** A reading's number as the cards give it: its place among the readings
+    drawn, from 1, scraps left out. Null for a scrap. */
 const readingNo = (lane: LinearLane, index: number): number | null => {
   const at = readingsOf(lane).findIndex((reading) => reading.index === index);
   return at >= 0 ? at + 1 : null;
 };
+/** A haplotype's walk rows: its dispersed copies with a row, in walk
+    order. */
+const rowsOf = (lane: LinearLane) => lane.copies.filter((copy) => copy.drawn);
+/** A copy's number as the cards and the walk rows give it: its place among
+    the rows, from 1; null for a copy with no row. */
+const copyNo = (lane: LinearLane, index: number): number | null => {
+  const at = rowsOf(lane).findIndex((copy) => copy.index === index);
+  return at >= 0 ? at + 1 : null;
+};
+/** A copy's kind and times in words: "dispersed ×2", "inverted tandem ×3". */
+const copyKind = (copy: Copy) => `${copy.inverted ? "inverted " : ""}${copy.kind} ×${copy.times}`;
 
 /** Whether "Show walks" has anything to draw for this band's haplotype. */
 export function walksShown(model: LinearModel): boolean {
   const lane = laneOf(model);
-  return !!lane && readingsOf(lane).length > 0;
+  return !!lane && rowsOf(lane).length > 0;
 }
 
-/** How tall the walks are: a row per reading. */
+/** How tall the walks are: a row per dispersed copy. */
 export function walksHeight(model: LinearModel): number {
   const lane = laneOf(model);
-  const rows = Math.max(1, lane ? readingsOf(lane).length : 0);
+  const rows = Math.max(1, lane ? rowsOf(lane).length : 0);
   return walkRowTop(rows) - WALK_ROW_GAP + WALK_FOOT;
 }
 
-/** A section of the band, zoomed out: neighbouring reference nodes read as
-    one. */
-interface Section {
-  left: number;
-  right: number;
+/** How many deletions in view this band's haplotype leaves undrawn,
+    narrower than half a CSS pixel at this zoom: barTiers.ts's hidden
+    whites over the rows drawn, its bar or, with its walk shown, every walk
+    row. Measured in CSS pixels, as the rows are, so it is the same on any
+    screen. Its track legend says so ("23 deletions too small to see").
+    None at a pixel a base or more, where the rows are not binned. */
+export function hiddenDeletions(model: LinearModel, axis: TierAxis, walks: boolean): number {
+  if (axis.scale >= ZOOMED_OUT_BELOW_PX_PER_BASE) return 0;
+  const lane = laneOf(model);
+  if (!lane) return 0;
+  const rows = walks && walksShown(model) ? rowsOf(lane).map((copy) => walkRow(lane, copy)) : [barRow(lane)];
+  /* The bins' grid ends where the band does (bins.ts). */
+  return rows.reduce((n, row) => n + hiddenWhites(model, row, axis), 0);
 }
 
 /** What a kept card is about, outlined in the drawing. */
@@ -98,7 +139,8 @@ type CardTarget =
   | { kind: "mark"; row: string; glyph: number }
   | { kind: "white"; row: string; white: number }
   | { kind: "end"; row: string; cap: number }
-  | { kind: "section"; row: string; left: number; right: number };
+  | { kind: "bin"; row: string; from: number; to: number }
+  | { kind: "dup"; row: string; copy: number };
 
 interface KeptCard extends CardContent {
   x: number;
@@ -110,11 +152,35 @@ interface KeptCard extends CardContent {
 interface BarRow {
   key: string;
   lane: LinearLane;
-  /** The reading, when the row is one of a walk's. */
-  reading: Reading | null;
+  /** The copy, when the row is one of a walk's: a dispersed copy aligned
+      on its own. */
+  reading: Copy | null;
   top: number;
   height: number;
   raster: BarRaster;
+  /** Zoomed out: the row's bins and what it draws of them; null at a pixel
+      a base or more. */
+  bins: Bins | null;
+  tiers: BarTiers | null;
+  /** A bar's copies line, at every zoom; null on a walk row. */
+  copies: CopyDrawing | null;
+}
+
+/** What a zoomed-out row's raster keeps (barTiers.ts): the marks kept as
+    glyphs, and the whites wide enough to draw. */
+function keepOf(tiers: BarTiers): RasterKeep {
+  const marks = new Set(tiers.keptMarks);
+  const parts = new Set<number>();
+  const outs = new Set<number>();
+  for (const white of tiers.whites) {
+    if (!white.drawn) continue;
+    if (white.part !== null) parts.add(white.part);
+    else if (white.out !== null) outs.add(white.out);
+  }
+  return {
+    keepMark: (index) => marks.has(index),
+    keepWhite: (part, out) => (part !== null ? parts.has(part) : out !== null && outs.has(out)),
+  };
 }
 
 interface LinearViewProps {
@@ -122,11 +188,11 @@ interface LinearViewProps {
   axis: LinearAxis;
   /** Lane key to keep lit; every other lane is dimmed. */
   highlight: string | null;
-  /** Zoomed out, a haplotype's section is hatched only where more than
-      this many of its bases there are off the reference. */
-  sectionAltBp?: number;
-  /** One haplotype's row drawn as its readings, a row each. */
+  /** One haplotype's row drawn as its dispersed copies, a row each. */
   walks?: boolean;
+  /** Moves the view to [start, end) of the reference's contig: what a bin
+      card's "Zoom in here" does. Without it the card has no such button. */
+  onZoomTo?: (start: number, end: number, contig?: string) => void;
 }
 
 const plural = (n: number, word: string) => `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
@@ -145,13 +211,36 @@ const VARIANT_CLASS: Record<string, string> = {
 };
 const className = (cls: BrowserClass) =>
   cls === "mismatch+gap" ? "mismatches, then a gap" : cls === "replacement" ? "replacement" : cls;
+/** A bin card's variants, by kind (bins.ts): the colour of each, the
+    order they are counted in (inversions apart, as they are not counted),
+    and what eg3's alignment calls the kind where its name differs. A
+    deletion-insertion is named by its bubble's class instead, a
+    replacement or a mismatch+gap. */
+const KIND_CLASS: Record<VariantKind, string> = {
+  SNV: "pgv-var-sub",
+  MNV: "pgv-var-sub",
+  insertion: "pgv-var-ins",
+  deletion: "pgv-var-del",
+  "deletion-insertion": "pgv-var-multi",
+  inversion: "pgv-var-inv",
+  duplication: "",
+};
+const KIND_ORDER: VariantKind[] = ["SNV", "MNV", "insertion", "deletion", "deletion-insertion", "duplication"];
+const EG3_NAME: Partial<Record<VariantKind, string>> = { SNV: "mismatch", MNV: "substitution", duplication: "copies" };
+/** The part under the pointer, in a bin card's words. */
+const PART_WORDS: Partial<Record<RasterPart["kind"], string>> = {
+  match: "bases as the reference has them",
+  mismatch: "a changed base",
+  replaced: "a deletion-insertion's bases",
+  inverted: "bases read on the other strand",
+};
 
 function LinearView({
   model,
   axis,
   highlight,
-  sectionAltBp = 0,
   walks = false,
+  onZoomTo,
 }: LinearViewProps) {
   const { px, width, scale } = axis;
   const contig = model.contig;
@@ -189,30 +278,49 @@ function LinearView({
   /* ── Rows ────────────────────────────────────────────────────────────── */
   const layout = useMemo(() => laneLayout(model), [model]);
   const walkLane = walks ? laneOf(model) : undefined;
+  /* Zoomed out, every row of every lane in bins of the size this zoom
+     gives, on the one grid all lanes share (bins.ts). */
+  const binned = useMemo<ModelBins | null>(
+    () => (scale < ZOOMED_OUT_BELOW_PX_PER_BASE ? modelBins(model, binBpAt(scale)) : null),
+    [model, scale],
+  );
   const rows = useMemo<BarRow[]>(() => {
-    const make = (key: string, lane: LinearLane, reading: Reading | null, top: number, height: number): BarRow => ({
-      key,
-      lane,
-      reading,
-      top,
-      height,
-      raster: rasteriseBar(
+    const make = (key: string, lane: LinearLane, reading: Copy | null, top: number, height: number): BarRow => {
+      /* Zoomed out: the row's bins, what it draws of them, and a raster
+         that keeps only the marks and whites drawn. */
+      const laneBins = binned?.lanes.find((candidate) => candidate.key === lane.key);
+      const bins = (reading ? laneBins?.readings.find((row) => row.index === reading.index)?.bins : laneBins?.bar) ?? null;
+      const tiers = binned && bins ? barTiers(binned, bins, reading ? walkRow(lane, reading) : barRow(lane), axis) : null;
+      /* A bar's copies: zoomed out, the tiers' copies line, where a copied
+         stretch too narrow for a line gets a marker; at a pixel a base or
+         more, the duplication rule's marks below the bar alone. */
+      const copies = reading ? null : tiers ? tiers.copies : { lines: [], markers: [], labels: [], ...dupDrawing(lane, axis) };
+      return {
         key,
-        reading ? reading.parts : lane.drawn,
-        reading ? reading.outOfBand : lane.outOfBand,
-        reading ? reading.openEnds : lane.openEnds,
-        lane.readings,
-        model.graph,
-        px,
-        width,
-        axis.startBp,
-        axis.endBp,
-      ),
-    });
+        lane,
+        reading,
+        top,
+        height,
+        bins,
+        tiers,
+        copies,
+        raster: rasteriseBar(
+          key,
+          reading ? reading.parts : lane.drawn,
+          reading ? reading.outOfBand : lane.outOfBand,
+          reading ? reading.openEnds : lane.openEnds,
+          reading ? lane.copies : lane.readings,
+          model.graph,
+          px,
+          width,
+          axis.startBp,
+          axis.endBp,
+          tiers ? keepOf(tiers) : undefined,
+        ),
+      };
+    };
     if (walkLane) {
-      return readingsOf(walkLane).map((reading, k) =>
-        make(`${walkLane.key} reading ${reading.index}`, walkLane, reading, walkRowTop(k), WALK_ROW_H),
-      );
+      return rowsOf(walkLane).map((copy, k) => make(`${walkLane.key} copy ${copy.index}`, walkLane, copy, walkRowTop(k), WALK_ROW_H));
     }
     const out: BarRow[] = [];
     for (const row of layout.rows) {
@@ -220,38 +328,64 @@ function LinearView({
       if (lane) out.push(make(lane.key, lane, null, row.top, row.height));
     }
     return out;
-  }, [model, axis, px, width, layout, walkLane]);
+  }, [model, axis, px, width, layout, walkLane, binned]);
   const rowByKey = useMemo(() => new Map(rows.map((row) => [row.key, row])), [rows]);
   const height = walkLane ? walksHeight(model) : layout.height;
-
-  /* ── Sections, zoomed out ───────────────────────────────────────────── */
-  /* The reference's nodes, each where its walk first reads it, joined
-     until a section is SECTION_PX wide: zoomed out, the bars are hatched
-     by section and, past BAR_NODE_BASES_PER_PX, read a section at a time. */
-  const sections = useMemo<Section[] | null>(() => {
-    if (scale >= SECTIONS_BELOW_PX_PER_BASE) return null;
-    const out: Section[] = [];
-    const seen = new Set<string>();
-    let open: Section | null = null;
-    for (let k = 0; k < model.refSteps.length; k++) {
-      const id = model.refSteps[k].id;
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const left = px(model.origin + model.refOffset[k]);
-      const right = px(model.origin + model.refOffset[k + 1]);
-      if (open && (left < open.right - 0.5 || open.right - open.left < SECTION_PX)) {
-        open.right = Math.max(open.right, right);
-        continue;
+  /* In development, each zoomed-out row's bins and tiers on the window by
+     its key, with the axis they were made at, for the check harness to
+     read what the page drew from (claude-memory/testing), as the model is
+     (VisualizationContainer). */
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === "undefined") return;
+    const w = window as unknown as { __pgvBins?: Record<string, unknown>; __pgvTiers?: Record<string, unknown> };
+    const bins = (w.__pgvBins ??= {});
+    const tiers = (w.__pgvTiers ??= {});
+    const at = {
+      scale: axis.scale,
+      startBp: axis.startBp,
+      endBp: axis.endBp,
+      width: axis.width,
+      viewFromPx: axis.viewFromPx,
+      viewToPx: axis.viewToPx,
+    };
+    for (const row of rows) {
+      if (binned && row.bins && row.tiers) {
+        const { binBp, first, count, origin, end, contig } = binned;
+        bins[row.key] = { ...at, binBp, first, count, origin, end, contig, bins: row.bins };
+        tiers[row.key] = { ...at, binBp, tiers: row.tiers };
+      } else {
+        delete bins[row.key];
+        delete tiers[row.key];
       }
-      open = { left, right: Math.max(right, left + 1) };
-      out.push(open);
     }
-    return out;
-  }, [model, px, scale]);
-  useEffect(() => setCard(null), [sections]);
-  const barsByNode = !sections || 1 / scale < BAR_NODE_BASES_PER_PX;
-  const sectionAt = (x: number) =>
-    sections?.find((section) => x >= section.left && x < section.right) ?? null;
+  }, [rows, axis, binned]);
+
+  /* ── Bins, zoomed out ───────────────────────────────────────────────── */
+  /* A hover or a click reads the bin round the pointer: a grid bin of
+     hoverBp bases, the smallest at least HOVER_BIN_PX wide, cut to the
+     band. It holds whole drawn bins, both being powers of two on the one
+     grid from base 0, and is the same stretch from any band. */
+  const hoverBp = binned ? binBpAt(scale, HOVER_BIN_PX) : 0;
+  const binAt = (at: number): { from: number; to: number } | null => {
+    if (!binned || !(hoverBp > 0)) return null;
+    const k = Math.floor(axis.bpAt(at) / hoverBp);
+    const from = Math.max(binned.origin, k * hoverBp);
+    const to = Math.min(binned.end, (k + 1) * hoverBp);
+    return to > from ? { from, to } : null;
+  };
+  /* A kept card closes when the grid changes: a new band, or a zoom. */
+  useEffect(() => setCard(null), [binned]);
+  /* "Zoom in here": the bin's middle, with as many bases round it as the
+     view is pixels wide, so the view lands at a pixel a base, mid zoom. A
+     whole number of bases just under the pixels, so it is never a hair
+     under a pixel a base, which is still zoomed out. */
+  const zoomTo = (from: number, to: number) => {
+    if (!onZoomTo) return;
+    const bases = Math.max(1, Math.floor(axis.viewToPx - axis.viewFromPx));
+    const start = Math.round((from + to) / 2 - bases / 2);
+    setCard(null);
+    onZoomTo(start, start + bases, contig);
+  };
 
   /* ── What the cards say ─────────────────────────────────────────────── */
   /** The reference's bases over a stretch of it, from the reference walk. */
@@ -356,10 +490,35 @@ function LinearView({
       jump.reading === undefined
         ? ", past what this reading reads"
         : no !== null
-          ? ` (reading ${no})`
+          ? ` (in piece ${no} of its walk)`
           : ", in a stretch with nothing on the reference here";
     return `${jump.before ? "the walk comes from" : "the walk goes on at"} ${where(jump.to)}${jump.reverse ? ", read backward" : ""}${which}`;
   };
+  /** The reading a row's part belongs to: the copy on a walk row, else the
+      lane's reading the part names. */
+  const readingFor = (row: BarRow, part: { reading: number }): Reading => row.reading ?? row.lane.readings[part.reading];
+  /** A copy as a card line: its number, kind, own coordinates and where
+      the bar draws it. */
+  const copyLine = (lane: LinearLane, copy: Copy): ReactNode => (
+    <>
+      {copyNo(lane, copy.index) !== null ? `copy ${copyNo(lane, copy.index)} · ` : ""}
+      {copyKind(copy)} · {altCoord(`${copy.contig}:${copy.ownFrom.toLocaleString()}–${copy.ownTo.toLocaleString()}`)}
+      {copy.bar ? (
+        <>
+          {" "}
+          · {copy.bar.len ? <>drawn in place of {refCoord(span(copy.bar.ref, copy.bar.ref + copy.bar.len))}</> : <>inserted at {refCoord(where(copy.bar.ref))}</>}
+        </>
+      ) : (
+        " · not drawn on the bar"
+      )}
+    </>
+  );
+  /** The band below a row's bar: a row of DUP_BAND per dispersed
+      duplication on a haplotype's bar, none on a walk row. */
+  const belowOf = (row: BarRow) => (row.reading ? 0 : dupRowsOf(row.lane) * DUP_BAND);
+  /** The bar's height in a row: under the marks' band, over the
+      duplications' band. */
+  const barHeight = (row: BarRow) => row.height - MARK_BAND - belowOf(row) - 1;
   /** The bubble a part came from. */
   const bubbleOf = (reading: Reading, path: number[]): Bubble | null => {
     let bubble: Bubble | undefined = reading.alignment.bubbles[path[0]];
@@ -449,29 +608,25 @@ function LinearView({
       ),
     };
   };
-  /** The other readings of a lane that read a reference position: dupes.
-      A spanning reading reads none of the band, though its span is all of
-      it. */
-  const dupesAt = (lane: LinearLane, reading: number, ref: number): CardItem[] =>
-    lane.readings
-      .filter(
-        (other) =>
-          other.drawn && !other.spanning && other.index !== reading && other.refFrom <= ref && ref < other.refTo,
-      )
-      .map((other) => ({
-        key: `${other.index}`,
-        line: (
-          <>
-            reading {readingNo(lane, other.index)} · {altCoord(`${other.contig}:${other.ownFrom.toLocaleString()}–${other.ownTo.toLocaleString()}`)}{" "}
-            · reads {refCoord(span(other.refFrom, other.refTo))}
-          </>
-        ),
-        details: [`the haplotype has this place more than once; the bar draws the first along its contig`],
+  /** The lane's copies whose original covers a reference position: the
+      haplotype has the place more than once. */
+  const copiesAt = (lane: LinearLane, ref: number): CardItem[] =>
+    lane.copies
+      .filter((copy) => copy.original && copy.original[0] <= ref && ref < copy.original[1])
+      .map((copy) => ({
+        key: `copy ${copy.index}`,
+        line: copyLine(lane, copy),
+        details: [
+          copy.kind === "tandem"
+            ? "a tandem duplication: the walk reads these nodes again right after them"
+            : "a dispersed duplication: the walk reads these nodes again elsewhere; with Show walks its row lines up here",
+          `its original: ${span(copy.original![0], copy.original![1])}`,
+        ],
       }));
 
   const describeBase = (row: BarRow, part: RasterPart, offset: number, bp: number, zoom: NodeLetters | null): CardContent => {
     const { lane } = row;
-    const reading = lane.readings[part.reading];
+    const reading = readingFor(row, part);
     const step = Number.isFinite(bp) ? stepAtOwn(reading, bp) : null;
     const node = step ? model.nodes.get(step.node) ?? null : null;
     const refAt = part.kind === "open" ? null : part.ref + offset;
@@ -500,15 +655,39 @@ function LinearView({
       ...(step ? carriersLine(step.node) : []),
       ...(node ? linkLines(node, openEnd?.into?.id) : []),
       ...(openEnd ? openEndLines(lane, openEnd) : []),
-      ...(row.reading ? [`reading ${readingNo(lane, reading.index)} of ${readingsOf(lane).length}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`] : []),
+      ...(row.reading
+        ? [<>copy {copyNo(lane, row.reading.index)} of {rowsOf(lane).length}: {copyLine(lane, row.reading)}</>]
+        : readingsOf(lane).length > 1
+          ? [`piece ${readingNo(lane, reading.index)} of ${readingsOf(lane).length} of its walk: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`]
+          : []),
       ...reading.jumps.map((jump) => jumpLine(lane, jump)),
     ];
-    const dupes = refAt !== null ? dupesAt(lane, reading.index, refAt) : [];
+    const copies = refAt !== null && !row.reading ? copiesAt(lane, refAt) : [];
     return {
       title: `${lane.label}${node ? ` · node ${node.id}` : ""}`,
       zoom: zoomOf(zoom, reading.contig),
       lines,
-      groups: dupes.length ? [{ head: `Dupes (${dupes.length})`, items: dupes }] : [],
+      groups: copies.length ? [{ head: `Copies (${copies.length})`, items: copies }] : [],
+    };
+  };
+  /** A duplication's mark below the bar: the copy, its kind and times,
+      its original and where the bar draws it. */
+  const describeDup = (row: BarRow, hit: DupHit): CardContent => {
+    const { lane } = row;
+    const copy = lane.copies[hit.copy];
+    const group = copy.kind === "tandem" ? lane.copies.filter((other) => other.group === copy.group) : [copy];
+    return {
+      title: `${lane.label} · ${copyKind(copy)}`,
+      lines: [
+        copy.kind === "tandem"
+          ? `a tandem duplication: the haplotype has this stretch ${copy.times} times in a row, the original and ${plural(group.length, "copy").replace("copys", "copies")} right after it`
+          : `a dispersed duplication: the haplotype has this stretch ${copy.times} times, this copy elsewhere in its sequence`,
+        ...(copy.inverted ? ["read on the other strand"] : []),
+        ...(copy.original ? [<>original: {refCoord(span(copy.original[0], copy.original[1]))}, in the black border</>] : ["its original is outside the band"]),
+        ...group.map((member) => copyLine(lane, member)),
+        copy.kind === "tandem" ? "no walk row: the pointer stands for it" : copy.drawn ? "with Show walks, its row lines up on its original" : "no walk row: its original is not on the band",
+      ],
+      groups: [],
     };
   };
 
@@ -516,7 +695,7 @@ function LinearView({
     const { lane, raster } = row;
     const parts = glyph.parts.map((index) => raster.parts[index]);
     const items: CardItem[] = parts.map((part) => {
-      const reading = lane.readings[part.reading];
+      const reading = readingFor(row, part);
       const bubble = bubbleOf(reading, part.bubble);
       /* At an end that runs out of the band, the bases between the
          junction and the node the walk goes to or comes from there. */
@@ -560,11 +739,18 @@ function LinearView({
         ],
       };
     });
+    /* Several insertions close together share the glyph: the title names
+       the largest, where it goes in, as the glyph's label does, and how
+       many more. */
+    const largest = parts.find((part) => part.len === glyph.largest) ?? parts[0];
     return {
-      title: `${lane.label} · +${glyph.bp.toLocaleString()} bp inserted at ${where(axis.bpAt(glyph.x) | 0)}`,
+      title:
+        parts.length > 1
+          ? `${lane.label} · +${glyph.largest.toLocaleString()} bp inserted at ${where(largest.ref)}, and ${plural(parts.length - 1, "more insertion")}`
+          : `${lane.label} · +${glyph.bp.toLocaleString()} bp inserted at ${where(axis.bpAt(glyph.x) | 0)}`,
       lines: [
         "bases the haplotype has here that the reference does not: shown after the bases they replace, taking no room",
-        ...(parts.length > 1 ? [`${parts.length} insertions close together, drawn as one mark`] : []),
+        ...(parts.length > 1 ? [`${parts.length} insertions close together, ${glyph.bp.toLocaleString()} bp in all, drawn as one mark`] : []),
       ],
       groups: [{ head: parts.length > 1 ? `Insertions (${parts.length})` : "Insertion", items }],
     };
@@ -572,7 +758,7 @@ function LinearView({
 
   const describeWhite = (row: BarRow, white: WhiteRun): CardContent => {
     const { lane } = row;
-    const reading = lane.readings[white.reading];
+    const reading = readingFor(row, white);
     const skipped = white.open === null ? referenceBases(white.refFrom, white.refTo) : "";
     return {
       title: `${lane.label} · deletion`,
@@ -594,7 +780,7 @@ function LinearView({
                   white.node ? ` (node ${white.node})` : ""
                 }, before the band, and next at ${where(white.refTo)}`
               : <>reference reads {cardSequence(skipped)}; the haplotype reads nothing here</>,
-        `reading ${readingNo(lane, reading.index)}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
+        row.reading ? <>copy {copyNo(lane, row.reading.index)}: {copyLine(lane, row.reading)}</> : `${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
       ],
       groups: [],
     };
@@ -604,7 +790,7 @@ function LinearView({
   const describeEnd = (row: BarRow, cap: EndCap): CardContent => {
     const { lane } = row;
     const end = cap.end;
-    const reading = lane.readings[end.reading];
+    const reading = readingFor(row, end);
     const ownLow = Math.min(end.own.from, end.own.to);
     const ownHigh = Math.max(end.own.from, end.own.to);
     return {
@@ -620,7 +806,7 @@ function LinearView({
           {plural(end.nodes.length, "node")} past the junction, none of them the reference's
         </>,
         "not an allele: nothing says what reference these bases stand in for, so the bar draws none of them",
-        `reading ${readingNo(lane, reading.index)} of ${readingsOf(lane).length}: ${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
+        row.reading ? <>copy {copyNo(lane, row.reading.index)}: {copyLine(lane, row.reading)}</> : `${reading.contig} ${reading.ownFrom.toLocaleString()}–${reading.ownTo.toLocaleString()}`,
       ],
       groups: [],
     };
@@ -671,52 +857,218 @@ function LinearView({
     };
   };
 
-  /** Zoomed out: what a haplotype does in a section of the band. */
-  const describeSection = (row: BarRow, section: { left: number; right: number }): CardContent => {
-    const { lane, raster } = row;
-    const inside = raster.parts.filter(
-      (part) => part.right > section.left && part.left < section.right && part.kind !== "match",
-    );
-    const whites = raster.whites.filter((white) => white.right > section.left && white.left < section.right);
-    const counts = new Map<string, number>();
-    for (const part of inside) counts.set(part.kind, (counts.get(part.kind) ?? 0) + part.len);
-    const refFrom = Math.round(axis.bpAt(section.left));
-    const refTo = Math.round(axis.bpAt(section.right));
-    const items: CardItem[] = [
-      ...inside.map((part) => {
-        const reading = lane.readings[part.reading];
-        const bubble = bubbleOf(reading, part.bubble);
-        return {
-          key: `part ${part.index}`,
-          line: (
-            <>
-              {part.kind} · {part.len.toLocaleString()} bp at {refCoord(where(part.ref))}
-            </>
-          ),
-          details: [...(bubble ? [bubbleLine(bubble, reading, lane)] : []), ...(part.seq ? [<>reads {cardSequence(part.seq)}</>] : [])],
-        };
-      }),
-      ...whites.map((white, k) => ({
-        key: `white ${k}`,
+  /** A variant's bubble, where it is one: bins.ts keys it "b", or "b.k"
+      inside the inversion b. */
+  const variantBubble = (row: BarRow, variant: BinVariant): Bubble | null => {
+    const reading = readingFor(row, variant);
+    if (!reading || !/^\d+(\.\d+)?$/.test(variant.key)) return null;
+    return bubbleOf(reading, variant.key.split(".").map(Number));
+  };
+  /** A variant that is no bubble, in words: a white running out of the
+      band, a span, or a duplication (bins.ts: one per dispersed copy or
+      run of tandem copies, sized by its bases). */
+  const variantWords = (lane: LinearLane, variant: BinVariant): string =>
+    variant.key.startsWith("dup:")
+      ? ((copy) =>
+          copy
+            ? `a ${copyKind(copy)}: ${variant.size.toLocaleString()} bp the walk reads again${copy.original ? `, its original at ${span(copy.original[0], copy.original[1])}` : ""}`
+            : "a duplication")(lane.copies[Number(variant.key.slice(4))])
+      : variant.key === "span"
+        ? `the haplotype reads none of the band from ${where(variant.home)}: it goes on past both its ends`
+        : `running out of the band to the ${variant.key === "out:left" ? "left" : "right"}, from ${where(variant.home)}${
+            variant.inserted ? `, with ${variant.inserted.toLocaleString()} bp of its own` : ""
+          }`;
+
+  /**
+   * Zoomed out: the bin round the pointer, from `from` to before `to`, on
+   * one row, added up from the row's bins (bins.ts) and what the row draws
+   * of them (barTiers.ts). Its bases, aligned, deleted and with missing
+   * data; its variants by kind, inversions apart; the bases they insert;
+   * the deletions too small to see that start in it; its copies; the part
+   * under the pointer. Then lists, each the largest first: the variants
+   * homed in it, as many as the count line counts; apart from them, the
+   * inversions homed in it, which are listed but not counted, and the big
+   * variants homed in another bin that only cross it. Its button, on the
+   * kept card, zooms in on it.
+   */
+  const describeBin = (row: BarRow, from: number, to: number, at: number): CardContent | null => {
+    const { lane, reading, bins, tiers } = row;
+    if (!binned || !bins || !tiers) return null;
+    const B = binned.binBp;
+    const i0 = Math.max(0, Math.floor(from / B) - binned.first);
+    const i1 = Math.min(binned.count, Math.ceil(to / B) - binned.first);
+    const sum = (field: Int32Array) => {
+      let n = 0;
+      for (let i = i0; i < i1; i++) n += field[i];
+      return n;
+    };
+    let copies = 0;
+    for (let i = i0; i < i1; i++) copies = Math.max(copies, bins.copies[i]);
+    const homedHere = (variant: BinVariant) => variant.bin !== null && variant.bin >= i0 && variant.bin < i1;
+    const left = axis.px(from);
+    const right = axis.px(to);
+
+    /* Its variants: those homed in it, and the big ones crossing it from
+       another bin, where the row draws them. Only the counted ones homed
+       in it go under the count line; a variant that crosses it is counted
+       in its own home's bin, and an inversion in none. */
+    const homed: number[] = [];
+    bins.list.forEach((variant, index) => {
+      if (homedHere(variant)) homed.push(index);
+    });
+    const crossing = tiers.big
+      .filter((big) => !homedHere(bins.list[big.variant]) && big.left < right && big.right > left)
+      .map((big) => big.variant);
+
+    /* By kind: those counted, and the inversions apart. */
+    const byKind = new Map<VariantKind, { n: number; names: Set<string> }>();
+    let inversions = 0;
+    for (const index of homed) {
+      const variant = bins.list[index];
+      if (!variant.counted) {
+        if (variant.kind === "inversion") inversions += 1;
+        continue;
+      }
+      const known = byKind.get(variant.kind) ?? { n: 0, names: new Set<string>() };
+      known.n += 1;
+      const name = variant.kind === "deletion-insertion" ? variantBubble(row, variant)?.cls : EG3_NAME[variant.kind];
+      if (name) known.names.add(name);
+      byKind.set(variant.kind, known);
+    }
+    const counts = KIND_ORDER.filter((kind) => byKind.has(kind)).map((kind) => {
+      const { n, names } = byKind.get(kind)!;
+      return `${plural(n, kind)}${names.size ? ` (${[...names].join(" or ")})` : ""}`;
+    });
+    const variants = sum(bins.variants);
+    const reverse = sum(bins.reverse);
+    const notRead = sum(bins.notRead);
+    const inserted = sum(bins.inserted);
+    const hidden = tiers.whites.filter((white) => !white.drawn && white.from >= from && white.from < to).length;
+    /* Its copies: the stretch here the haplotype has the most times. */
+    const run = bins.runs
+      .filter((one) => one.from < to && one.to > from)
+      .reduce<CopyRun | null>((best, one) => (!best || one.copies.length > best.copies.length ? one : best), null);
+    const hit = hitAt(row.raster, at);
+
+    /* How each listed variant is drawn at this zoom. */
+    const big = new Set(tiers.big.map((one) => one.variant));
+    const ticked = new Set(tiers.ticks.map((tick) => tick.variant));
+    const stripeOf = new Map(tiers.stripes.map((stripe) => [stripe.bin, stripe]));
+    const whiteOf = new Map<number, TierWhite>();
+    for (const white of tiers.whites) if (white.variant !== null) whiteOf.set(white.variant, white);
+    const drawnAs = (index: number, variant: BinVariant): string | null => {
+      /* An inversion, big or not, is drawn by the arrows over its bases. */
+      if (variant.kind === "inversion") return "drawn by arrows: its bases are read on the other strand";
+      if (variant.kind === "deletion") {
+        const white = whiteOf.get(index);
+        if (white) return white.drawn ? "drawn as a white gap at its true width" : "too small to see: counted in the track's legend";
+      }
+      if (big.has(index)) return "drawn as itself";
+      if (ticked.has(index)) return "drawn as a tick at its base";
+      const stripe = variant.bin !== null ? stripeOf.get(variant.bin) : undefined;
+      if (stripe && variant.counted && variant.kind !== "duplication") {
+        return `in a grey stripe: small variants are dense here, ${tiers.cells[stripe.cell].rate.toFixed(1)} per kb`;
+      }
+      return null;
+    };
+    const itemOf = (index: number): CardItem => {
+      const variant = bins.list[index];
+      const place = variant.kind === "insertion" ? variant.home + 1 : variant.home;
+      const size = variant.size.toLocaleString();
+      const bubble = variantBubble(row, variant);
+      const how = drawnAs(index, variant);
+      return {
+        key: `variant ${index}`,
         line: (
           <>
-            <span className={VARIANT_CLASS.deletion}>deletion</span> · −{deletionSize(white.bp)} at {refCoord(span(white.refFrom, white.refTo))}
+            <span className={KIND_CLASS[variant.kind]}>{variant.kind}</span> ·{" "}
+            {variant.kind === "insertion" ? `+${size}` : variant.kind === "deletion" ? `−${size}` : size} bp at {refCoord(where(place))}
           </>
         ),
-        details: [],
-      })),
-    ];
-    return {
-      title: lane.label,
-      lines: [
+        details: [
+          bubble ? bubbleLine(bubble, readingFor(row, variant), lane) : variantWords(lane, variant),
+          ...(how ? [how] : []),
+          /* An inversion is listed in the bin of its first base but never
+             counted (bins.ts). */
+          ...(homedHere(variant)
+            ? []
+            : [
+                variant.bin === null
+                  ? `crosses this bin; its first base, ${where(variant.home)}, is outside the band`
+                  : variant.counted
+                    ? `crosses this bin; counted in the bin of its first base, ${where(variant.home)}`
+                    : `crosses this bin; listed in the bin of its first base, ${where(variant.home)}`,
+              ]),
+        ],
+      };
+    };
+
+    /* Bases the row does not read: on a bar, the haplotype has no data
+       there; a walk row only says this copy does not read them. */
+    const unread = reading ? "not read by this copy" : "with missing data";
+    const lines: ReactNode[] = [
+      `${sum(bins.bases).toLocaleString()} bp: ${sum(bins.aligned).toLocaleString()} aligned${
+        reverse ? ` (${reverse.toLocaleString()} read on the other strand)` : ""
+      }, ${sum(bins.deleted).toLocaleString()} deleted${notRead ? `, ${notRead.toLocaleString()} ${unread}` : ""}`,
+      variants ? `${plural(variants, "variant")}: ${counts.join(", ")}` : "no variants",
+      ...(inversions
+        ? [`${plural(inversions, "inversion")} as well, not counted: ${inversions === 1 ? "its" : "their"} bases count as read on the other strand`]
+        : []),
+      ...(inserted ? [`${inserted.toLocaleString()} bp inserted, which the reference does not have`] : []),
+      ...(hidden ? [`${plural(hidden, "deletion")} too small to see, counted in the track's legend`] : []),
+      ...(copies >= 2 && run
+        ? [`×${copies}: the haplotype has this stretch ${copies} times, ${plural(run.tandem.length, "tandem copy").replace("copys", "copies")} and ${run.dispersed.length} dispersed`]
+        : []),
+      ...(reading ? [<>copy {copyNo(lane, reading.index)} of {rowsOf(lane).length}: {copyLine(lane, reading)}</>] : []),
+      hit ? (
         <>
-          {coordLabel(`Reference (${referenceName})`)} {refCoord(span(refFrom, refTo))} · {(refTo - refFrom).toLocaleString()} bp
-        </>,
-        counts.size || whites.length
-          ? `${[...counts].map(([kind, bp]) => `${bp.toLocaleString()} bp ${kind}`).join(" · ")}${whites.length ? ` · ${plural(whites.length, "deletion")}` : ""}`
-          : "reads as the reference does here",
-      ],
-      groups: [{ head: `Changes (${items.length})`, items }],
+          under the pointer: {PART_WORDS[hit.part.kind] ?? hit.part.kind}, at {refCoord(where(hit.part.ref + hit.offset))}
+        </>
+      ) : (
+        <>
+          under the pointer: {refCoord(where(Math.floor(axis.bpAt(at))))},{" "}
+          {reading ? "where this copy has no bases" : `where ${lane.label} has no bases drawn`}
+        </>
+      ),
+    ];
+    const groups: CardContent["groups"] = [];
+    /* A list, the largest first, BIN_CARD_VARIANTS at most, and how many
+       it leaves out. */
+    const list = (head: string, indexes: number[]) => {
+      if (!indexes.length) return;
+      const shown = [...indexes].sort((a, b) => bins.list[b].size - bins.list[a].size || a - b).slice(0, BIN_CARD_VARIANTS);
+      groups.push({
+        head: `${head} (${indexes.length.toLocaleString()})`,
+        items: shown.map(itemOf),
+        ...(indexes.length > shown.length ? { more: `and ${(indexes.length - shown.length).toLocaleString()} more` } : {}),
+      });
+    };
+    list("Variants", homed.filter((index) => bins.list[index].counted));
+    list("Inversions", homed.filter((index) => !bins.list[index].counted));
+    list("Crossing this bin", crossing);
+    if (copies >= 2 && run) {
+      groups.push({
+        head: `Copies (${run.copies.length})`,
+        items: run.copies.map((index) => {
+          const copy = lane.copies[index];
+          return {
+            key: `copy ${index}`,
+            line: copyLine(lane, copy),
+            details: [
+              copy.kind === "tandem"
+                ? "right after its original: a tandem duplication"
+                : "elsewhere in the haplotype's sequence: a dispersed duplication",
+              ...(copy.original ? [`its original: ${span(copy.original[0], copy.original[1])}`] : []),
+            ],
+          };
+        }),
+      });
+    }
+    return {
+      title: `${lane.label} · ${span(from, to)}`,
+      lines,
+      ...(onZoomTo ? { action: { label: "Zoom in here", run: () => zoomTo(from, to) } } : {}),
+      groups,
     };
   };
 
@@ -751,17 +1103,37 @@ function LinearView({
   /** A bar's end and the empty stretch past it, outlined. */
   const capBox = (row: BarRow, cap: EndCap) => {
     const x = Math.min(cap.left, cap.x - 3);
-    return { x, y: row.top + MARK_BAND, width: Math.max(cap.right, cap.x + 3) - x, height: row.height - MARK_BAND - 1 };
+    return { x, y: row.top + MARK_BAND, width: Math.max(cap.right, cap.x + 3) - x, height: barHeight(row) };
+  };
+  /** A bin of a bar, outlined over the bar. */
+  const binBox = (row: BarRow, from: number, to: number) => ({
+    x: axis.px(from),
+    y: row.top + MARK_BAND,
+    width: axis.px(to) - axis.px(from),
+    height: barHeight(row),
+  });
+  /** A duplication's mark below the bar, outlined: the copy's pointer, or
+      its line under the original. */
+  const dupBox = (row: BarRow, index: number) => {
+    const copy = row.lane.copies[index];
+    const pointer = row.copies?.pointers.find((one) => one.copy === index);
+    const line = row.copies?.below.find((one) => one.copy === index);
+    const left = pointer ? pointer.x - 5 : copy.original ? axis.px(copy.original[0]) : 0;
+    const right = pointer ? pointer.x + 5 : copy.original ? axis.px(copy.original[1]) : 0;
+    const at = pointer?.row ?? line?.row ?? 0;
+    return { x: left, y: row.top + MARK_BAND + barHeight(row) + at * DUP_BAND, width: right - left, height: DUP_BAND };
   };
   const boxOf = (row: BarRow, target: BarTarget) => {
     if (target.kind === "base") {
-      return { x: target.part.left, y: row.top + MARK_BAND, width: target.part.right - target.part.left, height: row.height - MARK_BAND - 1 };
+      return { x: target.part.left, y: row.top + MARK_BAND, width: target.part.right - target.part.left, height: barHeight(row) };
     }
     if (target.kind === "mark") {
       return { x: target.glyph.x - 5, y: row.top, width: 10, height: MARK_BAND + 2 };
     }
     if (target.kind === "end") return capBox(row, target.cap);
-    return { x: target.white.left, y: row.top + MARK_BAND, width: target.white.right - target.white.left, height: row.height - MARK_BAND - 1 };
+    if (target.kind === "bin") return binBox(row, target.from, target.to);
+    if (target.kind === "dup") return dupBox(row, target.dup.copy);
+    return { x: target.white.left, y: row.top + MARK_BAND, width: target.white.right - target.white.left, height: barHeight(row) };
   };
   const onBarHover = (row: BarRow, target: BarTarget | null) => {
     if (!target || cardKeptOpen()) {
@@ -777,6 +1149,14 @@ function LinearView({
       showHover(`mark:${row.key}:${target.glyph.x}`, () => describeMark(row, target.glyph), target.x, target.y);
     } else if (target.kind === "end") {
       showHover(`end:${row.key}:${target.cap.x}`, () => describeEnd(row, target.cap), target.x, target.y);
+    } else if (target.kind === "bin") {
+      /* Built again only when the part under the pointer changes, which
+         its last line names. */
+      const { from, to, at } = target;
+      const hit = hitAt(row.raster, at);
+      showHover(`bin:${row.key}:${from}:${hit ? `${hit.part.index}:${hit.offset}` : ""}`, () => describeBin(row, from, to, at), target.x, target.y);
+    } else if (target.kind === "dup") {
+      showHover(`dup:${row.key}:${target.dup.copy}`, () => describeDup(row, target.dup), target.x, target.y);
     } else {
       showHover(`white:${row.key}:${target.white.left}`, () => describeWhite(row, target.white), target.x, target.y);
     }
@@ -788,6 +1168,10 @@ function LinearView({
       keep(describeMark(row, target.glyph), { kind: "mark", row: row.key, glyph: row.raster.marks.indexOf(target.glyph) }, target.x, target.y);
     } else if (target.kind === "end") {
       keep(describeEnd(row, target.cap), { kind: "end", row: row.key, cap: row.raster.caps.indexOf(target.cap) }, target.x, target.y);
+    } else if (target.kind === "bin") {
+      keep(describeBin(row, target.from, target.to, target.at), { kind: "bin", row: row.key, from: target.from, to: target.to }, target.x, target.y);
+    } else if (target.kind === "dup") {
+      keep(describeDup(row, target.dup), { kind: "dup", row: row.key, copy: target.dup.copy }, target.x, target.y);
     } else {
       keep(describeWhite(row, target.white), { kind: "white", row: row.key, white: row.raster.whites.indexOf(target.white) }, target.x, target.y);
     }
@@ -804,21 +1188,22 @@ function LinearView({
     if (!row) return null;
     if (kept.kind === "base") {
       const part = row.raster.parts[kept.part];
-      return part ? { x: part.left, y: row.top + MARK_BAND, width: part.right - part.left, height: row.height - MARK_BAND - 1 } : null;
+      return part ? { x: part.left, y: row.top + MARK_BAND, width: part.right - part.left, height: barHeight(row) } : null;
     }
+    if (kept.kind === "dup") return dupBox(row, kept.copy);
     if (kept.kind === "mark") {
       const glyph = row.raster.marks[kept.glyph];
       return glyph ? { x: glyph.x - 5, y: row.top, width: 10, height: MARK_BAND + 2 } : null;
     }
     if (kept.kind === "white") {
       const white = row.raster.whites[kept.white];
-      return white ? { x: white.left, y: row.top + MARK_BAND, width: white.right - white.left, height: row.height - MARK_BAND - 1 } : null;
+      return white ? { x: white.left, y: row.top + MARK_BAND, width: white.right - white.left, height: barHeight(row) } : null;
     }
     if (kept.kind === "end") {
       const cap = row.raster.caps[kept.cap];
       return cap ? capBox(row, cap) : null;
     }
-    return { x: kept.left, y: row.top, width: kept.right - kept.left, height: row.height };
+    return binBox(row, kept.from, kept.to);
   })();
 
   return (
@@ -844,22 +1229,12 @@ function LinearView({
             color={row.lane.color}
             view={[axis.viewFromPx, axis.viewToPx]}
             dim={dim(row.lane)}
-            sections={sections ?? undefined}
-            sectionAltBp={sectionAltBp}
-            onPress={
-              sections && !barsByNode
-                ? ({ x, clientX, clientY }) => {
-                    const section = sectionAt(x);
-                    if (section) {
-                      keep(describeSection(row, section), { kind: "section", row: row.key, left: section.left, right: section.right }, clientX, clientY);
-                    }
-                  }
-                : undefined
-            }
-            onPoint={(point) => {
-              const section = point === null ? null : sectionAt(point.x);
-              outline(section ? { x: section.left, y: row.top, width: section.right - section.left, height: row.height } : null);
-            }}
+            /* Zoomed out, the row's tiers: it is drawn from them, and a
+               hover or a click reads the bin round the pointer. */
+            tiers={row.tiers ?? undefined}
+            binAt={row.tiers ? binAt : undefined}
+            copies={row.copies ?? undefined}
+            below={belowOf(row)}
             onHover={(target) => onBarHover(row, target)}
             onPick={(target) => onBarPick(row, target)}
           />
@@ -879,12 +1254,13 @@ function LinearView({
           />
         ))}
 
-        {/* A walk's rows' names: which reading each is. */}
+        {/* A walk's rows' names: which copy each is. */}
         {walkLane &&
           rows.map((row) => (
             <text key={`name-${row.key}`} x={axis.viewFromPx + 4} y={row.top - 3} className="pgv-walk-label">
-              {`own ${row.reading?.ownFrom.toLocaleString()}–${row.reading?.ownTo.toLocaleString()}`}
-              {row.reading?.reversed ? " · read backwards" : ""}
+              {row.reading
+                ? `copy ${copyNo(walkLane, row.reading.index)} · ${copyKind(row.reading)} · own ${row.reading.ownFrom.toLocaleString()}–${row.reading.ownTo.toLocaleString()}${row.reading.reversed ? " · read backwards" : ""}`
+                : ""}
             </text>
           ))}
 
@@ -897,7 +1273,7 @@ function LinearView({
           <button type="button" className="pgv-section-close" aria-label="Close" onClick={() => setCard(null)}>
             ×
           </button>
-          <CardBody card={card} openItems={openItems} onToggle={toggleItem} />
+          <CardBody card={card} openItems={openItems} onToggle={toggleItem} kept />
         </FloatingCard>
       )}
       <HoverCard ref={hoverCard} />

@@ -23,37 +23,12 @@ export const SEQUENCE_MAX_SIZE = 15;
  * How big to draw sequence text at a given zoom.
  *
  * Large enough to fill a base, capped so a wide zoom does not turn the
- * sequence into a headline. Where the letters go is a separate question,
- * answered by baseCentres - the size only decides whether a letter fits in
- * the space its base occupies.
+ * sequence into a headline. Each view places its letters itself, each on
+ * its own base; the size only decides whether a letter fits in the space
+ * its base occupies.
  */
 export function sequenceSize(pxPerBase: number): number {
   return Math.min(SEQUENCE_MAX_SIZE, pxPerBase / MONO_ADVANCE);
-}
-
-/**
- * The centre of every base in a run, for SVG's per-glyph `x` list.
- *
- * A `<text>` given a list of coordinates places one glyph at each, so this
- * pins every letter to the base it spells rather than letting the font
- * decide. That matters because the font is not known: the stack falls
- * through to Consolas on Windows, whose glyphs advance 0.55em against the
- * 0.6em the other faces use, and a per-glyph error of a few percent walks
- * the end of a long node clean off its bases.
- *
- * `perBase` is the width one base occupies *in the view asking* - not always
- * the zoom, since a view may draw a short node wider than its sequence.
- */
-export function baseCentres(
-  startX: number,
-  length: number,
-  perBase: number,
-): string {
-  const centres: number[] = [];
-  for (let i = 0; i < length; i++) {
-    centres.push(Math.round((startX + (i + 0.5) * perBase) * 100) / 100);
-  }
-  return centres.join(" ");
 }
 
 /** A half-open coordinate range, phrased for a reader. */
@@ -84,7 +59,7 @@ export interface LaneNeighbours {
 }
 
 /**
- * Worked out once per haplotype and kept, since both views ask for it a
+ * Worked out once per haplotype and kept, since the tube map asks for it a
  * node at a time while the pointer moves.
  */
 const neighbours = new WeakMap<Lane, Map<string, LaneNeighbours>>();

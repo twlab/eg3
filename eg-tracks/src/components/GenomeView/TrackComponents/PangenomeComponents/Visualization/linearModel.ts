@@ -15,11 +15,19 @@ import type { Bubble, Graph, Part, Step, Walk, WalkAlignment } from "./alignment
 
    A haplotype reaches the band as pieces - the window cuts its walk where
    it leaves and resumes where it comes back, and a haplotype can come on
-   several contigs. Each piece is aligned on its own (alignment.ts) and
-   becomes a reading: anchors, bubbles, and parts placed in reference
-   coordinates. A lane is one haplotype, its contigs joined, and its bar
-   draws one reading at any place: the first along its main contig, the
-   rest being the place's dupes, which the cards list.
+   several contigs. Each piece is aligned whole, on its own (alignment.ts;
+   gbz-base's `query --cigar` aligns it the same way) and becomes a
+   reading: anchors, bubbles, and parts placed in reference coordinates.
+   A lane is one haplotype, its contigs joined, and its bar draws one
+   reading at any place: the first along its main contig.
+
+   A duplication is read off the walk alone (PLAN-duplications.md in
+   eg3/claude-memory): a stretch whose nodes the walk has read before is a
+   copy, tandem when it repeats the steps right before it, dispersed
+   otherwise. The one-piece alignment draws a copy where the walk has it,
+   as an insertion or in place of other reference; each copy is also
+   aligned on its own, as a reading is, which lines it up on its original:
+   its walk row (Copy, copiesOf). Nothing compares bases.
 
    A run at a piece's end that reaches a node the reference reads outside
    the band is not sequence of the haplotype's own but the far side of a
@@ -97,10 +105,13 @@ export interface PlacedPart {
 /** Where a reading's walk goes on past one of its ends: a jump along the
     reference the band cannot follow - back over what was read, or off to
     a node the reference reads behind the junction. The walk goes on at a
-    node the reference reads at `to`, on the reverse strand or not;
-    `before` when, in walk order, that is where the walk came from rather
-    than where it goes. A jump the piece was cut at names the reading the
-    walk goes on in. */
+    node the reference reads, on the reverse strand or not; `before` when,
+    in walk order, that is where the walk came from rather than where it
+    goes. `to` is where the walk is there: where it reaches the node it
+    goes on at (its start, read forward; its end, read backwards), or where
+    it left the node it came from (its end, read forward; its start, read
+    backwards). A jump the piece was cut at names the reading the walk goes
+    on in. */
 export interface Jump {
   side: "left" | "right";
   /** The junction: the reading's last reference base on that side. */
@@ -204,6 +215,38 @@ export interface Reading {
   reversed: boolean;
 }
 
+/**
+ * A stretch of a haplotype's walk that reads again nodes the walk has
+ * read before: the graph's only sign of a duplication. Aligned on its own
+ * against the band's walk, as a reading is (so its parts' `reading` is its
+ * index among the lane's copies), it lines up on its original: its walk
+ * row, drawn only for a dispersed copy whose original is on the band.
+ */
+export interface Copy extends Reading {
+  /** Its steps in its piece: [from, to). */
+  at: [number, number];
+  /** Tandem: its steps repeat the steps right before it in its piece, in
+      order with the same strands, or reversed with every strand flipped
+      (inverted). Dispersed: anything else lies between it and the stretch
+      it copies - reference, or bases of the haplotype's own. */
+  kind: "tandem" | "dispersed";
+  inverted: boolean;
+  /** How many times the haplotype has the stretch, the original counted:
+      the ×n. A tandem copy counts its run of tandem copies; a dispersed
+      one every copy of its original. */
+  times: number;
+  /** The first copy of its run of tandem copies, or itself: one pointer
+      per group. */
+  group: number;
+  /** What its reference nodes' first visits cover on the band's walk;
+      null when every one of them is read only elsewhere by the
+      reference. */
+  original: [number, number] | null;
+  /** Where the bar draws its bases: the reference they cover, or the
+      point they are inserted at (len 0). Null where the bar draws none. */
+  bar: { ref: number; len: number } | null;
+}
+
 export interface LinearLane {
   /** `sample#haplotype`: one lane per haplotype, its contigs joined. */
   key: string;
@@ -217,9 +260,13 @@ export interface LinearLane {
   /** The main contig first: the one with the most bases here. */
   contigs: string[];
   pieces: Piece[];
+  /** One per piece, in the pieces' order. */
   readings: Reading[];
+  /** Its copies, in walk order (copiesOf). */
+  copies: Copy[];
   /** The parts the bar draws, in reference order: each reading's, clipped
-      to where no earlier reading of the lane is drawn. */
+      to where no earlier reading of the lane is drawn; a mark cut to the
+      bases of the haplotype's own where it held a copy's. */
   drawn: PlacedPart[];
   outOfBand: OutOfBand[];
   /** The open ends the bar shows: each reading's, where no other reading
@@ -463,6 +510,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     contigs: [contig],
     pieces: [main],
     readings: [],
+    copies: [],
     drawn: [],
     outOfBand: [],
     openEnds: [],
@@ -502,6 +550,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       contigs: ordered.map((draft) => draft.contig),
       pieces,
       readings: [],
+      copies: [],
       drawn: [],
       outOfBand: [],
       openEnds: [],
@@ -509,14 +558,15 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       bp: ordered.reduce((n, draft) => n + bpOf(draft), 0),
     };
     for (const piece of pieces) {
-      /* Cut by where the reference reads each node, on the band's walk or
-         elsewhere, so that a cut names the node the walk goes to first. */
-      for (const run of cutAtJumps(piece.steps, (id) => referenceAt[id] ?? refPos.get(id), lenOf)) {
-        const reading = readPiece(graph, refWalk, piece, run, lane.readings.length, origin, refOffset, referenceAt, refPos, lenOf);
-        lane.readings.push(reading);
-        if (!reading.drawn) lane.scraps += 1;
-      }
+      const reading = readPiece(graph, refWalk, piece, { steps: piece.steps }, lane.readings.length, origin, refOffset, referenceAt, refPos, lenOf);
+      lane.readings.push(reading);
+      if (!reading.drawn) lane.scraps += 1;
     }
+    /* The bar's parts place each copy on the bar; a mark cut to its own
+       bases then changes them. */
+    lane.drawn = drawnParts(lane.readings);
+    lane.copies = copiesOf(lane, (run, index) => readPiece(graph, refWalk, pieces[run.piece!], run, index, origin, refOffset, referenceAt, refPos, lenOf), referenceAt, refPos, lenOf);
+    cutMarks(lane);
     lane.drawn = drawnParts(lane.readings);
     lane.outOfBand = outOfBandDrawn(lane.readings);
     lane.openEnds = openEndsDrawn(lane.readings);
@@ -545,6 +595,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       contigs: [],
       pieces: [],
       readings: [],
+      copies: [],
       drawn: [],
       outOfBand: [],
       openEnds: [],
@@ -615,104 +666,22 @@ function linksOf(...edgeSets: Array<Record<string, RawLink[]>>): Map<string, Lin
 
 /* ── One piece aligned and placed ─────────────────────────────────────── */
 
-/** A jump back along the reference shorter than this is left inside its
-    reading, where the rule makes it an insertion: a node read again right
-    after itself is a tiny tandem copy, not a second pass. */
-const JUMP_BACK_BP = 20;
-
-/** A piece's steps between two cuts, and the jumps the cuts were: where
-    the walk goes on at the run's end, and where it came from at its
-    start, each a node the reference reads and the strand it is read on. */
+/** A piece's steps as one reading, or a copy's steps cut out of its
+    piece, with the jumps at the cut: where the walk goes on at the run's
+    end, at the first step after it that reads the reference, and where it
+    came from at its start, the last such step before it; each the
+    reference base the walk is at there (where it reaches the one, where
+    it left the other: a node's start or end by the strand it is read on)
+    and that strand. */
 interface Run {
   steps: LinearStep[];
-  jumpIn?: { to: number; reverse: boolean };
-  jumpOut?: { to: number; reverse: boolean };
-}
-
-/**
- * A piece's steps cut into readings where the walk reads the reference
- * again: a tandem duplication's second pass, which starts where the first
- * did, or a hairpin's return, which reads the stretch back on the other
- * strand. Each pass is then aligned on its own, so each anchors in full;
- * left in one reading the second could not anchor at all, being out of
- * order, and hung off the first's end as an open end. A step reads again
- * when it overlaps, by more than JUMP_BACK_BP, the reference span the run
- * has read so far on either strand. An inversion inside a reading does
- * not: its nodes lie beyond the forward span, and a pass never overlaps
- * its own span, each node being next to the last. Nor does a jump off to
- * a stretch outside the spans, which readPiece places as a jump. A
- * re-reading on the other strand cuts at the first node of that strand's
- * run, so a hairpin's return is one reading from its turn, the nodes it
- * reads before reaching what was read included.
- */
-function cutAtJumps(
-  steps: LinearStep[],
-  refAt: (id: string) => number | undefined,
-  lenOf: (id: string) => number,
-): Run[] {
-  const runs: Run[] = [];
-  let run: LinearStep[] = [];
-  let jumpIn: Run["jumpIn"];
-  /* The reference span read so far, forward steps' and reverse steps'. */
-  const fresh = (): Array<[number, number]> => [
-    [Infinity, -Infinity],
-    [Infinity, -Infinity],
-  ];
-  let spans = fresh();
-  const widen = (step: LinearStep, at: number) => {
-    const span = spans[step.reverse ? 1 : 0];
-    span[0] = Math.min(span[0], at);
-    span[1] = Math.max(span[1], at + lenOf(step.node));
-  };
-  /* The strand of the last step the reference reads, where it sits in the
-     run, and where the current run of one strand began: right after the
-     last reference-read step of the other strand, the haplotype's own
-     nodes between counted with the run whichever way they are read. */
-  let lastStrand: boolean | null = null;
-  let lastRead = -1;
-  let strandStart = 0;
-  for (const step of steps) {
-    const at = refAt(step.node);
-    if (at !== undefined) {
-      if (lastStrand !== null && step.reverse !== lastStrand) strandStart = lastRead + 1;
-      const len = lenOf(step.node);
-      const [onForward, onReverse] = spans.map(([lo, hi]) => Math.min(at + len, hi) - Math.max(at, lo));
-      const overlap = Math.max(onForward, onReverse);
-      if (overlap > JUMP_BACK_BP && run.length) {
-        /* Read again on the other strand - a hairpin's return - the whole
-           strand run goes, from its first node; on the same strand - a
-           tandem's second pass - the cut is here. */
-        const otherStrand = step.reverse ? onForward > JUMP_BACK_BP : onReverse > JUMP_BACK_BP;
-        const cutAt = otherStrand ? strandStart : run.length;
-        const kept = run.slice(0, cutAt);
-        const moved = run.slice(cutAt);
-        const first = moved.find((s) => refAt(s.node) !== undefined);
-        const jump = first ? { to: refAt(first.node)!, reverse: first.reverse } : { to: at, reverse: step.reverse };
-        if (kept.length) {
-          runs.push({ steps: kept, jumpIn, jumpOut: jump });
-          jumpIn = jump;
-        }
-        run = moved;
-        spans = fresh();
-        lastStrand = null;
-        lastRead = -1;
-        moved.forEach((s, k) => {
-          const there = refAt(s.node);
-          if (there === undefined) return;
-          widen(s, there);
-          lastStrand = s.reverse;
-          lastRead = k;
-        });
-        strandStart = 0;
-      }
-      widen(step, at);
-      lastStrand = step.reverse;
-      lastRead = run.length;
-    }
-    run.push(step);
-  }
-  if (run.length) runs.push({ steps: run, jumpIn });
-  return runs;
+  /** For a copy: which piece, and its steps in it. */
+  piece?: number;
+  at?: [number, number];
+  /** `reading`: which of the lane's readings the walk goes on in, when
+      one is known. */
+  jumpIn?: { to: number; reverse: boolean; reading?: number };
+  jumpOut?: { to: number; reverse: boolean; reading?: number };
 }
 
 /**
@@ -965,7 +934,12 @@ function readPiece(
           markBefore(outAt);
           return;
         }
-        const jump: Jump = { side: bubble.open, ref: junction, to: at, reverse: away[outAt].reverse, before };
+        /* Where the walk is on the far side: where it left the node it
+           came from, or reaches the node it goes on at, by the strand it
+           reads it on. */
+        const reverse = away[outAt].reverse;
+        const to = before === reverse ? at : at + lenOf(node);
+        const jump: Jump = { side: bubble.open, ref: junction, to, reverse, before };
         reading.jumps.push(jump);
         markBefore(outAt, jump);
         return;
@@ -981,7 +955,7 @@ function readPiece(
           to: cut.to,
           reverse: cut.reverse,
           before,
-          reading: before ? index - 1 : index + 1,
+          ...(cut.reading !== undefined ? { reading: cut.reading } : {}),
         };
         reading.jumps.push(jump);
         markBefore(away.length, jump);
@@ -1025,7 +999,7 @@ function readPiece(
       to: run.jumpIn.to,
       reverse: run.jumpIn.reverse,
       before: true,
-      reading: index - 1,
+      ...(run.jumpIn.reading !== undefined ? { reading: run.jumpIn.reading } : {}),
     });
   }
   if (run.jumpOut && !reading.jumps.some((jump) => !jump.before)) {
@@ -1036,7 +1010,7 @@ function readPiece(
       to: run.jumpOut.to,
       reverse: run.jumpOut.reverse,
       before: false,
-      reading: index + 1,
+      ...(run.jumpOut.reading !== undefined ? { reading: run.jumpOut.reading } : {}),
     });
   }
   /* The anchors themselves: each a whole node the haplotype reads as the
@@ -1055,6 +1029,281 @@ function readPiece(
   });
   reading.parts.sort((a, b) => a.ref - b.ref || a.len - b.len);
   return reading;
+}
+
+/* ── Copies ───────────────────────────────────────────────────────────── */
+
+/** The kinds that take room on the reference. */
+const ROOMY = new Set<PlacedPart["kind"]>(["match", "mismatch", "replaced", "inverted"]);
+
+/** A stretch of the haplotype's own coordinates, [from, to). */
+type OwnRange = [number, number];
+
+/** What is left of one range outside the others, in order. */
+function without(of: OwnRange, cut: OwnRange[]): OwnRange[] {
+  let kept: OwnRange[] = [of];
+  for (const [a, b] of cut) {
+    const next: OwnRange[] = [];
+    for (const [x, y] of kept) {
+      if (b <= x || a >= y) next.push([x, y]);
+      else {
+        if (a > x) next.push([x, a]);
+        if (b < y) next.push([b, y]);
+      }
+    }
+    kept = next;
+  }
+  return kept;
+}
+
+/** The own coordinates a run of steps covers, lowest first. */
+function ownOf(steps: LinearStep[]): OwnRange {
+  let from = Infinity;
+  let to = -Infinity;
+  for (const step of steps) {
+    from = Math.min(from, step.start);
+    to = Math.max(to, step.end);
+  }
+  return [from, to];
+}
+
+/**
+ * A lane's copies (PLAN-duplications.md). In the lane's walk order, its
+ * pieces in order, a reference node - one the band's walk reads, or one
+ * the reference reads elsewhere - is read again when its id was read
+ * before. A copy is a maximal run of steps whose reference steps are all
+ * read again, on one strand and in the reference's order along it: nodes
+ * of the haplotype's own may lie inside it (a base that differs from the
+ * original), but not at its ends, and so may a reference node read for the
+ * first time that lies in place between the two steps read again either
+ * side of it (the copy carries the reference's base where the original
+ * carried another, the original having read something of its own there
+ * between the node read again before it and the one after); a node out
+ * of that order ends it, as does
+ * a node repeating inside it (the walk jumping back once more: the next
+ * copy), a change of strand, and the piece's end. It is
+ * tandem when the steps right before it in the piece are its own, in
+ * order with the same strands, or reversed with every strand flipped
+ * (inverted); consecutive tandem copies of one stretch are one group.
+ * Each copy is aligned on its own by "read", as a reading is, which lines
+ * it up on its original; its jumps name the reference steps either side
+ * of it, in the piece's reading. Nothing compares bases.
+ */
+function copiesOf(
+  lane: LinearLane,
+  read: (run: Run, index: number) => Reading,
+  referenceAt: Record<string, number>,
+  refPos: Map<string, number>,
+  lenOf: (id: string) => number,
+): Copy[] {
+  const isRef = (id: string) => refPos.has(id) || referenceAt[id] !== undefined;
+  const positionOf = (id: string): number => referenceAt[id] ?? refPos.get(id)!;
+  /* Each reference node's first visit: its piece, its step and its strand. */
+  const seen = new Map<string, { piece: number; k: number; reverse: boolean }>();
+  /** Whether the original covered the place between two nodes read again
+      with something of its own: their first visits are in one piece, with
+      nodes between them none of which is the band's reference (nodes of
+      the haplotype's own, or nodes the reference reads only outside the
+      band: the alt allele the copy has the reference's base for). Asked
+      only where the copy reads reference for the first time between the
+      two, so that a stretch the original deleted, or jumped over, is not
+      bridged into a copy by nodes read again at both ends (jump's
+      HG02698#1: piece 0 reads 318-375, then nodes 1 kb on; piece 2, read
+      backwards, reads the 1 kb between for the first time). */
+  const covered = (last: string, next: string): boolean => {
+    const a = seen.get(last)!;
+    const b = seen.get(next)!;
+    if (a.piece !== b.piece) return false;
+    const original = lane.pieces[a.piece].steps;
+    let something = false;
+    for (let m = Math.min(a.k, b.k) + 1; m < Math.max(a.k, b.k); m++) {
+      if (refPos.has(original[m].node)) return false;
+      something = true;
+    }
+    return something;
+  };
+  const runs: Array<{ piece: number; at: [number, number]; kind: Copy["kind"]; inverted: boolean }> = [];
+  for (const piece of lane.pieces) {
+    const steps = piece.steps;
+    const again = steps.map((step, k) => {
+      if (!isRef(step.node)) return false;
+      const was = seen.has(step.node);
+      if (!was) seen.set(step.node, { piece: piece.index, k, reverse: step.reverse });
+      return was;
+    });
+    for (let i = 0; i < steps.length; ) {
+      if (!again[i]) {
+        i += 1;
+        continue;
+      }
+      /* The run reads one strand, in the reference's order along it: its
+         next step read again must lie past the last on that strand, with
+         any reference node read for the first time between them in place,
+         between the two. */
+      const strand = steps[i].reverse;
+      const inRun = new Set<string>();
+      let last = i;
+      let lastAt = positionOf(steps[i].node);
+      const ahead = (pos: number) => (strand ? pos < lastAt : pos > lastAt);
+      for (let j = i; j < steps.length; j++) {
+        const id = steps[j].node;
+        if (inRun.has(id)) break;
+        if (!isRef(id)) {
+          inRun.add(id);
+          continue;
+        }
+        if (steps[j].reverse !== strand) break;
+        if (again[j]) {
+          if (j > i && !ahead(positionOf(id))) break;
+          /* The first-time nodes since the last step read again lie
+             between the two, where the original covered the place with
+             something of its own; or the run ends at the last. */
+          let placed = true;
+          let firstTime = false;
+          for (let k = last + 1; k < j && placed; k++) {
+            const at = isRef(steps[k].node) ? positionOf(steps[k].node) : null;
+            if (at === null) continue;
+            firstTime = true;
+            if (!(ahead(at) && (strand ? at > positionOf(id) : at < positionOf(id)))) placed = false;
+          }
+          if (!placed || (firstTime && !covered(steps[last].node, id))) break;
+          for (let k = last + 1; k <= j; k++) inRun.add(steps[k].node);
+          last = j;
+          lastAt = positionOf(id);
+          continue;
+        }
+        /* A reference node read for the first time: kept only if a step
+           read again follows it in place (checked when that step comes). */
+        if (!ahead(positionOf(id))) break;
+      }
+      const at: [number, number] = [i, last + 1];
+      const k = at[1] - at[0];
+      const own = steps.slice(at[0], at[1]);
+      const before = at[0] >= k ? steps.slice(at[0] - k, at[0]) : [];
+      const forward = before.length === k && before.every((s, m) => s.node === own[m].node && s.reverse === own[m].reverse);
+      const flipped = before.length === k && before.every((s, m) => s.node === own[k - 1 - m].node && s.reverse !== own[k - 1 - m].reverse);
+      /* Inverted: its steps read again are on the other strand from their
+         first visits. */
+      const inverted = strand !== seen.get(steps[i].node)!.reverse;
+      runs.push({ piece: piece.index, at, kind: forward || flipped ? "tandem" : "dispersed", inverted });
+      i = last + 1;
+    }
+  }
+
+  const copies: Copy[] = runs.map((run, index) => {
+    const piece = lane.pieces[run.piece];
+    const steps = piece.steps.slice(run.at[0], run.at[1]);
+    /* The reference steps either side of it, where the walk left the one
+       and reaches the other, for its row's cards. */
+    let before: LinearStep | undefined;
+    for (let k = run.at[0] - 1; k >= 0 && !before; k--) if (isRef(piece.steps[k].node)) before = piece.steps[k];
+    let after: LinearStep | undefined;
+    for (let k = run.at[1]; k < piece.steps.length && !after; k++) if (isRef(piece.steps[k].node)) after = piece.steps[k];
+    const reading = read(
+      {
+        steps,
+        piece: run.piece,
+        at: run.at,
+        ...(before ? { jumpIn: { to: positionOf(before.node) + (before.reverse ? 0 : lenOf(before.node)), reverse: before.reverse, reading: run.piece } } : {}),
+        ...(after ? { jumpOut: { to: positionOf(after.node) + (after.reverse ? lenOf(after.node) : 0), reverse: after.reverse, reading: run.piece } } : {}),
+      },
+      index,
+    );
+    /* Its original: what its reference nodes' first visits cover on the
+       band's walk; none when every one is read only elsewhere. */
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const step of steps) {
+      const at = refPos.get(step.node);
+      if (at === undefined) continue;
+      lo = Math.min(lo, at);
+      hi = Math.max(hi, at + lenOf(step.node));
+    }
+    const original: Copy["original"] = lo < hi ? [lo, hi] : null;
+    /* Where the bar draws its bases: the bar's parts of the piece's
+       reading over its own coordinates. */
+    const [ownFrom, ownTo] = ownOf(steps);
+    const over = lane.drawn.filter((part) => part.reading === run.piece && part.own && part.own.from < ownTo && ownFrom < part.own.to);
+    const roomy = over.filter((part) => ROOMY.has(part.kind));
+    let bar: Copy["bar"] = null;
+    if (roomy.length) {
+      const ref = Math.min(...roomy.map((part) => part.ref));
+      bar = { ref, len: Math.max(...roomy.map((part) => part.ref + part.len)) - ref };
+    } else {
+      const mark = over.find((part) => part.kind === "mark");
+      if (mark) bar = { ref: mark.ref, len: 0 };
+    }
+    return {
+      ...reading,
+      index,
+      at: run.at,
+      kind: run.kind,
+      inverted: run.inverted,
+      times: 2,
+      group: index,
+      original,
+      bar,
+      /* Its row: a dispersed copy lined up on its original. */
+      drawn: reading.drawn && !reading.spanning && original !== null && run.kind === "dispersed",
+    };
+  });
+
+  /* Groups: tandem copies back to back in one piece, of the same nodes
+     either way round. Times: a tandem copy's group, a dispersed copy's
+     every copy of its original. */
+  const ids = (copy: Copy) => copy.steps.map((step) => step.node);
+  const sameNodes = (a: Copy, b: Copy) => {
+    const x = ids(a);
+    const y = ids(b);
+    return x.length === y.length && (x.every((id, m) => id === y[m]) || x.every((id, m) => id === y[y.length - 1 - m]));
+  };
+  for (let m = 1; m < copies.length; m++) {
+    const prev = copies[m - 1];
+    const cur = copies[m];
+    if (cur.kind === "tandem" && prev.kind === "tandem" && cur.piece === prev.piece && cur.at[0] === prev.at[1] && sameNodes(prev, cur)) cur.group = prev.group;
+  }
+  const groupSize = new Map<number, number>();
+  for (const copy of copies) groupSize.set(copy.group, (groupSize.get(copy.group) ?? 0) + 1);
+  const overlapping = (copy: Copy) =>
+    copies.filter((other) => other.original && copy.original && other.original[0] < copy.original[1] && copy.original[0] < other.original[1]).length;
+  for (const copy of copies) copy.times = 1 + (copy.kind === "tandem" ? groupSize.get(copy.group)! : copy.original ? overlapping(copy) : 1);
+  return copies;
+}
+
+/**
+ * A mark holding a copy's bases is cut to the bases of the haplotype's
+ * own in it: its length, its bases and its nodes (the user, 2026-11-02:
+ * the mark above the bar says "+5" for 5 bases of its own beside a copy
+ * that the pointer below stands for). A mark that is copy alone keeps
+ * its number: the copy is an insertion, and the mark says so.
+ */
+function cutMarks(lane: LinearLane): void {
+  for (const reading of lane.readings) {
+    const cut = lane.copies.filter((copy) => copy.piece === reading.piece).map((copy) => ownOf(copy.steps));
+    if (!cut.length) continue;
+    const steps = lane.pieces[reading.piece].steps;
+    reading.parts = reading.parts.flatMap((part): PlacedPart[] => {
+      if (part.kind !== "mark" || !part.own) return [part];
+      const own = part.own;
+      const kept = without([own.from, own.to], cut);
+      const len = kept.reduce((n, [a, b]) => n + b - a, 0);
+      if (len === own.to - own.from || len === 0) return [part];
+      /* Its bases are drawn on the reference's strand: for a mark read
+         backwards, the walk's last base first. */
+      const slices = own.reverse ? [...kept].reverse().map(([a, b]) => [own.to - b, own.to - a]) : kept.map(([a, b]) => [a - own.from, b - own.from]);
+      const seq = part.seq !== undefined ? slices.map(([a, b]) => part.seq!.slice(a, b)).join("") : undefined;
+      const nodes = steps.filter((step) => kept.some(([a, b]) => step.start < b && a < step.end)).map((step) => step.node);
+      return [
+        {
+          ...part,
+          len,
+          ...(seq !== undefined ? { seq } : {}),
+          own: { from: kept[0][0], to: kept[kept.length - 1][1], reverse: own.reverse },
+          nodes,
+        },
+      ];
+    });
+  }
 }
 
 /* ── What the bar draws of a lane's readings ─────────────────────────── */
@@ -1177,6 +1426,26 @@ function openEndsDrawn(readings: Reading[]): OpenEnd[] {
     }
   }
   return out;
+}
+
+/* ── A placed part, read back ─────────────────────────────────────────── */
+
+/** The bubble a part came from: `[b]` among its reading's bubbles, or
+    `[b, k]`, the k-th inside the inversion b. Null for an anchor's match
+    and a span's white, which come from no bubble. */
+export function bubbleOf(reading: Reading, path: number[]): Bubble | null {
+  if (!path.length) return null;
+  const bubble = reading.alignment.bubbles[path[0]];
+  return (path.length > 1 ? bubble?.inside?.[path[1]] : bubble) ?? null;
+}
+
+/** Whether a part is drawn arrowed, as read on the other strand: an
+    inverted span or a part inside one, or any part of a reading read
+    backwards as a whole; both at once cancel. The rule barRaster.ts draws
+    by. */
+export function drawnArrowed(part: PlacedPart, reading: Reading | undefined): boolean {
+  const inverted = part.kind === "inverted" || !!part.inverted;
+  return inverted !== !!reading?.reversed;
 }
 
 /* ── Which way each node is drawn ────────────────────────────────────── */

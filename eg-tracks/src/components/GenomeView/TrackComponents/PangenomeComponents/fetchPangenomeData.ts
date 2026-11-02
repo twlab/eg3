@@ -60,6 +60,25 @@ export const isLayoutTrackType = (type: unknown) =>
    makes the bubbles; see pangenomeBrowser's dataFetcher. */
 const DEFAULT_CONTEXT_BP = 32;
 
+/** The widest view, in bases, the linear view draws haplotypes for. Past it
+    the band is not fetched: a 150 kb view already takes about 11 s, most of
+    it the fetch, and a 1 Mb view ran the tab out of memory. Each haplotype's
+    row says to zoom in instead (PangenomeTrackView). */
+export const PANGENOME_MAX_VIEW_BP = 150_000;
+
+/** What a band left unfetched for its width says of itself: the view's
+    width and the limit, in bases. */
+export interface TooWide {
+  viewBp: number;
+  maxBp: number;
+}
+
+/** Why a band holds nothing, when it was too wide to fetch; null for a band
+    that was fetched. */
+export function tooWideOf(queryResult: any): TooWide | null {
+  return (queryResult?.result ?? queryResult)?.tooWide ?? null;
+}
+
 /** Where a graph track's options say its database is. */
 interface PangenomeOptions {
   /** The gbz worker's id for the opened database. */
@@ -722,6 +741,25 @@ export async function fetchPangenomeData(
     return query;
   };
 
+  /* Linear view, past the limit: nothing is fetched. Every row gets the
+     empty reply a band outside the path gets, saying why, so the band is
+     still laid out and the ruler and the other tracks still draw. Not an
+     error: that would draw eg3's red box, and a click on it would fetch
+     again. Without the view in the message, a third of the band: the band
+     is the view and a view's width either side. */
+  const viewBp = visData.viewWindowRegion
+    ? regionOf(visData.viewWindowRegion).getWidth()
+    : visRegion.getWidth() / 3;
+  /* Past it to a tenth of a kb, as the row gives the width: a view runs a
+     base or so past the round number asked for (a typed region holds both
+     its ends, and a zoom rounds its edges), and eg3's own zoom in from a
+     300 kb view, 150,001 bases, is a 150 kb view. */
+  const tooWide: TooWide | null =
+    settings.mode === "linear" && Math.round(viewBp / 100) * 100 > PANGENOME_MAX_VIEW_BP
+      ? { viewBp, maxBp: PANGENOME_MAX_VIEW_BP }
+      : null;
+  const unfetched = tooWide ? { nodes: {}, edges: {}, paths: [], tooWide } : null;
+
   /* The first graph lays the band out; the views never hold two. */
   let layoutRecords: any = null;
   const haplotypes = new Set<string>();
@@ -730,7 +768,7 @@ export async function fetchPangenomeData(
     let errorType: string | undefined;
     try {
       const options = trackModel.options as PangenomeOptions;
-      records = await queryFor(options);
+      records = unfetched ?? (await queryFor(options));
       layoutRecords ??= records;
       for (const key of options.haplotypes ?? []) haplotypes.add(key);
       if (options.part && options.part !== GRAPH_PART) haplotypes.add(options.part);

@@ -5974,9 +5974,33 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       </OutsideClickDetector>
     </div>
   );
+  /* How the pangenome view's "Zoom in here" moves the region (a
+     zoomed-out bar's card, in linear view): a span of the reference's
+     contig, turned into the genome's own bases and taken as the region the
+     way the navigator takes one. Held still, so the view's shared state
+     does not change with every render; the genome and onRegionSelected
+     are read when it is called. */
+  const onRegionSelectedRef = useRef(onRegionSelected);
+  onRegionSelectedRef.current = onRegionSelected;
+  const commitPangenomeRegion = useCallback(
+    (start: number, end: number, contig?: string) => {
+      const navContext = curGenomeConfig.current?.navContext;
+      if (!navContext) return;
+      if (!contig) {
+        onRegionSelectedRef.current(start, end, "isJump");
+        return;
+      }
+      const [bases] = navContext.convertGenomeIntervalToBases(
+        new ChromosomeInterval(contig, start, end),
+      );
+      if (bases) onRegionSelectedRef.current(bases.start, bases.end, "isJump");
+    },
+    [],
+  );
   return isPangenome ? (
     <PangenomeViewProvider
       windowWidth={windowWidthRef.current}
+      onCommitRegion={commitPangenomeRegion}
       mode={pangenomeView}
       onModeChange={setPangenomeView}
       tubeGrouping={tubeGrouping}

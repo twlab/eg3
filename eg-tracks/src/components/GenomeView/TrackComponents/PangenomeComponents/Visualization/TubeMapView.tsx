@@ -45,8 +45,8 @@ import type {
    hands them in, since the pan needs the same axis the drawing uses.
 
    Painted on one canvas, as the bars are - the tubes are thousands of
-   pieces - with the ruler drawn over it. What is under the pointer is worked
-   out from the geometry rather than hit-tested.
+   pieces. eg3's ruler track, not this, gives the coordinates. What is
+   under the pointer is worked out from the geometry rather than hit-tested.
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** How thick a tube is: two thirds of a linear view bar. */

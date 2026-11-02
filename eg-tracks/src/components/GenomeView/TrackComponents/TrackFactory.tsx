@@ -701,6 +701,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   }
                 : undefined
             }
+            note={legend?.note}
           />
           {legend?.reverseStrandLegendProps && (
             <TrackLegend

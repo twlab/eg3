@@ -6,9 +6,11 @@ import { createPortal } from "react-dom";
    The cards of the linear view: what a hover shows and a click keeps.
 
    A card is a title, the letters under the pointer when there are any, some
-   lines, and headed lists of items that open on a click. The hover card
-   follows the pointer and is drawn again only when what it is about
-   changes; the kept card (FloatingCard) stays where it was clicked.
+   lines, a button when the card has something to do, and headed lists of
+   items that open on a click. The hover card follows the pointer and is
+   drawn again only when what it is about changes; the kept card
+   (FloatingCard) stays where it was clicked. Only there can the button be
+   pressed, so only there is it shown.
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** The letters round the pointer, with the ones it covers picked out. */
@@ -33,20 +35,28 @@ export interface CardContent {
   title: string;
   zoom?: CardZoom;
   lines: ReactNode[];
-  /** Headed lists, each opening on a click. `near`: the nodes either side
-      of the one the card is about, headed in the yellow they are outlined
-      in. `empty`: what to say when the list has none. */
-  groups: Array<{ head: string; items: CardItem[]; near?: boolean; empty?: string }>;
+  /** What the card can do, as a button under its lines: "Zoom in here",
+      on a zoomed-out bar's bin. On the kept card only. */
+  action?: { label: string; run: () => void };
+  /** Headed lists, each opening on a click. `empty`: what to say when the
+      list has none. `more`: what to say under it of the items it leaves
+      out. */
+  groups: Array<{ head: string; items: CardItem[]; empty?: string; more?: string }>;
 }
 
 export function CardBody({
   card,
   openItems,
   onToggle,
+  kept = false,
 }: {
   card: CardContent;
   openItems?: ReadonlySet<string>;
   onToggle?: (key: string) => void;
+  /** The card a click kept, the only one with the card's button: the
+      hover card lets clicks through to the drawing, so a button on it
+      could never be pressed. */
+  kept?: boolean;
 }) {
   return (
     <>
@@ -66,9 +76,14 @@ export function CardBody({
           {line}
         </div>
       ))}
+      {kept && card.action && (
+        <button type="button" className="pgv-card-action" onClick={card.action.run}>
+          {card.action.label}
+        </button>
+      )}
       {card.groups.map((group) => (
         <div key={group.head}>
-          <div className={`pgv-section-head${group.near ? " pgv-head-near" : ""}`}>{group.head}</div>
+          <div className="pgv-section-head">{group.head}</div>
           {group.items.length === 0 ? (
             <div className="pgv-section-line">{group.empty ?? "none"}</div>
           ) : (
@@ -112,6 +127,7 @@ export function CardBody({
               })}
             </div>
           )}
+          {group.more && <div className="pgv-section-line pgv-section-more">{group.more}</div>}
         </div>
       ))}
     </>

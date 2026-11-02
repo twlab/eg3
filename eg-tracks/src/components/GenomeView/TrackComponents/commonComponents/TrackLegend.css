@@ -38,6 +38,17 @@
   opacity: 0.75;
 }
 
+/* A short note under a track's name and button: a pangenome haplotype's
+   "23 deletions too small to see". Wrapped to the legend's width, its
+   lines split evenly where the browser can. */
+.TrackLegend-note {
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.2;
+  opacity: 0.75;
+  text-wrap: balance;
+}
+
 [data-theme="dark"] {
   --font-color: var(--dark-fg-color);
   --bg-color: var(--dark-bg-color);

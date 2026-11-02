@@ -1,11 +1,16 @@
 import type { ViewMode } from "./Visualization/pangenomeViewState";
+import { usePangenomeView } from "./Visualization/pangenomeViewState";
+import { STRIPE_INKS } from "./Visualization/BarCanvas";
+import { binBpAt } from "./Visualization/bins";
+import { CELL_BP, DENSE_PER_KB, STRIPE_PER_KB, stripeClass } from "./Visualization/barTiers";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Which view the pangenome graph is drawn in, in TrackManager's toolbar
    where a genome's region readout and metadata button are. Every track
    follows it: the band is laid out for the view chosen (see
    fetchPangenomeData), so the ruler and the HPRC tracks stay under the
-   graph in each.
+   graph in each. Beside it, the view's scale, and in the linear view
+   zoomed out a key to the greys its bars are drawn with.
    ══════════════════════════════════════════════════════════════════════════ */
 
 const VIEWS: Array<[ViewMode, string, string]> = [
@@ -42,6 +47,35 @@ function scaleText(basePerPixel: number): { text: string; narrow: boolean } {
         ? `${Math.round(basePerPixel)} bp`
         : `${basePerPixel.toFixed(1)} bp`;
   return { text: `1 px = ${bp}`, narrow: true };
+}
+
+/** A grey's words in the key: the small variants a kb its class stands
+    for, between barTiers.ts's lines. */
+function classWords(cls: number): string {
+  const lines = STRIPE_PER_KB;
+  if (cls === 1) return `under ${lines[0]}`;
+  if (cls > lines.length) return `${lines[lines.length - 1]}+`;
+  return `${lines[cls - 2]}–${lines[cls - 1]}`;
+}
+
+/** The key to a zoomed-out bar's greys: the greys that can show at this
+    zoom, each in the stripes' own ink, and what grey means. While bins are
+    under a cell (1 kb), only a cell with DENSE_PER_KB small variants a kb
+    or more has its bins striped, so only the classes from there up show;
+    once bins are a cell or wider, every bin with a small variant is, in
+    any of the five. Null at a pixel a base or more, where nothing is
+    binned. */
+function greyKey(basePerPixel: number): { greys: Array<{ ink: string; words: string }>; title: string } | null {
+  if (!(basePerPixel > 1)) return null;
+  const every = binBpAt(1 / basePerPixel) >= CELL_BP;
+  const from = every ? 1 : stripeClass(DENSE_PER_KB);
+  const what = "Grey in a bar: a bin holding small variants (SNVs, MNVs, and small insertions, deletions and deletion-insertions)";
+  return {
+    greys: STRIPE_INKS.map((ink, k) => ({ ink, words: classWords(k + 1) })).slice(from - 1),
+    title: every
+      ? `${what}. The darker the grey, the more of them per kb.`
+      : `${what}, where its kilobase has ${DENSE_PER_KB} or more of them. The darker the grey, the more per kb; sparser ones are ticks.`,
+  };
 }
 
 export default function PangenomeViewSwitch({
@@ -88,10 +122,17 @@ export default function PangenomeViewSwitch({
           }
         : null;
   const scale = scaleText(basePerPixel ?? 0);
+  /* The key to the greys: in the linear view below a pixel a base, where
+     its bars are drawn. Past the size limit nothing is fetched, and the
+     view has no model to show. */
+  const view = usePangenomeView();
+  const key = mode === "linear" && view?.model ? greyKey(basePerPixel ?? 0) : null;
+  /* Each item on one line, the row wrapping where the toolbar is too
+     narrow for it: the key's five greys come only in a narrow window. */
   return (
     <div
       className="flex items-center gap-1 px-2"
-      style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+      style={{ whiteSpace: "nowrap", flexWrap: "wrap", flexShrink: 1 }}
     >
     <div
       className="flex items-center gap-1"
@@ -125,7 +166,7 @@ export default function PangenomeViewSwitch({
         <span
           title={
             scale.narrow
-              ? "A base is narrower than a pixel now: the bars are drawn by sections, not base by base"
+              ? "A base is narrower than a pixel now: the bars are drawn by bins, not base by base"
               : "Each base of the view gets at least this many pixels"
           }
           className="px-1"
@@ -137,6 +178,25 @@ export default function PangenomeViewSwitch({
           }}
         >
           {scale.text}
+        </span>
+      )}
+      {key && (
+        <span
+          className="pgv-grey-key flex items-center gap-1 px-1"
+          title={key.title}
+          style={{
+            fontSize: `${Math.max(12, fontSize - 1)}px`,
+            fontVariantNumeric: "tabular-nums",
+            color: "var(--font-color)",
+          }}
+        >
+          {key.greys.map(({ ink, words }) => (
+            <span key={words} className="pgv-grey-key-class flex items-center gap-1 pr-1">
+              <span className="pgv-grey-key-swatch" style={{ width: 12, height: 9, borderRadius: 1, backgroundColor: ink }} />
+              {words}
+            </span>
+          ))}
+          <span>small variants per kb</span>
         </span>
       )}
       <button

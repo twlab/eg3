@@ -76,10 +76,14 @@ import Bedcolor from "./bedComponents/Bedcolor";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { chromAlias } from "../../../getRemoteData/fetchFunctions";
 import PangenomeTrackView, {
+  hiddenDeletionsNote,
   pangenomeTrackHeight,
   walksDrawn,
 } from "./PangenomeComponents/PangenomeTrackView";
-import { PANGENOME_TRACK_TYPE } from "./PangenomeComponents/fetchPangenomeData";
+import {
+  PANGENOME_TRACK_TYPE,
+  tooWideOf,
+} from "./PangenomeComponents/fetchPangenomeData";
 import { GRAPH_PART } from "./PangenomeComponents/Visualization/VisualizationContainer";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 
@@ -1349,13 +1353,22 @@ export const displayModeComponentMap: { [key: string]: any } = {
         label: drawData.trackModel.options?.label ?? drawData.trackModel.name,
         /* A haplotype's row has a button for its walk on its legend: whether
            it is on, and whether this band has any of the haplotype to draw
-           it from. */
+           it from. None past the size limit: nothing was fetched, so there
+           are no walks to show. */
         walks:
-          part !== GRAPH_PART && (primary?.pangenomeView ?? "linear") === "linear"
+          part !== GRAPH_PART &&
+          (primary?.pangenomeView ?? "linear") === "linear" &&
+          !tooWideOf(drawData.genesArr)
             ? {
                 on: walks,
                 shown: walks && walksDrawn(drawData.genesArr, part, primaryVisData),
               }
+            : undefined,
+        /* Below a pixel a base, a haplotype's row says how many deletions
+           in view are too narrow to draw. */
+        note:
+          (primary?.pangenomeView ?? "linear") === "linear"
+            ? hiddenDeletionsNote(drawData.genesArr, part, primaryVisData, walks)
             : undefined,
       };
     }

@@ -1,4 +1,5 @@
 import type { OpenEnd, OutOfBand, PlacedPart, Reading } from "./linearModel";
+import { drawnArrowed } from "./linearModel";
 import { reverseComplement, stepSeq } from "./alignment";
 import type { Graph } from "./alignment";
 import { deletionText } from "./pangenomeModel";
@@ -26,6 +27,8 @@ import type { NodeLetters } from "./letters";
 /** A part placed on the band's pixels. */
 export interface RasterPart extends PlacedPart {
   index: number;
+  /** Where it starts and ends. A mark's len is its inserted bases, which
+      take no room, so its right edge is its left. */
   left: number;
   right: number;
   /** Drawn arrowed, as read on the other strand: an inverted span, or any
@@ -34,10 +37,13 @@ export interface RasterPart extends PlacedPart {
 }
 
 /** A mark's glyph: one or more marks within a glyph's width of each other,
-    drawn as one with their sizes summed. */
+    drawn as one. Its label names the largest of them (markLabel). */
 export interface MarkGlyph {
   x: number;
+  /** All its marks' bases, for the card. */
   bp: number;
+  /** Its largest mark's bases. */
+  largest: number;
   /** The parts it stands for, as indices into `parts`. */
   parts: number[];
 }
@@ -101,10 +107,23 @@ export const END_HIT_PX = 5;
 /** The kinds that take room on the bar. */
 const ROOMY = new Set<PlacedPart["kind"]>(["match", "mismatch", "replaced", "inverted"]);
 
+/** Which of a bar's marks and whites it draws: all of them, unless told.
+    Zoomed out, barTiers.ts says (LinearView): a mark keeps its glyph only
+    where it is kept, and a white is drawn only where it is wide enough to
+    see, so the labels and the hover skip the rest too. */
+export interface RasterKeep {
+  /** Whether a mark keeps its glyph, by its index among the parts. */
+  keepMark?: (index: number) => boolean;
+  /** Whether a white is drawn: a white part by its index among the parts,
+      or a white out of the band by its index among those. */
+  keepWhite?: (part: number | null, out: number | null) => boolean;
+}
+
 /**
  * A bar from its parts. `px` is the axis's own, so the bar cannot drift
  * from the ruler or the other bars; `startBp`/`endBp` are the band's, where
- * a deletion running out of it ends.
+ * a deletion running out of it ends. `keep` leaves marks and whites out of
+ * the glyphs and the whites; by default nothing is left out.
  */
 export function rasteriseBar(
   key: string,
@@ -117,14 +136,14 @@ export function rasteriseBar(
   width: number,
   startBp: number,
   endBp: number,
+  keep: RasterKeep = {},
 ): BarRaster {
   const w = Math.max(0, Math.ceil(width));
   const parts: RasterPart[] = placed.map((part, index) => {
     const left = px(part.ref);
-    const right = px(part.ref + part.len);
-    const inverted = part.kind === "inverted" || !!part.inverted;
-    const arrowed = inverted !== !!readings[part.reading]?.reversed;
-    return { ...part, index, left, right, arrowed };
+    /* A mark sits at a point: its len is the bases it inserts. */
+    const right = part.kind === "mark" ? left : px(part.ref + part.len);
+    return { ...part, index, left, right, arrowed: drawnArrowed(part, readings[part.reading]) };
   });
   const partAt = new Int32Array(w).fill(-1);
   const baseAt = new Int32Array(w).fill(-1);
@@ -146,24 +165,27 @@ export function rasteriseBar(
   for (const part of parts) if (part.kind === "inverted") paint(part);
   for (const part of parts) if (part.kind !== "inverted") paint(part);
 
-  /* Marks: one glyph per cluster within a glyph's width. */
+  /* Marks: one glyph per cluster within a glyph's width, of the marks
+     kept. */
   const markParts = parts
-    .filter((part) => part.kind === "mark")
+    .filter((part) => part.kind === "mark" && (keep.keepMark?.(part.index) ?? true))
     .sort((a, b) => a.left - b.left);
   const marks: MarkGlyph[] = [];
   for (const part of markParts) {
     const last = marks[marks.length - 1];
     if (last && part.left - last.x <= MARK_MERGE_PX) {
       last.bp += part.len;
+      last.largest = Math.max(last.largest, part.len);
       last.parts.push(part.index);
       continue;
     }
-    marks.push({ x: part.left, bp: part.len, parts: [part.index] });
+    marks.push({ x: part.left, bp: part.len, largest: part.len, parts: [part.index] });
   }
 
+  /* The whites drawn. */
   const whites: WhiteRun[] = [];
   for (const part of parts) {
-    if (part.kind !== "white") continue;
+    if (part.kind !== "white" || (keep.keepWhite && !keep.keepWhite(part.index, null))) continue;
     const span = part.span;
     whites.push({
       left: part.left,
@@ -178,7 +200,8 @@ export function rasteriseBar(
       ...(span ? { instead: span.instead } : {}),
     });
   }
-  for (const out of outOfBand) {
+  outOfBand.forEach((out, index) => {
+    if (keep.keepWhite && !keep.keepWhite(null, index)) return;
     whites.push({
       left: out.side === "right" ? px(out.ref) : px(out.until ?? startBp),
       right: out.side === "right" ? px(out.until ?? endBp) : px(out.ref),
@@ -191,7 +214,7 @@ export function rasteriseBar(
       part: null,
       node: out.node,
     });
-  }
+  });
   whites.sort((a, b) => a.left - b.left);
 
   /* The bar's ends where a walk leaves the reference for good: the empty
@@ -225,6 +248,24 @@ export function rasteriseBar(
   };
 
   return { key, width: w, part: partAt, base: baseAt, parts, marks, whites, caps, own };
+}
+
+/** A size in bases, short, for a label: as it is under a thousand ("582"),
+    then to a tenth of a Kb ("2.0 Kb", "32.2 Kb"), and from a million to a
+    tenth of an Mb ("1.2 Mb"). */
+export function markSize(bp: number): string {
+  if (bp < 1000) return `${bp}`;
+  const kb = Math.round(bp / 100) / 10;
+  if (kb < 1000) return `${kb.toFixed(1)} Kb`;
+  return `${(Math.round(bp / 100_000) / 10).toFixed(1)} Mb`;
+}
+
+/** What a mark's glyph says beside it. One mark: its bases, "+2,040".
+    Several: the largest and how many more, "+32.2 Kb & 2 more", since
+    their sum would match no insertion the haplotype has. */
+export function markLabel(glyph: Pick<MarkGlyph, "bp" | "largest" | "parts">): string {
+  const more = glyph.parts.length - 1;
+  return more > 0 ? `+${markSize(glyph.largest)} & ${more} more` : `+${glyph.bp.toLocaleString()}`;
 }
 
 /** What the pointer is on, in a part of the bar. */

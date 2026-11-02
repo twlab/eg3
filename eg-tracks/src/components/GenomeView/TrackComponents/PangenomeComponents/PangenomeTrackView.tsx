@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import VisualizationContainer, {
   GRAPH_PART,
+  pxPerBaseOf,
 } from "./Visualization/VisualizationContainer";
 import {
   PangenomeViewProvider,
@@ -14,6 +15,8 @@ import {
   placedModel,
 } from "./Visualization/pangenomeModel";
 import { linearModelOf } from "./Visualization/linearModel";
+import type { LinearLane } from "./Visualization/linearModel";
+import { linearAxis } from "./Visualization/linearAxis";
 import type { ViewMode } from "./Visualization/pangenomeViewState";
 import { TUBE_H } from "./Visualization/TubeMapView";
 import { tubeStacks } from "./Visualization/tubeLayout";
@@ -24,8 +27,14 @@ import {
   variantSegments,
 } from "./Visualization/variantBubbles";
 import type { DrawFrame } from "./Visualization/pangenomeModel";
-import { linearHeight, walksHeight, walksShown } from "./Visualization/LinearView";
+import {
+  hiddenDeletions,
+  linearHeight,
+  walksHeight,
+  walksShown,
+} from "./Visualization/LinearView";
 import { BAR_H, GRAPH_ROW_H, LANE_H } from "./Visualization/laneLayout";
+import { tooWideOf } from "./fetchPangenomeData";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
 import LinearDrawingModel from "../../../../models/LinearDrawingModel";
 
@@ -56,6 +65,11 @@ export function pangenomeTrackHeight(
   /** A haplotype's row drawn as its walk: see WalksView. */
   walks = false,
 ): number {
+  /* Linear view, past the size limit: nothing was fetched, and each row
+     keeps the height it has with a band (fetchPangenomeData). */
+  if (view === "linear" && tooWideOf(queryResult)) {
+    return part === GRAPH_PART ? GRAPH_ROW_H : BAR_H;
+  }
   const model = modelOf(queryResult);
   if (!model) return 40;
   if (view !== "linear") {
@@ -101,6 +115,45 @@ export function walksDrawn(queryResult: any, part: string, _primaryVisData?: any
   if (!linear) return false;
   const lanes = linear.lanes.filter((lane) => lane.isReference || lane.label === part);
   return lanes.length > 1 && walksShown({ ...linear, lanes });
+}
+
+/** Each haplotype's legend note by its lane, for each axis and walk
+    setting it was worked out for: the legend is worked out again on every
+    draw of the row. */
+const notesByLane = new WeakMap<LinearLane, Map<string, string | undefined>>();
+
+/** What a haplotype's track legend says in linear view (the only view it
+    is asked for in) of the deletions its row leaves undrawn below a pixel
+    a base: "23 deletions too small to see", or "1 deletion too small to
+    see" (see hiddenDeletions). Nothing on the graph's own row, nothing
+    when every deletion in view is drawn, and nothing past the size limit,
+    where no row is drawn. It counts the view the band was drawn for, its
+    middle window, so a pan within the band leaves it as it is. */
+export function hiddenDeletionsNote(
+  queryResult: any,
+  part: string,
+  primaryVisData?: any,
+  /** The row drawn as its walk: see WalksView. */
+  walks = false,
+): string | undefined {
+  if (part === GRAPH_PART || tooWideOf(queryResult)) return undefined;
+  const linear = linearModelOf(queryResult);
+  if (!linear) return undefined;
+  const lanes = linear.lanes.filter((lane) => lane.isReference || lane.label === part);
+  const lane = lanes.find((candidate) => !candidate.isReference);
+  if (!lane) return undefined;
+  /* The axis the row is drawn on, as VisualizationContainer makes it. */
+  const cut = { ...linear, lanes };
+  const frame = bandFrame(primaryVisData);
+  const axis = linearAxis(cut, frame, pxPerBaseOf(frame));
+  const key = [axis.scale, axis.startBp, axis.endBp, axis.viewFromPx, axis.viewToPx, walks].join(":");
+  let known = notesByLane.get(lane);
+  if (!known) notesByLane.set(lane, (known = new Map()));
+  if (!known.has(key)) {
+    const n = hiddenDeletions(cut, axis, walks);
+    known.set(key, n > 0 ? `${n.toLocaleString()} deletion${n === 1 ? "" : "s"} too small to see` : undefined);
+  }
+  return known.get(key);
 }
 
 /**
@@ -149,6 +202,10 @@ export function bandFrame(primaryVisData: any): DrawFrame | undefined {
   };
 }
 
+/** A width in bases as the size limit says it: "150 kb". */
+const kb = (bp: number) =>
+  `${(bp / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })} kb`;
+
 export default function PangenomeTrackView({
   queryResult,
   primaryVisData,
@@ -176,18 +233,40 @@ export default function PangenomeTrackView({
     const perBase = primaryVisData.visWidth / width;
     return { minBp: tube.minBp, gapsPx: tube.bases.map((b) => b * perBase) };
   }, [tube, primaryVisData]);
-  const drawing = (
-    <div style={{ width: frame?.width ?? windowWidth * 3 }}>
-      <VisualizationContainer
-        isPrimary={part === GRAPH_PART}
-        queryResult={queryResult}
-        frame={frame}
-        part={part}
-        tubeLayout={tubeLayout}
-        walks={walks}
-      />
-    </div>
-  );
+  /* Past the size limit nothing was fetched (fetchPangenomeData): a
+     haplotype's row says so, in a box the band's width, so a pan shows no
+     blank stretch, with the words over the view; the graph's own row is
+     drawn as ever, empty. */
+  const tooWide = tooWideOf(queryResult);
+  const drawing =
+    tooWide && part !== GRAPH_PART ? (
+      <div style={{ position: "relative", width: frame?.width ?? windowWidth * 3, height: BAR_H }}>
+        <div
+          className="pgv-zoom-in"
+          title={`Haplotypes are drawn for views of ${kb(tooWide.maxBp)} or less; this view is ${kb(tooWide.viewBp)}`}
+        >
+          <span
+            style={{
+              left: frame?.viewFromPx ?? windowWidth,
+              width: frame ? frame.viewToPx - frame.viewFromPx : windowWidth,
+            }}
+          >
+            Zoom in to see haplotypes
+          </span>
+        </div>
+      </div>
+    ) : (
+      <div style={{ width: frame?.width ?? windowWidth * 3 }}>
+        <VisualizationContainer
+          isPrimary={part === GRAPH_PART}
+          queryResult={queryResult}
+          frame={frame}
+          part={part}
+          tubeLayout={tubeLayout}
+          walks={walks}
+        />
+      </div>
+    );
   /* The view TrackManager holds, which its toolbar switches, when there is
      one; a provider of its own otherwise. */
   const held = usePangenomeView();

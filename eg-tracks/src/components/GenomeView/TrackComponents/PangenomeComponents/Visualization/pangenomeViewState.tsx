@@ -18,11 +18,7 @@ import type { PangenomeModel } from "./pangenomeModel";
    here for the chrome to describe.
    ══════════════════════════════════════════════════════════════════════════ */
 
-export type ViewMode = "linear" | "tube" | "graph" | "variants";
-
-/** Base-level detail starts here, in pixels a base: below it the letters
-    are unreadable. */
-export const SEQUENCE_ZOOM = 7;
+export type ViewMode = "linear" | "tube" | "variants";
 
 /** Gaps offered between nodes, in pixels - chosen like a font size. */
 export const NODE_GAPS = [0, 4, 8, 14, 20, 28, 40];
@@ -62,8 +58,6 @@ export interface PangenomeViewState {
   setHighlight: React.Dispatch<React.SetStateAction<string | null>>;
   selectedNode: string | null;
   setSelectedNode: React.Dispatch<React.SetStateAction<string | null>>;
-  expandEdges: boolean;
-  setExpandEdges: React.Dispatch<React.SetStateAction<boolean>>;
   /** How the variants view groups bubbles into sites: the shortest shared
       stretch that separates two, in bases - 1 is every bubble alone - or 0
       for auto, which picks one that fits the zoom. */
@@ -74,8 +68,11 @@ export interface PangenomeViewState {
   tubeGrouping: number;
   setTubeGrouping: React.Dispatch<React.SetStateAction<number>>;
 
-  /** Adopt a span of the reference as the region; null when nothing can. */
-  commitRegion: ((start: number, end: number) => void) | null;
+  /** Adopt a span of the reference as the region: [start, end) of its
+      `contig`, or, without one, of the genome's own bases. Only the linear
+      view's "Zoom in here", on a zoomed-out bar's card, calls it. Null when
+      nothing can. */
+  commitRegion: ((start: number, end: number, contig?: string) => void) | null;
   /** The primary window's model, or null before the first one draws. */
   model: PangenomeModel | null;
   publishModel: (model: PangenomeModel | null) => void;
@@ -90,8 +87,8 @@ export function usePangenomeView(): PangenomeViewState | null {
 export interface PangenomeViewProviderProps {
   children: ReactNode;
   windowWidth?: number;
-  /** Adopt a span of the reference as the region. */
-  onCommitRegion?: (start: number, end: number) => void;
+  /** Adopt a span of the reference as the region: see commitRegion. */
+  onCommitRegion?: (start: number, end: number, contig?: string) => void;
   /** The view, when whoever mounts this holds it - eg3's TrackManager,
       whose toolbar switches it and whose tracks are laid out by it. */
   mode?: ViewMode;
@@ -135,7 +132,6 @@ export function PangenomeViewProvider({
   const resetLaneColors = useCallback(() => setLaneColors({}), []);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [expandEdges, setExpandEdges] = useState(false);
   /* Auto, so the variants view draws no more sites than there is room for. */
   const [ownVariantGrouping, setOwnVariantGrouping] = useState(0);
   const [ownTubeGrouping, setOwnTubeGrouping] = useState(0);
@@ -144,15 +140,15 @@ export function PangenomeViewProvider({
   const tubeGrouping = heldTubeGrouping ?? ownTubeGrouping;
   const setTubeGrouping = setHeldTubeGrouping ?? setOwnTubeGrouping;
   const [model, publishModel] = useState<PangenomeModel | null>(null);
-  /* Adopt a span of the reference as the region. Nothing reaches for this
-     now that the wheel no longer zooms - a pan is the only thing that
-     moves the region - but it is what a caller would use to. */
+  /* Adopt a span of the reference as the region. The wheel no longer
+     zooms and a pan moves the region by itself, so only the linear view's
+     "Zoom in here" reaches for this. */
   const commitRegion = useMemo(() => {
     if (!onCommitRegion) return null;
-    return (start: number, end: number) => {
+    return (start: number, end: number, contig?: string) => {
       if (!Number.isFinite(start) || !Number.isFinite(end)) return;
       if (end - start < MIN_REGION_BP) return;
-      onCommitRegion(Math.max(0, Math.round(start)), Math.round(end));
+      onCommitRegion(Math.max(0, Math.round(start)), Math.round(end), contig);
     };
   }, [onCommitRegion]);
 
@@ -184,8 +180,6 @@ export function PangenomeViewProvider({
       setHighlight,
       selectedNode,
       setSelectedNode,
-      expandEdges,
-      setExpandEdges,
       variantGrouping,
       setVariantGrouping,
       tubeGrouping,
@@ -203,7 +197,6 @@ export function PangenomeViewProvider({
       laneColors,
       highlight,
       selectedNode,
-      expandEdges,
       variantGrouping,
       tubeGrouping,
       model,

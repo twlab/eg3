@@ -1,6 +1,13 @@
-/** What the layout reads of a model: its lanes. */
+/** What the layout reads of a model: its lanes, each with its copies
+    (linearModel.ts) where it has them, which set its rows below the bar. */
 export interface LayoutModel {
-  lanes: ReadonlyArray<{ key: string; label: string; color: string; isReference: boolean }>;
+  lanes: ReadonlyArray<{
+    key: string;
+    label: string;
+    color: string;
+    isReference: boolean;
+    copies?: ReadonlyArray<{ kind: "tandem" | "dispersed"; original: unknown; bar: unknown }>;
+  }>;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -21,10 +28,22 @@ export const LEGEND_WIDTH = 120;
 
 /** The tube map sizes its tubes from this: what a haplotype's bar was. */
 export const LANE_H = 17;
-/** How tall an alt path's bar is: one row, whatever it holds. Where the
-    haplotype reads one place more than once the visits split it between
-    them - see `visitBand` in laneRaster.ts. */
-export const BAR_H = 60;
+/** How tall a haplotype's row is with one row of duplication marks
+    below its bar: the band above the bar for the insertion marks
+    (BarCanvas.tsx's MARK_BAND), the bar, and one DUP_ROW_H. */
+export const BAR_H = 72;
+/** One row of the band below the bar (BarCanvas.tsx's DUP_BAND): the
+    duplication rule's lines and pointers, a row per dispersed duplication
+    (PLAN-duplications.md, the user's choice of 2026-11-02), so their
+    words do not pile up where originals overlap. */
+export const DUP_ROW_H = 12;
+
+/** How many rows of duplication marks a lane's bar has below it: one per
+    dispersed copy with an original on the band or a place on the bar,
+    and at least one (a tandem copy's pointer goes on the first). */
+export function dupRowsOf(lane: LayoutModel["lanes"][number]): number {
+  return Math.max(1, (lane.copies ?? []).filter((copy) => copy.kind === "dispersed" && (copy.original || copy.bar)).length);
+}
 /** Between one haplotype's bar and the next. Nothing: what separates one
     from the next is the rule under it, and a gap as well left every bar
     looking as though it had been pushed down from its own name. */
@@ -69,7 +88,7 @@ export function laneLayout(model: LayoutModel): LaneLayout {
   model.lanes.forEach((lane) => {
     /* The reference has no bar of its own. */
     if (lane.isReference) return;
-    const height = BAR_H;
+    const height = BAR_H + DUP_ROW_H * (dupRowsOf(lane) - 1);
     rows.push({
       key: lane.key,
       label: lane.label,

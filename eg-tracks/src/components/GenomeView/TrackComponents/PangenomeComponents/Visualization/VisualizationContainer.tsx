@@ -22,7 +22,6 @@ import type { DrawFrame } from "./pangenomeModel";
 import type { HoverTarget } from "./hoverTarget";
 import TubeMapView, { TUBE_H } from "./TubeMapView";
 import { tubeAxis, tubeStacks } from "./tubeLayout";
-import NodeGraphView from "./NodeGraphView";
 import {
   boxFills,
   boxLabels,
@@ -39,26 +38,9 @@ import {
 } from "./variantBubbles";
 import {
   DEFAULT_GAP_SCALE,
-  SEQUENCE_ZOOM,
   usePangenomeView,
 } from "./pangenomeViewState";
 import "./pangenomeVisualization.css";
-
-/**
- * A length that follows the zoom, for the settings left on auto: the
- * largest of 2, 5, 10, 20, 50, 100… not over `bp`, and never under 2. In
- * steps rather than smoothly, so a zoom only redoes the work behind it when
- * it crosses one.
- */
-function autoBp(bp: number): number {
-  let step = 2;
-  for (let unit = 1; unit <= bp; unit *= 10) {
-    for (const m of [1, 2, 5]) {
-      if (m * unit >= 2 && m * unit <= bp) step = m * unit;
-    }
-  }
-  return step;
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
    Two renderings of one subgraph, after Eizenga et al. 2020, "Pangenome
@@ -130,6 +112,14 @@ interface VisualizationContainerProps {
 /** The `part` that is the graph's own row rather than a haplotype's bar. */
 export const GRAPH_PART = "graph";
 
+/** Pixels a base for a band: its width over the bases it spans; 1 without
+    one. The linear view's axis is made from this and the band (linearAxis),
+    here and for a haplotype's track legend (PangenomeTrackView.tsx). */
+export const pxPerBaseOf = (frame: DrawFrame | undefined): number =>
+  frame && frame.endBp > frame.startBp && frame.width > 0
+    ? frame.width / (frame.endBp - frame.startBp)
+    : 1;
+
 /** Room left for the tooltip so it does not run off the right of the window. */
 const TOOLTIP_W = 260;
 const POINTER_GAP = 14;
@@ -152,14 +142,6 @@ export default function VisualizationContainer({
      graph's own track row; a haplotype's row draws its bar in linear view
      and nothing else, so it lays nothing else out. */
   const drawsWhole = !part || part === GRAPH_PART;
-  /* Zoomed out, a section of the linear view's bars is hatched only where
-     more of its bases than this are off the reference, so a scatter of SNPs
-     does not hatch the whole bar. It grows with the window: 10 bp at 10 kb. */
-  const windowBp = frame
-    ? ((frame.endBp - frame.startBp) * (frame.viewToPx - frame.viewFromPx)) /
-      Math.max(1, frame.width)
-    : 0;
-  const sectionAltBp = autoBp(windowBp / 1000);
   /* The band's one model, shared with the graph's other rows. */
   const built = modelOf(queryResult);
 
@@ -302,12 +284,9 @@ export default function VisualizationContainer({
      gaps are let in between the nodes. */
   /* Pixels a base: the window's width over the region it shows, and
      nothing else - a zoom is a new region. Where the band says where its
-     bases go, a view draws from that instead; this is what is left for the
-     node graph, which lays itself out, and for a view without a band. */
-  const pxPerBase =
-    frame && frame.endBp > frame.startBp && frame.width > 0
-      ? frame.width / (frame.endBp - frame.startBp)
-      : 1;
+     bases go, a view draws from that instead; this is what is left for a
+     view without a band. */
+  const pxPerBase = pxPerBaseOf(frame);
   const gapScale = view?.gapScale ?? DEFAULT_GAP_SCALE;
   /* Grouped, the tube map is drawn from sites: a box per shared stretch and
      per unique walk, every haplotype still a tube of its own through them,
@@ -486,10 +465,10 @@ export default function VisualizationContainer({
   }, [linearModel, linAxis, part]);
   const linearBand = useMemo(() => (linAxis ? toBandAxis(linAxis) : null), [linAxis]);
 
-  /* The box is the height of what is in it. The linear view and the tube
-     map can say in advance - a bar or a tube is a known height each - so
-     they are asked; the node graph lays itself out before it knows, and
-     keeps the given default. */
+  /* The box is the height of what is in it. Each view can say in advance -
+     a bar or a tube is a known height each, and the variants view's layout
+     has its height - so each is asked; the given default stands in until
+     there is a drawing to ask. */
   const walksOn =
     walks && !drawsWhole && view?.mode === "linear" && !!linearModel && walksShown(linearModel);
   const shellHeight = !model
@@ -556,27 +535,24 @@ export default function VisualizationContainer({
     if (isPrimary) publishModel?.(model);
   }, [isPrimary, model, publishModel]);
 
-  /* Everything the drawings read, held still between renders so a view that
-     has not changed is not asked to draw itself again. */
+  /* What the tube map reads of the view, held still between renders so a
+     tube map that has not changed is not asked to draw itself again. */
   const shared = useMemo(
     () =>
       model && view
         ? {
             model,
-            pxPerBase,
             highlight: view.highlight,
             onHighlight: view.setHighlight,
             onHover: showTip,
             onSelectNode: view.setSelectedNode,
             selectedNode: view.selectedNode,
-            showSequence: pxPerBase >= SEQUENCE_ZOOM,
             frame,
           }
         : null,
     [
       model,
       view,
-      pxPerBase,
       view?.highlight,
       view?.setHighlight,
       view?.setSelectedNode,
@@ -606,7 +582,9 @@ export default function VisualizationContainer({
       >
         {view.mode === "linear" ? (
           /* The graph's own row draws nothing in linear view: it keeps its
-             place for its name. */
+             place for its name. A zoomed-out bar's bin card can move the
+             region, through whoever mounted the view's state; the tube map
+             and the variants view cannot. */
           part !== GRAPH_PART &&
           linearModel &&
           linAxis && (
@@ -614,8 +592,8 @@ export default function VisualizationContainer({
               model={linearModel}
               axis={linAxis}
               highlight={view.highlight}
-              sectionAltBp={sectionAltBp}
               walks={walksOn}
+              onZoomTo={view.commitRegion ?? undefined}
             />
           )
         ) : view.mode === "tube" ? (
@@ -632,7 +610,7 @@ export default function VisualizationContainer({
               axis={tube.axis}
             />
           )
-        ) : view.mode === "variants" ? (
+        ) : (
           variants &&
           variantAxis &&
           variantShape &&
@@ -648,8 +626,6 @@ export default function VisualizationContainer({
               onHover={showTip}
             />
           )
-        ) : (
-          <NodeGraphView {...shared} expanded={view.expandEdges} />
         )}
       </div>
 
