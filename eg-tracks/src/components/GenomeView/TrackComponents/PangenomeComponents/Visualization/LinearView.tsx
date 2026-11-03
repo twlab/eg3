@@ -589,7 +589,13 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
               : ", not compared: the commonest version's bases were not sent"}
         </>,
       );
-      if (info.sites.length) lines.push(`${plural(info.sites.length, "site")} inside where the versions differ: ${info.sites.join("; ")}`);
+      if (info.merged) {
+        lines.push(
+          `one site of ${info.refLen.toLocaleString()} reference bases, merged from ${plural(info.merged.pairs, "anchor pair")}${info.merged.source === "chains" ? ", a top-level snarl of the graph's chains" : ""}: every walk's bases between the anchor before and the anchor after, the reference nodes it reads inside included`,
+        );
+        if (info.merged.partial) lines.push(`${plural(info.merged.partial, info.unit === "haplotypes" ? "haplotype" : "lane")} anchor only one end of it, neither, or the two in the other order (an inverted run): not counted`);
+      }
+      if (info.sites.length) lines.push(`the versions differ at ${plural(info.sites.length, "place")} along the commonest: ${info.sites.join("; ")}`);
       if (info.others) lines.push(`${plural(info.others, info.unit === "haplotypes" ? "haplotype" : "lane")} anchor other nodes over this stretch: counted at their own sites`);
       const items: CardItem[] = info.list.map((v, i) => ({
         key: `${part.index}:v${i}`,
@@ -611,6 +617,25 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         details: [info.straightLanes.length ? `lanes on screen: ${info.straightLanes.join(", ")}` : "no lane on screen"],
       });
       groups.push({ head: `Versions here (${info.versions})`, items });
+      /* A merged site's sealed sites inside, as vg deconstruct lists nested
+         snarls: each with its own versions over the haplotypes in the band,
+         and how many of the merged site's readers skip it. */
+      if (info.merged?.inside.length) {
+        groups.push({
+          head: `Sites inside (${info.merged.inside.length})`,
+          items: info.merged.inside.map((inner, i) => ({
+            key: `${part.index}:inside${i}`,
+            line: (
+              <>
+                {refCoord(inner.refLen ? span(inner.refAt, inner.refAt + inner.refLen) : where(inner.refAt))} · {inner.refLen ? `${inner.refLen.toLocaleString()} bp of reference` : "an insertion site"} ·{" "}
+                {inner.versions.map((v) => `${v.seq === "" ? "nothing" : v.seq !== null && v.seq.length <= 24 ? v.seq : `${v.bases.toLocaleString()} bp`} in ${v.count.toLocaleString()}`).join(", ")}
+                {inner.straight ? `; the reference's own in ${inner.straight.toLocaleString()}` : ""}
+              </>
+            ),
+            details: [`${inner.skip.toLocaleString()} of the merged site's readers do not pass this site: they anchor other nodes over it`],
+          })),
+        });
+      }
     }
     return { lines, groups };
   };

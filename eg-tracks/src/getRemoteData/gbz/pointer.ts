@@ -148,18 +148,23 @@ export function flipRun<S extends PointerStep>(run: S[]): S[] {
     run). `anchors` are every reference step the walk anchors. Both
     levels of the layout are read: the walk's own, and the inside of each
     inverted run. An insertion site is the case k1 = k0 + 1. */
-export function siteReads<S extends PointerStep>(axis: PointerAxis, steps: S[]): { anchors: Set<number>; bubbles: Array<{ k0: number; k1: number; version: S[] }> } {
+export function siteReads<S extends PointerStep>(axis: PointerAxis, steps: S[]): { anchors: Set<number>; anchorAt: Map<number, number>; bubbles: Array<{ k0: number; k1: number; version: S[] }> } {
   const anchors = new Set<number>();
+  /* Reference step -> the walk's step index anchoring it, at the walk's own
+     level (inside an inverted run the steps are flipped, so none). */
+  const anchorAt = new Map<number, number>();
   const bubbles: Array<{ k0: number; k1: number; version: S[] }> = [];
-  const read = (laid: Laid<S>) => {
+  const read = (laid: Laid<S>, own: boolean) => {
     for (const piece of laid.pieces) {
-      if (piece.kind === "anchor") anchors.add(piece.k);
-      else if (piece.kind === "bubble") bubbles.push({ k0: piece.ref[0] - 1, k1: piece.ref[1], version: piece.pending });
-      else read(layOut(axis, flipRun(piece.steps), piece.ref[0], piece.ref[1], false));
+      if (piece.kind === "anchor") {
+        anchors.add(piece.k);
+        if (own) anchorAt.set(piece.k, steps.indexOf(piece.step));
+      } else if (piece.kind === "bubble") bubbles.push({ k0: piece.ref[0] - 1, k1: piece.ref[1], version: piece.pending });
+      else read(layOut(axis, flipRun(piece.steps), piece.ref[0], piece.ref[1], false), false);
     }
   };
-  read(layOut(axis, steps, 0, axis.steps.length, true));
-  return { anchors, bubbles };
+  read(layOut(axis, steps, 0, axis.steps.length, true), true);
+  return { anchors, anchorAt, bubbles };
 }
 
 /** How a walk's reads stand to a site: "own", it reads the site's own

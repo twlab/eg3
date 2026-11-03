@@ -52,6 +52,11 @@ export interface GbzSource {
 
   /** One decoded `Nodes` row. */
   getRecord(handle: number): GbzRecord | null;
+
+  /** The `Tags` table, where the source reads it: the graph's metadata,
+      among it `chains`, the number of top-level chains the database was
+      built with (0 or absent: none). */
+  tags?(): Record<string, string>;
 }
 
 /**

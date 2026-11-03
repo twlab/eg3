@@ -540,10 +540,11 @@ function paintOver(
       const at = Math.round(x + half + 2 * sx);
       const baseline = Math.round(tip - 1 * sy);
       const widthOf = (runs: typeof glyph.forms[number]) => runs.reduce((w, run) => w + ctx.measureText(run.text).width + (run.chip ? 2 * pad : 0), 0);
-      const form = glyph.forms.find((runs) => widthOf(runs) <= room);
+      /* The longest form that fits the room and is not cut by the view's
+         edge; a shorter one where the longest would be. */
+      const form = glyph.forms.find((runs) => widthOf(runs) <= room && uncut(at, at + widthOf(runs)));
       if (!form) return;
       const textWidth = widthOf(form);
-      if (!uncut(at, at + textWidth)) return;
       let cursor = at;
       for (const run of form) {
         const w = ctx.measureText(run.text).width;

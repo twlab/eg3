@@ -1,4 +1,5 @@
 import { axisOf, readsSite, siteReads } from "./pointer";
+import { adjacencyOf, clustersOf, handleOf, leaksInGraph, sealedInterior } from "./sites";
 import {
   edgeIsCanonical,
   encodeNode,
@@ -8,6 +9,7 @@ import {
   nodeId,
   pathIsCanonical,
 } from "./codec";
+import { encodeNode, isReverse, nodeId } from "./codec";
 import type { Pos } from "./codec";
 import { locateHaplotypes } from "./locate";
 import type { Located } from "./locate";
@@ -140,6 +142,11 @@ export interface Carriers {
       anchor after; the code's word: junction), what every haplotype reads
       there. Keyed "left>right" by the two anchors' node ids. */
   versions?: Record<string, JunctionVersions>;
+  /** The merged sites (PLAN-merge.md): where pairs overlap on the
+      reference and the stretch between the outer anchors is sealed in the
+      graph, one site under the outer anchors' key, in place of its pairs.
+      The pairs stay in `versions` for the card's list of sites inside. */
+  merged?: Record<string, MergedSite>;
   /** The haplotypes counted for the versions: those with a walk in the
       window, the reference sample's left out. */
   versionTotal?: number;
@@ -166,6 +173,33 @@ export interface JunctionVersions {
   straight: number;
   others: number;
   refLen: number;
+  /** The stretch between the two anchors is sealed in the graph (a snarl
+      with no cycle or tip): every walk through it enters by the one and
+      leaves by the other. Checked against the graph's own records. */
+  sealed: boolean;
+}
+
+/**
+ * A merged site: overlapping pairs whose outer anchors seal the stretch.
+ * Every walk anchoring both outer anchors reads a version there, its
+ * steps between the two, the reference nodes it reads inside included;
+ * a walk whose steps between are exactly the reference's reads straight;
+ * one with a bubble over the stretch that anchors only one or neither
+ * outer anchor is partial. Once per haplotype, the reference sample's own
+ * walks left out.
+ */
+export interface MergedSite {
+  /** The pairs' keys, as in `versions`. */
+  pairs: string[];
+  /** Where the site's bounds come from: "band", a cluster of overlapping
+      pairs sealed in the band's graph and the records; "chains", a
+      top-level snarl of the graph's own chains (gbz2db --chains), its
+      boundaries read from the reference steps' records. */
+  source: "band" | "chains";
+  refLen: number;
+  versions: Array<{ nodes: Array<{ id: string; reverse: boolean }>; bases: number; count: number }>;
+  straight: number;
+  partial: number;
 }
 
 /** A version longer than this has no sequences sent for its nodes: the
@@ -510,7 +544,7 @@ export function queryInterval(
   }
   return {
     ...kept,
-    carriers: countCarriers(json, kept, around ? Object.keys(around.lengths) : []),
+    carriers: countCarriers(json, kept, around ? Object.keys(around.lengths) : [], cache, Number(source.tags?.().chains ?? 0) > 0),
     referenceAt,
     ...(located ? { located } : {}),
     ...(around ? { around } : {}),
@@ -570,6 +604,8 @@ function countCarriers(
   all: SubgraphJson,
   kept: SubgraphJson,
   alsoNodes: Iterable<string> = [],
+  cache?: RecordCache,
+  chains = false,
 ): Carriers {
   const reference = all.paths.find((path) => path.is_reference);
   const refIndex = new Map<string, number>();
@@ -647,7 +683,7 @@ function countCarriers(
   };
   const siteKey = (k0: number, k1: number) => `${k0}>${k1}`;
   type VersionTally = Tally & { nodes: Array<{ id: string; reverse: boolean }>; bases: number };
-  const junctions = new Map<string, { k0: number; k1: number; versions: Map<string, VersionTally>; straight: Tally; others: Tally; refLen: number }>();
+  const junctions = new Map<string, { k0: number; k1: number; versions: Map<string, VersionTally>; straight: Tally; others: Tally; refLen: number; sealed: boolean }>();
   for (const path of kept.paths) {
     if (path.is_reference) continue;
     for (const read of siteReads(axis, stepsOf(path)).bubbles) {
@@ -655,10 +691,118 @@ function countCarriers(
       if (junctions.has(key)) continue;
       const refSeq = refBases(read.k0, read.k1);
       if (read.version.map(basesOf).join("") === refSeq) continue;
-      junctions.set(key, { k0: read.k0, k1: read.k1, versions: new Map(), straight: { count: 0, last: -1 }, others: { count: 0, last: -1 }, refLen: refSeq.length });
+      junctions.set(key, { k0: read.k0, k1: read.k1, versions: new Map(), straight: { count: 0, last: -1 }, others: { count: 0, last: -1 }, refLen: refSeq.length, sealed: false });
     }
   }
   const sites = [...junctions.values()];
+
+  /* The seal of each pair, and of each cluster of overlapping pairs, in the
+     graph: the band's edges first, then every interior node's record (the
+     band drops edges to nodes outside it, so a stretch cut by the band
+     would otherwise pass). A cluster of two or more pairs that seals is a
+     merged site; its pairs stay for the card. */
+  const pos: number[] = [0];
+  for (const step of axis.steps) pos.push(pos[pos.length - 1] + (all.nodes[step.id] ?? "").length);
+  const adjacency = adjacencyOf(all.edges);
+  const successorsOf = cache
+    ? (id: string, reverse: boolean): string[] | null => {
+        const record = cache.get(encodeNode(Number(id), reverse));
+        return record ? record.successors().map((h) => String(nodeId(h))) : null;
+      }
+    : null;
+  const sealedStretch = (k0: number, k1: number): boolean => {
+    const entrance = axis.steps[k0];
+    const exit = axis.steps[k1];
+    const interior = sealedInterior(adjacency, handleOf(entrance.id, entrance.reverse), handleOf(exit.id, exit.reverse));
+    if (!interior) return false;
+    return successorsOf ? !leaksInGraph(interior, entrance, exit, successorsOf) : true;
+  };
+  for (const site of sites) site.sealed = sealedStretch(site.k0, site.k1);
+  /* Every walk's reads, once: the clusters take every haplotype's pairs,
+     since the site's boundaries are where all of them converge, not only
+     the shown ones; the tally below reads them again. */
+  const readsOf = new Map<JsonPath, ReturnType<typeof siteReads<{ node: string; reverse: boolean }>>>();
+  const allPairs: Array<{ k0: number; k1: number }> = [];
+  for (const path of all.paths) {
+    if (path.is_reference) continue;
+    const reads = siteReads(axis, stepsOf(path));
+    readsOf.set(path, reads);
+    for (const b of reads.bubbles) allPairs.push({ k0: b.k0, k1: b.k1 });
+  }
+  const keptKeys = new Set(sites.map((site) => `${site.k0}>${site.k1}`));
+  type MergedTally = { k0: number; k1: number; pairs: string[]; source: MergedSite["source"]; refLen: number; versions: Map<string, VersionTally>; straight: Tally; partial: Tally };
+  const mergedSites: MergedTally[] = [];
+  /* The graph's own top-level snarls, where the database stores chains
+     (gbz2db --chains; the Tags say how many): a reference step whose
+     record links to a next boundary that is a later reference step bounds
+     a snarl, as gbz-base's covered_snarls reads them; a chain running
+     against the reference's direction links each boundary to the one
+     before, on the other strand, so both strands are asked. A snarl that
+     holds a pair some shown walk reads is a merged site, every pair of
+     the band inside it its pairs, sealed by the trusted source; a cluster
+     the band finds inside one is not tallied apart. Where a cluster lies
+     in no snarl it stays as the band finds it. Untested: the HPRC
+     database has no chains (Tags: chains 0). */
+  const chainSites: Array<{ k0: number; k1: number }> = [];
+  if (chains && cache) {
+    const stepAt = new Map<string, number>();
+    axis.steps.forEach((s, k) => {
+      const key = handleOf(s.id, s.reverse);
+      if (!stepAt.has(key)) stepAt.set(key, k);
+    });
+    axis.steps.forEach((s, k) => {
+      const forward = cache.get(encodeNode(Number(s.id), s.reverse))?.chainNext ?? null;
+      if (forward !== null) {
+        const k1 = stepAt.get(handleOf(String(nodeId(forward)), isReverse(forward)));
+        if (k1 !== undefined && k1 > k) chainSites.push({ k0: k, k1 });
+      }
+      const backward = cache.get(encodeNode(Number(s.id), !s.reverse))?.chainNext ?? null;
+      if (backward !== null) {
+        const k0 = stepAt.get(handleOf(String(nodeId(backward)), !isReverse(backward)));
+        if (k0 !== undefined && k0 < k) chainSites.push({ k0, k1: k });
+      }
+    });
+  }
+  const inChain = (k0: number, k1: number) => chainSites.some((c) => c.k0 <= k0 && k1 <= c.k1);
+  const distinctPairs = [...new Map(allPairs.map((q) => [`${q.k0}>${q.k1}`, q])).values()];
+  const candidates: Array<{ k0: number; k1: number; pairs: Array<{ k0: number; k1: number }>; source: MergedSite["source"] }> = [];
+  for (const c of chainSites) {
+    const inside = distinctPairs.filter((q) => c.k0 <= q.k0 && q.k1 <= c.k1);
+    if (!inside.some((q) => keptKeys.has(`${q.k0}>${q.k1}`))) continue;
+    if (inside.length === 1 && inside[0].k0 === c.k0 && inside[0].k1 === c.k1) continue;
+    candidates.push({ k0: c.k0, k1: c.k1, pairs: inside, source: "chains" });
+  }
+  for (const cluster of clustersOf(allPairs, pos)) {
+    if (cluster.pairs.length < 2 || !cluster.pairs.some((q) => keptKeys.has(`${q.k0}>${q.k1}`))) continue;
+    if (inChain(cluster.k0, cluster.k1)) continue;
+    if (!sealedStretch(cluster.k0, cluster.k1)) continue;
+    candidates.push({ k0: cluster.k0, k1: cluster.k1, pairs: cluster.pairs, source: "band" });
+  }
+  for (const cluster of candidates) {
+    mergedSites.push({
+      k0: cluster.k0,
+      k1: cluster.k1,
+      source: cluster.source,
+      /* Every pair in the cluster, the shown walks' and the others': the
+         card says how many the site was made from. */
+      pairs: cluster.pairs.map((q) => `${axis.steps[q.k0].id}>${axis.steps[q.k1].id}`),
+      refLen: pos[cluster.k1] - pos[cluster.k0 + 1],
+      versions: new Map(),
+      straight: { count: 0, last: -1 },
+      partial: { count: 0, last: -1 },
+    });
+    /* Every pair of the site is tallied, the shown walks' and the others':
+       the sealed ones inside are the site's sites inside, listed on the
+       card as vg deconstruct lists nested snarls. */
+    for (const q of cluster.pairs) {
+      const key = siteKey(q.k0, q.k1);
+      if (junctions.has(key)) continue;
+      const entry = { k0: q.k0, k1: q.k1, versions: new Map<string, VersionTally>(), straight: { count: 0, last: -1 }, others: { count: 0, last: -1 }, refLen: refBases(q.k0, q.k1).length, sealed: sealedStretch(q.k0, q.k1) };
+      junctions.set(key, entry);
+      sites.push(entry);
+    }
+  }
+  const refKeyBetween = (k0: number, k1: number) => axis.steps.slice(k0 + 1, k1).map((step) => `${step.id}${step.reverse ? "-" : "+"}`).join(" ");
 
   /* A haplotype's walks read together, so it counts once for anything it
      reaches more than once: whatever it last counted is marked with it. */
@@ -687,7 +831,7 @@ function countCarriers(
         (walk) => tally(alleleTallies.get(alleleKey(walk))),
       );
       if (!junctions.size || ofReferenceSample) continue;
-      const reads = siteReads(axis, stepsOf(path));
+      const reads = readsOf.get(path) ?? siteReads(axis, stepsOf(path));
       for (const site of sites) {
         const how = readsSite(reads, site.k0, site.k1);
         if (how === "straight") tally(site.straight);
@@ -705,16 +849,52 @@ function countCarriers(
           tally(version);
         }
       }
+      /* The merged sites: the walk's steps between the outer anchors. */
+      const steps = stepsOf(path);
+      for (const site of mergedSites) {
+        const i0 = reads.anchorAt.get(site.k0);
+        const i1 = reads.anchorAt.get(site.k1);
+        const there = reads.bubbles.some((b) => b.k0 < site.k1 && b.k1 > site.k0);
+        if (i0 === undefined || i1 === undefined || i1 <= i0) {
+          if (there) tally(site.partial);
+          continue;
+        }
+        const between = steps.slice(i0 + 1, i1);
+        const versionKey = between.map((step) => `${step.node}${step.reverse ? "-" : "+"}`).join(" ");
+        if (versionKey === refKeyBetween(site.k0, site.k1)) {
+          tally(site.straight);
+          continue;
+        }
+        let version = site.versions.get(versionKey);
+        if (!version) {
+          const nodes = between.map((step) => ({ id: step.node, reverse: step.reverse }));
+          version = { count: 0, last: -1, nodes, bases: nodes.reduce((n, node) => n + (all.nodes[node.id] ?? "").length, 0) };
+          site.versions.set(versionKey, version);
+        }
+        tally(version);
+      }
     }
     haplotype += 1;
   }
 
   const versions: Record<string, JunctionVersions> = {};
   const versionNodes: Record<string, string> = {};
+  const merged: Record<string, MergedSite> = {};
+  for (const site of mergedSites) {
+    const key = `${axis.steps[site.k0].id}>${axis.steps[site.k1].id}`;
+    const list = [...site.versions.values()].sort((a, b) => b.count - a.count || a.nodes.length - b.nodes.length);
+    merged[key] = { pairs: site.pairs, source: site.source, refLen: site.refLen, versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: site.straight.count, partial: site.partial.count };
+    for (const version of list) {
+      if (version.bases > VERSION_BASES_CAP) continue;
+      for (const node of version.nodes) {
+        if (!(node.id in kept.nodes) && node.id in all.nodes) versionNodes[node.id] = all.nodes[node.id];
+      }
+    }
+  }
   for (const entry of sites) {
     const key = `${axis.steps[entry.k0].id}>${axis.steps[entry.k1].id}`;
     const list = [...entry.versions.values()].sort((a, b) => b.count - a.count || a.nodes.length - b.nodes.length);
-    versions[key] = { versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: entry.straight.count, others: entry.others.count, refLen: entry.refLen };
+    versions[key] = { versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: entry.straight.count, others: entry.others.count, refLen: entry.refLen, sealed: entry.sealed };
     for (const version of list) {
       if (version.bases > VERSION_BASES_CAP) continue;
       for (const node of version.nodes) {
@@ -733,6 +913,7 @@ function countCarriers(
     nodes: counts(nodeTallies),
     alleles: counts(alleleTallies),
     ...(junctions.size ? { versions, versionTotal, versionNodes } : {}),
+    ...(mergedSites.length ? { merged } : {}),
   };
 }
 

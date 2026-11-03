@@ -33,7 +33,7 @@ const LIST_PATHS = `SELECT handle, sample, contig, haplotype, fragment, is_index
 const INDEXED_POSITION = `SELECT path_offset, node_handle, node_offset FROM ReferenceIndex
   WHERE path_handle = ? AND path_offset <= ? ORDER BY path_offset DESC LIMIT 1`;
 
-const GET_RECORD = `SELECT edges, bwt, sequence, path_handles FROM Nodes WHERE handle = ?`;
+const GET_RECORD = `SELECT edges, bwt, sequence, path_handles, next FROM Nodes WHERE handle = ?`;
 
 type Row = Record<string, unknown>;
 
@@ -158,6 +158,7 @@ export class SqliteWasmGbzSource implements GbzSource {
       bwt: row.bwt as Uint8Array,
       sequence: row.sequence as Uint8Array,
       pathHandles: (row.path_handles as Uint8Array | null) ?? null,
+      next: row.next === null || row.next === undefined ? null : Number(row.next),
     });
   }
 

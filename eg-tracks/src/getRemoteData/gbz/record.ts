@@ -23,6 +23,9 @@ export interface RawRecord {
   bwt: Uint8Array;
   sequence: Uint8Array;
   pathHandles: Uint8Array | null;
+  /** The next boundary node in this node's top-level chain, when the
+      database was built with chains (gbz2db --chains); null otherwise. */
+  next?: number | null;
 }
 
 export class GbzRecord {
@@ -31,6 +34,9 @@ export class GbzRecord {
   readonly sequence: string;
   /** Sampled path positions in this record, ascending by `nodeOffset`. */
   readonly pathAnchors: PathAnchor[];
+  /** The next boundary handle in the top-level chain, where the database
+      has chains; null where it has none or this node is no boundary. */
+  readonly chainNext: number | null;
   private readonly bwt: Uint8Array;
 
   constructor(raw: RawRecord) {
@@ -43,6 +49,7 @@ export class GbzRecord {
     this.pathAnchors = raw.pathHandles
       ? decodePathAnchors(raw.pathHandles)
       : [];
+    this.chainNext = raw.next ?? null;
   }
 
   get sequenceLength(): number {

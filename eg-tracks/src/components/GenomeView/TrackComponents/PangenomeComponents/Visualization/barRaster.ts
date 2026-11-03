@@ -195,7 +195,16 @@ export function rasteriseBar(
      none, its card listing the versions. */
   const countOver = keep.countOver ?? "all";
   const zoomedOut = !!keep.keepMark;
-  const siteParts = zoomedOut ? [] : parts.filter((part) => part.kind !== "mark" && part.kind !== "white" && part.nested?.[countOver]);
+  /* A white gets a site glyph only where the row's version at a merged
+     site has bases: a deletion of part of the site. A deletion of the
+     whole site, or of a plain site, keeps its white alone. */
+  const siteParts = zoomedOut
+    ? []
+    : parts.filter((part) => {
+        const info = part.nested?.[countOver];
+        if (!info || part.kind === "mark") return false;
+        return part.kind !== "white" || info.seq.length > 0;
+      });
   const folded = new Set(siteParts.map((part) => part.bubble));
   const surplusOf = (bubble: number | null) => parts.filter((p) => p.kind === "mark" && p.bubble !== null && p.bubble === bubble).reduce((n, p) => n + p.len, 0);
   const markParts = [

@@ -1,7 +1,7 @@
 import { alignDiverging, placeClosed, reverseComplement } from "./alignment";
 import type { Step } from "./alignment";
 import { axisOf, layOut, readsSite, siteReads } from "../../../../../getRemoteData/gbz/pointer";
-import type { Carriers } from "../../../../../getRemoteData/gbz/subgraph";
+import type { Carriers, JunctionVersions } from "../../../../../getRemoteData/gbz/subgraph";
 import { labelForms, labelPrefix, runsOf } from "./markLabel";
 import type { InnerDiff, LabelRun } from "./markLabel";
 import type { LinearLane } from "./linearModel";
@@ -10,8 +10,9 @@ import type { RefAxis } from "./rowAlign";
 /* ══════════════════════════════════════════════════════════════════════════
    Rule D: a nested allele inside a bubble (PLAN-nested.md in
    eg3/claude-memory, built on the rows 2026-11-03 for insertion sites;
-   PLAN-bubble-sites.md, the same day, for any bubble; the pictures are
-   diagrams/nested-on-rows.html and diagrams/nested-bubbles.html).
+   PLAN-bubble-sites.md, the same day, for any bubble; PLAN-merge.md, the
+   same day, for the merge of overlapping sites; the pictures are
+   diagrams/nested-on-rows.html, nested-bubbles.html, nested-merge.html).
 
    A site inside an insertion has no reference base, so every row carrying
    the insertion gets the same "+6" mark, and TTTTGT cannot be told from
@@ -33,6 +34,16 @@ import type { RefAxis } from "./rowAlign";
    the label marks a base that differs from the commonest between shared
    nodes, which is what the graph states; two versions with no node in
    common are one deletion-insertion, nothing guessed.
+
+   The merge: where pairs overlap on the reference and the stretch between
+   the outer anchors is sealed in the graph (a snarl: every walk through
+   it enters by the one anchor and leaves by the other), the worker
+   tallies one merged site under the outer anchors, every walk's version
+   its steps between the two, reference nodes included. On a row, the
+   first bubble inside a merged site carries the merged reading; its other
+   bubbles there carry none. The pairs inside that are sealed themselves
+   are the site's sites inside, listed on the card as vg deconstruct lists
+   nested snarls.
 
    Who counts is a switch (pangenomeViewState, countOver): every haplotype
    in the band, the default, or only the lanes on screen. In the second
@@ -60,6 +71,19 @@ export interface NestedVersion {
   commonest: boolean;
   /** The row's own. */
   mine: boolean;
+}
+
+/** A sealed pair inside a merged site, as the card lists it. */
+export interface InsideSite {
+  key: string;
+  /** Its reference stretch, absolute; refLen 0 at an insertion site. */
+  refAt: number;
+  refLen: number;
+  versions: Array<{ seq: string | null; bases: number; count: number }>;
+  straight: number;
+  /** Readers of the merged site that do not read this pair's two anchors
+      with a bubble between nor straight across it: they skip it. */
+  skip: number;
 }
 
 /** What a nested mark shows, counted one way. */
@@ -93,6 +117,10 @@ export interface NestedMark {
   /** The places inside where the versions differ, in words:
       "at base 4: T in 162, C in 118". */
   sites: string[];
+  /** A merged site: how many pairs it was made from, how many haplotypes
+      (or lanes) anchor only one or neither outer anchor, and the sealed
+      pairs inside. */
+  merged?: { pairs: number; partial: number; inside: InsideSite[]; source: "band" | "chains" };
 }
 
 /** A part's nested reading each way of counting; null where the count
@@ -226,7 +254,8 @@ type Reads = ReturnType<typeof siteReads<{ node: string; reverse: boolean }>>;
  * differ from the reference's between its anchors) gets its nested
  * reading each way of counting (`nested` on the bubble's first changed
  * part: the mark of an insertion, the white of a deletion, the letters of
- * the rest), where that way finds two or more versions. `refSample` is
+ * the rest), where that way finds two or more versions. Inside a merged
+ * site the row's first bubble carries the merged reading. `refSample` is
  * the reference sample, whose own walks count nowhere.
  */
 export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: Step) => string, carriers: Carriers | undefined, refSample: string): void {
@@ -234,14 +263,27 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
   axis.pos.forEach((at, k) => kAt.set(at, k));
   const siteKey = (k0: number, k1: number) => `${axis.steps[k0].id}>${axis.steps[k1].id}`;
   const onScreen = lanes.filter((lane) => !lane.isReference && lane.sample !== refSample && lane.rows.length);
+  const pointerAxis = axisOf(axis.steps);
+  const refKeyBetween = (k0: number, k1: number) => versionKey(axis.steps.slice(k0 + 1, k1));
 
   /* What each lane on screen reads, row by row, by the same pass the
      worker tallies the band with. */
-  const pointerAxis = axisOf(axis.steps);
   const laneReads = new Map<string, Reads[]>();
   for (const lane of onScreen) laneReads.set(lane.key, lane.rows.map((row) => siteReads(pointerAxis, row.steps)));
 
-  /* The lanes' count at a site: versions by the lanes reading them, the
+  /* The merged sites by the pairs they hold, with their anchors' step
+     indexes: the first place the reference reads the left node, and the
+     first it reads the right node after it. */
+  const mergedByPair = new Map<string, { key: string; k0: number; k1: number; site: NonNullable<Carriers["merged"]>[string] }>();
+  for (const [key, site] of Object.entries(carriers?.merged ?? {})) {
+    const [left, right] = key.split(">");
+    const k0 = axis.steps.findIndex((s) => s.id === left);
+    const k1 = axis.steps.findIndex((s, k) => k > k0 && s.id === right);
+    if (k0 < 0 || k1 < 0) continue;
+    for (const pair of site.pairs) mergedByPair.set(pair, { key, k0, k1, site });
+  }
+
+  /* The lanes' count at a pair: versions by the lanes reading them, the
      straight readers, those anchoring other nodes. A lane with several
      rows counts once, by its first row that reads the site's own pair,
      else by its first that reads the stretch at all. */
@@ -272,6 +314,41 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     return { versions, straight, others };
   };
 
+  /* The lanes' count at a merged site: each lane's steps between the
+     outer anchors, by its first row anchoring both. */
+  const selectedMerged = (k0: number, k1: number) => {
+    const versions = new Map<string, Tallied>();
+    const straight = new Set<string>();
+    const partial = new Set<string>();
+    for (const lane of onScreen) {
+      let read = false;
+      let there = false;
+      lane.rows.forEach((row, n) => {
+        if (read) return;
+        const reads = laneReads.get(lane.key)![n];
+        const i0 = reads.anchorAt.get(k0);
+        const i1 = reads.anchorAt.get(k1);
+        if (i0 === undefined || i1 === undefined || i1 <= i0) {
+          if (reads.bubbles.some((b) => b.k0 < k1 && b.k1 > k0)) there = true;
+          return;
+        }
+        read = true;
+        const nodes: Step[] = row.steps.slice(i0 + 1, i1).map((s) => ({ id: s.node, reverse: s.reverse }));
+        const key = versionKey(nodes);
+        if (key === refKeyBetween(k0, k1)) {
+          straight.add(lane.key);
+          return;
+        }
+        let version = versions.get(key);
+        if (!version) versions.set(key, (version = { key, nodes, bases: nodes.reduce((n, s) => n + seqOf(s).length, 0), count: 0, lanes: new Set() }));
+        version.lanes.add(lane.key);
+        version.count = version.lanes.size;
+      });
+      if (!read && there) partial.add(lane.key);
+    }
+    return { versions, straight, partial };
+  };
+
   const bandOrder = (a: { count: number; nodes: Step[]; key: string }, b: { count: number; nodes: Step[]; key: string }) =>
     b.count - a.count || a.nodes.length - b.nodes.length || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
   const seqOfVersion = (nodes: Step[]): string | null => {
@@ -282,6 +359,31 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
       out += bases;
     }
     return out;
+  };
+  const tallied = (versions: JunctionVersions["versions"]): Tallied[] =>
+    versions.map((v) => ({ key: versionKey(v.nodes), nodes: v.nodes, bases: v.bases, count: v.count, lanes: new Set<string>() })).sort(bandOrder);
+
+  /** The sealed pairs inside a merged site, from the worker's pair
+      tallies, with how many of the merged site's readers skip each. */
+  const insideOf = (k0: number, k1: number, readers: number): InsideSite[] => {
+    const out: InsideSite[] = [];
+    for (const [key, pair] of Object.entries(carriers?.versions ?? {})) {
+      if (!pair.sealed) continue;
+      const [left, right] = key.split(">");
+      const p0 = axis.steps.findIndex((s, k) => k >= k0 && s.id === left);
+      const p1 = axis.steps.findIndex((s, k) => k > p0 && s.id === right);
+      if (p0 < k0 || p1 < 0 || p1 > k1) continue;
+      const own = pair.versions.reduce((n, v) => n + v.count, 0);
+      out.push({
+        key,
+        refAt: axis.pos[p0 + 1],
+        refLen: pair.refLen,
+        versions: pair.versions.map((v) => ({ seq: seqOfVersion(v.nodes), bases: v.bases, count: v.count })),
+        straight: pair.straight,
+        skip: Math.max(0, readers - own - pair.straight),
+      });
+    }
+    return out.sort((a, b) => a.refAt - b.refAt || a.refLen - b.refLen);
   };
 
   const mark = (
@@ -296,6 +398,7 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     others: number,
     total: number,
     unit: NestedMark["unit"],
+    merged?: NestedMark["merged"],
   ): NestedMark | null => {
     if (ranked.length < 2) return null;
     const ends: [Step, Step] = [axis.steps[k0], axis.steps[k1]];
@@ -333,11 +436,14 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
       diffs,
       forms,
       sites: sitesOf(list, diffsOf),
+      ...(merged ? { merged } : {}),
     };
   };
 
   for (const lane of onScreen) {
-    for (const row of lane.rows) {
+    lane.rows.forEach((row, n) => {
+      const reads = laneReads.get(lane.key)![n];
+      const mergedDone = new Set<string>();
       row.bubbles.forEach((bubble, b) => {
         if (bubble.cls === "inversion" || bubble.cls === "match") return;
         const k0 = (kAt.get(bubble.refAt) ?? 0) - 1;
@@ -346,16 +452,50 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
         /* The bubble's first changed part carries the reading. */
         const first = row.parts.filter((part) => part.bubble === b && part.kind !== "match").sort((x, y) => x.ref - y.ref)[0];
         if (!first) return;
+        const key = siteKey(k0, k1);
+
+        /* Inside a merged site: the row's first bubble there carries the
+           merged reading, its steps between the outer anchors. */
+        const mg = mergedByPair.get(key);
+        if (mg) {
+          if (mergedDone.has(mg.key)) return;
+          mergedDone.add(mg.key);
+          const i0 = reads.anchorAt.get(mg.k0);
+          const i1 = reads.anchorAt.get(mg.k1);
+          if (i0 === undefined || i1 === undefined || i1 <= i0) return;
+          const between: Step[] = row.steps.slice(i0 + 1, i1).map((s) => ({ id: s.node, reverse: s.reverse }));
+          const mine = versionKey(between);
+          const bandList = tallied(mg.site.versions);
+          const bandCount = new Map(bandList.map((v) => [v.key, v.count]));
+          const readers = mg.site.versions.reduce((t, v) => t + v.count, 0) + mg.site.straight;
+          const inside = insideOf(mg.k0, mg.k1, readers);
+          const sel = selectedMerged(mg.k0, mg.k1);
+          const all = mark(mg.k0, mg.k1, mg.site.refLen, mine, bandList, sel.versions, mg.site.straight, [...sel.straight].sort(), 0, carriers?.versionTotal ?? carriers?.total ?? 0, "haplotypes", {
+            pairs: mg.site.pairs.length,
+            partial: mg.site.partial,
+            inside,
+            source: mg.site.source ?? "band",
+          });
+          const seen = [...sel.versions.values()].sort(
+            (a, c) => c.count - a.count || bandOrder({ ...a, count: bandCount.get(a.key) ?? 0 }, { ...c, count: bandCount.get(c.key) ?? 0 }),
+          );
+          const selected = mark(mg.k0, mg.k1, mg.site.refLen, mine, seen, sel.versions, sel.straight.size, [...sel.straight].sort(), 0, onScreen.length, "lanes", {
+            pairs: mg.site.pairs.length,
+            partial: sel.partial.size,
+            inside,
+          });
+          if (all || selected) first.nested = { all, selected };
+          return;
+        }
+
         let steps: Step[] = row.steps.slice(bubble.steps[0], bubble.steps[1]).map((s) => ({ id: s.node, reverse: s.reverse }));
         if (bubble.inverted) steps = [...steps].reverse().map((s) => ({ id: s.id, reverse: !s.reverse }));
         const mine = versionKey(steps);
-        const key = siteKey(k0, k1);
         const sel = selectedAt(k0, k1);
 
         /* Every haplotype in the band: the worker's tally. */
         const band = carriers?.versions?.[key];
-        const bandList: Tallied[] = (band?.versions ?? []).map((v) => ({ key: versionKey(v.nodes), nodes: v.nodes, bases: v.bases, count: v.count, lanes: new Set<string>() }));
-        bandList.sort(bandOrder);
+        const bandList: Tallied[] = tallied(band?.versions ?? []);
         const bandCount = new Map(bandList.map((v) => [v.key, v.count]));
         const refLen = band?.refLen ?? bubble.refLen;
         const all = band
@@ -370,7 +510,7 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
 
         if (all || selected) first.nested = { all, selected };
       });
-    }
+    });
   }
 }
 

@@ -1443,7 +1443,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
   }
 
   const successors = new Map<string, string[]>();
-  console.log(layoutEdges, lanes);
   for (const edge of layoutEdges) {
     if (!level.has(edge.from) || !level.has(edge.to)) continue;
     /* A copy laid on what it copies is placed by that, not by its links. */
