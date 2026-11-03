@@ -1,12 +1,12 @@
-/** What the layout reads of a model: its lanes, each with its copies
-    (linearModel.ts) where it has them, which set its rows below the bar. */
+/** What the layout reads of a model: its lanes, each with its rows
+    (linearModel.ts). */
 export interface LayoutModel {
   lanes: ReadonlyArray<{
     key: string;
     label: string;
     color: string;
     isReference: boolean;
-    copies?: ReadonlyArray<{ kind: "tandem" | "dispersed"; original: unknown; bar: unknown }>;
+    rows: ReadonlyArray<unknown>;
   }>;
 }
 
@@ -15,7 +15,7 @@ export interface LayoutModel {
 
    The drawing pans and the names beside it do not, so they are two elements
    rather than one - and two elements that have to agree to the pixel, since
-   a name level with the wrong bar is worse than no name at all. Neither of
+   a name level with the wrong row is worse than no name at all. Neither of
    them owns the arithmetic: this does, and both read it.
 
    Everything here is in the drawing's own coordinates, measured down from
@@ -28,77 +28,59 @@ export const LEGEND_WIDTH = 120;
 
 /** The tube map sizes its tubes from this: what a haplotype's bar was. */
 export const LANE_H = 17;
-/** How tall a haplotype's row is with one row of duplication marks
-    below its bar: the band above the bar for the insertion marks
-    (BarCanvas.tsx's MARK_BAND), the bar, and one DUP_ROW_H. */
-export const BAR_H = 72;
-/** One row of the band below the bar (BarCanvas.tsx's DUP_BAND): the
-    duplication rule's lines and pointers, a row per dispersed duplication
-    (PLAN-duplications.md, the user's choice of 2026-11-02), so their
-    words do not pile up where originals overlap. */
-export const DUP_ROW_H = 12;
-
-/** How many rows of duplication marks a lane's bar has below it: one per
-    dispersed copy with an original on the band or a place on the bar,
-    and at least one (a tandem copy's pointer goes on the first). */
-export function dupRowsOf(lane: LayoutModel["lanes"][number]): number {
-  return Math.max(1, (lane.copies ?? []).filter((copy) => copy.kind === "dispersed" && (copy.original || copy.bar)).length);
+/** One row of a haplotype: the band above the bar for the insertion marks
+    (BarCanvas.tsx's MARK_BAND), the bar, and the rule under it. */
+export const ROW_H = 44;
+/** The room above each row for its name: the walk's own coordinates. */
+export const ROW_LABEL_H = 14;
+/** Under a lane's last row. */
+export const LANE_FOOT = 4;
+/** A lane's height: its rows, one at least (a haplotype with no row still
+    holds a row's worth, where its words go). */
+export function laneHeightOf(rows: number): number {
+  return Math.max(1, rows) * (ROW_LABEL_H + ROW_H) + LANE_FOOT;
 }
-/** Between one haplotype's bar and the next. Nothing: what separates one
-    from the next is the rule under it, and a gap as well left every bar
-    looking as though it had been pushed down from its own name. */
-export const LANE_GAP = 0;
-/** Nothing under the last bar: the rule under it is where the drawing ends,
-    and room past that read as a gap belonging to something. */
-export const FOOT_PAD = 0;
+/** The top of a lane's n-th row's bar, from the lane's top. */
+export const rowTop = (n: number) => n * (ROW_LABEL_H + ROW_H) + ROW_LABEL_H;
 /** The graph's own track row in linear view: the ref bar (RefBar.tsx),
-    the reference walk every bar is drawn against, as tall as eg3's chrome
+    the reference walk every row is drawn against, as tall as eg3's chrome
     needs the row to be: its name in the track legend (one line, 11 px)
     and the loading button that sits at the foot of a track's legend while
     a band loads (16 px). The user's choice of 2026-11-03, so no track
     moves. */
 export const GRAPH_ROW_H = 16;
 
-/** One row of the drawing, and the haplotype it belongs to. */
+/** One lane of the drawing, and the haplotype it belongs to. */
 export interface LaneRow {
   key: string;
   label: string;
   color: string;
   top: number;
   height: number;
+  rows: number;
 }
 
 export interface LaneLayout {
-  /** One per haplotype bar, top to bottom. */
+  /** One per haplotype, top to bottom. */
   rows: LaneRow[];
   /** What the whole drawing comes to. */
   height: number;
 }
 
 /**
- * The rows of the linear view, in the order they are drawn: a bar per
- * haplotype, BAR_H tall. No ruler - eg3's ruler track draws the
- * coordinates - and no row for the reference, which every bar is drawn
- * against.
+ * The lanes of the linear view, in the order they are drawn: one per
+ * haplotype, each as tall as its rows. No ruler - eg3's ruler track draws
+ * the coordinates - and no lane for the reference, which every row is
+ * drawn against.
  */
 export function laneLayout(model: LayoutModel): LaneLayout {
-  /* One bar per haplotype, BAR_H tall: copies of a stretch share it as
-     thinner bars rather than taking rows of their own. */
   const rows: LaneRow[] = [];
   let running = 0;
   model.lanes.forEach((lane) => {
-    /* The reference has no bar of its own. */
     if (lane.isReference) return;
-    const height = BAR_H + DUP_ROW_H * (dupRowsOf(lane) - 1);
-    rows.push({
-      key: lane.key,
-      label: lane.label,
-      color: lane.color,
-      top: running,
-      height,
-    });
-    running += height + LANE_GAP;
+    const height = laneHeightOf(lane.rows.length);
+    rows.push({ key: lane.key, label: lane.label, color: lane.color, top: running, height, rows: lane.rows.length });
+    running += height;
   });
-
-  return { rows, height: running + FOOT_PAD };
+  return { rows, height: running };
 }

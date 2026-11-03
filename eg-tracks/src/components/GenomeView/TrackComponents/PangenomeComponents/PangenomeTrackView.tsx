@@ -27,13 +27,8 @@ import {
   variantSegments,
 } from "./Visualization/variantBubbles";
 import type { DrawFrame } from "./Visualization/pangenomeModel";
-import {
-  hiddenDeletions,
-  linearHeight,
-  walksHeight,
-  walksShown,
-} from "./Visualization/LinearView";
-import { BAR_H, GRAPH_ROW_H, LANE_H } from "./Visualization/laneLayout";
+import { hiddenDeletions, linearHeight } from "./Visualization/LinearView";
+import { GRAPH_ROW_H, LANE_H, laneHeightOf } from "./Visualization/laneLayout";
 import { tooWideOf } from "./fetchPangenomeData";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
 import LinearDrawingModel from "../../../../models/LinearDrawingModel";
@@ -62,13 +57,11 @@ export function pangenomeTrackHeight(
   primaryVisData?: any,
   tube?: { minBp: number | null; bases: number[] },
   variantGrouping = 0,
-  /** A haplotype's row drawn as its walk: see WalksView. */
-  walks = false,
 ): number {
   /* Linear view, past the size limit: nothing was fetched, and each row
      keeps the height it has with a band (fetchPangenomeData). */
   if (view === "linear" && tooWideOf(queryResult)) {
-    return part === GRAPH_PART ? GRAPH_ROW_H : BAR_H;
+    return part === GRAPH_PART ? GRAPH_ROW_H : laneHeightOf(0);
   }
   const model = modelOf(queryResult);
   if (!model) return 40;
@@ -93,28 +86,16 @@ export function pangenomeTrackHeight(
     );
     return variantLayout(segments, axis).height;
   }
-  /* The linear view: one haplotype's bar, from the band aligned to the
-     reference (linearModel.ts). The graph's own row draws nothing there and
-     is only as tall as its legend needs (GRAPH_ROW_H). */
+  /* The linear view: one haplotype's rows, from the band placed on the
+     reference (linearModel.ts). The graph's own row draws the ref bar,
+     GRAPH_ROW_H tall. */
   const linear = linearModelOf(queryResult);
   if (!linear) return 40;
   if (part === GRAPH_PART) return GRAPH_ROW_H;
   const lanes = linear.lanes.filter((lane) => lane.isReference || lane.label === part);
-  /* A haplotype with nothing in this band still holds its row. */
-  if (lanes.length < 2) return BAR_H;
-  const cut = { ...linear, lanes };
-  if (walks && walksDrawn(queryResult, part, primaryVisData)) return walksHeight(cut);
-  return linearHeight(cut);
-}
-
-/** Whether a haplotype's row, asked to show its walk, can in this band:
-    see WalksView. Linear view only - the row is hidden in the others. */
-export function walksDrawn(queryResult: any, part: string, _primaryVisData?: any): boolean {
-  if (part === GRAPH_PART) return false;
-  const linear = linearModelOf(queryResult);
-  if (!linear) return false;
-  const lanes = linear.lanes.filter((lane) => lane.isReference || lane.label === part);
-  return lanes.length > 1 && walksShown({ ...linear, lanes });
+  /* A haplotype with nothing in this band still holds a row's worth. */
+  if (lanes.length < 2) return laneHeightOf(0);
+  return linearHeight({ ...linear, lanes });
 }
 
 /** Each haplotype's legend note by its lane, for each axis and walk
@@ -129,13 +110,7 @@ const notesByLane = new WeakMap<LinearLane, Map<string, string | undefined>>();
     when every deletion in view is drawn, and nothing past the size limit,
     where no row is drawn. It counts the view the band was drawn for, its
     middle window, so a pan within the band leaves it as it is. */
-export function hiddenDeletionsNote(
-  queryResult: any,
-  part: string,
-  primaryVisData?: any,
-  /** The row drawn as its walk: see WalksView. */
-  walks = false,
-): string | undefined {
+export function hiddenDeletionsNote(queryResult: any, part: string, primaryVisData?: any): string | undefined {
   if (part === GRAPH_PART || tooWideOf(queryResult)) return undefined;
   const linear = linearModelOf(queryResult);
   if (!linear) return undefined;
@@ -146,11 +121,11 @@ export function hiddenDeletionsNote(
   const cut = { ...linear, lanes };
   const frame = bandFrame(primaryVisData);
   const axis = linearAxis(cut, frame, pxPerBaseOf(frame));
-  const key = [axis.scale, axis.startBp, axis.endBp, axis.viewFromPx, axis.viewToPx, walks].join(":");
+  const key = [axis.scale, axis.startBp, axis.endBp, axis.viewFromPx, axis.viewToPx].join(":");
   let known = notesByLane.get(lane);
   if (!known) notesByLane.set(lane, (known = new Map()));
   if (!known.has(key)) {
-    const n = hiddenDeletions(cut, axis, walks);
+    const n = hiddenDeletions(cut, axis);
     known.set(key, n > 0 ? `${n.toLocaleString()} deletion${n === 1 ? "" : "s"} too small to see` : undefined);
   }
   return known.get(key);
@@ -212,7 +187,6 @@ export default function PangenomeTrackView({
   windowWidth,
   part,
   tube,
-  walks = false,
 }: {
   queryResult: any;
   primaryVisData: any;
@@ -222,8 +196,6 @@ export default function PangenomeTrackView({
   /** The tube map the band was laid out for, in tube view: its grouping and
       its room ahead of each column, in bases. */
   tube?: { minBp: number | null; bases: number[] };
-  /** A haplotype's row drawn as its walk: see WalksView. */
-  walks?: boolean;
 }) {
   const frame = useMemo(() => bandFrame(primaryVisData), [primaryVisData]);
   /* The room in pixels, at the band's own scale. */
@@ -242,7 +214,7 @@ export default function PangenomeTrackView({
   const tooWide = tooWideOf(queryResult);
   const graphRow = part === GRAPH_PART;
   const drawing = tooWide ? (
-    <div style={{ position: "relative", width: frame?.width ?? windowWidth * 3, height: graphRow ? GRAPH_ROW_H : BAR_H }}>
+    <div style={{ position: "relative", width: frame?.width ?? windowWidth * 3, height: graphRow ? GRAPH_ROW_H : laneHeightOf(0) }}>
       <div
         className={`pgv-zoom-in${graphRow ? " pgv-zoom-in-ref" : ""}`}
         title={`${graphRow ? "The reference's nodes" : "Haplotypes"} are drawn for views of ${kb(tooWide.maxBp)} or less; this view is ${kb(tooWide.viewBp)}`}
@@ -264,7 +236,6 @@ export default function PangenomeTrackView({
             frame={frame}
             part={part}
             tubeLayout={tubeLayout}
-            walks={walks}
           />
         </div>
       )}
@@ -277,7 +248,6 @@ export default function PangenomeTrackView({
           frame={frame}
           part={part}
           tubeLayout={tubeLayout}
-          walks={walks}
         />
       </div>
     );

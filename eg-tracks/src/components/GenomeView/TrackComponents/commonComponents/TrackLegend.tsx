@@ -29,13 +29,8 @@ interface TrackLegendProps {
   axisLegend?: any;
   label?: string;
   legendWidth?: number;
-  /** A pangenome haplotype's row: its "Show walks" button - whether the walk
-      is asked for, whether this band has any of the haplotype to draw it
-      from, and what the button does. */
-  walks?: { on: boolean; shown: boolean; onToggle: () => void };
-  /** A short line under the label, and under the walks button where there
-      is one. Only the pangenome gives one: below a pixel a base, how many
-      deletions in view are too small to see. */
+  /** A short line under the label. Only the pangenome gives one: below a
+      pixel a base, how many deletions in view are too small to see. */
   note?: string;
 }
 
@@ -192,7 +187,6 @@ class TrackLegend extends React.PureComponent<
       selectedRegion,
       label,
       forceSvg,
-      walks,
       note,
     } = this.props;
     if (height <= 0) {
@@ -330,34 +324,7 @@ class TrackLegend extends React.PureComponent<
             .filter(Boolean)
             .join("\n")}
         >
-          {walks ? (
-            <div>
-              {labelText}
-              {/* A press here is the button's, not the start of a drag or a
-                  pick of the track. */}
-              <button
-                type="button"
-                className="TrackLegend-walks"
-                title={
-                  walks.on && !walks.shown
-                    ? "This haplotype has nothing in this region to draw a walk from"
-                    : "Draw this haplotype's walk: a row for each time it reads the reference here"
-                }
-                onPointerDown={(event) => event.stopPropagation()}
-                onMouseDown={(event) => event.stopPropagation()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  walks.onToggle();
-                }}
-              >
-                {walks.on ? "Hide walks" : "Show walks"}
-              </button>
-              {walks.on && !walks.shown ? (
-                <div className="TrackLegend-walks-note">nothing here</div>
-              ) : null}
-              {noteText}
-            </div>
-          ) : noteText ? (
+          {noteText ? (
             <div>
               {labelText}
               {noteText}

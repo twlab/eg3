@@ -13,7 +13,7 @@ import {
   modelOf,
   placedModel,
 } from "./pangenomeModel";
-import LinearView, { linearHeight, walksHeight, walksShown } from "./LinearView";
+import LinearView, { linearHeight } from "./LinearView";
 import RefBar from "./RefBar";
 import { linearModelOf } from "./linearModel";
 import { linearAxis, toBandAxis } from "./linearAxis";
@@ -102,9 +102,6 @@ interface VisualizationContainerProps {
       by column. Drawn with these, the tubes land where the band's other
       tracks are. */
   tubeLayout?: { minBp: number | null; gapsPx: number[] };
-  /** A haplotype's row drawn as its walk - see WalksView - wherever the
-      band has the haplotype to draw it from; its bar otherwise. */
-  walks?: boolean;
   /** Accepted so existing callers keep type-checking; unused by these views. */
   viewport?: any;
   setViewport?: (v: any) => void;
@@ -136,7 +133,6 @@ export default function VisualizationContainer({
   onBandModel,
   part,
   tubeLayout,
-  walks = false,
 }: VisualizationContainerProps) {
   const view = usePangenomeView();
   /* The whole graph - the tube map, the variants view - is drawn by the
@@ -448,6 +444,8 @@ export default function VisualizationContainer({
     return {
       ...linearWhole,
       laneCount: linearWhole.lanes.length - 1,
+      /* Every lane on screen, for the cards that speak of other lanes. */
+      allLanes: linearWhole.lanes,
       lanes: linearWhole.lanes.filter(
         (lane) => lane.isReference || (part !== GRAPH_PART && lane.label === part),
       ),
@@ -470,13 +468,9 @@ export default function VisualizationContainer({
      a bar or a tube is a known height each, and the variants view's layout
      has its height - so each is asked; the given default stands in until
      there is a drawing to ask. */
-  const walksOn =
-    walks && !drawsWhole && view?.mode === "linear" && !!linearModel && walksShown(linearModel);
   const shellHeight = !model
     ? height
-    : walksOn && linearModel
-      ? walksHeight(linearModel)
-      : view?.mode === "linear"
+    : view?.mode === "linear"
       ? linearModel
         ? part === GRAPH_PART
           ? GRAPH_ROW_H
@@ -598,7 +592,6 @@ export default function VisualizationContainer({
                 model={linearModel}
                 axis={linAxis}
                 highlight={view.highlight}
-                walks={walksOn}
                 onZoomTo={view.commitRegion ?? undefined}
               />
             )

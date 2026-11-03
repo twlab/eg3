@@ -692,15 +692,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackWidth={legend?.trackWidth}
             noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
             legendWidth={legendWidth}
-            walks={
-              legend?.walks && onConfigChange
-                ? {
-                    ...legend.walks,
-                    onToggle: () =>
-                      onConfigChange("showWalks", !legend.walks.on, `${id}`),
-                  }
-                : undefined
-            }
             note={legend?.note}
           />
           {legend?.reverseStrandLegendProps && (

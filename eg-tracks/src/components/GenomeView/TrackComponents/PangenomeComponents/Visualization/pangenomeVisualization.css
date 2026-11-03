@@ -610,6 +610,12 @@
   color: #d9c6f7;
 }
 
+/* A nested insertion (rule D, nestedMarks.ts): the violet its mark is
+   drawn in, lightened for the card. */
+.pgv-var-nested {
+  color: #c4b5fd;
+}
+
 /* The card a hover shows in the linear view, following the pointer; a
    click keeps it as a floating card (Cards.tsx and LinearView.tsx). */
 .pgv-section-card.pgv-hover-card {

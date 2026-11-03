@@ -141,6 +141,9 @@ export default function PangenomeViewSwitch({
   const view = usePangenomeView();
   const key = mode === "linear" && view?.model ? greyKey(basePerPixel ?? 0) : null;
   const refShades = mode === "linear" && view?.model ? refKey(basePerPixel ?? 0) : null;
+  /* Rule D's switch: whose versions a nested mark counts. In the linear
+     view, where the marks are. */
+  const count = mode === "linear" && view?.model ? view : null;
   /* Each item on one line, the row wrapping where the toolbar is too
      narrow for it: the key's five greys come only in a narrow window. */
   return (
@@ -232,6 +235,42 @@ export default function PangenomeViewSwitch({
             </span>
           ))}
           <span>node breaks per kb</span>
+        </span>
+      )}
+      {count && (
+        <span
+          className="pgv-count-over flex items-center gap-1 pl-1"
+          role="radiogroup"
+          aria-label="Count versions over"
+          title="A nested insertion (violet) has more than one version among the haplotypes. Which haplotypes count: every one in the band, or only the lanes on screen. The commonest version among those counted is the one the others' letters are compared with."
+          style={{ fontSize: `${Math.max(12, fontSize - 1)}px`, color: "var(--font-color)" }}
+        >
+          versions among
+          {(
+            [
+              ["all", "all haplotypes"],
+              ["selected", "lanes shown"],
+            ] as const
+          ).map(([value, label]) => {
+            const on = count.countOver === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => count.setCountOver(value)}
+                className="rounded-xs px-2 py-0.5 cursor-pointer transition-colors"
+                style={{
+                  border: on ? "1px solid #7c3aed" : "1px solid #d1d5db",
+                  backgroundColor: on ? "#f5f3ff" : "transparent",
+                  color: on ? "#7c3aed" : "var(--font-color)",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </span>
       )}
       <button

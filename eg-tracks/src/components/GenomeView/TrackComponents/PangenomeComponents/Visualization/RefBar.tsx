@@ -214,8 +214,8 @@ function RefBar({ model, axis, onZoomTo }: RefBarProps) {
     for (const lane of model.lanes) {
       if (lane.isReference) continue;
       const seen = new Set<string>();
-      for (const piece of lane.pieces) {
-        for (const step of piece.steps) {
+      for (const row of lane.rows) {
+        for (const step of row.steps) {
           if (seen.has(step.node)) continue;
           seen.add(step.node);
           const list = out.get(step.node);

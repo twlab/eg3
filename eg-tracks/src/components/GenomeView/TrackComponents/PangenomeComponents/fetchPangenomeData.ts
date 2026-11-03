@@ -424,13 +424,15 @@ function haplotypeCoordLinear(
   const runs: Run[] = [];
   let cursor = 0;
   let last: { start: number; end: number; contig: string } | null = null;
-  for (const part of lane.drawn) {
+  /* Along the haplotype's first row: its rows are its walks through the
+     band (PLAN-rows.md), and a track along the haplotype is laid along
+     one of them. */
+  const row = lane.rows[0];
+  if (!row) return coord(empty());
+  const contig = altContig(sample, haplotype, row.contig);
+  for (const part of row.parts) {
     if (part.len <= 0 || !part.own || part.kind === "white" || part.kind === "mark") continue;
-    const reading = lane.readings[part.reading];
-    const contig = altContig(sample, haplotype, reading.contig);
-    /* A left open end runs leftward from its junction. */
-    const refFrom = part.kind === "open" && part.side === "left" ? part.ref - part.len : part.ref;
-    const from = at(refFrom);
+    const from = at(part.ref);
     if (from === null) continue;
     const length = Math.min(part.len, part.own.to - part.own.from);
     if (from + length <= cursor) continue;

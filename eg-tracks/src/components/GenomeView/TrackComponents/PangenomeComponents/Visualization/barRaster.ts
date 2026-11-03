@@ -1,22 +1,23 @@
-import type { OpenEnd, OutOfBand, PlacedPart, Reading } from "./linearModel";
-import { drawnArrowed } from "./linearModel";
+import type { OpenEnd, OutOfBand, PlacedPart, RowStep } from "./linearModel";
 import { reverseComplement, stepSeq } from "./alignment";
 import type { Graph } from "./alignment";
 import { deletionText } from "./pangenomeModel";
 import { coveredBases } from "./letters";
 import type { NodeLetters } from "./letters";
+import type { CountOver, NestedMark } from "./nestedMarks";
+import type { LabelRun } from "./markLabel";
 
 /* ══════════════════════════════════════════════════════════════════════════
-   One haplotype's bar as an array with one entry per pixel.
+   One row's bar as an array with one entry per pixel.
 
    The arrangement eg-tracks' density tracks use: the drawing is reduced
    once to a value per pixel of the band, and everything afterwards reads
    that array - painting walks it, and a hover indexes it with the pointer's
    own x, so there is nothing to hit-test and the two cannot disagree.
 
-   What a pixel holds is the part of the alignment drawn there (see
-   linearModel.ts: a run of matching bases, letters over the reference they
-   replace, a replacement, an inverted stretch) and which of the part's
+   What a pixel holds is the part of the row drawn there (see rowAlign.ts:
+   a run of matching bases, letters over the reference they replace, a
+   replacement, an inverted stretch) and which of the part's
    bases. White - reference the haplotype skips - leaves the pixel empty
    and is listed with its size. Marks, the bases with no room, are a list
    of glyphs: each sits at a pixel and takes none. So are the bar's ends
@@ -31,8 +32,8 @@ export interface RasterPart extends PlacedPart {
       take no room, so its right edge is its left. */
   left: number;
   right: number;
-  /** Drawn arrowed, as read on the other strand: an inverted span, or any
-      part of a reading read backwards as a whole; both at once cancel. */
+  /** Drawn arrowed, as read on the other strand: an inverted run, or a
+      part inside one. */
   arrowed: boolean;
 }
 
@@ -46,6 +47,18 @@ export interface MarkGlyph {
   largest: number;
   /** The parts it stands for, as indices into `parts`. */
   parts: number[];
+  /** Rule D: any of its marks is at an insertion site with two or more versions
+      among the haplotypes counted (nestedMarks.ts): drawn in the nested
+      ink and font. */
+  nested: boolean;
+  /** What the label says, the longest form first (markLabel.ts): one mark
+      alone, its version with chips on what differs; several, the largest
+      and how many more. BarCanvas draws the first that fits the room. */
+  forms: LabelRun[][];
+  /** A site glyph on a deletion-insertion's or a substitution's letters
+      (PLAN-bubble-sites.md): the reference between the site's anchors, in
+      bases. Absent on an insertion's mark. */
+  refLen?: number;
 }
 
 /** White on the bar: a deletion inside the band, or one running out of it. */
@@ -58,7 +71,6 @@ export interface WhiteRun {
   text: string;
   refFrom: number;
   refTo: number;
-  reading: number;
   /** The part, for a deletion inside the band. */
   part: number | null;
   /** Spanning: the haplotype's own bases in place of the reference. */
@@ -90,9 +102,9 @@ export interface BarRaster {
   marks: MarkGlyph[];
   whites: WhiteRun[];
   caps: EndCap[];
-  /** A reading's own sequence, in its own order, and its first base's
+  /** The row's own sequence, in its own order, and its first base's
       coordinate - for the letters round the pointer. */
-  own: (reading: number) => { seq: string; from: number };
+  own: () => { seq: string; from: number };
 }
 
 /** Marks closer than this, in pixels, are drawn as one glyph. */
@@ -117,20 +129,29 @@ export interface RasterKeep {
   /** Whether a white is drawn: a white part by its index among the parts,
       or a white out of the band by its index among those. */
   keepWhite?: (part: number | null, out: number | null) => boolean;
+  /** Rule D: whose versions a mark's label counts, every haplotype in the
+      band or the lanes on screen; "all" unless told. */
+  countOver?: CountOver;
+}
+
+/** What a row gives the raster: its parts, its whites out of the band,
+    its missing-data ends, and its steps for the letters round the pointer. */
+export interface RasterRow {
+  parts: PlacedPart[];
+  outOfBand: OutOfBand[];
+  openEnds: OpenEnd[];
+  steps: RowStep[];
 }
 
 /**
- * A bar from its parts. `px` is the axis's own, so the bar cannot drift
- * from the ruler or the other bars; `startBp`/`endBp` are the band's, where
- * a deletion running out of it ends. `keep` leaves marks and whites out of
- * the glyphs and the whites; by default nothing is left out.
+ * A row's bar from its parts. `px` is the axis's own, so the bar cannot
+ * drift from the ruler or the other rows; `startBp`/`endBp` are the
+ * band's, where a deletion running out of it ends. `keep` leaves marks and
+ * whites out of the glyphs and the whites; by default nothing is left out.
  */
 export function rasteriseBar(
   key: string,
-  placed: PlacedPart[],
-  outOfBand: OutOfBand[],
-  openEnds: OpenEnd[],
-  readings: Reading[],
+  row: RasterRow,
   graph: Graph,
   px: (bp: number) => number,
   width: number,
@@ -138,12 +159,13 @@ export function rasteriseBar(
   endBp: number,
   keep: RasterKeep = {},
 ): BarRaster {
+  const { parts: placed, outOfBand, openEnds } = row;
   const w = Math.max(0, Math.ceil(width));
   const parts: RasterPart[] = placed.map((part, index) => {
     const left = px(part.ref);
     /* A mark sits at a point: its len is the bases it inserts. */
     const right = part.kind === "mark" ? left : px(part.ref + part.len);
-    return { ...part, index, left, right, arrowed: drawnArrowed(part, readings[part.reading]) };
+    return { ...part, index, left, right, arrowed: part.kind === "inverted" || !!part.inverted };
   });
   const partAt = new Int32Array(w).fill(-1);
   const baseAt = new Int32Array(w).fill(-1);
@@ -166,20 +188,42 @@ export function rasteriseBar(
   for (const part of parts) if (part.kind !== "inverted") paint(part);
 
   /* Marks: one glyph per cluster within a glyph's width, of the marks
-     kept. */
-  const markParts = parts
-    .filter((part) => part.kind === "mark" && (keep.keepMark?.(part.index) ?? true))
-    .sort((a, b) => a.left - b.left);
+     kept. A nested site on letters (rule D at any bubble,
+     PLAN-bubble-sites.md: a deletion-insertion's or a substitution's
+     first part) gets a site glyph at its start in place of its bubble's
+     plain surplus mark, zoomed in and at mid zoom; a deletion's white gets
+     none, its card listing the versions. */
+  const countOver = keep.countOver ?? "all";
+  const zoomedOut = !!keep.keepMark;
+  const siteParts = zoomedOut ? [] : parts.filter((part) => part.kind !== "mark" && part.kind !== "white" && part.nested?.[countOver]);
+  const folded = new Set(siteParts.map((part) => part.bubble));
+  const surplusOf = (bubble: number | null) => parts.filter((p) => p.kind === "mark" && p.bubble !== null && p.bubble === bubble).reduce((n, p) => n + p.len, 0);
+  const markParts = [
+    ...parts.filter((part) => part.kind === "mark" && (keep.keepMark?.(part.index) ?? true) && !(part.bubble !== null && folded.has(part.bubble))),
+    ...siteParts,
+  ].sort((a, b) => a.left - b.left);
   const marks: MarkGlyph[] = [];
   for (const part of markParts) {
+    const info: NestedMark | null = part.nested?.[countOver] ?? null;
+    const bp = part.kind === "mark" ? part.len : surplusOf(part.bubble);
     const last = marks[marks.length - 1];
     if (last && part.left - last.x <= MARK_MERGE_PX) {
-      last.bp += part.len;
-      last.largest = Math.max(last.largest, part.len);
+      last.bp += bp;
+      last.largest = Math.max(last.largest, bp);
       last.parts.push(part.index);
+      last.nested = last.nested || !!info;
+      last.forms = [[{ text: markLabel(last) }]];
       continue;
     }
-    marks.push({ x: part.left, bp: part.len, largest: part.len, parts: [part.index] });
+    marks.push({
+      x: part.left,
+      bp,
+      largest: bp,
+      parts: [part.index],
+      nested: !!info,
+      forms: info ? info.forms : [[{ text: `+${bp.toLocaleString()}` }]],
+      ...(info && info.refLen > 0 ? { refLen: info.refLen } : {}),
+    });
   }
 
   /* The whites drawn. */
@@ -195,7 +239,6 @@ export function rasteriseBar(
       text: span ? deletionText(span.refTo - span.refFrom, "span", span.instead) : deletionText(part.len, null),
       refFrom: span ? span.refFrom : part.ref,
       refTo: span ? span.refTo : part.ref + part.len,
-      reading: part.reading,
       part: part.index,
       ...(span ? { instead: span.instead } : {}),
     });
@@ -203,14 +246,13 @@ export function rasteriseBar(
   outOfBand.forEach((out, index) => {
     if (keep.keepWhite && !keep.keepWhite(null, index)) return;
     whites.push({
-      left: out.side === "right" ? px(out.ref) : px(out.until ?? startBp),
-      right: out.side === "right" ? px(out.until ?? endBp) : px(out.ref),
+      left: out.side === "right" ? px(out.ref) : px(startBp),
+      right: out.side === "right" ? px(endBp) : px(out.ref),
       bp: out.bp,
       open: out.side,
       text: deletionText(out.bp, out.side),
       refFrom: out.refFrom,
       refTo: out.refTo,
-      reading: out.reading,
       part: null,
       node: out.node,
     });
@@ -233,16 +275,14 @@ export function rasteriseBar(
     })
     .sort((a, b) => a.x - b.x);
 
-  const owns = new Map<number, { seq: string; from: number }>();
-  const own = (reading: number) => {
-    let known = owns.get(reading);
+  let known: { seq: string; from: number } | null = null;
+  const own = () => {
     if (!known) {
-      const steps = readings[reading]?.steps ?? [];
+      const steps = row.steps;
       known = {
         seq: steps.map((s) => stepSeq(graph, { id: s.node, reverse: s.reverse })).join(""),
         from: steps[0]?.start ?? 0,
       };
-      owns.set(reading, known);
     }
     return known;
   };
@@ -323,7 +363,7 @@ export function capAt(raster: BarRaster, at: number): EndCap | null {
 
 /**
  * The haplotype's own sequence round the pointer, `half` bases either side
- * of what its pixel covers, read through the whole reading rather than
+ * of what its pixel covers, read through the whole row rather than
  * stopping at the part: a part is the alignment's business, not the
  * reader's, and a window that stopped at the edge of an allele cut a word
  * in half. Left to right along the bar: a stretch read on the reverse
@@ -333,7 +373,7 @@ export function capAt(raster: BarRaster, at: number): EndCap | null {
 export function lettersAround(raster: BarRaster, hit: BarHit, half: number): NodeLetters | null {
   const { part } = hit;
   if (!part.own || !part.seq && part.kind !== "match" && part.kind !== "inverted") return null;
-  const reading = raster.own(part.reading);
+  const reading = raster.own();
   const { first, last } = coveredBases({
     sequence: "",
     length: part.len,

@@ -1,3 +1,4 @@
+import { axisOf, readsSite, siteReads } from "./pointer";
 import {
   edgeIsCanonical,
   encodeNode,
@@ -134,7 +135,42 @@ export interface Carriers {
   nodes: Record<string, number>;
   /** alleleKey -> how many of them take that allele. */
   alleles: Record<string, number>;
+  /** Rule D (PLAN-nested.md, PLAN-bubble-sites.md in eg3/claude-memory):
+      at each site a kept walk reads with a bubble (its anchor before and
+      anchor after; the code's word: junction), what every haplotype reads
+      there. Keyed "left>right" by the two anchors' node ids. */
+  versions?: Record<string, JunctionVersions>;
+  /** The haplotypes counted for the versions: those with a walk in the
+      window, the reference sample's left out. */
+  versionTotal?: number;
+  /** Node id -> its sequence, for the versions' nodes the kept walks do
+      not read (up to VERSION_BASES_CAP bases a version). */
+  versionNodes?: Record<string, string>;
 }
+
+/**
+ * A site is a pair of anchors, the anchor before and the anchor after,
+ * that a walk placed by the pointer (pointer.ts) reads with a bubble
+ * between: its version there is the run of nodes between the two, on the
+ * reference's strand, or nothing for a deletion. An insertion site is the
+ * case where the two anchors are consecutive. A walk that anchors every
+ * reference step from the one anchor to the other reads straight across;
+ * one with a bubble over the stretch that has other anchors anchors other
+ * nodes. Each version with how many haplotypes read it, counted once per
+ * haplotype, the reference sample's own walks left out; the straight
+ * readers; those anchoring other nodes; and the reference between the
+ * anchors in bases.
+ */
+export interface JunctionVersions {
+  versions: Array<{ nodes: Array<{ id: string; reverse: boolean }>; bases: number; count: number }>;
+  straight: number;
+  others: number;
+  refLen: number;
+}
+
+/** A version longer than this has no sequences sent for its nodes: the
+    card gives its size and count, the label no letters. */
+export const VERSION_BASES_CAP = 2_000;
 
 /**
  * An allele as the nodes a walk takes through it: the reference node it
@@ -143,6 +179,13 @@ export interface Carriers {
  * between. The same either way round, since a walk can run against the
  * reference.
  */
+const COMPLEMENT: Record<string, string> = { A: "T", C: "G", G: "C", T: "A", N: "N", a: "t", c: "g", g: "c", t: "a", n: "n" };
+function reverseComplementOf(s: string): string {
+  let out = "";
+  for (let i = s.length - 1; i >= 0; i--) out += COMPLEMENT[s[i]] ?? s[i];
+  return out;
+}
+
 export function alleleKey(ids: string[]): string {
   const forward = ids.join(">");
   const backward = [...ids].reverse().join(">");
@@ -409,14 +452,17 @@ export function queryInterval(
     /* ── Each shown haplotype's path across the window ───────────── */
     if (keep && extracted.refId !== null) {
       const walk = extracted.paths[extracted.refId];
-      /* A haplotype with a walk through both ends of the window's walk is
-         here in place already; the rest are looked for. */
-      const ends = [walk.path[0], walk.path[walk.path.length - 1]].map(nodeId);
+      /* A haplotype with a walk through any node of the window's walk is
+         here already, and the linear view draws that walk as a row
+         (PLAN-rows.md); the rest are looked for. Until 2026-11-03 only a
+         walk through both ends of the window's walk counted, which sent
+         the search out for haplotypes whose walks were all here in
+         pieces, and brought back fragments of them from kilobases away. */
+      const onWalk = new Set(walk.path.map(nodeId));
       const crossing = new Set<string>();
       for (const info of extracted.paths) {
         if (info === walk || info.pathHandle === null) continue;
-        const ids = new Set(info.path.map(nodeId));
-        if (!ends.every((id) => ids.has(id))) continue;
+        if (!info.path.some((handle) => onWalk.has(nodeId(handle)))) continue;
         const own = nameOf(info.pathHandle);
         if (own) crossing.add(`${own.sample}#${own.haplotype}`);
       }
@@ -582,6 +628,38 @@ function countCarriers(
     );
   }
 
+  /* Rule D: the sites the kept walks read with a bubble, by the pointer's
+     own pass over each walk (pointer.ts), so the versions tallied are the
+     bubbles the rows are drawn from. A bubble whose bases equal the
+     reference's between the anchors (the same bases through other nodes)
+     is no site. */
+  const axis = axisOf((reference?.path ?? []).map((step) => ({ id: step.id, reverse: !!step.is_reverse })));
+  const refSample = reference ? haplotypeKey(reference).split("#")[0] : null;
+  const stepsOf = (path: JsonPath) => path.path.map((step) => ({ node: step.id, reverse: !!step.is_reverse }));
+  const basesOf = (step: { node: string; reverse: boolean }) => {
+    const forward = all.nodes[step.node] ?? "";
+    return step.reverse ? reverseComplementOf(forward) : forward;
+  };
+  const refBases = (k0: number, k1: number) => {
+    let out = "";
+    for (let k = k0 + 1; k < k1; k++) out += basesOf({ node: axis.steps[k].id, reverse: axis.steps[k].reverse });
+    return out;
+  };
+  const siteKey = (k0: number, k1: number) => `${k0}>${k1}`;
+  type VersionTally = Tally & { nodes: Array<{ id: string; reverse: boolean }>; bases: number };
+  const junctions = new Map<string, { k0: number; k1: number; versions: Map<string, VersionTally>; straight: Tally; others: Tally; refLen: number }>();
+  for (const path of kept.paths) {
+    if (path.is_reference) continue;
+    for (const read of siteReads(axis, stepsOf(path)).bubbles) {
+      const key = siteKey(read.k0, read.k1);
+      if (junctions.has(key)) continue;
+      const refSeq = refBases(read.k0, read.k1);
+      if (read.version.map(basesOf).join("") === refSeq) continue;
+      junctions.set(key, { k0: read.k0, k1: read.k1, versions: new Map(), straight: { count: 0, last: -1 }, others: { count: 0, last: -1 }, refLen: refSeq.length });
+    }
+  }
+  const sites = [...junctions.values()];
+
   /* A haplotype's walks read together, so it counts once for anything it
      reaches more than once: whatever it last counted is marked with it. */
   const byHaplotype = new Map<string, JsonPath[]>();
@@ -597,7 +675,10 @@ function countCarriers(
     entry.last = haplotype;
     entry.count += 1;
   };
-  for (const walks of byHaplotype.values()) {
+  let versionTotal = 0;
+  for (const [key, walks] of byHaplotype) {
+    const ofReferenceSample = refSample !== null && key.split("#")[0] === refSample;
+    if (!ofReferenceSample) versionTotal += 1;
     for (const path of walks) {
       for (const step of path.path) tally(nodeTallies.get(step.id));
       eachAllele(
@@ -605,8 +686,41 @@ function countCarriers(
         (id) => ends.has(id),
         (walk) => tally(alleleTallies.get(alleleKey(walk))),
       );
+      if (!junctions.size || ofReferenceSample) continue;
+      const reads = siteReads(axis, stepsOf(path));
+      for (const site of sites) {
+        const how = readsSite(reads, site.k0, site.k1);
+        if (how === "straight") tally(site.straight);
+        else if (how === "others") tally(site.others);
+        if (how !== "own") continue;
+        for (const read of reads.bubbles) {
+          if (read.k0 !== site.k0 || read.k1 !== site.k1) continue;
+          const versionKey = read.version.map((step) => `${step.node}${step.reverse ? "-" : "+"}`).join(" ");
+          let version = site.versions.get(versionKey);
+          if (!version) {
+            const nodes = read.version.map((step) => ({ id: step.node, reverse: step.reverse }));
+            version = { count: 0, last: -1, nodes, bases: nodes.reduce((n, node) => n + (all.nodes[node.id] ?? "").length, 0) };
+            site.versions.set(versionKey, version);
+          }
+          tally(version);
+        }
+      }
     }
     haplotype += 1;
+  }
+
+  const versions: Record<string, JunctionVersions> = {};
+  const versionNodes: Record<string, string> = {};
+  for (const entry of sites) {
+    const key = `${axis.steps[entry.k0].id}>${axis.steps[entry.k1].id}`;
+    const list = [...entry.versions.values()].sort((a, b) => b.count - a.count || a.nodes.length - b.nodes.length);
+    versions[key] = { versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: entry.straight.count, others: entry.others.count, refLen: entry.refLen };
+    for (const version of list) {
+      if (version.bases > VERSION_BASES_CAP) continue;
+      for (const node of version.nodes) {
+        if (!(node.id in kept.nodes) && node.id in all.nodes) versionNodes[node.id] = all.nodes[node.id];
+      }
+    }
   }
 
   const counts = (tallies: Map<string, Tally>) => {
@@ -618,6 +732,7 @@ function countCarriers(
     total: byHaplotype.size,
     nodes: counts(nodeTallies),
     alleles: counts(alleleTallies),
+    ...(junctions.size ? { versions, versionTotal, versionNodes } : {}),
   };
 }
 

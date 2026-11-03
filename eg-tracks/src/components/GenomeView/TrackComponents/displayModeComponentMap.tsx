@@ -78,12 +78,8 @@ import { chromAlias } from "../../../getRemoteData/fetchFunctions";
 import PangenomeTrackView, {
   hiddenDeletionsNote,
   pangenomeTrackHeight,
-  walksDrawn,
 } from "./PangenomeComponents/PangenomeTrackView";
-import {
-  PANGENOME_TRACK_TYPE,
-  tooWideOf,
-} from "./PangenomeComponents/fetchPangenomeData";
+import { PANGENOME_TRACK_TYPE } from "./PangenomeComponents/fetchPangenomeData";
 import { GRAPH_PART } from "./PangenomeComponents/Visualization/VisualizationContainer";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 
@@ -1327,13 +1323,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackState.primaryGenName ?? drawData.genomeName
       ];
     const primaryVisData = primary?.primaryVisData;
-    /* Which row of the graph: its own row, or one haplotype's bar. */
+    /* Which row of the graph: its own row, or one haplotype's rows. */
     const part = drawData.trackModel.options?.part ?? GRAPH_PART;
-    /* A haplotype's row drawn as its walk, from the button on its legend;
-       see WalksView. */
-    const walks =
-      part !== GRAPH_PART &&
-      !!(drawData.configOptions?.showWalks ?? drawData.trackModel.options?.showWalks);
     const height = pangenomeTrackHeight(
       drawData.genesArr,
       part,
@@ -1341,7 +1332,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
       primary?.primaryVisData,
       primary?.pangenomeTube,
       primary?.pangenomeVariantGrouping,
-      walks,
     );
     if (drawData.svgHeight) {
       drawData.svgHeight.current = height;
@@ -1351,24 +1341,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
         height,
         trackModel: drawData.trackModel,
         label: drawData.trackModel.options?.label ?? drawData.trackModel.name,
-        /* A haplotype's row has a button for its walk on its legend: whether
-           it is on, and whether this band has any of the haplotype to draw
-           it from. None past the size limit: nothing was fetched, so there
-           are no walks to show. */
-        walks:
-          part !== GRAPH_PART &&
-          (primary?.pangenomeView ?? "linear") === "linear" &&
-          !tooWideOf(drawData.genesArr)
-            ? {
-                on: walks,
-                shown: walks && walksDrawn(drawData.genesArr, part, primaryVisData),
-              }
-            : undefined,
         /* Below a pixel a base, a haplotype's row says how many deletions
            in view are too narrow to draw. */
         note:
           (primary?.pangenomeView ?? "linear") === "linear"
-            ? hiddenDeletionsNote(drawData.genesArr, part, primaryVisData, walks)
+            ? hiddenDeletionsNote(drawData.genesArr, part, primaryVisData)
             : undefined,
       };
     }
@@ -1379,7 +1356,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         windowWidth={drawData.windowWidth}
         part={part}
         tube={primary?.pangenomeTube}
-        walks={walks}
       />
     );
   },

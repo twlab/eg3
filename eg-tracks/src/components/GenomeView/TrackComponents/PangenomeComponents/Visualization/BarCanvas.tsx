@@ -1,8 +1,8 @@
 import { memo, useCallback, useLayoutEffect, useRef } from "react";
 import type { BarHit, BarRaster, EndCap, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
 import { capAt, hitAt, lettersAround, markAt, markLabel, ownOf, whiteAt } from "./barRaster";
-import { COPY_TICK_PX, GAP_MIN_PX } from "./barTiers";
-import type { BarTiers, CopyDrawing, DupPointer } from "./barTiers";
+import { GAP_MIN_PX } from "./barTiers";
+import type { BarTiers } from "./barTiers";
 import type { NodeLetters } from "./letters";
 import { sequenceSize } from "./nodeDetail";
 import { fitCanvas, useScreenSize } from "./canvasScreen";
@@ -11,7 +11,7 @@ import type { FittedCanvas } from "./canvasScreen";
 /* ══════════════════════════════════════════════════════════════════════════
    One haplotype's bar, painted from its raster (barRaster.ts).
 
-   The vocabulary is the alignment's (linearModel.ts): the bar is plain
+   The vocabulary is the alignment's (rowAlign.ts): the row's bar is plain
    where the haplotype reads what the reference reads, letters where it
    reads other bases over the same reference, hatched where it replaces a
    stretch with no base pairing claimed (its letters still spelled, in the
@@ -23,21 +23,7 @@ import type { FittedCanvas } from "./canvasScreen";
    many more ("+32.2 Kb & 2 more"). So the bar is the reference's length,
    like every other bar. Where the walk leaves the reference and never
    comes back, the bar stops at a cap, with "missing data" past it where it
-   fits: nothing there is an allele. A stretch the haplotype reads more than
-   once is drawn once, and a thin line along the bar's bottom edge and one
-   label say how many times it has it ("×5"): solid for copies in a row (a
-   tandem duplication), dotted for copies elsewhere in its sequence (a
-   dispersed one); zoomed out, a copied stretch too narrow for a line gets
-   a tick up from the bottom edge instead (barTiers.ts's copyDrawing). No
-   label is cut by the view's edge: one that would cross it is not drawn,
-   and one wholly in the band either side is, to show whole in a pan.
-   At a pixel a base or more the duplication rule's marks go in a band
-   below the bar (DUP_BAND; PLAN-duplications.md): a black border round
-   each original, a dotted line under each original and each dispersed
-   copy's place with "n." at its left end and "×k" at its right, and a
-   pointer up to the bar where a copy is inserted, "tandem ×2" underlined
-   (paintDups).
-
+   
    Painted, not drawn: one pass over the raster onto a canvas, and the
    pointer's x is the index into the raster, so a hover is a lookup and not
    a hit test. The canvas is sized to the screen's own pixels (canvasScreen).
@@ -55,18 +41,6 @@ import type { FittedCanvas } from "./canvasScreen";
 
 /** The band at the top of a row where the marks sit, above the bar. */
 export const MARK_BAND = 12;
-/** One row of the band under a haplotype's bar for the duplication
-    rule's pointers and lines, a row per dispersed duplication
-    (laneLayout.ts's DUP_ROW_H and dupRowsOf); a walk row has none. */
-export const DUP_BAND = 12;
-
-/** A duplication mark below the bar under the pointer: which copy, and
-    whether its pointer or one of its lines. */
-export interface DupHit {
-  copy: number;
-  what: "pointer" | "line";
-}
-
 /** What the pointer is on. Zoomed out, `bin`: the bin round the pointer,
     from `from` to before `to` in reference bases, where it is on no
     variant drawn as itself. */
@@ -75,8 +49,7 @@ export type BarTarget =
   | { kind: "mark"; glyph: MarkGlyph; x: number; y: number; at: number }
   | { kind: "white"; white: WhiteRun; x: number; y: number; at: number }
   | { kind: "end"; cap: EndCap; x: number; y: number; at: number }
-  | { kind: "bin"; from: number; to: number; x: number; y: number; at: number }
-  | { kind: "dup"; dup: DupHit; x: number; y: number; at: number };
+  | { kind: "bin"; from: number; to: number; x: number; y: number; at: number };
 
 export interface BarCanvasProps {
   raster: BarRaster;
@@ -101,16 +74,9 @@ export interface BarCanvasProps {
   /** Zoomed out: the bin a hover or a click at a point of the band reads,
       in reference bases (LinearView). */
   binAt?: (at: number) => { from: number; to: number } | null;
-  /** A haplotype's bar, at every zoom: its copies line (barTiers.ts's
-      copyDrawing), the stretches it draws once that the haplotype reads
-      more than once. A walk row has none. */
-  copies?: CopyDrawing;
   /** The band's pixels in view when it was laid out, for a label that
       should sit where it can be seen. */
   view?: [number, number];
-  /** The band below the bar, in CSS pixels: DUP_BAND per row of
-      duplication marks on a haplotype's bar, none on a walk row. */
-  below?: number;
 }
 
 /** How many bases of the haplotype the card shows either side of what
@@ -136,11 +102,17 @@ const STRAND_HALO_WIDTH = 3;
 const ARROW_WIDTH = 5;
 const ARROW_SEPARATION = 16;
 const ARROW_HEIGHT = 13;
-/* A mark: a small triangle pointing into the bar, and its size. */
+/* A mark: a small triangle pointing into the bar, and its size. A nested
+   mark (rule D, nestedMarks.ts) is violet, its label in the monospace
+   face so its chips line up with its letters. */
 const MARK_INK = "#c2410c";
 const MARK_HALF = 4;
 const MARK_TALL = 7;
 const MARK_FONT = 9;
+export const NESTED_INK = "#7c3aed";
+const NESTED_FONT = 10;
+/** Room either side of a chip's letters, in pixels. */
+const CHIP_PAD = 1;
 /** The most of the bar's height a letter may take. */
 const LETTER_OF_BAR = 0.7;
 /** Below this a letter is a smudge, so none is drawn. */
@@ -172,22 +144,6 @@ const END_TEXT = "missing data";
     be given by at least ΔE 5 in OKLab (× 100), classes 4 and 5 by at least
     12 (claude-memory/testing/tools/drawCheck.mjs checks all of this). */
 export const STRIPE_INKS: readonly string[] = ["#b7b7b7", "#a4a4a4", "#919191", "#7f7f7f", "#6d6d6d"];
-/* The copies line: a stripe this tall just inside the bar's bottom edge,
-   in the caps' ink; dotted, this many pixels on and as many off. A
-   marker's tick rises this high from the bottom edge. Its labels are as
-   small as the marks'. */
-const COPY_LINE = 2;
-const COPY_DOT = 2;
-const COPY_TICK_TALL = 9;
-const COPY_FONT = 9;
-/* The duplication rule's marks, in the caps' ink: the border's width
-   inside the bar, the line below the bar and its gap from the bar, the
-   pointer's size, and how near a pointer the pointer still means it. */
-const DUP_BORDER = 2;
-const DUP_LINE_GAP = 2;
-const DUP_POINTER_HALF = 4;
-const DUP_POINTER_TALL = 6;
-const DUP_HIT_PX = 6;
 /** Places closer than this, in screen pixels, are one: the axis's own
     arithmetic (a band 4,032 px wide comes out 4,031.9999999999986) must
     not move a label at the view's edge by a pixel, nor cut it. */
@@ -203,9 +159,7 @@ function BarCanvas({
   onPick,
   tiers,
   binAt,
-  copies,
   view,
-  below = 0,
 }: BarCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const nudge = useRef(0);
@@ -214,8 +168,8 @@ function BarCanvas({
 
   const repaint = useCallback(() => {
     if (!fitted.current) return;
-    paintBar(fitted.current, { raster, width, height, color, tiers, copies, view, below });
-  }, [raster, width, height, color, tiers, copies, view, below]);
+    paintBar(fitted.current, { raster, width, height, color, tiers, view });
+  }, [raster, width, height, color, tiers, view]);
 
   /* Painted again only for a new size or something new to draw: the
      observer's exact size usually matches the first paint's guess. */
@@ -239,12 +193,6 @@ function BarCanvas({
     const y = event.clientY - box.top;
     const x = event.clientX;
     const clientY = event.clientY;
-    /* The band below the bar: a duplication's pointer or line, on the
-       row the pointer is in. */
-    if (below > 0 && copies && y >= height - below - 1) {
-      const dup = dupAt(copies, at, Math.min(below / DUP_BAND - 1, Math.max(0, Math.floor((y - (height - below - 1)) / DUP_BAND))));
-      if (dup) return { kind: "dup", dup, x, y: clientY, at };
-    }
     if (tiers) return zoomedOutTarget(raster, tiers, binAt, { at, y, x, clientY });
     if (y < MARK_BAND + 2) {
       const glyph = markAt(raster, at);
@@ -293,20 +241,6 @@ function BarCanvas({
       onMouseLeave={() => onHover(null)}
     />
   );
-}
-
-/** The duplication mark below the bar at a pixel, on one row: the
-    nearest pointer within DUP_HIT_PX, else a line the pixel is on. */
-function dupAt(copies: CopyDrawing, at: number, row: number): DupHit | null {
-  let best: DupPointer | null = null;
-  for (const pointer of copies.pointers) {
-    if (pointer.row !== row) continue;
-    const away = Math.abs(pointer.x - at);
-    if (away <= DUP_HIT_PX && (!best || away < Math.abs(best.x - at))) best = pointer;
-  }
-  if (best) return { copy: best.copy, what: "pointer" };
-  const line = copies.below.find((one) => one.row === row && pointedAt(one, at));
-  return line ? { copy: line.copy, what: "line" } : null;
 }
 
 /**
@@ -389,9 +323,7 @@ interface BarPaint {
   height: number;
   color: string;
   tiers?: BarTiers;
-  copies?: CopyDrawing;
   view?: [number, number];
-  below: number;
 }
 
 /** The kinds that take room on the bar, and so are painted in its colour. */
@@ -407,17 +339,16 @@ interface BarBox {
   tall: number;
 }
 
-/** One haplotype's bar: its runs, the hatching, the arrows, the letters,
-    the copies line, the whites' sizes and the marks; zoomed out, from its
-    tiers. */
+/** One row's bar: its runs, the hatching, the arrows, the letters, the
+    whites' sizes and the marks; zoomed out, from its tiers. */
 function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
-  const { raster, width, height, color, tiers, copies, view, below } = paint;
+  const { raster, width, height, color, tiers, view } = paint;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, pw, ph);
   const toScreen = (x: number) => Math.round(x * sx);
-  /* The bar under the marks' band, over the duplications' band. */
+  /* The bar under the marks' band, over the rule at the row's foot. */
   const top = Math.round(MARK_BAND * sy);
-  const tall = Math.max(1, Math.round((height - MARK_BAND - below - 1) * sy));
+  const tall = Math.max(1, Math.round((height - MARK_BAND - 1) * sy));
   const clip = (a: number, b: number): [number, number] => [Math.max(0, a), Math.min(pw, b)];
   const box: BarBox = { pw, sx, sy, top, tall };
 
@@ -425,7 +356,6 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
      this is a bar at a pixel a base or more. */
   if (tiers) {
     paintBins(ctx, raster, tiers, color, box);
-    if (copies) paintCopies(ctx, copies, view, box);
     paintOver(ctx, raster, view, box);
     return;
   }
@@ -458,19 +388,13 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
   );
 
   /* Arrows pointing left over what is read on the other strand: an
-     inverted span, or every roomy part of a reading read backwards as a
-     whole - the same on a haplotype's bar as on its walk rows. The parts
-     inside an inversion are drawn over its span and take no arrows of
-     their own. */
+     inverted run. The parts inside it are drawn over its span and take no
+     arrows of their own. */
   ctx.strokeStyle = STRAND_INK;
   ctx.lineWidth = Math.max(1, Math.round(sx));
   eachRun(raster.parts, (part) => part.arrowed && !part.inverted && roomy(part), sx, pw, (from, to) =>
     arrows(ctx, from, to, top, tall, sx),
   );
-
-  /* The duplication rule's marks: the border over the bar's colour, under
-     the letters; the lines and pointers in the band below. */
-  if (copies) paintDups(ctx, copies, view, box);
 
   /* The letters, where a base is wide enough for one: a mismatch's on a
      chip, a replacement's on the hatching. A mismatch keeps its chip
@@ -523,7 +447,6 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
     }
   }
 
-  if (copies) paintCopies(ctx, copies, view, box);
   paintOver(ctx, raster, view, box);
 }
 
@@ -535,156 +458,6 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
 function uncutBy(view: [number, number] | undefined, sx: number) {
   const edges = view ? [view[0] * sx, view[1] * sx] : [];
   return (from: number, to: number) => !edges.some((edge) => from < edge - SAME_PX && to > edge + SAME_PX);
-}
-
-/**
- * A bar's copies line (barTiers.ts's copyDrawing), at every zoom: just
- * inside the bar's bottom edge, in the caps' ink, over the bar and under
- * the whites' sizes, the marks and the caps. A solid line is one rect,
- * its edges rounded once to the screen; a dotted one is the pixels on of
- * COPY_DOT on and as many off, started from the canvas's left edge so
- * lines side by side stay in step, as the hatching and the arrows do. A
- * marker is a tick up from the bottom edge. Each label sits just above
- * the line at its place, rounded up to a screen pixel so one at the
- * view's left edge stays inside it, where it fits before its room ends
- * and the view's edges do not cut it.
- */
-function paintCopies(
-  ctx: CanvasRenderingContext2D,
-  copies: CopyDrawing,
-  view: [number, number] | undefined,
-  { pw, sx, sy, top, tall }: BarBox,
-) {
-  if (!copies.lines.length && !copies.markers.length) return;
-  const clip = (a: number, b: number): [number, number] => [Math.max(0, a), Math.min(pw, b)];
-  const bottom = top + tall;
-  const thick = Math.max(1, Math.round(COPY_LINE * sy));
-  const y = bottom - thick;
-  const dot = Math.max(1, Math.round(COPY_DOT * sx));
-  ctx.fillStyle = END_INK;
-  for (const line of copies.lines) {
-    const [a, b] = clip(Math.round(line.left * sx), Math.round(line.right * sx));
-    if (b <= a) continue;
-    if (!line.dotted) {
-      ctx.fillRect(a, y, b - a, thick);
-      continue;
-    }
-    for (let x = Math.floor(a / (2 * dot)) * 2 * dot; x < b; x += 2 * dot) {
-      const from = Math.max(a, x);
-      const to = Math.min(b, x + dot);
-      if (to > from) ctx.fillRect(from, y, to - from, thick);
-    }
-  }
-  const tickWide = Math.max(1, Math.round(COPY_TICK_PX * sx));
-  const tickTall = Math.round(COPY_TICK_TALL * sy);
-  for (const marker of copies.markers) {
-    const x = Math.round(marker.x * sx);
-    const [a, b] = clip(x, x + tickWide);
-    if (b > a) ctx.fillRect(a, bottom - tickTall, b - a, tickTall);
-  }
-  if (!copies.labels.length) return;
-  ctx.font = `${Math.round(COPY_FONT * sy)}px ${SANS_STACK}`;
-  ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "left";
-  const uncut = uncutBy(view, sx);
-  const baseline = y - Math.round(1 * sy);
-  for (const label of copies.labels) {
-    const at = Math.ceil(label.x * sx - SAME_PX);
-    const width = ctx.measureText(label.text).width;
-    if (at + width <= label.end * sx && uncut(at, at + width)) ctx.fillText(label.text, at, baseline);
-  }
-}
-
-/**
- * The duplication rule's marks at a pixel a base or more (barTiers.ts's
- * dupDrawing), painted over the bar's colour and under its letters: a
- * border of DUP_BORDER inside the bar round each original; in the band
- * below the bar, on the row each duplication has (DUP_BAND tall), a
- * dotted line under each original and each dispersed copy's place, "n."
- * inside its left end and "×k" inside its right where both fit, just
- * outside otherwise, each kept inside the view where the line runs past
- * its edge; and a pointer up to the bar's bottom edge where a copy is
- * inserted, its label beside it, underlined for a tandem copy. Labels are
- * not cut by the view's edges.
- */
-function paintDups(ctx: CanvasRenderingContext2D, copies: CopyDrawing, view: [number, number] | undefined, { pw, sx, sy, top, tall }: BarBox) {
-  if (!copies.borders.length && !copies.below.length && !copies.pointers.length) return;
-  const clip = (a: number, b: number): [number, number] => [Math.max(0, a), Math.min(pw, b)];
-  const bottom = top + tall;
-  const uncut = uncutBy(view, sx);
-  ctx.fillStyle = END_INK;
-  const border = Math.max(1, Math.round(DUP_BORDER * sy));
-  for (const one of copies.borders) {
-    const [a, b] = clip(Math.round(one.left * sx), Math.round(one.right * sx));
-    if (b <= a) continue;
-    ctx.fillRect(a, top, b - a, border);
-    ctx.fillRect(a, bottom - border, b - a, border);
-    if (one.left * sx >= 0) ctx.fillRect(a, top, border, tall);
-    if (one.right * sx <= pw) ctx.fillRect(b - border, top, border, tall);
-  }
-  ctx.font = `${Math.round(COPY_FONT * sy)}px ${SANS_STACK}`;
-  ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "left";
-  const thick = Math.max(1, Math.round(COPY_LINE * sy));
-  const dot = Math.max(1, Math.round(COPY_DOT * sx));
-  /* Each row's line and the baseline of its words. */
-  const rowTop = (row: number) => bottom + Math.round(row * DUP_BAND * sy);
-  const lineY = (row: number) => rowTop(row) + Math.round(DUP_LINE_GAP * sy) + Math.round(2 * sy);
-  const baselineOf = (row: number) => lineY(row) + Math.round(COPY_FONT * sy) - Math.round(1 * sy);
-  const pad = Math.round(2 * sx);
-  const viewLeft = view ? Math.max(0, Math.round(view[0] * sx)) : 0;
-  const viewRight = view ? Math.min(pw, Math.round(view[1] * sx)) : pw;
-  const dotted = (p0: number, p1: number, y: number) => {
-    for (let x = Math.floor(p0 / (2 * dot)) * 2 * dot; x < p1; x += 2 * dot) {
-      const p = Math.max(p0, x);
-      const q = Math.min(p1, x + dot);
-      if (q > p) ctx.fillRect(p, y, q - p, thick);
-    }
-  };
-  for (const line of copies.below) {
-    const [a, b] = clip(Math.round(line.left * sx), Math.round(line.right * sx));
-    if (b <= a) continue;
-    const y = lineY(line.row);
-    const baseline = baselineOf(line.row);
-    const head = line.number !== null ? `${line.number}.` : "";
-    const headWidth = head ? ctx.measureText(head).width : 0;
-    const tailWidth = ctx.measureText(line.text).width;
-    /* The words go at the line's ends, or at the view's edge where the
-       line runs past it: inside the line where both fit, the line then
-       running between them; else the line runs whole and the words sit
-       just outside it. */
-    const left = Math.max(a, viewLeft);
-    const right = Math.min(b, viewRight);
-    const inside = right - left >= headWidth + tailWidth + 4 * pad;
-    const from = inside && head ? left + headWidth + 2 * pad : a;
-    const to = inside ? right - tailWidth - 2 * pad : b;
-    if (inside && head) dotted(a, left, y);
-    dotted(from, to, y);
-    if (inside) dotted(right, b, y);
-    const headAt = inside ? left + pad : a - pad - headWidth;
-    const tailAt = inside ? right - pad - tailWidth : b + pad;
-    if (head && uncut(headAt, headAt + headWidth)) ctx.fillText(head, headAt, baseline);
-    if (uncut(tailAt, tailAt + tailWidth)) ctx.fillText(line.text, tailAt, baseline);
-  }
-  const half = DUP_POINTER_HALF * sx;
-  const tallPointer = DUP_POINTER_TALL * sy;
-  for (const pointer of copies.pointers) {
-    const x = pointer.x * sx;
-    if (x < -half || x > pw + half) continue;
-    const top0 = rowTop(pointer.row);
-    const baseline = baselineOf(pointer.row);
-    ctx.beginPath();
-    ctx.moveTo(x, top0);
-    ctx.lineTo(x - half, top0 + tallPointer);
-    ctx.lineTo(x + half, top0 + tallPointer);
-    ctx.closePath();
-    ctx.fill();
-    const at = Math.round(x + half + 2 * sx);
-    const width = ctx.measureText(pointer.text).width;
-    if (!uncut(at, at + width)) continue;
-    ctx.fillText(pointer.text, at, baseline);
-    if (pointer.underline) ctx.fillRect(at, baseline + Math.round(1.5 * sy), Math.round(width), Math.max(1, Math.round(sy)));
-  }
 }
 
 /** What every bar draws over its runs, at every zoom: each drawn white's
@@ -734,30 +507,58 @@ function paintOver(
   /* The marks: a glyph each in the band above the bar, with its label
      (markLabel) to the right where the next glyph leaves room. */
   if (raster.marks.length) {
-    ctx.font = `${Math.round(MARK_FONT * sy)}px ${SANS_STACK}`;
+    const plainFont = `${Math.round(MARK_FONT * sy)}px ${SANS_STACK}`;
+    const nestedFont = `600 ${Math.round(NESTED_FONT * sy)}px ${MONO_STACK}`;
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "left";
-    ctx.fillStyle = MARK_INK;
     const half = MARK_HALF * sx;
     const tip = top;
     const base = top - MARK_TALL * sy;
+    const pad = CHIP_PAD * sx;
+    /* A chip's box round its letters: the ink's height in the nested
+       font, a margin above and below, inside the marks' band. */
+    ctx.font = nestedFont;
+    const probe = ctx.measureText(LETTER_SAMPLE);
+    const chipTop = Math.max(0, Math.floor(tip - 1 * sy - probe.actualBoundingBoxAscent - sy));
+    const chipBottom = Math.min(tip, Math.ceil(tip - 1 * sy + probe.actualBoundingBoxDescent + sy));
     raster.marks.forEach((glyph, k) => {
       const x = glyph.x * sx;
       if (x < -half || x > pw + half) return;
+      const ink = glyph.nested ? NESTED_INK : MARK_INK;
+      ctx.fillStyle = ink;
       ctx.beginPath();
       ctx.moveTo(x - half, base);
       ctx.lineTo(x + half, base);
       ctx.lineTo(x, tip);
       ctx.closePath();
       ctx.fill();
-      const text = markLabel(glyph);
-      const textWidth = ctx.measureText(text).width;
+      ctx.font = glyph.nested ? nestedFont : plainFont;
       const next = raster.marks[k + 1];
       const room = (next ? next.x * sx - half : pw) - (x + half + 2 * sx);
       /* Beside the glyph, its foot on the bar: above the glyph it would
-         run off the top of the canvas. */
+         run off the top of the canvas. The longest form that fits. */
       const at = Math.round(x + half + 2 * sx);
-      if (textWidth <= room && uncut(at, at + textWidth)) ctx.fillText(text, at, Math.round(tip - 1 * sy));
+      const baseline = Math.round(tip - 1 * sy);
+      const widthOf = (runs: typeof glyph.forms[number]) => runs.reduce((w, run) => w + ctx.measureText(run.text).width + (run.chip ? 2 * pad : 0), 0);
+      const form = glyph.forms.find((runs) => widthOf(runs) <= room);
+      if (!form) return;
+      const textWidth = widthOf(form);
+      if (!uncut(at, at + textWidth)) return;
+      let cursor = at;
+      for (const run of form) {
+        const w = ctx.measureText(run.text).width;
+        if (run.chip) {
+          ctx.fillStyle = CHIP_INK;
+          ctx.fillRect(Math.round(cursor), chipTop, Math.ceil(w + 2 * pad), chipBottom - chipTop);
+          ctx.fillStyle = CHIP_LETTER;
+          ctx.fillText(run.text, Math.round(cursor + pad), baseline);
+          cursor += w + 2 * pad;
+        } else {
+          ctx.fillStyle = ink;
+          ctx.fillText(run.text, Math.round(cursor), baseline);
+          cursor += w;
+        }
+      }
     });
   }
 
@@ -794,9 +595,8 @@ function paintOver(
  * draws of its bins. In order: the haplotype's colour; the grey stripes;
  * the whites; the big deletion-insertions' hatching; the ticks and the big
  * variants' chips, on top of the whites and the hatching; the arrows.
- * Then, as at every zoom, the copies line (paintCopies), and the whites'
- * sizes, the marks kept and the caps (paintOver). Each is one pass over
- * the parts or over the tiers.
+ * Then, as at every zoom, the whites' sizes, the marks kept and the caps
+ * (paintOver). Each is one pass over the parts or over the tiers.
  */
 function paintBins(ctx: CanvasRenderingContext2D, raster: BarRaster, tiers: BarTiers, color: string, box: BarBox) {
   const { pw, sx, top, tall } = box;
