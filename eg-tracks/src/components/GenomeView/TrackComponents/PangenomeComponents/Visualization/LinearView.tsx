@@ -27,9 +27,9 @@ import type { BrowserClass, Bubble } from "./alignment";
    arrowed; where a walk leaves the reference and never comes back, the bar
    stops at a cap and says missing data, and the card names the node the
    walk went into, in red. See linearModel.ts for how that is worked out and
-   BarCanvas.tsx for how it is painted. The reference has no bar: it is
-   what every bar is drawn against, and the graph's own track row draws
-   nothing in this view (VisualizationContainer).
+   BarCanvas.tsx for how it is painted. The reference has no bar here: it
+   is what every bar is drawn against, and the graph's own track row draws
+   it as the ref bar (RefBar.tsx, refBarRule.ts; VisualizationContainer).
 
    A hover shows a card and a click keeps it. Zoomed in and at mid zoom -
    while a base has a pixel - the bars are drawn part by part, lettered
@@ -104,6 +104,12 @@ const copyNo = (lane: LinearLane, index: number): number | null => {
 };
 /** A copy's kind and times in words: "dispersed ×2", "inverted tandem ×3". */
 const copyKind = (copy: Copy) => `${copy.inverted ? "inverted " : ""}${copy.kind} ×${copy.times}`;
+/** A walk row's name (the user, 2026-11-03): its copy's number, its kind
+    without the times (the rows are the count; the lines below the bar
+    keep it), the reference it is drawn over, and its own coordinates. The
+    arrows say where it is read backwards. */
+const rowName = (contig: string, lane: LinearLane, copy: Copy) =>
+  `copy ${copyNo(lane, copy.index)} · ${copy.inverted ? "inverted " : ""}${copy.kind} · ${contig}:${copy.refFrom.toLocaleString()}–${copy.refTo.toLocaleString()} · own ${copy.ownFrom.toLocaleString()}–${copy.ownTo.toLocaleString()}`;
 
 /** Whether "Show walks" has anything to draw for this band's haplotype. */
 export function walksShown(model: LinearModel): boolean {
@@ -1258,9 +1264,7 @@ function LinearView({
         {walkLane &&
           rows.map((row) => (
             <text key={`name-${row.key}`} x={axis.viewFromPx + 4} y={row.top - 3} className="pgv-walk-label">
-              {row.reading
-                ? `copy ${copyNo(walkLane, row.reading.index)} · ${copyKind(row.reading)} · own ${row.reading.ownFrom.toLocaleString()}–${row.reading.ownTo.toLocaleString()}${row.reading.reversed ? " · read backwards" : ""}`
-                : ""}
+              {row.reading ? rowName(contig, walkLane, row.reading) : ""}
             </text>
           ))}
 

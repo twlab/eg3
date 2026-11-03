@@ -3,6 +3,8 @@ import { usePangenomeView } from "./Visualization/pangenomeViewState";
 import { STRIPE_INKS } from "./Visualization/BarCanvas";
 import { binBpAt } from "./Visualization/bins";
 import { CELL_BP, DENSE_PER_KB, STRIPE_PER_KB, stripeClass } from "./Visualization/barTiers";
+import { LINE_GAP_PX, REF_INK, STRIPE_INKS as REF_STRIPE_INKS } from "./Visualization/refBarRule";
+import { SHADE_WORDS } from "./Visualization/RefBar";
 
 /* ══════════════════════════════════════════════════════════════════════════
    Which view the pangenome graph is drawn in, in TrackManager's toolbar
@@ -78,6 +80,17 @@ function greyKey(basePerPixel: number): { greys: Array<{ ink: string; words: str
   };
 }
 
+/** The key to the ref bar's stripes (refBarRule.ts): shown while a stripe can
+    show, under LINE_GAP_PX pixels a base, where two breaks a base apart
+    are too close for a line each. Null at a pixel a base or more than
+    that. */
+const REF_KEY_TITLE =
+  "The stripe in the ref bar (the reference's own row): where its nodes are too small for a line at each node break, the stripe is shaded by node breaks per kb over the kilobase - the lighter, the more. A break is where any haplotype in the pangenome leaves or rejoins the reference, shown here or not.";
+function refKey(basePerPixel: number): Array<{ ink: string; words: string }> | null {
+  if (!(basePerPixel > 1 / LINE_GAP_PX)) return null;
+  return REF_STRIPE_INKS.map((ink, k) => ({ ink, words: SHADE_WORDS[k] }));
+}
+
 export default function PangenomeViewSwitch({
   mode,
   onChange,
@@ -127,6 +140,7 @@ export default function PangenomeViewSwitch({
      view has no model to show. */
   const view = usePangenomeView();
   const key = mode === "linear" && view?.model ? greyKey(basePerPixel ?? 0) : null;
+  const refShades = mode === "linear" && view?.model ? refKey(basePerPixel ?? 0) : null;
   /* Each item on one line, the row wrapping where the toolbar is too
      narrow for it: the key's five greys come only in a narrow window. */
   return (
@@ -197,6 +211,27 @@ export default function PangenomeViewSwitch({
             </span>
           ))}
           <span>small variants per kb</span>
+        </span>
+      )}
+      {refShades && (
+        <span
+          className="pgv-grey-key pgv-ref-key flex items-center gap-1 px-1"
+          title={REF_KEY_TITLE}
+          style={{
+            fontSize: `${Math.max(12, fontSize - 1)}px`,
+            fontVariantNumeric: "tabular-nums",
+            color: "var(--font-color)",
+          }}
+        >
+          {refShades.map(({ ink, words }) => (
+            <span key={words} className="pgv-grey-key-class flex items-center gap-1 pr-1">
+              <span className="pgv-ref-key-swatch" style={{ backgroundColor: REF_INK }}>
+                <span style={{ backgroundColor: ink }} />
+              </span>
+              {words}
+            </span>
+          ))}
+          <span>node breaks per kb</span>
         </span>
       )}
       <button

@@ -28,9 +28,10 @@ import type { PathInfo } from "./subgraph";
    back over what was walked, and the end cut at the first node it reads.
 
    Fragments of one path are then made one where they meet: the GBWT holds
-   every path both ways round, and a hairpin's turn reads the same each
-   way, so it is stitched twice; and a walk followed on can reach the next
-   fragment of its own path, a tandem duplication's second pass.
+   every path both ways round, and an inverted repeat's turn reads the
+   same each way, so it is stitched twice; and a walk followed on can
+   reach the next fragment of its own path, a tandem duplication's second
+   pass. Fragments that do not meet stay apart (GAP_JOIN_BP).
    ══════════════════════════════════════════════════════════════════════════ */
 
 /** The reference enumerated this far either side of the window before any
@@ -44,8 +45,15 @@ export const MAX_WALK_ON_BP = 100_000;
 export const MAX_WALK_ON_NODES = 3_000;
 
 /** Two fragments of one path at most this far apart are joined by walking
-    the gap between them. */
-const GAP_JOIN_BP = 2_000;
+    the gap between them. Nothing (the user, 2026-11-03: "I like to see the
+    split"): fragments that meet are still made one - a tandem
+    duplication's second pass, which the walk-on reaches - but two passes
+    with reference between them stay two walks, each a reading of its own,
+    as the GBWT lists them. Until then it was 2,000, which joined a forward
+    pass with its inverted copy 1.6 kb along in chr17's segmental
+    duplication (HG002#2 at CHM13 chr17:38,982,605) into one 107-step
+    walk. */
+const GAP_JOIN_BP = 0;
 
 /** When an end is placed by one of the reference's anchors, the reference
     is enumerated back over the stretch walked and this much more: the walk

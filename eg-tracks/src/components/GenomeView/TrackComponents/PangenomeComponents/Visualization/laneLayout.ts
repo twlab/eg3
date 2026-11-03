@@ -51,11 +51,12 @@ export const LANE_GAP = 0;
 /** Nothing under the last bar: the rule under it is where the drawing ends,
     and room past that read as a gap belonging to something. */
 export const FOOT_PAD = 0;
-/** The graph's own track row in linear view. It draws nothing - every bar
-    is drawn against the reference, and eg3's ruler track gives the
-    coordinates - so it is only as tall as eg3's chrome needs: its name in
-    the track legend (one line, 11 px) and the loading button that sits at
-    the foot of a track's legend while a band loads (16 px). */
+/** The graph's own track row in linear view: the ref bar (RefBar.tsx),
+    the reference walk every bar is drawn against, as tall as eg3's chrome
+    needs the row to be: its name in the track legend (one line, 11 px)
+    and the loading button that sits at the foot of a track's legend while
+    a band loads (16 px). The user's choice of 2026-11-03, so no track
+    moves. */
 export const GRAPH_ROW_H = 16;
 
 /** One row of the drawing, and the haplotype it belongs to. */

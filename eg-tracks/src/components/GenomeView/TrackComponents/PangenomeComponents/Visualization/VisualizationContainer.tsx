@@ -14,6 +14,7 @@ import {
   placedModel,
 } from "./pangenomeModel";
 import LinearView, { linearHeight, walksHeight, walksShown } from "./LinearView";
+import RefBar from "./RefBar";
 import { linearModelOf } from "./linearModel";
 import { linearAxis, toBandAxis } from "./linearAxis";
 import { GRAPH_ROW_H } from "./laneLayout";
@@ -437,8 +438,8 @@ export default function VisualizationContainer({
 
      The linear view's own model: the band aligned to the reference (see
      linearModel.ts), cut down to the lanes this row draws - the reference
-     alone for the graph's own row, which draws nothing in linear view but
-     still gives the band its axis and the dev hook its model, or one
+     alone for the graph's own row, which draws the ref bar from the whole
+     model and gives the band its axis and the dev hook its model, or one
      haplotype's lane with it. */
   const linearWhole = linearModelOf(queryResult);
   const linearModel = useMemo(() => {
@@ -581,20 +582,26 @@ export default function VisualizationContainer({
         onMouseOut={() => showTip(null)}
       >
         {view.mode === "linear" ? (
-          /* The graph's own row draws nothing in linear view: it keeps its
-             place for its name. A zoomed-out bar's bin card can move the
-             region, through whoever mounted the view's state; the tube map
-             and the variants view cannot. */
-          part !== GRAPH_PART &&
-          linearModel &&
-          linAxis && (
-            <LinearView
-              model={linearModel}
-              axis={linAxis}
-              highlight={view.highlight}
-              walks={walksOn}
-              onZoomTo={view.commitRegion ?? undefined}
-            />
+          /* The graph's own row draws the ref bar in linear view: the
+             reference walk every bar is drawn against (RefBar.tsx), from
+             the band's whole model, so its node card can say which rows
+             read a node. A zoomed-out bar's bin card, or the ref bar's,
+             can move the region, through whoever mounted the view's
+             state; the tube map and the variants view cannot. */
+          part === GRAPH_PART ? (
+            linearWhole &&
+            linAxis && <RefBar model={linearWhole} axis={linAxis} onZoomTo={view.commitRegion ?? undefined} />
+          ) : (
+            linearModel &&
+            linAxis && (
+              <LinearView
+                model={linearModel}
+                axis={linAxis}
+                highlight={view.highlight}
+                walks={walksOn}
+                onZoomTo={view.commitRegion ?? undefined}
+              />
+            )
           )
         ) : view.mode === "tube" ? (
           tube && (

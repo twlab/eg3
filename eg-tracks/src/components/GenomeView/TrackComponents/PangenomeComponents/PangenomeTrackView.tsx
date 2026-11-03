@@ -233,29 +233,43 @@ export default function PangenomeTrackView({
     const perBase = primaryVisData.visWidth / width;
     return { minBp: tube.minBp, gapsPx: tube.bases.map((b) => b * perBase) };
   }, [tube, primaryVisData]);
-  /* Past the size limit nothing was fetched (fetchPangenomeData): a
-     haplotype's row says so, in a box the band's width, so a pan shows no
-     blank stretch, with the words over the view; the graph's own row is
-     drawn as ever, empty. */
+  /* Past the size limit nothing was fetched (fetchPangenomeData): each
+     row says so, in a box the band's width, so a pan shows no blank
+     stretch, with the words over the view; the graph's own row, which
+     would draw the ref bar, in its own 16 px. That row still mounts the
+     container, which draws nothing without a band but keeps the view's
+     shared state told. */
   const tooWide = tooWideOf(queryResult);
-  const drawing =
-    tooWide && part !== GRAPH_PART ? (
-      <div style={{ position: "relative", width: frame?.width ?? windowWidth * 3, height: BAR_H }}>
-        <div
-          className="pgv-zoom-in"
-          title={`Haplotypes are drawn for views of ${kb(tooWide.maxBp)} or less; this view is ${kb(tooWide.viewBp)}`}
+  const graphRow = part === GRAPH_PART;
+  const drawing = tooWide ? (
+    <div style={{ position: "relative", width: frame?.width ?? windowWidth * 3, height: graphRow ? GRAPH_ROW_H : BAR_H }}>
+      <div
+        className={`pgv-zoom-in${graphRow ? " pgv-zoom-in-ref" : ""}`}
+        title={`${graphRow ? "The reference's nodes" : "Haplotypes"} are drawn for views of ${kb(tooWide.maxBp)} or less; this view is ${kb(tooWide.viewBp)}`}
+      >
+        <span
+          style={{
+            left: frame?.viewFromPx ?? windowWidth,
+            width: frame ? frame.viewToPx - frame.viewFromPx : windowWidth,
+          }}
         >
-          <span
-            style={{
-              left: frame?.viewFromPx ?? windowWidth,
-              width: frame ? frame.viewToPx - frame.viewFromPx : windowWidth,
-            }}
-          >
-            Zoom in to see haplotypes
-          </span>
-        </div>
+          {graphRow ? "Zoom in to see the reference's nodes" : "Zoom in to see haplotypes"}
+        </span>
       </div>
-    ) : (
+      {graphRow && (
+        <div style={{ position: "absolute", left: 0, top: 0, width: 0, height: 0, overflow: "hidden" }}>
+          <VisualizationContainer
+            isPrimary
+            queryResult={queryResult}
+            frame={frame}
+            part={part}
+            tubeLayout={tubeLayout}
+            walks={walks}
+          />
+        </div>
+      )}
+    </div>
+  ) : (
       <div style={{ width: frame?.width ?? windowWidth * 3 }}>
         <VisualizationContainer
           isPrimary={part === GRAPH_PART}

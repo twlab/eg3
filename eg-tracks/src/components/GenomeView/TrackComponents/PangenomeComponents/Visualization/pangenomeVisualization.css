@@ -64,6 +64,35 @@
   cursor: pointer;
 }
 
+/* The ref bar: the reference's own row in the linear view (RefBar.tsx),
+   one canvas the band's width with the hover's outline laid over it. */
+.pgv-refbar {
+  position: relative;
+}
+
+.pgv-refbar-canvas {
+  display: block;
+  cursor: pointer;
+}
+
+/* The ref bar's key in the toolbar (PangenomeViewSwitch): a slate box with
+   the stripe's shade across its middle half, as the bar draws it. */
+.pgv-ref-key-swatch {
+  position: relative;
+  display: inline-block;
+  width: 12px;
+  height: 9px;
+  border-radius: 1px;
+}
+
+.pgv-ref-key-swatch > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 25%;
+  bottom: 25%;
+}
+
 /* Laid over the bars, and deaf - or it would take every hover meant for
    the canvas beneath it. */
 .pgv-over {
@@ -657,6 +686,14 @@
   border-radius: 8px;
   font-family: "Google Sans", Roboto, sans-serif;
   font-size: 16px;
+}
+
+/* The same in the graph's own row, 16 px tall, where the ref bar would be. */
+.pgv-zoom-in.pgv-zoom-in-ref {
+  top: 1px;
+  bottom: 1px;
+  border-radius: 4px;
+  font-size: 11px;
 }
 
 .pgv-zoom-in > span {
