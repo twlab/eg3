@@ -897,16 +897,28 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       if (stripe && variant.counted) return `in a grey stripe: small variants are dense here, ${tiers.cells[stripe.cell].rate.toFixed(1)} per kb`;
       return null;
     };
+    /* Rule D zoomed out: a variant whose site the haplotypes counted read
+       more than one way (nestedMarks.ts), by its bubble's first changed
+       part. */
+    const nestedOfVariant = (variant: BinVariant): NestedMark | null => {
+      if (!/^d+$/.test(variant.key)) return null;
+      const b = Number(variant.key);
+      const first = row.parts.filter((part) => part.bubble === b && part.kind !== "match").sort((x, y) => x.ref - y.ref)[0];
+      return first?.nested?.[countOver] ?? null;
+    };
+    const unitWords = countOver === "all" ? "the haplotypes in the band" : "the lanes on screen";
     const itemOf = (index: number): CardItem => {
       const variant = bins.list[index];
       const place = variant.kind === "insertion" ? variant.home + 1 : variant.home;
       const size = variant.size.toLocaleString();
       const bubble = variantBubble(row, variant);
       const how = drawnAs(index, variant);
+      const info = nestedOfVariant(variant);
       return {
         key: `variant ${index}`,
         line: (
           <>
+            {info ? <><span className="pgv-var-nested">nested</span> · </> : null}
             <span className={KIND_CLASS[variant.kind]}>{variant.kind}</span> · {variant.kind === "insertion" ? `+${size}` : variant.kind === "deletion" ? `−${size}` : size} bp at{" "}
             {refCoord(where(place))}
           </>
@@ -914,6 +926,12 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         details: [
           bubble ? bubbleLine(bubble, row) : variantWords(variant),
           ...(how ? [how] : []),
+          ...(info
+            ? [
+                `read ${info.versions} ways among ${unitWords}: this walk's version ${formText(info.forms[info.forms.length - 1])}${info.seq ? ` ${info.seq.length <= 40 ? info.seq : `(${info.seq.length.toLocaleString()} bp)`}` : " (nothing)"}, in ${info.count.toLocaleString()} of ${info.total.toLocaleString()} ${info.unit}${info.rank === 1 ? ", the commonest" : ""}; ${info.straight.toLocaleString()} read straight across${info.others ? `; ${info.others.toLocaleString()} anchor other nodes` : ""}`,
+                ...(info.sites.length ? [info.sites.join("; ")] : []),
+              ]
+            : []),
           ...(homedHere(variant)
             ? []
             : [
@@ -932,6 +950,10 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         notRead ? `, ${notRead.toLocaleString()} not read by this walk` : ""
       }`,
       variants ? `${plural(variants, "variant")}: ${counts.join(", ")}` : "no variants",
+      ...(() => {
+        const n = homed.filter((index) => bins.list[index].counted && nestedOfVariant(bins.list[index])).length;
+        return n ? [`${plural(n, "site")} read more than one way among ${unitWords}: listed as nested below`] : [];
+      })(),
       ...(inversions ? [`${plural(inversions, "inversion")} as well, not counted: ${inversions === 1 ? "its" : "their"} bases count as read on the other strand`] : []),
       ...(inserted ? [`${inserted.toLocaleString()} bp inserted, which the reference does not have`] : []),
       ...(hidden ? [`${plural(hidden, "deletion")} too small to see, counted in the track's legend`] : []),
