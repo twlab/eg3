@@ -1,6 +1,6 @@
 import { alignDiverging, placeClosed, reverseComplement } from "./alignment";
 import type { Step } from "./alignment";
-import { axisOf, layOut, readsSite, siteReads } from "../../../../../getRemoteData/gbz/pointer";
+import { axisOf, layOut, readsSite, siteReads, stepsBetween } from "../../../../../getRemoteData/gbz/pointer";
 import type { Carriers, JunctionVersions } from "../../../../../getRemoteData/gbz/subgraph";
 import { labelForms, labelPrefix, runsOf } from "./markLabel";
 import type { InnerDiff, LabelRun } from "./markLabel";
@@ -314,8 +314,10 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     return { versions, straight, others };
   };
 
-  /* The lanes' count at a merged site: each lane's steps between the
-     outer anchors, by its first row anchoring both. */
+  /* The lanes' count at a merged site: each row's steps between the
+     outer anchors; a lane with several rows counts once in each version
+     it reads, as a haplotype does in the worker's tally (2026-11-08;
+     before, only its first row anchoring both counted). */
   const selectedMerged = (k0: number, k1: number) => {
     const versions = new Map<string, Tallied>();
     const straight = new Set<string>();
@@ -324,16 +326,14 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
       let read = false;
       let there = false;
       lane.rows.forEach((row, n) => {
-        if (read) return;
         const reads = laneReads.get(lane.key)![n];
-        const i0 = reads.anchorAt.get(k0);
-        const i1 = reads.anchorAt.get(k1);
-        if (i0 === undefined || i1 === undefined || i1 <= i0) {
+        const between = stepsBetween(reads, row.steps, k0, k1);
+        if (!between) {
           if (reads.bubbles.some((b) => b.k0 < k1 && b.k1 > k0)) there = true;
           return;
         }
         read = true;
-        const nodes: Step[] = row.steps.slice(i0 + 1, i1).map((s) => ({ id: s.node, reverse: s.reverse }));
+        const nodes: Step[] = between.map((s) => ({ id: s.node, reverse: s.reverse }));
         const key = versionKey(nodes);
         if (key === refKeyBetween(k0, k1)) {
           straight.add(lane.key);
@@ -460,10 +460,9 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
         if (mg) {
           if (mergedDone.has(mg.key)) return;
           mergedDone.add(mg.key);
-          const i0 = reads.anchorAt.get(mg.k0);
-          const i1 = reads.anchorAt.get(mg.k1);
-          if (i0 === undefined || i1 === undefined || i1 <= i0) return;
-          const between: Step[] = row.steps.slice(i0 + 1, i1).map((s) => ({ id: s.node, reverse: s.reverse }));
+          const own = stepsBetween(reads, row.steps, mg.k0, mg.k1);
+          if (!own) return;
+          const between: Step[] = own.map((s) => ({ id: s.node, reverse: s.reverse }));
           const mine = versionKey(between);
           const bandList = tallied(mg.site.versions);
           const bandCount = new Map(bandList.map((v) => [v.key, v.count]));

@@ -1,4 +1,4 @@
-import { axisOf, readsSite, siteReads } from "./pointer";
+import { axisOf, readsSite, siteReads, stepsBetween } from "./pointer";
 import { adjacencyOf, clustersOf, handleOf, leaksInGraph, sealedInterior } from "./sites";
 import {
   edgeIsCanonical,
@@ -852,14 +852,12 @@ function countCarriers(
       /* The merged sites: the walk's steps between the outer anchors. */
       const steps = stepsOf(path);
       for (const site of mergedSites) {
-        const i0 = reads.anchorAt.get(site.k0);
-        const i1 = reads.anchorAt.get(site.k1);
+        const between = stepsBetween(reads, steps, site.k0, site.k1);
         const there = reads.bubbles.some((b) => b.k0 < site.k1 && b.k1 > site.k0);
-        if (i0 === undefined || i1 === undefined || i1 <= i0) {
+        if (!between) {
           if (there) tally(site.partial);
           continue;
         }
-        const between = steps.slice(i0 + 1, i1);
         const versionKey = between.map((step) => `${step.node}${step.reverse ? "-" : "+"}`).join(" ");
         if (versionKey === refKeyBetween(site.k0, site.k1)) {
           tally(site.straight);

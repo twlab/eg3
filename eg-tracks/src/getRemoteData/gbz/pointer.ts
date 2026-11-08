@@ -141,30 +141,66 @@ export function flipRun<S extends PointerStep>(run: S[]): S[] {
   return [...run].reverse().map((s) => ({ ...s, reverse: !s.reverse }));
 }
 
+/** Where a walk anchors a reference step: `i` the index of the anchoring
+    step in the list it was read from, which is the walk's own steps when
+    `run` is null, or the flipped steps of the inverted run `run` (an
+    index into `runs`) when the anchor lies inside one. A walk stored on
+    the other strand is one inverted run over everything it covers, so all
+    of its anchors are of that second kind (2026-11-08). */
+export interface AnchorAt {
+  i: number;
+  run: number | null;
+}
+
+export interface SiteReads<S extends PointerStep> {
+  anchors: Set<number>;
+  anchorAt: Map<number, AnchorAt>;
+  /** Each inverted run's steps, flipped: as the reference reads them. */
+  runs: S[][];
+  bubbles: Array<{ k0: number; k1: number; version: S[] }>;
+}
+
 /** Every bubble of a walk, with the anchor before and the anchor after
     (PLAN-bubble-sites.md): `k0` and `k1` are the two anchors' reference
     step indexes, `version` the pending steps between them (none for a
     deletion), on the reference's strand (flipped inside an inverted
-    run). `anchors` are every reference step the walk anchors. Both
-    levels of the layout are read: the walk's own, and the inside of each
-    inverted run. An insertion site is the case k1 = k0 + 1. */
-export function siteReads<S extends PointerStep>(axis: PointerAxis, steps: S[]): { anchors: Set<number>; anchorAt: Map<number, number>; bubbles: Array<{ k0: number; k1: number; version: S[] }> } {
+    run). `anchors` are every reference step the walk anchors, and
+    `anchorAt` where, at either level. Both levels of the layout are
+    read: the walk's own, and the inside of each inverted run. An
+    insertion site is the case k1 = k0 + 1. */
+export function siteReads<S extends PointerStep>(axis: PointerAxis, steps: S[]): SiteReads<S> {
   const anchors = new Set<number>();
-  /* Reference step -> the walk's step index anchoring it, at the walk's own
-     level (inside an inverted run the steps are flipped, so none). */
-  const anchorAt = new Map<number, number>();
+  const anchorAt = new Map<number, AnchorAt>();
+  const runs: S[][] = [];
   const bubbles: Array<{ k0: number; k1: number; version: S[] }> = [];
-  const read = (laid: Laid<S>, own: boolean) => {
+  const read = (laid: Laid<S>, list: S[], run: number | null) => {
     for (const piece of laid.pieces) {
       if (piece.kind === "anchor") {
         anchors.add(piece.k);
-        if (own) anchorAt.set(piece.k, steps.indexOf(piece.step));
+        if (!anchorAt.has(piece.k)) anchorAt.set(piece.k, { i: list.indexOf(piece.step), run });
       } else if (piece.kind === "bubble") bubbles.push({ k0: piece.ref[0] - 1, k1: piece.ref[1], version: piece.pending });
-      else read(layOut(axis, flipRun(piece.steps), piece.ref[0], piece.ref[1], false), false);
+      else {
+        const flipped = flipRun(piece.steps);
+        const r = runs.push(flipped) - 1;
+        read(layOut(axis, flipped, piece.ref[0], piece.ref[1], false), flipped, r);
+      }
     }
   };
-  read(layOut(axis, steps, 0, axis.steps.length, true), true);
-  return { anchors, anchorAt, bubbles };
+  read(layOut(axis, steps, 0, axis.steps.length, true), steps, null);
+  return { anchors, anchorAt, runs, bubbles };
+}
+
+/** The walk's steps between two reference steps it anchors, on the
+    reference's strand: its own steps when both anchors are at its own
+    level, the flipped run's when both lie inside the same inverted run.
+    Null when it anchors one or neither, the two in the other order, or
+    the two in different runs. */
+export function stepsBetween<S extends PointerStep>(reads: SiteReads<S>, steps: S[], k0: number, k1: number): S[] | null {
+  const a = reads.anchorAt.get(k0);
+  const b = reads.anchorAt.get(k1);
+  if (!a || !b || a.run !== b.run || b.i <= a.i) return null;
+  const list = a.run === null ? steps : reads.runs[a.run];
+  return list.slice(a.i + 1, b.i);
 }
 
 /** How a walk's reads stand to a site: "own", it reads the site's own

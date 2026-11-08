@@ -181,6 +181,12 @@ export interface OpenEnd {
 export interface RowPlacement {
   /** The reference the row covers, lowest first; null for a span. */
   anchored: [number, number] | null;
+  /** The tail's steps from the first reference node of the expanded region
+      view that the walk turns back to (rule 4's jump): the walk goes on
+      over reference this row already covers, so the model lays these out
+      as a further row of the same group (PLAN-rows.md 7). Absent when the
+      tail holds no such node: then the jump stays a note. */
+  tail?: RowStep[];
   spanning: boolean;
   parts: PlacedPart[];
   bubbles: RowBubble[];
@@ -216,6 +222,7 @@ export function placeRow(
   const outOfBand: OutOfBand[] = [];
   const openEnds: OpenEnd[] = [];
   const jumps: Jump[] = [];
+  let tail: RowStep[] | undefined;
   const lenOf = (s: RowStep) => s.end - s.start;
   const seqOf = (s: RowStep) => stepSeq(graph, { id: s.node, reverse: s.reverse });
   /** Where the reference reads a node, anywhere: on the band's walk (its
@@ -432,6 +439,7 @@ export function placeRow(
       const jump: Jump = { side, ref: junction, to: side === "right" ? reachedAt(at, s) : leftAt(at, s), reverse: s.reverse, before: side === "left" };
       jumps.push(jump);
       mark(out, jump);
+      if (side === "right" && axis.indexes.has(s.node)) tail = run.slice(out);
       return;
     }
     const bases = run.reduce((n, s) => n + lenOf(s), 0);
@@ -453,5 +461,5 @@ export function placeRow(
   endRun(laid.head, "left");
   endRun(laid.tail, "right");
   parts.sort((a, b) => a.ref - b.ref || a.len - b.len);
-  return { anchored: [anchoredFrom, anchoredTo], spanning: false, parts, bubbles, outOfBand, openEnds, jumps };
+  return { anchored: [anchoredFrom, anchoredTo], spanning: false, parts, bubbles, outOfBand, openEnds, jumps, ...(tail ? { tail } : {}) };
 }

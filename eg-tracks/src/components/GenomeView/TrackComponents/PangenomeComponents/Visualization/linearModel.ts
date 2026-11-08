@@ -49,11 +49,35 @@ export interface Row {
       at one end and one it reads after at the other: the row is white
       over the band, with both sizes. */
   spanning: boolean;
+  /** One inverted run over the whole row: a flipped pass, the walk reads
+      the reference on the other strand from end to end (PLAN-rows.md 7). */
+  flipped: boolean;
+  /** Which pass of the haplotype this row is. */
+  pass: RowPass;
+  /** The array (walk) this row comes from, as its index among the lane's
+      walks: the group (PLAN-rows.md 7). */
+  group: number;
+  /** The row's place in its group: 0 for the walk's first pass, then one
+      per turn back the pointer's tail made into a further row. */
+  passInGroup: number;
   parts: PlacedPart[];
   bubbles: RowBubble[];
   outOfBand: OutOfBand[];
   openEnds: OpenEnd[];
   jumps: Jump[];
+}
+
+/** A row as one pass of its haplotype through the expanded region view
+    (PLAN-rows.md 7): its number among the lane's rows; the haplotype's
+    own bases between it and the previous and the next pass of the same
+    contig, null when there is none or it is another contig; and the bases
+    of seam passes, walks that draw no row, lying in the gap before it. */
+export interface RowPass {
+  n: number;
+  of: number;
+  prevGap: number | null;
+  nextGap: number | null;
+  seamBp: number;
 }
 
 export interface LinearLane {
@@ -179,6 +203,8 @@ interface RawWalk {
   haplotype: number;
   contig: string;
   start: number;
+  /** The walk's own end as its name gives it; null when the name has none. */
+  end: number | null;
   steps: RowStep[];
   ends?: { head?: JsonStop; tail?: JsonStop };
   firstSeen: number;
@@ -242,6 +268,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       haplotype: parsed.haplotype,
       contig: parsed.contig,
       start: parsed.start ?? 0,
+      end: parsed.end,
       steps,
       ...(raw.ends ? { ends: raw.ends } : {}),
       firstSeen: i,
@@ -271,23 +298,56 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     for (const walk of walks) if (!contigs.includes(walk.contig)) contigs.push(walk.contig);
     const ordered = [...walks].sort((a, b) => contigs.indexOf(a.contig) - contigs.indexOf(b.contig) || a.start - b.start || a.firstSeen - b.firstSeen);
     const rows: Row[] = [];
+    const seams: Array<{ contig: string; from: number; to: number }> = [];
     let undrawn = 0;
+    let group = 0;
     for (const walk of ordered) {
-      const placed = placeRow(graph, axis, walk.steps, origin, end, walk.ends);
+      let steps = walk.steps;
+      let placed = placeRow(graph, axis, steps, origin, end, walk.ends);
       if (!placed.anchored && !placed.spanning) {
         undrawn += 1;
+        /* Its extent from its name: a merged band can hold a clipped
+           sequence for a node of a walk it draws nothing of. */
+        seams.push({ contig: walk.contig, from: walk.start, to: walk.end ?? walk.steps[walk.steps.length - 1].end });
         continue;
       }
-      rows.push({
-        index: rows.length,
-        contig: walk.contig,
-        name: walk.name,
-        steps: walk.steps,
-        ownFrom: walk.steps[0].start,
-        ownTo: walk.steps[walk.steps.length - 1].end,
-        ...placed,
-      });
+      /* The array is the group. Its first pass is the row the pointer
+         placed; where the tail turns back over reference of the expanded
+         region view, the tail is laid out by the same pointer as a further
+         row of the group, and so on while a tail remains (PLAN-rows.md 7). */
+      let passInGroup = 0;
+      for (;;) {
+        const { tail, ...placement } = placed;
+        const inverted = placement.parts.filter((part) => part.kind === "inverted");
+        rows.push({
+          index: rows.length,
+          contig: walk.contig,
+          name: walk.name,
+          steps,
+          ownFrom: steps[0].start,
+          ownTo: steps[steps.length - 1].end,
+          flipped: !!placement.anchored && inverted.length === 1 && inverted[0].ref === placement.anchored[0] && inverted[0].ref + inverted[0].len === placement.anchored[1],
+          pass: { n: rows.length + 1, of: 0, prevGap: null, nextGap: null, seamBp: 0 },
+          group,
+          passInGroup,
+          ...placement,
+        });
+        if (!tail) break;
+        steps = tail;
+        passInGroup += 1;
+        placed = placeRow(graph, axis, steps, origin, end, walk.ends?.tail ? { tail: walk.ends.tail } : undefined);
+        if (!placed.anchored && !placed.spanning) break;
+      }
+      group += 1;
     }
+    /* The passes (PLAN-rows.md 7): consecutive rows of one contig, the
+       haplotype's own bases between them, the seam passes in the gap. */
+    rows.forEach((row, i) => {
+      const prev = i > 0 && rows[i - 1].contig === row.contig ? rows[i - 1] : null;
+      const next = i + 1 < rows.length && rows[i + 1].contig === row.contig ? rows[i + 1] : null;
+      const seamBp = prev ? seams.filter((s) => s.contig === row.contig && s.from >= prev.ownTo && s.to <= row.ownFrom).reduce((n, s) => n + (s.to - s.from), 0) : 0;
+      row.pass = { n: i + 1, of: rows.length, prevGap: prev ? row.ownFrom - prev.ownTo : null, nextGap: next ? next.ownFrom - row.ownTo : null, seamBp };
+    });
     lanes.push({
       key: label,
       label,

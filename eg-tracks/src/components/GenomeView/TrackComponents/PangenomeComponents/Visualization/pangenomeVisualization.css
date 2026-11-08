@@ -187,6 +187,34 @@
   text-anchor: start;
 }
 
+/* The edge from one pass of a haplotype to its next (PLAN-rows.md 7),
+   through the label band between the two rows, and the bases between. */
+.pgv-pass-link path {
+  fill: none;
+  stroke: #8794ab;
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+/* Inside one array the edge is solid: the same walk, going on after a turn back. */
+.pgv-pass-link.pgv-pass-same path {
+  stroke: #6b7a94;
+  stroke-dasharray: none;
+}
+/* Between two arrays of one haplotype: a faint rule above the second group's first row. */
+.pgv-group-rule {
+  stroke: #dfe3ea;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  pointer-events: none;
+}
+.pgv-pass-gap {
+  font-size: 10px;
+  fill: #8794ab;
+  text-anchor: end;
+  pointer-events: none;
+}
+
 /* ── Tube map view ─────────────────────────────────────────────────────── */
 /* The tube map: one canvas on the band, as the linear view's bars are, so
    eg3's ruler track above it gives its coordinates. It has no ruler of its
@@ -200,9 +228,11 @@
   cursor: pointer;
 }
 
-/* The foot of a row, matching the one under its name in the legend. */
+/* The foot of a lane: the separator between one haplotype's passes and the
+   next haplotype's (PLAN-rows.md 7), matching the one under its name in
+   the legend. */
 .pgv-row-rule {
-  stroke: var(--pgv-rule-soft, #e6e8ec);
+  stroke: var(--pgv-rule-soft, #cdd2db);
   stroke-width: 1;
   pointer-events: none;
 }
