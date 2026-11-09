@@ -105,8 +105,7 @@ export const exampleRegions: ExampleRegion[] = [
     note: "110 bp of HLA-DRB where haplotypes read the stretch more than once - picking it unpicks the other references and turns the repeat tracks off",
     sample: "CHM13",
     contig: "chr6",
-    /* A base wider either side than the stretch looked at, 32,365,590-700:
-       Region only reads the window back from the band a base short. */
+    /* A base wider either side than the stretch looked at, 32,365,590-700. */
     start: 32_365_589,
     end: 32_365_701,
     alignmentTest: true,

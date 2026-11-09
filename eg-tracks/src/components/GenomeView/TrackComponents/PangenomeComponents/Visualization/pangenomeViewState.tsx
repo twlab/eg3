@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from "react";
 import type { PangenomeModel } from "./pangenomeModel";
-import type { CountOver } from "./nestedMarks";
 
 /* ══════════════════════════════════════════════════════════════════════════
    The toolbar, the legend and the detail bar are chrome for the whole view,
@@ -68,11 +67,6 @@ export interface PangenomeViewState {
       walks; -1 draws every node as it is. */
   tubeGrouping: number;
   setTubeGrouping: React.Dispatch<React.SetStateAction<number>>;
-  /** Rule D (nestedMarks.ts): whose versions a nested mark's label and
-      card count, every haplotype in the band or only the lanes on
-      screen. */
-  countOver: CountOver;
-  setCountOver: React.Dispatch<React.SetStateAction<CountOver>>;
 
   /** Adopt a span of the reference as the region: [start, end) of its
       `contig`, or, without one, of the genome's own bases. Only the linear
@@ -138,13 +132,6 @@ export function PangenomeViewProvider({
   const resetLaneColors = useCallback(() => setLaneColors({}), []);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [countOver, setCountOver] = useState<CountOver>("all");
-  /* In development, a hook for the check harness (claude-memory/testing)
-     to set the count, so both modes can be drawn and read. */
-  useEffect(() => {
-    if (!import.meta.env.DEV || typeof window === "undefined") return;
-    (window as unknown as { __pgvCountOver?: unknown }).__pgvCountOver = { get: () => countOver, set: setCountOver };
-  }, [countOver]);
   /* Auto, so the variants view draws no more sites than there is room for. */
   const [ownVariantGrouping, setOwnVariantGrouping] = useState(0);
   const [ownTubeGrouping, setOwnTubeGrouping] = useState(0);
@@ -197,8 +184,6 @@ export function PangenomeViewProvider({
       setVariantGrouping,
       tubeGrouping,
       setTubeGrouping,
-      countOver,
-      setCountOver,
       windowWidth,
       commitRegion,
       model,
@@ -214,7 +199,6 @@ export function PangenomeViewProvider({
       selectedNode,
       variantGrouping,
       tubeGrouping,
-      countOver,
       model,
       windowWidth,
       commitRegion,

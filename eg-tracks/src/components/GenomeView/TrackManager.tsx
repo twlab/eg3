@@ -362,14 +362,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
      sets its columns, and so the room each band holds. */
   const [tubeGrouping, setTubeGrouping] = useState(0);
   const [variantGrouping, setVariantGrouping] = useState(0);
-  /* Testing alignment: only the region in view is queried and drawn. A
-     different query, not a relayout, so changing it fetches again. */
-  const [regionOnly, setRegionOnly] = useState(false);
   const pangenomeSettings = {
     mode: pangenomeView,
     tubeGrouping,
     variantGrouping,
-    regionOnly,
   };
   const pangenomeViewRef = useRef(pangenomeSettings);
   pangenomeViewRef.current = pangenomeSettings;
@@ -404,14 +400,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     relayoutPangenome();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [pangenomeView, tubeGrouping, variantGrouping]);
-  const regionOnlyShown = useRef(regionOnly);
-  useEffect(() => {
-    if (regionOnlyShown.current === regionOnly) return;
-    regionOnlyShown.current = regionOnly;
-    pangenomeViewShown.current = JSON.stringify(pangenomeViewRef.current);
-    refetchPangenomeFromView();
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [regionOnly]);
   // TESTING no-sync (start): the toolbar's "No sync" button turns
   // syncScrollState off, so a pan updates neither the region nor the band.
   // A ref too, as a pan's settle runs from a timer an earlier render set.
@@ -1436,10 +1424,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMouseDown(e: any) {
     if (e.button !== 0) {
-      return;
-    }
-    /* Testing alignment: the region in view and nothing else, so no pan. */
-    if (hasPangenome.current && pangenomeViewRef.current.regionOnly) {
       return;
     }
 
@@ -5558,8 +5542,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   onTubeGrouping={setTubeGrouping}
                   variantGrouping={variantGrouping}
                   onVariantGrouping={setVariantGrouping}
-                  regionOnly={regionOnly}
-                  onRegionOnly={setRegionOnly}
                 />
               )}
               {!isPangenome && userViewRegion && (

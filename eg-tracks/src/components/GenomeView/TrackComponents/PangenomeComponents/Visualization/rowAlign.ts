@@ -2,7 +2,7 @@ import { alignDiverging, placeClosed, stepSeq } from "./alignment";
 import type { Aligned, BrowserClass, Graph, Part, Step } from "./alignment";
 import type { JsonStop } from "../../../../../getRemoteData/gbz/subgraph";
 import { flipRun, layOut } from "../../../../../getRemoteData/gbz/pointer";
-import type { NestedAt } from "./nestedMarks";
+import type { NestedMark } from "./nestedMarks";
 
 export { layOut };
 
@@ -109,8 +109,8 @@ export interface PlacedPart {
   /** A mark at an end before the walk turns back. */
   jump?: Jump;
   /** A mark at an insertion site with two or more versions among the
-      haplotypes counted: rule D (nestedMarks.ts), each way of counting. */
-  nested?: NestedAt;
+      haplotypes in the band: rule D (nestedMarks.ts). */
+  nested?: NestedMark;
 }
 
 /** A bubble as the cards read it: what gbz-base's rule made of it. */

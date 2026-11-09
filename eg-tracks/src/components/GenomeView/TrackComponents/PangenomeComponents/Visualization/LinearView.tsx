@@ -18,7 +18,6 @@ import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
 import { reverseComplement } from "./alignment";
 import type { BrowserClass } from "./alignment";
-import { usePangenomeView } from "./pangenomeViewState";
 import type { NestedMark } from "./nestedMarks";
 import { formText } from "./markLabel";
 
@@ -182,8 +181,6 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
   const { px, width, scale } = axis;
   const contig = model.contig;
   const referenceName = model.reference.sample;
-  /* Rule D's switch: whose versions a nested mark counts (nestedMarks.ts). */
-  const countOver = usePangenomeView()?.countOver ?? "all";
   const where = (bp: number) => `${contig}:${bp.toLocaleString()}`;
   const span = (from: number, to: number) =>
     to - from > 1 ? `${contig}:${from.toLocaleString()}–${to.toLocaleString()}` : where(from);
@@ -242,13 +239,31 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
           height: ROW_H,
           bins,
           tiers,
-          raster: rasteriseBar(key, row, model.graph, px, width, axis.startBp, axis.endBp, { ...(tiers ? keepOf(tiers) : {}), countOver }),
+          raster: rasteriseBar(key, row, model.graph, px, width, axis.startBp, axis.endBp, tiers ? keepOf(tiers) : {}),
         });
       });
     }
     return out;
-  }, [model, axis, px, width, layout, binned, countOver]);
+  }, [model, axis, px, width, layout, binned]);
   const rowByKey = useMemo(() => new Map(rows.map((row) => [row.key, row])), [rows]);
+  /* The groups (PLAN-rows.md 7): one band per array of a lane, from its first
+     row's label to its last row's foot; every second array of a lane is
+     tinted, and each band after the lane's first carries a top edge, so the
+     arrays of one haplotype read as separate blocks. */
+  const groupBands = useMemo(() => {
+    const out: Array<{ key: string; top: number; height: number; tinted: boolean; edged: boolean }> = [];
+    for (const lane of model.lanes) {
+      const bars = rows.filter((bar) => bar.lane.key === lane.key);
+      const groups = [...new Set(bars.map((bar) => bar.row.group))].sort((a, b) => a - b);
+      groups.forEach((g, n) => {
+        const own = bars.filter((bar) => bar.row.group === g);
+        const top = Math.min(...own.map((bar) => bar.top)) - ROW_LABEL_H;
+        const bottom = Math.max(...own.map((bar) => bar.top + bar.height));
+        out.push({ key: `${lane.key} group ${g}`, top, height: bottom - top, tinted: n % 2 === 1, edged: n > 0 });
+      });
+    }
+    return out;
+  }, [model, rows]);
   /** Where a row's walk enters or leaves the expanded region view, in
       pixels: the placed part holding its lowest or highest own coordinate,
       at the end those coordinates run to (PLAN-rows.md 7). */
@@ -261,8 +276,8 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
   };
   /** The edge from the previous pass of the same contig to this row: from
       where that pass leaves the expanded region view to where this one
-      enters it, labelled with the haplotype's own bases between. */
-  const passLink = (bar: BarRow): { d: string; x: number; y: number; label: string; same: boolean } | null => {
+      enters it. */
+  const passLink = (bar: BarRow): { d: string; same: boolean } | null => {
     const gap = bar.row.pass.prevGap;
     if (gap === null) return null;
     const prev = rows.find((other) => other.lane.key === bar.lane.key && other.row.index === bar.row.index - 1);
@@ -273,10 +288,8 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     const y0 = prev.top + prev.height;
     const y1 = bar.top;
     const mid = (y0 + y1) / 2;
-    const seam = bar.row.pass.seamBp;
-    const label = gap > 0 ? `${gap.toLocaleString()} bp of its own${seam ? ` · ${seam.toLocaleString()} bp of them beyond the view` : ""}` : "";
     /* Solid inside one array (the same walk going on after a turn back), dashed between two arrays of the haplotype (PLAN-rows.md 7). */
-    return { d: `M ${x0} ${y0} C ${x0} ${mid}, ${x1} ${mid}, ${x1} ${y1}`, x: Math.min(Math.max((x0 + x1) / 2 + 120, axis.viewFromPx + 480), axis.viewToPx - 8), y: mid + 4, label, same: prev.row.group === bar.row.group };
+    return { d: `M ${x0} ${y0} C ${x0} ${mid}, ${x1} ${mid}, ${x1} ${y1}`, same: prev.row.group === bar.row.group };
   };
   const height = layout.height;
   /** Where the reference walk first reads a node, for the cards. */
@@ -448,16 +461,10 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     const next = bar.lane.rows[bar.row.index + 1];
     return !!next && next.group === bar.row.group && next.passInGroup === bar.row.passInGroup + 1;
   };
-  /** The row's line on a card: which pass of the haplotype it is, and the
-      haplotype's own bases between it and its neighbouring passes of the
-      same contig (PLAN-rows.md 7). */
+  /** The row's line on a card: which pass of the haplotype it is, and
+      which array and pass in it (PLAN-rows.md 7). */
   const rowLine = (lane: LinearLane, row: Row): ReactNode => {
     const p = row.pass;
-    const before =
-      p.prevGap === null
-        ? ""
-        : `; ${p.prevGap.toLocaleString()} bp of its own after pass ${p.n - 1}${p.seamBp ? ` (${p.seamBp.toLocaleString()} bp of them on reference nodes beyond the expanded region view, not drawn)` : ""}`;
-    const after = p.nextGap === null ? "" : `; ${p.nextGap.toLocaleString()} bp of its own before pass ${p.n + 1}`;
     const undrawn = lane.undrawn ? ` (${lane.undrawn.toLocaleString()} more ${lane.undrawn === 1 ? "pass" : "passes"} through the fetched nodes read none of the expanded region view's reference: not drawn)` : "";
     const groups = lane.rows.reduce((n, r) => Math.max(n, r.group + 1), 0);
     const inGroup = lane.rows.filter((r) => r.group === row.group).length;
@@ -466,8 +473,6 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       <>
         pass {p.n} of {p.of} of {lane.label} here: {altCoord(rowName(row))}
         {where_}
-        {before}
-        {after}
         {undrawn}
       </>
     );
@@ -628,14 +633,14 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       ...(openEnd ? openEndLines(lane, row, openEnd) : []),
       ...deletedByOthers(refAt, lane),
       rowLine(lane, row),
-      ...row.jumps.map(jumpLine),
+      ...row.jumps.map((jump) => jumpLine(jump)),
     ];
     return { title: `${lane.label}${node ? ` · node ${node.id}` : ""}`, zoom: zoomOf(zoom, row.contig), lines, groups: [] };
   };
 
   /** Rule D: what a card says of a site with more than one version among
-      the haplotypes counted (nestedMarks.ts): the versions, each with its
-      count and the lanes on screen reading it, then the straight readers
+      the haplotypes in the band (nestedMarks.ts): the versions, each with
+      its count, then the straight readers
       and those anchoring other nodes, and where inside the site the
       versions differ. */
   /** Bases in plain words: "13 T" for a run of one letter, the letters when
@@ -665,11 +670,10 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     const groups: CardContent["groups"] = [];
     const lines: ReactNode[] = [];
     for (const part of parts) {
-      const info: NestedMark | null = part.nested?.[countOver] ?? null;
+      const info: NestedMark | null = part.nested ?? null;
       if (!info) continue;
-      const unit = info.unit === "haplotypes" ? "haplotypes in the band" : "lanes on screen";
-      const one = info.unit === "haplotypes" ? "haplotype" : "lane";
-      const of = (n: number) => `in ${n.toLocaleString()} of ${info.total.toLocaleString()} ${info.unit}`;
+      const one = "haplotype";
+      const of = (n: number) => `in ${n.toLocaleString()} of ${info.total.toLocaleString()} haplotypes`;
       const [left, right] = info.site.split(">");
       /* The site starts after its left anchor node; the mark sits at the first base that differs, which may lie further in. */
       const siteStart = refNodeAt.has(left) ? refNodeAt.get(left)! + (model.graph.seq.get(left)?.length ?? 0) : part.ref;
@@ -683,24 +687,23 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         </>,
       );
       lines.push(
-        `the site: ${info.refLen ? `${info.refLen.toLocaleString()} bp of ${referenceName}` : "an insertion site, no reference base"} between nodes ${left} and ${right}; every walk's bases between those two nodes count, read ${info.versions + (info.straight ? 1 : 0)} ways among the ${unit}`,
+        `the site: ${info.refLen ? `${info.refLen.toLocaleString()} bp of ${referenceName}` : "an insertion site, no reference base"} between nodes ${left} and ${right}; every walk's bases between those two nodes count, read ${info.versions + (info.straight ? 1 : 0)} ways among the haplotypes in the band`,
       );
       if (info.merged?.partial) lines.push(`${plural(info.merged.partial, one)} reach only one of the two nodes here, or one inside an inversion and one outside: not counted`);
       if (info.sites.length) lines.push(`where the readings differ from the commonest: ${info.sites.join("; ")}`);
       if (info.others) lines.push(`${plural(info.others, one)} go through other nodes over this stretch: counted at their own sites`);
       /* Readings with the same bases added up; the node paths in the details. */
-      const bySeq = new Map<string, { seq: string | null; bases: number; count: number; lanes: string[]; paths: Array<{ nodes: string; count: number }>; commonest: boolean; mine: boolean }>();
+      const bySeq = new Map<string, { seq: string | null; bases: number; count: number; paths: Array<{ nodes: string; count: number }>; commonest: boolean; mine: boolean }>();
       for (const v of info.list) {
         const key = v.seq === null ? `?${v.key}` : v.seq;
         const nodes = v.nodes.length ? v.nodes.map((s) => `${s.id}${s.reverse ? " (other strand)" : ""}`).join(", ") : "no node: straight from the one anchor to the other";
         const got = bySeq.get(key);
         if (got) {
           got.count += v.count;
-          got.lanes.push(...v.lanes);
           got.paths.push({ nodes, count: v.count });
           got.commonest ||= v.commonest;
           got.mine ||= v.mine;
-        } else bySeq.set(key, { seq: v.seq, bases: v.bases, count: v.count, lanes: [...v.lanes], paths: [{ nodes, count: v.count }], commonest: v.commonest, mine: v.mine });
+        } else bySeq.set(key, { seq: v.seq, bases: v.bases, count: v.count, paths: [{ nodes, count: v.count }], commonest: v.commonest, mine: v.mine });
       }
       const items: CardItem[] = [...bySeq.values()]
         .sort((a, b) => b.count - a.count)
@@ -714,16 +717,15 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
             </>
           ),
           details: [
-            v.lanes.length ? `lanes on screen with it: ${[...new Set(v.lanes)].join(", ")}` : "no lane on screen has it",
             ...(v.paths.length > 1 ? [`the same bases through ${v.paths.length} node paths: ${v.paths.map((p) => `${p.nodes} (${p.count.toLocaleString()})`).join("; ")}`] : [`nodes: ${v.paths[0].nodes}`]),
           ],
         }));
       items.push({
         key: `${part.index}:straight`,
         line: <>{referenceName}'s own {refWords} · {of(info.straight)}</>,
-        details: [info.straightLanes.length ? `lanes on screen with it: ${info.straightLanes.join(", ")}` : "no lane on screen has it"],
+        details: [],
       });
-      groups.push({ head: `How the ${info.unit} read this site (${items.length})`, items });
+      groups.push({ head: `How the haplotypes read this site (${items.length})`, items });
       /* Smaller sealed sites inside this one, as vg deconstruct lists nested
          snarls; the site itself is not listed among them. */
       const inside = (info.merged?.inside ?? []).filter((inner) => !(inner.refAt === siteStart && inner.refLen === info.refLen));
@@ -739,7 +741,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
                 {inner.straight ? `, ${referenceName}'s own in ${inner.straight.toLocaleString()}` : ""}
               </>
             ),
-            details: [`${inner.skip.toLocaleString()} of the ${info.unit} reading the whole site go through other nodes here`],
+            details: [`${inner.skip.toLocaleString()} of the haplotypes reading the whole site go through other nodes here`],
           })),
         });
       }
@@ -753,7 +755,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     /* A site glyph on letters: the versions are the card. */
     if (glyph.refLen !== undefined && parts.length === 1) {
       const part = parts[0];
-      const info = part.nested?.[countOver];
+      const info = part.nested;
       const versions = versionsCard(parts);
       const siteStart0 = info && refNodeAt.has(info.site.split(">")[0]) ? refNodeAt.get(info.site.split(">")[0])! + (model.graph.seq.get(info.site.split(">")[0])?.length ?? 0) : part.ref;
       const refWords = info ? (info.refLen ? basesWords(refBasesOver(siteStart0, siteStart0 + info.refLen), info.refLen) : "nothing") : `${glyph.refLen.toLocaleString()} bp`;
@@ -1038,9 +1040,9 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       if (!/^d+$/.test(variant.key)) return null;
       const b = Number(variant.key);
       const first = row.parts.filter((part) => part.bubble === b && part.kind !== "match").sort((x, y) => x.ref - y.ref)[0];
-      return first?.nested?.[countOver] ?? null;
+      return first?.nested ?? null;
     };
-    const unitWords = countOver === "all" ? "the haplotypes in the band" : "the lanes on screen";
+    const unitWords = "the haplotypes in the band";
     const itemOf = (index: number): CardItem => {
       const variant = bins.list[index];
       const place = variant.kind === "insertion" ? variant.home + 1 : variant.home;
@@ -1062,7 +1064,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
           ...(how ? [how] : []),
           ...(info
             ? [
-                `read ${info.versions} ways among ${unitWords}: this walk's version ${formText(info.forms[info.forms.length - 1])}${info.seq ? ` ${info.seq.length <= 40 ? info.seq : `(${info.seq.length.toLocaleString()} bp)`}` : " (nothing)"}, in ${info.count.toLocaleString()} of ${info.total.toLocaleString()} ${info.unit}${info.rank === 1 ? ", the commonest" : ""}; ${info.straight.toLocaleString()} read straight across${info.others ? `; ${info.others.toLocaleString()} anchor other nodes` : ""}`,
+                `read ${info.versions} ways among ${unitWords}: this walk's version ${formText(info.forms[info.forms.length - 1])}${info.seq ? ` ${info.seq.length <= 40 ? info.seq : `(${info.seq.length.toLocaleString()} bp)`}` : " (nothing)"}, in ${info.count.toLocaleString()} of ${info.total.toLocaleString()} haplotypes${info.rank === 1 ? ", the commonest" : ""}; ${info.straight.toLocaleString()} read straight across${info.others ? `; ${info.others.toLocaleString()} anchor other nodes` : ""}`,
                 ...(info.sites.length ? [info.sites.join("; ")] : []),
               ]
             : []),
@@ -1241,6 +1243,10 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
 
   return (
     <div className="pgv-linear" style={{ width, height }} onMouseLeave={hideHover}>
+      {/* ── The groups' bands, behind the rows ──────────────────────── */}
+      {groupBands.map((g) => (
+        <div key={g.key} className={`pgv-group-band${g.tinted ? " pgv-group-tinted" : ""}${g.edged ? " pgv-group-edged" : ""}`} style={{ top: g.top, height: g.height }} />
+      ))}
       {/* ── The rows ────────────────────────────────────────────────── */}
       {rows.map((bar) => (
         <div key={bar.key} className="pgv-lane-slot" style={{ top: bar.top, height: bar.height }}>
@@ -1283,23 +1289,12 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
             {rowName(bar.row)}
           </text>
         ))}
-        {/* The separator between two arrays of one haplotype: a rule above the first row of each group but the lane's first (PLAN-rows.md 7). */}
-        {rows
-          .filter((bar) => bar.row.passInGroup === 0 && bar.row.group > 0)
-          .map((bar) => (
-            <line key={`group-${bar.key}`} className="pgv-group-rule" x1={0} x2={width} y1={bar.top - ROW_LABEL_H + 0.5} y2={bar.top - ROW_LABEL_H + 0.5} />
-          ))}
         {/* The edges between a haplotype's passes (PLAN-rows.md 7). */}
         {rows.map((bar) => {
           const link = passLink(bar);
           return link ? (
             <g key={`pass-${bar.key}`} className={`pgv-pass-link${link.same ? " pgv-pass-same" : ""}`}>
               <path d={link.d} />
-              {link.label ? (
-                <text x={link.x} y={link.y} className="pgv-pass-gap">
-                  {link.label}
-                </text>
-              ) : null}
             </g>
           ) : null;
         })}

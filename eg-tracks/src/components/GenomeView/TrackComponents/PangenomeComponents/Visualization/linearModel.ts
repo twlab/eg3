@@ -7,7 +7,7 @@ import { addNestedMarks, versionSeqOf } from "./nestedMarks";
 import type { Jump, OpenEnd, OutOfBand, PlacedPart, RefAxis, RowBubble, RowStep } from "./rowAlign";
 
 export type { Jump, OpenEnd, OutOfBand, PlacedPart, RowBubble, RowStep } from "./rowAlign";
-export type { CountOver, NestedAt, NestedMark, NestedVersion } from "./nestedMarks";
+export type { NestedMark, NestedVersion } from "./nestedMarks";
 
 /* ══════════════════════════════════════════════════════════════════════════
    What the linear view draws: every walk of every shown haplotype, each a
@@ -391,7 +391,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
   }
 
   /* Rule D: the marks at junctions with more than one version among the
-     haplotypes, each way of counting (nestedMarks.ts). */
+     haplotypes in the band (nestedMarks.ts). */
   const carriers: Carriers | undefined = result?.carriers;
   addNestedMarks(lanes, axis, versionSeqOf(seq, carriers?.versionNodes), carriers, refName.sample);
 

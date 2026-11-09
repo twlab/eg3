@@ -481,10 +481,6 @@ export interface PangenomeLayoutSettings {
       variants view is drawn on the linear layout - but it sets how tall
       the picture is. */
   variantGrouping?: number;
-  /** For testing alignment: the graph queried for the window on screen
-      alone - none of the band either side of it, with the context the
-      pangenome was opened with - so what is drawn is the region asked for. */
-  regionOnly?: boolean;
 }
 
 /**
@@ -677,18 +673,12 @@ export async function fetchPangenomeData(
   const { trackToFetch, visData, trackDataIdx, missingIdx } = data;
 
   const visRegion = regionOf(visData.visRegion);
-  /* What is queried: the band, or - testing - the window alone. */
-  const queried =
-    settings.regionOnly && visData.viewWindowRegion
-      ? regionOf(visData.viewWindowRegion)
-      : visRegion;
 
   const fetchResults: any = {};
   const trackToDrawId: any = {};
 
-  /* The band's stretch of the reference, on the contig it covers most -
-     or, testing, of the window alone. */
-  const locus = queried
+  /* The band's stretch of the reference, on the contig it covers most. */
+  const locus = visRegion
     .getGenomeIntervals()
     .reduce(
       (a: ChromosomeInterval | null, b: ChromosomeInterval) =>

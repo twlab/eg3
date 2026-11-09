@@ -201,18 +201,20 @@
   stroke: #6b7a94;
   stroke-dasharray: none;
 }
-/* Between two arrays of one haplotype: a faint rule above the second group's first row. */
-.pgv-group-rule {
-  stroke: #dfe3ea;
-  stroke-width: 1;
-  stroke-dasharray: 2 3;
+/* The groups: one band per array of a lane, behind its rows. Every second
+   array is tinted slate, and each array after the lane's first has a slate
+   top edge, so a haplotype's arrays read as separate blocks (PLAN-rows.md 7). */
+.pgv-group-band {
+  position: absolute;
+  left: 0;
+  right: 0;
   pointer-events: none;
 }
-.pgv-pass-gap {
-  font-size: 10px;
-  fill: #8794ab;
-  text-anchor: end;
-  pointer-events: none;
+.pgv-group-tinted {
+  background: rgba(91, 107, 140, 0.08);
+}
+.pgv-group-edged {
+  border-top: 2px solid rgba(91, 107, 140, 0.45);
 }
 
 /* ── Tube map view ─────────────────────────────────────────────────────── */

@@ -4,7 +4,7 @@ import type { Graph } from "./alignment";
 import { deletionText } from "./pangenomeModel";
 import { coveredBases } from "./letters";
 import type { NodeLetters } from "./letters";
-import type { CountOver, NestedMark } from "./nestedMarks";
+import type { NestedMark } from "./nestedMarks";
 import type { LabelRun } from "./markLabel";
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -129,9 +129,6 @@ export interface RasterKeep {
   /** Whether a white is drawn: a white part by its index among the parts,
       or a white out of the band by its index among those. */
   keepWhite?: (part: number | null, out: number | null) => boolean;
-  /** Rule D: whose versions a mark's label counts, every haplotype in the
-      band or the lanes on screen; "all" unless told. */
-  countOver?: CountOver;
 }
 
 /** What a row gives the raster: its parts, its whites out of the band,
@@ -193,7 +190,6 @@ export function rasteriseBar(
      first part) gets a site glyph at its start in place of its bubble's
      plain surplus mark, zoomed in and at mid zoom; a deletion's white gets
      none, its card listing the versions. */
-  const countOver = keep.countOver ?? "all";
   const zoomedOut = !!keep.keepMark;
   /* A white gets a site glyph only where the row's version at a merged
      site has bases: a deletion of part of the site. A deletion of the
@@ -201,7 +197,7 @@ export function rasteriseBar(
   const siteParts = zoomedOut
     ? []
     : parts.filter((part) => {
-        const info = part.nested?.[countOver];
+        const info = part.nested;
         if (!info || part.kind === "mark") return false;
         return part.kind !== "white" || info.seq.length > 0;
       });
@@ -213,7 +209,7 @@ export function rasteriseBar(
   ].sort((a, b) => a.left - b.left);
   const marks: MarkGlyph[] = [];
   for (const part of markParts) {
-    const info: NestedMark | null = part.nested?.[countOver] ?? null;
+    const info: NestedMark | null = part.nested ?? null;
     const bp = part.kind === "mark" ? part.len : surplusOf(part.bubble);
     const last = marks[marks.length - 1];
     if (last && part.left - last.x <= MARK_MERGE_PX) {
