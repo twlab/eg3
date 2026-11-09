@@ -15,6 +15,7 @@ import type { CardContent, CardItem, CardZoom, HoverCardHandle } from "./Cards";
 import FloatingCard from "./FloatingCard";
 import { ROW_H, ROW_LABEL_H, laneLayout, rowTop } from "./laneLayout";
 import { visibleOwn } from "./legendRows";
+import { AeroDefs, AeroOutline, placeOutline } from "./AeroOutline";
 import type { RowStep } from "./rowAlign";
 import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
@@ -214,7 +215,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     });
   const hoverCard = useRef<HoverCardHandle>(null);
   const hideHover = () => hoverCard.current?.hide();
-  const hoverBoxRef = useRef<SVGRectElement>(null);
+  const hoverBoxRef = useRef<SVGGElement>(null);
 
   /* ── Rows ────────────────────────────────────────────────────────────── */
   const layout = useMemo(() => laneLayout(model), [model]);
@@ -1184,19 +1185,8 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
   /* The outline round what the pointer is on. Written straight to the
      attribute: a hover is a hundred events long and none of them change
      anything React would need to work out again. */
-  const outline = (box: { x: number; y: number; width: number; height: number } | null) => {
-    const element = hoverBoxRef.current;
-    if (!element) return;
-    if (!box) {
-      element.style.display = "none";
-      return;
-    }
-    element.setAttribute("x", String(box.x));
-    element.setAttribute("y", String(box.y));
-    element.setAttribute("width", String(Math.max(1, box.width)));
-    element.setAttribute("height", String(box.height));
-    element.style.display = "";
-  };
+  /** The hover outline on a box of a row, snapped with the row's canvas (AeroOutline.tsx). */
+  const outline = (box: { x: number; y: number; width: number; height: number } | null, canvasTop = 0) => placeOutline(hoverBoxRef.current, box, canvasTop);
   /** The bar's height in a row: under the marks' band. */
   const barHeight = (bar: BarRow) => bar.height - MARK_BAND - 1;
   /** A row's end and the empty stretch past it, outlined. */
@@ -1219,7 +1209,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       hideHover();
       return;
     }
-    outline(boxOf(bar, target));
+    outline(boxOf(bar, target), bar.top);
     if (target.kind === "base") {
       const { part, offset, bp, zoom } = target;
       showHover(`base:${bar.key}:${part.index}:${offset}`, () => describeBase(bar, part, offset, bp, zoom), target.x, target.y);
@@ -1383,8 +1373,9 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
             </g>
           ) : null;
         })}
-        <rect className="pgv-hover-node" ref={hoverBoxRef} x={0} y={0} width={0} height={0} style={{ display: "none" }} />
-        {keptBox && <rect className="pgv-kept-node" x={keptBox.x} y={keptBox.y} width={keptBox.width} height={keptBox.height} />}
+        <AeroDefs />
+        <AeroOutline kind="hover" groupRef={hoverBoxRef} />
+        {keptBox && <AeroOutline kind="kept" box={keptBox} canvasTop={kept ? (rowByKey.get(kept.row)?.top ?? 0) : 0} />}
       </svg>
 
       {card && (

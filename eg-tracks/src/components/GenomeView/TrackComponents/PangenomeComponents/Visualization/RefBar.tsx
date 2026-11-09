@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { AeroDefs, AeroOutline, placeOutline } from "./AeroOutline";
 import type { ReactNode } from "react";
 import type { LinearModel } from "./linearModel";
 import type { LinearAxis } from "./linearAxis";
@@ -195,18 +196,9 @@ function RefBar({ model, axis, onZoomTo }: RefBarProps) {
     });
   const hoverCard = useRef<HoverCardHandle>(null);
   const hideHover = () => hoverCard.current?.hide();
-  const hoverBoxRef = useRef<SVGRectElement>(null);
-  const outline = (box: Box | null) => {
-    const element = hoverBoxRef.current;
-    if (!element) return;
-    if (!box) {
-      element.style.display = "none";
-      return;
-    }
-    element.setAttribute("x", String(box.x));
-    element.setAttribute("width", String(Math.max(1, box.width)));
-    element.style.display = "";
-  };
+  const hoverBoxRef = useRef<SVGGElement>(null);
+  /* The outline runs the row's full height (AeroOutline.tsx). */
+  const outline = (box: Box | null) => placeOutline(hoverBoxRef.current, box ? { x: box.x, y: 0, width: box.width, height } : null, 0);
 
   /* Which rows read each node, for the node card. */
   const lanesOf = useMemo(() => {
@@ -419,8 +411,9 @@ function RefBar({ model, axis, onZoomTo }: RefBarProps) {
         onClick={onClick}
       />
       <svg className="pgv-svg pgv-over" width={width} height={height}>
-        <rect className="pgv-hover-node" ref={hoverBoxRef} x={0} y={0} width={0} height={height} style={{ display: "none" }} />
-        {card && <rect className="pgv-kept-node" x={card.box.x} y={0} width={Math.max(1, card.box.width)} height={height} />}
+        <AeroDefs />
+        <AeroOutline kind="hover" groupRef={hoverBoxRef} />
+        {card && <AeroOutline kind="kept" box={{ x: card.box.x, y: 0, width: Math.max(1, card.box.width), height }} />}
       </svg>
       {card && (
         <FloatingCard x={card.x} y={card.y} className="pgv-section-card">

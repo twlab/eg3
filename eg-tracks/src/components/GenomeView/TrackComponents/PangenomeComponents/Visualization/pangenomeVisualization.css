@@ -16,11 +16,34 @@
 
 /* The stretch under the pointer, in the bar it is drawn in. Cyan: the one
    hue the haplotype palette does not use, so it reads on any bar. */
-.pgv-hover-node {
+/* The outline round what the pointer is on, and round what a kept card
+   is about (AeroOutline.tsx): Frutiger Aero, a glassy stroke from sky
+   blue through aqua to lime, a soft aqua glow outside, a white shine just
+   inside, rounded corners. The kept one is heavier and glows more. */
+.pgv-aero rect {
   fill: none;
-  stroke: #22d3ee;
-  stroke-width: 1.5;
   pointer-events: none;
+}
+.pgv-aero-glow {
+  stroke: #22d3ee;
+  stroke-width: 6;
+  opacity: 0.5;
+  filter: url(#pgv-aero-glow);
+}
+/* The stroke widths are set on the rectangles, in whole device pixels
+   (AeroOutline.tsx). */
+.pgv-hover-node {
+  stroke: url(#pgv-aero-stroke);
+}
+.pgv-kept-node {
+  stroke: url(#pgv-aero-stroke);
+}
+.pgv-aero-kept .pgv-aero-glow {
+  stroke-width: 8;
+  opacity: 0.6;
+}
+.pgv-aero-shine {
+  stroke: rgba(255, 255, 255, 0.62);
 }
 
 /* ── Canvas ────────────────────────────────────────────────────────────── */
@@ -693,13 +716,6 @@
 
 /* What a kept card is about, outlined where it is drawn, in the hover's
    cyan. */
-.pgv-kept-node {
-  fill: none;
-  stroke: #22d3ee;
-  stroke-width: 2.5;
-  pointer-events: none;
-}
-
 /* A haplotype's row with nothing drawn: what the search for it along the
    reference found, in words. */
 .pgv-absent {
