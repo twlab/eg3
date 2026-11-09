@@ -253,7 +253,8 @@ function BarCanvas({
  * white gap, a big deletion-insertion's hatching, and bases read on the
  * other strand too narrow for more than one arrow. Wider arrows give the
  * bin: its card lists the inversion, and what lies inside it can still be
- * pointed at.
+ * pointed at. A bin holding none of the row's bases is nothing (binAt
+ * gives null): no card on an empty stretch, as at mid zoom.
  */
 function zoomedOutTarget(
   raster: BarRaster,

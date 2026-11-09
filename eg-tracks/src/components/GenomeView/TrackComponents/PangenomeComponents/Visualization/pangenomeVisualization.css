@@ -194,6 +194,19 @@
   stroke: #6b7a94;
   stroke-dasharray: none;
 }
+/* The edge's hit stroke, wide and unseen; the overlay takes no pointer
+   events, so the edge alone does. A click keeps the card of the two nodes
+   the edge joins (LinearView.tsx describeEdge). */
+.pgv-pass-link path.pgv-pass-hit {
+  stroke: transparent;
+  stroke-width: 12;
+  stroke-dasharray: none;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.pgv-pass-link:hover path:not(.pgv-pass-hit) {
+  stroke-width: 2.2;
+}
 /* The groups: one band per array of a lane, behind its rows. Every second
    array is tinted slate, and each array after the lane's first has a slate
    top edge, so a haplotype's arrays read as separate blocks (PLAN-rows.md 7). */

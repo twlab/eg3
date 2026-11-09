@@ -15,6 +15,7 @@ import type { CardContent, CardItem, CardZoom, HoverCardHandle } from "./Cards";
 import FloatingCard from "./FloatingCard";
 import { ROW_H, ROW_LABEL_H, laneLayout, rowTop } from "./laneLayout";
 import { visibleOwn } from "./legendRows";
+import type { RowStep } from "./rowAlign";
 import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
 import { reverseComplement } from "./alignment";
@@ -90,7 +91,9 @@ type CardTarget =
   | { kind: "mark"; row: string; glyph: number }
   | { kind: "white"; row: string; white: number }
   | { kind: "end"; row: string; cap: number }
-  | { kind: "bin"; row: string; from: number; to: number };
+  | { kind: "bin"; row: string; from: number; to: number }
+  /** The edge into a row from the previous pass of its haplotype. */
+  | { kind: "edge"; row: string };
 
 interface KeptCard extends CardContent {
   x: number;
@@ -329,12 +332,20 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
      band. It holds whole drawn bins, both being powers of two on the one
      grid from base 0, and is the same stretch from any band. */
   const hoverBp = binned ? binBpAt(scale, HOVER_BIN_PX) : 0;
-  const binAt = (at: number): { from: number; to: number } | null => {
+  /** Whether the row has bases in [from, to): a part holding its own bases
+      there, or a mark at a place inside (its right edge is the next bin's). */
+  const rowHasBasesIn = (row: Row, from: number, to: number): boolean =>
+    row.parts.some((part) => !!part.own && (part.kind === "mark" || part.len <= 0 ? part.ref >= from && part.ref < to : part.ref < to && part.ref + part.len > from));
+  /* A bin holding none of the row's bases - bases the walk never read, or
+     the inside of a gap - is nothing to point at, as an empty stretch is at
+     mid zoom; a bin with some bases and empty space beside them still
+     reads, and its card names its nodes (2026-11-09, the user). */
+  const binAt = (row: Row, at: number): { from: number; to: number } | null => {
     if (!binned || !(hoverBp > 0)) return null;
     const k = Math.floor(axis.bpAt(at) / hoverBp);
     const from = Math.max(binned.origin, k * hoverBp);
     const to = Math.min(binned.end, (k + 1) * hoverBp);
-    return to > from ? { from, to } : null;
+    return to > from && rowHasBasesIn(row, from, to) ? { from, to } : null;
   };
   /* A kept card closes when the grid changes: a new band, or a zoom. */
   useEffect(() => setCard(null), [binned]);
@@ -1226,6 +1237,49 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       showHover(`white:${bar.key}:${target.white.left}`, () => describeWhite(bar, target.white), target.x, target.y);
     }
   };
+  /** The card a click on a pass edge keeps (PLAN-rows.md 7): the two nodes
+      the edge joins, the last of the previous pass and the first of this
+      one, what lies between them in the walk, and whether the edge is the
+      same walk going on after a turn back (solid) or the haplotype's next
+      array (dashed). */
+  const describeEdge = (bar: BarRow): CardContent | null => {
+    const prev = rows.find((other) => other.lane.key === bar.lane.key && other.row.index === bar.row.index - 1);
+    if (!prev) return null;
+    const { lane, row } = bar;
+    const from = prev.row.steps[prev.row.steps.length - 1];
+    const to = row.steps[0];
+    if (!from || !to) return null;
+    const same = prev.row.group === row.group;
+    const gap = row.pass.prevGap;
+    const seam = row.pass.seamBp;
+    const nodeLine = (step: RowStep, what: string): ReactNode => (
+      <>
+        {what}: node {step.node} · {(step.end - step.start).toLocaleString()} bp · alt {altCoord(`${row.contig}:${step.start.toLocaleString()}–${step.end.toLocaleString()}`)}
+        {step.reverse ? " · read on the other strand" : ""}
+      </>
+    );
+    /* Each line names its node: the card speaks of two. */
+    const nodeNotes = (id: string): ReactNode[] => [referenceReads(id)?.replace("this node", `node ${id}`) ?? `node ${id} is the haplotype's own: the reference does not read it`, ...carriersLine(id).map((line) => `node ${id}: ${line}`)];
+    const between =
+      gap === null
+        ? "the two rows are different contigs"
+        : gap === 0
+          ? "the two nodes follow each other in the walk: one edge of the graph joins them"
+          : gap > 0
+            ? `between the two nodes the walk has ${gap.toLocaleString()} bp through nodes not drawn: they lie beyond the expanded region view${seam ? ` (${seam.toLocaleString()} bp of them on reference nodes beyond it)` : ""}`
+            : `the next pass starts ${(-gap).toLocaleString()} bp before the previous one ends in the walk's own coordinates`;
+    const lines: ReactNode[] = [
+      same
+        ? "the same walk going on: it turned back over reference this pass already covered, so the rest is drawn as the next row of the same array"
+        : "the haplotype's next array: the walk goes on in a further array, from a cut of the fetch or a dispersed copy, which the fetch cannot tell apart",
+      nodeLine(from, `leaves pass ${prev.row.pass.n} at`),
+      nodeLine(to, `enters pass ${row.pass.n} at`),
+      between,
+      ...nodeNotes(from.node),
+      ...(to.node !== from.node ? nodeNotes(to.node) : []),
+    ];
+    return { title: `${lane.label} · pass ${prev.row.pass.n} → pass ${row.pass.n}`, lines, groups: [] };
+  };
   const onBarPick = (bar: BarRow, target: BarTarget) => {
     if (target.kind === "base") {
       keep(describeBase(bar, target.part, target.offset, target.bp, target.zoom), { kind: "base", row: bar.key, part: target.part.index }, target.x, target.y);
@@ -1265,6 +1319,8 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       const cap = bar.raster.caps[kept.cap];
       return cap ? capBox(bar, cap) : null;
     }
+    /* An edge's card outlines nothing: the edge itself is the mark. */
+    if (kept.kind === "edge") return null;
     return binBox(bar, kept.from, kept.to);
   })();
 
@@ -1293,7 +1349,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
             /* Zoomed out, the row's tiers: it is drawn from them, and a
                hover or a click reads the bin round the pointer. */
             tiers={bar.tiers ?? undefined}
-            binAt={bar.tiers ? binAt : undefined}
+            binAt={bar.tiers ? (at) => binAt(bar.row, at) : undefined}
             onHover={(target) => onBarHover(bar, target)}
             onPick={(target) => onBarPick(bar, target)}
           />
@@ -1322,6 +1378,8 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
           return link ? (
             <g key={`pass-${bar.key}`} className={`pgv-pass-link${link.same ? " pgv-pass-same" : ""}`}>
               <path d={link.d} />
+              {/* A wide unseen stroke to click: the card of the two nodes the edge joins. */}
+              <path className="pgv-pass-hit" d={link.d} onClick={(event) => keep(describeEdge(bar), { kind: "edge", row: bar.key }, event.clientX, event.clientY)} />
             </g>
           ) : null;
         })}
