@@ -12,6 +12,7 @@ import LinearDrawingModel from "../../../../models/LinearDrawingModel";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 
 import "./TrackLegend.css";
+import type { LegendRow } from "../PangenomeComponents/Visualization/legendRows";
 
 interface TrackLegendProps {
   trackModel: TrackModel; // Track metadata
@@ -32,6 +33,10 @@ interface TrackLegendProps {
   /** A short line under the label. Only the pangenome gives one: below a
       pixel a base, how many deletions in view are too small to see. */
   note?: string;
+  /** The pangenome's rows (PLAN-legend.md): one per row of the
+      haplotype's lane, level with its bar, the stretch of the walk on
+      screen. With rows the note goes under the last of them. */
+  rows?: LegendRow[];
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
@@ -188,6 +193,7 @@ class TrackLegend extends React.PureComponent<
       label,
       forceSvg,
       note,
+      rows,
     } = this.props;
     if (height <= 0) {
       return null;
@@ -196,6 +202,7 @@ class TrackLegend extends React.PureComponent<
     const axisHeight = axisScaleReverse ? height * 0.5 : height;
     const styleObj = {
       display: "flex",
+      position: "relative" as const,
       width: this.props.legendWidth ? this.props.legendWidth : 120,
       minWidth: 120,
       height: axisHeight + (trackModel?.type === "methylc" ? 0 : 2),
@@ -309,8 +316,30 @@ class TrackLegend extends React.PureComponent<
             : ""}
       </p>
     );
-    const noteText = note ? (
-      <div className="TrackLegend-note">{note}</div>
+    const noteText =
+      note && !rows?.length ? (
+        <div className="TrackLegend-note">{note}</div>
+      ) : null;
+    /* The pangenome's rows, each level with its row of the drawing; the
+       note under the last. */
+    const rowTexts = rows?.length ? (
+      <div className="TrackLegend-rows">
+        {rows.map((row, i) => (
+          <div
+            key={i}
+            className={`TrackLegend-row${row.dim ? " TrackLegend-row-dim" : ""}`}
+            style={{ top: row.top }}
+            title={row.title}
+          >
+            {row.lines.map((line, j) => (
+              <div key={j}>{line}</div>
+            ))}
+            {note && i === rows.length - 1 ? (
+              <div className="TrackLegend-note">{note}</div>
+            ) : null}
+          </div>
+        ))}
+      </div>
     ) : null;
 
     return (
@@ -350,6 +379,7 @@ class TrackLegend extends React.PureComponent<
             ""
           )}
         </div>
+        {rowTexts}
         {axis}
       </div>
     );

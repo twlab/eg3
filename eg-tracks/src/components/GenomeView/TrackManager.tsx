@@ -5404,6 +5404,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||
+              /* The pangenome's legends follow the window (PLAN-legend.md). */
+              (cache.trackType === PANGENOME_TRACK_TYPE &&
+                pangenomeViewRef.current.mode === "linear") ||
               ((cache.trackType === "vcf" || cache.trackType === "modbed") &&
                 curConfigOptions?.displayMode === "auto" &&
                 bpRegionSize.current > 100000)

@@ -1283,12 +1283,6 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         {layout.rows.map((slot) => (
           <line key={`rule-${slot.key}`} className="pgv-row-rule" x1={0} x2={width} y1={slot.top + slot.height - 0.5} y2={slot.top + slot.height - 0.5} />
         ))}
-        {/* Each row's name: the walk's contig and own coordinates. */}
-        {rows.map((bar) => (
-          <text key={`name-${bar.key}`} x={axis.viewFromPx + 4} y={bar.top - 3} className="pgv-walk-label">
-            {rowName(bar.row)}
-          </text>
-        ))}
         {/* The edges between a haplotype's passes (PLAN-rows.md 7). */}
         {rows.map((bar) => {
           const link = passLink(bar);

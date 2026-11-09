@@ -28,6 +28,9 @@ import {
 } from "./Visualization/variantBubbles";
 import type { DrawFrame } from "./Visualization/pangenomeModel";
 import { hiddenDeletions, linearHeight } from "./Visualization/LinearView";
+import type { TierAxis } from "./Visualization/barTiers";
+import { legendRowsOf } from "./Visualization/legendRows";
+import type { LegendRow } from "./Visualization/legendRows";
 import { GRAPH_ROW_H, LANE_H, laneHeightOf } from "./Visualization/laneLayout";
 import { tooWideOf } from "./fetchPangenomeData";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
@@ -98,37 +101,51 @@ export function pangenomeTrackHeight(
   return linearHeight({ ...linear, lanes });
 }
 
-/** Each haplotype's legend note by its lane, for each axis and walk
-    setting it was worked out for: the legend is worked out again on every
-    draw of the row. */
-const notesByLane = new WeakMap<LinearLane, Map<string, string | undefined>>();
+/** Each haplotype's hidden-deletion count by its lane, for each axis and
+    window it was worked out for. */
+const hiddenByLane = new WeakMap<LinearLane, Map<string, number>>();
 
-/** What a haplotype's track legend says in linear view (the only view it
-    is asked for in) of the deletions its row leaves undrawn below a pixel
-    a base: "23 deletions too small to see", or "1 deletion too small to
-    see" (see hiddenDeletions). Nothing on the graph's own row, nothing
-    when every deletion in view is drawn, and nothing past the size limit,
-    where no row is drawn. It counts the view the band was drawn for, its
-    middle window, so a pan within the band leaves it as it is. */
-export function hiddenDeletionsNote(queryResult: any, part: string, primaryVisData?: any): string | undefined {
-  if (part === GRAPH_PART || tooWideOf(queryResult)) return undefined;
+/** The window on screen in the band's pixels: the one handed in, else the
+    band's middle window, the axis's view. */
+const windowPx = (axis: { viewFromPx: number; viewToPx: number }, viewWindow?: { start: number; end: number } | null): [number, number] =>
+  viewWindow && Number.isFinite(viewWindow.start) && Number.isFinite(viewWindow.end) && viewWindow.end > viewWindow.start ? [viewWindow.start, viewWindow.end] : [axis.viewFromPx, axis.viewToPx];
+
+/** What a haplotype's track legend says in linear view (PLAN-legend.md):
+    `rows`, one per row of its lane, the stretch of the walk on screen
+    (legendRows.ts); `note`, below a pixel a base, how many deletions on
+    screen are too narrow to draw ("23 deletions too small to see",
+    LinearView.tsx hiddenDeletions). Both follow the window: `viewWindow`
+    is the window on screen in the band's pixels, as TrackFactory hands it
+    on a pan; without one the band's middle window counts. Nothing on the
+    graph's own row, nothing past the size limit, where no row is drawn. */
+export function pangenomeLegendOf(
+  queryResult: any,
+  part: string,
+  primaryVisData: any,
+  viewWindow: { start: number; end: number } | null | undefined,
+  legendWidth: number,
+): { note?: string; rows?: LegendRow[] } {
+  if (part === GRAPH_PART || tooWideOf(queryResult)) return {};
   const linear = linearModelOf(queryResult);
-  if (!linear) return undefined;
+  if (!linear) return {};
   const lanes = linear.lanes.filter((lane) => lane.isReference || lane.label === part);
   const lane = lanes.find((candidate) => !candidate.isReference);
-  if (!lane) return undefined;
+  if (!lane) return {};
   /* The axis the row is drawn on, as VisualizationContainer makes it. */
   const cut = { ...linear, lanes };
   const frame = bandFrame(primaryVisData);
   const axis = linearAxis(cut, frame, pxPerBaseOf(frame));
-  const key = [axis.scale, axis.startBp, axis.endBp, axis.viewFromPx, axis.viewToPx].join(":");
-  let known = notesByLane.get(lane);
-  if (!known) notesByLane.set(lane, (known = new Map()));
+  const [fromPx, toPx] = windowPx(axis, viewWindow);
+  const rows = legendRowsOf(lane.rows, axis.px, fromPx, toPx, legendWidth);
+  const key = [axis.scale, axis.startBp, axis.endBp, fromPx, toPx].join(":");
+  let known = hiddenByLane.get(lane);
+  if (!known) hiddenByLane.set(lane, (known = new Map()));
   if (!known.has(key)) {
-    const n = hiddenDeletions(cut, axis);
-    known.set(key, n > 0 ? `${n.toLocaleString()} deletion${n === 1 ? "" : "s"} too small to see` : undefined);
+    const windowAxis: TierAxis = { scale: axis.scale, px: axis.px, startBp: axis.startBp, endBp: axis.endBp, viewFromPx: fromPx, viewToPx: toPx };
+    known.set(key, hiddenDeletions(cut, windowAxis));
   }
-  return known.get(key);
+  const n = known.get(key)!;
+  return { rows, ...(n > 0 ? { note: `${n.toLocaleString()} deletion${n === 1 ? "" : "s"} too small to see` } : {}) };
 }
 
 /**

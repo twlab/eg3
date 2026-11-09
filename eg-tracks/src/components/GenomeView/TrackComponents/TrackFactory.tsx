@@ -22,6 +22,8 @@ import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cac
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
 import { pangenomeLegendColor } from "./PangenomeComponents/fetchPangenomeData";
+import { pangenomeLegendOf } from "./PangenomeComponents/PangenomeTrackView";
+import { GRAPH_PART } from "./PangenomeComponents/Visualization/VisualizationContainer";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -493,6 +495,29 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             ?.primaryVisData?.viewWindow?.end + xDiff,
       };
 
+      /* A pangenome haplotype's band is drawn once and translated on a
+         pan; only its legend follows the window (PLAN-legend.md). */
+      if (trackModel.type === "pangenome") {
+        const band = cacheTrackData?.[dataIdx]?.dataCache;
+        const primary =
+          trackState?.genomicFetchCoord?.[trackState.primaryGenName]
+            ?.primaryVisData;
+        if (band && primary && (primary.pangenomeView ?? "linear") === "linear") {
+          const words = pangenomeLegendOf(
+            band,
+            trackModel.options?.part ?? GRAPH_PART,
+            primary,
+            sameRegionViewWindow,
+            legendWidth ? legendWidth : 120,
+          );
+          if (updatedLegend.current) {
+            updatedLegend.current = { ...updatedLegend.current, rows: words.rows, note: words.note };
+          }
+          setLegend((prev) => (prev ? { ...prev, rows: words.rows, note: words.note } : prev));
+        }
+        return;
+      }
+
       handleTrackDraw({
         cacheTrackData,
         trackState,
@@ -693,6 +718,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
             legendWidth={legendWidth}
             note={legend?.note}
+            rows={legend?.rows}
           />
           {legend?.reverseStrandLegendProps && (
             <TrackLegend

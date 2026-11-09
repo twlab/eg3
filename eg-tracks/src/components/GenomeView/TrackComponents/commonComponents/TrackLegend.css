@@ -27,6 +27,31 @@
   text-wrap: balance;
 }
 
+/* The pangenome's rows in the legend (PLAN-legend.md): each level with
+   its row's bar, in the grey the drawing used to write the region in;
+   dimmed when nothing of the row is on screen. */
+.TrackLegend-rows {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  pointer-events: none;
+}
+.TrackLegend-row {
+  position: absolute;
+  left: 4px;
+  right: 2px;
+  font: 10px ui-monospace, Menlo, Consolas, monospace;
+  line-height: 12px;
+  color: #8794ab;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.TrackLegend-row-dim {
+  opacity: 0.45;
+}
+
 [data-theme="dark"] {
   --font-color: var(--dark-fg-color);
   --bg-color: var(--dark-bg-color);

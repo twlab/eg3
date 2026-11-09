@@ -76,7 +76,7 @@ import Bedcolor from "./bedComponents/Bedcolor";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { chromAlias } from "../../../getRemoteData/fetchFunctions";
 import PangenomeTrackView, {
-  hiddenDeletionsNote,
+  pangenomeLegendOf,
   pangenomeTrackHeight,
 } from "./PangenomeComponents/PangenomeTrackView";
 import { PANGENOME_TRACK_TYPE } from "./PangenomeComponents/fetchPangenomeData";
@@ -1341,12 +1341,19 @@ export const displayModeComponentMap: { [key: string]: any } = {
         height,
         trackModel: drawData.trackModel,
         label: drawData.trackModel.options?.label ?? drawData.trackModel.name,
-        /* Below a pixel a base, a haplotype's row says how many deletions
-           in view are too narrow to draw. */
-        note:
-          (primary?.pangenomeView ?? "linear") === "linear"
-            ? hiddenDeletionsNote(drawData.genesArr, part, primaryVisData)
-            : undefined,
+        /* In linear view a haplotype's legend names each row's stretch on
+           screen and, below a pixel a base, the deletions too narrow to
+           draw (PLAN-legend.md). The window: the one the draw was asked
+           for, else the band's middle. */
+        ...((primary?.pangenomeView ?? "linear") === "linear"
+          ? pangenomeLegendOf(
+              drawData.genesArr,
+              part,
+              primaryVisData,
+              trackState.viewWindow ?? primaryVisData?.viewWindow,
+              drawData.legendWidth ?? 120,
+            )
+          : {}),
       };
     }
     return (

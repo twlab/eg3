@@ -31,7 +31,9 @@ export const LANE_H = 17;
 /** One row of a haplotype: the band above the bar for the insertion marks
     (BarCanvas.tsx's MARK_BAND), the bar, and the rule under it. */
 export const ROW_H = 44;
-/** The room above each row for its name: the walk's own coordinates. */
+/** The room above each row. Its name, the walk's own coordinates, used
+    to be written here; it is in the track legend now (PLAN-legend.md),
+    and the room stays for the edges between passes. */
 export const ROW_LABEL_H = 14;
 /** Under a lane's last row. */
 export const LANE_FOOT = 4;

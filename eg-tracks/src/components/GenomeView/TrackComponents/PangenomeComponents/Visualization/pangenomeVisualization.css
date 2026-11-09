@@ -180,13 +180,6 @@
 /* A walk row's name: which reading the row is. Inside the drawing rather
    than in a gutter to its left, so it reads from its own x rather than
    back towards it. */
-.pgv-walk-label {
-  font-size: 11px;
-  font-style: italic;
-  fill: #8794ab;
-  text-anchor: start;
-}
-
 /* The edge from one pass of a haplotype to its next (PLAN-rows.md 7),
    through the label band between the two rows, and the bases between. */
 .pgv-pass-link path {
