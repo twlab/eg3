@@ -14,6 +14,7 @@ import { CardBody, HoverCard, cardKeptOpen, cardSequence } from "./Cards";
 import type { CardContent, CardItem, CardZoom, HoverCardHandle } from "./Cards";
 import FloatingCard from "./FloatingCard";
 import { ROW_H, ROW_LABEL_H, laneLayout, rowTop } from "./laneLayout";
+import { visibleOwn } from "./legendRows";
 import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
 import { reverseComplement } from "./alignment";
@@ -60,7 +61,6 @@ const ZOOMED_OUT_BELOW_PX_PER_BASE = 1;
     band. */
 const HOVER_BIN_PX = 16;
 /** How many variants each of a bin card's lists shows, the largest first. */
-const BIN_CARD_VARIANTS = 6;
 
 /** How tall the drawing comes out: each haplotype's rows. */
 export function linearHeight(model: LinearModel): number {
@@ -979,6 +979,19 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     const left = axis.px(from);
     const right = axis.px(to);
 
+    /* The walk over this stretch: its own coordinates, the parts at the
+       bin's edges cut in proportion (legendRows.ts, as the legend reads
+       the window), and the nodes it reads here in the row's order; a
+       mark on the bin's right edge belongs to the next bin. */
+    const altSeen = visibleOwn(row, axis.px, left, right, true);
+    const nodesHere: string[] = [];
+    for (const part of row.parts) {
+      const point = part.kind === "mark" || part.len <= 0;
+      const inBin = point ? part.ref >= from && part.ref < to : part.ref < to && part.ref + part.len > from;
+      if (!inBin) continue;
+      for (const id of part.nodes) if (!nodesHere.includes(id)) nodesHere.push(id);
+    }
+
     /* Its variants: those homed in it, and the big ones crossing it from
        another bin, where the row draws them. Only the counted ones homed
        in it go under the count line; a variant that crosses it is counted
@@ -1085,6 +1098,11 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       `${sum(bins.bases).toLocaleString()} bp: ${sum(bins.aligned).toLocaleString()} aligned${reverse ? ` (${reverse.toLocaleString()} read on the other strand)` : ""}, ${sum(bins.deleted).toLocaleString()} deleted${
         notRead ? `, ${notRead.toLocaleString()} not read by this walk` : ""
       }`,
+      <>
+        {coordLabel(`Alt path (${lane.label})`)}{" "}
+        {altSeen ? altCoord(`${row.contig}:${altSeen[0].toLocaleString()}–${altSeen[1].toLocaleString()}`) : "no bases of this walk over this stretch"}
+        {altSeen ? ` · ${plural(nodesHere.length, "node")}` : ""}
+      </>,
       variants ? `${plural(variants, "variant")}: ${counts.join(", ")}` : "no variants",
       ...(() => {
         const n = homed.filter((index) => bins.list[index].counted && nestedOfVariant(bins.list[index])).length;
@@ -1103,20 +1121,35 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       ),
     ];
     const groups: CardContent["groups"] = [];
-    /* A list, the largest first, BIN_CARD_VARIANTS at most, and how many
-       it leaves out. */
+    /* A list, the largest first, every one of them: the card scrolls. */
     const list = (head: string, indexes: number[]) => {
       if (!indexes.length) return;
-      const shown = [...indexes].sort((a, b) => bins.list[b].size - bins.list[a].size || a - b).slice(0, BIN_CARD_VARIANTS);
+      const shown = [...indexes].sort((a, b) => bins.list[b].size - bins.list[a].size || a - b);
       groups.push({
         head: `${head} (${indexes.length.toLocaleString()})`,
         items: shown.map(itemOf),
-        ...(indexes.length > shown.length ? { more: `and ${(indexes.length - shown.length).toLocaleString()} more` } : {}),
       });
     };
     list("Variants", homed.filter((index) => bins.list[index].counted));
     list("Inversions", homed.filter((index) => !bins.list[index].counted));
     list("Crossing this bin", crossing);
+    /* The nodes the walk reads over the bin, in the row's order, every one
+       of them (the card scrolls), each with its length and where the
+       reference reads it, if it does. */
+    if (nodesHere.length) {
+      groups.push({
+        head: `Nodes here (${nodesHere.length.toLocaleString()})`,
+        items: nodesHere.map((id) => ({
+          key: `node-${id}`,
+          line: (
+            <>
+              node {id} · {(model.lengths.get(id) ?? 0).toLocaleString()} bp
+            </>
+          ),
+          details: [referenceReads(id) ?? "a node of the haplotype's own: the reference does not read it", ...carriersLine(id)],
+        })),
+      });
+    }
     return {
       title: `${lane.label} · ${span(from, to)}`,
       lines,

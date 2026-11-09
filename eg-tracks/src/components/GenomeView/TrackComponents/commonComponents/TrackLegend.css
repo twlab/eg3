@@ -42,7 +42,7 @@
   left: 4px;
   right: 2px;
   font: 10px ui-monospace, Menlo, Consolas, monospace;
-  line-height: 12px;
+  line-height: 11px;
   color: #8794ab;
   white-space: nowrap;
   overflow: hidden;
@@ -50,6 +50,16 @@
 }
 .TrackLegend-row-dim {
   opacity: 0.45;
+}
+/* Under the last row's lines: three lines, the note and its margin fit
+   the row's 44 px and the lane's foot. */
+.TrackLegend-row .TrackLegend-note {
+  margin-top: 1px;
+  line-height: 11px;
+  white-space: normal;
+}
+.TrackLegend-row .TrackLegend-note-short {
+  white-space: nowrap;
 }
 
 [data-theme="dark"] {

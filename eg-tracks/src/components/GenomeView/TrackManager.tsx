@@ -1758,7 +1758,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     let groupChange = false;
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
-      setConfigMenu(createConfigMenuData(trackId, key, value as string | number));
+      setConfigMenu(
+        createConfigMenuData(trackId, key, value as string | number),
+      );
     }
     // separate label because we don't to apply label to all tracks
     if (key === "label" && trackId) {
@@ -3413,7 +3415,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             const lastBase = navContext.getTotalBases() - 1;
             const genomeBaseAt = (x: number) =>
               navContext.toGaplessCoordinate(
-                Math.max(0, Math.min(Math.round(drawModel.xToBase(x)), lastBase)),
+                Math.max(
+                  0,
+                  Math.min(Math.round(drawModel.xToBase(x)), lastBase),
+                ),
               );
             onNewRegion(genomeBaseAt(start), genomeBaseAt(end));
           }
@@ -5449,7 +5454,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setConfigMenu(null);
     }
   }
-  console.log(trackManagerState.current);
+
   // MARK: render________________________________________
   const content = (
     <div

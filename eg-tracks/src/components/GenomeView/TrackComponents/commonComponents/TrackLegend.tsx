@@ -321,24 +321,33 @@ class TrackLegend extends React.PureComponent<
         <div className="TrackLegend-note">{note}</div>
       ) : null;
     /* The pangenome's rows, each level with its row of the drawing; the
-       note under the last. */
+       note under the last. Under a three-line region (a long contig name)
+       the note has one line of room: "13 deletions hidden", its full
+       words in the hover title. */
+    const last = (rows?.length ?? 0) - 1;
     const rowTexts = rows?.length ? (
       <div className="TrackLegend-rows">
-        {rows.map((row, i) => (
-          <div
-            key={i}
-            className={`TrackLegend-row${row.dim ? " TrackLegend-row-dim" : ""}`}
-            style={{ top: row.top }}
-            title={row.title}
-          >
-            {row.lines.map((line, j) => (
-              <div key={j}>{line}</div>
-            ))}
-            {note && i === rows.length - 1 ? (
-              <div className="TrackLegend-note">{note}</div>
-            ) : null}
-          </div>
-        ))}
+        {rows.map((row, i) => {
+          const withNote = note && i === last;
+          const short = withNote && row.lines.length >= 3;
+          return (
+            <div
+              key={i}
+              className={`TrackLegend-row${row.dim ? " TrackLegend-row-dim" : ""}`}
+              style={{ top: row.top }}
+              title={withNote ? `${row.title} · ${note}` : row.title}
+            >
+              {row.lines.map((line, j) => (
+                <div key={j}>{line}</div>
+              ))}
+              {withNote ? (
+                <div className={`TrackLegend-note${short ? " TrackLegend-note-short" : ""}`}>
+                  {short ? note.replace(" too small to see", " hidden") : note}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     ) : null;
 

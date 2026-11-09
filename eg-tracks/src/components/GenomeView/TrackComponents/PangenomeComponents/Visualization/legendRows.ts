@@ -1,4 +1,3 @@
-import type { PlacedPart } from "./rowAlign";
 import type { Row } from "./linearModel";
 import { rowTop } from "./laneLayout";
 
@@ -32,8 +31,9 @@ export interface LegendRow {
     bases at one reference place, so it counts when that place is inside.
     On the reference's strand a part's left end is its lowest own
     coordinate; reversed, its right end is, so the cut comes off the
-    other end. Null when nothing of the row is inside. */
-export function visibleOwn(row: Pick<Row, "parts">, px: (bp: number) => number, fromPx: number, toPx: number): [number, number] | null {
+    other end. Null when nothing of the row is inside. A mark on the right
+    edge counts, unless `openRight`: a bin's edge belongs to the next bin. */
+export function visibleOwn(row: Pick<Row, "parts">, px: (bp: number) => number, fromPx: number, toPx: number, openRight = false): [number, number] | null {
   let lo = Infinity;
   let hi = -Infinity;
   const keep = (from: number, to: number) => {
@@ -44,7 +44,7 @@ export function visibleOwn(row: Pick<Row, "parts">, px: (bp: number) => number, 
     if (!part.own) continue;
     const x0 = px(part.ref);
     if (part.kind === "mark" || part.len <= 0) {
-      if (x0 >= fromPx && x0 <= toPx) keep(part.own.from, part.own.to);
+      if (x0 >= fromPx && (openRight ? x0 < toPx : x0 <= toPx)) keep(part.own.from, part.own.to);
       continue;
     }
     const x1 = px(part.ref + part.len);
@@ -68,11 +68,16 @@ const CHAR_PX = 6;
 const SIDE_PX = 8;
 
 /** The region's lines for a legend of the given width: one line when it
-    fits, else two, the contig and the first coordinate over the second. */
+    fits, else two, the contig and the first coordinate over the second;
+    else three, a long contig name (CM087320.1, JBHIIK010000078.1) on a
+    line of its own. */
 export function regionLines(contig: string, from: number, to: number, legendWidth: number): string[] {
+  const fits = (text: string) => text.length * CHAR_PX + SIDE_PX <= legendWidth;
   const one = regionText(contig, from, to);
-  if (one.length * CHAR_PX + SIDE_PX <= legendWidth) return [one];
-  return [`${contig}:${from.toLocaleString()}`, `–${to.toLocaleString()}`];
+  if (fits(one)) return [one];
+  const head = `${contig}:${from.toLocaleString()}`;
+  if (fits(head)) return [head, `–${to.toLocaleString()}`];
+  return [`${contig}:`, from.toLocaleString(), `–${to.toLocaleString()}`];
 }
 
 /** The legend's rows for a lane: one per row of the lane, level with the
