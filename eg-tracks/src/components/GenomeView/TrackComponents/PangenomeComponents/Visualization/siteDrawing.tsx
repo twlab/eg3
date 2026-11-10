@@ -111,7 +111,14 @@ const shortId = (step: Step) => `…${step.id.slice(-3)}${step.reverse ? "−" :
 
 export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boolean }): ReactNode {
   const { refNodes, rows, seqOf } = data;
-  const laid = useMemo(() => rows.map((row) => (row.ref ? null : layOutRow(refNodes, row.nodes))), [refNodes, rows]);
+  /* The columns: the reference's nodes between the anchors; at an
+     insertion site, where the reference has none, the commonest reading's
+     nodes instead, so readings that share nodes line up (the user: "the
+     letters dont look aligned"). A node is drawn as the reference's only
+     when the reference reads it. */
+  const axis = useMemo(() => (refNodes.length ? refNodes : (rows.find((row) => row.commonest)?.nodes ?? [])), [refNodes, rows]);
+  const refIds = useMemo(() => new Set(refNodes.map((step) => step.id)), [refNodes]);
+  const laid = useMemo(() => rows.map((row) => (row.ref ? null : layOutRow(axis, row.nodes))), [axis, rows]);
   /* Bases can be shown only where every node drawn has them. */
   const canBases = useMemo(() => rows.every((row) => row.nodes.every((step) => seqOf(step) !== null)), [rows, seqOf]);
   const basesOf = (step: Step) => seqOf(step) ?? "";
@@ -122,44 +129,44 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
     const runWidth = (steps: Step[]) => steps.reduce((w, step) => w + boxWidth(mode, step) + 2, 0);
     /* The room before column k: the widest pending run ending there,
        beyond the reference columns it replaces. */
-    const slot = new Array(refNodes.length + 1).fill(0);
+    const slot = new Array(axis.length + 1).fill(0);
     for (const pieces of laid) {
       if (!pieces) continue;
       for (const piece of pieces) {
         if (piece.kind !== "bubble") continue;
-        const have = runWidth(refNodes.slice(piece.from, piece.to));
+        const have = runWidth(axis.slice(piece.from, piece.to));
         slot[piece.to] = Math.max(slot[piece.to], runWidth(piece.pending) - have);
       }
     }
     /* A column every reading anchors (or skips with the whole site, as
        a deletion does), with no room before it, is the same in every
        reading: runs of them fold. */
-    const alike = refNodes.map((_, k) =>
+    const alike = axis.map((_, k) =>
       laid.every((pieces, i) => !pieces || rows[i].nodes.length === 0 || pieces.some((piece) => piece.kind === "anchor" && piece.k === k)) && !slot[k],
     );
     const columns: Column[] = [];
     let k = 0;
-    while (k < refNodes.length) {
+    while (k < axis.length) {
       let end = k;
-      while (end < refNodes.length && alike[end] && (end === k || !slot[end])) end += 1;
+      while (end < axis.length && alike[end] && (end === k || !slot[end])) end += 1;
       if (end - k >= FOLD_MIN) {
-        columns.push({ steps: refNodes.slice(k, end), k, folded: true, width: FOLD_W, x: 0 });
+        columns.push({ steps: axis.slice(k, end), k, folded: true, width: FOLD_W, x: 0 });
         k = end;
       } else {
-        columns.push({ steps: [refNodes[k]], k, folded: false, width: boxWidth(mode, refNodes[k]), x: 0 });
+        columns.push({ steps: [axis[k]], k, folded: false, width: boxWidth(mode, axis[k]), x: 0 });
         k += 1;
       }
     }
     const x0 = LABEL_W + ANCHOR_W + 6;
     let x = x0;
-    const colX: number[] = new Array(refNodes.length).fill(0);
+    const colX: number[] = new Array(axis.length).fill(0);
     for (const column of columns) {
       x += slot[column.k];
       column.x = x;
       for (let j = 0; j < column.steps.length; j++) colX[column.k + j] = x;
       x += column.width + 2;
     }
-    const xEnd = x + slot[refNodes.length];
+    const xEnd = x + slot[axis.length];
     const width = xEnd + ANCHOR_W + 8 + COUNT_W;
     /** The column holding reference node k, and where it ends. */
     const colOf = (kk: number) => columns.find((column) => kk >= column.k && kk < column.k + column.steps.length)!;
@@ -206,6 +213,11 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
     const whites: Array<[number, number]> = [];
     const pieces = laid[rows.indexOf(row)];
     if (row.ref) {
+      /* At an insertion site the reference has nothing between the anchors. */
+      if (!refNodes.length) {
+        if (axis.length) whites.push([L.colX[0] - L.slot[0], L.xEnd]);
+        return { boxes, whites };
+      }
       for (const column of L.columns) boxes.push({ x: column.x, w: column.width, step: column.steps[0], own: false, folded: column.folded ? column : undefined });
       return { boxes, whites };
     }
@@ -217,8 +229,8 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
       if (piece.kind === "anchor") {
         const column = L.colOf(piece.k);
         if (column.folded) {
-          if (piece.k === column.k) boxes.push({ x: column.x, w: column.width, step: column.steps[0], own: false, folded: column });
-        } else boxes.push({ x: column.x, w: column.width, step: piece.step, own: false });
+          if (piece.k === column.k) boxes.push({ x: column.x, w: column.width, step: column.steps[0], own: !refIds.has(column.steps[0].id), folded: column });
+        } else boxes.push({ x: column.x, w: column.width, step: piece.step, own: !refIds.has(piece.step.id) });
         continue;
       }
       /* A bubble: its own nodes end where the next column starts. Nodes
@@ -227,7 +239,7 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
          two nodes of a base each is the same size as those two), so white
          is left only where the reading has nothing there: a deletion.
          Nodes inserted before a column keep their own width. */
-      const to = piece.to < refNodes.length ? L.colX[piece.to] : L.xEnd;
+      const to = piece.to < axis.length ? L.colX[piece.to] : L.xEnd;
       const replaces = piece.to > piece.from;
       const roomFrom = replaces ? L.colX[piece.from] : to - L.runWidth(piece.pending);
       if (!piece.pending.length) {
@@ -240,57 +252,13 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
       let x = roomFrom;
       piece.pending.forEach((step, j) => {
         const w = replaces ? (forBoxes * widths[j]) / natural : widths[j];
-        boxes.push({ x, w, step, own: true });
+        boxes.push({ x, w, step, own: !refIds.has(step.id) });
         x += w + 2;
       });
     }
     return { boxes, whites };
   };
   const geometry = useMemo(() => rows.map(geometryOf), [rows, L, mode]);
-  /* Where the haplotypes' readings differ from each other (the user: a
-     base every haplotype reads alike against the reference is one SNV,
-     not the nested part; the nested part is where they differ among
-     themselves): over each column, and each room before a column, what
-     every counted reading has there, and the stretches read two or more
-     ways other than the reference's. A stretched node counts at every
-     column it covers; a deletion counts as nothing. */
-  const variable = useMemo(() => {
-    const ranges: Array<[number, number]> = [];
-    for (const column of L.columns) {
-      ranges.push([L.colX[column.k] - L.slot[column.k], L.colX[column.k]]);
-      ranges.push([column.x, column.x + column.width]);
-    }
-    ranges.push([L.xEnd - L.slot[refNodes.length], L.xEnd]);
-    const counted = rows.map((row, i) => (row.count > 0 ? geometry[i] : null)).filter((g) => g !== null);
-    const reference = geometry[rows.findIndex((row) => row.ref)];
-    const readingAt = (g: { boxes: Box[] }, a: number, b: number) =>
-      g.boxes
-        .filter((box) => box.x < b - 1 && box.x + box.w > a + 1)
-        .map((box) => `${box.step.id}${box.step.reverse ? "-" : ""}`)
-        .sort()
-        .join(" ");
-    const out: Array<[number, number]> = [];
-    for (const [a, b] of ranges) {
-      if (b - a <= 1) continue;
-      /* Rule D's own test, on this column: two or more readings other
-         than the reference's (the user: a column read as TTG or nothing
-         is a deletion there, not nested; one read as A, G or nothing
-         against the reference's G is). */
-      const refHere = reference ? readingAt(reference, a, b) : "";
-      const others = new Set<string>();
-      for (const g of counted) {
-        const here = readingAt(g, a, b);
-        if (here !== refHere) others.add(here);
-      }
-      if (others.size < 2) continue;
-      const last = out[out.length - 1];
-      /* Stretches a gap apart (a column and the room before the next) join. */
-      if (last && last[1] >= a - 3.5) last[1] = b;
-      else out.push([a, b]);
-    }
-    return out;
-  }, [geometry, L, rows, refNodes.length]);
-
   const header = 14;
   const footer = 16 + (data.partial ? 14 : 0);
   const height = header + shown.length * ROW_H + footer;
@@ -327,10 +295,10 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
               if (b.folded) {
                 parts.push(
                   <g key={`f${b.x}`}>
-                    <rect x={b.x} y={y} width={b.w} height={BOX_H} rx={3} className="pgv-site-refnode">
+                    <rect x={b.x} y={y} width={b.w} height={BOX_H} rx={3} className={b.own ? "pgv-site-ownnode" : "pgv-site-refnode"}>
                       <title>{`${b.folded.steps.length} nodes, ${b.folded.steps.reduce((n, s) => n + basesOf(s).length, 0)} bp, the same in every reading`}</title>
                     </rect>
-                    <text x={b.x + b.w / 2} y={y + 12} className="pgv-site-refink">
+                    <text x={b.x + b.w / 2} y={y + 12} className={b.own ? "pgv-site-ink" : "pgv-site-refink"}>
                       …
                     </text>
                   </g>,
@@ -338,7 +306,6 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
               } else parts.push(box(b.x, y, b.w, b.step, b.own ? "pgv-site-ownnode" : "pgv-site-refnode"));
             }
             for (const [x1, x2] of g.whites) parts.push(white(x1, x2, y));
-            const nested = row.mine ? variable : [];
             const countX = L.width - 4;
             /* Rows run by count, so the commonest is the first reading and
                needs no mark; it gets one only if it ever stands elsewhere. */
@@ -346,17 +313,6 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
             return (
               <g key={row.key} className={`pgv-site-row${row.mine ? " pgv-site-mine" : ""}`} data-row="" data-nodes={row.nodes.map((s) => `${s.id}${s.reverse ? "-" : ""}`).join(" ")} data-count={row.count} data-ref={row.ref ? "" : undefined} data-mine={row.mine ? "" : undefined} data-commonest={row.commonest ? "" : undefined}>
                 {row.mine && <rect x={1} y={y - 3} width={L.width - 2} height={ROW_H - 1} rx={4} className="pgv-site-mine-fill" />}
-                {/* The nested part of this walk's row, where the reading
-                    differs from the reference: a green band behind it, the
-                    row's full height, and a bracket under it, so it reads
-                    by shape as well as by colour. */}
-                {row.mine &&
-                  nested.map(([a, b], j) => (
-                    <g key={`n${j}`}>
-                      <rect x={a - 2} y={y - 3} width={Math.max(8, b - a + 2)} height={ROW_H - 1} rx={3} className="pgv-site-nested" />
-                      <path d={`M${a - 2},${y + BOX_H + 1} v3 H${Math.max(a + 6, b)} v-3`} className="pgv-site-nested-bracket" />
-                    </g>
-                  ))}
                 <text x={4} y={y + 12} className={`pgv-site-who${row.mine ? " pgv-site-who-mine" : ""}`}>
                   {row.ref ? "reference" : row.mine ? "this walk" : ""}
                 </text>

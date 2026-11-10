@@ -868,11 +868,3 @@
   stroke: #60a5fa;
   stroke-width: 1.4;
 }
-.pgv-site-nested {
-  fill: rgba(187, 247, 208, 0.5);
-}
-.pgv-site-nested-bracket {
-  fill: none;
-  stroke: #bbf7d0;
-  stroke-width: 1.6;
-}
