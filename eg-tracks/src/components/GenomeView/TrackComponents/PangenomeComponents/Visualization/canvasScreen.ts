@@ -151,19 +151,18 @@ export function useScreenSize(ref: {
 }
 
 /**
- * Sizes a canvas's backing store to the screen and lines the element up with
- * the screen's pixels. Null when the canvas cannot be drawn on.
- *
- * `nudge` carries the shift from the last call, so the next one can measure
- * where the canvas sits without it.
+ * The backing store a canvas of this CSS size gets, in screen pixels: what
+ * fitCanvas sets, and what a component writes on its <canvas> as it renders
+ * so that fitCanvas finds it set already. Writing the size from the effect
+ * instead changed the element's intrinsic size, and the next canvas's
+ * measurement had to lay the page out again: a thousand rows, a thousand
+ * layouts, two seconds of a load with every haplotype.
  */
-export function fitCanvas(
-  canvas: HTMLCanvasElement,
+export function backingSize(
   width: number,
   height: number,
   screen: ScreenSize | null,
-  nudge: { current: number },
-): FittedCanvas | null {
+): ScreenSize {
   /* The screen's pixels once the observer has measured this size - within
      a pixel of the ratio's guess, or it measured the size before - and the
      guess until then. */
@@ -185,6 +184,25 @@ export function fitCanvas(
   );
   pw = Math.max(1, Math.floor(pw * shrink));
   ph = Math.max(1, Math.floor(ph * shrink));
+  return { width: pw, height: ph };
+}
+
+/**
+ * Sizes a canvas's backing store to the screen and lines the element up with
+ * the screen's pixels. Null when the canvas cannot be drawn on.
+ *
+ * `nudge` carries the shift from the last call, so the next one can measure
+ * where the canvas sits without it.
+ */
+export function fitCanvas(
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  screen: ScreenSize | null,
+  nudge: { current: number },
+): FittedCanvas | null {
+  const ratio = window.devicePixelRatio || 1;
+  const { width: pw, height: ph } = backingSize(width, height, screen);
   if (canvas.width !== pw) canvas.width = pw;
   if (canvas.height !== ph) canvas.height = ph;
 

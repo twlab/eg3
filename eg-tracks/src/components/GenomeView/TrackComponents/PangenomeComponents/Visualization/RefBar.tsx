@@ -3,7 +3,7 @@ import { AeroDefs, AeroOutline, placeOutline } from "./AeroOutline";
 import type { ReactNode } from "react";
 import type { LinearModel } from "./linearModel";
 import type { LinearAxis } from "./linearAxis";
-import { fitCanvas, useScreenSize } from "./canvasScreen";
+import { backingSize, fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
 import { CardBody, HoverCard, cardKeptOpen, cardSequence } from "./Cards";
 import type { CardContent, CardItem, HoverCardHandle } from "./Cards";
@@ -156,6 +156,7 @@ function RefBar({ model, axis, onZoomTo }: RefBarProps) {
   const nudge = useRef(0);
   const screen = useScreenSize(ref);
   const fitted = useRef<FittedCanvas | null>(null);
+  const backing = backingSize(width, height, screen);
   const repaint = useCallback(() => {
     if (!fitted.current) return;
     paintRefBar(fitted.current, drawing, model, axis, width);
@@ -406,6 +407,8 @@ function RefBar({ model, axis, onZoomTo }: RefBarProps) {
       <canvas
         ref={ref}
         className="pgv-refbar-canvas"
+        width={backing.width}
+        height={backing.height}
         style={{ width, height }}
         onMouseMove={onMove}
         onClick={onClick}

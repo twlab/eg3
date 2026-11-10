@@ -5,7 +5,7 @@ import { GAP_MIN_PX } from "./barTiers";
 import type { BarTiers } from "./barTiers";
 import type { NodeLetters } from "./letters";
 import { sequenceSize } from "./nodeDetail";
-import { fitCanvas, useScreenSize } from "./canvasScreen";
+import { backingSize, fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -163,6 +163,9 @@ function BarCanvas({
   const nudge = useRef(0);
   const screen = useScreenSize(ref);
   const fitted = useRef<FittedCanvas | null>(null);
+  /* The backing store's size, written as the element renders so the
+     effect's fitCanvas finds it set (canvasScreen.ts backingSize). */
+  const backing = backingSize(width, height, screen);
 
   const repaint = useCallback(() => {
     if (!fitted.current) return;
@@ -222,6 +225,8 @@ function BarCanvas({
     <canvas
       ref={ref}
       className="pgv-lane-canvas"
+      width={backing.width}
+      height={backing.height}
       style={{ width, height, opacity: dim ? DIM_ALPHA : 1 }}
       onClick={(event) => {
         const target = targetAt(event);

@@ -724,7 +724,6 @@ export function modelOf(queryResult: any): PangenomeModel | null {
  */
 export function buildModel(queryResult: any): PangenomeModel | null {
   const result = queryResult?.result ?? queryResult;
-  console.log(result);
   /* Node id to its bases; node id to the links that leave it. */
   const rawNodes: Record<string, string> = result?.nodes ?? {};
   const rawEdges: Record<string, RawLink[]> = result?.edges ?? {};
