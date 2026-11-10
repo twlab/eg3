@@ -1,9 +1,7 @@
-import { alignDiverging, placeClosed, reverseComplement } from "./alignment";
+import { reverseComplement } from "./alignment";
 import type { Step } from "./alignment";
-import { axisOf, layOut, siteReads, stepsBetween } from "../../../../../getRemoteData/gbz/pointer";
+import { axisOf, siteReads, stepsBetween } from "../../../../../getRemoteData/gbz/pointer";
 import type { Carriers, JunctionVersions } from "../../../../../getRemoteData/gbz/subgraph";
-import { labelForms, labelPrefix, runsOf } from "./markLabel";
-import type { InnerDiff, LabelRun } from "./markLabel";
 import type { LinearLane } from "./linearModel";
 import type { RefAxis } from "./rowAlign";
 
@@ -98,14 +96,9 @@ export interface NestedMark {
   list: NestedVersion[];
   /** The row's version's bases. */
   seq: string;
-  /** What differs from the commonest; null where it could not be placed
-      over the commonest (its bases not sent). */
-  diffs: InnerDiff[] | null;
-  /** The label's forms, longest first. */
-  forms: LabelRun[][];
-  /** The places inside where the versions differ, in words:
-      "at base 4: T in 162, C in 118". */
-  sites: string[];
+  /** What the mark's label says: the row's bases against the reference's
+      between the anchors, "+6" or "−4"; nothing when they are as many. */
+  label: string;
   /** A merged site: how many pairs it was made from, how many haplotypes
       anchor only one or neither outer anchor, and the sealed pairs
       inside. */
@@ -115,109 +108,13 @@ export interface NestedMark {
 const handle = (s: Step) => `${s.id}${s.reverse ? "-" : "+"}`;
 const versionKey = (steps: Step[]) => steps.map(handle).join(" ");
 
-/* ── The row's version against the commonest ────────────────────────── */
-
-/** What differs between a row's version and the commonest: the row's
-    placed over the commonest by the pointer (pointer.ts), both bracketed
-    by the site's two anchors, each bubble classed by gbz-base's rule
-    (alignment.ts). Offsets are into the two versions' own bases. Either
-    version may be nothing. */
-export function innerDiffs(seqOf: (s: Step) => string, lane: Step[], commonest: Step[], ends: [Step, Step]): InnerDiff[] {
-  const [left, right] = ends;
-  const axisSteps = [left, ...commonest, right];
-  const axis = axisOf(axisSteps);
-  const laneSteps = [left, ...lane, right].map((s) => ({ node: s.id, reverse: s.reverse, step: s }));
-  const shift = seqOf(left).length;
-  const laneBases = lane.reduce((n, s) => n + seqOf(s).length, 0);
-  const comBases = commonest.reduce((n, s) => n + seqOf(s).length, 0);
-  const comAt: number[] = [];
-  let at = -shift;
-  for (const s of axisSteps) {
-    comAt.push(at);
-    at += seqOf(s).length;
-  }
-  comAt.push(at);
-  const laid = layOut(axis, laneSteps, 0, axisSteps.length, false);
-  if (laid.head.length || laid.tail.length || !laid.pieces.length) {
-    return [{ kind: "replacement", at: 0, len: laneBases, gone: comBases, comAt: 0 }];
-  }
-  const diffs: InnerDiff[] = [];
-  let hapAt = -shift;
-  for (const piece of laid.pieces) {
-    if (piece.kind === "anchor") {
-      hapAt += seqOf(piece.step.step).length;
-      continue;
-    }
-    if (piece.kind !== "bubble") continue;
-    const hapSeq = piece.pending.map((s) => seqOf(s.step)).join("");
-    let refSeq = "";
-    for (let k = piece.ref[0]; k < piece.ref[1]; k++) refSeq += seqOf(axisSteps[k]);
-    const aligned = alignDiverging(hapSeq, refSeq);
-    let cursor = 0;
-    for (const part of placeClosed(aligned, comAt[piece.ref[0]], hapSeq)) {
-      if (part.hap) cursor = part.hap[1];
-      const from = hapAt + (part.hap ? part.hap[0] : cursor);
-      if (part.kind === "mismatch") diffs.push({ kind: "substitution", at: from, len: part.len, gone: part.len, comAt: part.ref });
-      else if (part.kind === "replaced") diffs.push({ kind: "replacement", at: from, len: part.len, gone: part.len, comAt: part.ref });
-      else if (part.kind === "mark") diffs.push({ kind: "insertion", at: from, len: part.len, gone: 0, comAt: part.ref });
-      else if (part.kind === "white") diffs.push({ kind: "deletion", at: from, len: 0, gone: part.len, comAt: part.ref });
-    }
-    hapAt += hapSeq.length;
-  }
-  return diffs.sort((x, y) => x.at - y.at || x.comAt - y.comAt);
-}
-
-/* ── The places inside, for the card ────────────────────────────────── */
-
-/** Where the versions differ, each place in words, the commonest's bases
-    first: "at base 4: T in 162, C in 118". A version with no difference
-    over a place reads the commonest's bases there. */
-function sitesOf(list: NestedVersion[], diffsOf: (v: NestedVersion) => InnerDiff[] | null): string[] {
-  const commonest = list.find((v) => v.commonest);
-  if (!commonest || commonest.seq === null) return [];
-  const comSeq = commonest.seq;
-  const places = new Map<string, { comAt: number; gone: number; kind: InnerDiff["kind"]; len: number }>();
-  const byVersion = new Map<NestedVersion, InnerDiff[] | null>();
-  for (const v of list) {
-    const diffs = v.commonest ? [] : diffsOf(v);
-    byVersion.set(v, diffs);
-    for (const d of diffs ?? []) {
-      /* Insertions at one place are one place, whatever their lengths. */
-      const key = d.kind === "insertion" ? `insertion:${d.comAt}` : `${d.kind}:${d.comAt}:${d.gone}`;
-      if (!places.has(key)) places.set(key, { comAt: d.comAt, gone: d.gone, kind: d.kind, len: d.len });
-    }
-  }
-  const out: string[] = [];
-  for (const place of [...places.values()].sort((a, b) => a.comAt - b.comAt)) {
-    const tally = new Map<string, number>();
-    const add = (bases: string, count: number) => tally.set(bases, (tally.get(bases) ?? 0) + count);
-    for (const v of list) {
-      const diffs = byVersion.get(v);
-      if (diffs === null || diffs === undefined || v.seq === null) continue;
-      const over =
-        place.kind === "insertion"
-          ? diffs.find((d) => d.kind === "insertion" && d.comAt === place.comAt)
-          : diffs.find((d) => d.kind !== "insertion" && d.comAt <= place.comAt && d.comAt + d.gone >= place.comAt + place.gone);
-      if (place.kind === "insertion") add(over ? `+${v.seq.slice(over.at, over.at + over.len)}` : "nothing more", v.count);
-      else if (!over) add(comSeq.slice(place.comAt, place.comAt + place.gone), v.count);
-      else if (over.kind === "deletion") add("nothing", v.count);
-      else {
-        const from = over.at + (place.comAt - over.comAt);
-        add(v.seq.slice(from, from + place.gone), v.count);
-      }
-    }
-    const comBases = place.kind === "insertion" ? "nothing more" : comSeq.slice(place.comAt, place.comAt + place.gone);
-    const ordered = [...tally.entries()].sort((a, b) => (a[0] === comBases ? -1 : b[0] === comBases ? 1 : b[1] - a[1]));
-    const where =
-      place.kind === "insertion"
-        ? `after base ${place.comAt}`
-        : place.gone === 1
-          ? `at base ${place.comAt + 1}`
-          : `at bases ${place.comAt + 1}–${place.comAt + place.gone}`;
-    out.push(`${where}: ${ordered.map(([bases, count]) => `${bases} in ${count.toLocaleString()}`).join(", ")}`);
-  }
-  return out;
-}
+/** What a mark's label says (the user, 2026-11-10: "just have + or -
+    comparing to ref in that bubble, nothing for same"): the row's bases
+    against the reference's between the anchors, "+6", "−4", or nothing
+    when they are as many. The spelled forms with chips on what differed
+    from the commonest reading are gone. */
+export const labelOf = (bases: number, refLen: number): string =>
+  bases > refLen ? `+${(bases - refLen).toLocaleString("en-US")}` : bases < refLen ? `−${(refLen - bases).toLocaleString("en-US")}` : "";
 
 /* ── The model's pass ───────────────────────────────────────────────── */
 
@@ -312,7 +209,6 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     merged?: NestedMark["merged"],
   ): NestedMark | null => {
     if (ranked.length < 2) return null;
-    const ends: [Step, Step] = [axis.steps[k0], axis.steps[k1]];
     const list: NestedVersion[] = ranked.map((v, i) => ({
       key: v.key,
       nodes: v.nodes,
@@ -322,14 +218,9 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
       commonest: i === 0,
       mine: v.key === mine,
     }));
-    const commonest = list[0];
     const own = list.find((v) => v.mine);
     const seq = own?.seq ?? "";
-    const diffsOf = (v: NestedVersion): InnerDiff[] | null =>
-      v.commonest ? [] : v.seq !== null && commonest.seq !== null ? innerDiffs(seqOf, v.nodes, commonest.nodes, ends) : null;
-    const diffs = own ? diffsOf(own) : null;
-    const prefix = labelPrefix(seq.length, refLen);
-    const forms = (diffs ? labelForms(seq, diffs, true, prefix) : [prefix]).map(runsOf);
+    const label = labelOf(own?.bases ?? 0, refLen);
     return {
       site: siteKey(k0, k1),
       refLen,
@@ -341,9 +232,7 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
       others,
       list,
       seq,
-      diffs,
-      forms,
-      sites: sitesOf(list, diffsOf),
+      label,
       ...(merged ? { merged } : {}),
     };
   };

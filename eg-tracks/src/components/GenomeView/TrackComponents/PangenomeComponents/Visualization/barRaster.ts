@@ -5,7 +5,6 @@ import { deletionText } from "./pangenomeModel";
 import { coveredBases } from "./letters";
 import type { NodeLetters } from "./letters";
 import type { NestedMark } from "./nestedMarks";
-import type { LabelRun } from "./markLabel";
 
 /* ══════════════════════════════════════════════════════════════════════════
    One row's bar as an array with one entry per pixel.
@@ -51,10 +50,11 @@ export interface MarkGlyph {
       among the haplotypes counted (nestedMarks.ts): drawn in the nested
       ink and font. */
   nested: boolean;
-  /** What the label says, the longest form first (markLabel.ts): one mark
-      alone, its version with chips on what differs; several, the largest
-      and how many more. BarCanvas draws the first that fits the room. */
-  forms: LabelRun[][];
+  /** What the label says: a nested mark's bases against the reference's
+      between the anchors ("+6", "−4", nothing when as many); a plain
+      insertion's "+6"; several insertions drawn as one, the largest and
+      how many more (markLabel). */
+  label: string;
   /** A site glyph on a deletion-insertion's or a substitution's letters
       (PLAN-bubble-sites.md): the reference between the site's anchors, in
       bases. Absent on an insertion's mark. */
@@ -217,7 +217,7 @@ export function rasteriseBar(
       last.largest = Math.max(last.largest, bp);
       last.parts.push(part.index);
       last.nested = last.nested || !!info;
-      last.forms = [[{ text: markLabel(last) }]];
+      last.label = markLabel(last);
       continue;
     }
     marks.push({
@@ -226,7 +226,7 @@ export function rasteriseBar(
       largest: bp,
       parts: [part.index],
       nested: !!info,
-      forms: info ? info.forms : [[{ text: `+${bp.toLocaleString()}` }]],
+      label: info ? info.label : `+${bp.toLocaleString()}`,
       ...(info && info.refLen > 0 ? { refLen: info.refLen } : {}),
     });
   }

@@ -1,6 +1,8 @@
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { SiteDrawing } from "./siteDrawing";
+import type { SiteDrawingData } from "./siteDrawing";
 
 /* ══════════════════════════════════════════════════════════════════════════
    The cards of the linear view: what a hover shows and a click keeps.
@@ -42,6 +44,12 @@ export interface CardContent {
       list has none. `more`: what to say under it of the items it leaves
       out. */
   groups: Array<{ head: string; items: CardItem[]; empty?: string; more?: string }>;
+  /** A nested site's readings drawn as rows (siteDrawing.tsx), under the
+      lines. */
+  drawing?: SiteDrawingData;
+  /** How wide the card may be, in pixels: a card with a drawing is let as
+      wide as the bar. */
+  width?: number;
 }
 
 export function CardBody({
@@ -76,6 +84,7 @@ export function CardBody({
           {line}
         </div>
       ))}
+      {card.drawing && <SiteDrawing data={card.drawing} kept={kept} />}
       {kept && card.action && (
         <button type="button" className="pgv-card-action" onClick={card.action.run}>
           {card.action.label}
@@ -207,7 +216,7 @@ export const HoverCard = forwardRef<HoverCardHandle>(function HoverCard(_props, 
   }, [shown]);
   if (!shown) return null;
   return createPortal(
-    <div ref={box} className="pgv-section-card pgv-hover-card">
+    <div ref={box} className="pgv-section-card pgv-hover-card" style={shown.card.width ? { maxWidth: Math.min(shown.card.width, window.innerWidth - 16) } : undefined}>
       <CardBody card={shown.card} />
     </div>,
     document.body,

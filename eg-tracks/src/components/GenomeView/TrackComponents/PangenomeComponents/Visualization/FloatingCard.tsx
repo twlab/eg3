@@ -36,12 +36,16 @@ export default function FloatingCard({
   x,
   y,
   className,
+  maxWidth,
   children,
 }: {
   /** The pointer, in window coordinates (a mouse event's clientX/Y). */
   x: number;
   y: number;
   className?: string;
+  /** Wider than the stylesheet lets a card be, up to this: a card with a
+      drawing is let as wide as the bar. */
+  maxWidth?: number;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -101,6 +105,7 @@ export default function FloatingCard({
         left: place?.left ?? x,
         top: place?.top ?? y + GAP,
         ...(place?.maxHeight !== undefined ? { maxHeight: place.maxHeight } : {}),
+        ...(maxWidth !== undefined ? { maxWidth: Math.min(maxWidth, window.innerWidth - 2 * MARGIN) } : {}),
         /* Measured first, then shown. */
         visibility: place ? "visible" : "hidden",
       }}

@@ -1,6 +1,6 @@
 import { memo, useCallback, useLayoutEffect, useRef } from "react";
 import type { BarHit, BarRaster, EndCap, MarkGlyph, RasterPart, WhiteRun } from "./barRaster";
-import { capAt, hitAt, lettersAround, markAt, markLabel, ownOf, whiteAt } from "./barRaster";
+import { capAt, hitAt, lettersAround, markAt, ownOf, whiteAt } from "./barRaster";
 import { GAP_MIN_PX } from "./barTiers";
 import type { BarTiers } from "./barTiers";
 import type { NodeLetters } from "./letters";
@@ -111,8 +111,6 @@ const MARK_TALL = 7;
 const MARK_FONT = 9;
 export const NESTED_INK = "#7c3aed";
 const NESTED_FONT = 10;
-/** Room either side of a chip's letters, in pixels. */
-const CHIP_PAD = 1;
 /** The most of the bar's height a letter may take. */
 const LETTER_OF_BAR = 0.7;
 /** Below this a letter is a smudge, so none is drawn. */
@@ -515,13 +513,6 @@ function paintOver(
     const half = MARK_HALF * sx;
     const tip = top;
     const base = top - MARK_TALL * sy;
-    const pad = CHIP_PAD * sx;
-    /* A chip's box round its letters: the ink's height in the nested
-       font, a margin above and below, inside the marks' band. */
-    ctx.font = nestedFont;
-    const probe = ctx.measureText(LETTER_SAMPLE);
-    const chipTop = Math.max(0, Math.floor(tip - 1 * sy - probe.actualBoundingBoxAscent - sy));
-    const chipBottom = Math.min(tip, Math.ceil(tip - 1 * sy + probe.actualBoundingBoxDescent + sy));
     raster.marks.forEach((glyph, k) => {
       const x = glyph.x * sx;
       if (x < -half || x > pw + half) return;
@@ -533,34 +524,17 @@ function paintOver(
       ctx.lineTo(x, tip);
       ctx.closePath();
       ctx.fill();
+      if (!glyph.label) return;
       ctx.font = glyph.nested ? nestedFont : plainFont;
       const next = raster.marks[k + 1];
       const room = (next ? next.x * sx - half : pw) - (x + half + 2 * sx);
       /* Beside the glyph, its foot on the bar: above the glyph it would
-         run off the top of the canvas. The longest form that fits. */
+         run off the top of the canvas. Only where it fits the room before
+         the next glyph and is not cut by the view's edge. */
       const at = Math.round(x + half + 2 * sx);
       const baseline = Math.round(tip - 1 * sy);
-      const widthOf = (runs: typeof glyph.forms[number]) => runs.reduce((w, run) => w + ctx.measureText(run.text).width + (run.chip ? 2 * pad : 0), 0);
-      /* The longest form that fits the room and is not cut by the view's
-         edge; a shorter one where the longest would be. */
-      const form = glyph.forms.find((runs) => widthOf(runs) <= room && uncut(at, at + widthOf(runs)));
-      if (!form) return;
-      const textWidth = widthOf(form);
-      let cursor = at;
-      for (const run of form) {
-        const w = ctx.measureText(run.text).width;
-        if (run.chip) {
-          ctx.fillStyle = CHIP_INK;
-          ctx.fillRect(Math.round(cursor), chipTop, Math.ceil(w + 2 * pad), chipBottom - chipTop);
-          ctx.fillStyle = CHIP_LETTER;
-          ctx.fillText(run.text, Math.round(cursor + pad), baseline);
-          cursor += w + 2 * pad;
-        } else {
-          ctx.fillStyle = ink;
-          ctx.fillText(run.text, Math.round(cursor), baseline);
-          cursor += w;
-        }
-      }
+      const w = ctx.measureText(glyph.label).width;
+      if (w <= room && uncut(at, at + w)) ctx.fillText(glyph.label, at, baseline);
     });
   }
 

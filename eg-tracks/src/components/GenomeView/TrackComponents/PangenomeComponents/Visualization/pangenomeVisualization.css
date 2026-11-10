@@ -765,3 +765,114 @@
   justify-content: center;
   white-space: nowrap;
 }
+
+/* ── A nested site's card: the readings drawn as rows (siteDrawing.tsx) ──
+   Columns for the reference's nodes between the anchors; a row per
+   reading; this walk's row outlined, its nested part shaded amber. */
+.pgv-site {
+  margin: 6px 0 2px;
+}
+.pgv-site-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 2px 0 4px;
+  min-height: 16px;
+}
+.pgv-site-switch {
+  font: 600 10px/1.2 inherit;
+  font-family: inherit;
+  color: #f2f3f4;
+  background: #2d3138;
+  border: 1px solid #4a505a;
+  border-radius: 4px;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+.pgv-site-switch:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pgv-site-switch.pgv-site-on {
+  background: #3b5bdb;
+  border-color: #3b5bdb;
+}
+.pgv-site-note {
+  color: #8a8f97;
+  font-size: 10px;
+}
+.pgv-site-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+.pgv-site-svg {
+  display: block;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 10px;
+}
+.pgv-site-refnode {
+  fill: #5b6b8c;
+}
+.pgv-site-refink {
+  fill: #ffffff;
+  text-anchor: middle;
+  font-weight: 600;
+}
+.pgv-site-ownnode {
+  fill: #d9a77c;
+}
+.pgv-site-ink {
+  fill: #1d2430;
+  text-anchor: middle;
+  font-weight: 600;
+}
+.pgv-site-white {
+  fill: #f4f4f4;
+}
+.pgv-site-anchor {
+  fill: #3a4048;
+}
+.pgv-site-anchor-ink {
+  fill: #e8ebf0;
+  text-anchor: middle;
+}
+.pgv-site-who {
+  fill: #f2f3f4;
+  font-weight: 600;
+}
+.pgv-site-who-mine {
+  fill: #60a5fa;
+}
+.pgv-site-count {
+  fill: #f2f3f4;
+  text-anchor: end;
+}
+.pgv-site-count-strong {
+  font-weight: 600;
+}
+.pgv-site-count-head {
+  fill: #8a8f97;
+  text-anchor: end;
+}
+.pgv-site-star {
+  fill: #b08cff;
+  text-anchor: end;
+  font-size: 11px;
+}
+.pgv-site-mine-fill {
+  fill: rgba(96, 165, 250, 0.1);
+}
+.pgv-site-mine-edge {
+  fill: none;
+  stroke: #60a5fa;
+  stroke-width: 1.4;
+}
+.pgv-site-nested {
+  fill: rgba(187, 247, 208, 0.5);
+}
+.pgv-site-nested-bracket {
+  fill: none;
+  stroke: #bbf7d0;
+  stroke-width: 1.6;
+}

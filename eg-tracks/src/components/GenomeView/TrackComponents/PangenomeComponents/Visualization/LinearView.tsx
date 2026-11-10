@@ -19,10 +19,11 @@ import { AeroDefs, AeroOutline, placeOutline } from "./AeroOutline";
 import type { RowStep } from "./rowAlign";
 import { deletionSize } from "./pangenomeModel";
 import type { NodeLetters } from "./letters";
-import { reverseComplement } from "./alignment";
 import type { BrowserClass } from "./alignment";
 import type { NestedMark } from "./nestedMarks";
-import { formText } from "./markLabel";
+import { versionSeqOf } from "./nestedMarks";
+import type { SiteDrawingData, SiteRow } from "./siteDrawing";
+import type { Step } from "./alignment";
 
 /* ══════════════════════════════════════════════════════════════════════════
    The linear view: a row per walk of each haplotype, on the reference's
@@ -657,128 +658,95 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       versions differ. */
   /** Bases in plain words: "13 T" for a run of one letter, the letters when
       short, else the length; "nothing" for none; "? bp" when not sent. */
-  const basesWords = (seq: string | null, bases: number): string => {
-    if (seq === "") return "nothing";
-    if (seq === null) return `${bases.toLocaleString()} bp`;
-    if (seq.length >= 2 && /^(.)\1*$/.test(seq)) return `${seq.length.toLocaleString()} ${seq[0]}`;
-    return seq.length <= 12 ? seq : `${seq.length.toLocaleString()} bp`;
-  };
-  /** The reference's bases over [from, to), from the band's reference walk. */
-  const refBasesOver = (from: number, to: number): string => {
-    let out = "";
-    model.refSteps.forEach((step, k) => {
-      const at = model.origin + model.refOffset[k];
-      const raw = model.graph.seq.get(step.id) ?? "";
-      const seq = step.reverse ? reverseComplement(raw) : raw;
-      const a = Math.max(from, at), b = Math.min(to, at + seq.length);
-      if (b > a) out += seq.slice(a - at, b - at);
-    });
-    return out;
-  };
-  /** The site card's words (the user's audit, 2026-11-08): what this walk
-      has here against what the reference has, how the haplotypes read the
-      site, same-sequence readings added up, the site's two anchor nodes. */
-  const versionsCard = (parts: RasterPart[]): { lines: ReactNode[]; groups: CardContent["groups"] } => {
-    const groups: CardContent["groups"] = [];
-    const lines: ReactNode[] = [];
-    for (const part of parts) {
-      const info: NestedMark | null = part.nested ?? null;
-      if (!info) continue;
-      const one = "haplotype";
-      const of = (n: number) => `in ${n.toLocaleString()} of ${info.total.toLocaleString()} haplotypes`;
-      const [left, right] = info.site.split(">");
-      /* The site starts after its left anchor node; the mark sits at the first base that differs, which may lie further in. */
-      const siteStart = refNodeAt.has(left) ? refNodeAt.get(left)! + (model.graph.seq.get(left)?.length ?? 0) : part.ref;
-      const refSeq = refBasesOver(siteStart, siteStart + info.refLen);
-      const refWords = info.refLen ? basesWords(refSeq, info.refLen) : "nothing";
-      const commonest = info.list[0];
-      lines.push(
-        <>
-          this walk has {basesWords(info.seq, info.seq.length)} here, where {referenceName} has {refWords}
-          {info.rank === 1 ? "; the commonest reading" : info.diffs ? <>; the black chips mark where it differs from the commonest, {basesWords(commonest.seq, commonest.bases)}</> : "; not compared with the commonest: its bases were not sent"}
-        </>,
-      );
-      lines.push(
-        `the site: ${info.refLen ? `${info.refLen.toLocaleString()} bp of ${referenceName}` : "an insertion site, no reference base"} between nodes ${left} and ${right}; every walk's bases between those two nodes count, read ${info.versions + (info.straight ? 1 : 0)} ways among the haplotypes in the band`,
-      );
-      if (info.merged?.partial) lines.push(`${plural(info.merged.partial, one)} reach only one of the two nodes here, or one inside an inversion and one outside: not counted`);
-      if (info.sites.length) lines.push(`where the readings differ from the commonest: ${info.sites.join("; ")}`);
-      if (info.others) lines.push(`${plural(info.others, one)} go through other nodes over this stretch: counted at their own sites`);
-      /* Readings with the same bases added up; the node paths in the details. */
-      const bySeq = new Map<string, { seq: string | null; bases: number; count: number; paths: Array<{ nodes: string; count: number }>; commonest: boolean; mine: boolean }>();
-      for (const v of info.list) {
-        const key = v.seq === null ? `?${v.key}` : v.seq;
-        const nodes = v.nodes.length ? v.nodes.map((s) => `${s.id}${s.reverse ? " (other strand)" : ""}`).join(", ") : "no node: straight from the one anchor to the other";
-        const got = bySeq.get(key);
-        if (got) {
-          got.count += v.count;
-          got.paths.push({ nodes, count: v.count });
-          got.commonest ||= v.commonest;
-          got.mine ||= v.mine;
-        } else bySeq.set(key, { seq: v.seq, bases: v.bases, count: v.count, paths: [{ nodes, count: v.count }], commonest: v.commonest, mine: v.mine });
-      }
-      const items: CardItem[] = [...bySeq.values()]
-        .sort((a, b) => b.count - a.count)
-        .map((v, i) => ({
-          key: `${part.index}:v${i}`,
-          line: (
-            <>
-              {basesWords(v.seq, v.bases)} · {of(v.count)}
-              {v.commonest ? " · the commonest" : ""}
-              {v.mine ? " · this walk's" : ""}
-            </>
-          ),
-          details: [
-            ...(v.paths.length > 1 ? [`the same bases through ${v.paths.length} node paths: ${v.paths.map((p) => `${p.nodes} (${p.count.toLocaleString()})`).join("; ")}`] : [`nodes: ${v.paths[0].nodes}`]),
-          ],
-        }));
-      items.push({
-        key: `${part.index}:straight`,
-        line: <>{referenceName}'s own {refWords} · {of(info.straight)}</>,
-        details: [],
+  /** The site card (PLAN-card.md, 2026-11-10; the user: "very wordy, too
+      technical"): the site's reference stretch and this walk's own, the
+      two anchors, and the readings drawn as rows (siteDrawing.tsx), this
+      walk's row outlined and its nested part shaded. Nothing where no
+      part is a nested site. */
+  const versionsCard = (parts: RasterPart[], bar: BarRow): { lines: ReactNode[]; drawing?: SiteDrawingData } => {
+    const { lane, row } = bar;
+    const part = parts.find((p) => p.nested);
+    const info = part?.nested ?? null;
+    if (!part || !info) return { lines: [] };
+    const [left, right] = info.site.split(">");
+    const k0 = model.refSteps.findIndex((s) => s.id === left);
+    const k1 = k0 < 0 ? -1 : model.refSteps.findIndex((s, k) => k > k0 && s.id === right);
+    /* The site starts after its left anchor node; the mark sits at the first base that differs, which may lie further in. */
+    const siteStart = refNodeAt.has(left) ? refNodeAt.get(left)! + (model.graph.seq.get(left)?.length ?? 0) : part.ref;
+    const siteEnd = siteStart + info.refLen;
+    /* This walk's own stretch between the two anchors: between the two
+       anchor steps nearest the part, in whichever order the walk reads
+       them (a flipped pass reads the right anchor first). */
+    const at = part.own?.from ?? null;
+    const near = (id: string) => {
+      let best = -1;
+      row.steps.forEach((s, i) => {
+        if (s.node !== id) return;
+        if (best < 0 || at === null || Math.abs(s.start - at) < Math.abs(row.steps[best].start - at)) best = i;
       });
-      groups.push({ head: `How the haplotypes read this site (${items.length})`, items });
-      /* Smaller sealed sites inside this one, as vg deconstruct lists nested
-         snarls; the site itself is not listed among them. */
-      const inside = (info.merged?.inside ?? []).filter((inner) => !(inner.refAt === siteStart && inner.refLen === info.refLen));
-      if (inside.length) {
-        groups.push({
-          head: `Smaller sites inside (${inside.length})`,
-          items: inside.map((inner, i) => ({
-            key: `${part.index}:inside${i}`,
-            line: (
-              <>
-                {refCoord(inner.refLen ? span(inner.refAt, inner.refAt + inner.refLen) : where(inner.refAt))} · {inner.refLen ? `${referenceName} has ${basesWords(refBasesOver(inner.refAt, inner.refAt + inner.refLen), inner.refLen)}` : "an insertion site"} · read as{" "}
-                {inner.versions.map((v) => `${basesWords(v.seq, v.bases)} in ${v.count.toLocaleString()}`).join(", ")}
-                {inner.straight ? `, ${referenceName}'s own in ${inner.straight.toLocaleString()}` : ""}
-              </>
-            ),
-            details: [`${inner.skip.toLocaleString()} of the haplotypes reading the whole site go through other nodes here`],
-          })),
-        });
-      }
-    }
-    return { lines, groups };
+      return best;
+    };
+    const iL = near(left);
+    const iR = near(right);
+    const own =
+      iL >= 0 && iR >= 0 && iL !== iR
+        ? iL < iR
+          ? { from: row.steps[iL].end, to: row.steps[iR].start, reverse: false }
+          : { from: row.steps[iR].end, to: row.steps[iL].start, reverse: true }
+        : null;
+    const readings = info.versions + (info.straight ? 1 : 0);
+    const lines: ReactNode[] = [
+      <>
+        {referenceName} {refCoord(info.refLen ? span(siteStart, siteEnd) : `after ${where(siteStart)}`)} ({info.refLen ? `${info.refLen.toLocaleString()} bp` : "insertion site, no reference base"}) ·{" "}
+        {lane.label}{" "}
+        {own ? (
+          <>
+            {altCoord(own.to > own.from ? `${row.contig}:${own.from.toLocaleString()}–${own.to.toLocaleString()}` : `${row.contig}: after ${own.from.toLocaleString()}`)} ({own.to > own.from ? `${(own.to - own.from).toLocaleString()} bp` : "nothing"}){own.reverse ? " · read on the reverse strand" : ""}
+          </>
+        ) : (
+          "reaches only one of the two anchors here"
+        )}
+      </>,
+      <>
+        anchors {contig} · node {left} → node {right} · {info.refLen.toLocaleString()} bp between · {info.total.toLocaleString()} haplotypes, {readings} readings
+      </>,
+    ];
+    if (k0 < 0 || k1 < 0) return { lines };
+    /* A node's bases from the band, or from the worker's extra nodes for
+       versions other haplotypes read (versionNodes); null where neither
+       has them. */
+    const versionSeq = versionSeqOf(model.graph.seq, model.carriers?.versionNodes);
+    const seqOf = (s: Step): string | null => versionSeq(s) || null;
+    const rows: SiteRow[] = [
+      { key: "ref", nodes: model.refSteps.slice(k0 + 1, k1), count: info.straight, mine: false, commonest: false, ref: true },
+      ...info.list.map((v, i) => ({ key: `v${i}`, nodes: v.nodes, count: v.count, mine: v.mine, commonest: v.commonest, ref: false })),
+    ];
+    const drawing: SiteDrawingData = {
+      refNodes: model.refSteps.slice(k0 + 1, k1),
+      anchors: [model.refSteps[k0], model.refSteps[k1]],
+      rows,
+      total: info.total,
+      partial: info.merged?.partial ?? 0,
+      seqOf,
+      maxWidth: Math.max(220, width - 40),
+    };
+    return { lines, drawing };
   };
 
   const describeMark = (bar: BarRow, glyph: MarkGlyph): CardContent => {
     const { lane, row, raster } = bar;
     const parts = glyph.parts.map((index) => raster.parts[index]);
-    /* A site glyph on letters: the versions are the card. */
+    /* A site glyph on letters: the site's readings are the card. */
     if (glyph.refLen !== undefined && parts.length === 1) {
       const part = parts[0];
-      const info = part.nested;
-      const versions = versionsCard(parts);
-      const siteStart0 = info && refNodeAt.has(info.site.split(">")[0]) ? refNodeAt.get(info.site.split(">")[0])! + (model.graph.seq.get(info.site.split(">")[0])?.length ?? 0) : part.ref;
-      const refWords = info ? (info.refLen ? basesWords(refBasesOver(siteStart0, siteStart0 + info.refLen), info.refLen) : "nothing") : `${glyph.refLen.toLocaleString()} bp`;
+      const versions = versionsCard(parts, bar);
+      if (versions.drawing) {
+        return { title: `${lane.label} · pass ${row.pass.n} of ${row.pass.of}`, lines: versions.lines, groups: [], drawing: versions.drawing, width };
+      }
       return {
-        title: `${lane.label} · ${info ? `${basesWords(info.seq, info.seq.length)} here, where ${referenceName} has ${refWords}` : `${glyph.refLen.toLocaleString()} bp`} · ${where(part.ref)}`,
-        lines: [
-          `the letters on the bar are this walk's bases against ${referenceName}'s; the black chips on the label mark where it differs from the commonest reading`,
-          ...versions.lines,
-          rowLine(lane, row),
-        ],
-        groups: versions.groups,
+        title: `${lane.label} · ${glyph.refLen.toLocaleString()} bp · ${where(part.ref)}`,
+        lines: [`the letters on the bar are this walk's bases against ${referenceName}'s`, ...versions.lines, rowLine(lane, row)],
+        groups: [],
       };
     }
     const items: CardItem[] = parts.map((part) => {
@@ -829,7 +797,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     });
     /* Rule D: a mark at an insertion site with more than one version among
        the haplotypes counted (nestedMarks.ts). */
-    const { lines: nestedLines, groups: nestedGroups } = versionsCard(parts);
+    const nested = versionsCard(parts, bar);
     /* Several insertions close together share the glyph: the title names
        the largest, where it goes in, as the glyph's label does, and how
        many more. */
@@ -842,10 +810,12 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       lines: [
         "bases the haplotype has here that the reference does not: shown after the bases they follow, taking no room",
         ...(parts.length > 1 ? [`${parts.length} insertions close together, ${glyph.bp.toLocaleString()} bp in all, drawn as one mark`] : []),
-        ...nestedLines,
+        ...nested.lines,
         rowLine(lane, row),
       ],
-      groups: [...nestedGroups, { head: parts.length > 1 ? `Insertions (${parts.length})` : "Insertion", items }],
+      groups: [{ head: parts.length > 1 ? `Insertions (${parts.length})` : "Insertion", items }],
+      drawing: nested.drawing,
+      width: nested.drawing ? width : undefined,
     };
   };
 
@@ -854,7 +824,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     const skipped = white.open === null ? referenceBases(white.refFrom, white.refTo) : "";
     /* Rule D at a deletion: the site's versions, where the band reads it
        more than one way. */
-    const versions = white.part !== null ? versionsCard([bar.raster.parts[white.part]]) : { lines: [], groups: [] };
+    const versions = white.part !== null ? versionsCard([bar.raster.parts[white.part]], bar) : { lines: [] };
     return {
       title: `${lane.label} · deletion`,
       lines: [
@@ -874,7 +844,9 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         ...versions.lines,
         rowLine(lane, row),
       ],
-      groups: versions.groups,
+      groups: [],
+      drawing: versions.drawing,
+      width: versions.drawing ? width : undefined,
     };
   };
 
@@ -1089,8 +1061,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
           ...(how ? [how] : []),
           ...(info
             ? [
-                `read ${info.versions} ways among ${unitWords}: this walk's version ${formText(info.forms[info.forms.length - 1])}${info.seq ? ` ${info.seq.length <= 40 ? info.seq : `(${info.seq.length.toLocaleString()} bp)`}` : " (nothing)"}, in ${info.count.toLocaleString()} of ${info.total.toLocaleString()} haplotypes${info.rank === 1 ? ", the commonest" : ""}; ${info.straight.toLocaleString()} read straight across${info.others ? `; ${info.others.toLocaleString()} anchor other nodes` : ""}`,
-                ...(info.sites.length ? [info.sites.join("; ")] : []),
+                `read ${info.versions} ways among ${unitWords}: this walk's version${info.label ? ` ${info.label}` : ""}${info.seq ? ` ${info.seq.length <= 40 ? info.seq : `(${info.seq.length.toLocaleString()} bp)`}` : " (nothing)"}, in ${info.count.toLocaleString()} of ${info.total.toLocaleString()} haplotypes${info.rank === 1 ? ", the commonest" : ""}; ${info.straight.toLocaleString()} read straight across${info.others ? `; ${info.others.toLocaleString()} anchor other nodes` : ""}`,
               ]
             : []),
           ...(homedHere(variant)
@@ -1379,7 +1350,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       </svg>
 
       {card && (
-        <FloatingCard x={card.x} y={card.y} className="pgv-section-card">
+        <FloatingCard x={card.x} y={card.y} className="pgv-section-card" maxWidth={card.width}>
           <button type="button" className="pgv-section-close" aria-label="Close" onClick={() => setCard(null)}>
             ×
           </button>
