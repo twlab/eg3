@@ -694,7 +694,6 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
           ? { from: row.steps[iL].end, to: row.steps[iR].start, reverse: false }
           : { from: row.steps[iR].end, to: row.steps[iL].start, reverse: true }
         : null;
-    const readings = info.versions + (info.straight ? 1 : 0);
     const lines: ReactNode[] = [
       <>
         {referenceName} {refCoord(info.refLen ? span(siteStart, siteEnd) : `after ${where(siteStart)}`)} ({info.refLen ? `${info.refLen.toLocaleString()} bp` : "insertion site, no reference base"}) ·{" "}
@@ -708,7 +707,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         )}
       </>,
       <>
-        anchors {contig} · node {left} → node {right} · {info.refLen.toLocaleString()} bp between · {info.total.toLocaleString()} haplotypes, {readings} readings
+        anchors {contig} · node {left} → node {right} · {info.refLen.toLocaleString()} bp between
       </>,
     ];
     if (k0 < 0 || k1 < 0) return { lines };

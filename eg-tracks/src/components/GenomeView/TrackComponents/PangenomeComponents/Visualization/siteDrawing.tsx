@@ -259,6 +259,7 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
     return { boxes, whites };
   };
   const geometry = useMemo(() => rows.map(geometryOf), [rows, L, mode]);
+  const readings = rows.filter((row) => row.count > 0).length;
   const header = 14;
   const footer = 16 + (data.partial ? 14 : 0);
   const height = header + shown.length * ROW_H + footer;
@@ -279,6 +280,10 @@ export function SiteDrawing({ data, kept }: { data: SiteDrawingData; kept: boole
         ) : (
           <span className="pgv-site-note">{mode === "bases" ? "bases" : "nodes"}: click the mark to switch</span>
         )}
+        {/* How many ways the haplotypes read the site: the readings some
+            haplotype has, the reference's own among them when any reads
+            it straight (its row stands at ×0 when none does). */}
+        <span className="pgv-site-note">{readings} reading{readings === 1 ? "" : "s"}</span>
         {mode === "bases" && basesWidth > data.maxWidth && <span className="pgv-site-note">scrolls sideways</span>}
         {mode === "nodes" && nodesWidth > data.maxWidth && <span className="pgv-site-note">scrolls sideways</span>}
       </div>
