@@ -31,6 +31,9 @@ import { hiddenDeletions, linearHeight } from "./Visualization/LinearView";
 import type { TierAxis } from "./Visualization/barTiers";
 import { legendRowsOf } from "./Visualization/legendRows";
 import type { LegendRow } from "./Visualization/legendRows";
+import { laneCopiesOf } from "./Visualization/copyRuler";
+import type { LaneCopies } from "./Visualization/copyRuler";
+import { laneSlots } from "./Visualization/laneLayout";
 import { GRAPH_ROW_H, LANE_H, laneHeightOf } from "./Visualization/laneLayout";
 import { tooWideOf } from "./fetchPangenomeData";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
@@ -116,15 +119,17 @@ const windowPx = (axis: { viewFromPx: number; viewToPx: number }, viewWindow?: {
     screen are too narrow to draw ("23 deletions too small to see",
     LinearView.tsx hiddenDeletions). Both follow the window: `viewWindow`
     is the window on screen in the band's pixels, as TrackFactory hands it
-    on a pan; without one the band's middle window counts. Nothing on the
+    on a pan; without one the band's middle window counts. `textWidth` is
+    the room a row's words have: the glass pill's in the pangenome view
+    (legendRows.ts PILL_WIDTH), never the column's 0. Nothing on the
     graph's own row, nothing past the size limit, where no row is drawn. */
 export function pangenomeLegendOf(
   queryResult: any,
   part: string,
   primaryVisData: any,
   viewWindow: { start: number; end: number } | null | undefined,
-  legendWidth: number,
-): { note?: string; rows?: LegendRow[] } {
+  textWidth: number,
+): { note?: string; rows?: LegendRow[]; copies?: LaneCopies } {
   if (part === GRAPH_PART || tooWideOf(queryResult)) return {};
   const linear = linearModelOf(queryResult);
   if (!linear) return {};
@@ -136,7 +141,18 @@ export function pangenomeLegendOf(
   const frame = bandFrame(primaryVisData);
   const axis = linearAxis(cut, frame, pxPerBaseOf(frame));
   const [fromPx, toPx] = windowPx(axis, viewWindow);
-  const rows = legendRowsOf(lane.rows, axis.px, fromPx, toPx, legendWidth);
+  /* A lane with copies has a ruler and tabs among its rows: the labels
+     sit where its slots put the rows, and the rulers and the tabs are the
+     header's to draw (copyRuler.ts). */
+  const slots = laneSlots(lane);
+  const ruled = new Set(slots.rulers.map((ruler) => ruler.contig));
+  const rows = legendRowsOf(lane.rows, axis.px, fromPx, toPx, textWidth, lane.label, slots.rowTops, ruled);
+  const copies = laneCopiesOf(
+    lane,
+    slots,
+    rows.map((row) => (row.dim ? null : row.own)),
+    toPx - fromPx,
+  );
   const key = [axis.scale, axis.startBp, axis.endBp, fromPx, toPx].join(":");
   let known = hiddenByLane.get(lane);
   if (!known) hiddenByLane.set(lane, (known = new Map()));
@@ -145,7 +161,7 @@ export function pangenomeLegendOf(
     known.set(key, hiddenDeletions(cut, windowAxis));
   }
   const n = known.get(key)!;
-  return { rows, ...(n > 0 ? { note: `${n.toLocaleString()} deletion${n === 1 ? "" : "s"} too small to see` } : {}) };
+  return { rows, ...(copies ? { copies } : {}), ...(n > 0 ? { note: `${n.toLocaleString()} deletion${n === 1 ? "" : "s"} too small to see` } : {}) };
 }
 
 /**

@@ -23,6 +23,10 @@ interface HoverToolTipProps {
   hasReverse?: boolean;
   options?: any;
   legendWidth?: any;
+  /** Where the data starts in the track block, which the heatmap's beams
+      are placed from: the legend column's width, none in the pangenome
+      view. Without it, legendWidth as before. */
+  beamOffset?: number;
   viewWindow?: any;
   scale?: any;
   xAlias?: any;
@@ -493,9 +497,9 @@ export const getHoverTooltip = {
         const right = xSpan2.start;
 
         const leftBeamPos =
-          left - dataObj.viewWindow.start + dataObj.legendWidth + "px";
+          left - dataObj.viewWindow.start + dataObj.beamOffset + "px";
         const rightBeamPos =
-          right - dataObj.viewWindow.start + dataObj.legendWidth + "px";
+          right - dataObj.viewWindow.start + dataObj.beamOffset + "px";
         const leftWidth = Math.max(xSpan1.getLength(), 1);
         const rightWidth = Math.max(xSpan2.getLength(), 1);
 
@@ -845,6 +849,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   options,
   viewWindow,
   legendWidth,
+  beamOffset,
   scale,
   xAlias,
 }) {
@@ -891,6 +896,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         scale,
         xAlias,
         legendWidth: legendWidth ? legendWidth : 120,
+        beamOffset: beamOffset ?? (legendWidth ? legendWidth : 120),
       });
     } catch (err) {
       trackHoverTooltip = {

@@ -20,6 +20,11 @@ export interface GbzPath {
   /** GBWT position the path starts at, for walking an unindexed path. */
   fwNode: number;
   fwOffset: number;
+  /** GBWT position the path's reverse sequence starts at - its last node,
+      read the other way - for stepping back across a cut onto the path
+      (duplications.ts). Absent where the source does not read it. */
+  revNode?: number;
+  revOffset?: number;
 }
 
 export interface IndexedPosition {

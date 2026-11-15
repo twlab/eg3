@@ -11,6 +11,8 @@ import {
 } from "./codec";
 import { encodeNode, isReverse, nodeId } from "./codec";
 import type { Pos } from "./codec";
+import { bandDuplications, rolesOf } from "./duplications";
+import type { ArrayRole, DupLimits, HaplotypeDuplications } from "./duplications";
 import { locateHaplotypes } from "./locate";
 import type { Located } from "./locate";
 import { GbzRecord } from "./record";
@@ -46,6 +48,16 @@ export interface IntervalQuery {
   walkOn?: boolean;
   /** How far either side that search goes; locate.ts has the default. */
   locateCapBp?: number;
+  /** Find each shown haplotype's duplications by walking its path
+      (duplications.ts; claude-memory/PLAN-remastered-2.md, section 1b): a
+      report per haplotype under `duplications`, and a `role` on each of its
+      arrays.
+      Needs `walkOn` and `haplotypes`. Off by default: without it the
+      result is what it always was. */
+  duplications?: boolean;
+  /** For the finder: the region view on screen (CHM13 [from, to)) when it
+      is not the queried interval, and limits other than the plan's. */
+  duplicationOptions?: { view?: [number, number]; limits?: Partial<DupLimits> };
 }
 
 /** A link out of a node, listed under the node it leaves - see
@@ -76,6 +88,18 @@ export interface JsonPath {
       fetch followed it (walkOn.ts): `head` before its first step and
       `tail` after its last, in the path's own direction. See JsonStop. */
   ends?: { head?: JsonStop; tail?: JsonStop };
+  /** With `duplications` asked for: what the array is for its haplotype -
+      in place, copy n, in place on the right (copy n), in place on the
+      right, in the uncut stretch, other sequence or seam; "pass, not
+      walked" where the haplotype has no duplication - the role of the part
+      holding most of its bases, and, when it runs across a junction, each
+      part's own range and role (duplications.ts). */
+  role?: string;
+  roleParts?: Array<{ start: number; end: number; role: string }>;
+  /** With `duplications` asked for: the blocks the array reads, in own
+      order - each a piece, a run reading CHM13 in order on one strand:
+      its own range, the CHM13 it reads, and the strand (duplications.ts). */
+  block?: Array<{ start: number; end: number; chm13: [number, number]; strand: "CHM13's" | "other" }>;
 }
 
 /** An end of a walk the walk-on followed and that never reached the
@@ -123,6 +147,9 @@ export interface SubgraphJson {
       nodes' lengths, so a card can list every fetched neighbour of a node;
       see aroundKept. Their carriers are counted with the rest. */
   around?: { edges: Record<string, JsonLink[]>; lengths: Record<string, number> };
+  /** With `duplications` asked for: each shown haplotype's duplications,
+      keyed `sample#haplotype` (duplications.ts). */
+  duplications?: Record<string, HaplotypeDuplications>;
 }
 
 /* ── Carriers ──────────────────────────────────────────────────────────
@@ -449,6 +476,7 @@ export function queryInterval(
   /* ── On past the cut, to the reference ───────────────────────────── */
   let walkedTo = new Map<number, number>();
   let located: Record<string, Located> | undefined;
+  let duplications: Record<string, HaplotypeDuplications> | undefined;
   if (query.walkOn) {
     const keep = query.haplotypes ? new Set(query.haplotypes) : null;
     const named = new Map<number, GbzPath | null>();
@@ -532,10 +560,46 @@ export function queryInterval(
         new Set([...records.keys()].map(nodeId)),
       );
       for (const [id, at] of placed) walkedTo.set(id, at);
+
+      /* ── Each shown haplotype's duplications ────────────────────── */
+      if (query.duplications) {
+        /* The band: the reference walk's interval, the query grown to
+           whole nodes, as writeJson measures it. */
+        const refWalk = extracted.paths[extracted.refId];
+        let back = refStart.nodeOffset;
+        for (let i = 0; i < (extracted.refOffset ?? 0); i++) back += records.get(refWalk.path[i])?.sequenceLength ?? 0;
+        const bandStart = path.fragment + refStart.seqOffset - back;
+        duplications = bandDuplications({
+          cache,
+          source,
+          reference: path,
+          refWalk,
+          paths: extracted.paths,
+          band: [bandStart, bandStart + refWalk.len],
+          view: query.duplicationOptions?.view ?? [query.start, query.end],
+          haplotypes: [...keep].filter((key) => key !== `${path.sample}#${path.haplotype}`),
+          /* The context nodes the fetch places on the reference. */
+          positioned: walkedTo.keys(),
+          limits: query.duplicationOptions?.limits,
+        });
+      }
     }
   }
 
   const json = writeJson(source, records, extracted, path, refStart);
+  if (duplications) {
+    /* Each array's role, by its name, which writeJson gives as the
+       finder does. */
+    const roles = new Map<string, ArrayRole>();
+    for (const report of Object.values(duplications)) for (const [name, role] of rolesOf(report)) roles.set(name, role);
+    for (const walk of json.paths) {
+      const found = roles.get(walk.name);
+      if (!found) continue;
+      walk.role = found.role;
+      if (found.parts) walk.roleParts = found.parts;
+      walk.block = found.blocks;
+    }
+  }
   const kept = query.haplotypes ? keepHaplotypes(json, query.haplotypes) : json;
   const around = query.haplotypes ? aroundKept(json, kept) : undefined;
   const referenceAt = referenceElsewhere(json, kept);
@@ -548,6 +612,7 @@ export function queryInterval(
     referenceAt,
     ...(located ? { located } : {}),
     ...(around ? { around } : {}),
+    ...(duplications ? { duplications } : {}),
   };
 }
 

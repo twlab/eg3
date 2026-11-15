@@ -40,7 +40,89 @@ interface TrackLegendProps {
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
-const AXIS_WIDTH = 32;
+export const AXIS_WIDTH = 32;
+
+/** What a legend's y-axis is drawn from. */
+export interface LegendAxisProps {
+  height: number;
+  axisScale?: ScaleLinear<number, number>;
+  axisScaleReverse?: ScaleLinear<number, number>;
+  hideFirstAxisLabel?: boolean;
+  noShiftFirstAxisLabel?: boolean;
+}
+
+/**
+ * Draws a legend's y-axis into an svg group: d3's left axis on the scale,
+ * labelled at its two ends, and a second, reversed axis under it for a
+ * track drawn on two strands. Shared by the legend column (TrackLegend)
+ * and the pangenome view's glass header (TrackHeader.tsx), so both draw
+ * the same axis.
+ */
+export function drawLegendAxis(gNode: any, props: LegendAxisProps) {
+  if (gNode && props.axisScale) {
+    while (gNode.hasChildNodes()) {
+      // Believe it not, there's no function that removes all child nodes.
+      (gNode.lastChild as Element).remove();
+    }
+
+    const axis = axisLeft(props.axisScale);
+    // axis.ticks(NUM_TICKS_SUGGESTION);
+    const axisDomain = props.axisScale.domain();
+
+    if (!axisDomain.includes(NaN)) {
+      if (axisDomain[0] > 1000) {
+        axis.tickValues(axisDomain).tickFormat(format(".3s"));
+      } else {
+        axis.tickValues(axisDomain); //.tickFormat(format("d"));
+      }
+    }
+    const dy0 =
+      props.axisScaleReverse || props.noShiftFirstAxisLabel
+        ? "0.32em"
+        : "-0.1em";
+    if (axisDomain[0] !== axisDomain[1]) {
+      select(gNode).append("g").call(axis);
+    }
+    select(gNode)
+      .selectAll("text")
+      .filter((d, i) => i === 0)
+      .attr("dy", "0.8em");
+    select(gNode)
+      .selectAll("text")
+      .filter((d, i) => i === 1)
+      .attr("dy", dy0);
+    if (props.hideFirstAxisLabel) {
+      select(gNode)
+        .selectAll(".tick")
+        .filter((d, i) => i === 0)
+        .remove();
+    }
+    if (props.axisScaleReverse) {
+      const axis2 = axisLeft(props.axisScaleReverse);
+      // axis2.ticks(NUM_TICKS_SUGGESTION);
+      const axis2Domain = props.axisScaleReverse.domain();
+      if (!axis2Domain.includes(NaN)) {
+        axis2.tickValues(axis2Domain);
+      }
+      if (axis2Domain[0] !== axis2Domain[1]) {
+        select(gNode)
+          .append("g")
+          .attr("transform", "translate(" + 0 + "," + props.height * 0.5 + ")")
+          .call(axis2)
+          .selectAll(".tick")
+          .filter((d) => d === 0)
+          .remove();
+      }
+      select(gNode)
+        .selectAll("text")
+        .filter((d, i) => i === 2)
+        .attr("dy", "-0.1em");
+    }
+    select(gNode).selectAll("text").attr("class", "svg-text-bg");
+    select(gNode).selectAll("line").attr("class", "svg-line-bg");
+    select(gNode).selectAll("path").attr("class", "svg-line-bg");
+  }
+}
 
 /**
  * A box displaying labels, axes, and other important track info.
@@ -89,72 +171,7 @@ class TrackLegend extends React.PureComponent<
   }
 
   drawAxis() {
-    if (this.gNode && this.props.axisScale) {
-      while (this.gNode.hasChildNodes()) {
-        // Believe it not, there's no function that removes all child nodes.
-        (this.gNode.lastChild as Element).remove();
-      }
-
-      const axis = axisLeft(this.props.axisScale);
-      // axis.ticks(NUM_TICKS_SUGGESTION);
-      const axisDomain = this.props.axisScale.domain();
-
-      if (!axisDomain.includes(NaN)) {
-        if (axisDomain[0] > 1000) {
-          axis.tickValues(axisDomain).tickFormat(format(".3s"));
-        } else {
-          axis.tickValues(axisDomain); //.tickFormat(format("d"));
-        }
-      }
-      const dy0 =
-        this.props.axisScaleReverse || this.props.noShiftFirstAxisLabel
-          ? "0.32em"
-          : "-0.1em";
-      if (axisDomain[0] !== axisDomain[1]) {
-        select(this.gNode).append("g").call(axis);
-      }
-      select(this.gNode)
-        .selectAll("text")
-        .filter((d, i) => i === 0)
-        .attr("dy", "0.8em");
-      select(this.gNode)
-        .selectAll("text")
-        .filter((d, i) => i === 1)
-        .attr("dy", dy0);
-      if (this.props.hideFirstAxisLabel) {
-        select(this.gNode)
-          .selectAll(".tick")
-          .filter((d, i) => i === 0)
-          .remove();
-      }
-      if (this.props.axisScaleReverse) {
-        const axis2 = axisLeft(this.props.axisScaleReverse);
-        // axis2.ticks(NUM_TICKS_SUGGESTION);
-        const axis2Domain = this.props.axisScaleReverse.domain();
-        if (!axis2Domain.includes(NaN)) {
-          axis2.tickValues(axis2Domain);
-        }
-        if (axis2Domain[0] !== axis2Domain[1]) {
-          select(this.gNode)
-            .append("g")
-            .attr(
-              "transform",
-              "translate(" + 0 + "," + this.props.height * 0.5 + ")",
-            )
-            .call(axis2)
-            .selectAll(".tick")
-            .filter((d) => d === 0)
-            .remove();
-        }
-        select(this.gNode)
-          .selectAll("text")
-          .filter((d, i) => i === 2)
-          .attr("dy", "-0.1em");
-      }
-      select(this.gNode).selectAll("text").attr("class", "svg-text-bg");
-      select(this.gNode).selectAll("line").attr("class", "svg-line-bg");
-      select(this.gNode).selectAll("path").attr("class", "svg-line-bg");
-    }
+    drawLegendAxis(this.gNode, this.props);
   }
 
   getLabelWidth() {

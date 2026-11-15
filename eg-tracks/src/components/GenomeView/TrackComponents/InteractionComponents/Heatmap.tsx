@@ -30,6 +30,9 @@ interface HeatmapProps {
   legend?: any;
   windowWidth: number;
   legendWidth: number;
+  /** Where the data starts in the track block: the beams' offset
+      (InteractionTrackComponent.tsx). */
+  beamOffset?: number;
 }
 
 class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
@@ -210,6 +213,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
               height={height}
               hasReverse={true}
               legendWidth={this.props.legendWidth}
+              beamOffset={this.props.beamOffset}
               options={this.props.options}
             />
           </div>

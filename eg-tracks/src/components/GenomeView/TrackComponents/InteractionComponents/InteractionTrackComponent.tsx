@@ -62,6 +62,10 @@ interface InteractionTrackProps {
   initialLoad?: boolean;
   windowWidth: number;
   legendWidth: number;
+  /** Where the data starts in the track block, which the heatmap's beams
+      are placed from: the legend column's width, none in the pangenome
+      view. Without it, legendWidth. */
+  beamOffset?: number;
 }
 
 export const DEFAULT_OPTIONS = {
@@ -249,6 +253,7 @@ const InteractionTrackComponent: React.FC<InteractionTrackProps> = (props) => {
       isThereG3dTrack,
       clampHeight: options.clampHeight,
       legendWidth: legendWidth,
+      beamOffset: props.beamOffset,
       windowWidth: props.windowWidth,
     };
 

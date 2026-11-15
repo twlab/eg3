@@ -20,14 +20,14 @@ import type { FileVfs, FileVfsStats, SliceReader } from "./fileVfs";
    have meant making `queryInterval` and the whole walk async.
    ══════════════════════════════════════════════════════════════════════════ */
 
-const FIND_PATH = `SELECT handle, sample, contig, haplotype, fragment, is_indexed, fw_node, fw_offset
+const FIND_PATH = `SELECT handle, sample, contig, haplotype, fragment, is_indexed, fw_node, fw_offset, rev_node, rev_offset
   FROM Paths WHERE sample = ? AND contig = ? AND haplotype = ? AND fragment <= ?
   ORDER BY fragment DESC LIMIT 1`;
 
-const GET_PATH = `SELECT handle, sample, contig, haplotype, fragment, is_indexed, fw_node, fw_offset
+const GET_PATH = `SELECT handle, sample, contig, haplotype, fragment, is_indexed, fw_node, fw_offset, rev_node, rev_offset
   FROM Paths WHERE handle = ?`;
 
-const LIST_PATHS = `SELECT handle, sample, contig, haplotype, fragment, is_indexed, fw_node, fw_offset
+const LIST_PATHS = `SELECT handle, sample, contig, haplotype, fragment, is_indexed, fw_node, fw_offset, rev_node, rev_offset
   FROM Paths ORDER BY handle`;
 
 const INDEXED_POSITION = `SELECT path_offset, node_handle, node_offset FROM ReferenceIndex
@@ -46,6 +46,8 @@ const toPath = (row: Row): GbzPath => ({
   isIndexed: Number(row.is_indexed) !== 0,
   fwNode: Number(row.fw_node),
   fwOffset: Number(row.fw_offset),
+  revNode: Number(row.rev_node),
+  revOffset: Number(row.rev_offset),
 });
 
 /** Runs a prepared statement for one row, or null when there is none. */

@@ -1183,6 +1183,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
     initialLoad,
     windowWidth,
     legendWidth,
+    /* Where the data starts in the track block (TrackFactory: 0 in the
+       pangenome view). Left out, the beams fall back to legendWidth
+       (HoverToolTip.tsx). */
+    beamOffset = undefined as number | undefined,
   }) {
     const canvasElements = (
       <InteractionTrackComponent
@@ -1202,6 +1206,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         initialLoad={initialLoad}
         windowWidth={windowWidth}
         legendWidth={legendWidth ? legendWidth : 120}
+        beamOffset={beamOffset}
       />
     );
 
@@ -1351,7 +1356,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
               part,
               primaryVisData,
               trackState.viewWindow ?? primaryVisData?.viewWindow,
-              drawData.legendWidth ?? 120,
+              /* The room a row's words have: the glass pill's in the
+                 pangenome view (TrackFactory). */
+              drawData.pillWidth ?? drawData.legendWidth ?? 120,
             )
           : {}),
       };
@@ -1728,6 +1735,9 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     trackModel: drawData.trackModel,
     initialLoad: drawData.initialLoad,
     legendWidth: drawData.legendWidth,
+    /* Where the data starts in the track block (TrackFactory): the
+       heatmap's beams are placed from it. */
+    beamOffset: drawData.beamOffset,
     windowWidth:
       configOptions.forceSvg || configOptions.packageVersion
         ? legendWidth + drawData.windowWidth

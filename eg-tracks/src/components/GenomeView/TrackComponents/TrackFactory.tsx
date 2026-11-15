@@ -21,9 +21,30 @@ import HiddenIndicator from "./commonComponents/HiddenIndicator";
 import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import VerticalDivider from "./commonComponents/VerticalDivider";
 import TrackLegend from "./commonComponents/TrackLegend";
+import TrackHeader from "./commonComponents/TrackHeader";
 import { pangenomeLegendColor } from "./PangenomeComponents/fetchPangenomeData";
 import { pangenomeLegendOf } from "./PangenomeComponents/PangenomeTrackView";
 import { GRAPH_PART } from "./PangenomeComponents/Visualization/VisualizationContainer";
+import { PILL_WIDTH } from "./PangenomeComponents/Visualization/legendRows";
+import { pastelColor } from "./PangenomeComponents/Visualization/pangenomeModel";
+
+/** How tall the legend column's box for a track is (TrackLegend.tsx):
+    nothing at a height of 0 or less; else the height, half of it beside a
+    second axis, plus 2 except on a methylc track. Each row is as tall as
+    its drawing or this, whichever is more, so the pangenome view, which
+    has no column, keeps an empty box this tall and no track moves. */
+function legendBoxHeight(props: {
+  height?: number;
+  trackModel?: any;
+  axisScaleReverse?: any;
+}): number {
+  const height = props?.height;
+  if (typeof height !== "number" || !Number.isFinite(height) || height <= 0) {
+    return 0;
+  }
+  const axisHeight = props.axisScaleReverse ? height * 0.5 : height;
+  return axisHeight + (props.trackModel?.type === "methylc" ? 0 : 2);
+}
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   basePerPixel,
@@ -53,8 +74,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   initialLoad,
   selectedRegionSet,
   legendWidth,
+  columnWidth,
+  legendHeader = false,
   onConfigChange,
 }) {
+  /* The legend column's width on screen: the user's legendWidth, or none
+     in the pangenome view, where the legend is a glass header over the
+     track (TrackHeader.tsx, PLAN-remastered-2.md section 3). */
+  const colWidth = columnWidth ?? legendWidth;
+  /* The room a pangenome row's region has: its glass pill's in the
+     pangenome view. Never the column's 0: the ?: fallbacks of legendWidth
+     here and in the draws turn a 0 into 120. */
+  const pillWidth = legendHeader
+    ? PILL_WIDTH
+    : legendWidth
+      ? legendWidth
+      : 120;
   function getConfigOptions() {
     try {
       const globalCfg = trackManagerState.current.globalConfig;
@@ -145,6 +180,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       initialLoad: initialLoad.current,
       placeFeature,
       legendWidth: legendWidth ? legendWidth : 120,
+      pillWidth,
+      /* Where the data starts in the track block, which the heatmap's beams
+         are placed from (HoverToolTip.tsx): after the column, or at the
+         left edge in the pangenome view. */
+      beamOffset: legendHeader ? 0 : legendWidth ? legendWidth : 120,
     };
 
     // try {
@@ -508,12 +548,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackModel.options?.part ?? GRAPH_PART,
             primary,
             sameRegionViewWindow,
-            legendWidth ? legendWidth : 120,
+            pillWidth,
           );
           if (updatedLegend.current) {
-            updatedLegend.current = { ...updatedLegend.current, rows: words.rows, note: words.note };
+            updatedLegend.current = { ...updatedLegend.current, rows: words.rows, note: words.note, copies: words.copies };
           }
-          setLegend((prev) => (prev ? { ...prev, rows: words.rows, note: words.note } : prev));
+          setLegend((prev) => (prev ? { ...prev, rows: words.rows, note: words.note, copies: words.copies } : prev));
         }
         return;
       }
@@ -634,6 +674,83 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK: RENDER
 
+  /* The legend's height, as the column's TrackLegend is given it. */
+  const legendHeight =
+    legend?.height ??
+    (fetchError.current
+      ? 40
+      : getConfigOptions().displayMode === "full" ||
+          getConfigOptions().displayMode === "detail" ||
+          (svgHeight.current && getConfigOptions().displayMode === "auto")
+        ? svgHeight.current
+        : getConfigOptions().height);
+  const isLoading =
+    trackModel.id in messageData ||
+    !viewComponent ||
+    (viewComponent && dataIdx !== viewComponent.dataIdx);
+  const loadingLabel =
+    (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
+      ? "Loading View"
+      : "Getting Data";
+  /* The loci being fetched, which the loading button lists on a click. */
+  const loadingLoci = (
+    <div>
+      {trackModel.id in messageData
+        ? messageData[`${trackModel.id}`].map((item, index) => {
+            return (
+              <div key={`${trackModel.index}loading-` + `${index}`}>
+                {item.genomicLoci
+                  ? item.genomicLoci.map((item) => item.toString())
+                  : ""}{" "}
+              </div>
+            );
+          })
+        : ""}
+    </div>
+  );
+  const metadataBoxes = (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        zIndex: 3,
+        pointerEvents: "auto",
+        height: fetchError.current
+          ? 40
+          : getConfigOptions().displayMode === "full"
+            ? svgHeight.current
+            : !getConfigOptions().isCombineStrands &&
+                trackModel.type === "methylc"
+              ? getConfigOptions().height * 2
+              : getConfigOptions().height,
+        left:
+          windowWidth + (colWidth - (15 * metaSets.terms.length - 1)), // add the column's width to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
+      }}
+    >
+      <MetadataIndicator
+        track={trackModel}
+        terms={metaSets.terms}
+        onClick={onColorBoxClick}
+        height={
+          fetchError.current
+            ? 40
+            : svgHeight.current
+              ? svgHeight.current
+              : !getConfigOptions().isCombineStrands &&
+                  trackModel.type === "methylc"
+                ? getConfigOptions().height * 2
+                : getConfigOptions().height
+        }
+      />
+    </div>
+  );
+  /* Which of the pangenome's own tracks this is: the graph's row, a
+     haplotype's lane, or neither. */
+  const pangenomePart =
+    trackModel.type === "pangenome"
+      ? (trackModel.options?.part ?? GRAPH_PART)
+      : null;
+
   return (
     <div
       style={{
@@ -641,200 +758,234 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         position: "relative",
       }}
     >
-      <div
-        ref={legendRef}
-        style={
-          scrollPanEnabled
-            ? {
-                position: "sticky",
-                left: 0,
-                alignSelf: "stretch",
-                flexShrink: 0,
-                willChange: "transform",
-                zIndex: 2,
-                pointerEvents: "none",
-              }
-            : {
-                position: "absolute",
-                left: 0,
-                top: 0,
-
-                willChange: "transform",
-                zIndex: 2,
-                pointerEvents: "none",
-              }
-        }
-      >
+      {legendHeader ? (
+        /* The pangenome view: no column. The slot takes no width and holds
+           the glass header over the track's top-left corner; it stays still
+           on a pan as the column did. */
         <div
-          style={{
-            width: legendWidth,
-            display: "flex",
-            flexDirection: "column",
-            backgroundColor: trackModel.isSelected
-              ? "yellow"
-              : "var(--bg-color)",
-            color: trackModel.options?.legendFontColor
-              ? trackModel.options.legendFontColor
-              : trackModel.isSelected
-                ? "black"
-                : /* The graph's rows: the reference blue, alt paths green. */
-                  (pangenomeLegendColor(trackModel) ?? "var(--font-color)"),
-
-            pointerEvents: "auto",
-          }}
+          ref={legendRef}
+          style={
+            scrollPanEnabled
+              ? {
+                  position: "sticky",
+                  left: 0,
+                  alignSelf: "stretch",
+                  flexShrink: 0,
+                  width: 0,
+                  willChange: "transform",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                }
+              : {
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  width: 0,
+                  willChange: "transform",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                }
+          }
         >
-          {/* <p
-            className="TrackLegend-label"
+          {/* The column's box set each row's height: kept, empty, so no
+              track moves. */}
+          <div
             style={{
-              position: "absolute",
-              wordWrap: "break-word",
-              whiteSpace: "normal",
-              margin: 0,
-              zIndex: 1,
+              width: 0,
+              height:
+                legendBoxHeight({ height: legendHeight, trackModel }) +
+                (legend?.reverseStrandLegendProps
+                  ? legendBoxHeight(legend.reverseStrandLegendProps)
+                  : 0),
+            }}
+          />
+          <TrackHeader
+            trackModel={trackModel}
+            legend={legend}
+            height={legendHeight}
+            label={trackModel.options?.label ?? legend?.label ?? ""}
+            fontColor={trackModel.options?.legendFontColor}
+            orbColor={
+              /* A haplotype's dot is its bar's own colour (linearModel.ts). */
+              pangenomePart !== null && pangenomePart !== GRAPH_PART
+                ? pastelColor(pangenomePart)
+                : pangenomeLegendColor(trackModel)
+            }
+            light={pangenomePart !== null}
+            lane={pangenomePart !== null && pangenomePart !== GRAPH_PART}
+            passThrough={pangenomePart === GRAPH_PART}
+            chips={
+              <>
+                <Loading
+                  chip
+                  buttonLabel={loadingLabel}
+                  height={0}
+                  color={trackModel.isSelected ? "black" : "var(--font-color)"}
+                  isVisible={isLoading}
+                  legendWidth={legendWidth}
+                >
+                  {loadingLoci}
+                </Loading>
+                <HiddenIndicator
+                  chip
+                  numHidden={
+                    viewComponent && viewComponent.numHidden
+                      ? viewComponent.numHidden
+                      : ""
+                  }
+                  color={trackModel.isSelected ? "black" : "var(--font-color)"}
+                  height={0}
+                  isVisible={
+                    viewComponent && viewComponent.numHidden && !isLoading
+                  }
+                  legendWidth={legendWidth}
+                />
+              </>
+            }
+          />
+          {metadataBoxes}
+        </div>
+      ) : (
+        <div
+          ref={legendRef}
+          style={
+            scrollPanEnabled
+              ? {
+                  position: "sticky",
+                  left: 0,
+                  alignSelf: "stretch",
+                  flexShrink: 0,
+                  willChange: "transform",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                }
+              : {
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+
+                  willChange: "transform",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                }
+          }
+        >
+          <div
+            style={{
+              width: legendWidth,
+              display: "flex",
+              flexDirection: "column",
+              backgroundColor: trackModel.isSelected
+                ? "yellow"
+                : "var(--bg-color)",
+              color: trackModel.options?.legendFontColor
+                ? trackModel.options.legendFontColor
+                : trackModel.isSelected
+                  ? "black"
+                  : /* The graph's rows: the reference blue, alt paths green. */
+                    (pangenomeLegendColor(trackModel) ?? "var(--font-color)"),
+
+              pointerEvents: "auto",
             }}
           >
-            {trackModel.options?.label ?? legend?.label ?? ""}
-          </p> */}
-          <TrackLegend
-            trackModel={trackModel}
-            height={
-              legend?.height ??
-              (fetchError.current
-                ? 40
-                : getConfigOptions().displayMode === "full" ||
-                    getConfigOptions().displayMode === "detail" ||
-                    (svgHeight.current &&
-                      getConfigOptions().displayMode === "auto")
-                  ? svgHeight.current
-                  : getConfigOptions().height)
-            }
-            axisScale={legend?.axisScale}
-            axisLegend={legend?.axisLegend}
-            label={trackModel.options?.label ?? legend?.label ?? ""}
-            forceSvg={legend?.forceSvg}
-            trackViewRegion={legend?.trackViewRegion}
-            selectedRegion={legend?.selectedRegion}
-            trackWidth={legend?.trackWidth}
-            noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
-            legendWidth={legendWidth}
-            note={legend?.note}
-            rows={legend?.rows}
-          />
-          {legend?.reverseStrandLegendProps && (
+            {/* <p
+              className="TrackLegend-label"
+              style={{
+                position: "absolute",
+                wordWrap: "break-word",
+                whiteSpace: "normal",
+                margin: 0,
+                zIndex: 1,
+              }}
+            >
+              {trackModel.options?.label ?? legend?.label ?? ""}
+            </p> */}
             <TrackLegend
-              {...legend.reverseStrandLegendProps}
+              trackModel={trackModel}
+              height={legendHeight}
+              axisScale={legend?.axisScale}
+              axisLegend={legend?.axisLegend}
+              label={trackModel.options?.label ?? legend?.label ?? ""}
+              forceSvg={legend?.forceSvg}
+              trackViewRegion={legend?.trackViewRegion}
+              selectedRegion={legend?.selectedRegion}
+              trackWidth={legend?.trackWidth}
+              noShiftFirstAxisLabel={legend?.noShiftFirstAxisLabel}
               legendWidth={legendWidth}
+              note={legend?.note}
+              rows={legend?.rows}
             />
-          )}
-        </div>
-        {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
-        <Loading
-          buttonLabel={
-            (viewComponent && dataIdx !== viewComponent.dataIdx) ||
-            !viewComponent
-              ? "Loading View"
-              : "Getting Data"
-          }
-          height={
-            !viewComponent
-              ? 40
-              : getConfigOptions().displayMode === "full"
+            {legend?.reverseStrandLegendProps && (
+              <TrackLegend
+                {...legend.reverseStrandLegendProps}
+                legendWidth={legendWidth}
+              />
+            )}
+          </div>
+          {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
+          <Loading
+            buttonLabel={
+              (viewComponent && dataIdx !== viewComponent.dataIdx) ||
+              !viewComponent
+                ? "Loading View"
+                : "Getting Data"
+            }
+            height={
+              !viewComponent
+                ? 40
+                : getConfigOptions().displayMode === "full"
+                  ? !fetchError.current
+                    ? svgHeight.current
+                    : 40
+                  : !fetchError.current
+                    ? getConfigOptions().height
+                    : 40
+            }
+            color={trackModel.isSelected ? "black" : "var(--font-color)"}
+            isVisible={
+              trackModel.id in messageData ||
+              !viewComponent ||
+              (viewComponent && dataIdx !== viewComponent.dataIdx)
+            }
+            legendWidth={legendWidth}
+          >
+            {loadingLoci}
+          </Loading>
+
+          <HiddenIndicator
+            numHidden={
+              viewComponent && viewComponent.numHidden
+                ? viewComponent.numHidden
+                : ""
+            }
+            color={trackModel.isSelected ? "black" : "var(--font-color)"}
+            height={
+              getConfigOptions().displayMode === "full"
                 ? !fetchError.current
                   ? svgHeight.current
                   : 40
                 : !fetchError.current
                   ? getConfigOptions().height
                   : 40
-          }
-          color={trackModel.isSelected ? "black" : "var(--font-color)"}
-          isVisible={
-            trackModel.id in messageData ||
-            !viewComponent ||
-            (viewComponent && dataIdx !== viewComponent.dataIdx)
-          }
-          legendWidth={legendWidth}
-        >
-          <div>
-            {trackModel.id in messageData
-              ? messageData[`${trackModel.id}`].map((item, index) => {
-                  return (
-                    <div key={`${trackModel.index}loading-` + `${index}`}>
-                      {item.genomicLoci
-                        ? item.genomicLoci.map((item) => item.toString())
-                        : ""}{" "}
-                    </div>
-                  );
-                })
-              : ""}
-          </div>
-        </Loading>
-
-        <HiddenIndicator
-          numHidden={
-            viewComponent && viewComponent.numHidden
-              ? viewComponent.numHidden
-              : ""
-          }
-          color={trackModel.isSelected ? "black" : "var(--font-color)"}
-          height={
-            getConfigOptions().displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-                ? getConfigOptions().height
-                : 40
-          }
-          xOffset={
-            windowWidth / 2 + legendWidth - (15 * metaSets.terms.length - 1)
-          }
-          isVisible={
-            viewComponent &&
-            viewComponent.numHidden &&
-            !(
-              trackModel.id in messageData ||
-              !viewComponent ||
-              (viewComponent && dataIdx !== viewComponent.dataIdx)
-            )
-          }
-          legendWidth={legendWidth}
-        />
-
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            zIndex: 3,
-            pointerEvents: "auto",
-            height: fetchError.current
-              ? 40
-              : getConfigOptions().displayMode === "full"
-                ? svgHeight.current
-                : !getConfigOptions().isCombineStrands &&
-                    trackModel.type === "methylc"
-                  ? getConfigOptions().height * 2
-                  : getConfigOptions().height,
-            left:
-              windowWidth + (legendWidth - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
-          }}
-        >
-          <MetadataIndicator
-            track={trackModel}
-            terms={metaSets.terms}
-            onClick={onColorBoxClick}
-            height={
-              fetchError.current
-                ? 40
-                : svgHeight.current
-                  ? svgHeight.current
-                  : !getConfigOptions().isCombineStrands &&
-                      trackModel.type === "methylc"
-                    ? getConfigOptions().height * 2
-                    : getConfigOptions().height
             }
+            xOffset={
+              windowWidth / 2 + colWidth - (15 * metaSets.terms.length - 1)
+            }
+            isVisible={
+              viewComponent &&
+              viewComponent.numHidden &&
+              !(
+                trackModel.id in messageData ||
+                !viewComponent ||
+                (viewComponent && dataIdx !== viewComponent.dataIdx)
+              )
+            }
+            legendWidth={legendWidth}
           />
+
+          {metadataBoxes}
         </div>
-      </div>
+      )}
 
       <div
         style={{

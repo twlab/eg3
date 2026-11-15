@@ -725,6 +725,11 @@ export async function fetchPangenomeData(
                  out with room for whatever arrives, so there the walks stay
                  cut at the context. */
               walkOn: settings.mode === "linear",
+              /* The rows of a haplotype with copies are told apart by copy
+                 (copiesModel.ts): the finder walks each shown haplotype's
+                 path for them. Only for the bars, and only with haplotypes
+                 chosen, which it needs. */
+              duplications: settings.mode === "linear" && !!options.haplotypes?.length,
             })
           : { nodes: {}, edges: {}, paths: [] };
       })();

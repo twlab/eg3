@@ -99,6 +99,9 @@ export interface BarRaster {
   /** Which base of that part the pixel shows. */
   base: Int32Array;
   parts: RasterPart[];
+  /** The stretches read on the other strand, each one block: the inverted
+      runs among the parts, left to right. */
+  runs: RasterPart[];
   marks: MarkGlyph[];
   whites: WhiteRun[];
   caps: EndCap[];
@@ -292,7 +295,8 @@ export function rasteriseBar(
     return known;
   };
 
-  return { key, width: w, part: partAt, base: baseAt, parts, marks, whites, caps, own };
+  const runs = parts.filter((part) => part.kind === "inverted" && part.right > part.left && part.len > 0).sort((a, b) => a.left - b.left);
+  return { key, width: w, part: partAt, base: baseAt, parts, runs, marks, whites, caps, own };
 }
 
 /** A size in bases, short, for a label: as it is under a thousand ("582"),

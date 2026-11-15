@@ -8,6 +8,9 @@ interface HiddenIndicatorProps {
   isVisible?: boolean;
   color: string;
   legendWidth?: number;
+  /** In the pangenome view's glass header (TrackHeader.tsx): a small chip
+      after the track's label, which opens in place to say more. */
+  chip?: boolean;
 }
 
 const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
@@ -17,6 +20,7 @@ const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
   isVisible = false,
   color,
   legendWidth,
+  chip = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(true);
@@ -39,6 +43,30 @@ const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [open]);
+
+  if (chip) {
+    if (!isVisible) return null;
+    return dismissed ? (
+      <button
+        type="button"
+        className="TrackHeader-glass TrackHeader-chip"
+        onClick={() => setDismissed(false)}
+      >
+        {numHidden} items hidden
+      </button>
+    ) : (
+      <span className="TrackHeader-glass TrackHeader-chip">
+        {numHidden} items hidden - zoom in to view them
+        <button
+          type="button"
+          className="TrackHeader-chipLink"
+          onClick={() => setDismissed(true)}
+        >
+          dismiss
+        </button>
+      </span>
+    );
+  }
 
   return (
     <div

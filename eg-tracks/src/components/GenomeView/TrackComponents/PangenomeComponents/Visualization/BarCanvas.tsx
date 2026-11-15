@@ -7,6 +7,7 @@ import type { NodeLetters } from "./letters";
 import { sequenceSize } from "./nodeDetail";
 import { backingSize, fitCanvas, useScreenSize } from "./canvasScreen";
 import type { FittedCanvas } from "./canvasScreen";
+import { blockRing, blockTone } from "./blockColor";
 
 /* ══════════════════════════════════════════════════════════════════════════
    One haplotype's bar, painted from its raster (barRaster.ts).
@@ -16,7 +17,11 @@ import type { FittedCanvas } from "./canvasScreen";
    reads other bases over the same reference, hatched where it replaces a
    stretch with no base pairing claimed (its letters still spelled, in the
    hatched style), white with the size written in it where it skips
-   reference, arrowed where it reads the reference on the other strand.
+   reference. Where it reads the reference on the other strand it is one
+   block (PLAN-remastered-2.md section 4): a shade darker, outlined and
+   arrowed, with nothing lettered inside - a mismatch there is its black
+   chip alone, a deletion its white, an insertion its mark - and the
+   pointer reads the whole block, whose card shows the stretch flipped.
    Bases with no room on the reference are marks: a glyph above the bar at
    the point they go in, with "+n" when it fits, taking no room. Marks
    closer than a glyph's width share one, which names the largest and how
@@ -33,9 +38,10 @@ import type { FittedCanvas } from "./canvasScreen";
    unbroken by gaps too small to see; a grey stripe across each bin with
    small variants where they are dense; each white gap at its true width,
    never widened; the big variants as themselves; a dark tick at each other
-   small variant's base, on top of the gaps; and arrows over what is read
-   on the other strand. No letters. And the pointer reads it by bins too:
-   a variant drawn as itself keeps its own card, and anywhere else the
+   small variant's base, on top of the gaps; and what is read on the other
+   strand as one block, a shade darker, arrowed and outlined, as at every
+   zoom. No letters. And the pointer reads it by bins too: a variant drawn
+   as itself keeps its own card, a block its own, and anywhere else the
    pointer means the bin round it (zoomedOutTarget).
    ══════════════════════════════════════════════════════════════════════════ */
 
@@ -49,6 +55,9 @@ export type BarTarget =
   | { kind: "mark"; glyph: MarkGlyph; x: number; y: number; at: number }
   | { kind: "white"; white: WhiteRun; x: number; y: number; at: number }
   | { kind: "end"; cap: EndCap; x: number; y: number; at: number }
+  /** A stretch read on the other strand, one block: the run, and the
+      reference base under the pointer. */
+  | { kind: "block"; part: RasterPart; bp: number; x: number; y: number; at: number }
   | { kind: "bin"; from: number; to: number; x: number; y: number; at: number };
 
 export interface BarCanvasProps {
@@ -105,7 +114,7 @@ const ARROW_HEIGHT = 13;
 /* A mark: a small triangle pointing into the bar, and its size. A nested
    mark (rule D, nestedMarks.ts) is violet, its label in the monospace
    face so its chips line up with its letters. */
-const MARK_INK = "#c2410c";
+export const MARK_INK = "#c2410c";
 const MARK_HALF = 4;
 const MARK_TALL = 7;
 const MARK_FONT = 9;
@@ -127,6 +136,8 @@ const INK_PROBE_SIZE = 100;
 const DELETION_FONT = 11;
 const DELETION_INK = "#6b7280";
 const DELETION_PAD = 4;
+/* A block's outline, in CSS pixels. */
+const BLOCK_RING_WIDTH = 1.5;
 /* A bar's end where the walk leaves the reference for good: a dark cap,
    and "missing data" past it in the deletion's grey, set in italics. */
 const END_INK = "#374151";
@@ -199,6 +210,13 @@ function BarCanvas({
       const glyph = markAt(raster, at);
       if (glyph) return { kind: "mark", glyph, x, y: clientY, at };
     }
+    /* A stretch read on the other strand is one block: the pointer reads
+       it whole, its whites included, and the card shows the place. */
+    const run = raster.runs.find((part) => at >= part.left && at < part.right);
+    if (run) {
+      const into = Math.floor(((at - run.left) / (run.right - run.left)) * run.len);
+      return { kind: "block", part: run, bp: run.ref + Math.min(run.len - 1, Math.max(0, into)), x, y: clientY, at };
+    }
     const hit = hitAt(raster, at);
     if (hit) {
       return {
@@ -253,10 +271,9 @@ function BarCanvas({
  * one. So the pointer reads the bin round it (`binAt`), whose card lists
  * them. A variant drawn as itself keeps its own card, as at mid zoom,
  * checked in this order: a kept mark's glyph in the marks' band, a cap, a
- * white gap, a big deletion-insertion's hatching, and bases read on the
- * other strand too narrow for more than one arrow. Wider arrows give the
- * bin: its card lists the inversion, and what lies inside it can still be
- * pointed at. A bin holding none of the row's bases is nothing (binAt
+ * stretch read on the other strand (one block at every zoom: its card
+ * shows it flipped, at the place under the pointer), a white gap and a
+ * big deletion-insertion's hatching. A bin holding none of the row's bases is nothing (binAt
  * gives null): no card on an empty stretch, as at mid zoom.
  */
 function zoomedOutTarget(
@@ -271,6 +288,11 @@ function zoomedOutTarget(
   }
   const cap = capAt(raster, at);
   if (cap) return { kind: "end", cap, x, y: clientY, at };
+  const block = raster.runs.find((part) => pointedAt(part, at));
+  if (block) {
+    const into = Math.floor(((at - block.left) / (block.right - block.left)) * block.len);
+    return { kind: "block", part: block, bp: block.ref + Math.min(block.len - 1, Math.max(0, into)), x, y: clientY, at };
+  }
   const white = raster.whites.find((run) => pointedAt(run, at));
   if (white) return { kind: "white", white, x, y: clientY, at };
   const hit = ownPartAt(raster, tiers, at);
@@ -369,6 +391,14 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
   ctx.fillStyle = color;
   eachRun(raster.parts, roomy, sx, pw, (from, to) => ctx.fillRect(from, top, to - from, tall));
 
+  /* A stretch read on the other strand: one block, the colour a shade
+     darker. */
+  const isRun = (part: RasterPart) => part.kind === "inverted";
+  if (raster.runs.length) {
+    ctx.fillStyle = blockTone(color);
+    eachRun(raster.parts, isRun, sx, pw, (from, to) => ctx.fillRect(from, top, to - from, tall));
+  }
+
   /* White where the haplotype skips reference, at least a screen pixel
      wide, cleared after the runs so a deletion inside an inverted span
      shows through the arrows too. */
@@ -415,7 +445,9 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
     if (part.right <= 0 || part.left >= width) continue;
     const perBase = (part.right - part.left) / part.len;
     const size = Math.min(sequenceSize(perBase), (tall / sy) * LETTER_OF_BAR);
-    const spell = size >= SEQUENCE_MIN_SIZE;
+    /* Nothing is lettered inside a block: a mismatch there keeps its
+       chip alone, as one too narrow for its letter does. */
+    const spell = !part.inverted && size >= SEQUENCE_MIN_SIZE;
     if (!spell && part.kind !== "mismatch") continue;
     let advance = 0;
     let baseline = 0;
@@ -449,6 +481,16 @@ function paintBar({ ctx, pw, ph, sx, sy }: FittedCanvas, paint: BarPaint) {
       }
       if (spell) ctx.fillText(letter, Math.round((part.left + (i + 0.5) * perBase) * sx - advance / 2), baseline);
     }
+  }
+
+  /* Each block's outline, over what is drawn inside it. */
+  if (raster.runs.length) {
+    const ring = Math.max(1, Math.round(BLOCK_RING_WIDTH * sx));
+    ctx.strokeStyle = blockRing(color);
+    ctx.lineWidth = ring;
+    eachRun(raster.parts, isRun, sx, pw, (from, to) => {
+      if (to - from > ring && tall > ring) ctx.strokeRect(from + ring / 2, top + ring / 2, to - from - ring, tall - ring);
+    });
   }
 
   paintOver(ctx, raster, view, box);
@@ -605,6 +647,20 @@ function paintBins(ctx: CanvasRenderingContext2D, raster: BarRaster, tiers: BarT
     Math.max(1, GAP_MIN_PX * sx),
   );
 
+  /* A stretch read on the other strand: one block, the colour a shade
+     darker, where the bar is filled. */
+  if (raster.runs.length) {
+    ctx.fillStyle = blockTone(color);
+    for (const run of raster.runs) {
+      const [a, b] = clip(Math.round(run.left * sx), Math.round(run.right * sx));
+      for (const [from, to] of filled) {
+        const x0 = Math.max(a, from);
+        const x1 = Math.min(b, to);
+        if (x1 > x0) ctx.fillRect(x0, top, x1 - x0, tall);
+      }
+    }
+  }
+
   /* The grey stripes, in the middle half and only where the bar is
      filled: one rect per run of bins of one class, its edges rounded once
      from the axis every bar shares, so they line up from lane to lane. */
@@ -709,6 +765,18 @@ function paintBins(ctx: CanvasRenderingContext2D, raster: BarRaster, tiers: BarT
   };
   for (const run of tiers.arrowRuns) strand(() => arrows(ctx, run.left * sx, run.right * sx, top, tall, sx));
   for (const glyph of tiers.arrowGlyphs) strand(() => arrow(ctx, glyph.x * sx, top, tall, sx));
+
+  /* Each block's outline, over what is drawn inside it; a block too
+     narrow for one has its darker shade alone. */
+  if (raster.runs.length) {
+    const ring = Math.max(1, Math.round(BLOCK_RING_WIDTH * sx));
+    ctx.strokeStyle = blockRing(color);
+    ctx.lineWidth = ring;
+    for (const run of raster.runs) {
+      const [a, b] = clip(Math.round(run.left * sx), Math.round(run.right * sx));
+      if (b - a > ring && tall > ring) ctx.strokeRect(a + ring / 2, top + ring / 2, b - a - ring, tall - ring);
+    }
+  }
 }
 
 /**

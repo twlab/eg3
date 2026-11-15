@@ -63,6 +63,7 @@ import { ChevronRightIcon } from "@primer/octicons-react";
 import EscapeHandlerContext from "../../lib/EscapeHandlerContext";
 import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
 import { LinearDrawingModel } from "../../models";
+import "./TrackCards.css";
 
 /**
  * Filters trackModels of type "genomealign" from the first array where their IDs
@@ -273,8 +274,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastSelectedTool = useRef<string | null>("Drag");
   const dragOn = useRef(true);
   const prevWindowWidth = useRef<number>(0);
-  const windowWidthRef = useRef<number>(windowWidth);
-  windowWidthRef.current = windowWidth;
+  /* The pangenome view has no legend column (PLAN-remastered-2.md section
+     3): each track's name is a glass label over its top-left corner
+     (TrackHeader.tsx), and the drawing takes the column's width, so the
+     region typed is exactly the region shown, from the left edge. Every
+     other view keeps its column at the user's legendWidth. The same test
+     switches the toolbar to the pangenome's. */
+  const isPangenome = tracks.some(
+    (track: any) => track.type === PANGENOME_TRACK_TYPE,
+  );
+  const legendHeader = isPangenome;
+  const columnWidth = legendHeader ? 0 : legendWidth;
+  /* GenomeRoot gives the width less the user's column; the view gets back
+     whatever its own column does not take. */
+  const windowWidthRef = useRef<number>(
+    windowWidth + legendWidth - columnWidth,
+  );
+  windowWidthRef.current = windowWidth + legendWidth - columnWidth;
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
@@ -301,8 +317,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const rafId = useRef<number | null>(null);
   const stateSize = useRef(currentState.limit);
   const stateIdx = useRef(currentState.index);
-  const padding = Math.max(8, Math.min(12, windowWidthRef.current * 0.008));
-  const fontSize = Math.max(12, Math.min(12, windowWidthRef.current * 0.009));
+  /* The toolbar is sized by GenomeRoot's width, the view's less the
+     user's column, in every view: in the pangenome view the drawing is
+     wider, the toolbar's row is not. */
+  const padding = Math.max(8, Math.min(12, windowWidth * 0.008));
+  const fontSize = Math.max(12, Math.min(12, windowWidth * 0.009));
 
   const trackManagerState = useRef<any>({
     bundleId: "",
@@ -353,10 +372,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   /* Which view the pangenome graph is drawn in. Held here rather than by the
      graph's tracks: the toolbar switches it, the graph's rows are drawn in
      it, and each band is laid out for it - so the tracks under the graph
-     stay under it. */
-  const isPangenome = tracks.some(
-    (track: any) => track.type === PANGENOME_TRACK_TYPE,
-  );
+     stay under it. (Whether there is a graph, isPangenome, is worked out
+     above, with the view's width.) */
   const [pangenomeView, setPangenomeView] = useState<ViewMode>("linear");
   /* Which bubbles are one site, in tube and variants view: the tube map's
      sets its columns, and so the room each band holds. */
@@ -820,7 +837,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const legendCounter = -(anchor + dragXBase.current);
     trackWrapperRef.current.style.transform = `translate3d(${anchor + dragXBase.current}px, 0, 0)`;
     trackWrapperRef.current
-      .querySelectorAll(".Track-border-container")
+      .querySelectorAll(".Track-border-container, .Track-card-frame")
       .forEach((border) => {
         (border as HTMLElement).style.transform =
           `translate3d(${counter}px, 0, 0)`;
@@ -1406,7 +1423,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (trackWrapperRef.current) {
         trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
         trackWrapperRef.current
-          .querySelectorAll(".Track-border-container")
+          .querySelectorAll(".Track-border-container, .Track-card-frame")
           .forEach((border) => {
             (border as HTMLElement).style.transform =
               `translate3d(${-dragX.current}px, 0, 0)`;
@@ -4514,7 +4531,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (trackWrapperRef.current) {
         trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
         trackWrapperRef.current
-          .querySelectorAll(".Track-border-container")
+          .querySelectorAll(".Track-border-container, .Track-card-frame")
           .forEach((border) => {
             (border as HTMLElement).style.transform =
               `translate3d(${-dragX.current}px, 0, 0)`;
@@ -5215,7 +5232,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (trackWrapperRef.current) {
             trackWrapperRef.current.style.transform = `translate3d(${dragX.current}px, 0, 0)`;
             trackWrapperRef.current
-              .querySelectorAll(".Track-border-container")
+              .querySelectorAll(".Track-border-container, .Track-card-frame")
               .forEach((border) => {
                 (border as HTMLElement).style.transform =
                   `translate3d(${-dragX.current}px, 0, 0)`;
@@ -5468,7 +5485,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <GenomeNavigator
           selectedRegion={userViewRegion}
           genomeConfig={genomeConfig}
-          windowWidth={windowWidthRef.current + legendWidth}
+          windowWidth={windowWidthRef.current + columnWidth}
           onRegionSelected={onRegionSelected}
         />
       )}
@@ -5477,12 +5494,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           <div
             style={{
               backgroundColor: "var(--bg-color)",
-              width: `${windowWidthRef.current + legendWidth}px`,
+              width: `${windowWidthRef.current + columnWidth}px`,
               marginTop: padding / 3,
               marginBottom: padding / 3,
               display: "flex",
-              flexDirection: windowWidthRef.current <= 600 ? "column" : "row",
-              alignItems: windowWidthRef.current <= 600 ? "stretch" : "center",
+              /* Sized by GenomeRoot's width, as padding is: the same row
+                 wraps the same way with or without a legend column. */
+              flexDirection: windowWidth <= 600 ? "column" : "row",
+              alignItems: windowWidth <= 600 ? "stretch" : "center",
               justifyContent: "end",
             }}
           >
@@ -5492,7 +5511,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 width: "100%",
                 alignItems: "center",
                 justifyContent: "start",
-                flexWrap: windowWidthRef.current <= 1080 ? "wrap" : "nowrap",
+                flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
               }}
             >
               <div
@@ -5509,7 +5528,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       onNewRegionSelect={
                         !onNewRegionSelect ? () => {} : onNewRegionSelect
                       }
-                      windowWidth={windowWidthRef.current}
+                      windowWidth={windowWidth}
                       buttonPadding={padding / 2}
                     />
                   ) : (
@@ -5660,7 +5679,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 justifyContent: "flex-end",
 
-                marginTop: windowWidthRef.current <= 1080 ? padding / 2 : 0,
+                marginTop: windowWidth <= 1080 ? padding / 2 : 0,
               }}
             >
               <MetadataHeader
@@ -5668,7 +5687,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 onNewTerms={onNewTerms}
                 suggestedMetaSets={metaSets.suggestedMetaSets}
                 onRemoveTerm={onRemoveTerm}
-                windowWidth={windowWidthRef.current}
+                windowWidth={windowWidth}
                 fontSize={Math.max(14, fontSize)}
                 padding={padding}
                 tracks={trackManagerState.current.tracks}
@@ -5687,7 +5706,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             flexDirection: "row",
             outline: "1px solid #9AA6B2",
 
-            width: `${windowWidthRef.current + legendWidth}px`,
+            width: `${windowWidthRef.current + columnWidth}px`,
             overflowX: "hidden",
             overflowY: "hidden",
           }}
@@ -5728,7 +5747,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 flexDirection: "row",
 
-                width: `${windowWidthRef.current + legendWidth}px`,
+                width: `${windowWidthRef.current + columnWidth}px`,
                 ...(scrollPanEnabled
                   ? {
                       overscrollBehaviorX: "contain" as const,
@@ -5739,7 +5758,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }}
             >
               {trackComponents ? (
-                <div ref={trackWrapperRef} onClick={handleOutsideConfigClick}>
+                <div
+                  ref={trackWrapperRef}
+                  onClick={handleOutsideConfigClick}
+                  className={legendHeader ? "Track-cards" : undefined}
+                >
                   <SortableList
                     items={trackComponents}
                     onChange={handleReorder}
@@ -5756,9 +5779,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           key={item.id}
                           style={{
                             width: scrollPanEnabled
-                              ? `${(scrollRunwayWindows * 2 + 1) * windowWidthRef.current + legendWidth}px`
-                              : `${windowWidthRef.current + legendWidth}px`,
+                              ? `${(scrollRunwayWindows * 2 + 1) * windowWidthRef.current + columnWidth}px`
+                              : `${windowWidthRef.current + columnWidth}px`,
                             position: "relative",
+                            ...(cardOf.has(item.id)
+                              ? {
+                                  marginTop: cardOf.get(item.id)!.start && !cardOf.get(item.id)!.first ? CARD_WELL_PX : 0,
+                                  paddingTop: cardOf.get(item.id)!.start ? CARD_EDGE_PX : 0,
+                                  background: "var(--bg-color, #fff)",
+                                }
+                              : {}),
                             ...(pangenomeView !== "linear" &&
                             item.trackModel.type === PANGENOME_TRACK_TYPE &&
                             item.trackModel.options?.part &&
@@ -5776,7 +5806,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                               style={
                                 scrollPanEnabled
                                   ? {
-                                      width: `${windowWidthRef.current + legendWidth}px`,
+                                      width: `${windowWidthRef.current + columnWidth}px`,
                                       right: "auto",
                                     }
                                   : undefined
@@ -5788,12 +5818,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                               style={
                                 scrollPanEnabled
                                   ? {
-                                      width: `${windowWidthRef.current + legendWidth}px`,
+                                      width: `${windowWidthRef.current + columnWidth}px`,
                                       right: "auto",
                                     }
                                   : undefined
                               }
                             ></div>
+                          )}
+
+                          {cardOf.has(item.id) && (
+                            <div
+                              className={[
+                                "Track-card-frame",
+                                cardOf.get(item.id)!.edge ? `Track-card-${cardOf.get(item.id)!.edge}` : "",
+                                cardOf.get(item.id)!.start ? "Track-card-start" : "",
+                                cardOf.get(item.id)!.end ? "Track-card-end" : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
+                              style={
+                                scrollPanEnabled
+                                  ? {
+                                      width: `${windowWidthRef.current + columnWidth}px`,
+                                      right: "auto",
+                                    }
+                                  : undefined
+                              }
+                            >
+                              {cardOf.get(item.id)!.start && (
+                                <>
+                                  <i className="Track-card-corner Track-card-tl" />
+                                  <i className="Track-card-corner Track-card-tr" />
+                                </>
+                              )}
+                              {cardOf.get(item.id)!.end && (
+                                <>
+                                  <i className="Track-card-corner Track-card-bl" />
+                                  <i className="Track-card-corner Track-card-br" />
+                                </>
+                              )}
+                            </div>
                           )}
 
                           <item.component
@@ -5828,6 +5892,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             initialLoad={initialLoad}
                             selectedRegionSet={selectedRegionSet}
                             legendWidth={legendWidth}
+                            columnWidth={columnWidth}
+                            legendHeader={legendHeader}
                             onConfigChange={onConfigChange}
                           />
                         </div>
@@ -5840,7 +5906,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       style={{
                         position: "absolute",
                         top: 0,
-                        left: legendWidth,
+                        left: columnWidth,
                         width: windowWidthRef.current,
                         height: "100%",
                         pointerEvents: "none",
@@ -5890,8 +5956,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     selectableRegion={curViewWindowRegion}
                     dragLimits={
                       new OpenInterval(
-                        legendWidth,
-                        windowWidthRef.current + legendWidth,
+                        columnWidth,
+                        windowWidthRef.current + columnWidth,
                       )
                     }
                     xOffset={
@@ -5909,7 +5975,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           ? block.current?.getBoundingClientRect().height
                           : 0,
                         zIndex: 3,
-                        width: `${windowWidthRef.current + legendWidth}px`,
+                        width: `${windowWidthRef.current + columnWidth}px`,
                       }}
                     ></div>
                   </SelectableGenomeArea>
@@ -5920,7 +5986,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               {scrollPanEnabled ? (
                 <div
                   style={{
-                    width: `${(scrollRunwayWindows * 2 + 1) * windowWidthRef.current + legendWidth}px`,
+                    width: `${(scrollRunwayWindows * 2 + 1) * windowWidthRef.current + columnWidth}px`,
                     flexShrink: 0,
                     height: 1,
                     pointerEvents: "none",
@@ -5965,6 +6031,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     },
     [],
   );
+  /* The pangenome view's cards (PLAN-remastered-2.md section 3, "The cards";
+     TrackCards.css): every shown row a card on a grey well, the ruler and
+     the graph's own row one card under a blue edge, each haplotype one under
+     a green edge, any other track one under a slate edge. Which row opens
+     and which closes a card, by the rows' order on screen; the rows the view
+     hides (the haplotypes' outside linear view) have none. */
+  const CARD_WELL_PX = 10;
+  const CARD_EDGE_PX = 3;
+  const cardOf = new Map<string, { first: boolean; start: boolean; end: boolean; edge: "ref" | "hap" | "other" | null }>();
+  if (legendHeader && trackComponents) {
+    const isRow = (item: any) => item.trackModel.type === PANGENOME_TRACK_TYPE;
+    const isHap = (item: any) => isRow(item) && !!item.trackModel.options?.part && item.trackModel.options.part !== GRAPH_PART;
+    const isGraph = (item: any) => isRow(item) && !isHap(item);
+    const shown = trackComponents.filter((item: any) => !(pangenomeView !== "linear" && isHap(item)));
+    shown.forEach((item: any, k: number) => {
+      const before = shown[k - 1];
+      const after = shown[k + 1];
+      const joinsBefore = isGraph(item) && !!before && before.trackModel.type === "ruler";
+      const joinsAfter = item.trackModel.type === "ruler" && !!after && isGraph(after);
+      cardOf.set(item.id, {
+        first: k === 0,
+        start: !joinsBefore,
+        end: !joinsAfter,
+        edge: joinsBefore ? null : joinsAfter || isGraph(item) ? "ref" : isHap(item) ? "hap" : "other",
+      });
+    });
+  }
+
   return isPangenome ? (
     <PangenomeViewProvider
       windowWidth={windowWidthRef.current}

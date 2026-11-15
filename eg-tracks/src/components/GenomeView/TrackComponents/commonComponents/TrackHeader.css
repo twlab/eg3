@@ -1,0 +1,612 @@
+/* ── The pangenome view's legend: glass labels over the tracks ───────────
+   PLAN-remastered-2.md section 3 in eg3/claude-memory, and its mockup
+   diagrams/copy-ruler-aero.html. The pangenome view has no legend column:
+   each track's name is a Frutiger Aero glass label over its top-left
+   corner (translucent white with a top sheen, a white edge, a soft shadow,
+   the data blurred behind it), and a haplotype's rows have a glass pill
+   each in the empty strip above the bar. The drawing stays plain; only the
+   legend is glass.
+
+   The column also kept the legend's words off the data. Over data the
+   label's glass is opaque enough to read on any drawing, its text has a
+   halo, and the blur goes where blur is not drawn (the no-blur fallback
+   below). The pangenome's own tracks sit on the view's light ground in
+   both themes (pangenomeVisualization.css .pgv-shell), so their labels
+   keep the light glass; every other track's label follows the theme. */
+
+.TrackHeader {
+  --th-glass-base: rgba(255, 255, 255, 0.4);
+  --th-glass-top: rgba(255, 255, 255, 0.86);
+  --th-glass-mid: rgba(255, 255, 255, 0.6);
+  --th-glass-low: rgba(214, 238, 252, 0.5);
+  --th-glass-bot: rgba(236, 248, 255, 0.7);
+  --th-glass-edge: rgba(255, 255, 255, 0.95);
+  --th-glass-rim: rgba(120, 200, 255, 0.28);
+  --th-glass-shadow: rgba(20, 90, 140, 0.24);
+  --th-ink: #13394f;
+  --th-ink-dim: #4f6a7c;
+  --th-halo: rgba(255, 255, 255, 0.85);
+  --th-axis-ground: rgba(255, 255, 255, 0.62);
+  --th-solid: rgba(246, 251, 255, 0.94);
+}
+[data-theme="dark"] .TrackHeader:not(.TrackHeader-light) {
+  --th-glass-base: rgba(6, 18, 27, 0.55);
+  --th-glass-top: rgba(255, 255, 255, 0.24);
+  --th-glass-mid: rgba(255, 255, 255, 0.09);
+  --th-glass-low: rgba(120, 190, 240, 0.08);
+  --th-glass-bot: rgba(160, 220, 255, 0.14);
+  --th-glass-edge: rgba(255, 255, 255, 0.34);
+  --th-glass-rim: rgba(120, 200, 255, 0.2);
+  --th-glass-shadow: rgba(0, 0, 0, 0.5);
+  --th-ink: #e6f4fb;
+  --th-ink-dim: #9cc0d3;
+  --th-halo: rgba(0, 0, 0, 0.75);
+  --th-axis-ground: rgba(0, 0, 0, 0.55);
+  --th-solid: rgba(10, 24, 34, 0.94);
+}
+
+/* The header's box: none of its own. It sits at the track's top-left
+   corner, in the legend's slot, which takes no width and stays still on a
+   pan (TrackFactory.tsx); everything in it is placed from there. Only the
+   glass takes the pointer, so the data around it still has its hovers. */
+.TrackHeader.TrackLegend-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  font-family: "Segoe UI", "Segoe UI Variable", system-ui, -apple-system,
+    Roboto, Arial, sans-serif;
+}
+
+/* The line at the top: the track's label, then (on a haplotype) its first
+   row's pill, then the loading and hidden chips. As wide as they are: the
+   header's box has no width to fit them into, and none of them shrinks. */
+.TrackHeader-line {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.TrackHeader-line > * {
+  flex: none;
+}
+
+/* The glass. */
+.TrackHeader-glass {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 14px;
+  padding: 0 6px;
+  border: 1px solid var(--th-glass-edge);
+  border-radius: 7px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--th-glass-top) 0%,
+      var(--th-glass-mid) 48%,
+      var(--th-glass-low) 52%,
+      var(--th-glass-bot) 100%
+    ),
+    var(--th-glass-base);
+  box-shadow:
+    0 1px 2px var(--th-glass-shadow),
+    0 4px 10px -4px var(--th-glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 0 0 1px var(--th-glass-rim);
+  color: var(--th-ink);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 12px;
+  text-shadow: 0 0 2px var(--th-halo);
+  white-space: nowrap;
+  pointer-events: auto;
+}
+/* Over data the glass blurs what is behind it. */
+.TrackHeader-blur {
+  -webkit-backdrop-filter: blur(6px) saturate(160%);
+  backdrop-filter: blur(6px) saturate(160%);
+}
+/* Without the blur the glass would let the data through sharp: it is
+   drawn nearly solid instead. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .TrackHeader-blur {
+    --th-glass-base: var(--th-solid);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .TrackHeader-glass {
+    --th-glass-base: var(--th-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+/* A haplotype's label and pills sit in the empty strips above its bars:
+   13 px, inside the 14 px strip (legendRows.ts PILL_H). */
+.TrackHeader-light .TrackHeader-glass {
+  height: 13px;
+  border-radius: 6.5px;
+}
+/* The graph's own row: its label lets the pointer through to the
+   reference bar under it. */
+.TrackHeader-glass.TrackHeader-pass {
+  pointer-events: none;
+}
+/* A selected track, as the column's yellow box showed it. */
+.TrackHeader-glass.TrackHeader-selected,
+.TrackHeader .TrackLegend-row.TrackHeader-selected {
+  --th-glass-base: rgba(255, 236, 64, 0.85);
+  --th-glass-top: rgba(255, 252, 214, 0.9);
+  --th-glass-mid: rgba(255, 244, 150, 0.7);
+  --th-glass-low: rgba(255, 228, 60, 0.6);
+  --th-glass-bot: rgba(255, 238, 110, 0.75);
+  --th-ink: #000;
+  --th-halo: rgba(255, 255, 255, 0.6);
+}
+
+/* The label's words. The column's styles for these classes (TrackLegend.css)
+   are for its box: one line here. */
+.TrackHeader .TrackLegend-label {
+  margin: 0;
+  min-height: 0;
+  max-width: 320px;
+  overflow: hidden;
+  font-size: inherit;
+  line-height: inherit;
+  text-overflow: ellipsis;
+  word-break: normal;
+  white-space: nowrap;
+}
+/* A haplotype's note, "23 deletions too small to see", as a chip in its
+   label. */
+.TrackHeader .TrackLegend-note {
+  margin: 0;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: rgba(19, 57, 79, 0.08);
+  color: var(--th-ink-dim);
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 11px;
+  white-space: nowrap;
+  opacity: 1;
+}
+/* The orb: the track's colour where it carries meaning, the graph's blue
+   and the haplotypes' green (fetchPangenomeData.ts pangenomeLegendColor). */
+.TrackHeader-orb {
+  flex: none;
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff 0 16%,
+    var(--orb, #5cc4ff) 58%
+  );
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+/* The ruler's key: the chromosome, and the bases' colours once a base is
+   wide enough to be drawn as a letter. */
+.TrackHeader-bases {
+  display: inline-flex;
+  gap: 1px;
+}
+.TrackHeader-bases > span {
+  box-sizing: border-box;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  color: #fff;
+  font-size: 7.5px;
+  font-weight: 700;
+  line-height: 9px;
+  text-align: center;
+  text-shadow: none;
+}
+.TrackHeader .TrackLegend-subLabels {
+  display: inline-flex;
+  gap: 5px;
+  font-size: 9.5px;
+}
+
+/* A row's pill: its region on screen, in the strip above its bar. No blur:
+   the strip is empty. Rows after the first are placed by TrackHeader.tsx
+   under the first, at the track's left. */
+.TrackHeader .TrackLegend-row {
+  position: relative;
+  left: auto;
+  right: auto;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 480px;
+  height: 13px;
+  padding: 0 6px;
+  overflow: hidden;
+  border: 1px solid var(--th-glass-edge);
+  border-radius: 6.5px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--th-glass-top) 0%,
+      var(--th-glass-mid) 48%,
+      var(--th-glass-low) 52%,
+      var(--th-glass-bot) 100%
+    ),
+    var(--th-glass-base);
+  box-shadow:
+    0 1px 2px var(--th-glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 0 0 1px var(--th-glass-rim);
+  color: var(--th-ink);
+  font: 10px/11px ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.TrackHeader .TrackLegend-row-dim {
+  opacity: 0.5;
+}
+
+/* A numerical track's y-axis, at the data's left edge, on a pale strip. */
+.TrackHeader-axis {
+  position: absolute;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.TrackHeader-axis .TrackHeader-axis-ground {
+  fill: var(--th-axis-ground);
+}
+
+/* The loading and hidden chips. */
+.TrackHeader-chip {
+  height: 13px;
+  padding: 0 6px;
+  font-size: 9.5px;
+  font-style: italic;
+  font-weight: 500;
+  cursor: pointer;
+}
+.TrackHeader-chipRoot {
+  position: relative;
+  display: inline-flex;
+  pointer-events: auto;
+}
+.TrackHeader-chipLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #007acc;
+  font: inherit;
+  font-style: normal;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.TrackHeader-spinner {
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: TrackHeader-spin 0.8s linear infinite;
+}
+@keyframes TrackHeader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .TrackHeader-spinner {
+    animation: none;
+  }
+}
+
+/* A row's label, one label: a dot in the bar's own colour with a dark ring
+   of its hue (a pale colour alone does not show on glass), the haplotype's
+   name, the range, and after them the contig or "reverse" where they
+   apply. The first row's label is the haplotype's title: light green
+   glass, as the reference's is the graph's blue. */
+.TrackHeader-dot {
+  flex: none;
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid;
+  border-radius: 50%;
+}
+.TrackHeader .TrackLegend-row .TrackLegend-label {
+  font-weight: 700;
+}
+.TrackHeader .TrackLegend-row .TrackLegend-range {
+  margin-left: -4px;
+}
+/* A row of a lane with copies: no name, the range after the number. */
+.TrackHeader .TrackLegend-row-bare .TrackLegend-range {
+  margin-left: 0;
+}
+.TrackHeader .TrackLegend-tag {
+  color: var(--th-ink-dim);
+  font-weight: 500;
+}
+.TrackHeader .TrackLegend-row-head:not(.TrackHeader-selected),
+.TrackHeader .TrackHeader-title:not(.TrackHeader-selected) {
+  --th-glass-top: rgba(255, 255, 255, 0.88);
+  --th-glass-mid: rgba(220, 252, 231, 0.88);
+  --th-glass-low: rgba(187, 247, 208, 0.86);
+  --th-glass-bot: rgba(220, 252, 231, 0.92);
+  --th-glass-edge: rgba(134, 239, 172, 0.95);
+  --th-ink: #14532d;
+  --th-ink-dim: #3f6a4d;
+}
+
+/* ── A haplotype with copies: the copy ruler, the tabs, the numbered labels ─
+   PLAN-remastered-2.md section 3, steps 3 and 4; CopyRulerView.tsx draws them,
+   copyRuler.ts places them. All on the view's light ground. */
+.TrackHeader .TrackHeader-title .TrackLegend-label {
+  font-weight: 700;
+}
+.TrackHeader-count {
+  font-weight: 500;
+}
+/* A row's dot with its number: the same on its pin. */
+.TrackHeader-pin {
+  flex: none;
+  box-sizing: border-box;
+  min-width: 11px;
+  height: 11px;
+  margin-left: -4px;
+  padding: 0 2px;
+  border: 1px solid;
+  border-radius: 5.5px;
+  color: #13394f;
+  font: 700 8.5px/9px "Segoe UI", system-ui, sans-serif;
+  text-align: center;
+  text-shadow: none;
+}
+.TrackHeader .TrackLegend-row-hot {
+  box-shadow:
+    0 0 0 1.5px #2563eb,
+    0 1px 2px var(--th-glass-shadow);
+}
+/* The glass panel behind a copy ruler's band: the whole header part of
+   the lane, edge to edge, from its top under the card's edge down to the
+   line its first tab stands on; no corners or sides of its own, the card's
+   frame them (the user, 2026-11-15: "it should the whole header part ...
+   fill the gap on the left and right too"). Glass ("it doesnt look glassy
+   enough"): a gloss on the upper half that fades out over the middle, with
+   no edge to draw a line ("the middle part is where it dont blend"), a soft
+   diagonal streak of light, a bright top edge and a pale inner rim, over a
+   sky blue that is light at half height and deepens a little to the foot
+   ("a bit dark at the bottom and light in the middle", for the bottom
+   half): not deep ("the bottom is just too dark"), not white ("the bottom
+   of the panel should not be white"); blue all the way up ("top half of
+   the panel is still white"). Its foot draws the first tab's line, which
+   it covers, in the tab lines' grey. */
+.pgv-ruler-panel {
+  position: absolute;
+  box-sizing: border-box;
+  border: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(255, 255, 255, 0.25) 35%,
+      rgba(255, 255, 255, 0) 58%
+    ),
+    linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0) 0 24%,
+      rgba(255, 255, 255, 0.35) 31%,
+      rgba(255, 255, 255, 0) 39%
+    ),
+    linear-gradient(180deg, #c8e0f5 0%, #d6e9f8 50%, #aecdeb 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 #b4bcc9;
+  pointer-events: none;
+}
+.pgv-rulers {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.pgv-rulers rect,
+.pgv-rulers .pgv-ruler-pin {
+  pointer-events: auto;
+}
+.pgv-rulers .pgv-ruler-mark,
+.pgv-rulers .pgv-ruler-name-ground {
+  pointer-events: none;
+}
+/* The ruler's line, under the stretches. */
+.pgv-ruler-line {
+  stroke: #cbd5e1;
+  stroke-width: 1;
+}
+.pgv-ruler-anchor {
+  fill: #94a3b8;
+}
+.pgv-ruler-cut {
+  stroke: #64748b;
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+/* A stretch not placed on CHM13, labelled own sequence. */
+.pgv-ruler-unplaced {
+  fill: #fff;
+  stroke: #94a3b8;
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.pgv-ruler-word {
+  fill: #4f6a7c;
+  font: 500 9px "Segoe UI", system-ui, sans-serif;
+  pointer-events: none;
+}
+.pgv-ruler-word-light {
+  fill: #fff;
+}
+.pgv-ruler-part {
+  stroke: rgba(19, 57, 79, 0.6);
+  stroke-width: 1;
+}
+.pgv-ruler-chevron {
+  fill: none;
+  stroke: rgba(19, 57, 79, 0.62);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.pgv-ruler-name-ground {
+  fill: rgba(255, 255, 255, 0.85);
+}
+.pgv-ruler-name {
+  fill: #13394f;
+  font: 700 9px "Segoe UI", system-ui, sans-serif;
+  pointer-events: none;
+}
+.pgv-ruler-tick {
+  stroke: #94a3b8;
+  stroke-width: 1;
+}
+.pgv-ruler-tick-label {
+  fill: #4f6a7c;
+  font: 9px ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+}
+.pgv-ruler-pin line {
+  stroke-width: 1;
+}
+.pgv-ruler-pin circle {
+  stroke-width: 1.2;
+}
+.pgv-ruler-pin text {
+  fill: #13394f;
+  font: 700 8.5px "Segoe UI", system-ui, sans-serif;
+  pointer-events: none;
+}
+.pgv-ruler-pin-dim {
+  opacity: 0.45;
+}
+.pgv-ruler-pin-hot circle {
+  stroke: #2563eb;
+  stroke-width: 2.2;
+}
+/* The faint line from a row's label to its place on the ruler. */
+.pgv-ruler-lead {
+  fill: none;
+  stroke: #64748b;
+  stroke-width: 1;
+  opacity: 0.28;
+}
+.pgv-ruler-lead-dim {
+  opacity: 0.14;
+}
+.pgv-ruler-lead-hot {
+  stroke: #2563eb;
+  stroke-width: 1.6;
+  opacity: 1;
+}
+/* The ruler's caption: the same white glass as the rows' labels (the
+   user, 2026-11-15; it was slate). */
+.pgv-ruler-caption {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 13px;
+  padding: 0 7px;
+  border: 1px solid var(--th-glass-edge);
+  border-radius: 6.5px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--th-glass-top) 0%,
+      var(--th-glass-mid) 48%,
+      var(--th-glass-low) 52%,
+      var(--th-glass-bot) 100%
+    ),
+    var(--th-glass-base);
+  box-shadow:
+    0 1px 2px var(--th-glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 0 0 1px var(--th-glass-rim);
+  color: var(--th-ink);
+  font: 600 10px/11px "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.pgv-ruler-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 500;
+  opacity: 0.92;
+}
+.pgv-ruler-key i {
+  display: inline-block;
+  width: 5px;
+  height: 9px;
+}
+/* A copy's tab, on its line across the lane (the drawing draws the line:
+   pangenomeVisualization.css .pgv-copy-rule). */
+.pgv-copy-tab {
+  position: absolute;
+  left: 14px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px 0 7px;
+  border: 1px solid #b4bcc9;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  /* The view's ground (pangenomeVisualization.css .pgv-linear): the tab is
+     open to its rows, and hides its line under it. */
+  background: #f6f8fc;
+  color: #13394f;
+  font: 600 10.5px/12px "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.pgv-copy-tab i {
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  border: 1px solid;
+  border-radius: 50%;
+}
+/* What lies between two copies, on the line. */
+.pgv-copy-between {
+  position: absolute;
+  height: 13px;
+  padding: 0 7px;
+  background: #f6f8fc;
+  color: #4f6a7c;
+  font: 500 10px/13px "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}

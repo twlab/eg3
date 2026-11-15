@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { SiteDrawing } from "./siteDrawing";
 import type { SiteDrawingData } from "./siteDrawing";
+import { ReverseAlign } from "./ReverseAlignCard";
+import type { ReverseAlignProps } from "./ReverseAlignCard";
 
 /* ══════════════════════════════════════════════════════════════════════════
    The cards of the linear view: what a hover shows and a click keeps.
@@ -47,6 +49,9 @@ export interface CardContent {
   /** A nested site's readings drawn as rows (siteDrawing.tsx), under the
       lines. */
   drawing?: SiteDrawingData;
+  /** A block's alignment: the reference forward and the stretch read on
+      the other strand flipped under it (ReverseAlignCard.tsx), under the lines. */
+  alignment?: Omit<ReverseAlignProps, "kept">;
   /** How wide the card may be, in pixels: a card with a drawing is let as
       wide as the bar. */
   width?: number;
@@ -85,6 +90,7 @@ export function CardBody({
         </div>
       ))}
       {card.drawing && <SiteDrawing data={card.drawing} kept={kept} />}
+      {card.alignment && <ReverseAlign {...card.alignment} kept={kept} />}
       {kept && card.action && (
         <button type="button" className="pgv-card-action" onClick={card.action.run}>
           {card.action.label}

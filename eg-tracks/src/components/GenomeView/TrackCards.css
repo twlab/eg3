@@ -1,0 +1,80 @@
+/* ── The pangenome view's cards ────────────────────────────────────────────
+   PLAN-remastered-2.md section 3, "The cards", in eg3/claude-memory; mockup
+   diagrams/copy-ruler-aero.html, option Cards (the user, 2026-11-15: "I think
+   you should implement the card separator view"). Every shown track is a card
+   on a grey well: the well is the track list's ground, showing in the 10 px
+   margin above each row that opens a card (TrackManager.tsx); the frame is an
+   element the width of the window, moved against the band on every scroll
+   and drag as the selection border is. A card's first row has 3 px of room
+   above its content for the edge, so the glass labels sit under it. */
+.Track-cards {
+  --card-well: #e2e2e2;
+  --card-line: rgba(28, 38, 48, 0.16);
+  background: var(--card-well);
+}
+[data-theme="dark"] .Track-cards {
+  --card-well: #2a313a;
+  --card-line: rgba(150, 200, 235, 0.34);
+}
+
+.Track-card-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  border-left: 1px solid var(--card-line);
+  border-right: 1px solid var(--card-line);
+  /* Above the track's data and its legend (2), under the selection border (5). */
+  z-index: 4;
+  pointer-events: none;
+}
+/* The row that opens a card carries its top edge: blue for the reference's
+   card, green for a haplotype's, slate for any other track. */
+.Track-card-start {
+  border-top: 3px solid;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+.Track-card-end {
+  border-bottom: 1px solid var(--card-line);
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+.Track-card-ref {
+  border-top-color: #2563eb;
+}
+.Track-card-hap {
+  border-top-color: #16a34a;
+}
+.Track-card-other {
+  border-top-color: #94a3b8;
+}
+
+/* The rounded corners: the well over what lies outside the rounded edge. */
+.Track-card-corner {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+}
+.Track-card-tl {
+  top: -3px;
+  left: -1px;
+  background: radial-gradient(circle at 6px 6px, transparent 5.5px, var(--card-well) 6px);
+}
+.Track-card-tr {
+  top: -3px;
+  right: -1px;
+  background: radial-gradient(circle at 0 6px, transparent 5.5px, var(--card-well) 6px);
+}
+.Track-card-bl {
+  bottom: -1px;
+  left: -1px;
+  background: radial-gradient(circle at 6px 0, transparent 5.5px, var(--card-well) 6px);
+}
+.Track-card-br {
+  bottom: -1px;
+  right: -1px;
+  background: radial-gradient(circle at 0 0, transparent 5.5px, var(--card-well) 6px);
+}

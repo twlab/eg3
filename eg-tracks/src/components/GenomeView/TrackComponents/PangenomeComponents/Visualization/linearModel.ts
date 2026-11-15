@@ -4,10 +4,13 @@ import { REF_COLOR, pastelColor } from "./pangenomeModel";
 import type { Graph, Step, Walk } from "./alignment";
 import { placeRow } from "./rowAlign";
 import { addNestedMarks, versionSeqOf } from "./nestedMarks";
+import { copiesOf, copyAt } from "./copiesModel";
+import type { ContigCopies, ViewCopy } from "./copiesModel";
 import type { Jump, OpenEnd, OutOfBand, PlacedPart, RefAxis, RowBubble, RowStep } from "./rowAlign";
 
 export type { Jump, OpenEnd, OutOfBand, PlacedPart, RowBubble, RowStep } from "./rowAlign";
 export type { NestedMark, NestedVersion } from "./nestedMarks";
+export type { ContigCopies, ViewCopy } from "./copiesModel";
 
 /* ══════════════════════════════════════════════════════════════════════════
    What the linear view draws: every walk of every shown haplotype, each a
@@ -40,9 +43,15 @@ export interface Row {
   /** The walk's name as the fetch gave it. */
   name: string;
   steps: RowStep[];
-  /** Its own coordinates, lowest first. */
+  /** Its own coordinates, lowest first: the walk's from the row's first
+      step on, so a row whose walk goes on in a further row (`continued`)
+      holds that row's too. */
   ownFrom: number;
   ownTo: number;
+  /** The stretch of its own coordinates the row itself draws: its placed
+      parts', lowest first. The whole of `ownFrom`-`ownTo` where nothing
+      is placed. */
+  extent: [number, number];
   /** The reference it covers, lowest first; null for a span. */
   anchored: [number, number] | null;
   /** Nothing of it placed, but a node the reference reads before the band
@@ -54,12 +63,15 @@ export interface Row {
   flipped: boolean;
   /** Which pass of the haplotype this row is. */
   pass: RowPass;
-  /** The array (walk) this row comes from, as its index among the lane's
-      walks: the group (PLAN-rows.md 7). */
-  group: number;
-  /** The row's place in its group: 0 for the walk's first pass, then one
-      per turn back the pointer's tail made into a further row. */
-  passInGroup: number;
+  /** The row is the tail of the row above: the same walk going on after it
+      turned back over reference that row covers (rowAlign.ts `tail`). */
+  continued: boolean;
+  /** The copy of a duplicated stretch the row lies in, where the finder
+      found the haplotype's copies (copiesModel.ts): the copy the row's
+      own stretch (`extent`) overlaps most. Null where it found none, and
+      for a row in none of them (an anchor site, the haplotype's own
+      sequence). */
+  copy: ViewCopy | null;
   parts: PlacedPart[];
   bubbles: RowBubble[];
   outOfBand: OutOfBand[];
@@ -67,17 +79,25 @@ export interface Row {
   jumps: Jump[];
 }
 
+/** The stretch of own coordinates a row's placed parts cover; the given
+    range where none is placed. */
+function extentOf(parts: ReadonlyArray<PlacedPart>, from: number, to: number): [number, number] {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const part of parts) {
+    if (!part.own) continue;
+    lo = Math.min(lo, part.own.from);
+    hi = Math.max(hi, part.own.to);
+  }
+  return lo <= hi ? [lo, hi] : [from, to];
+}
+
 /** A row as one pass of its haplotype through the expanded region view
-    (PLAN-rows.md 7): its number among the lane's rows; the haplotype's
-    own bases between it and the previous and the next pass of the same
-    contig, null when there is none or it is another contig; and the bases
-    of seam passes, walks that draw no row, lying in the gap before it. */
+    (PLAN-rows.md 7): its number among the lane's rows, and how many rows
+    the lane has. */
 export interface RowPass {
   n: number;
   of: number;
-  prevGap: number | null;
-  nextGap: number | null;
-  seamBp: number;
 }
 
 export interface LinearLane {
@@ -94,6 +114,9 @@ export interface LinearLane {
   contigs: string[];
   /** One per walk drawn, in own order, contigs in their order. */
   rows: Row[];
+  /** The haplotype's copies of a duplicated stretch, per contig, where the
+      fetch asked the finder for them and it found some (copiesModel.ts). */
+  copies: ContigCopies[];
   /** Walks of the haplotype through the band's nodes that draw no row:
       they read none of the band's reference walk and do not span it. */
   undrawn: number;
@@ -288,6 +311,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     index: 0,
     contigs: [contig],
     rows: [],
+    copies: [],
     undrawn: 0,
     bp: end - origin,
   };
@@ -298,24 +322,23 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
     for (const walk of walks) if (!contigs.includes(walk.contig)) contigs.push(walk.contig);
     const ordered = [...walks].sort((a, b) => contigs.indexOf(a.contig) - contigs.indexOf(b.contig) || a.start - b.start || a.firstSeen - b.firstSeen);
     const rows: Row[] = [];
-    const seams: Array<{ contig: string; from: number; to: number }> = [];
     let undrawn = 0;
-    let group = 0;
     for (const walk of ordered) {
       let steps = walk.steps;
       let placed = placeRow(graph, axis, steps, origin, end, walk.ends);
       if (!placed.anchored && !placed.spanning) {
         undrawn += 1;
-        /* Its extent from its name: a merged band can hold a clipped
-           sequence for a node of a walk it draws nothing of. */
-        seams.push({ contig: walk.contig, from: walk.start, to: walk.end ?? walk.steps[walk.steps.length - 1].end });
         continue;
       }
-      /* The array is the group. Its first pass is the row the pointer
-         placed; where the tail turns back over reference of the expanded
-         region view, the tail is laid out by the same pointer as a further
-         row of the group, and so on while a tail remains (PLAN-rows.md 7). */
-      let passInGroup = 0;
+      /* The walk's first pass is the row the pointer placed; where the tail
+         turns back over reference of the expanded region view, the tail is
+         laid out by the same pointer as a further row of the haplotype, and
+         so on while a tail remains (PLAN-rows.md 7). A copy inside one array
+         gets its own row this way only when it reads back over the view's
+         reference; one that comes back ahead of the pointer is a bubble, drawn
+         as a mark (predict.ts: "a tandem duplication: the second pass is a
+         mark"). */
+      let continued = false;
       for (;;) {
         const { tail, ...placement } = placed;
         const inverted = placement.parts.filter((part) => part.kind === "inverted");
@@ -327,27 +350,29 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
           ownFrom: steps[0].start,
           ownTo: steps[steps.length - 1].end,
           flipped: !!placement.anchored && inverted.length === 1 && inverted[0].ref === placement.anchored[0] && inverted[0].ref + inverted[0].len === placement.anchored[1],
-          pass: { n: rows.length + 1, of: 0, prevGap: null, nextGap: null, seamBp: 0 },
-          group,
-          passInGroup,
+          pass: { n: rows.length + 1, of: 0 },
+          continued,
+          copy: null,
+          extent: extentOf(placement.parts, steps[0].start, steps[steps.length - 1].end),
           ...placement,
         });
         if (!tail) break;
         steps = tail;
-        passInGroup += 1;
+        continued = true;
         placed = placeRow(graph, axis, steps, origin, end, walk.ends?.tail ? { tail: walk.ends.tail } : undefined);
         if (!placed.anchored && !placed.spanning) break;
       }
-      group += 1;
     }
-    /* The passes (PLAN-rows.md 7): consecutive rows of one contig, the
-       haplotype's own bases between them, the seam passes in the gap. */
+    /* The passes (PLAN-rows.md 7): each row's number among the lane's rows. */
     rows.forEach((row, i) => {
-      const prev = i > 0 && rows[i - 1].contig === row.contig ? rows[i - 1] : null;
-      const next = i + 1 < rows.length && rows[i + 1].contig === row.contig ? rows[i + 1] : null;
-      const seamBp = prev ? seams.filter((s) => s.contig === row.contig && s.from >= prev.ownTo && s.to <= row.ownFrom).reduce((n, s) => n + (s.to - s.from), 0) : 0;
-      row.pass = { n: i + 1, of: rows.length, prevGap: prev ? row.ownFrom - prev.ownTo : null, nextGap: next ? next.ownFrom - row.ownTo : null, seamBp };
+      row.pass = { n: i + 1, of: rows.length };
     });
+    /* The haplotype's copies, and each row's. */
+    const copies = copiesOf(result?.duplications?.[label]);
+    for (const row of rows) {
+      const onContig = copies.find((one) => one.contig === row.contig);
+      row.copy = onContig ? copyAt(onContig, row.extent[0], row.extent[1]) : null;
+    }
     lanes.push({
       key: label,
       label,
@@ -358,6 +383,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       index: lanes.length,
       contigs,
       rows,
+      copies,
       undrawn,
       bp: walks.reduce((n, walk) => n + walk.steps.reduce((m, step) => m + (step.end - step.start), 0), 0),
     });
@@ -384,6 +410,7 @@ export function buildLinearModel(queryResult: any): LinearModel | null {
       index: lanes.length,
       contigs: [],
       rows: [],
+      copies: [],
       undrawn: 0,
       bp: 0,
       located: found,

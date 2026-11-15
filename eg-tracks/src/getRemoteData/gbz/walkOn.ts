@@ -26,6 +26,18 @@ import type { PathInfo } from "./subgraph";
    position outright. An anchor is met only on one visit in a hundred, so
    by then the walk has overshot the rejoin; the reference is enumerated
    back over what was walked, and the end cut at the first node it reads.
+   Wherever a walk stops on the reference - a node known, a node an anchor
+   places, the window's walk - the reference is then read round that
+   place, on both sides, as far as was walked and the anchor's slack more,
+   and the end cut at the first node it reads, the end node itself counted
+   first. When that is the end node, the end was on the reference all
+   along, only not known because that stretch had not been enumerated, and
+   the walk keeps nothing there, as when it was known from the start
+   (`settle`). Until 2026-11-15 a walk could run on past nodes the
+   reference reads that were not enumerated yet, keeping one node more or
+   a dozen, and only on a fetch that had not read that stretch before, so
+   a second fetch of the same band answered otherwise
+   (PLAN-remastered-2.md section 3).
 
    Fragments of one path are then made one where they meet: the GBWT holds
    every path both ways round, and an inverted repeat's turn reads the
@@ -152,18 +164,21 @@ export function makeContext(
  * from the last indexed position before it, skipping what is covered.
  * With `visit`, every node of the stretch is read, covered or not, and
  * handed over with its record and position; a visit returning true stops
- * the walk.
+ * the walk. With `keep` false nothing read is kept in the cover: the
+ * stretch is read for the caller alone (the walk-on's `settle`), so it
+ * changes nothing that later reads of the cover decide.
  */
 export function enumerateReference(
   ctx: Context,
   from: number,
   to: number,
   visit?: (id: number, record: GbzRecord, at: number, pos: Pos) => boolean | void,
+  keep = true,
 ): void {
   const { reference, cover } = ctx;
   from = Math.max(from, reference.fragment);
   if (to <= from) return;
-  const stretches: Array<[number, number]> = visit ? [[from, to]] : gaps(cover.covered, from, to);
+  const stretches: Array<[number, number]> = visit || !keep ? [[from, to]] : gaps(cover.covered, from, to);
   for (const [a, b] of stretches) {
     const indexed = ctx.source.indexedPosition(reference.handle, a - reference.fragment);
     if (!indexed) return;
@@ -176,16 +191,18 @@ export function enumerateReference(
       if (!record) break;
       const at = reference.fragment + offset;
       const id = nodeId(pos.node);
-      const seen = cover.at.get(id);
-      if (!seen) cover.at.set(id, [at]);
-      else if (!seen.includes(at)) seen.push(at);
+      if (keep) {
+        const seen = cover.at.get(id);
+        if (!seen) cover.at.set(id, [at]);
+        else if (!seen.includes(at)) seen.push(at);
+      }
       offset += record.sequenceLength;
       stopped = visit?.(id, record, at, pos) === true;
       const next = record.lf(pos.offset);
       pos = next && next.node !== ENDMARKER ? next : null;
       if (stopped) break;
     }
-    addCovered(cover.covered, start, reference.fragment + offset);
+    if (keep) addCovered(cover.covered, start, reference.fragment + offset);
     if (stopped) return;
   }
 }
@@ -307,6 +324,56 @@ function placeByAnchor(ctx: Context, tail: Tail, anchor: PathAnchor, forward: bo
   /* The reference could not be enumerated here (unindexed): the anchored
      node itself, placed by its anchor. */
   return { ...tail, at };
+}
+
+/** A followed end, settled: what of the walk to keep; or, when the end
+    node itself is one the reference reads, where it reads it. */
+type Settled = { kept: Tail } | { endAt: number };
+
+/**
+ * A followed end that stopped on the reference, settled. The reference is
+ * read round where the walk stopped, on both sides, as far as was walked
+ * and ANCHOR_SLACK_BP more, and the end cut at the first node the
+ * reference reads, the end node itself counted first: when that is the
+ * end node, the end was on the reference all along, and nothing is kept.
+ * A walk that stops on a node it already knew has read no reference on
+ * its way, and one an anchor stopped has read one side of it only, so
+ * either may have run past nodes the reference reads that were not
+ * enumerated yet - and a later fetch of the band, the reference read
+ * further by then, would cut it elsewhere (2026-11-15: inv-edge's HG002#1
+ * ran 12 nodes along the inverted reference past an end node the
+ * reference reads, 5 kb from the window). The reading here is not kept in
+ * the cover: it decides this end's cut and changes nothing else.
+ */
+function settle(ctx: Context, endId: number, tail: Tail): Settled {
+  if ((tail.stop !== "reference" && tail.stop !== "walk") || !tail.handles.length) return { kept: tail };
+  const last = tail.handles[tail.handles.length - 1];
+  const at = tail.at ?? readAt(ctx, nodeId(last));
+  if (at === undefined) return { kept: tail };
+  const len = ctx.cache.get(last)?.sequenceLength ?? 0;
+  const slack = tail.bp + ANCHOR_SLACK_BP;
+  const read = new Map<number, number>();
+  enumerateReference(
+    ctx,
+    at - slack,
+    at + len + slack,
+    (id, _record, where) => {
+      if (!read.has(id)) read.set(id, where);
+    },
+    false,
+  );
+  const placed = (id: number) => readAt(ctx, id) ?? read.get(id);
+  const end = placed(endId);
+  if (end !== undefined) return { endAt: end };
+  for (let k = 0; k < tail.handles.length - 1; k++) {
+    const where = placed(nodeId(tail.handles[k]));
+    if (where === undefined) continue;
+    const handles = tail.handles.slice(0, k + 1);
+    const positions = tail.positions.slice(0, k + 1);
+    const bp = handles.reduce((n, h) => n + (ctx.cache.get(h)?.sequenceLength ?? 0), 0);
+    return { kept: { handles, positions, bp, stop: "reference", at: where } };
+  }
+  return { kept: tail };
 }
 
 /**
@@ -493,18 +560,24 @@ export function walkOn(
       const at = readAt(ctx, lastId);
       if (at !== undefined) referenceAt.set(lastId, at);
       else if (info.exit) {
-        const tail = follow(ctx, info.exit, true);
-        if (tail.stop !== "cap" && tail.handles.length) {
-          for (const handle of tail.handles) addNode(nodeId(handle));
-          info.path.push(...tail.handles);
-          info.len += tail.bp;
-          if (info.backward && info.fragmentStart !== null) info.fragmentStart -= tail.bp;
-          info.exit = after(cache, tail.positions[tail.positions.length - 1]);
-          if (tail.at !== undefined) {
-            referenceAt.set(nodeId(tail.handles[tail.handles.length - 1]), tail.at);
+        /* Cut at the first node the reference reads, the end node counted
+           first; when that is the end node, nothing is kept. */
+        const settled = settle(ctx, lastId, follow(ctx, info.exit, true));
+        if ("endAt" in settled) referenceAt.set(lastId, settled.endAt);
+        else {
+          const tail = settled.kept;
+          if (tail.stop !== "cap" && tail.handles.length) {
+            for (const handle of tail.handles) addNode(nodeId(handle));
+            info.path.push(...tail.handles);
+            info.len += tail.bp;
+            if (info.backward && info.fragmentStart !== null) info.fragmentStart -= tail.bp;
+            info.exit = after(cache, tail.positions[tail.positions.length - 1]);
+            if (tail.at !== undefined) {
+              referenceAt.set(nodeId(tail.handles[tail.handles.length - 1]), tail.at);
+            }
           }
+          noteStop(info, "exit", tail);
         }
-        noteStop(info, "exit", tail);
       } else {
         /* Its sequence ends at the walk's last node. */
         noteStop(info, "exit", { stop: "end", bp: 0 });
@@ -517,18 +590,23 @@ export function walkOn(
       const at = readAt(ctx, firstId);
       if (at !== undefined) referenceAt.set(firstId, at);
       else {
-        const head = follow(ctx, before(cache, info.start), false);
-        if (head.stop !== "cap" && head.handles.length) {
-          for (const handle of head.handles) addNode(nodeId(handle));
-          info.path.unshift(...[...head.handles].reverse());
-          info.len += head.bp;
-          if (!info.backward && info.fragmentStart !== null) info.fragmentStart -= head.bp;
-          info.start = head.positions[head.positions.length - 1];
-          if (head.at !== undefined) {
-            referenceAt.set(nodeId(head.handles[head.handles.length - 1]), head.at);
+        /* As at the other end. */
+        const settled = settle(ctx, firstId, follow(ctx, before(cache, info.start), false));
+        if ("endAt" in settled) referenceAt.set(firstId, settled.endAt);
+        else {
+          const head = settled.kept;
+          if (head.stop !== "cap" && head.handles.length) {
+            for (const handle of head.handles) addNode(nodeId(handle));
+            info.path.unshift(...[...head.handles].reverse());
+            info.len += head.bp;
+            if (!info.backward && info.fragmentStart !== null) info.fragmentStart -= head.bp;
+            info.start = head.positions[head.positions.length - 1];
+            if (head.at !== undefined) {
+              referenceAt.set(nodeId(head.handles[head.handles.length - 1]), head.at);
+            }
           }
+          noteStop(info, "start", head);
         }
-        noteStop(info, "start", head);
       }
     }
   }

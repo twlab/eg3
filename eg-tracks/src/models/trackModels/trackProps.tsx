@@ -50,7 +50,15 @@ export interface TrackProps {
   onBandDrawn?: (dataIdx: number) => void;
   initialLoad: any;
   selectedRegionSet: any;
+  /** The user's legend width (Settings): what the column's text, a
+      screenshot's legend and the menus are sized by. Never 0. */
   legendWidth: number;
+  /** How wide the legend column is on screen: legendWidth, or 0 in the
+      pangenome view, which has no column (PLAN-remastered-2.md section 3). */
+  columnWidth?: number;
+  /** True in the pangenome view: each track's name is a glass label over
+      its top-left corner (TrackHeader.tsx) instead of a box in the column. */
+  legendHeader?: boolean;
   /** Changes one of this track's options, as the config menu does. */
   onConfigChange?: (
     key: string,

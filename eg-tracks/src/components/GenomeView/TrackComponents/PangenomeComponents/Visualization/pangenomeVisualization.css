@@ -199,53 +199,6 @@
   color: var(--pgv-ink-3);
 }
 
-/* ── Linear view ───────────────────────────────────────────────────────── */
-/* A walk row's name: which reading the row is. Inside the drawing rather
-   than in a gutter to its left, so it reads from its own x rather than
-   back towards it. */
-/* The edge from one pass of a haplotype to its next (PLAN-rows.md 7),
-   through the label band between the two rows, and the bases between. */
-.pgv-pass-link path {
-  fill: none;
-  stroke: #8794ab;
-  stroke-width: 1.2;
-  stroke-dasharray: 3 3;
-  pointer-events: none;
-}
-/* Inside one array the edge is solid: the same walk, going on after a turn back. */
-.pgv-pass-link.pgv-pass-same path {
-  stroke: #6b7a94;
-  stroke-dasharray: none;
-}
-/* The edge's hit stroke, wide and unseen; the overlay takes no pointer
-   events, so the edge alone does. A click keeps the card of the two nodes
-   the edge joins (LinearView.tsx describeEdge). */
-.pgv-pass-link path.pgv-pass-hit {
-  stroke: transparent;
-  stroke-width: 12;
-  stroke-dasharray: none;
-  pointer-events: stroke;
-  cursor: pointer;
-}
-.pgv-pass-link:hover path:not(.pgv-pass-hit) {
-  stroke-width: 2.2;
-}
-/* The groups: one band per array of a lane, behind its rows. Every second
-   array is tinted slate, and each array after the lane's first has a slate
-   top edge, so a haplotype's arrays read as separate blocks (PLAN-rows.md 7). */
-.pgv-group-band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  pointer-events: none;
-}
-.pgv-group-tinted {
-  background: rgba(91, 107, 140, 0.08);
-}
-.pgv-group-edged {
-  border-top: 2px solid rgba(91, 107, 140, 0.45);
-}
-
 /* ── Tube map view ─────────────────────────────────────────────────────── */
 /* The tube map: one canvas on the band, as the linear view's bars are, so
    eg3's ruler track above it gives its coordinates. It has no ruler of its
@@ -259,11 +212,16 @@
   cursor: pointer;
 }
 
-/* The foot of a lane: the separator between one haplotype's passes and the
-   next haplotype's (PLAN-rows.md 7), matching the one under its name in
-   the legend. */
+/* The foot of a lane: the line between one haplotype and the next,
+   matching the one under its name in the legend. */
 .pgv-row-rule {
   stroke: var(--pgv-rule-soft, #cdd2db);
+  stroke-width: 1;
+  pointer-events: none;
+}
+/* The line a copy's tab sits on, in a lane with copies (laneLayout.ts). */
+.pgv-copy-rule {
+  stroke: #b4bcc9;
   stroke-width: 1;
   pointer-events: none;
 }
@@ -867,4 +825,58 @@
   fill: none;
   stroke: #60a5fa;
   stroke-width: 1.4;
+}
+
+/* A block's alignment in a card (ReverseAlignCard.tsx): the rows' names beside
+   a canvas on the tracks' own light ground. On the kept card it scrolls
+   sideways over the whole stretch. */
+.pgv-ralign {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+
+.pgv-ralign-tags {
+  position: relative;
+  flex: 0 0 76px;
+  line-height: 1.15;
+}
+
+.pgv-ralign-tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.pgv-ralign-tag b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.pgv-ralign-tag span {
+  color: #b6babf;
+  font-size: 10px;
+}
+
+.pgv-ralign-scroll {
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #f6f8fc;
+}
+
+.pgv-ralign-scroll.pgv-ralign-kept {
+  overflow-x: auto;
+}
+
+.pgv-ralign-canvas {
+  display: block;
+  position: sticky;
+  left: 0;
 }

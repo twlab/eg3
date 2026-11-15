@@ -184,7 +184,7 @@ export interface RowPlacement {
   /** The tail's steps from the first reference node of the expanded region
       view that the walk turns back to (rule 4's jump): the walk goes on
       over reference this row already covers, so the model lays these out
-      as a further row of the same group (PLAN-rows.md 7). Absent when the
+      as a further row of the haplotype (PLAN-rows.md 7). Absent when the
       tail holds no such node: then the jump stays a note. */
   tail?: RowStep[];
   spanning: boolean;
@@ -273,7 +273,10 @@ export function placeRow(
   const ownRange = (list: RowStep[], a: number, b: number, flipped: boolean) => {
     if (!list.length) return { from: 0, to: 0, reverse: flipped };
     if (!flipped) return { from: list[0].start + a, to: list[0].start + b, reverse: false };
-    const last = list[list.length - 1].end;
+    /* Flipped, the list runs back to front (flipRun keeps each step's own
+       start and end): its first step is the highest, and the flipped bases
+       begin at its end. */
+    const last = list[0].end;
     return { from: last - b, to: last - a, reverse: true };
   };
   /* The nodes whose bases fall in [a, b) of the bases along `list`. */
