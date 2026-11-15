@@ -404,13 +404,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     const shown = JSON.stringify(pangenomeViewRef.current);
     if (pangenomeViewShown.current === shown) return;
-    const wasLinear = JSON.parse(pangenomeViewShown.current).mode === "linear";
+    const wasVariants = JSON.parse(pangenomeViewShown.current).mode === "variants";
     pangenomeViewShown.current = shown;
-    /* The linear view fetches each walk followed on to the next node the
-       reference reads, the other views the walks cut at the context
-       (fetchPangenomeData), so a change between them fetches again;
-       otherwise what is cached is laid out again. */
-    if (wasLinear !== (pangenomeViewRef.current.mode === "linear")) {
+    /* The linear and the tube view fetch each walk followed on to the next
+       node the reference reads - the tube map is drawn from the linear
+       view's rows - and the variants view the walks cut at the context
+       (fetchPangenomeData), so a change to or from the variants view
+       fetches again; otherwise what is cached is laid out again. */
+    if (wasVariants !== (pangenomeViewRef.current.mode === "variants")) {
       refetchPangenomeFromView();
       return;
     }

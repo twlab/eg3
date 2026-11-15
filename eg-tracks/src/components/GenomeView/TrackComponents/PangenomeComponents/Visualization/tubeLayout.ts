@@ -125,6 +125,9 @@ export interface TrackEntry {
   segment: number;
   /** Whether the tube carries on into the next entry, one column on. */
   joined: boolean;
+  /** The haplotype's coordinates count down along the node here: a reverse
+      pass, drawn left to right (tubeModel.ts). */
+  descending?: boolean;
 }
 
 /** A deletion along a haplotype's tube: the entries of its track passing
@@ -254,6 +257,7 @@ interface Visit {
   start: number;
   end: number;
   segment: number;
+  descending?: boolean;
 }
 
 /** A step that moves on along the layout within one walk. */
@@ -278,7 +282,13 @@ export function tubeStacks(model: PangenomeModel, tubeH: number): TubeStacks {
       const node = model.nodeById.get(step.node);
       if (node) {
         of.set(i, list.length);
-        list.push({ node, start: step.start, end: step.end, segment: step.segment });
+        list.push({
+          node,
+          start: step.start,
+          end: step.end,
+          segment: step.segment,
+          ...(step.descending ? { descending: true } : {}),
+        });
       }
     });
     visitOfStep[l] = of;
@@ -438,6 +448,7 @@ export function tubeStacks(model: PangenomeModel, tubeH: number): TubeStacks {
         end: start === null ? null : visit.end,
         segment: visit.segment,
         joined: false,
+        ...(visit.descending && start !== null ? { descending: true } : {}),
       });
       return true;
     };

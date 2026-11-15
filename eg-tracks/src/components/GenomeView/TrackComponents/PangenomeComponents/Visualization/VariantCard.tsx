@@ -41,7 +41,14 @@ export default function VariantCard({
   const [query, setQuery] = useState("");
 
   const labelOf = useMemo(
-    () => new Map(model.lanes.map((l) => [l.key, l.label])),
+    () =>
+      new Map(
+        model.lanes.map((l) => [
+          l.key,
+          /* A tube that is a row (tubeModel.ts): which pass of its haplotype. */
+          l.row ? `${l.label} · pass ${l.row.n}` : l.label,
+        ]),
+      ),
     [model],
   );
   const contig = model.reference?.contig ?? "";
@@ -86,7 +93,8 @@ export default function VariantCard({
       {segment.kind === "site" && (
         <div className="pgv-section-line">
           {segment.walks.length} unique walk
-          {segment.walks.length === 1 ? "" : "s"} · {segment.haplotypes} haplotypes
+          {segment.walks.length === 1 ? "" : "s"} · {segment.haplotypes}{" "}
+          {model.lanes.some((l) => l.row) ? "tubes" : "haplotypes"}
         </div>
       )}
       {segment.sameSpelling > 0 && (
@@ -110,7 +118,8 @@ export default function VariantCard({
                 setLane(null);
               }}
             >
-              #{w.index} · {w.lanes.length} haplotypes ·{" "}
+              #{w.index} · {w.lanes.length}{" "}
+              {model.lanes.some((l) => l.row) ? "tubes" : "haplotypes"} ·{" "}
               {w.nodes.length
                 ? `${w.nodes.length} node${w.nodes.length === 1 ? "" : "s"} · ${w.label}`
                 : `skips the site · ${w.label}`}

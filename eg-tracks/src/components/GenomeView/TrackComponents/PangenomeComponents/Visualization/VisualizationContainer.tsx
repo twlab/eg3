@@ -22,6 +22,7 @@ import type { BandAxis, PangenomeModel } from "./pangenomeModel";
 import type { DrawFrame } from "./pangenomeModel";
 import type { HoverTarget } from "./hoverTarget";
 import TubeMapView, { TUBE_H } from "./TubeMapView";
+import { tubeModelOf } from "./tubeModel";
 import { tubeAxis, tubeStacks } from "./tubeLayout";
 import {
   boxFills,
@@ -139,8 +140,10 @@ export default function VisualizationContainer({
      graph's own track row; a haplotype's row draws its bar in linear view
      and nothing else, so it lays nothing else out. */
   const drawsWhole = !part || part === GRAPH_PART;
-  /* The band's one model, shared with the graph's other rows. */
-  const built = modelOf(queryResult);
+  /* The band's one model, shared with the graph's other rows: in tube
+     view the rows of the linear view, a tube each (tubeModel.ts). */
+  const built =
+    view?.mode === "tube" ? tubeModelOf(queryResult) : modelOf(queryResult);
 
   /* A colour the reader picked wins over the one the palette handed out.
      Applied here rather than in each view, so every drawing and the legend
@@ -348,7 +351,8 @@ export default function VisualizationContainer({
         title: `node ${id}`,
         lines: [
           `walk ${walk.index} of ${segment.walks.length}`,
-          `${walk.lanes.length} of ${segment.haplotypes} haplotypes`,
+          /* Tubes where each is a row: a haplotype has one a pass. */
+          `${walk.lanes.length} of ${segment.haplotypes} ${model?.lanes.some((lane) => lane.row) ? "tubes" : "haplotypes"}`,
           walk.nodes.length
             ? `${walk.nodes.length} node${walk.nodes.length === 1 ? "" : "s"}, ${walk.label} against the reference's allele`
             : `skips the site: a deletion (${walk.label})`,
@@ -462,6 +466,18 @@ export default function VisualizationContainer({
     const w = window as unknown as { __pgvLinear?: Record<string, unknown> };
     (w.__pgvLinear ??= {})[part ?? "all"] = { model: linearModel, axis: linAxis };
   }, [linearModel, linAxis, part]);
+  /* And what the tube map draws: the model as fetched, the one drawn
+     (grouped or not) and its stacks (testing/tools/browser/tubeView.mjs). */
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === "undefined") return;
+    if (!drawsWhole || !tubeBase || !tubeModel || !tubeStack) return;
+    (window as unknown as { __pgvTube?: unknown }).__pgvTube = {
+      base: tubeBase,
+      model: tubeModel,
+      stacks: tubeStack,
+      grouped: !!tubeGrouped,
+    };
+  }, [drawsWhole, tubeBase, tubeModel, tubeStack, tubeGrouped]);
   const linearBand = useMemo(() => (linAxis ? toBandAxis(linAxis) : null), [linAxis]);
 
   /* The box is the height of what is in it. Each view can say in advance -

@@ -118,7 +118,13 @@ export function compressedModel(
     /* Which grouped step each of the lane's own steps went into, for its
        deletions. */
     const moved = new Map<number, number>();
-    const push = (id: string, start: number, piece: number, end: number) => {
+    const push = (
+      id: string,
+      start: number,
+      piece: number,
+      end: number,
+      descending = false,
+    ) => {
       const node = nodeById.get(id);
       if (!node) return false;
       const last = steps[steps.length - 1];
@@ -127,6 +133,8 @@ export function compressedModel(
          box and the next starting in it are the same stretch. It ends where
          the last of the haplotype's own bases in it does. */
       if (last && last.node === id) {
+        /* Both ways: a reverse pass's coordinates count down along it. */
+        last.start = Math.min(last.start, start);
         last.end = Math.max(last.end, end);
         return true;
       }
@@ -142,7 +150,13 @@ export function compressedModel(
         }
       }
       /* In the haplotype's own coordinates: its bases, not the box. */
-      steps.push({ node: id, start, end, segment: piece });
+      steps.push({
+        node: id,
+        start,
+        end,
+        segment: piece,
+        ...(descending ? { descending: true } : {}),
+      });
       if (node.lanes[node.lanes.length - 1] !== lane.key) {
         node.lanes.push(lane.key);
       }
@@ -162,7 +176,8 @@ export function compressedModel(
           const index = walkOf[between].get(lane.key);
           const walk = index && segments[between].walks[index - 1];
           if (walk && walk.nodes.length === 0) {
-            push(walkId(between, index), step.start, step.segment, step.start);
+            const at = step.descending ? step.end : step.start;
+            push(walkId(between, index), at, step.segment, at, !!step.descending);
           }
         }
       }
@@ -170,8 +185,9 @@ export function compressedModel(
       const index = segment.kind === "same" ? 0 : walkOf[at].get(lane.key);
       const pushed =
         segment.kind === "same"
-          ? push(sameId(at), step.start, step.segment, step.end)
-          : !!index && push(walkId(at, index), step.start, step.segment, step.end);
+          ? push(sameId(at), step.start, step.segment, step.end, !!step.descending)
+          : !!index &&
+            push(walkId(at, index), step.start, step.segment, step.end, !!step.descending);
       if (pushed) moved.set(i, steps.length - 1);
       previous = at;
     });
@@ -182,7 +198,8 @@ export function compressedModel(
       const piece = pieces[step.segment];
       if (piece) {
         piece.nodes.push(step.node);
-        piece.end = step.end;
+        piece.start = Math.min(piece.start ?? step.start, step.start);
+        piece.end = Math.max(piece.end ?? step.end, step.end);
       } else {
         pieces[step.segment] = {
           nodes: [step.node],
@@ -213,7 +230,10 @@ export function compressedModel(
       nodeSet: new Set(order),
       bp: steps.reduce((sum, step) => sum + (step.end - step.start), 0),
       interval: steps.length
-        ? { start: steps[0].start, end: steps[steps.length - 1].end }
+        ? {
+            start: Math.min(steps[0].start, steps[steps.length - 1].start),
+            end: Math.max(steps[0].end, steps[steps.length - 1].end),
+          }
         : null,
     };
   });

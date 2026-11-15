@@ -39,6 +39,25 @@ export interface RawPath {
   /** The GBZ path the walk is a piece of: one continuous walk, whatever
       the window cut it into. */
   path_handle?: string;
+  /** Each step's place in the haplotype's own coordinates, lowest first,
+      where the steps do not count up from the name's start: a row handed
+      to the tube map (tubeModel.ts). */
+  own?: Array<[number, number]>;
+  /** The steps whose coordinates count down along the walk as handed
+      over: an inverted run, read the other way (tubeModel.ts). */
+  descending?: boolean[];
+  /** The row of the linear view the walk is (tubeModel.ts). */
+  row?: LaneRow;
+}
+
+/** A lane that is one row of the linear view: which pass of its haplotype
+    it is, of how many; whether it is a reverse pass, drawn left to right
+    and read right to left; whether it is the tail of the row before it. */
+export interface LaneRow {
+  n: number;
+  of: number;
+  reverse: boolean;
+  continued: boolean;
 }
 
 /** A link out of a node, listed under the node it leaves: where it goes,
@@ -175,6 +194,8 @@ export interface Lane {
   interval: { start: number; end: number } | null;
   /** Where it jumps over the reference; see laneDeletions. */
   deletions?: LaneDeletion[];
+  /** The row of the linear view the lane is, in the tube map on rows. */
+  row?: LaneRow;
 }
 
 /** One node visit by one haplotype, placed in that haplotype's coordinates. */
@@ -188,6 +209,10 @@ export interface LaneStep {
       reverse-complemented here - inside an inversion, or all along a contig
       assembled the other way round from the reference. */
   reverse?: boolean;
+  /** Its own coordinates count down along the layout: a step of an
+      inverted run or a reverse pass, drawn left to right (tubeModel.ts).
+      `start` is still the lowest. */
+  descending?: boolean;
 }
 
 const COMPLEMENT: Record<string, string> = {
@@ -722,7 +747,13 @@ export function modelOf(queryResult: any): PangenomeModel | null {
  * normal answer for a tile that falls outside the part of the graph covered by
  * the queried haplotype.
  */
-export function buildModel(queryResult: any): PangenomeModel | null {
+export function buildModel(
+  queryResult: any,
+  /** `lanePerPath`: every walk but the reference's a lane of its own, as
+      the tube map on rows hands them (tubeModel.ts); else a haplotype's
+      walks on one contig are one lane. */
+  options: { lanePerPath?: boolean } = {},
+): PangenomeModel | null {
   const result = queryResult?.result ?? queryResult;
   /* Node id to its bases; node id to the links that leave it. */
   const rawNodes: Record<string, string> = result?.nodes ?? {};
@@ -745,7 +776,15 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     haplotype: number;
     isReference: boolean;
     firstSeen: number;
-    segments: Array<LaneSegment & { path?: string; reverse?: boolean[] }>;
+    segments: Array<
+      LaneSegment & {
+        path?: string;
+        reverse?: boolean[];
+        own?: Array<[number, number]>;
+        descending?: boolean[];
+      }
+    >;
+    row?: LaneRow;
   }
 
   const drafts = new Map<string, Draft>();
@@ -779,9 +818,11 @@ export function buildModel(queryResult: any): PangenomeModel | null {
        reference lane it was numbered as if it went on from there, 4.7 kb
        out. It is a walk like any haplotype's, placed by the graph. */
     const key =
-      !isReference && pathKey === referenceKey
-        ? `${pathKey}#elsewhere`
-        : pathKey;
+      options.lanePerPath && !isReference
+        ? `${pathKey}@${i}`
+        : !isReference && pathKey === referenceKey
+          ? `${pathKey}#elsewhere`
+          : pathKey;
 
     let draft = drafts.get(key);
     if (!draft) {
@@ -792,6 +833,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         isReference,
         firstSeen: i,
         segments: [],
+        ...(raw.row ? { row: raw.row } : {}),
       };
       drafts.set(key, draft);
     }
@@ -802,6 +844,8 @@ export function buildModel(queryResult: any): PangenomeModel | null {
       end: parsed.end,
       path: raw.path_handle,
       reverse: (raw.path ?? []).map((s) => !!s.is_reverse),
+      ...(raw.own ? { own: raw.own } : {}),
+      ...(raw.descending ? { descending: raw.descending } : {}),
     });
   });
 
@@ -954,15 +998,19 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         if (segment.start !== null) cursor = segment.start;
         segment.nodes.forEach((id, j) => {
           const length = (sequences.get(id) ?? "").length;
+          /* Given with the walk where its steps do not count up from its
+             name's start: a row of the tube map. */
+          const own = segment.own?.[j];
           order.push(id);
           steps.push({
             node: id,
-            start: cursor,
-            end: cursor + length,
+            start: own ? own[0] : cursor,
+            end: own ? own[1] : cursor + length,
             segment: segmentIndex,
             ...(strands[segmentIndex][j] ? { reverse: true } : {}),
+            ...(segment.descending?.[j] ? { descending: true } : {}),
           });
-          cursor += length;
+          cursor = own ? own[1] : cursor + length;
         });
       });
 
@@ -972,7 +1020,10 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         bp += (sequences.get(id) ?? "").length;
       });
       const interval = steps.length
-        ? { start: steps[0].start, end: steps[steps.length - 1].end }
+        ? {
+            start: Math.min(steps[0].start, steps[steps.length - 1].start),
+            end: Math.max(steps[0].end, steps[steps.length - 1].end),
+          }
         : null;
       return {
         key,
@@ -991,6 +1042,7 @@ export function buildModel(queryResult: any): PangenomeModel | null {
         nodeSet,
         bp,
         interval,
+        ...(draft.row ? { row: draft.row } : {}),
       };
     });
 
@@ -1308,7 +1360,6 @@ export function buildModel(queryResult: any): PangenomeModel | null {
     .filter((edge) => edge.lanes.length > 0 || !intoRepeat.has(edge.key))
     .filter((edge) => !turns.has(edge) || straight.has(edge))
     .map(({ from, to }) => ({ from, to }));
-  console.log(layoutEdges, lanes, sequences, copyOf, ids);
   for (const lane of lanes) {
     if (lane.isReference) continue;
     const pieces = lane.segments.map((segment) => segment.nodes);

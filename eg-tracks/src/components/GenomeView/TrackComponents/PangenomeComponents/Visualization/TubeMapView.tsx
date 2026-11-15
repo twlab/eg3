@@ -73,6 +73,11 @@ const CARRIED_DASH = [4, 3];
 /** The thin solid line for a link between two alternative alleles. */
 /** How thick a haplotype is drawn, wherever it goes. */
 const PATH_WIDTH = 2;
+/** The chevrons along a stretch read on the other strand: how far apart,
+    half their size, and their ink. */
+const CHEVRON_GAP = 14;
+const CHEVRON_HALF = 2.5;
+const CHEVRON_INK = "#1f2937";
 /** How far inside its box a start or an end is marked, from the box's edge
     to the mark's own: on the edge, a mark ran into the box's outline and the
     seam leaving it. */
@@ -152,18 +157,19 @@ function TubeMapView({
   /* The dots and Xs where they are drawn, for the pointer to find. */
   const marks = useMemo(
     () => [
+      /* A reverse pass starts at its line's right end: see reversePass. */
       ...routeStarts(geometry).map((m) => ({
         ...m,
-        end: false,
-        cx: m.x + MARK_INSET + markHalf(m.pass),
+        end: reversePass(model, m.lane),
+        cx: m.x + MARK_INSET + markHalf(markNumber(model, m.lane, m.pass)),
       })),
       ...routeEnds(geometry).map((m) => ({
         ...m,
-        end: true,
-        cx: m.x - MARK_INSET - markHalf(m.pass),
+        end: !reversePass(model, m.lane),
+        cx: m.x - MARK_INSET - markHalf(markNumber(model, m.lane, m.pass)),
       })),
     ],
-    [geometry],
+    [geometry, model],
   );
   const markAt = (x: number, y: number) => {
     let best: (typeof marks)[number] | null = null;
@@ -326,8 +332,18 @@ function tubeHover(
   const { passOf, passCount } = linePasses(geometry);
   const pass = passOf[laneIndex]?.[entryIndex] ?? 1;
   const count = passCount[laneIndex] ?? 1;
-  const repeatLines =
-    count > 1
+  /* A tube that is a row of the linear view (tubeModel.ts) is that pass of
+     its haplotype, whatever pieces its line is in here. */
+  const row = lane.row;
+  const repeatLines = row
+    ? [
+        `pass ${row.n} of ${row.of} of ${lane.label}${row.reverse ? ", a reverse pass: read right to left" : ""}`,
+        ...(entry.descending && !row.reverse
+          ? ["read on the other strand here: right to left"]
+          : []),
+        ...(count > 1 ? [`its line is in ${count} pieces here: piece ${pass}`] : []),
+      ]
+    : count > 1
       ? [`pass ${pass} of ${count}: from the white ${pass} to the dark ${pass}`]
       : [];
   /* The node this haplotype walks here, or the box's own where it is only
@@ -391,7 +407,34 @@ function tubeHover(
     perBase > 0
       ? Math.min(node.length - 1, Math.max(0, Math.floor((x - left) / perBase)))
       : 0;
-  const bp = entry.start + offset;
+  /* Counting down along a stretch read on the other strand. */
+  const down = !!entry.descending && entry.end !== null;
+  const bp = down ? entry.end! - 1 - offset : entry.start + offset;
+  const letters =
+    node.length > 0
+      ? nodeLetters(
+          {
+            sequence: node.sequence,
+            length: node.length,
+            left,
+            right,
+            start: entry.start,
+            offset,
+            pixel: Math.round(x),
+          },
+          LETTER_CAP,
+        )
+      : null;
+  /* The bases marked, in the haplotype's own coordinates: the letters are
+     the node's, left to right, and those count down along them here. */
+  const zoom =
+    letters && down
+      ? {
+          ...letters,
+          markFrom: entry.end! - 1 - ((letters.markTo ?? letters.markFrom ?? entry.start) - entry.start),
+          markTo: entry.end! - 1 - ((letters.markFrom ?? entry.start) - entry.start),
+        }
+      : letters;
 
   return {
     x: event.clientX,
@@ -406,21 +449,7 @@ function tubeHover(
          following a tube is asking about. */
       ...laneNeighbourLines(lane, node.id),
     ],
-    zoom:
-      node.length > 0
-        ? nodeLetters(
-            {
-              sequence: node.sequence,
-              length: node.length,
-              left,
-              right,
-              start: entry.start,
-              offset,
-              pixel: Math.round(x),
-            },
-            LETTER_CAP,
-          )
-        : null,
+    zoom,
   };
 }
 
@@ -523,8 +552,12 @@ function paint(
   const ends = routeEnds(geometry);
   const at = (lane: number, x: number, y: number) =>
     `${lane}:${x.toFixed(2)}:${y.toFixed(2)}`;
-  const startAt = new Map(starts.map((p) => [at(p.lane, p.x, p.y), p.pass]));
-  const endAt = new Map(ends.map((p) => [at(p.lane, p.x, p.y), p.pass]));
+  const startAt = new Map(
+    starts.map((p) => [at(p.lane, p.x, p.y), markNumber(model, p.lane, p.pass)]),
+  );
+  const endAt = new Map(
+    ends.map((p) => [at(p.lane, p.x, p.y), markNumber(model, p.lane, p.pass)]),
+  );
   /* A piece's two ends: pulled in to its marks where it has them, and half a
      pixel out otherwise, so it tucks under whatever meets it. */
   const trimmed = (piece: TubePiece) => {
@@ -592,19 +625,47 @@ function paint(
      window has come from somewhere the window does not show, and without a
      mark there is nothing to say which end of it is the beginning. Inside
      the box, |1---1|, clear of its edges: a start on white, an end on dark. */
+  /* A stretch read on the other strand - an inverted run, a reverse pass
+     (tubeModel.ts) - carries left-pointing chevrons along its line, the
+     linear view's sign for it: drawn left to right, read right to left. */
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = CHEVRON_INK;
+  for (const run of geometry.runs) {
+    if (!inView(run.x0, run.x1)) continue;
+    if (!geometry.stacks.tracks[run.lane]?.[run.from]?.descending) continue;
+    const { x0, x1 } = trimmed(run);
+    if (x1 - x0 < CHEVRON_GAP) continue;
+    const count = Math.floor((x1 - x0) / CHEVRON_GAP);
+    const step = (x1 - x0) / count;
+    ctx.globalAlpha = dimPiece(run) ? DIM_ALPHA : 1;
+    ctx.beginPath();
+    for (let k = 0; k < count; k++) {
+      const x = x0 + step * (k + 0.5);
+      ctx.moveTo(x + CHEVRON_HALF, run.y0 - CHEVRON_HALF);
+      ctx.lineTo(x - CHEVRON_HALF, run.y0);
+      ctx.lineTo(x + CHEVRON_HALF, run.y0 + CHEVRON_HALF);
+    }
+    ctx.stroke();
+  }
+
+  /* The number is the row's among its haplotype's rows where the tube is a
+     row (markNumber); a reverse pass starts at its right end, so its two
+     marks change places (reversePass). */
   for (const start of starts) {
-    const half = markHalf(start.pass);
+    const number = markNumber(model, start.lane, start.pass);
+    const half = markHalf(number);
     const x = start.x + MARK_INSET + half;
     if (!inView(x - half, x + half)) continue;
     ctx.globalAlpha = dimPass(start.lane, start.pass) ? DIM_ALPHA : 1;
-    passNumber(ctx, start.pass, x, start.y, model.lanes[start.lane].color);
+    passNumber(ctx, number, x, start.y, model.lanes[start.lane].color, reversePass(model, start.lane));
   }
   for (const end of ends) {
-    const half = markHalf(end.pass);
+    const number = markNumber(model, end.lane, end.pass);
+    const half = markHalf(number);
     const x = end.x - MARK_INSET - half;
     if (!inView(x - half, x + half)) continue;
     ctx.globalAlpha = dimPass(end.lane, end.pass) ? DIM_ALPHA : 1;
-    passNumber(ctx, end.pass, x, end.y, model.lanes[end.lane].color, true);
+    passNumber(ctx, number, x, end.y, model.lanes[end.lane].color, !reversePass(model, end.lane));
   }
 
   /* Each deletion's size on its stretch of tube, where it fits there: at
@@ -697,6 +758,16 @@ function paint(
   ctx.globalAlpha = 1;
 }
 
+/** The number on a line's two marks: its row's among its haplotype's rows,
+    as the linear view's labels number them, where the tube is a row
+    (tubeModel.ts); else which of the lane's lines it is. */
+const markNumber = (model: PangenomeModel, lane: number, pass: number) =>
+  model.lanes[lane]?.row?.n ?? pass;
+/** A reverse pass is drawn left to right and read right to left: its line
+    starts at its right end. */
+const reversePass = (model: PangenomeModel, lane: number) =>
+  !!model.lanes[lane]?.row?.reverse;
+
 /** How near a start or an end number the pointer has to be to be on it. */
 const MARK_HIT = 6;
 
@@ -730,6 +801,22 @@ function markLines(
   const { passCount } = linePasses(geometry);
   const count = passCount[lane] ?? 1;
   const contig = model.lanes[lane]?.contig ?? "";
+  /* A tube that is a row: its pass, and its own stretch in this band. */
+  const row = model.lanes[lane]?.row;
+  if (row) {
+    let from = Infinity;
+    let to = -Infinity;
+    for (const step of model.lanes[lane].steps) {
+      from = Math.min(from, step.start);
+      to = Math.max(to, step.end);
+    }
+    return [
+      `${end ? "end" : "start"} of pass ${row.n} of ${row.of} of ${model.lanes[lane].label}`,
+      ...(to > from ? [`${contig}:${from.toLocaleString()}–${to.toLocaleString()} here`] : []),
+      ...(row.reverse ? ["a reverse pass: read right to left"] : []),
+      ...(count > 1 ? [`its line is in ${count} pieces here: piece ${pass}`] : []),
+    ];
+  }
   const at = (
     entry: { node: GraphNode | null; start: number | null; end: number | null } | null,
     last: boolean,

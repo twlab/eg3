@@ -19,6 +19,7 @@ import { GRAPH_PART } from "./Visualization/VisualizationContainer";
 import { TUBE_H } from "./Visualization/TubeMapView";
 import { tubeAxis, tubeStacks } from "./Visualization/tubeLayout";
 import { compressedModel } from "./Visualization/compressedTube";
+import { tubeModelOf } from "./Visualization/tubeModel";
 import { separatorBp, variantSegments } from "./Visualization/variantBubbles";
 import { DEFAULT_GAP_SCALE } from "./Visualization/pangenomeViewState";
 import type { ViewMode } from "./Visualization/pangenomeViewState";
@@ -60,7 +61,8 @@ export const isLayoutTrackType = (type: unknown) =>
    makes the bubbles; see pangenomeBrowser's dataFetcher. */
 const DEFAULT_CONTEXT_BP = 32;
 
-/** The widest view, in bases, the linear view draws haplotypes for. Past it
+/** The widest view, in bases, the linear view draws haplotypes for, and
+    the tube view, which is drawn from the same fetch (tubeModel.ts). Past it
     the band is not fetched: a 150 kb view already takes about 11 s, most of
     it the fetch, and a 1 Mb view ran the tab out of memory. Each haplotype's
     row says to zoom in instead (PangenomeTrackView). */
@@ -563,7 +565,14 @@ export function layoutPangenomeBand(
         !a || b.getLength() > a.getLength() ? b : a,
       null,
     );
-  const model = records && locus ? modelOf(records) : null;
+  /* The tube map's own model in tube view: the linear view's rows, a tube
+     each (tubeModel.ts). */
+  const model =
+    records && locus
+      ? settings.mode === "tube"
+        ? tubeModelOf(records)
+        : modelOf(records)
+      : null;
   /* Linear view: the reference's own scale, no room let in for anyone's
      longer allele - the bars show such bases as marks (linearModel.ts), so
      every track under the graph is drawn to the reference. The other views
@@ -701,6 +710,13 @@ export async function fetchPangenomeData(
     let query = queries.get(key);
     if (!query) {
       query = (async () => {
+        /* In development, how many bands were queried: the check harness
+           counts none on a switch between the linear and the tube view
+           (testing/tools/browser/tubeView.mjs). */
+        if ((import.meta as any).env?.DEV && typeof window !== "undefined") {
+          const counted = window as unknown as { __pgvFetches?: number };
+          counted.__pgvFetches = (counted.__pgvFetches ?? 0) + 1;
+        }
         const database = await liveDatabase(options);
         const bounds = !locus
           ? null
@@ -721,15 +737,18 @@ export async function fetchPangenomeData(
               haplotypes: options.haplotypes,
               /* The bars place every allele against the reference's own
                  coordinates, so each is wanted whole, to the node it
-                 rejoins at. The tube and variants views still lay the band
-                 out with room for whatever arrives, so there the walks stay
-                 cut at the context. */
-              walkOn: settings.mode === "linear",
+                 rejoins at; the tube map is drawn from the bars' own rows
+                 (tubeModel.ts), so it asks the same and a switch between
+                 the two fetches nothing. The variants view still lays the
+                 band out with room for whatever arrives, so there the
+                 walks stay cut at the context. */
+              walkOn: settings.mode !== "variants",
               /* The rows of a haplotype with copies are told apart by copy
                  (copiesModel.ts): the finder walks each shown haplotype's
-                 path for them. Only for the bars, and only with haplotypes
-                 chosen, which it needs. */
-              duplications: settings.mode === "linear" && !!options.haplotypes?.length,
+                 path for them. For the bars - and the tube view, to ask
+                 the same - and only with haplotypes chosen, which it
+                 needs. */
+              duplications: settings.mode !== "variants" && !!options.haplotypes?.length,
             })
           : { nodes: {}, edges: {}, paths: [] };
       })();
@@ -752,7 +771,7 @@ export async function fetchPangenomeData(
      its ends, and a zoom rounds its edges), and eg3's own zoom in from a
      300 kb view, 150,001 bases, is a 150 kb view. */
   const tooWide: TooWide | null =
-    settings.mode === "linear" && Math.round(viewBp / 100) * 100 > PANGENOME_MAX_VIEW_BP
+    settings.mode !== "variants" && Math.round(viewBp / 100) * 100 > PANGENOME_MAX_VIEW_BP
       ? { viewBp, maxBp: PANGENOME_MAX_VIEW_BP }
       : null;
   const unfetched = tooWide ? { nodes: {}, edges: {}, paths: [], tooWide } : null;

@@ -21,6 +21,7 @@ import type { ViewMode } from "./Visualization/pangenomeViewState";
 import { TUBE_H } from "./Visualization/TubeMapView";
 import { tubeStacks } from "./Visualization/tubeLayout";
 import { compressedModel } from "./Visualization/compressedTube";
+import { tubeModelOf } from "./Visualization/tubeModel";
 import {
   separatorBp,
   variantLayout,
@@ -64,12 +65,13 @@ export function pangenomeTrackHeight(
   tube?: { minBp: number | null; bases: number[] },
   variantGrouping = 0,
 ): number {
-  /* Linear view, past the size limit: nothing was fetched, and each row
-     keeps the height it has with a band (fetchPangenomeData). */
-  if (view === "linear" && tooWideOf(queryResult)) {
+  /* Linear or tube view, past the size limit: nothing was fetched, and
+     each row keeps the height it has with a band (fetchPangenomeData). */
+  if (view !== "variants" && tooWideOf(queryResult)) {
     return part === GRAPH_PART ? GRAPH_ROW_H : laneHeightOf(0);
   }
-  const model = modelOf(queryResult);
+  /* The tube map is drawn from the linear view's rows (tubeModel.ts). */
+  const model = view === "tube" ? tubeModelOf(queryResult) : modelOf(queryResult);
   if (!model) return 40;
   if (view !== "linear") {
     if (part !== GRAPH_PART) return LANE_H;
@@ -246,11 +248,15 @@ export default function PangenomeTrackView({
      shared state told. */
   const tooWide = tooWideOf(queryResult);
   const graphRow = part === GRAPH_PART;
+  /* The view TrackManager holds, which its toolbar switches, when there is
+     one; a provider of its own otherwise. */
+  const held = usePangenomeView();
+  const tubes = held?.mode === "tube";
   const drawing = tooWide ? (
     <div style={{ position: "relative", width: frame?.width ?? windowWidth * 3, height: graphRow ? GRAPH_ROW_H : laneHeightOf(0) }}>
       <div
         className={`pgv-zoom-in${graphRow ? " pgv-zoom-in-ref" : ""}`}
-        title={`${graphRow ? "The reference's nodes" : "Haplotypes"} are drawn for views of ${kb(tooWide.maxBp)} or less; this view is ${kb(tooWide.viewBp)}`}
+        title={`${tubes ? "The tubes" : graphRow ? "The reference's nodes" : "Haplotypes"} are drawn for views of ${kb(tooWide.maxBp)} or less; this view is ${kb(tooWide.viewBp)}`}
       >
         <span
           style={{
@@ -258,7 +264,7 @@ export default function PangenomeTrackView({
             width: frame ? frame.viewToPx - frame.viewFromPx : windowWidth,
           }}
         >
-          {graphRow ? "Zoom in to see the reference's nodes" : "Zoom in to see haplotypes"}
+          {tubes ? "Zoom in to see the tubes" : graphRow ? "Zoom in to see the reference's nodes" : "Zoom in to see haplotypes"}
         </span>
       </div>
       {graphRow && (
@@ -284,9 +290,6 @@ export default function PangenomeTrackView({
         />
       </div>
     );
-  /* The view TrackManager holds, which its toolbar switches, when there is
-     one; a provider of its own otherwise. */
-  const held = usePangenomeView();
   return held ? (
     drawing
   ) : (
