@@ -76,10 +76,23 @@ export interface InsideSite {
   skip: number;
 }
 
+/** What a site mark says (PLAN-site-marks.md, 2026-11-15): "nested" where the row differs
+    inside a smaller sealed site of a merged site, drawn teal; else "multiallelic", two or more
+    alleles here besides the reference's, drawn violet. Nested wins. */
+export type SiteMarkKind = "nested" | "multiallelic";
+
 /** What a nested mark shows. */
 export interface NestedMark {
   /** "left>right" by the two anchors' node ids. */
   site: string;
+  /** Nested or multiallelic (SiteMarkKind). */
+  kind: SiteMarkKind;
+  /** The row's own smaller sealed sites inside the merged site, where it differs: each pair's
+      key and reference stretch. Empty unless nested. */
+  nestedPairs: Array<{ key: string; refAt: number; refLen: number }>;
+  /** Whether the site seals in the graph: a merged site always does; a single pair as the
+      worker found it. */
+  sealed: boolean;
   /** The reference between the anchors, in bases: 0 at an insertion site. */
   refLen: number;
   /** How many versions there are. */
@@ -206,9 +219,12 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     straight: number,
     others: number,
     total: number,
+    how: { kind: SiteMarkKind; nestedPairs: NestedMark["nestedPairs"]; sealed: boolean },
     merged?: NestedMark["merged"],
   ): NestedMark | null => {
-    if (ranked.length < 2) return null;
+    /* Two or more alleles make the mark; a nested difference makes it too, its own being the
+       alternative (no such case in the saved regions, 2026-11-15). */
+    if (ranked.length < 2 && how.kind !== "nested") return null;
     const list: NestedVersion[] = ranked.map((v, i) => ({
       key: v.key,
       nodes: v.nodes,
@@ -223,6 +239,9 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     const label = labelOf(own?.bases ?? 0, refLen);
     return {
       site: siteKey(k0, k1),
+      kind: how.kind,
+      nestedPairs: how.nestedPairs,
+      sealed: how.sealed,
       refLen,
       versions: list.length,
       rank: list.findIndex((v) => v.mine) + 1,
@@ -264,7 +283,20 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
           const bandList = tallied(mg.site.versions);
           const readers = mg.site.versions.reduce((t, v) => t + v.count, 0) + mg.site.straight;
           const inside = insideOf(mg.k0, mg.k1, readers);
-          const all = mark(mg.k0, mg.k1, mg.site.refLen, mine, bandList, mg.site.straight, 0, carriers?.versionTotal ?? carriers?.total ?? 0, {
+          /* Nested (PLAN-site-marks.md): the row's own bubbles inside the merged site that
+             are pairs sealed on their own, other than its outer pair. */
+          const nestedPairs: NestedMark["nestedPairs"] = [];
+          for (const other of row.bubbles) {
+            if (other.cls === "inversion" || other.cls === "match") continue;
+            const a = (kAt.get(other.refAt) ?? 0) - 1;
+            const z = kAt.get(other.refAt + other.refLen);
+            if (a < 0 || z === undefined || z >= axis.steps.length) continue;
+            const pair = siteKey(a, z);
+            if (pair === mg.key || !mg.site.pairs.includes(pair) || !carriers?.versions?.[pair]?.sealed) continue;
+            if (!nestedPairs.some((q) => q.key === pair)) nestedPairs.push({ key: pair, refAt: other.refAt, refLen: other.refLen });
+          }
+          const how = { kind: (nestedPairs.length ? "nested" : "multiallelic") as SiteMarkKind, nestedPairs, sealed: true };
+          const all = mark(mg.k0, mg.k1, mg.site.refLen, mine, bandList, mg.site.straight, 0, carriers?.versionTotal ?? carriers?.total ?? 0, how, {
             pairs: mg.site.pairs.length,
             partial: mg.site.partial,
             inside,
@@ -283,7 +315,12 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
         const bandList: Tallied[] = tallied(band?.versions ?? []);
         const refLen = band?.refLen ?? bubble.refLen;
         const all = band
-          ? mark(k0, k1, refLen, mine, bandList, band.straight, band.others ?? 0, carriers?.versionTotal ?? carriers?.total ?? 0)
+          ? mark(k0, k1, refLen, mine, bandList, band.straight, band.others ?? 0, carriers?.versionTotal ?? carriers?.total ?? 0, {
+              /* A single pair is never nested in step 1: no parent is known for it. */
+              kind: "multiallelic",
+              nestedPairs: [],
+              sealed: !!band.sealed,
+            })
           : null;
         if (all) first.nested = all;
 

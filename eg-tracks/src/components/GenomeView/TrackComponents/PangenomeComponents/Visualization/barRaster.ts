@@ -4,7 +4,7 @@ import type { Graph } from "./alignment";
 import { deletionText } from "./pangenomeModel";
 import { coveredBases } from "./letters";
 import type { NodeLetters } from "./letters";
-import type { NestedMark } from "./nestedMarks";
+import type { NestedMark, SiteMarkKind } from "./nestedMarks";
 
 /* ══════════════════════════════════════════════════════════════════════════
    One row's bar as an array with one entry per pixel.
@@ -50,6 +50,9 @@ export interface MarkGlyph {
       among the haplotypes counted (nestedMarks.ts): drawn in the nested
       ink and font. */
   nested: boolean;
+  /** What its site mark says, where it has one (PLAN-site-marks.md): teal when any of its marks
+      is nested, else violet. */
+  kind?: SiteMarkKind;
   /** What the label says: a nested mark's bases against the reference's
       between the anchors ("+6", "−4", nothing when as many); a plain
       insertion's "+6"; several insertions drawn as one, the largest and
@@ -220,6 +223,7 @@ export function rasteriseBar(
       last.largest = Math.max(last.largest, bp);
       last.parts.push(part.index);
       last.nested = last.nested || !!info;
+      if (info && (info.kind === "nested" || !last.kind)) last.kind = info.kind;
       last.label = markLabel(last);
       continue;
     }
@@ -229,6 +233,7 @@ export function rasteriseBar(
       largest: bp,
       parts: [part.index],
       nested: !!info,
+      ...(info ? { kind: info.kind } : {}),
       label: info ? info.label : `+${bp.toLocaleString()}`,
       ...(info && info.refLen > 0 ? { refLen: info.refLen } : {}),
     });

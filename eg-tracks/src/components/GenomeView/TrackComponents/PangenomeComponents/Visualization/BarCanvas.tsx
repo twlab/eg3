@@ -111,14 +111,17 @@ const STRAND_HALO_WIDTH = 3;
 const ARROW_WIDTH = 5;
 const ARROW_SEPARATION = 16;
 const ARROW_HEIGHT = 13;
-/* A mark: a small triangle pointing into the bar, and its size. A nested
-   mark (rule D, nestedMarks.ts) is violet, its label in the monospace
-   face so its chips line up with its letters. */
+/* A mark: a small triangle pointing into the bar, and its size. A site
+   mark (rule D, nestedMarks.ts) is violet where the site is multiallelic
+   and teal where the row differs inside a smaller sealed site, nested
+   (PLAN-site-marks.md, 2026-11-15); its label in the monospace face so its
+   chips line up with its letters. */
 export const MARK_INK = "#c2410c";
 const MARK_HALF = 4;
 const MARK_TALL = 7;
 const MARK_FONT = 9;
-export const NESTED_INK = "#7c3aed";
+export const MULTIALLELIC_INK = "#7c3aed";
+export const NESTED_INK = "#0f766e";
 const NESTED_FONT = 10;
 /** The most of the bar's height a letter may take. */
 const LETTER_OF_BAR = 0.7;
@@ -563,7 +566,7 @@ function paintOver(
     raster.marks.forEach((glyph, k) => {
       const x = glyph.x * sx;
       if (x < -half || x > pw + half) return;
-      const ink = glyph.nested ? NESTED_INK : MARK_INK;
+      const ink = glyph.nested ? (glyph.kind === "nested" ? NESTED_INK : MULTIALLELIC_INK) : MARK_INK;
       ctx.fillStyle = ink;
       ctx.beginPath();
       ctx.moveTo(x - half, base);

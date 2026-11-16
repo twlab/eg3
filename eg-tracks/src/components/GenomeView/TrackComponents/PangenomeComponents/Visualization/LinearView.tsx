@@ -8,7 +8,7 @@ import { binBpAt, modelBins } from "./bins";
 import type { BinVariant, Bins, ModelBins, VariantKind } from "./bins";
 import { barTiers, hiddenWhites, rowOf } from "./barTiers";
 import type { BarTiers, TierAxis, TierWhite } from "./barTiers";
-import BarCanvas, { MARK_BAND } from "./BarCanvas";
+import BarCanvas, { MARK_BAND, MULTIALLELIC_INK, NESTED_INK } from "./BarCanvas";
 import type { BarTarget } from "./BarCanvas";
 import { CardBody, HoverCard, cardKeptOpen, cardSequence } from "./Cards";
 import type { CardContent, CardItem, CardZoom, HoverCardHandle } from "./Cards";
@@ -648,7 +648,36 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
           ? { from: row.steps[iL].end, to: row.steps[iR].start, reverse: false }
           : { from: row.steps[iR].end, to: row.steps[iL].start, reverse: true }
         : null;
+    /* What the mark says (PLAN-site-marks.md, 2026-11-15): nested, multiallelic, or both, a dot
+       in each one's colour. */
+    const dot = (ink: string) => (
+      <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: ink, marginRight: 6 }} />
+    );
+    const pairAt = (q: { refAt: number; refLen: number }) => (q.refLen ? span(q.refAt, q.refAt + q.refLen) : `after ${where(q.refAt)}`);
+    const firstNested = info.nestedPairs[0];
+    const kindLines: ReactNode[] = [
+      ...(info.kind === "nested" && firstNested
+        ? [
+            <>
+              {dot(NESTED_INK)}
+              <b>Nested</b>:{" "}
+              {info.nestedPairs.length === 1
+                ? `this walk differs inside a smaller sealed site at ${pairAt(firstNested)}, within this one`
+                : `this walk differs inside ${info.nestedPairs.length} smaller sealed sites within this one, the first at ${pairAt(firstNested)}`}
+            </>,
+          ]
+        : []),
+      ...(info.versions >= 2
+        ? [
+            <>
+              {dot(MULTIALLELIC_INK)}
+              <b>Multiallelic</b>: {info.versions.toLocaleString()} alleles here besides {referenceName}'s{info.sealed ? "" : " · not a sealed site"}
+            </>,
+          ]
+        : []),
+    ];
     const lines: ReactNode[] = [
+      ...kindLines,
       <>
         {referenceName} {refCoord(info.refLen ? span(siteStart, siteEnd) : `after ${where(siteStart)}`)} ({info.refLen ? `${info.refLen.toLocaleString()} bp` : "insertion site, no reference base"}) ·{" "}
         {lane.label}{" "}
@@ -1080,8 +1109,8 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
       return null;
     };
     /* Rule D zoomed out: a variant whose site the haplotypes counted read
-       more than one way (nestedMarks.ts), by its bubble's first changed
-       part. */
+       more than one way, or where the row differs inside a smaller sealed
+       site (nestedMarks.ts), by its bubble's first changed part. */
     const nestedOfVariant = (variant: BinVariant): NestedMark | null => {
       if (!/^d+$/.test(variant.key)) return null;
       const b = Number(variant.key);
@@ -1100,7 +1129,7 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
         key: `variant ${index}`,
         line: (
           <>
-            {info ? <><span className="pgv-var-nested">nested</span> · </> : null}
+            {info ? <><span className={info.kind === "nested" ? "pgv-var-nested" : "pgv-var-multiallelic"}>{info.kind === "nested" ? "nested" : "multiallelic"}</span> · </> : null}
             <span className={KIND_CLASS[variant.kind]}>{variant.kind}</span> · {variant.kind === "insertion" ? `+${size}` : variant.kind === "deletion" ? `−${size}` : size} bp at{" "}
             {refCoord(where(place))}
           </>

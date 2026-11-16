@@ -629,9 +629,13 @@
   color: #d9c6f7;
 }
 
-/* A nested insertion (rule D, nestedMarks.ts): the violet its mark is
-   drawn in, lightened for the card. */
+/* A site mark in the bin card (rule D, nestedMarks.ts; PLAN-site-marks.md):
+   the colour its mark is drawn in, lightened for the dark card: nested
+   teal, multiallelic violet. */
 .pgv-var-nested {
+  color: #5eead4;
+}
+.pgv-var-multiallelic {
   color: #c4b5fd;
 }
 
