@@ -1,5 +1,5 @@
 import { axisOf, readsSite, siteReads, stepsBetween } from "./pointer";
-import { adjacencyOf, clustersOf, handleOf, leaksInGraph, sealedInterior } from "./sites";
+import { adjacencyOf, clustersOf, handleOf, leaksInGraph, nodeOfHandle, sealedInterior } from "./sites";
 import {
   edgeIsCanonical,
   encodeNode,
@@ -204,6 +204,20 @@ export interface JunctionVersions {
       with no cycle or tip): every walk through it enters by the one and
       leaves by the other. Checked against the graph's own records. */
   sealed: boolean;
+  /** The sealed sites inside the alleles (PLAN-site-marks.md, step 2). */
+  inner?: InnerSite[];
+}
+
+/**
+ * A sealed site inside a site's alleles (PLAN-site-marks.md, step 2): a node `from` that two or
+ * more alleles read once and leave differently, the first node `to` after it that every allele
+ * through `from` reads once after it, one of the two not on the band's reference walk, the stretch
+ * between sealed in the graph and read two or more ways. Each reading once per haplotype.
+ */
+export interface InnerSite {
+  from: { id: string; reverse: boolean };
+  to: { id: string; reverse: boolean };
+  readings: Array<{ nodes: Array<{ id: string; reverse: boolean }>; bases: number; count: number }>;
 }
 
 /**
@@ -227,6 +241,8 @@ export interface MergedSite {
   versions: Array<{ nodes: Array<{ id: string; reverse: boolean }>; bases: number; count: number }>;
   straight: number;
   partial: number;
+  /** The sealed sites inside the alleles (PLAN-site-marks.md, step 2). */
+  inner?: InnerSite[];
 }
 
 /** A version longer than this has no sequences sent for its nodes: the
@@ -940,13 +956,186 @@ function countCarriers(
     haplotype += 1;
   }
 
+  /* Sealed sites inside the alleles (PLAN-site-marks.md, step 2). From each site's versions: a
+     node x that two or more versions read once each and leave differently, and the first node y
+     along the first of them that every version through x reads once after x; kept when one of x
+     and y is not a node of the band's reference walk (two of its nodes are step 1's pairs), the
+     graph seals x..y as it seals the pairs, and the versions through x read x..y two or more ways.
+     Their readings are counted once per haplotype in a second pass. */
+  type Hand = { id: string; reverse: boolean };
+  type InnerTally = { from: Hand; to: Hand; readings: Map<string, Tally & { nodes: Hand[]; bases: number }> };
+  const onReferenceWalk = new Set(axis.steps.map((step) => step.id));
+  const handOf = (n: Hand) => `${n.id}${n.reverse ? "-" : "+"}`;
+  /** Each node's place in a list that reads it once. */
+  const onceIn = (nodes: Hand[]) => {
+    const at = new Map<string, number>();
+    const twice = new Set<string>();
+    nodes.forEach((n, i) => {
+      const h = handOf(n);
+      if (at.has(h)) twice.add(h);
+      else at.set(h, i);
+    });
+    for (const h of twice) at.delete(h);
+    return at;
+  };
+  const sealedBetween = (from: Hand, to: Hand): boolean => {
+    const interior = sealedInterior(adjacency, handleOf(from.id, from.reverse), handleOf(to.id, to.reverse));
+    if (!interior) return false;
+    return successorsOf ? !leaksInGraph(interior, from, to, successorsOf) : true;
+  };
+  /* Whether the search from x, not passing y, stays inside a sealed outer site's interior. Out of
+     it, the search has passed the outer site's exit without passing y, and nothing beyond the
+     exit leads back in, so x..y cannot seal: the same answer as the whole seal, without its walk
+     through the rest of the band (a repeat's thousands of nodes). */
+  const staysWithin = (from: Hand, to: Hand, bound: Set<string>): boolean => {
+    const start = handleOf(from.id, from.reverse);
+    const stop = handleOf(to.id, to.reverse);
+    const seen = new Set<string>([start]);
+    const stack = [start];
+    while (stack.length) {
+      const v = stack.pop()!;
+      if (v === stop) continue;
+      for (const w of adjacency.out.get(v) ?? []) {
+        if (seen.has(w)) continue;
+        if (w !== stop && !bound.has(nodeOfHandle(w))) return false;
+        seen.add(w);
+        stack.push(w);
+      }
+    }
+    return true;
+  };
+  /* Each x..y sealed once: a pair inside a merged site and the merged site share alleles. */
+  const sealedOnce = new Map<string, boolean>();
+  const sealedWithin = (from: Hand, to: Hand, bound: Set<string> | null): boolean => {
+    const key = `${handOf(from)}>${handOf(to)}`;
+    let sealed = sealedOnce.get(key);
+    if (sealed === undefined) sealedOnce.set(key, (sealed = (!bound || staysWithin(from, to, bound)) && sealedBetween(from, to)));
+    return sealed;
+  };
+  const innerOf = (versionsHere: Map<string, VersionTally>, bound: Set<string> | null): InnerTally[] => {
+    const list = [...versionsHere.values()].filter((v) => v.nodes.length);
+    if (list.length < 2) return [];
+    const at = list.map((v) => onceIn(v.nodes));
+    const nexts = new Map<string, Set<string>>();
+    list.forEach((v, a) => {
+      for (const [h, i] of at[a]) {
+        let set = nexts.get(h);
+        if (!set) nexts.set(h, (set = new Set()));
+        set.add(i + 1 < v.nodes.length ? handOf(v.nodes[i + 1]) : "end");
+      }
+    });
+    const found = new Map<string, InnerTally>();
+    for (const [x, set] of nexts) {
+      if (set.size < 2) continue;
+      const through = list.map((_, a) => a).filter((a) => at[a].has(x));
+      if (through.length < 2) continue;
+      const first = list[through[0]];
+      const xi = at[through[0]].get(x)!;
+      let yi = -1;
+      for (let i = xi + 1; i < first.nodes.length && yi < 0; i++) {
+        const h = handOf(first.nodes[i]);
+        if (!at[through[0]].has(h)) continue;
+        if (through.every((a) => at[a].has(h) && at[a].get(h)! > at[a].get(x)!)) yi = i;
+      }
+      if (yi < 0) continue;
+      const from = first.nodes[xi];
+      const to = first.nodes[yi];
+      const y = handOf(to);
+      if (onReferenceWalk.has(from.id) && onReferenceWalk.has(to.id)) continue;
+      const ways = new Set(through.map((a) => list[a].nodes.slice(at[a].get(x)! + 1, at[a].get(y)!).map(handOf).join(" ")));
+      if (ways.size < 2) continue;
+      if (!sealedWithin(from, to, bound)) continue;
+      found.set(`${x}>${y}`, { from, to, readings: new Map() });
+    }
+    return [...found.values()];
+  };
+  const innerOfSite = new Map<object, InnerTally[]>();
+  /* A sealed site's interior in the band, worked out once. */
+  const interiors = new Map<object, Set<string> | null>();
+  const interiorOf = (site: { k0: number; k1: number }) => {
+    if (!interiors.has(site)) {
+      const entrance = axis.steps[site.k0];
+      const exit = axis.steps[site.k1];
+      interiors.set(site, sealedInterior(adjacency, handleOf(entrance.id, entrance.reverse), handleOf(exit.id, exit.reverse)));
+    }
+    return interiors.get(site)!;
+  };
+  for (const site of [...sites, ...mergedSites]) {
+    if (site.versions.size < 2) continue;
+    /* A sealed site (a merged site always is) bounds the search for its inner sites; one that
+       does not seal on its own takes the bound of a merged site around it, which holds its
+       alleles' nodes as well. */
+    const sealedSite = (site as { sealed?: boolean }).sealed !== false;
+    let bound = sealedSite ? interiorOf(site) : null;
+    if (!bound) {
+      const around = mergedSites.find((m) => m !== site && m.k0 <= site.k0 && site.k1 <= m.k1);
+      if (around) bound = interiorOf(around);
+    }
+    const inner = innerOf(site.versions, bound);
+    if (inner.length) innerOfSite.set(site, inner);
+  }
+  if (innerOfSite.size) {
+    let reader = 0;
+    const tallyReader = (entry: Tally) => {
+      if (entry.last === reader) return;
+      entry.last = reader;
+      entry.count += 1;
+    };
+    const readInner = (inner: InnerTally[], steps: Array<{ node: string; reverse: boolean }>) => {
+      const nodes = steps.map((s) => ({ id: s.node, reverse: s.reverse }));
+      const at = onceIn(nodes);
+      for (const site of inner) {
+        const i = at.get(handOf(site.from));
+        const j = at.get(handOf(site.to));
+        if (i === undefined || j === undefined || j <= i) continue;
+        const mid = nodes.slice(i + 1, j);
+        const key = mid.map(handOf).join(" ");
+        let reading = site.readings.get(key);
+        if (!reading) site.readings.set(key, (reading = { count: 0, last: -1, nodes: mid, bases: mid.reduce((n, node) => n + (all.nodes[node.id] ?? "").length, 0) }));
+        tallyReader(reading);
+      }
+    };
+    for (const [key, walks] of byHaplotype) {
+      const ofReferenceSample = refSample !== null && key.split("#")[0] === refSample;
+      if (!ofReferenceSample) {
+        for (const path of walks) {
+          const reads = readsOf.get(path) ?? siteReads(axis, stepsOf(path));
+          const steps = stepsOf(path);
+          for (const site of sites) {
+            const inner = innerOfSite.get(site);
+            if (!inner) continue;
+            for (const read of reads.bubbles) if (read.k0 === site.k0 && read.k1 === site.k1) readInner(inner, read.version);
+          }
+          for (const site of mergedSites) {
+            const inner = innerOfSite.get(site);
+            if (!inner) continue;
+            const between = stepsBetween(reads, steps, site.k0, site.k1);
+            if (between) readInner(inner, between);
+          }
+        }
+      }
+      reader += 1;
+    }
+  }
+  /** A site's inner sites as sent: those read two or more ways, readings commonest first. */
+  const innerField = (site: object): { inner?: InnerSite[] } => {
+    const inner = (innerOfSite.get(site) ?? [])
+      .filter((s) => s.readings.size >= 2)
+      .map((s) => ({
+        from: s.from,
+        to: s.to,
+        readings: [...s.readings.values()].sort((a, b) => b.count - a.count || a.nodes.length - b.nodes.length).map(({ nodes, bases, count }) => ({ nodes, bases, count })),
+      }));
+    return inner.length ? { inner } : {};
+  };
+
   const versions: Record<string, JunctionVersions> = {};
   const versionNodes: Record<string, string> = {};
   const merged: Record<string, MergedSite> = {};
   for (const site of mergedSites) {
     const key = `${axis.steps[site.k0].id}>${axis.steps[site.k1].id}`;
     const list = [...site.versions.values()].sort((a, b) => b.count - a.count || a.nodes.length - b.nodes.length);
-    merged[key] = { pairs: site.pairs, source: site.source, refLen: site.refLen, versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: site.straight.count, partial: site.partial.count };
+    merged[key] = { pairs: site.pairs, source: site.source, refLen: site.refLen, versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: site.straight.count, partial: site.partial.count, ...innerField(site) };
     for (const version of list) {
       if (version.bases > VERSION_BASES_CAP) continue;
       for (const node of version.nodes) {
@@ -957,7 +1146,7 @@ function countCarriers(
   for (const entry of sites) {
     const key = `${axis.steps[entry.k0].id}>${axis.steps[entry.k1].id}`;
     const list = [...entry.versions.values()].sort((a, b) => b.count - a.count || a.nodes.length - b.nodes.length);
-    versions[key] = { versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: entry.straight.count, others: entry.others.count, refLen: entry.refLen, sealed: entry.sealed };
+    versions[key] = { versions: list.map(({ nodes, bases, count }) => ({ nodes, bases, count })), straight: entry.straight.count, others: entry.others.count, refLen: entry.refLen, sealed: entry.sealed, ...innerField(entry) };
     for (const version of list) {
       if (version.bases > VERSION_BASES_CAP) continue;
       for (const node of version.nodes) {

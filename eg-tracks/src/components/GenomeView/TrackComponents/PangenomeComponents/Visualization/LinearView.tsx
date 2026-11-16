@@ -655,6 +655,11 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
     );
     const pairAt = (q: { refAt: number; refLen: number }) => (q.refLen ? span(q.refAt, q.refAt + q.refLen) : `after ${where(q.refAt)}`);
     const firstNested = info.nestedPairs[0];
+    /* Step 2's line: a sealed site inside this walk's allele and how the haplotypes read it. */
+    const readingWords = (r: { seq: string | null; bases: number }) =>
+      r.seq === null ? `${r.bases.toLocaleString()} bp` : !r.seq.length ? "nothing" : r.seq.length <= 12 ? r.seq : `${r.bases.toLocaleString()} bp`;
+    const readingsText = (site: NestedMark["inner"][number]) =>
+      `${site.readings.length} ways: ${site.readings.map((r) => `${readingWords(r)} in ${r.count.toLocaleString()}`).join(", ")}`;
     const kindLines: ReactNode[] = [
       ...(info.kind === "nested" && firstNested
         ? [
@@ -664,6 +669,17 @@ function LinearView({ model, axis, highlight, onZoomTo }: LinearViewProps) {
               {info.nestedPairs.length === 1
                 ? `this walk differs inside a smaller sealed site at ${pairAt(firstNested)}, within this one`
                 : `this walk differs inside ${info.nestedPairs.length} smaller sealed sites within this one, the first at ${pairAt(firstNested)}`}
+            </>,
+          ]
+        : []),
+      ...(info.inner.length
+        ? [
+            <>
+              {dot(NESTED_INK)}
+              <b>Nested</b>:{" "}
+              {info.inner.length === 1
+                ? `this walk's allele holds a smaller sealed site, read ${readingsText(info.inner[0])}`
+                : `this walk's allele holds ${info.inner.length} smaller sealed sites, the first read ${readingsText(info.inner[0])}`}
             </>,
           ]
         : []),

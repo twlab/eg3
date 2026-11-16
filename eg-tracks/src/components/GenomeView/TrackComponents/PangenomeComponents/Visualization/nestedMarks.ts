@@ -1,7 +1,7 @@
 import { reverseComplement } from "./alignment";
 import type { Step } from "./alignment";
 import { axisOf, siteReads, stepsBetween } from "../../../../../getRemoteData/gbz/pointer";
-import type { Carriers, JunctionVersions } from "../../../../../getRemoteData/gbz/subgraph";
+import type { Carriers, InnerSite, JunctionVersions } from "../../../../../getRemoteData/gbz/subgraph";
 import type { LinearLane } from "./linearModel";
 import type { RefAxis } from "./rowAlign";
 
@@ -93,6 +93,9 @@ export interface NestedMark {
   /** Whether the site seals in the graph: a merged site always does; a single pair as the
       worker found it. */
   sealed: boolean;
+  /** Step 2: the sealed sites inside the alleles that the row's own allele holds (the worker's
+      `inner`), each with its readings as the card says them. */
+  inner: Array<{ from: string; to: string; readings: Array<{ seq: string | null; bases: number; count: number }> }>;
   /** The reference between the anchors, in bases: 0 at an insertion site. */
   refLen: number;
   /** How many versions there are. */
@@ -184,6 +187,31 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     }
     return out;
   };
+  /** Step 2 (PLAN-site-marks.md): the worker's inner sites a row's allele holds: it reads the
+      first node once, then the last once. */
+  const heldInner = (nodes: Step[], list: InnerSite[] | undefined): NestedMark["inner"] => {
+    if (!list?.length) return [];
+    const at = new Map<string, number>();
+    const twice = new Set<string>();
+    const hand = (n: { id: string; reverse: boolean }) => `${n.id}${n.reverse ? "-" : "+"}`;
+    nodes.forEach((n, i) => {
+      const h = hand(n);
+      if (at.has(h)) twice.add(h);
+      else at.set(h, i);
+    });
+    const place = (n: { id: string; reverse: boolean }) => (twice.has(hand(n)) ? undefined : at.get(hand(n)));
+    return list
+      .filter((site) => {
+        const a = place(site.from);
+        const b = place(site.to);
+        return a !== undefined && b !== undefined && a < b;
+      })
+      .map((site) => ({
+        from: hand(site.from),
+        to: hand(site.to),
+        readings: site.readings.map((r) => ({ seq: seqOfVersion(r.nodes), bases: r.bases, count: r.count })),
+      }));
+  };
   const tallied = (versions: JunctionVersions["versions"]): Tallied[] =>
     versions.map((v) => ({ key: versionKey(v.nodes), nodes: v.nodes, bases: v.bases, count: v.count })).sort(bandOrder);
 
@@ -219,7 +247,7 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
     straight: number,
     others: number,
     total: number,
-    how: { kind: SiteMarkKind; nestedPairs: NestedMark["nestedPairs"]; sealed: boolean },
+    how: { kind: SiteMarkKind; nestedPairs: NestedMark["nestedPairs"]; sealed: boolean; inner: NestedMark["inner"] },
     merged?: NestedMark["merged"],
   ): NestedMark | null => {
     /* Two or more alleles make the mark; a nested difference makes it too, its own being the
@@ -242,6 +270,7 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
       kind: how.kind,
       nestedPairs: how.nestedPairs,
       sealed: how.sealed,
+      inner: how.inner,
       refLen,
       versions: list.length,
       rank: list.findIndex((v) => v.mine) + 1,
@@ -295,7 +324,9 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
             if (pair === mg.key || !mg.site.pairs.includes(pair) || !carriers?.versions?.[pair]?.sealed) continue;
             if (!nestedPairs.some((q) => q.key === pair)) nestedPairs.push({ key: pair, refAt: other.refAt, refLen: other.refLen });
           }
-          const how = { kind: (nestedPairs.length ? "nested" : "multiallelic") as SiteMarkKind, nestedPairs, sealed: true };
+          /* Step 2: the sealed sites inside the merged site's alleles that this row's allele holds. */
+          const held = heldInner(between, mg.site.inner);
+          const how = { kind: (nestedPairs.length || held.length ? "nested" : "multiallelic") as SiteMarkKind, nestedPairs, sealed: true, inner: held };
           const all = mark(mg.k0, mg.k1, mg.site.refLen, mine, bandList, mg.site.straight, 0, carriers?.versionTotal ?? carriers?.total ?? 0, how, {
             pairs: mg.site.pairs.length,
             partial: mg.site.partial,
@@ -314,12 +345,15 @@ export function addNestedMarks(lanes: LinearLane[], axis: RefAxis, seqOf: (s: St
         const band = carriers?.versions?.[key];
         const bandList: Tallied[] = tallied(band?.versions ?? []);
         const refLen = band?.refLen ?? bubble.refLen;
+        /* Step 2: the sealed sites inside this site's alleles that this row's allele holds. */
+        const held = heldInner(steps, band?.inner);
         const all = band
           ? mark(k0, k1, refLen, mine, bandList, band.straight, band.others ?? 0, carriers?.versionTotal ?? carriers?.total ?? 0, {
-              /* A single pair is never nested in step 1: no parent is known for it. */
-              kind: "multiallelic",
+              /* A single pair is nested only by step 2: no parent is known for it. */
+              kind: held.length ? "nested" : "multiallelic",
               nestedPairs: [],
               sealed: !!band.sealed,
+              inner: held,
             })
           : null;
         if (all) first.nested = all;
