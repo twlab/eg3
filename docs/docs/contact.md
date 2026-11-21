@@ -19,7 +19,7 @@ Using github issues is our preferred way to commmunicate with users :)
 
 You can also get help from social media:
 
-1. [Discord server](https://discord.gg/Mvngzxa9)
+1. [Discord server](https://discord.gg/2PHxAEJFf7)
 2. [Google group](https://groups.google.com/forum/#!forum/epgg)
 3. [Facebook page](https://www.facebook.com/WashUEpiGenomeBrowser/)
 4. [X](https://x.com/wuepgg)
