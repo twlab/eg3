@@ -3,7 +3,7 @@ import TabView from "@/components/ui/tab-view/TabView";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import { generateUUID } from "wuepgg3-track";
+import { generateUUID, isSupportedTrackType } from "wuepgg3-track";
 import React, { useMemo } from "react";
 import JSON5 from "json5";
 
@@ -368,7 +368,6 @@ function SelectTrackType({ selectedType, onTypeChange }: SelectTrackTypeProps) {
       <optgroup label="Select only the track file (can select many)">
         <option value="bigWig">bigWig — {TYPES_DESC.bigWig}</option>
         <option value="bigBed">bigBed — {TYPES_DESC.bigBed}</option>
-        <option value="rgbpeak">RgbPeak — {TYPES_DESC.rgbpeak}</option>
         <option value="hic">HiC — {TYPES_DESC.hic}</option>
         <option value="bigInteract">bigInteract — {TYPES_DESC.bigInteract}</option>
         <option value="dynseq">dynseq — {TYPES_DESC.dynseq}</option>
@@ -383,7 +382,6 @@ function SelectTrackType({ selectedType, onTypeChange }: SelectTrackTypeProps) {
         <option value="vcf">vcf — {TYPES_DESC.vcf}</option>
         <option value="refBed">refBed — {TYPES_DESC.refBed}</option>
         <option value="longrange">longrange — {TYPES_DESC.longrange}</option>
-        <option value="longrangecolor">longrangecolor — {TYPES_DESC.longrangecolor}</option>
         <option value="qbed">qBED — {TYPES_DESC.qBED}</option>
         <option value="bam">BAM — {TYPES_DESC.bam}</option>
       </optgroup>
@@ -576,11 +574,25 @@ function AddLocalHub() {
 
 // MARK: - Constants
 
-export const TRACK_TYPES = {
+// Offer only the types the track library can display (see
+// SUPPORTED_TRACK_TYPES in eg-tracks). Types listed here ahead of their
+// support appear in the picker once they are added to that list.
+function supportedOnly(groups: { [group: string]: string[] }) {
+  const result: { [group: string]: string[] } = {};
+  for (const [group, types] of Object.entries(groups)) {
+    const supported = types.filter(isSupportedTrackType);
+    if (supported.length > 0) {
+      result[group] = supported;
+    }
+  }
+  return result;
+}
+
+export const TRACK_TYPES = supportedOnly({
   Numerical: ["bigWig", "bedGraph", "qBED"],
   Variant: ["vcf"],
   "Dynamic sequence": ["dynseq"],
-  Annotation: ["bed", "bigBed", "refBed", "bedcolor"],
+  Annotation: ["bed", "bigBed", "refBed", "bedcolor", "hammock"],
   Peak: ["rgbpeak"],
   Categorical: ["categorical"],
   "Genome graph": ["brgfa", "graph"],
@@ -592,7 +604,7 @@ export const TRACK_TYPES = {
   "3D Structure": ["g3d"],
   Dynamic: ["dbedgraph"],
   Image: ["omero4dn", "omeroidr"],
-};
+});
 
 export const TYPES_DESC = {
   bigWig: "numerical data",
@@ -602,6 +614,8 @@ export const TYPES_DESC = {
   categorical: "categorical data, processed by tabix in .gz format",
   bed: "annotationd data, processed by tabix in .gz format",
   bedcolor: "annotationd data with color, processed by tabix in .gz format",
+  hammock:
+    "annotation data with scores (legacy hammock format), processed by tabix in .gz format",
   bigBed: "anotation data",
   repeatmasker: "repeats annotation data in bigBed format",
   refBed: "gene annotationd data, processed by tabix in .gz format",

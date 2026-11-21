@@ -49,6 +49,7 @@ function timeoutForType(type: string) {
 const BED_OR_TABIX = new Set([
   "bed",
   "bedcolor",
+  "hammock",
   "omeroidr",
   "bedgraph",
   "qbed",

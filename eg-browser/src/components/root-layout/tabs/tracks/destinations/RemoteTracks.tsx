@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import TabView from "@/components/ui/tab-view/TabView";
 import FacetTable from "./FacetTable";
 import FileInput from "@/components/ui/input/FileInput";
-import { generateUUID } from "wuepgg3-track";
+import { generateUUID, isSupportedTrackType } from "wuepgg3-track";
 // Redux Imports
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -754,11 +754,25 @@ function AddDataHubs() {
 
 // MARK: - Constants
 
-export const TRACK_TYPES = {
+// Offer only the types the track library can display (see
+// SUPPORTED_TRACK_TYPES in eg-tracks). Types listed here ahead of their
+// support appear in the picker once they are added to that list.
+function supportedOnly(groups: { [group: string]: string[] }) {
+  const result: { [group: string]: string[] } = {};
+  for (const [group, types] of Object.entries(groups)) {
+    const supported = types.filter(isSupportedTrackType);
+    if (supported.length > 0) {
+      result[group] = supported;
+    }
+  }
+  return result;
+}
+
+export const TRACK_TYPES = supportedOnly({
   Numerical: ["bigWig", "bedGraph", "qBED"],
   Variant: ["vcf"],
   "Dynamic sequence": ["dynseq"],
-  Annotation: ["bed", "bigBed", "refBed", "bedcolor"],
+  Annotation: ["bed", "bigBed", "refBed", "bedcolor", "hammock"],
   Peak: ["rgbpeak"],
   Categorical: ["categorical"],
   // "Transcription Factor": ["jaspar"],
@@ -771,7 +785,7 @@ export const TRACK_TYPES = {
   "3D Structure": ["g3d"],
   Dynamic: ["dbedgraph"],
   Image: ["omero4dn", "omeroidr"],
-};
+});
 
 export const NUMERRICAL_TRACK_TYPES = ["bigwig", "bedgraph"]; // the front UI we allow any case of types, in TrackModel only lower case
 
@@ -792,6 +806,7 @@ const TYPES_NEED_INDEX = [
   "vcf",
   "genomealign",
   "bedcolor",
+  "hammock",
   "brgfa",
   "graph",
   "modbed",
@@ -806,6 +821,8 @@ export const TYPES_DESC = {
   categorical: "categorical data, processed by tabix in .gz format",
   bed: "annotationd data, processed by tabix in .gz format",
   bedcolor: "annotationd data with color, processed by tabix in .gz format",
+  hammock:
+    "annotation data with scores (legacy hammock format), processed by tabix in .gz format",
   bigBed: "anotation data",
   repeatmasker: "repeats annotation data in bigBed format",
   refBed: "gene annotationd data, processed by tabix in .gz format",

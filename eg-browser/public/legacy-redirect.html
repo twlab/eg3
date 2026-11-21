@@ -1,0 +1,37 @@
+<!doctype html>
+<!--
+  Redirect page for links to the retired 1st-generation WashU Epigenome Browser.
+
+  Published links look like
+    https://epigenomegateway.wustl.edu/legacy/?genome=mm9&datahub=...&coordinate=...
+  Serve this file as the index page of /legacy/ (copy it to the document root
+  that answers /legacy/ and name it index.html). It sends the visitor to
+  /browser/ with the same parameters, where the current browser converts the
+  legacy datahub and opens the same region.
+
+  The file is self-contained and does not change between browser releases.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WashU Epigenome Browser</title>
+    <script>
+      window.location.replace(
+        "/browser/" + window.location.search + window.location.hash,
+      );
+    </script>
+  </head>
+  <body>
+    <p>
+      The 1st-generation WashU Epigenome Browser has been retired. Continue to
+      the <a id="link" href="/browser/">current WashU Epigenome Browser</a>.
+    </p>
+    <script>
+      // keep the parameters on the manual link too, in case the redirect above
+      // was blocked
+      document.getElementById("link").href =
+        "/browser/" + window.location.search + window.location.hash;
+    </script>
+  </body>
+</html>

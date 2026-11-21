@@ -36,6 +36,16 @@ interface UtilityState {
    * again on every check; it re-arms once there is comfortable room again.
    */
   storageWarningAcknowledged: boolean;
+  /**
+   * A message for the user that does not block the page, e.g. why a link
+   * could not be loaded as written. Shown by NoticeBanner until dismissed.
+   */
+  notice: Notice | null;
+}
+
+export interface Notice {
+  level: "info" | "error";
+  message: string;
 }
 
 const initialToolState: ToolState = {
@@ -53,6 +63,7 @@ const initialState: UtilityState = {
   awaitingStorageRecheck: false,
   storageNearlyFull: false,
   storageWarningAcknowledged: false,
+  notice: null,
 };
 
 export const utilitySlice = createSlice({
@@ -126,6 +137,12 @@ export const utilitySlice = createSlice({
       if (!state.storageWarningAcknowledged) state.storageNearlyFull = true;
     },
     /** Dismiss the early warning. Nothing is deleted — there is still room. */
+    showNotice: (state, action: PayloadAction<Notice>) => {
+      state.notice = action.payload;
+    },
+    dismissNotice: (state) => {
+      state.notice = null;
+    },
     dismissStorageNearlyFull: (state) => {
       state.storageNearlyFull = false;
       state.storageWarningAcknowledged = true;
@@ -165,6 +182,8 @@ export const utilitySlice = createSlice({
       awaitingStorageRecheck: state.awaitingStorageRecheck,
       storageNearlyFull: state.storageNearlyFull,
       storageWarningAcknowledged: state.storageWarningAcknowledged,
+      // raised while a link is loading, i.e. right before the session changes
+      notice: state.notice,
     }),
   },
 });
@@ -178,6 +197,8 @@ export const {
   reportStorageFull,
   setStorageHeadroom,
   dismissStorageNearlyFull,
+  showNotice,
+  dismissNotice,
   clearStorageFull,
   requestStorageRecheck,
   storageRecheckFailed,
@@ -193,5 +214,6 @@ export const selectSessionBytesAtLimit = (state: RootState) =>
   state.utility.sessionBytesAtLimit;
 export const selectStorageNearlyFull = (state: RootState) =>
   state.utility.storageNearlyFull;
+export const selectNotice = (state: RootState) => state.utility.notice;
 
 export default utilitySlice.reducer;

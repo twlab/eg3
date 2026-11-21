@@ -24,7 +24,7 @@ import { RefBedTrackConfig } from "./RefBedTrackConfig";
 import { SnpTrackConfig } from "./SnpTrackConfig";
 import { MatplotTrackConfig } from "./MatplotTrackConfig";
 import { DynamicplotTrackConfig } from "./DynamicplotTrackConfig";
-// import { HammockTrackConfig } from "./HammockTrackConfig";
+import { HammockTrackConfig } from "./HammockTrackConfig";
 // import { PairwiseSegmentTrackConfig } from "./PairwiseSegmentTrackConfig";
 // import { SnvSegmentTrackConfig } from "./SnvSegmentTrackConfig";
 // import { G3dTrackConfig } from "./G3dTrackConfig";
@@ -73,7 +73,7 @@ export const TYPE_NAME_TO_CONFIG = {
 
   ruler: RulerTrackConfig,
   matplot: MatplotTrackConfig,
-  // hammock: HammockTrackConfig,
+  hammock: HammockTrackConfig,
   // pairwise: PairwiseSegmentTrackConfig,
   // snv: PairwiseSegmentTrackConfig,
   // snv2: SnvSegmentTrackConfig,

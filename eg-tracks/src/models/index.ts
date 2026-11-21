@@ -5,6 +5,9 @@ export {
   type IChromosomeInterval,
 } from "./ChromosomeInterval";
 export { default as DataHubParser } from "./DataHubParser";
+export * from "./LegacyHubConverter";
+export * from "./Hammock";
+export * from "./trackTypes";
 export { default as FlankingStrategy } from "./FlankingStrategy";
 export { default as Json5Fetcher } from "./Json5Fetcher";
 

@@ -11,6 +11,7 @@ import AddCustomGenome from "../genome-hub/AddCustomGenome";
 import ImportSession from "../sessions/ImportSession";
 import SessionList from "../sessions/SessionList";
 import StorageBanner from "../sessions/StorageBanner";
+import NoticeBanner from "../ui/NoticeBanner";
 import SessionEditToggle from "../sessions/SessionEditToggle";
 import ClosePanelButton from "../sessions/ClosePanelButton";
 
@@ -463,6 +464,7 @@ export default function RootLayout(props: AppProps) {
               top={navBarHeight + 12}
               onOpenSessions={handleOpenSessionsForEditing}
             />
+            <NoticeBanner top={navBarHeight + 12} />
 
             <AnimatePresence>
               {leftPanelOpen ? (
