@@ -4,54 +4,65 @@ sidebar_position: 9
 
 # FAQ
 
-## Hard Reload
+## A new version of the browser is available
 
-Sometimes your web browser might cached old Javascript code of the browser, if you didn\'t see updated feature after refresh, you can do a `Hard Reload`. This is how you do this on Google Chrome:
+The Browser checks for a new version every five minutes, and each time you come back to its tab.
+When one has been published, a message appears at the bottom of the page:
+**A new version of the browser is available.** Click **Refresh** to load it, or **×** to keep working
+and refresh later. Your session is kept in your web browser and is restored after the refresh.
 
-Open *Developer Tools*:
-
-![image](./img/hard1.png)
-
-Click and Hold the Refresh button for a while, then you can see the *Hard Reload* option:
-
-![image](./img/hard2.png)
+If you still see an old version after refreshing, your web browser may have cached the old
+JavaScript code. Do a hard reload: in Chrome, open *Developer Tools*, then click and hold the
+reload button and choose **Hard Reload** (or **Empty Cache and Hard Reload**).
 
 ## Data fetch failed
 
-Please check the URL to your file is correct. If yes, most case, your webserver doesn\'t enable CORS. Please see `tracks` page for how to enable CORS settings.
+When a track file cannot be read, the track shows an error message instead of data. Click the
+message to try again.
+
+![A track whose file could not be read](./img/faq-data-fetch-failed.png)
+
+Please check that the URL to your file is correct and that the file can be downloaded without a
+password. If it is, most often your web server does not allow other web sites to read the file
+(CORS). For bigWig, bigBed, BAM and tabix-indexed files, the Browser then tries again through a WashU
+relay server (`epigenome.wustl.edu/cors`), and the error appears only when that fails too. The best
+fix is to enable CORS on your server; see [Track file formats](../tracks/file-tracks.md).
 
 ## Use HTTP or HTTPS
 
-Both our main site and AWS mirror support both HTTP and HTTPS protocol, since webpage hosted through HTTPS cannot access resource hosted by HTTP, you should use our HTTP site. For example, when you visit [https://epigenomegateway.wustl.edu/browser](https://epigenomegateway.wustl.edu/browser), and you want to display a custome track hosted at `http://your.track.url.bigwig`, the browser will display `Data fetch failed` for that track because due to security settings, the browser in HTTPS page cannot access HTTP resource. In such case you can use [http://epigenomegateway.wustl.edu/browser](http://epigenomegateway.wustl.edu/browser) instead (without the `s`).
+The Browser is served over HTTPS
+([https://epigenomegateway.wustl.edu/browser/](https://epigenomegateway.wustl.edu/browser/)), and a
+web page served over HTTPS is not allowed by your web browser to read files from a plain `http://`
+address. Host your track files on an HTTPS server.
 
-## Firebase fetal error
+## Do I need Firebase to run my own copy?
 
-After you installed a new mirror, when you start your mirror instance by running `npm start`, if you see a Firebase fetal error like following:
-
-![image](./img/firebase_error.png)
-
-This means you need to setup a Firebase database for the Session/Live function to work properly, check `Firebase_setup` please.
-
-## Can I use without setup Firebase?
-
-Yes. But this means you would not have the Session/Live function, check `use_without_Firebase` please.
+No. A copy of the Browser that you run yourself starts and displays tracks without any Firebase
+settings. Firebase is only needed to save and retrieve session bundles (the **Session Bundle ID**);
+sessions are always kept in your web browser and can be downloaded to and loaded from a file
+without it. How to set up your own Firebase database is described in
+[Run your own copy](../installation.md).
 
 ## Local track security
 
-Local track function is perfect for view protected or private data, since there is no data transfer on the web. More discussions about this please check [here](https://github.com/lidaof/eg-react/issues/114).
+Local track function is perfect for viewing protected or private data, since there is no data
+transfer on the web: the files stay on your computer and are read by your web browser. See
+[Local tracks](../tracks/local-tracks.md). More discussions about this please check
+[here](https://github.com/lidaof/eg-react/issues/114).
 
-## What\'s the different between `hub` and `sessionFile` URL parameter
+## What's the difference between the `hub` and `sessionFile` URL parameters?
 
-Both browser links with `hub` or `sessionFile` can be shared with others or be used for publication purpose. `sessionFile` not only contains all the *tracks* as `hub`, it also contains genomic coordinates, metadata, show/hide of genome navigator etc.
+Both browser links with `hub` or `sessionFile` can be shared with others or be used for publication
+purposes.
 
-So `sessionFile` link contains more information than `hub` link, as the `sessionFile` contains more contents only used by the browser (it\'s much more complex than `hub` file syntax).
+- A `hub` link names a genome and a [datahub](../datahub/datahub.md): a list of tracks. The page
+  opens with the genome's default tracks plus the hub tracks marked `showOnHubLoad`, at the region
+  given by `position`. A datahub is simple to write by hand.
+- A `sessionFile` link restores a whole session: the genome, the region, the tracks in their order
+  with all their settings, the metadata terms shown, highlights and region sets. A session file is
+  made by the Browser: arrange the view, then download the session from the session panel (see
+  [Manage sessions](../use-the-browser/manage-sessions.md)).
 
-Examples links:
-
-[hub link](https://epigenomegateway.wustl.edu/browser/?genome=hg19&hub=https://wangftp.wustl.edu/~dli/test/a.json)
-
-![image](./img/hubLink.png)
-
-[sessionFile link](https://epigenomegateway.wustl.edu/browser/?genome=hg19&sessionFile=https://wangftp.wustl.edu/~dli/test/eg-session-Hl4320IQ8-5b4bcd10-cbcd-11ea-b1b4-6196abf220ba.json)
-
-![image](./img/sessionLink.png)
+So a `sessionFile` link contains more information than a `hub` link. See
+[URL parameters](../url-params.md) for both, and
+[Publish with the browser](../contact.md) for advice on links in publications.

@@ -46,6 +46,8 @@ function timeoutForType(type: string) {
 // to appear in one set; getLocalData uses these to pick the fetch strategy.
 const BED_OR_TABIX = new Set([
   "bed",
+  "bedcolor",
+  "hammock",
   "bedgraph",
   "qbed",
   "refbed",
@@ -63,7 +65,14 @@ const HIC = new Set(["hic"]);
 const LOCAL_TYPES = [...BED_OR_TABIX, ...BIG, ...BIGBED, ...HIC];
 
 // Track types served from an in-browser text blob via getTextData.
-const TEXT_TYPES = ["bed", "bedgraph", "qbed", "refbed", "longrange"];
+const TEXT_TYPES = [
+  "bed",
+  "bedcolor",
+  "bedgraph",
+  "qbed",
+  "refbed",
+  "longrange",
+];
 
 let cachedLocalFetchInstance: { [key: string]: any } = {};
 

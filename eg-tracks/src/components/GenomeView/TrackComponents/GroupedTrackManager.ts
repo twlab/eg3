@@ -60,6 +60,7 @@ export const possibleNumericalTracks = {
   modbed: "",
   refbed: "",
   bed: "",
+  hammock: "",
   repeatmasker: "",
   omeroidr: "",
   bam: "",
@@ -502,14 +503,27 @@ export class GroupedTrackManager {
               ) {
                 continue;
               }
+              // hammock barplot draws every item on one baseline, at least
+              // 1px wide: no rows to pad, and hiding sub-pixel items would
+              // drop peaks (and shift the y scale) when zoomed out.
+              const isHammockBarplot =
+                curTrackModel.type === "hammock" &&
+                configOptions?.displayMode === "barplot";
+              const genePadding = trackOptionMap[`${curTrackModel.type}`]
+                ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
+                : trackOptionMap["error"].getGenePadding;
               const placeFeatureData = featureArrange.arrange(
                 data,
                 track.visRegion,
                 width,
-                trackOptionMap[`${curTrackModel.type}`]
-                  ? trackOptionMap[`${curTrackModel.type}`].getGenePadding
-                  : trackOptionMap["error"].getGenePadding,
-                configOptions.hiddenPixels,
+                isHammockBarplot
+                  ? 0
+                  : typeof genePadding === "function"
+                    ? // padding can depend on the track's options (label drawing)
+                      (feature: any, xSpan: any) =>
+                        genePadding(feature, xSpan, configOptions)
+                    : genePadding,
+                isHammockBarplot ? 0 : configOptions.hiddenPixels,
                 configOptions.sortItems ? configOptions.sortItems : sortType,
                 viewWindow,
               );
@@ -517,7 +531,10 @@ export class GroupedTrackManager {
               const height =
                 curTrackModel.type === "repeatmasker" ||
                 curTrackModel.type === "rmskv2" ||
-                curTrackModel.type === "bigbedcolor"
+                curTrackModel.type === "bigbedcolor" ||
+                // ...so the track is as tall as its `height` option, not its
+                // row count
+                isHammockBarplot
                   ? configOptions?.height
                   : placeFeatureData.numRowsAssigned
                     ? getHeight(

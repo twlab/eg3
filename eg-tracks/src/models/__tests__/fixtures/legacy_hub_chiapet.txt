@@ -1,0 +1,173 @@
+[
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/wTR1.Pol2peak.gz",
+                name:"wTR1 peak Pol2ChIA-PET",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value", "P value (-log10)","Q value (-log10)"],
+		boxcolor:'#990005',
+		strokecolor:'#FF1A40',
+},
+{
+        type:"longrange",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/wTR1.track.gz",
+                name:"wTR1 ChIA-PET",
+                    mode:"show",
+                        colorpositive:"#FF1A40",
+                        qtc:{pfilterscore: 0, pcolorscore: 5, thtype: "fixed"}
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/wTR2.Pol2peak.gz",
+                name:"wTR2 peak Pol2ChIA-PET",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value", "P value (-log10)","Q value (-log10)"],
+		boxcolor:'#990005',
+		strokecolor:'#FF1A40',
+},
+{
+        type:"longrange",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/wTR2.track.gz",
+                name:"wTR2 ChIA-PET",
+                    mode:"show",
+                        colorpositive:"#FF1A40",
+                        qtc:{pfilterscore: 0, pcolorscore: 5, thtype: "fixed"}
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/wTR3.Pol2peak.gz",
+                name:"wTR3 peak Pol2ChIA-PET",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value", "P value (-log10)","Q value (-log10)"],
+		boxcolor:'#990005',
+		strokecolor:'#FF1A40',
+},
+{
+        type:"longrange",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/wTR3.track.gz",
+                name:"wTR3 ChIA-PET",
+                    mode:"show",
+                        colorpositive:"#FF1A40",
+                        qtc:{pfilterscore: 0, pcolorscore: 5, thtype: "fixed"}
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/mTR1.Pol2peak.gz",
+                name:"mTR1 peak Pol2ChIA-PET",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value", "P value (-log10)","Q value (-log10)"],
+		boxcolor:'#0000c5',
+		strokecolor:'#2E49FF',
+},
+{
+        type:"longrange",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/mTR1.track.gz",
+                name:"mTR1 ChIA-PET",
+                    mode:"show",
+                        colorpositive:"#2E49FF",
+                        qtc:{pfilterscore: 0, pcolorscore: 5, thtype: "fixed"}
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/mTR2.Pol2peak.gz",
+                name:"mTR2 peak Pol2ChIA-PET",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value", "P value (-log10)","Q value (-log10)"],
+		boxcolor:'#0000c5',
+		strokecolor:'#2E49FF',
+},
+{
+        type:"longrange",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/mTR2.track.gz",
+                name:"mTR2 ChIA-PET",
+                    mode:"show",
+                        colorpositive:"#2E49FF",
+                        qtc:{pfilterscore: 0, pcolorscore: 5, thtype: "fixed"}
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/mTR3.Pol2peak.gz",
+                name:"mTR3 peak Pol2ChIA-PET",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value", "P value (-log10)","Q value (-log10)"],
+		boxcolor:'#0000c5',
+		strokecolor:'#2E49FF',
+},
+{
+        type:"longrange",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/mTR3.track.gz",
+                name:"mTR3 ChIA-PET",
+                    mode:"show",
+                        colorpositive:"#2E49FF",
+                        qtc:{pfilterscore: 0, pcolorscore: 5, thtype: "fixed"}
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/Sox2_Singles_Q5_aggregated_peaks.bed.gz",
+                name:"Sox2 singles peak",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value"],
+		boxcolor:'#cc1005',
+		strokecolor:'#cc1005',
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/Sox2_Spheres_Q5_aggregated_peaks.bed.gz",
+                name:"Sox2 spheres peak",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value"],
+		boxcolor:'#cc6705',
+		strokecolor:'#cc6705',
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/k27ac_non_redundant.bed.gz",
+                name:"H3K27ac peak",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value"],
+		boxcolor:'#c12cb5',
+		strokecolor:'#7c2575',
+},
+
+{
+        type:"hammock",
+            url:"https://wangftp.wustl.edu/~dli/7131149234337a58201ae3da174ecc51/k4me1_non_redundant.bed.gz",
+                name:"H3K4me1 peak",
+                mode:"barplot",
+		showscoreidx:0,
+		scorenamelst:["signal value"],
+		boxcolor:'#18b7bc',
+		strokecolor:'#28bdc1',
+},
+
+
+
+    {
+        "list": [
+            {
+                "name": "refGene", 
+                "mode": "full"
+            }
+        ], 
+        "type": "native_track"
+    }, 
+#{"type":"coordinate_override","coord":"chr8,87120161,chr8,87587163"}
+]
+

@@ -1,6 +1,7 @@
 import ChromosomeInterval, { IChromosomeInterval } from "./ChromosomeInterval";
 import Gene from "./Gene";
 import NavigationContext from "./NavigationContext";
+import { getHammockDetails, getHammockScore } from "./Hammock";
 
 export type Strand = "+" | "-" | string;
 
@@ -85,6 +86,9 @@ export function getFeatureName(featureOrRecord: any, type?: string): string {
     case "bedcolor":
       // column [3] is the color, not a name — bedcolor features are unnamed.
       return "";
+    case "hammock":
+      // column [3] is a relaxed-JSON fragment; the name is one of its fields.
+      return getHammockDetails(featureOrRecord).name;
     case "repeatmasker":
       return featureOrRecord.label != null ? String(featureOrRecord.label) : "";
     case "rmskv2": {
@@ -120,6 +124,8 @@ export function getFeatureStrand(featureOrRecord: any, type?: string): string {
       return splitRest(featureOrRecord)[2] ?? "";
     case "bedcolor":
       return "+"; // formatBedColorData hardcodes the forward strand
+    case "hammock":
+      return getHammockDetails(featureOrRecord).strand;
     case "repeatmasker":
       return featureOrRecord.orientation ?? "";
     case "rmskv2":
@@ -171,6 +177,10 @@ export function getFeatureScore(featureOrRecord: any, type?: string): any {
       const rest = splitRest(featureOrRecord);
       return rest.length ? Number.parseInt(rest[1], 10) : featureOrRecord.score;
     }
+    case "hammock":
+      // First score of the item's `scorelst`; renderers that honour the
+      // track's `scoreIndex` option call getHammockScore directly.
+      return getHammockScore(featureOrRecord);
     default:
       return featureOrRecord.score;
   }

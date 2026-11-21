@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WashU Epigenome Browser</title>
+    <script>
+      // Links to the retired 1st-generation browser live under /legacy/, e.g.
+      //   /legacy/?genome=mm9&datahub=...&coordinate=...
+      // When this page is served for such a path, move to the browser's own
+      // path and keep the parameters; the app converts them once it loads.
+      // Done here, before anything else loads, so the bundle is fetched once.
+      (function () {
+        if (/^\/legacy(\/|$)/i.test(window.location.pathname)) {
+          window.location.replace(
+            "%BASE_URL%" + window.location.search + window.location.hash,
+          );
+        }
+      })();
+    </script>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <script src="/3Dmol-min.js"></script>
   </head>

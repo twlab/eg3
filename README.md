@@ -18,62 +18,63 @@
 * [Source code](https://github.com/lidaof/eg-react)
 * [Documentation](https://eg.readthedocs.io/en/latest/)
 
-### the 1st generation since 2010
+### the 1st generation since 2010 (retired)
 
-* [Access the Browser](https://epigenomegateway.wustl.edu/legacy/)
+* The 1st generation browser is no longer online. Links made for it (`/legacy/?genome=...&datahub=...`) open in the current browser, which converts the datahub on the fly.
 * [Source code](https://github.com/epgg/eg)
 * [Documentation](https://wiki.wubrowse.org/)
 
 ## Run the Browser locally
 
-* get Node.js (version 20 above recommended) and yarn package management tool
+* get Node.js (version 20 or above) and the yarn package manager
 * clone the code
-* install the package at root folder
+* install the packages at the root folder
 
     ```bash
     yarn install
     ```
 
-* go the eg-browser folder
+* go to the eg-browser folder and start the Browser
 
     ```bash
-    yarn install
+    cd eg-browser
     yarn dev
     ```
 
-* the browser should be running on your local computer now at <http://localhost:5173/>
+* the Browser is now running on your computer at <http://localhost:5173/browser/>
 
     ```bash
-    VITE v5.4.14  ready in 409 ms
+      VITE v5.4.21  ready in 370 ms
 
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: use --host to expose
-  ➜  press h + enter to show help
+      ➜  Local:   http://localhost:5173/browser/
+      ➜  Network: use --host to expose
     ```
+
+See [Run your own copy](https://epgg.github.io/installation) in the documentation for building, deploying and settings.
 
 ## Use the Browser as a module in your web application
 
-* install the package from NPM registry
+* install the package from the NPM registry (React 18 or 19 is required)
 
     ```bash
     npm install wuepgg
     ```
 
-* import the package and related style sheet
+* import the component and its style sheet
 
-    ```javascript
-    import GenomeHub from "wuepg"
-    import "wuepgg/style.css"
-    
-    <GenomeHub name={exampleName} dataHub={exampleDataHub} />
+    ```jsx
+    import { GenomeHub } from "wuepgg";
+    import "wuepgg/style.css";
+
+    <GenomeHub
+      storeConfig={{ storeId: "genome-1" }}
+      genomeName="hg19"
+      viewRegion={{ genomeCoordinate: "chr7:27053397-27373765" }}
+      tracks={[{ type: "ruler", name: "Ruler" }]}
+    />
     ```
 
-* example of screenshot for each step can found below:
-
-![npm install screenshot](/screenshots/npm1.png)
-![import screenshot](/screenshots/npm2.png)
-![use the component screenshot](/screenshots/npm3.png)
-![how it looks screenshot](/screenshots/npm4.png)
+* an example application is available at [twlab/embed-eg3](https://github.com/twlab/embed-eg3), and the full list of properties is in the [package description](https://www.npmjs.com/package/wuepgg)
 
 ## Questions or feedbacks?
 

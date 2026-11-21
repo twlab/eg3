@@ -1,7 +1,7 @@
 import Button from "@/components/ui/button/Button";
 import React from "react";
 import JSON5 from "json5";
-import { generateUUID } from "wuepgg3-track";
+import { generateUUID, isSupportedTrackType } from "wuepgg3-track";
 import { ITrackModel, HELP_LINKS } from "wuepgg3-track";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -268,7 +268,10 @@ function SelectTextType({ selectedType, onTypeChange }: SelectTextTypeProps) {
         value={selectedType}
         onChange={(e) => onTypeChange(e.target.value)}
       >
-        {Object.entries(TEXT_TYPE_DESC).map(([key, value]) => (
+        {Object.entries(TEXT_TYPE_DESC)
+          // keys are "type" or "type-subType"; offer only displayable types
+          .filter(([key]) => isSupportedTrackType(key.split("-")[0]))
+          .map(([key, value]) => (
           <option value={key} key={key}>
             {value.label}
           </option>

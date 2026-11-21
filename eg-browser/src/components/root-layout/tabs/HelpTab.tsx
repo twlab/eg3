@@ -8,7 +8,7 @@ export default function HelpTab({ panelCounter, onNavigationPathChange }: { pane
         <ExternalLink compact title="Documentation" description="Read our comprehensive documentation and user guides" href="https://epgg.github.io/" />
         <ExternalLink compact title="GitHub Repository" description="View and contribute to our source code on GitHub" href="https://github.com/twlab/eg3" />
         <ExternalLink compact title="2nd Gen Browser" description="Visit the 2nd generation of WashU Epigenome Browser" href="https://epigenomegateway.wustl.edu/browser2022" />
-        <ExternalLink compact title="1st Gen Browser" description="Visit the classic version of WashU Epigenome Browser" href="https://epigenomegateway.wustl.edu/legacy" />
+        <ExternalLink compact title="1st Gen Browser" description="Source code of the classic (retired) version of WashU Epigenome Browser" href="https://github.com/epgg/eg" />
         <ExternalLink compact title="Discord Server" description="Join our Discord server for real-time discussions and support" href="https://discord.gg/2PHxAEJFf7" />
         <ExternalLink compact title="Google Groups" description="Join our community discussions and get support" href="https://groups.google.com/d/forum/epgg" />
         <ExternalLink compact title="YouTube Channel" description="Watch tutorials and demonstrations of the browser" href="https://www.youtube.com/channel/UCnGVWbxJv-DPDCAFDQ1oFQA" />

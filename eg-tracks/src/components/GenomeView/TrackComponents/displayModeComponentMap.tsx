@@ -73,6 +73,11 @@ import React from "react";
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 import Bedcolor from "./bedComponents/Bedcolor";
+import HammockBar, {
+  computeHammockBarScale,
+  thinHammockBars,
+} from "./bedComponents/HammockBar";
+import { HammockDisplayModes } from "../../../models/Hammock";
 import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { chromAlias } from "../../../getRemoteData/fetchFunctions";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
@@ -104,6 +109,7 @@ function makeAnnotationElementMap(context: any) {
     onClose,
     onHideTooltip,
     trackModel,
+    hammockBarScale,
   } = context;
 
   function getAnnotationElement(
@@ -202,6 +208,33 @@ function makeAnnotationElementMap(context: any) {
       getAnnotationElement(placedGroup, y, isLastRow, index),
     bed: (placedGroup: any, y: number, isLastRow: boolean, index: number) =>
       getBedAnnotationElement(placedGroup, y, isLastRow, index),
+    hammock: function renderHammock(
+      placedGroup: any,
+      y: number,
+      isLastRow: boolean,
+      index: number,
+    ) {
+      if (
+        configOptions.displayMode !== HammockDisplayModes.BARPLOT ||
+        !hammockBarScale
+      ) {
+        // full mode: same look as a bed track, names read from the 4th column
+        return getBedAnnotationElement(placedGroup, y, isLastRow, index);
+      }
+      // barplot mode: every item sits on one shared baseline, so rows are ignored
+      return placedGroup.placedFeatures.map((placement: any, i: number) => (
+        <HammockBar
+          key={i}
+          feature={placement.feature}
+          xSpan={placement.xSpan}
+          barScale={hammockBarScale}
+          scoreIndex={configOptions.scoreIndex}
+          color={configOptions.color}
+          reverseStrandColor={configOptions.color2}
+          onClick={renderTooltip ? renderTooltip : () => {}}
+        />
+      ));
+    },
     bedcolor: function renderAnnotation(
       placedGroup: any,
       y: number,
@@ -581,6 +614,7 @@ const FullVisualizer: React.FC<any> = ({
   renderTooltip,
   scales,
   onClose,
+  hammockBarScale,
 }) => {
   const getAnnotationElementMap = makeAnnotationElementMap({
     configOptions,
@@ -589,6 +623,7 @@ const FullVisualizer: React.FC<any> = ({
     scales,
     onClose,
     trackModel,
+    hammockBarScale,
   });
 
   function renderAnnotation(placedGroup: any, i: number) {
@@ -676,6 +711,13 @@ const FullVisualizer: React.FC<any> = ({
     </svg>
   );
 };
+
+function isHammockBarplot(trackModel: any, configOptions: any): boolean {
+  return (
+    trackModel?.type === "hammock" &&
+    configOptions?.displayMode === HammockDisplayModes.BARPLOT
+  );
+}
 
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
@@ -783,12 +825,19 @@ export const displayModeComponentMap: { [key: string]: any } = {
       let featureArrange = new FeatureArranger();
       let sortType = SortItemsOptions.NOSORT;
 
+      // hammock barplot: one baseline, nothing hidden (see GroupedTrackManager)
+      const hammockBarplot = isHammockBarplot(trackModel, configOptions);
       placeFeatureData = featureArrange.arrange(
         formattedData,
         trackState.visRegion,
         trackState.visWidth,
-        getGenePadding,
-        configOptions.hiddenPixels,
+        hammockBarplot
+          ? 0
+          : typeof getGenePadding === "function"
+            ? (feature: any, xSpan: any) =>
+                getGenePadding(feature, xSpan, configOptions)
+            : getGenePadding,
+        hammockBarplot ? 0 : configOptions.hiddenPixels,
         sortType,
         trackState.viewWindow,
       );
@@ -797,7 +846,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
       height =
         trackModel.type === "repeatmasker" ||
         trackModel.type === "rmskv2" ||
-        trackModel.type === "categorical"
+        trackModel.type === "categorical" ||
+        isHammockBarplot(trackModel, configOptions)
           ? configOptions.height
           : placeFeatureData.numRowsAssigned
             ? getHeight(placeFeatureData.numRowsAssigned)
@@ -807,6 +857,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
       height = placeFeature.height;
       numHidden = placeFeature.numHidden;
     }
+    // hammock barplot: one shared score scale drives both the bars and the
+    // legend axis, auto-ranged to the items inside the view window.
+    const hammockBarScale = isHammockBarplot(trackModel, configOptions)
+      ? computeHammockBarScale(
+          placeFeatureData.placements,
+          configOptions,
+          height,
+          trackState.viewWindow,
+        )
+      : undefined;
     const legendProps = {
       height,
       trackModel,
@@ -817,6 +877,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
           : "",
       forceSvg: configOptions.forceSvg,
       legendWidth: legendWidth,
+      axisScale:
+        hammockBarScale && !hammockBarScale.isFlat
+          ? hammockBarScale.scale
+          : undefined,
     };
     if (updatedLegend) {
       updatedLegend.current = legendProps;
@@ -830,7 +894,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     const svgDATA = (
       <FullVisualizer
-        placements={placeFeatureData.placements}
+        placements={
+          hammockBarScale
+            ? thinHammockBars(
+                placeFeatureData.placements,
+                configOptions.scoreIndex,
+              )
+            : placeFeatureData.placements
+        }
         width={trackState.visWidth}
         height={height}
         rowHeight={ROW_HEIGHT}
@@ -843,6 +914,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         renderTooltip={renderTooltip}
         scales={scales}
         onClose={onClose}
+        hammockBarScale={hammockBarScale}
       />
     );
 
@@ -1740,6 +1812,8 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   const isFullMode =
     (configOptions.displayMode === "full" &&
       !excludedFromFull.has(trackType)) ||
+    // hammock barplot is drawn item by item, through the same placement path
+    isHammockBarplot(trackModel, configOptions) ||
     (trackType === "omeroidr" && configOptions.displayMode !== "density");
   if (trackType === "boxplot" || trackType === "qbed") {
     return displayModeComponentMap[trackType](createFullParams());
@@ -3000,6 +3074,8 @@ const formatFunctions: {
   rmskv2: formatRmskv2Masker,
   refbed: formatRefBedData,
   bed: formatBedData,
+  // hammock renders straight from its raw records (see rawRenderTracks)
+  hammock: (genesArr: any[]) => genesArr,
   bedcolor: formatBedColorData,
   categorical: formatCategoricalData,
   bam: formatBamData,
@@ -3149,6 +3225,7 @@ export const rawRenderTracks: { [type: string]: string } = {
   dynamicbed: "",
   matplot: "",
   bed: "",
+  hammock: "",
   bigbed: "",
   bigbedcolor: "",
   jaspar: "",

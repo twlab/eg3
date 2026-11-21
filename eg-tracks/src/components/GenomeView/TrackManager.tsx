@@ -4825,6 +4825,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               cache.trackType === "dynamiclongrange" ||
               interactionTracks.has(cache.trackType) ||
               curConfigOptions?.displayMode === "density" ||
+              // hammock barplot auto-scales its y axis to the view window
+              (cache.trackType === "hammock" &&
+                curConfigOptions?.displayMode === "barplot") ||
               (cache.trackType === "genomealign" && !useFineModeNav.current) ||
               ((cache.trackType === "vcf" || cache.trackType === "modbed") &&
                 curConfigOptions?.displayMode === "auto" &&

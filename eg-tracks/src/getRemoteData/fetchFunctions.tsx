@@ -9,6 +9,7 @@ import {
   localFetchTypeMap,
   textFetchTypeMap,
 } from "../getLocalData/localFetchTypeMap";
+import { isSupportedTrackType } from "../models/trackTypes";
 
 import { AlignmentSegment } from "../models/AlignmentSegment";
 import { NavContextBuilder } from "../models/NavContextBuilder";
@@ -256,41 +257,6 @@ export const chromAlias: Record<string, Set<string>> = {
   ]),
   chrM: new Set(["M", "MT", "NC_001807.4", "J01415.2", "NC_012920.1"]),
 };
-const componentMap: { [key: string]: any } = {
-  geneannotation: "",
-  bed: "",
-  // bedcolor: "",
-  bigbedcolor: "",
-  bigwig: "",
-  dynseq: "",
-  methylc: "",
-  hic: "",
-  genomealign: "",
-  vcf: "",
-  categorical: "",
-  longrange: "",
-  biginteract: "",
-  repeatmasker: "",
-  rmskv2: "",
-  bigbed: "",
-  refbed: "",
-  matplot: "",
-  ruler: "",
-  modbed: "",
-  dynamic: "",
-  bedgraph: "",
-  qbed: "",
-  boxplot: "",
-  jaspar: "",
-  dynamichic: "",
-  dynamicbed: "",
-  dbedgraph: "",
-  dynamiclongrange: "",
-  snp: "",
-  bam: "",
-  omeroidr: "",
-  error: "",
-};
 export interface PlacedMergedAlignment extends QueryGenomePiece {
   segments: PlacedAlignment[];
   targetXSpan: OpenInterval;
@@ -373,7 +339,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         const trackType = item?.type || item?.metadata["Track type"];
         const id = item.id;
 
-        if (!(item.type in componentMap)) {
+        // "error" is the placeholder type of a track that failed earlier
+        if (!isSupportedTrackType(item.type) && item.type !== "error") {
           return Promise.resolve({
             name: trackType,
             id: id,

@@ -13,9 +13,10 @@ import { DEFAULT_OPTIONS as defaultGenomeAlignTrack } from "./GenomeAlignCompone
 import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/DynamicplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
+import { DEFAULT_OPTIONS as defaultHammockTrack } from "../../../trackConfigs/config-menu-models.tsx/HammockTrackConfig";
 
 import { DEFAULT_OPTIONS as defaultDynamicInteraction } from "./InteractionComponents/DynamicInteractionTrackComponents";
-// import { DEFAULT_OPTIONS as defaultBedcolorTrack } from "./bedComponents/BedcolorTrack";
+import { DEFAULT_OPTIONS as defaultBedcolorTrack } from "../../../trackConfigs/config-menu-models.tsx/BedcolorTrackConfig";
 
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
@@ -48,6 +49,26 @@ const SNP_HEIGHT = 9;
 const SNP_ROW_VERTICAL_PADDING = 2;
 const SNP_ROW_HEIGHT = SNP_HEIGHT + SNP_ROW_VERTICAL_PADDING;
 
+/**
+ * Horizontal room to keep free around a box drawn by BedAnnotation. A name
+ * that fits is written inside the box; one that does not is written beside the
+ * box only when "always draw label" is on, so only then does it need room.
+ * Without this, long names push items onto separate rows although nothing is
+ * drawn next to them. `options` is absent for callers that predate it, which
+ * keep the old, roomier layout.
+ */
+function boxLabelPadding(name: string, xSpan: OpenInterval, options?: any) {
+  const width = xSpan.end - xSpan.start;
+  const estimatedLabelWidth = name.length * 9;
+  if (estimatedLabelWidth < 0.5 * width) {
+    return 5;
+  }
+  if (options && !options.alwaysDrawLabel) {
+    return 5;
+  }
+  return 9 + estimatedLabelWidth;
+}
+
 export const trackOptionMap: { [key: string]: any } = {
   ruler: {
     defaultOptions: {
@@ -62,15 +83,8 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultAnnotationTrack,
     },
-    getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
-      const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = getFeatureName(feature, "bigbed").length * 9;
-      if (estimatedLabelWidth < 0.5 * width) {
-        return 5;
-      } else {
-        return 9 + estimatedLabelWidth;
-      }
-    },
+    getGenePadding: (feature: Feature, xSpan: OpenInterval, options?: any) =>
+      boxLabelPadding(getFeatureName(feature, "bigbed"), xSpan, options),
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
 
@@ -81,16 +95,8 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultAnnotationTrack,
       maxRows: 1,
     },
-    getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
-      const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth =
-        getFeatureName(feature, "bigbedcolor").length * 9;
-      if (estimatedLabelWidth < 0.5 * width) {
-        return 5;
-      } else {
-        return 9 + estimatedLabelWidth;
-      }
-    },
+    getGenePadding: (feature: Feature, xSpan: OpenInterval, options?: any) =>
+      boxLabelPadding(getFeatureName(feature, "bigbedcolor"), xSpan, options),
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
   geneannotation: {
@@ -127,33 +133,29 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultAnnotationTrack,
     },
-    getGenePadding: function getGenePadding(
-      feature: Feature,
-      xSpan: OpenInterval,
-    ) {
-      const width = xSpan.end - xSpan.start;
-      // bed renders straight from raw records, so read the name via the accessor
-      // rather than feature.getName().
-      const estimatedLabelWidth = getFeatureName(feature).length * 9;
-
-      if (estimatedLabelWidth < 0.5 * width) {
-        return 5;
-      } else {
-        return 9 + estimatedLabelWidth;
-      }
-    },
+    getGenePadding: (feature: Feature, xSpan: OpenInterval, options?: any) =>
+      boxLabelPadding(getFeatureName(feature), xSpan, options),
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
-  // bedcolor: {
-  //   defaultOptions: {
-  //     ...defaultBedTrack,
-  //     ...defaultNumericalTrack,
-  //     ...defaultAnnotationTrack,
-  //     ...defaultBedcolorTrack,
-  //   },
-  //   getGenePadding: 0,
-  //   ROW_HEIGHT: 40 + 2,
-  // },
+  hammock: {
+    defaultOptions: {
+      ...defaultBedTrack,
+      ...defaultNumericalTrack,
+      ...defaultHammockTrack,
+    },
+    getGenePadding: (feature: Feature, xSpan: OpenInterval, options?: any) =>
+      boxLabelPadding(getFeatureName(feature, "hammock"), xSpan, options),
+    ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
+  },
+  bedcolor: {
+    defaultOptions: {
+      ...defaultBedTrack,
+      ...defaultAnnotationTrack,
+      ...defaultBedcolorTrack,
+    },
+    getGenePadding: 0, // plain colored boxes, no labels
+    ROW_HEIGHT: defaultBedcolorTrack.rowHeight + 2,
+  },
   repeatmasker: {
     defaultOptions: {
       ...defaultAnnotationTrack,
@@ -325,18 +327,8 @@ export const trackOptionMap: { [key: string]: any } = {
       alwaysDrawLabel: true,
       backgroundColor: "var(--bg-color)",
     },
-    getGenePadding: function getGenePadding(
-      feature: JasparFeature,
-      xSpan: OpenInterval,
-    ) {
-      const width = xSpan.end - xSpan.start;
-      const estimatedLabelWidth = getFeatureName(feature, "jaspar").length * 9;
-      if (estimatedLabelWidth < 0.5 * width) {
-        return 5;
-      } else {
-        return 9 + estimatedLabelWidth;
-      }
-    },
+    getGenePadding: (feature: Feature, xSpan: OpenInterval, options?: any) =>
+      boxLabelPadding(getFeatureName(feature, "jaspar"), xSpan, options),
     ROW_HEIGHT: BedAnnotation.HEIGHT + 2,
   },
 
